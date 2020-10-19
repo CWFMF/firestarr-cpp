@@ -1,0 +1,8 @@
+CompileFlags:
+  CompilationDatabase: build
+  Compiler: g++
+  Add: [ -std=c++23 ]
+  BuiltinHeaders: QueryDriver
+
+InlayHints:
+  Designators: No

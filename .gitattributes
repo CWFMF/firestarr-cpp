@@ -1,0 +1,12 @@
+* text=auto
+
+*.tif -text
+
+*.cpp text
+*.h text
+
+*.sh text eol=lf
+CMake* text eol=lf
+*.json eol=lf
+
+*.sln text eol=crlf

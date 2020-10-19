@@ -1,0 +1,77 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+#include "Input.h"
+#include "Log.h"
+#include "Util.h"
+namespace fs
+{
+inline MathSize stod(const string* const str) { return stod(*str); }
+FwiWeather read_fwi_weather(istringstream* iss, string* str)
+{
+  // PREC
+  getline(iss, str, ',');
+  logging::extensive("PREC is %s", str->c_str());
+  const Precipitation prec(stod(str));
+  // TEMP
+  getline(iss, str, ',');
+  logging::extensive("TEMP is %s", str->c_str());
+  const Temperature temp(stod(str));
+  // RH
+  getline(iss, str, ',');
+  logging::extensive("RH is %s", str->c_str());
+  const RelativeHumidity rh(stod(str));
+  // WS
+  getline(iss, str, ',');
+  logging::extensive("WS is %s", str->c_str());
+  const Speed ws(stod(str));
+  // WD
+  getline(iss, str, ',');
+  logging::extensive("WD is %s", str->c_str());
+  const Direction wd(stod(str), false);
+  const Wind wind(wd, ws);
+  // FIX: pretend we're checking these but the flag is unset for now
+  getline(iss, str, ',');
+  logging::extensive("FFMC is %s", str->c_str());
+  const Ffmc ffmc(stod(str));
+  getline(iss, str, ',');
+  logging::extensive("DMC is %s", str->c_str());
+  const Dmc dmc(stod(str));
+  getline(iss, str, ',');
+  logging::extensive("DC is %s", str->c_str());
+  const Dc dc(stod(str));
+  getline(iss, str, ',');
+  logging::extensive("ISI is %s", str->c_str());
+  const Isi isi(stod(str), ws, ffmc);
+  getline(iss, str, ',');
+  logging::extensive("BUI is %s", str->c_str());
+  const Bui bui(stod(str), dmc, dc);
+  getline(iss, str, ',');
+  logging::extensive("FWI is %s", str->c_str());
+  const Fwi fwi(stod(str), isi, bui);
+  return {temp, rh, wind, prec, ffmc, dmc, dc, isi, bui, fwi};
+}
+FwiWeather read_weather(istringstream* iss, string* str)
+{
+  // PREC
+  getline(iss, str, ',');
+  logging::extensive("PREC is %s", str->c_str());
+  const Precipitation prec(stod(str));
+  // TEMP
+  getline(iss, str, ',');
+  logging::extensive("TEMP is %s", str->c_str());
+  const Temperature temp(stod(str));
+  // RH
+  getline(iss, str, ',');
+  logging::extensive("RH is %s", str->c_str());
+  const RelativeHumidity rh(stod(str));
+  // WS
+  getline(iss, str, ',');
+  logging::extensive("WS is %s", str->c_str());
+  const Speed ws(stod(str));
+  // WD
+  getline(iss, str, ',');
+  logging::extensive("WD is %s", str->c_str());
+  const Direction wd(stod(str), false);
+  const Wind wind(wd, ws);
+  return {temp, rh, wind, prec, Ffmc::Zero, Dmc::Zero, Dc::Zero, Isi::Zero, Bui::Zero, Fwi::Zero};
+}
+}
