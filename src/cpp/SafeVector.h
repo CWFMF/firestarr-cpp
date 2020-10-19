@@ -1,0 +1,87 @@
+/* SPDX-FileCopyrightText: 2020 Queen's Printer for Ontario */
+/* SPDX-FileCopyrightText: 2025 Government of Canada */
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+#ifndef FS_SAFEVECTOR_H
+#define FS_SAFEVECTOR_H
+
+#include <vector>
+namespace fs
+{
+namespace util
+{
+class Statistics;
+/**
+ * \brief A vector with added thread safety.
+ */
+class SafeVector
+{
+  /**
+   * \brief Vector of stored values
+   */
+  vector<double> values_{};
+  /**
+   * \brief Mutex for parallel access
+   */
+  mutable mutex mutex_{};
+public:
+  /**
+   * \brief Destructor
+   */
+  ~SafeVector() = default;
+  /**
+   * \brief Construct empty SafeVector
+   */
+  SafeVector() = default;
+  /**
+   * \brief Copy constructor
+   * \param rhs SafeVector to copy from
+   */
+  SafeVector(const SafeVector& rhs);
+  /**
+   * \brief Move constructor
+   * \param rhs SafeVector to move from
+   */
+  SafeVector(SafeVector&& rhs) noexcept;
+  /**
+   * \brief Copy assignment operator
+   * \param rhs SafeVector to copy from
+   * \return This, after assignment
+   */
+  SafeVector&
+  operator=(const SafeVector& rhs) noexcept;
+  /**
+   * \brief Move assignment operator
+   * \param rhs SafeVector to move from
+   * \return This, after assignment
+   */
+  SafeVector&
+  operator=(SafeVector&& rhs) noexcept;
+  /**
+   * \brief Add a value to the SafeVector
+   * \param value Value to add
+   */
+  void
+  addValue(double value);
+  /**
+   * \brief Get a vector with the stored values
+   * \return A vector with the stored values
+   */
+  [[nodiscard]] vector<double>
+  getValues() const;
+  /**
+   * \brief Calculate Statistics for values in this SafeVector
+   * \return Statistics for values in this SafeVector
+   */
+  [[nodiscard]] Statistics
+  getStatistics() const;
+  /**
+   * \brief Number of values in the SafeVector
+   * \return Size of the SafeVector
+   */
+  [[nodiscard]] size_t
+  size() const noexcept;
+};
+}
+}
+#endif

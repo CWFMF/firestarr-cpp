@@ -1,0 +1,106 @@
+/* SPDX-FileCopyrightText: 2020 Queen's Printer for Ontario */
+/* SPDX-FileCopyrightText: 2024-2025 Government of Canada */
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+#ifndef FS_ITERATION_H
+#define FS_ITERATION_H
+
+#include <random>
+#include <vector>
+#include "SafeVector.h"
+namespace fs
+{
+namespace sim
+{
+class ProbabilityMap;
+class Scenario;
+/**
+ * \brief Represents a full set of simulations using all available weather streams.
+ */
+class Iteration
+{
+public:
+  ~Iteration();
+  /**
+   * \brief Constructor
+   * \param scenarios List of Scenarios to wrap into Iteration
+   */
+  explicit Iteration(vector<Scenario*> scenarios) noexcept;
+  /**
+   * \brief Copy constructor
+   * \param rhs Iteration to copy form
+   */
+  Iteration(const Iteration& rhs) = default;
+  /**
+   * \brief Move constructor
+   * \param rhs Iteration to move from
+   */
+  Iteration(Iteration&& rhs) = default;
+  /**
+   * \brief Copy assignment
+   * \param rhs Iteration to copy from
+   * \return This, after assignment
+   */
+  Iteration&
+  operator=(const Iteration& rhs) = default;
+  /**
+   * \brief Move assignment
+   * \param rhs Iteration to move from
+   * \return This, after assignment
+   */
+  Iteration&
+  operator=(Iteration&& rhs) = default;
+  /**
+   * \brief Create new thresholds for use in each Scenario
+   * \param mt_extinction Extinction thresholds
+   * \param mt_spread Spread thresholds
+   * \return This
+   */
+  Iteration*
+  reset(mt19937* mt_extinction, mt19937* mt_spread);
+  /**
+   * \brief List of Scenarios this Iteration contains
+   * \return List of Scenarios this Iteration contains
+   */
+  const vector<Scenario*>&
+  getScenarios() const noexcept
+  {
+    return scenarios_;
+  }
+  /**
+   * \brief Points in time that ProbabilityMaps get saved for
+   * \return Points in time that ProbabilityMaps get saved for
+   */
+  [[nodiscard]] vector<double>
+  savePoints() const;
+  /**
+   * \brief Time that simulations start
+   * \return Time that simulations start
+   */
+  [[nodiscard]] double
+  startTime() const;
+  /**
+   * \brief Number of Scenarios in this Iteration
+   * \return Number of Scenarios in this Iteration
+   */
+  [[nodiscard]] size_t
+  size() const noexcept;
+  /**
+   * \brief SafeVector of sizes that Scenarios have resulted in
+   * \return SafeVector of sizes that Scenarios have resulted in
+   */
+  [[nodiscard]] util::SafeVector
+  finalSizes() const;
+private:
+  /**
+   * \brief List of Scenarios this Iteration contains
+   */
+  vector<Scenario*> scenarios_;
+  /**
+   * \brief SafeVector of sizes that Scenarios have resulted in
+   */
+  util::SafeVector final_sizes_{};
+};
+}
+}
+#endif

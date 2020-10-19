@@ -1,0 +1,75 @@
+BasedOnStyle: Mozilla
+ColumnLimit: 100
+
+AlignAfterOpenBracket: BlockIndent
+AlignOperands: AlignAfterOperator
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseExpressionOnASingleLine: false
+AllowShortCompoundRequirementOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: None
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterDefinitionReturnType: All
+BreakAfterReturnType: All
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BitFieldColonSpacing: After
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+  BeforeLambdaBody: false
+  BeforeWhile: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeInheritanceComma: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakFunctionDefinitionParameters: true
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: false
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ContinuationIndentWidth: 2
+Cpp11BracedListStyle: true
+DeriveLineEnding: false
+EmptyLineBeforeAccessModifier: Never
+ExperimentalAutoDetectBinPacking: false
+IncludeBlocks: Regroup
+IndentCaseBlocks: true
+IndentCaseLabels: true
+IndentWidth: 2
+IndentWrappedFunctionNames: false
+InsertNewlineAtEOF: true
+InsertTrailingCommas: Wrapped
+PackConstructorInitializers: Never
+PointerAlignment: Left
+PenaltyBreakAssignment: 2000
+PenaltyReturnTypeOnItsOwnLine: 100000
+ReflowComments: true
+SortIncludes: false
+SortUsingDeclarations: false
+SpaceAfterTemplateKeyword: true
+SpaceInEmptyBlock: true
+SpacesBeforeTrailingComments: 3
+Standard: Latest
+TabWidth: 2
