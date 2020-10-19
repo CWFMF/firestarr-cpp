@@ -1,0 +1,87 @@
+BasedOnStyle: Mozilla
+ColumnLimit: 100
+
+AlignAfterOpenBracket: BlockIndent
+AlignOperands: AlignAfterOperator
+# AllowAllArgumentsOnNextLine: false
+# AllowAllParametersOfDeclarationOnNextLine: false
+# AllowShortBlocksOnASingleLine: false
+# AllowShortCaseExpressionOnASingleLine: false
+# AllowShortCompoundRequirementOnASingleLine: false
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+# AllowShortIfStatementsOnASingleLine: Never
+# AllowShortLambdasOnASingleLine: None
+# AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: true
+# AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BitFieldColonSpacing: After
+BraceWrapping:
+  # AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: true
+  # BeforeLambdaBody: false
+  BeforeWhile: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BreakBeforeInheritanceComma: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+# BreakFunctionDefinitionParameters: true
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: false
+CompactNamespaces: false
+# ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ContinuationIndentWidth: 2
+Cpp11BracedListStyle: true
+DeriveLineEnding: false
+# EmptyLineAfterAccessModifier: Never
+# EmptyLineBeforeAccessModifier: Always
+# ExperimentalAutoDetectBinPacking: false
+IncludeBlocks: Regroup
+# IndentCaseBlocks: true
+# IndentCaseLabels: true
+IndentWidth: 2
+# IndentWrappedFunctionNames: false
+InsertNewlineAtEOF: true
+InsertTrailingCommas: Wrapped
+MaxEmptyLinesToKeep: 0
+# PackConstructorInitializers: Never
+PointerAlignment: Left
+# PenaltyBreakAssignment: 0
+PenaltyReturnTypeOnItsOwnLine: 100000
+ReflowComments: true
+# SeparateDefinitionBlocks: Always
+SortIncludes: CaseInsensitive
+IncludeCategories:
+  - Regex: '^("|<)stdafx\.h(pp)?("|>)'
+    Priority: -1
+  - Regex: '^<[^\.]*>' # Core includes
+    Priority: 1
+  - Regex: '^<.*>' # System includes
+    Priority: 2
+  - Regex: '".*"' # Project-specific includes
+    Priority: 3
+SortUsingDeclarations: true
+SpaceAfterTemplateKeyword: true
+SpaceInEmptyBlock: true
+SpacesBeforeTrailingComments: 3
+Standard: Latest
+TabWidth: 2

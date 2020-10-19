@@ -1,0 +1,8 @@
+.vscode
+firestarr
+**/*diff*
+**/*log*
+**/build
+**/src/cpp/version.cpp
+**/test/10N_50651
+**/test/flamegraphs
