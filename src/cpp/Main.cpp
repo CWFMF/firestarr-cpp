@@ -388,6 +388,23 @@ main(
       {
         fs::util::make_directory_recursive(output_directory.c_str());
       }
+      if (nullptr == ffmc)
+      {
+        fs::logging::fatal("FFMC is required");
+      }
+      if (nullptr == dmc)
+      {
+        fs::logging::fatal("DMC is required");
+      }
+      if (nullptr == dc)
+      {
+        fs::logging::fatal("DC is required");
+      }
+      if (nullptr == apcp_0800)
+      {
+        fs::logging::warning("Assuming 0 precipitation");
+        apcp_0800 = new fs::wx::AccumulatedPrecipitation(0);
+      }
       const auto ffmc_fixed = *ffmc;
       const auto dmc_fixed = *dmc;
       const auto dc_fixed = *dc;
