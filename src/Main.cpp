@@ -392,19 +392,19 @@ int main(const int argc, const char* const argv[])
       }
       if (nullptr == ffmc)
       {
-        logging::fatal("FFMC is required");
+        firestarr::logging::fatal("FFMC is required");
       }
       if (nullptr == dmc)
       {
-        logging::fatal("DMC is required");
+        firestarr::logging::fatal("DMC is required");
       }
       if (nullptr == dc)
       {
-        logging::fatal("DC is required");
+        firestarr::logging::fatal("DC is required");
       }
       if (nullptr == apcp_0800)
       {
-        logging::warning("Assuming 0 precipitation");
+        firestarr::logging::warning("Assuming 0 precipitation");
         apcp_0800 = new firestarr::wx::AccumulatedPrecipitation(0);
       }
       const auto ffmc_fixed = *ffmc;
