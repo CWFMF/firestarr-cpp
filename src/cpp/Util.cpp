@@ -18,14 +18,14 @@ read_directory(
 )
 {
   string full_match = ".*/" + match;
-  logging::info(("Matching '" + full_match + "'").c_str());
+  logging::debug(("Matching '" + full_match + "'").c_str());
   static const std::regex re(full_match, std::regex_constants::icase);
   for (const auto& entry : std::filesystem::directory_iterator(name))
   {
     logging::debug(("Checking if file: " + entry.path().string()).c_str());
     if (std::filesystem::is_regular_file(entry))
     {
-      logging::info(("Checking regex match: " + entry.path().string()).c_str());
+      logging::verbose(("Checking regex match: " + entry.path().string()).c_str());
       if (std::regex_match(entry.path().string(), re))
       {
         v->push_back(entry.path());
