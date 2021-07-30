@@ -106,9 +106,11 @@ Model::Model(const topo::StartPoint& start_point,
 void Model::readWeather(const fuel::FuelLookup& fuel_lookup,
                         const string& filename,
                         const bool for_actuals,
-                        const wx::FwiWeather& yesterday)
+                        const wx::FwiWeather& yesterday,
+                        const double latitude)
 {
   map<size_t, map<Day, wx::FwiWeather>> wx{};
+  map<Day, struct tm> dates{};
   auto min_date = numeric_limits<Day>::max();
   ifstream in;
   in.open(filename);
@@ -180,6 +182,10 @@ void Model::readWeather(const fuel::FuelLookup& fuel_lookup,
         logging::check_fatal(s.find(static_cast<Day>(t.tm_yday)) != s.end(),
                              "Day already exists");
         s.emplace(static_cast<Day>(t.tm_yday), wx::FwiWeather(&iss, &str));
+        if (s.find(static_cast<Day>(t.tm_yday)) == s.end())
+        {
+          dates.emplace(static_cast<Day>(t.tm_yday), t);
+        }
       }
     }
     in.close();
@@ -199,7 +205,38 @@ void Model::readWeather(const fuel::FuelLookup& fuel_lookup,
     auto& s = kv.second;
     logging::check_fatal(s.find(static_cast<Day>(min_date - 1)) != s.end(),
                          "Day already exists");
-    s.emplace(static_cast<Day>(min_date - 1), yesterday);
+    // recalculate everything with startup indices
+    map<Day, wx::FwiWeather> new_wx{};
+    auto last_ffmc = yesterday.ffmc();
+    auto last_dmc = yesterday.dmc();
+    auto last_dc = yesterday.dc();
+    auto apcp = yesterday.apcp();
+    for (auto& kv2 : s)
+    {
+      auto& day = kv2.first;
+      auto& w = kv2.second;
+      const firestarr::wx::Ffmc ffmc(w.tmp(), w.rh(), w.wind().speed(), apcp, last_ffmc);
+      const auto t = dates[day];
+      const auto month = t.tm_mon + 1;
+      const firestarr::wx::Dmc dmc(w.tmp(), w.rh(), apcp, last_dmc, month, latitude);
+      const firestarr::wx::Dc dc(w.tmp(), apcp, last_dc, month, latitude);
+      const firestarr::wx::Isi isi(w.wind().speed(), ffmc);
+      const firestarr::wx::Bui bui(dmc, dc);
+      const firestarr::wx::Fwi fwi(isi, bui);
+      const firestarr::wx::FwiWeather n(w.tmp(),
+                                        w.rh(),
+                                        w.wind(),
+                                        apcp,
+                                        ffmc,
+                                        dmc,
+                                        dc,
+                                        isi,
+                                        bui,
+                                        fwi);
+      new_wx.emplace(static_cast<Day>(day), n);
+    }
+    new_wx.emplace(static_cast<Day>(min_date - 1), yesterday);
+    kv.second = new_wx;
   }
   // loop through and try to find duplicates
   for (const auto& kv : wx)
@@ -654,7 +691,7 @@ int Model::runScenarios(const char* const output_directory,
   logging::note("Fire start position is cell (%d, %d)",
                 location.row(),
                 location.column());
-  model.readWeather(lookup, weather_input, for_actuals, yesterday);
+  model.readWeather(lookup, weather_input, for_actuals, yesterday, start_point.latitude());
   model.makeStarts(*position, start_point, yesterday, perimeter, size);
   auto start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60))
     / DAY_HOURS);
