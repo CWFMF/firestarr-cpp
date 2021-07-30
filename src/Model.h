@@ -279,11 +279,13 @@ public:
    * \param filename Weather file to read
    * \param for_actuals Whether or not this is for actual observed weather
    * \param yesterday FwiWeather for yesterday
+   * \param latitude to use for calculating DC & DMC
    */
   void readWeather(const fuel::FuelLookup& fuel_lookup,
                    const string& filename,
                    bool for_actuals,
-                   const wx::FwiWeather& yesterday);
+                   const wx::FwiWeather& yesterday,
+                   const double latitude);
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
