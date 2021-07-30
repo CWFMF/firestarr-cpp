@@ -464,7 +464,7 @@ template <typename T>
 template <class R>
 [[nodiscard]] R with_tiff(const string& filename, function<R(TIFF*, GTIF*)> fct)
 {
-  logging::info("Reading file %s", filename.c_str());
+  logging::debug("Reading file %s", filename.c_str());
   // suppress warnings about geotiff tags that aren't found
   TIFFSetWarningHandler(nullptr);
   auto tif = XTIFFOpen(filename.c_str(), "r");

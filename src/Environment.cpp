@@ -97,33 +97,40 @@ Environment Environment::load(const fuel::FuelLookup& lookup,
   logging::note("Fuel raster is %s", in_fuel.c_str());
   if (sim::Settings::runAsync())
   {
+    logging::debug("Loading grids async");
     auto fuel = async(launch::async,
                       [&in_fuel, &point, lookup]()
                       {
+                        logging::info("Loading %s", in_fuel.c_str());
                         return FuelGrid::readTiff(in_fuel, point, lookup);
                       });
     auto slope = async(launch::async,
                        [&in_slope, &point]()
                        {
+                         logging::info("Loading %s", in_slope.c_str());
                          return SlopeGrid::readTiff(in_slope, point);
                        });
     auto aspect = async(launch::async,
                         [&in_aspect, &point]()
                         {
+                          logging::info("Loading %s", in_aspect.c_str());
                           return AspectGrid::readTiff(in_aspect, point);
                         });
     auto elevation = async(launch::async,
                            [&in_elevation, &point]()
                            {
+                             logging::info("Loading %s", in_elevation.c_str());
                              return read_tiff_point<ElevationSize>(
                                in_elevation,
                                point);
                            });
+    logging::debug("Waiting for grids");
     return Environment(*unique_ptr<FuelGrid>(fuel.get()),
                        *unique_ptr<SlopeGrid>(slope.get()),
                        *unique_ptr<AspectGrid>(aspect.get()),
                        elevation.get());
   }
+  logging::warning("Loading grids async");
   // HACK: need to copy strings since closures do that above
   return Environment(*unique_ptr<FuelGrid>(
                        FuelGrid::readTiff(string(in_fuel), point, lookup)),

@@ -671,6 +671,7 @@ int Model::runScenarios(const char* const output_directory,
                                                 start_point,
                                                 perimeter,
                                                 start_time.tm_year);
+  logging::debug("Environment loaded");
   const auto position = env.findCoordinates(start_point, true);
   logging::check_fatal(
     std::get<0>(*position) > MAX_COLUMNS || std::get<1>(*position) > MAX_COLUMNS,
