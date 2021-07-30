@@ -148,8 +148,11 @@ public:
                                                     const topo::Point& point,
                                                     std::function<T(int, int)> convert)
   {
+    logging::info("Reading file %s", filename.c_str());
+#ifndef NDEBUG
     V min_value = std::numeric_limits<V>::max();
     V max_value = std::numeric_limits<V>::min();
+#endif
     const GridBase grid_info = read_header<T>(tif, gtif);
     const auto coordinates = grid_info.findCoordinates(point, false);
     auto min_column = max(static_cast<Idx>(0),
@@ -176,7 +179,9 @@ public:
     int tile_length;
     TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tile_width);
     TIFFGetField(tif, TIFFTAG_TILELENGTH, &tile_length);
+    logging::warning("%s: malloc start", filename.c_str());
     const auto buf = _TIFFmalloc(TIFFTileSize(tif));
+    logging::warning("%s: read start", filename.c_str());
     const tsample_t smp{};
     for (auto h = 0; h < grid_info.rows(); h += tile_length)
     {
@@ -200,14 +205,18 @@ public:
               offset_x;
             const auto offset = y * tile_length + x;
             V cur = *(static_cast<V*>(buf) + offset);
+#ifndef NDEBUG
             min_value = min(cur, min_value);
             max_value = max(cur, max_value);
+#endif
             values.at(cur_hash) = convert(cur, grid_info.nodata());
           }
         }
       }
     }
+    logging::warning("%s: read end", filename.c_str());
     _TIFFfree(buf);
+    logging::warning("%s: free end", filename.c_str());
     const auto new_xll = grid_info.xllcorner() - offset_x * grid_info.cellSize();
     const auto new_yll = grid_info.yllcorner() + (static_cast<double>(grid_info.rows()) -
       max_row) * grid_info.cellSize();
@@ -234,10 +243,12 @@ public:
                   std::get<1>(*new_location),
                   std::get<0>(*new_location) + std::get<3>(*new_location) / 1000.0,
                   std::get<1>(*new_location) + std::get<2>(*new_location) / 1000.0);
+#ifndef NDEBUG
     logging::note("Values for %s range from %d to %d",
                   filename.c_str(),
                   min_value,
                   max_value);
+#endif
     return result;
   }
   /**
