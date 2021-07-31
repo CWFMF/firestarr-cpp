@@ -333,8 +333,8 @@ int test(const int argc, const char* const argv[])
       logging::note("Running tests with constant inputs for %d:\n"
                     "\tSlope:\t\t\t%d\n"
                     "\tAspect:\t\t\t%d\n"
-                    "\tWind Speed:\t\t%d\n"
-                    "\tWind Direction:\t\t%d\n",
+                    "\tWind Speed:\t\t%f\n"
+                    "\tWind Direction:\t\t%f\n",
                     num_hours,
                     slope,
                     aspect,
