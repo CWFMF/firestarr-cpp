@@ -16,6 +16,7 @@
 #include "SafeVector.h"
 #include "Statistics.h"
 #include "UTM.h"
+#include <ranges>
 
 namespace fs::sim
 {
@@ -700,6 +701,20 @@ Model::runScenarios(
   logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
   logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
   model.readWeather(lookup, weather_input, for_actuals, yesterday, start_point.latitude());
+  auto kv = std::views::keys(model.wx_);
+  std::vector<int> keys{kv.begin(), kv.end()};
+  const auto w = model.wx_[keys[0]];
+  logging::debug("Have weather from day %d to %d", w->minDate(), w->maxDate());
+  const auto numDays = (w->maxDate() - w->minDate() + 1);
+  const auto needDays = Settings::maxDateOffset();
+  if (numDays < needDays)
+  {
+    logging::fatal(
+      "Not enough weather to proceed - have %d days but looking for %d",
+      numDays,
+      needDays
+    );
+  }
   model.makeStarts(*position, start_point, yesterday, perimeter, size);
   auto
     start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60)) / DAY_HOURS);
