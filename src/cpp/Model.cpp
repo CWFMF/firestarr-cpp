@@ -703,6 +703,10 @@ Model::runScenarios(
   model.readWeather(lookup, weather_input, for_actuals, yesterday, start_point.latitude());
   auto kv = std::views::keys(model.wx_);
   std::vector<int> keys{kv.begin(), kv.end()};
+  if (0 == keys.size())
+  {
+    logging::fatal("No weather provided");
+  }
   const auto w = model.wx_[keys[0]];
   logging::debug("Have weather from day %d to %d", w->minDate(), w->maxDate());
   const auto numDays = (w->maxDate() - w->minDate() + 1);
