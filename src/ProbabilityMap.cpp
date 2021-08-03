@@ -98,7 +98,7 @@ void ProbabilityMap::addProbability(const IntensityMap& for_time)
     [this](auto&& kv)
     {
       all_.data[kv.first] += 1;
-      if (kv.second > min_value_ && kv.second <= low_max_)
+      if (kv.second >= min_value_ && kv.second <= low_max_)
       {
         low_.data[kv.first] += 1;
       }
