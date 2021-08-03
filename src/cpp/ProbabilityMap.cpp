@@ -91,7 +91,7 @@ ProbabilityMap::addProbability(
   lock_guard<mutex> lock(mutex_);
   std::for_each(for_time.cbegin(), for_time.cend(), [this](auto&& kv) {
     all_.data[kv.first] += 1;
-    if (kv.second > min_value_ && kv.second <= low_max_)
+    if (kv.second >= min_value_ && kv.second <= low_max_)
     {
       low_.data[kv.first] += 1;
     }
