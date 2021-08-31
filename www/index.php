@@ -60,6 +60,12 @@
         var prob = L.tileLayer('/data/output/probability/tiled/{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: ""});
         var perim = L.tileLayer('/data/output/perimeter/tiled/{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: ""});
         var bc_fires = L.esri.featureLayer({'url': 'https://services6.arcgis.com/ubm4tcTYICKBpist/ArcGIS/rest/services/BCWS_FirePerimeters_PublicView/FeatureServer/0'});
+        var fire_m3 = L.tileLayer.wms('https://cwfis.cfs.nrcan.gc.ca/geoserver/public/wms?', {
+                                        'layers': 'public:m3_polygons_current',
+                                        'transparent': true,
+                                        'format': 'image/png',
+                                        'cql_filter': 'lastdate>=2021-08-30T00:00:00'
+                                      });
         // Map
         var map = L.map('map', {
             center: [53.90794041375133, -122.35548907293926],
@@ -70,7 +76,7 @@
         });
 
         var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Stamen Toner": toner, "Without background": white}
-        var overlaymaps = {"Probability": prob, "Perimeter": perim, 'BC Fires': bc_fires}
+        var overlaymaps = {"Probability": prob, "Perimeter": perim, 'BC Fires': bc_fires, 'Fire M3': fire_m3}
 
         // Title
         var title = L.control();
