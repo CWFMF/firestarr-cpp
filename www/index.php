@@ -6,8 +6,12 @@
             <title>FireSTARR Outputs</title>
 
             <!-- Leaflet -->
-            <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
-            <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+            <link rel="stylesheet" href="//npmcdn.com/leaflet@1.2.0/dist/leaflet.css" />
+            <script src="//npmcdn.com/leaflet@1.2.0/dist/leaflet.js"></script>
+            <script src="//d3js.org/d3.v4.min.js"></script>
+            <script src="https://unpkg.com/esri-leaflet@3.0.2/dist/esri-leaflet.js"
+                integrity="sha512-myckXhaJsP7Q7MZva03Tfme/MSF5a6HC2xryjAM4FxPLHGqlh5VALCbywHnzs2uPoF/4G/QVXyYDDSkp5nPfig=="
+                crossorigin=""></script>
 
             <style>
                 body { margin:0; padding:0; }
@@ -55,7 +59,7 @@
         // Overlay layers (TMS)
         var prob = L.tileLayer('/data/output/probability/tiled/{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: ""});
         var perim = L.tileLayer('/data/output/perimeter/tiled/{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: ""});
-
+        var bc_fires = L.esri.featureLayer({'url': 'https://services6.arcgis.com/ubm4tcTYICKBpist/ArcGIS/rest/services/BCWS_FirePerimeters_PublicView/FeatureServer/0'});
         // Map
         var map = L.map('map', {
             center: [53.90794041375133, -122.35548907293926],
@@ -66,7 +70,7 @@
         });
 
         var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Stamen Toner": toner, "Without background": white}
-        var overlaymaps = {"Probability": prob, "Perimeter": perim}
+        var overlaymaps = {"Probability": prob, "Perimeter": perim, 'BC Fires': bc_fires}
 
         // Title
         var title = L.control();
