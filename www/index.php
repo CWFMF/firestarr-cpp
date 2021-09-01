@@ -12,7 +12,8 @@
             <script src="https://unpkg.com/esri-leaflet@3.0.2/dist/esri-leaflet.js"
                 integrity="sha512-myckXhaJsP7Q7MZva03Tfme/MSF5a6HC2xryjAM4FxPLHGqlh5VALCbywHnzs2uPoF/4G/QVXyYDDSkp5nPfig=="
                 crossorigin=""></script>
-
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+            <script src="betterWMS.js"></script>
             <style>
                 body { margin:0; padding:0; }
                 body, table, tr, td, th, div, h1, h2, input { font-family: "Calibri", "Trebuchet MS", "Ubuntu", Serif; font-size: 11pt; }
@@ -60,11 +61,17 @@
         var prob = L.tileLayer('/data/output/probability/tiled/{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: ""});
         var perim = L.tileLayer('/data/output/perimeter/tiled/{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: ""});
         var bc_fires = L.esri.featureLayer({'url': 'https://services6.arcgis.com/ubm4tcTYICKBpist/ArcGIS/rest/services/BCWS_FirePerimeters_PublicView/FeatureServer/0'});
-        var fire_m3 = L.tileLayer.wms('https://cwfis.cfs.nrcan.gc.ca/geoserver/public/wms?', {
+        var CWFIS_WMS = 'https://cwfis.cfs.nrcan.gc.ca/geoserver/public/wms?';
+        var fire_m3 = L.tileLayer.betterWms(CWFIS_WMS, {
                                         'layers': 'public:m3_polygons_current',
                                         'transparent': true,
                                         'format': 'image/png',
                                         'cql_filter': 'lastdate>=2021-08-30T00:00:00'
+                                      });
+        var active = L.tileLayer.betterWms(CWFIS_WMS, {
+                                        'layers': 'public:activefires_current',
+                                        'transparent': true,
+                                        'format': 'image/png',
                                       });
         // Map
         var map = L.map('map', {
@@ -76,7 +83,7 @@
         });
 
         var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Stamen Toner": toner, "Without background": white}
-        var overlaymaps = {"Probability": prob, "Perimeter": perim, 'BC Fires': bc_fires, 'Fire M3': fire_m3}
+        var overlaymaps = {"Probability": prob, "Perimeter": perim, 'BC Fires': bc_fires, 'Fire M3': fire_m3, 'Active Fires': active}
 
         // Title
         var title = L.control();
