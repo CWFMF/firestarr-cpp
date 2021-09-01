@@ -82,6 +82,7 @@
             layers: [osm]
         });
 
+        map.fitBounds([[45, -50], [64, -141]]);
         var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Stamen Toner": toner, "Without background": white}
         var overlaymaps = {"Probability": prob, "Perimeter": perim, 'BC Fires': bc_fires, 'Fire M3': fire_m3, 'Active Fires': active}
 
@@ -114,8 +115,6 @@
         // Add base layers
         L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
-        // Fit to overlay bounds (SW and NE points with (lat, lon))
-        map.fitBounds([[48.9848939530759, -115.40557113021183], [58.830986874426756, -129.3054070156667]]);
 
         </script>
 
