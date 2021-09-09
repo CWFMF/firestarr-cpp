@@ -124,8 +124,10 @@ void Model::readWeather(const fuel::FuelLookup& fuel_lookup,
     logging::info("Reading scenarios from '%s'", filename.c_str());
     // read header line
     getline(in, str);
-    // get rid of spaces
+    // get rid of whitespace
     str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+    str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+    str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     constexpr auto expected_header =
       "Scenario,Date,APCP,TMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
     logging::check_fatal(0 != str.compare(expected_header),
