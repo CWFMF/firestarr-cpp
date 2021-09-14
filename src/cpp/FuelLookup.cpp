@@ -417,6 +417,7 @@ public:
     emplaceFuel("M-4 (100 PDF)", &M3_M4_100);
     ifstream in;
     in.open(filename);
+    bool read_ok = false;
     if (in.is_open())
     {
       string str;
@@ -455,9 +456,14 @@ public:
             logging::warning("Unknown fuel type '%s' in fuel lookup table", str.c_str());
             fuel_bad_values_.emplace(value, str);
           }
+          read_ok = true;
         }
       }
       in.close();
+    }
+    if (!read_ok)
+    {
+      logging::fatal("Unable to read file %s", filename);
     }
   }
   ~FuelLookupImpl()
