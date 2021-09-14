@@ -257,7 +257,8 @@ void Model::findStarts(const Location location)
 {
   logging::error("Trying to start a fire in non-fuel");
   Idx range = 1;
-  while (starts_.empty())
+  // HACK: should always be centered in the grid
+  while (starts_.empty() && (range < (MAX_COLUMNS / 2)))
   {
     for (Idx x = -range; x <= range; ++x)
     {
@@ -276,6 +277,7 @@ void Model::findStarts(const Location location)
     }
     ++range;
   }
+  logging::check_fatal(0 == starts_.size(), "Fuel grid is empty");
   logging::info("Using %d start locations:", starts_.size());
   for (const auto& s : starts_)
   {
