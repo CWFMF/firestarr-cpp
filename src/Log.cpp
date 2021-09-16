@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Queen's Printer for Ontario
+// Copyright (c) 2020-2021, Queen's Printer for Ontario.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -12,8 +12,6 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-//
-// Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
 #include "Log.h"
