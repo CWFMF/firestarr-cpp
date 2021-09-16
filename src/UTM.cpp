@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -50,18 +50,13 @@ constexpr auto UTM_SCALE_FACTOR = 0.9996;
 double arc_length_of_meridian(const double phi) noexcept
 {
   const auto n = (SM_A - SM_B) / (SM_A + SM_B);
-  const auto alpha = ((SM_A + SM_B) / 2.0) * (1.0 + (pow_int<2>(n) / 4.0) + (pow_int<4>(n)
-    / 64.0));
-  const auto beta = (-3.0 * n / 2.0) + (9.0 * pow_int<3>(n) / 16.0) + (-3.0 * pow_int<5
-  >(n) / 32.0);
+  const auto alpha = ((SM_A + SM_B) / 2.0) * (1.0 + (pow_int<2>(n) / 4.0) + (pow_int<4>(n) / 64.0));
+  const auto beta = (-3.0 * n / 2.0) + (9.0 * pow_int<3>(n) / 16.0) + (-3.0 * pow_int<5>(n) / 32.0);
   const auto gamma = (15.0 * pow_int<2>(n) / 16.0) + (-15.0 * pow_int<4>(n) / 32.0);
   const auto delta = (-35.0 * pow_int<3>(n) / 48.0) + (105.0 * pow_int<5>(n) / 256.0);
   const auto epsilon = (315.0 * pow_int<4>(n) / 512.0);
   /* Now calculate the sum of the series and return */
-  return alpha * (phi + (beta * sin(2.0 * phi))
-    + (gamma * sin(4.0 * phi))
-    + (delta * sin(6.0 * phi))
-    + (epsilon * sin(8.0 * phi)));
+  return alpha * (phi + (beta * sin(2.0 * phi)) + (gamma * sin(4.0 * phi)) + (delta * sin(6.0 * phi)) + (epsilon * sin(8.0 * phi)));
 }
 constexpr double utm_central_meridian(const double zone)
 {
@@ -77,13 +72,11 @@ double footpoint_latitude(const double y) noexcept
   const auto n = (SM_A - SM_B) / (SM_A + SM_B);
   /* Precalculate alpha_ (Eq. 10.22) */
   /* (Same as alpha in Eq. 10.17) */
-  const auto alpha = ((SM_A + SM_B) / 2.0) * (1 + (pow_int<2>(n) / 4) + (pow_int<4>(n) /
-    64));
+  const auto alpha = ((SM_A + SM_B) / 2.0) * (1 + (pow_int<2>(n) / 4) + (pow_int<4>(n) / 64));
   /* Precalculate row_ (Eq. 10.23) */
   const auto y_alpha = y / alpha;
   /* Precalculate beta_ (Eq. 10.22) */
-  const auto beta = (3.0 * n / 2.0) + (-27.0 * pow_int<3>(n) / 32.0) + (269.0 * pow_int<5
-  >(n) / 512.0);
+  const auto beta = (3.0 * n / 2.0) + (-27.0 * pow_int<3>(n) / 32.0) + (269.0 * pow_int<5>(n) / 512.0);
   /* Precalculate gamma_ (Eq. 10.22) */
   const auto gamma = (21.0 * pow_int<2>(n) / 16.0) + (-55.0 * pow_int<4>(n) / 32.0);
   /* Precalculate delta_ (Eq. 10.22) */
@@ -92,9 +85,9 @@ double footpoint_latitude(const double y) noexcept
   const auto epsilon = (1097.0 * pow_int<4>(n) / 512.0);
   /* Now calculate the sum of the series (Eq. 10.21) */
   return y_alpha + (beta * sin(2.0 * y_alpha))
-    + (gamma * sin(4.0 * y_alpha))
-    + (delta * sin(6.0 * y_alpha))
-    + (epsilon * sin(8.0 * y_alpha));
+       + (gamma * sin(4.0 * y_alpha))
+       + (delta * sin(6.0 * y_alpha))
+       + (epsilon * sin(8.0 * y_alpha));
 }
 void map_lat_lon_to_xy(const double phi,
                        const double lambda,
@@ -116,21 +109,20 @@ void map_lat_lon_to_xy(const double phi,
   const auto l3_coefficient = 1.0 - t2 + nu2;
   const auto l4_coefficient = 5.0 - t2 + 9 * nu2 + 4.0 * (nu2 * nu2);
   const auto l5_coefficient = 5.0 - 18.0 * t2 + (t2 * t2) + 14.0 * nu2 - 58.0 * t2 * nu2;
-  const auto l6_coefficient = 61.0 - 58.0 * t2 + (t2 * t2) + 270.0 * nu2 - 330.0 * t2 *
-    nu2;
+  const auto l6_coefficient = 61.0 - 58.0 * t2 + (t2 * t2) + 270.0 * nu2 - 330.0 * t2 * nu2;
   const auto l7_coefficient = 61.0 - 479.0 * t2 + 179.0 * (t2 * t2) - (t2 * t2 * t2);
   const auto l8_coefficient = 1385.0 - 3111.0 * t2 + 543.0 * (t2 * t2) - (t2 * t2 * t2);
   /* Calculate easting (x) */
   *x = n * c * l
-    + (n / 6.0 * pow_int<3>(c) * l3_coefficient * pow_int<3>(l))
-    + (n / 120.0 * pow_int<5>(c) * l5_coefficient * pow_int<5>(l))
-    + (n / 5040.0 * pow_int<7>(c) * l7_coefficient * pow_int<7>(l));
+     + (n / 6.0 * pow_int<3>(c) * l3_coefficient * pow_int<3>(l))
+     + (n / 120.0 * pow_int<5>(c) * l5_coefficient * pow_int<5>(l))
+     + (n / 5040.0 * pow_int<7>(c) * l7_coefficient * pow_int<7>(l));
   /* Calculate northing (y) */
   *y = arc_length_of_meridian(phi)
-    + (t / 2.0 * n * pow_int<2>(c) * pow_int<2>(l))
-    + (t / 24.0 * n * pow_int<4>(c) * l4_coefficient * pow_int<4>(l))
-    + (t / 720.0 * n * pow_int<6>(c) * l6_coefficient * pow_int<6>(l))
-    + (t / 40320.0 * n * pow_int<8>(c) * l8_coefficient * pow_int<8>(l));
+     + (t / 2.0 * n * pow_int<2>(c) * pow_int<2>(l))
+     + (t / 24.0 * n * pow_int<4>(c) * l4_coefficient * pow_int<4>(l))
+     + (t / 720.0 * n * pow_int<6>(c) * l6_coefficient * pow_int<6>(l))
+     + (t / 40320.0 * n * pow_int<8>(c) * l8_coefficient * pow_int<8>(l));
 }
 //   The local variables Nf, nuf2, tf, and tf2 serve the same purpose as
 //   N, nu2, t, and t2 in MapLatLonToXY, but they are computed with respect
@@ -176,25 +168,22 @@ void map_xy_to_lat_lon(const double x,
      -- x**1 does not have a polynomial coefficient. */
   const auto x2_polynomial = -1.0 - nuf2;
   const auto x3_polynomial = -1.0 - 2 * tf2 - nuf2;
-  const auto x4_polynomial = 5.0 + 3.0 * tf2 + 6.0 * nuf2 - 6.0 * tf2 * nuf2 - 3.0 * (nuf2
-      * nuf2)
-    - 9.0 * tf2 * (nuf2 * nuf2);
-  const auto x5_polynomial = 5.0 + 28.0 * tf2 + 24.0 * tf4 + 6.0 * nuf2 + 8.0 * tf2 *
-    nuf2;
-  const auto x6_polynomial = -61.0 - 90.0 * tf2 - 45.0 * tf4 - 107.0 * nuf2 + 162.0 * tf2
-    * nuf2;
+  const auto x4_polynomial = 5.0 + 3.0 * tf2 + 6.0 * nuf2 - 6.0 * tf2 * nuf2 - 3.0 * (nuf2 * nuf2)
+                           - 9.0 * tf2 * (nuf2 * nuf2);
+  const auto x5_polynomial = 5.0 + 28.0 * tf2 + 24.0 * tf4 + 6.0 * nuf2 + 8.0 * tf2 * nuf2;
+  const auto x6_polynomial = -61.0 - 90.0 * tf2 - 45.0 * tf4 - 107.0 * nuf2 + 162.0 * tf2 * nuf2;
   const auto x7_polynomial = -61.0 - 662.0 * tf2 - 1320.0 * tf4 - 720.0 * (tf4 * tf2);
   const auto x8_polynomial = 1385.0 + 3633.0 * tf2 + 4095.0 * tf4 + 1575 * (tf4 * tf2);
   /* Calculate latitude */
   *phi = phi_f + x2_fraction * x2_polynomial * (x * x)
-    + x4_fraction * x4_polynomial * pow_int<4>(x)
-    + x6_fraction * x6_polynomial * pow_int<6>(x)
-    + x8_fraction * x8_polynomial * pow_int<8>(x);
+       + x4_fraction * x4_polynomial * pow_int<4>(x)
+       + x6_fraction * x6_polynomial * pow_int<6>(x)
+       + x8_fraction * x8_polynomial * pow_int<8>(x);
   /* Calculate longitude */
   *lambda = lambda0 + x1_fraction * x
-    + x3_fraction * x3_polynomial * pow_int<3>(x)
-    + x5_fraction * x5_polynomial * pow_int<5>(x)
-    + x7_fraction * x7_polynomial * pow_int<7>(x);
+          + x3_fraction * x3_polynomial * pow_int<3>(x)
+          + x5_fraction * x5_polynomial * pow_int<5>(x)
+          + x7_fraction * x7_polynomial * pow_int<7>(x);
 }
 int lat_lon_to_utm(const Point& point, double* x, double* y) noexcept
 {

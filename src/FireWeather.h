@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -68,7 +68,7 @@ public:
   [[nodiscard]] const FwiWeather* at(const double time) const
   {
 #ifndef NDEBUG
-				logging::check_fatal(time < 0 || time >= MAX_DAYS, "Invalid weather time %f", time);
+    logging::check_fatal(time < 0 || time >= MAX_DAYS, "Invalid weather time %f", time);
 #endif
     return weather_by_hour_by_day_->at(util::time_index(time, min_date_));
   }
@@ -87,17 +87,26 @@ public:
    * \brief Minimum date present in FireWeather
    * \return Minimum date present in FireWeather
    */
-  [[nodiscard]] constexpr Day minDate() const { return min_date_; }
+  [[nodiscard]] constexpr Day minDate() const
+  {
+    return min_date_;
+  }
   /**
    * \brief Maximum date present in FireWeather
    * \return Maximum date present in FireWeather
    */
-  [[nodiscard]] constexpr Day maxDate() const { return max_date_; }
+  [[nodiscard]] constexpr Day maxDate() const
+  {
+    return max_date_;
+  }
   /**
    * \brief Weighted Danger Severity Rating for the stream
    * \return Weighted Danger Severity Rating for the stream
    */
-  [[nodiscard]] constexpr size_t weightedDsr() const noexcept { return weighted_dsr_; }
+  [[nodiscard]] constexpr size_t weightedDsr() const noexcept
+  {
+    return weighted_dsr_;
+  }
 protected:
   /**
    * \brief Constructor
@@ -123,8 +132,8 @@ private:
    * \brief Minimum date present in stream
    */
   Day min_date_;
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Maximum date present in stream
    */
@@ -134,7 +143,7 @@ private:
    */
   size_t weighted_dsr_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 /**
  * \brief Equality operator
  * \param lhs First FireWeather
@@ -148,10 +157,10 @@ private:
     return false;
   }
   // FIX: why is this a warning?
-#pragma warning (push)
-#pragma warning (disable: 4365)
+#pragma warning(push)
+#pragma warning(disable: 4365)
   for (Day day = lhs.minDate() + static_cast<Day>(1); day <= lhs.maxDate(); ++day)
-#pragma warning (pop)
+#pragma warning(pop)
   {
     for (auto hour = 0; hour < DAY_HOURS; ++hour)
     {

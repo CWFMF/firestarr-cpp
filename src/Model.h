@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -72,7 +72,10 @@ public:
   void wait()
   {
     std::unique_lock<std::mutex> l(mutex_);
-    cv_.wait(l, [this] { return count_ != 0; });
+    cv_.wait(l, [this]
+             {
+               return count_ != 0;
+             });
     --count_;
   }
 private:
@@ -84,14 +87,14 @@ private:
    * \brief Condition variable to use for checking count
    */
   std::condition_variable cv_;
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Variable to keep count of threads in use
    */
   int count_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 /**
  * \brief Indicates a section of code that is limited to a certain number of threads running at once.
  */
@@ -106,15 +109,19 @@ public:
    * \brief Constructor
    * \param ss Semaphore to wait on
    */
-  CriticalSection(Semaphore& ss) : s_{ss} { s_.wait(); }
+  CriticalSection(Semaphore& ss)
+    : s_{ss}
+  {
+    s_.wait();
+  }
   CriticalSection(const CriticalSection& rhs) = delete;
   CriticalSection(CriticalSection&& rhs) = delete;
   CriticalSection& operator=(const CriticalSection& rhs) = delete;
   CriticalSection& operator=(CriticalSection&& rhs) = delete;
   ~CriticalSection() noexcept
   {
-#pragma warning (push)
-#pragma warning (disable: 26447)
+#pragma warning(push)
+#pragma warning(disable: 26447)
     try
     {
       s_.notify();
@@ -123,7 +130,7 @@ public:
     {
       std::terminate();
     }
-#pragma warning (pop)
+#pragma warning(pop)
   }
 };
 /**
@@ -198,22 +205,34 @@ public:
    * \brief Number of rows in extent
    * \return Number of rows in extent
    */
-  [[nodiscard]] constexpr Idx rows() const { return env_->rows(); }
+  [[nodiscard]] constexpr Idx rows() const
+  {
+    return env_->rows();
+  }
   /**
    * \brief Number of columns in extent
    * \return Number of columns in extent
    */
-  [[nodiscard]] constexpr Idx columns() const { return env_->columns(); }
+  [[nodiscard]] constexpr Idx columns() const
+  {
+    return env_->columns();
+  }
   /**
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double cellSize() const { return env_->cellSize(); }
+  [[nodiscard]] constexpr double cellSize() const
+  {
+    return env_->cellSize();
+  }
   /**
    * \brief Environment simulation is occurring in
    * \return Environment simulation is occurring in
    */
-  [[nodiscard]] constexpr const topo::Environment& environment() const { return *env_; }
+  [[nodiscard]] constexpr const topo::Environment& environment() const
+  {
+    return *env_;
+  }
   /**
    * \brief Time to use for simulation start 
    * \return Time to use for simulation start
@@ -226,7 +245,10 @@ public:
    * \brief Maximum amount of time simulation can run for before being stopped
    * \return Maximum amount of time simulation can run for before being stopped
    */
-  [[nodiscard]] constexpr Clock::duration timeLimit() const { return time_limit_; }
+  [[nodiscard]] constexpr Clock::duration timeLimit() const
+  {
+    return time_limit_;
+  }
   /**
    * \brief Whether or not simulation has been running longer than maximum duration
    * \return Whether or not simulation has been running longer than maximum duration

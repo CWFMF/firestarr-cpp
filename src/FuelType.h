@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -120,15 +120,17 @@ public:
    * \brief Whether or not this fuel can have a crown fire
    * \return Whether or not this fuel can have a crown fire
    */
-  [[nodiscard]] constexpr bool canCrown() const { return can_crown_; }
+  [[nodiscard]] constexpr bool canCrown() const
+  {
+    return can_crown_;
+  }
   /**
    * \brief Crown Fraction Burned (CFB) [ST-X-3 eq 58]
    * \param rss Surface Rate of spread (ROS) (m/min) [ST-X-3 eq 55]
    * \param rso Critical surface fire spread rate (RSO) [ST-X-3 eq 57]
    * \return Crown Fraction Burned (CFB) [ST-X-3 eq 58]
    */
-  [[nodiscard]] virtual double crownFractionBurned(double rss, double rso) const noexcept
-  = 0;
+  [[nodiscard]] virtual double crownFractionBurned(double rss, double rso) const noexcept = 0;
   /**
    * \brief Calculate probability of burning [Anderson eq 1]
    * \param mc_fraction moisture content (% / 100)
@@ -208,12 +210,18 @@ public:
    * \brief Name of the fuel
    * \return Name of the fuel
    */
-  [[nodiscard]] constexpr const char* name() const { return name_; }
+  [[nodiscard]] constexpr const char* name() const
+  {
+    return name_;
+  }
   /**
    * \brief Code for this fuel type
    * \return Code for this fuel type
    */
-  [[nodiscard]] constexpr FuelCodeSize code() const { return code_; }
+  [[nodiscard]] constexpr FuelCodeSize code() const
+  {
+    return code_;
+  }
 private:
   /**
    * \brief Name of the fuel
@@ -223,14 +231,14 @@ private:
    * \brief Whether or not this fuel can have a crown fire
    */
   const bool can_crown_;
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Code to identify fuel with
    */
   FuelCodeSize code_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 /**
  * \brief Base class for all FuelTypes.
  * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
@@ -300,7 +308,7 @@ public:
    * \return Chance of survival (% / 100)
    */
   [[nodiscard]] double survivalProbability(const wx::FwiWeather& wx) const noexcept
-  override
+    override
   {
     // divide by 100 since we need moisture ratio
     //    IFERROR(((1 / (1 + EXP($G$43 + $I$43 *
@@ -321,8 +329,7 @@ public:
     const auto prob_ffmc_peat = probabilityPeat(mc_ffmc);
     const auto prob_ffmc_peat_saturated = probabilityPeat(McFfmcSaturated);
     const auto prob_ffmc_peat_zero = probabilityPeat(McDmc);
-    const auto prob_ffmc_peat_weighted = (prob_ffmc_peat - prob_ffmc_peat_saturated) /
-      prob_ffmc_peat_zero;
+    const auto prob_ffmc_peat_weighted = (prob_ffmc_peat - prob_ffmc_peat_saturated) / prob_ffmc_peat_zero;
     const auto prob_ffmc = duffFfmcType()->probabilityOfSurvival(mc_ffmc * 100);
     const auto prob_ffmc_saturated = duffFfmcType()->probabilityOfSurvival(
       McFfmcSaturated * 100);
@@ -336,21 +343,17 @@ public:
     const auto prob_weight_dmc = duffDmcType()->probabilityOfSurvival(wx.mcDmcPct());
     const auto prob_weight_dmc_peat = probabilityPeat(wx.mcDmc());
     // chance of survival is 1 - chance of it not surviving in every fuel
-    const auto tot_prob = 1 - (1 - prob_ffmc_peat_weighted) * (1 - prob_ffmc_weighted)
-      * (
-        (1 - prob_otway) * RatioAspen +
-        ((1 - prob_weight_ffmc_peat) * RatioHartford + (1 - prob_weight_ffmc) *
-          RatioFrandsen) *
-        ((1 - prob_weight_dmc_peat) * RatioHartford + (1 - prob_weight_dmc) *
-          RatioFrandsen)
-        * RatioFuel);
+    const auto tot_prob = 1 - (1 - prob_ffmc_peat_weighted) * (1 - prob_ffmc_weighted) * ((1 - prob_otway) * RatioAspen + ((1 - prob_weight_ffmc_peat) * RatioHartford + (1 - prob_weight_ffmc) * RatioFrandsen) * ((1 - prob_weight_dmc_peat) * RatioHartford + (1 - prob_weight_dmc) * RatioFrandsen) * RatioFuel);
     return tot_prob;
   }
   /**
    * \brief Duff Bulk Density (g/cm^3) [Anderson table 1]
    * \return Duff Bulk Density (g/cm^3) [Anderson table 1]
    */
-  [[nodiscard]] static constexpr double bulkDensity() { return BulkDensity / 1000.0; }
+  [[nodiscard]] static constexpr double bulkDensity()
+  {
+    return BulkDensity / 1000.0;
+  }
   /**
    * \brief Inorganic Percent (% / 100) [Anderson table 1]
    * \return Inorganic Percent (% / 100) [Anderson table 1]
@@ -363,22 +366,34 @@ public:
    * \brief DuffDepth Depth of Duff layer (cm) [Anderson table 1]
    * \return DuffDepth Depth of Duff layer (cm) [Anderson table 1]
    */
-  [[nodiscard]] static constexpr double duffDepth() { return DuffDepth / 10.0; }
+  [[nodiscard]] static constexpr double duffDepth()
+  {
+    return DuffDepth / 10.0;
+  }
   /**
    * \brief Type of duff deeper underground
    * \return Type of duff deeper underground
    */
-  [[nodiscard]] constexpr const Duff* duffDmcType() const { return duff_dmc_; }
+  [[nodiscard]] constexpr const Duff* duffDmcType() const
+  {
+    return duff_dmc_;
+  }
   /**
    * \brief Type of duff near the surface
    * \return Type of duff near the surface
    */
-  [[nodiscard]] constexpr const Duff* duffFfmcType() const { return duff_ffmc_; }
+  [[nodiscard]] constexpr const Duff* duffFfmcType() const
+  {
+    return duff_ffmc_;
+  }
   /**
    * \brief What fraction of the duff layer should use FFMC to determine moisture
    * \return What fraction of the duff layer should use FFMC to determine moisture
    */
-  [[nodiscard]] static constexpr double ffmcRatio() { return 1 - dmcRatio(); }
+  [[nodiscard]] static constexpr double ffmcRatio()
+  {
+    return 1 - dmcRatio();
+  }
   /**
    * \brief What fraction of the duff layer should use DMC to determine moisture
    * \return What fraction of the duff layer should use DMC to determine moisture
@@ -437,19 +452,19 @@ public:
    * \return Throw a runtime_error
    */
   [[nodiscard]] double calculateRos(int, const wx::FwiWeather&, double) const
-  override;
+    override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
   [[nodiscard]] double calculateIsf(const SpreadInfo&, double) const
-  override;
+    override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
   [[nodiscard]] double surfaceFuelConsumption(const SpreadInfo&) const
-  override;
+    override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
@@ -468,7 +483,7 @@ public:
    * \return Throw a runtime_error
    */
   [[nodiscard]] double criticalSurfaceIntensity(const SpreadInfo&) const
-  override;
+    override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
@@ -485,7 +500,7 @@ public:
    * \return Throw a runtime_error
    */
   [[nodiscard]] double survivalProbability(const wx::FwiWeather&) const noexcept
-  override;
+    override;
 };
 }
 }

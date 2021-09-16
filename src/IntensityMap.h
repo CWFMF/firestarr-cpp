@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -56,12 +56,18 @@ public:
    * \brief Number of rows in this extent
    * \return Number of rows in this extent
    */
-  [[nodiscard]] Idx rows() { return map_->rows(); }
+  [[nodiscard]] Idx rows()
+  {
+    return map_->rows();
+  }
   /**
    * \brief Number of columns in this extent
    * \return Number of columns in this extent
    */
-  [[nodiscard]] Idx columns() { return map_->columns(); }
+  [[nodiscard]] Idx columns()
+  {
+    return map_->columns();
+  }
   /**
    * \brief Set cells in the map to be burned based on Perimeter
    * \param perimeter Perimeter to burn cells based on
@@ -119,13 +125,13 @@ public:
    * \return Iterator for underlying GridMap
    */
   [[nodiscard]] unordered_map<Location, IntensitySize>::const_iterator
-  cbegin() const noexcept;
+    cbegin() const noexcept;
   /**
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
    */
   [[nodiscard]] unordered_map<Location, IntensitySize>::const_iterator
-  cend() const noexcept;
+    cend() const noexcept;
 private:
   /**
    * \brief Model map is for

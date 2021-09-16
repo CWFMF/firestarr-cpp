@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -34,7 +34,10 @@ public:
    * \brief Station providing the Startup values
    * \return Station providing the Startup values
    */
-  [[nodiscard]] constexpr const string& station() const noexcept { return station_; }
+  [[nodiscard]] constexpr const string& station() const noexcept
+  {
+    return station_;
+  }
   /**
    * \brief Time the Startup value is for
    * \return Time the Startup value is for
@@ -47,27 +50,42 @@ public:
    * \brief Point the Startup value is for
    * \return Point the Startup value is for
    */
-  [[nodiscard]] constexpr const topo::Point& point() const noexcept { return point_; }
+  [[nodiscard]] constexpr const topo::Point& point() const noexcept
+  {
+    return point_;
+  }
   /**
    * \brief Distance Startup value location is from the requested location (m)
    * \return Distance Startup value location is from the requested location (m)
    */
-  [[nodiscard]] constexpr double distanceFrom() const noexcept { return distance_from_; }
+  [[nodiscard]] constexpr double distanceFrom() const noexcept
+  {
+    return distance_from_;
+  }
   /**
    * \brief Fine Fuel Moisture Code
    * \return Fine Fuel Moisture Code
    */
-  [[nodiscard]] constexpr const Ffmc& ffmc() const noexcept { return ffmc_; }
+  [[nodiscard]] constexpr const Ffmc& ffmc() const noexcept
+  {
+    return ffmc_;
+  }
   /**
    * \brief Duff Moisture Code
    * \return Duff Moisture Code
    */
-  [[nodiscard]] constexpr const Dmc& dmc() const noexcept { return dmc_; }
+  [[nodiscard]] constexpr const Dmc& dmc() const noexcept
+  {
+    return dmc_;
+  }
   /**
    * \brief Drought Code
    * \return Drought Code
    */
-  [[nodiscard]] constexpr const Dc& dc() const noexcept { return dc_; }
+  [[nodiscard]] constexpr const Dc& dc() const noexcept
+  {
+    return dc_;
+  }
   /**
    * \brief Accumulated Precipitation at 0800 (mm)
    * \return Accumulated Precipitation at 0800 (mm)
@@ -80,7 +98,10 @@ public:
    * \brief Whether or not any Startup values were overridden
    * \return Whether or not any Startup values were overridden
    */
-  [[nodiscard]] constexpr bool isOverridden() const noexcept { return is_overridden_; }
+  [[nodiscard]] constexpr bool isOverridden() const noexcept
+  {
+    return is_overridden_;
+  }
   /**
  * \brief Constructor
  * \param station Station indices are from
@@ -161,13 +182,13 @@ private:
    * \brief Accumulated Precipitation at 0800 (mm)
    */
   AccumulatedPrecipitation apcp_0800_;
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Whether or not any of the indices have been overridden
    */
   bool is_overridden_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 }
 }

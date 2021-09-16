@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -22,23 +22,23 @@
 #define _USE_MATH_DEFINES
 // ReSharper restore CppInconsistentNaming
 #define NOMINMAX
-#pragma warning (push)
-#pragma warning (disable: 4355)
-#pragma warning (disable: 4365)
-#pragma warning (disable: 4514)
-#pragma warning (disable: 4571)
-#pragma warning (disable: 4623)
-#pragma warning (disable: 4625)
-#pragma warning (disable: 4626)
-#pragma warning (disable: 4668)
-#pragma warning (disable: 4710)
-#pragma warning (disable: 4711)
-#pragma warning (disable: 4774)
-#pragma warning (disable: 4820)
-#pragma warning (disable: 5026)
-#pragma warning (disable: 5027)
-#pragma warning (disable: 5039)
-#pragma warning (disable: 5045)
+#pragma warning(push)
+#pragma warning(disable: 4355)
+#pragma warning(disable: 4365)
+#pragma warning(disable: 4514)
+#pragma warning(disable: 4571)
+#pragma warning(disable: 4623)
+#pragma warning(disable: 4625)
+#pragma warning(disable: 4626)
+#pragma warning(disable: 4668)
+#pragma warning(disable: 4710)
+#pragma warning(disable: 4711)
+#pragma warning(disable: 4774)
+#pragma warning(disable: 4820)
+#pragma warning(disable: 5026)
+#pragma warning(disable: 5027)
+#pragma warning(disable: 5039)
+#pragma warning(disable: 5045)
 #include <ctime>
 #include <chrono>
 #include <algorithm>
@@ -83,49 +83,49 @@
 #include <tiffio.h>
 #include <geotiff/xtiffio.h>
 #include <sys/stat.h>
-#pragma warning (pop)
+#pragma warning(pop)
 // unreferenced inline function has been removed
-#pragma warning (disable: 4514)
+#pragma warning(disable: 4514)
 // Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
-#pragma warning (disable: 4571)
+#pragma warning(disable: 4571)
 // function 'X' selected for automatic inline expansion
-#pragma warning (disable: 4623)
+#pragma warning(disable: 4623)
 // function not inlined
-#pragma warning (disable: 4710)
+#pragma warning(disable: 4710)
 // selected for automatic inline expansion
-#pragma warning (disable: 4711)
+#pragma warning(disable: 4711)
 // Do not assign the result of an allocation or a function call with an owner<T> return value to a raw pointer, use owner<T> instead
-#pragma warning (disable: 26400)
+#pragma warning(disable: 26400)
 // Do not delete a raw pointer that is not an owner<T>
-#pragma warning (disable: 26401)
+#pragma warning(disable: 26401)
 // Return a scoped object instead of a heap-allocated if it has a move constructor
-#pragma warning (disable: 26402)
+#pragma warning(disable: 26402)
 // Reset or explicitly delete an owner<T> pointer
-#pragma warning (disable: 26403)
+#pragma warning(disable: 26403)
 // Do not assign to an owner<T> which may be in valid state
-#pragma warning (disable: 26405)
+#pragma warning(disable: 26405)
 // Do not assign a raw pointer to an owner<T>
-#pragma warning (disable: 26406)
+#pragma warning(disable: 26406)
 // Prefer scoped objects, don't heap-allocate unnecessarily
-#pragma warning (disable: 26407)
+#pragma warning(disable: 26407)
 // Avoid calling new and delete explicitly, use std::make_unique<T> instead
-#pragma warning (disable: 26409)
+#pragma warning(disable: 26409)
 // Global initializer calls a non-constexpr function
-#pragma warning (disable: 26426)
+#pragma warning(disable: 26426)
 // Symbol is never tested for nullness, it can be marked as not_null
-#pragma warning (disable: 26429)
+#pragma warning(disable: 26429)
 // Function hides a non-virtual function
-#pragma warning (disable: 26434)
+#pragma warning(disable: 26434)
 // prefer to use gsl::at()
-#pragma warning (disable: 26446)
+#pragma warning(disable: 26446)
 // Don't use a static_cast for arithmetic conversions. Use brace initialization, gsl::narrow_cast or gsl::narrow
-#pragma warning (disable: 26472)
+#pragma warning(disable: 26472)
 // Don't use pointer arithmetic. Use span instead
-#pragma warning (disable: 26481)
+#pragma warning(disable: 26481)
 // Only index into arrays using constant expressions
-#pragma warning (disable: 26482)
+#pragma warning(disable: 26482)
 // No array to pointer decay
-#pragma warning (disable: 26485)
+#pragma warning(disable: 26485)
 using std::abs;
 using std::array;
 using std::async;

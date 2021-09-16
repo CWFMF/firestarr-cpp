@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -90,72 +90,114 @@ public:
    * \brief Maximum intensity in any direction for spread (kW/m)
    * \return Maximum intensity in any direction for spread (kW/m)
    */
-  [[nodiscard]] double maxIntensity() const noexcept { return max_intensity_; }
+  [[nodiscard]] double maxIntensity() const noexcept
+  {
+    return max_intensity_;
+  }
   /**
    * \brief Offsets from origin point that represent spread under these conditions
    * \return Offsets from origin point that represent spread under these conditions
    */
-  [[nodiscard]] vector<InnerPos> offsets() const { return offsets_; }
+  [[nodiscard]] vector<InnerPos> offsets() const
+  {
+    return offsets_;
+  }
   /**
    * \brief Whether or not there is no spread
    * \return Whether or not there is no spread
    */
-  [[nodiscard]] constexpr bool isNotSpreading() const { return isInvalid(); }
+  [[nodiscard]] constexpr bool isNotSpreading() const
+  {
+    return isInvalid();
+  }
   /**
    * \brief Difference between date and the date of minimum foliar moisture content
    * \return Difference between date and the date of minimum foliar moisture content
    */
-  [[nodiscard]] constexpr int nd() const { return nd_; }
+  [[nodiscard]] constexpr int nd() const
+  {
+    return nd_;
+  }
   /**
    * \brief FwiWeather used for spread
    * \return FwiWeather used for spread
    */
-  [[nodiscard]] constexpr const wx::FwiWeather* weather() const { return weather_; }
+  [[nodiscard]] constexpr const wx::FwiWeather* weather() const
+  {
+    return weather_;
+  }
   /**
    * \brief Wind used for spread
    * \return Wind used for spread
    */
-  [[nodiscard]] constexpr const wx::Wind& wind() const { return weather()->wind(); }
+  [[nodiscard]] constexpr const wx::Wind& wind() const
+  {
+    return weather()->wind();
+  }
   /**
    * \brief Fine Fuel Moisture Code used for spread
    * \return Fine Fuel Moisture Code used for spread
    */
-  [[nodiscard]] constexpr const wx::Ffmc& ffmc() const { return weather()->ffmc(); }
+  [[nodiscard]] constexpr const wx::Ffmc& ffmc() const
+  {
+    return weather()->ffmc();
+  }
   /**
    * \brief Build-up Index used for spread
    * \return Build-up Index used for spread
    */
-  [[nodiscard]] constexpr const wx::Bui& bui() const { return weather()->bui(); }
+  [[nodiscard]] constexpr const wx::Bui& bui() const
+  {
+    return weather()->bui();
+  }
   /**
    * \brief Duff Moisture Code used for spread
    * \return Duff Moisture Code used for spread
    */
-  [[nodiscard]] constexpr const wx::Dmc& dmc() const { return weather()->dmc(); }
+  [[nodiscard]] constexpr const wx::Dmc& dmc() const
+  {
+    return weather()->dmc();
+  }
   /**
    * \brief Drought Code used for spread
    * \return Drought Code used for spread
    */
-  [[nodiscard]] constexpr const wx::Dc& dc() const { return weather()->dc(); }
+  [[nodiscard]] constexpr const wx::Dc& dc() const
+  {
+    return weather()->dc();
+  }
   /**
    * \brief FFMC effect used for spread
    * \return FFMC effect used for spread
    */
-  [[nodiscard]] constexpr double ffmcEffect() const { return weather()->ffmcEffect(); }
+  [[nodiscard]] constexpr double ffmcEffect() const
+  {
+    return weather()->ffmcEffect();
+  }
   /**
    * \brief Time used for spread
    * \return Time used for spread
    */
-  [[nodiscard]] constexpr double time() const { return time_; }
+  [[nodiscard]] constexpr double time() const
+  {
+    return time_;
+  }
   /**
    * \brief Slope used for spread (%)
    * \return Slope used for spread (%)
    */
-  [[nodiscard]] constexpr SlopeSize percentSlope() const { return cell_.slope(); }
+  [[nodiscard]] constexpr SlopeSize percentSlope() const
+  {
+    return cell_.slope();
+  }
   /**
    * \brief Head fire rate of spread (m/min)
    * \return Head fire rate of spread (m/min)
    */
-  [[nodiscard]] constexpr double headRos() const { return head_ros_; }
+  [[nodiscard]] constexpr double headRos() const
+  {
+    return head_ros_;
+  }
   /**
    * \brief Slope factor calculated from percent slope
    * \return Slope factor calculated from percent slope
@@ -173,16 +215,19 @@ public:
   [[nodiscard]] constexpr double foliarMoisture() const
   {
     return nd_ >= 50
-             ? 120.0
-             : nd_ >= 30 && nd_ < 50
-             ? 32.9 + 3.17 * nd_ - 0.0288 * nd_ * nd_
-             : 85.0 + 0.0189 * nd_ * nd_;
+           ? 120.0
+         : nd_ >= 30 && nd_ < 50
+           ? 32.9 + 3.17 * nd_ - 0.0288 * nd_ * nd_
+           : 85.0 + 0.0189 * nd_ * nd_;
   }
   /**
    * \brief Whether or not there is no spread for given conditions
    * \return Whether or not there is no spread for given conditions
    */
-  [[nodiscard]] constexpr bool isInvalid() const { return -1 == head_ros_; }
+  [[nodiscard]] constexpr bool isInvalid() const
+  {
+    return -1 == head_ros_;
+  }
 private:
   /**
    * \brief Offsets from origin point that represent spread under these conditions
@@ -208,13 +253,13 @@ private:
    * \brief Head fire rate of spread (m/min)
    */
   double head_ros_;
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Difference between date and the date of minimum foliar moisture content (from ST-X-3)
    */
   int nd_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 }
 }

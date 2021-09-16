@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -109,27 +109,42 @@ public:
    * \brief UTM projection that this uses
    * \return UTM projection that this uses
    */
-  [[nodiscard]] constexpr const string& proj4() const { return cells_->proj4(); }
+  [[nodiscard]] constexpr const string& proj4() const
+  {
+    return cells_->proj4();
+  }
   /**
    * \brief Number of rows in grid
    * \return Number of rows in grid
    */
-  [[nodiscard]] constexpr Idx rows() const { return cells_->rows(); }
+  [[nodiscard]] constexpr Idx rows() const
+  {
+    return cells_->rows();
+  }
   /**
    * \brief Number of columns in grid
    * \return Number of columns in grid
    */
-  [[nodiscard]] constexpr Idx columns() const { return cells_->columns(); }
+  [[nodiscard]] constexpr Idx columns() const
+  {
+    return cells_->columns();
+  }
   /**
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double cellSize() const { return cells_->cellSize(); }
+  [[nodiscard]] constexpr double cellSize() const
+  {
+    return cells_->cellSize();
+  }
   /**
    * \brief Elevation of the origin Point
    * \return Elevation of the origin Point
    */
-  [[nodiscard]] constexpr ElevationSize elevation() const { return elevation_; }
+  [[nodiscard]] constexpr ElevationSize elevation() const
+  {
+    return elevation_;
+  }
   /**
    * \brief Cell at given row and column
    * \param row Row
@@ -262,27 +277,27 @@ protected:
         values.at(h) = cell;
 #ifndef NDEBUG
 #ifndef VLD_RPTHOOK_INSTALL
-					const topo::Location loc{ h };
-					const auto r = loc.row();
-					const auto c = loc.column();
-					logging::check_fatal(cell.row() != r, "Cell row %d not %d", cell.row(), r);
-					logging::check_fatal(cell.column() != c, "Cell column %d not %d", cell.column(), c);
-					logging::check_fatal(cell.slope() != s, "Cell slope %d not %d", cell.slope(), s);
-					logging::check_fatal(cell.aspect() != a, "Cell aspect %d not %d", cell.aspect(), a);
-					logging::check_fatal(cell.fuelCode() != f, "Cell fuel %d not %d", cell.fuelCode(), f);
-					const auto v = values.at(h);
-					logging::check_fatal(v.row() != r, "Row %d not %d", v.row(), r);
-					logging::check_fatal(v.column() != c, "Column %d not %d", v.column(), c);
-					logging::check_fatal(v.slope() != s, "Slope %d not %d", v.slope(), s);
-					if (0 != s)
-					{
-						logging::check_fatal(v.aspect() != a, "Aspect %d not %d", v.aspect(), a);
-					}
-					else
-					{
-						logging::check_fatal(v.aspect() != 0, "Aspect %d not %d", v.aspect(), 0);
-					}
-					logging::check_fatal(v.fuelCode() != f, "Fuel %d not %d", v.fuelCode(), f);
+        const topo::Location loc{h};
+        const auto r = loc.row();
+        const auto c = loc.column();
+        logging::check_fatal(cell.row() != r, "Cell row %d not %d", cell.row(), r);
+        logging::check_fatal(cell.column() != c, "Cell column %d not %d", cell.column(), c);
+        logging::check_fatal(cell.slope() != s, "Cell slope %d not %d", cell.slope(), s);
+        logging::check_fatal(cell.aspect() != a, "Cell aspect %d not %d", cell.aspect(), a);
+        logging::check_fatal(cell.fuelCode() != f, "Cell fuel %d not %d", cell.fuelCode(), f);
+        const auto v = values.at(h);
+        logging::check_fatal(v.row() != r, "Row %d not %d", v.row(), r);
+        logging::check_fatal(v.column() != c, "Column %d not %d", v.column(), c);
+        logging::check_fatal(v.slope() != s, "Slope %d not %d", v.slope(), s);
+        if (0 != s)
+        {
+          logging::check_fatal(v.aspect() != a, "Aspect %d not %d", v.aspect(), a);
+        }
+        else
+        {
+          logging::check_fatal(v.aspect() != 0, "Aspect %d not %d", v.aspect(), 0);
+        }
+        logging::check_fatal(v.fuelCode() != f, "Fuel %d not %d", v.fuelCode(), f);
 #endif
 #endif
       });
@@ -334,8 +349,8 @@ protected:
     logging::note("Start elevation is %d", elevation_);
     initializeNotBurnable();
   }
-#pragma warning (push)
-#pragma warning (disable: 26447)
+#pragma warning(push)
+#pragma warning(disable: 26447)
   /**
    * \brief Construct from cells and elevation
    * \param cells Cells representing Environment
@@ -354,7 +369,7 @@ protected:
       std::terminate();
     }
   }
-#pragma warning (pop)
+#pragma warning(pop)
 private:
   /**
    * \brief Cells representing Environment
@@ -364,13 +379,13 @@ private:
    * \brief BurnedData of cells that are not burnable
    */
   sim::BurnedData not_burnable_{};
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Elevation at StartPoint
    */
   ElevationSize elevation_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 }
 }

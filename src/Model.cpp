@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -37,8 +37,8 @@ namespace sim
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 BurnedData* Model::getBurnedVector() const noexcept
 {
-#pragma warning (push)
-#pragma warning (disable: 26447)
+#pragma warning(push)
+#pragma warning(disable: 26447)
   try
   {
     if (!vectors_.empty())
@@ -59,12 +59,12 @@ BurnedData* Model::getBurnedVector() const noexcept
   {
     std::terminate();
   }
-#pragma warning (pop)
+#pragma warning(pop)
 }
 void Model::releaseBurnedVector(BurnedData* has_burned) const noexcept
 {
-#pragma warning (push)
-#pragma warning (disable: 26447)
+#pragma warning(push)
+#pragma warning(disable: 26447)
   try
   {
     environment().resetBurnedData(has_burned);
@@ -75,7 +75,7 @@ void Model::releaseBurnedVector(BurnedData* has_burned) const noexcept
   {
     std::terminate();
   }
-#pragma warning (pop)
+#pragma warning(pop)
 }
 Model::~Model()
 {
@@ -166,7 +166,9 @@ void Model::readWeather(const fuel::FuelLookup& fuel_lookup,
           wx.emplace(cur, map<Day, wx::FwiWeather>());
         }
         auto& s = wx.at(cur);
-        struct tm t{};
+        struct tm t
+        {
+        };
         util::read_date(&iss, &str, &t);
         const auto ticks = mktime(&t);
         if (1 == cur)
@@ -347,8 +349,8 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
                                const Day last_date)
 {
   vector<Scenario*> result{};
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   auto saves = Settings::outputDateOffsets();
   const auto setup_scenario = [&result, save_intensity, &saves](Scenario* scenario)
   {
@@ -365,7 +367,7 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
     }
     result.push_back(scenario);
   };
-#pragma warning (pop)
+#pragma warning(pop)
   for (const auto& kv : wx_)
   {
     const auto id = kv.first;
@@ -507,8 +509,8 @@ size_t runs_required(const size_t i,
   const auto for_means = util::Statistics{*means};
   const auto for_pct = util::Statistics{*pct};
   if (!(i < Settings::minimumSimulationRounds()
-    || !for_means.isConfident(Settings::confidenceLevel())
-    || !for_pct.isConfident(Settings::confidenceLevel())))
+        || !for_means.isConfident(Settings::confidenceLevel())
+        || !for_pct.isConfident(Settings::confidenceLevel())))
   {
     return 0;
   }
@@ -699,7 +701,7 @@ int Model::runScenarios(const char* const output_directory,
                 location.column());
   model.readWeather(lookup, weather_input, for_actuals, yesterday, start_point.latitude());
   auto kv = std::views::keys(model.wx_);
-  std::vector<int> keys{ kv.begin(), kv.end() };
+  std::vector<int> keys{kv.begin(), kv.end()};
   if (0 == keys.size())
   {
     logging::fatal("No weather provided");
@@ -714,7 +716,7 @@ int Model::runScenarios(const char* const output_directory,
   }
   model.makeStarts(*position, start_point, yesterday, perimeter, size);
   auto start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60))
-    / DAY_HOURS);
+                     / DAY_HOURS);
   // HACK: round to 2 digits so we can keep test output the same
   start_hour = static_cast<double>(static_cast<int>(start_hour * 100)) / 100;
   const auto start = start_time.tm_yday + start_hour;

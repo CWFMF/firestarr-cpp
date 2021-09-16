@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -39,7 +39,10 @@ using PointSet = vector<InnerPos>;
 /**
 * \brief Deleter for IObserver to get around incomplete class with unique_ptr
 */
-struct IObserver_deleter { void operator()(IObserver*) const; };
+struct IObserver_deleter
+{
+  void operator()(IObserver*) const;
+};
 /**
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
  */
@@ -172,22 +175,34 @@ public:
    * \brief Number of rows
    * \return Number of rows
    */
-  [[nodiscard]] constexpr Idx rows() const { return model_->rows(); }
+  [[nodiscard]] constexpr Idx rows() const
+  {
+    return model_->rows();
+  }
   /**
    * \brief Number of columns
    * \return Number of columns
    */
-  [[nodiscard]] constexpr Idx columns() const { return model_->columns(); }
+  [[nodiscard]] constexpr Idx columns() const
+  {
+    return model_->columns();
+  }
   /**
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double cellSize() const { return model_->cellSize(); }
+  [[nodiscard]] constexpr double cellSize() const
+  {
+    return model_->cellSize();
+  }
   /**
    * \brief Simulation number
    * \return Simulation number
    */
-  [[nodiscard]] constexpr int64_t simulation() const { return simulation_; }
+  [[nodiscard]] constexpr int64_t simulation() const
+  {
+    return simulation_;
+  }
   /**
    * \brief StartPoint that provides sunrise/sunset times
    * \return StartPoint
@@ -200,17 +215,26 @@ public:
    * \brief Simulation start time
    * \return Simulation start time
    */
-  [[nodiscard]] constexpr double startTime() const { return start_time_; }
+  [[nodiscard]] constexpr double startTime() const
+  {
+    return start_time_;
+  }
   /**
    * \brief Identifier
    * \return Identifier
    */
-  [[nodiscard]] constexpr size_t id() const { return id_; }
+  [[nodiscard]] constexpr size_t id() const
+  {
+    return id_;
+  }
   /**
    * \brief Model this Scenario is running in
    * \return Model this Scenario is running in
    */
-  [[nodiscard]] constexpr const Model& model() const { return *model_; }
+  [[nodiscard]] constexpr const Model& model() const
+  {
+    return *model_;
+  }
   /**
    * \brief Sunrise time for given day
    * \param for_day Day to get sunrise time for
@@ -243,7 +267,10 @@ public:
    * \param time Time to get value for
    * \return Difference between date and the date of minimum foliar moisture content
    */
-  [[nodiscard]] constexpr int nd(const double time) const { return model().nd(time); }
+  [[nodiscard]] constexpr int nd(const double time) const
+  {
+    return model().nd(time);
+  }
   /**
    * \brief Get extinction threshold for given time
    * \param time Time to get value for
@@ -407,18 +434,18 @@ public:
     // use mike's table
     const auto mc = wx->mcDmcPct();
     if (100 > mc
-      || 109 >= mc && 5 > time_at_location
-      || 119 >= mc && 4 > time_at_location
-      || 131 >= mc && 3 > time_at_location
-      || 145 >= mc && 2 > time_at_location
-      || 218 >= mc && 1 > time_at_location)
+        || 109 >= mc && 5 > time_at_location
+        || 119 >= mc && 4 > time_at_location
+        || 131 >= mc && 3 > time_at_location
+        || 145 >= mc && 2 > time_at_location
+        || 218 >= mc && 1 > time_at_location)
     {
       return true;
     }
     // we can look by fuel type because the entire landscape shares the weather
     return extinctionThreshold(time) < weather_->survivalProbability(
-      time,
-      cell.fuelCode());
+             time,
+             cell.fuelCode());
   }
   /**
    * \brief List of what times the simulation will save
@@ -584,13 +611,13 @@ protected:
    * \brief Last day of simulation
    */
   Day last_date_;
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Whether or not this Scenario has completed running
    */
   bool ran_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 }
 }

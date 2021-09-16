@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -273,8 +273,8 @@ public:
    * \param rhs FwiWeather to copy from
    */
   constexpr FwiWeather(const FwiWeather& rhs) noexcept = default;
-#pragma warning (push)
-#pragma warning (disable: 26456)
+#pragma warning(push)
+#pragma warning(disable: 26456)
   /**
    * \brief Move assignment
    * \param rhs FwiWeather to move from
@@ -287,62 +287,95 @@ public:
    * \return This, after assignment
    */
   FwiWeather& operator=(const FwiWeather& rhs) = default;
-#pragma warning (pop)
+#pragma warning(pop)
   /**
    * \brief Fine Fuel Moisture Code
    * \return Fine Fuel Moisture Code
    */
-  [[nodiscard]] constexpr const Ffmc& ffmc() const { return ffmc_; }
+  [[nodiscard]] constexpr const Ffmc& ffmc() const
+  {
+    return ffmc_;
+  }
   /**
    * \brief Duff Moisture Code
    * \return Duff Moisture Code
    */
-  [[nodiscard]] constexpr const Dmc& dmc() const { return dmc_; }
+  [[nodiscard]] constexpr const Dmc& dmc() const
+  {
+    return dmc_;
+  }
   /**
    * \brief Drought Code
    * \return Drought Code
    */
-  [[nodiscard]] constexpr const Dc& dc() const { return dc_; }
+  [[nodiscard]] constexpr const Dc& dc() const
+  {
+    return dc_;
+  }
   /**
    * \brief Initial Spread Index
    * \return Initial Spread Index
    */
-  [[nodiscard]] constexpr const Isi& isi() const { return isi_; }
+  [[nodiscard]] constexpr const Isi& isi() const
+  {
+    return isi_;
+  }
   /**
    * \brief Build-up Index
    * \return Build-up Index
    */
-  [[nodiscard]] constexpr const Bui& bui() const { return bui_; }
+  [[nodiscard]] constexpr const Bui& bui() const
+  {
+    return bui_;
+  }
   /**
    * \brief Fire Weather Index
    * \return Fire Weather Index
    */
-  [[nodiscard]] constexpr const Fwi& fwi() const { return fwi_; }
+  [[nodiscard]] constexpr const Fwi& fwi() const
+  {
+    return fwi_;
+  }
   /**
    * \brief Moisture content (%) based on Ffmc
    * \return Moisture content (%) based on Ffmc
    */
-  [[nodiscard]] constexpr double mcFfmcPct() const { return mc_ffmc_pct_; }
+  [[nodiscard]] constexpr double mcFfmcPct() const
+  {
+    return mc_ffmc_pct_;
+  }
   /**
    * \brief Moisture content (%) based on Dmc
    * \return Moisture content (%) based on Dmc
    */
-  [[nodiscard]] constexpr double mcDmcPct() const { return mc_dmc_pct_; }
+  [[nodiscard]] constexpr double mcDmcPct() const
+  {
+    return mc_dmc_pct_;
+  }
   /**
    * \brief Moisture content (ratio) based on Ffmc
    * \return Moisture content (ratio) based on Ffmc
    */
-  [[nodiscard]] constexpr double mcFfmc() const { return mcFfmcPct() / 100.0; }
+  [[nodiscard]] constexpr double mcFfmc() const
+  {
+    return mcFfmcPct() / 100.0;
+  }
   /**
    * \brief Moisture content (ratio) based on Dmc
    * \return Moisture content (ratio) based on Dmc
    */
-  [[nodiscard]] constexpr double mcDmc() const { return mcDmcPct() / 100.0; }
+  [[nodiscard]] constexpr double mcDmc() const
+  {
+    return mcDmcPct() / 100.0;
+  }
   /**
    * \brief Ffmc effect used for spread
    * \return Ffmc effect used for spread
    */
-  [[nodiscard]] constexpr double ffmcEffect() const { return ffmc_effect_; }
+  [[nodiscard]] constexpr double ffmcEffect() const
+  {
+    return ffmc_effect_;
+  }
 private:
   /**
    * \brief Calculate based on indices plus new Wind, Ffmc, and Isi
@@ -436,15 +469,15 @@ private:
 [[nodiscard]] constexpr bool operator!=(const FwiWeather& lhs, const FwiWeather& rhs)
 {
   return lhs.tmp() != rhs.tmp()
-    || lhs.rh() != rhs.rh()
-    || lhs.wind() != rhs.wind()
-    || lhs.apcp() != rhs.apcp()
-    || lhs.ffmc() != rhs.ffmc()
-    || lhs.dmc() != rhs.dmc()
-    || lhs.dc() != rhs.dc()
-    || lhs.isi() != rhs.isi()
-    || lhs.bui() != rhs.bui()
-    || lhs.fwi() != rhs.fwi();
+      || lhs.rh() != rhs.rh()
+      || lhs.wind() != rhs.wind()
+      || lhs.apcp() != rhs.apcp()
+      || lhs.ffmc() != rhs.ffmc()
+      || lhs.dmc() != rhs.dmc()
+      || lhs.dc() != rhs.dc()
+      || lhs.isi() != rhs.isi()
+      || lhs.bui() != rhs.bui()
+      || lhs.fwi() != rhs.fwi();
 }
 [[nodiscard]] constexpr bool operator==(const FwiWeather& lhs, const FwiWeather& rhs)
 {

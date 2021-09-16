@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -38,15 +38,13 @@ static V read_tiff_point(TIFF* tif,
   const data::GridBase grid_info = data::read_header<T>(tif, gtif);
   const auto coordinates = grid_info.findCoordinates(point, false);
   auto min_column = max(static_cast<Idx>(0),
-                        static_cast<Idx>(std::get<1>(*coordinates) - MAX_COLUMNS /
-                          static_cast<Idx>(2)));
+                        static_cast<Idx>(std::get<1>(*coordinates) - MAX_COLUMNS / static_cast<Idx>(2)));
   if (min_column + MAX_COLUMNS >= grid_info.columns())
   {
     min_column = grid_info.columns() - MAX_COLUMNS;
   }
   auto min_row = max(static_cast<Idx>(0),
-                     static_cast<Idx>(std::get<0>(*coordinates) - MAX_COLUMNS /
-                       static_cast<Idx>(2)));
+                     static_cast<Idx>(std::get<0>(*coordinates) - MAX_COLUMNS / static_cast<Idx>(2)));
   if (min_row + MAX_COLUMNS >= grid_info.rows())
   {
     min_row = grid_info.rows() - MAX_COLUMNS;
@@ -197,7 +195,7 @@ Environment Environment::loadEnvironment(const fuel::FuelLookup& lookup,
                      cur_x);
     // HACK: assume floating point is going to always be exactly the same result
     if ((nullptr == for_info || cur_info->meridian() == for_info->meridian())
-      && cur_x <= best_x)
+        && cur_x <= best_x)
     {
       logging::debug("SWITCH X");
       if (cur_x != best_x)

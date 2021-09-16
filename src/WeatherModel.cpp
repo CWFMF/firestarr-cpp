@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -55,8 +55,8 @@ bool ModelCompare::operator()(const WeatherModel& x, const WeatherModel& y) cons
     {
       // HACK: these should always be equal, so just check that they are
       assert(x.point().latitude() == y.point().latitude()
-        && x.point().longitude() == y.point().longitude()
-        && x.distanceFrom() == y.distanceFrom());
+             && x.point().longitude() == y.point().longitude()
+             && x.distanceFrom() == y.distanceFrom());
       if (x.point().latitude() == y.point().latitude())
       {
         if (x.point().longitude() == y.point().longitude())

@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -33,8 +33,7 @@ FwiStream::FwiStream(const vector<TIMESTAMP_STRUCT>& dates,
   static const AccumulatedPrecipitation ZeroDmcPrecipitationAmount(10);
   assert(cur_member.size() <= dates.size());
   int month = dates.at(0).month;
-  auto started = (nullptr != startup) ||
-    (month > 9 || (9 == month && 15 <= dates.at(0).day));
+  auto started = (nullptr != startup) || (month > 9 || (9 == month && 15 <= dates.at(0).day));
   auto shutdown = !started;
   static auto fake_startup = Startup("",
                                      TIMESTAMP_STRUCT{},
@@ -47,8 +46,8 @@ FwiStream::FwiStream(const vector<TIMESTAMP_STRUCT>& dates,
                                      false);
   // HACK: could be started but now ended and marked as started because of month/day
   const Startup* const use_startup = (!started || nullptr == startup)
-                                       ? &fake_startup
-                                       : startup;
+                                     ? &fake_startup
+                                     : startup;
   auto last_ffmc = use_startup->ffmc();
   auto last_dmc = use_startup->dmc();
   auto last_dc = use_startup->dc();
@@ -99,7 +98,8 @@ FwiStream::FwiStream(const vector<TIMESTAMP_STRUCT>& dates,
         }
       }
       else if (((!shutdown && month > 9)
-        || (9 == month && 15 <= for_date.day)) && date_index >= 2)
+                || (9 == month && 15 <= for_date.day))
+               && date_index >= 2)
       {
         // try to see if we can stop things
         double sum = 0;

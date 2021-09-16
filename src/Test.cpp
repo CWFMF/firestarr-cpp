@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -60,16 +60,17 @@ static vector<const wx::FwiWeather*>* make_weather(const wx::Dc& dc,
                 [&wind, &ffmc, &dmc, &dc, &bui]()
                 {
                   return make_unique<wx::FwiWeather>(
-                    TMP,
-                    RH,
-                    wind,
-                    APCP,
-                    ffmc,
-                    dmc,
-                    dc,
-                    wx::Isi(wind.speed(), ffmc),
-                    bui,
-                    wx::Fwi(wx::Isi(wind.speed(), ffmc), bui)).release();
+                           TMP,
+                           RH,
+                           wind,
+                           APCP,
+                           ffmc,
+                           dmc,
+                           dc,
+                           wx::Isi(wind.speed(), ffmc),
+                           bui,
+                           wx::Fwi(wx::Isi(wind.speed(), ffmc), bui))
+                    .release();
                 });
   return wx;
 }
@@ -197,8 +198,7 @@ int run_test(const char* output_directory,
     TEST_XLLCORNER,
     TEST_YLLCORNER,
     TEST_PROJ4,
-    std::move(values)
-  };
+    std::move(values)};
   TestEnvironment env(cells);
   const Location start_location(static_cast<Idx>(MAX_ROWS / 2),
                                 static_cast<Idx>(MAX_COLUMNS / 2));
@@ -271,19 +271,17 @@ int test(const int argc, const char* const argv[])
         simple_fuel_name.erase(
           std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '/'),
           simple_fuel_name.end());
-        const auto out_length = output_directory.length() + 28 + simple_fuel_name.
-          length();
+        const auto out_length = output_directory.length() + 28 + simple_fuel_name.length();
         const auto out = new char[out_length];
         for (SlopeSize slope = 0; slope <= 100; slope += SLOPE_INCREMENT)
         {
           for (AspectSize aspect = 0; aspect < 360; aspect += ASPECT_INCREMENT)
           {
             for (auto wind_direction = 0; wind_direction < 360; wind_direction +=
-                 WD_INCREMENT)
+                                                                WD_INCREMENT)
             {
               const wx::Direction direction(wind_direction, false);
-              for (auto wind_speed = 0; wind_speed <= MAX_WIND; wind_speed += WS_INCREMENT
-              )
+              for (auto wind_speed = 0; wind_speed <= MAX_WIND; wind_speed += WS_INCREMENT)
               {
                 const wx::Wind wind(direction, wx::Speed(wind_speed));
                 logging::note(mask,
@@ -330,16 +328,17 @@ int test(const int argc, const char* const argv[])
       const wx::Wind wind(wind_direction, wind_speed);
       // ReSharper restore CppAssignedValueIsNeverUsed
       assert(i == argc);
-      logging::note("Running tests with constant inputs for %d:\n"
-                    "\tSlope:\t\t\t%d\n"
-                    "\tAspect:\t\t\t%d\n"
-                    "\tWind Speed:\t\t%f\n"
-                    "\tWind Direction:\t\t%f\n",
-                    num_hours,
-                    slope,
-                    aspect,
-                    wind_speed,
-                    wind_direction);
+      logging::note(
+        "Running tests with constant inputs for %d:\n"
+        "\tSlope:\t\t\t%d\n"
+        "\tAspect:\t\t\t%d\n"
+        "\tWind Speed:\t\t%f\n"
+        "\tWind Direction:\t\t%f\n",
+        num_hours,
+        slope,
+        aspect,
+        wind_speed,
+        wind_direction);
       result = run_test(output_directory.c_str(),
                         fuel_lookup,
                         "C-2",
