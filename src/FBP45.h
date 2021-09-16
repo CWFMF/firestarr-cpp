@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -43,30 +43,30 @@ static constexpr int START_GREENING = -43;
 [[nodiscard]] constexpr int calculate_grass_curing(const int nd)
 {
   return (nd < START_GREENING)
-           ?  // we're before foliar moisture dip has started
+         ?   // we're before foliar moisture dip has started
            100
-           : (nd >= 50)
-           ? 0  // foliar moisture is at 120.0, so grass should be totally uncured
-           // HACK: invent a formula that has 50% curing at the bottom of the foliar
-           // moisture dip foliar moisture above ranges between 120 and 85, with 85
-           // being at the point where we want 50% cured Curing:
-           // -43 => 100, 0 => 50, 50 => 0 least-squares best fit:
-           : static_cast<int>(52.5042 - 1.07324 * nd);
+         : (nd >= 50)
+             ? 0   // foliar moisture is at 120.0, so grass should be totally uncured
+             // HACK: invent a formula that has 50% curing at the bottom of the foliar
+             // moisture dip foliar moisture above ranges between 120 and 85, with 85
+             // being at the point where we want 50% cured Curing:
+             // -43 => 100, 0 => 50, 50 => 0 least-squares best fit:
+             : static_cast<int>(52.5042 - 1.07324 * nd);
 }
 [[nodiscard]] static double
-calculate_surface_fuel_consumption_mixed_or_c2(const double bui) noexcept
+  calculate_surface_fuel_consumption_mixed_or_c2(const double bui) noexcept
 {
   return 5.0 * (1.0 - exp(-0.0115 * bui));
 }
 static const util::LookupTable<&calculate_surface_fuel_consumption_mixed_or_c2>
-SURFACE_FUEL_CONSUMPTION_MIXED_OR_C2{};
+  SURFACE_FUEL_CONSUMPTION_MIXED_OR_C2{};
 [[nodiscard]] static double
-calculate_surface_fuel_consumption_d1(const double bui) noexcept
+  calculate_surface_fuel_consumption_d1(const double bui) noexcept
 {
   return 1.5 * (1.0 - exp(-0.0183 * bui));
 }
 static util::LookupTable<&calculate_surface_fuel_consumption_d1>
-SURFACE_FUEL_CONSUMPTION_D1{};
+  SURFACE_FUEL_CONSUMPTION_D1{};
 /**
  * \brief A StandardFuel that is not made of multiple fuels.
  * \tparam A Rate of spread parameter a [ST-X-3 table 6]
@@ -79,8 +79,7 @@ SURFACE_FUEL_CONSUMPTION_D1{};
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int
-          InorganicPercent, int DuffDepth>
+template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int InorganicPercent, int DuffDepth>
 class FuelNonMixed
   : public StandardFuel<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>
 {
@@ -106,7 +105,8 @@ protected:
     return this->limitIsf(1.0,
                           calculateRos(spread.nd(),
                                        *spread.weather(),
-                                       isi) * spread.slopeFactor());
+                                       isi)
+                            * spread.slopeFactor());
   }
   /**
    * \brief Initial rate of spread (m/min) [ST-X-3 eq 26]
@@ -132,8 +132,7 @@ protected:
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int
-          InorganicPercent, int DuffDepth>
+template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int InorganicPercent, int DuffDepth>
 class FuelConifer
   : public FuelNonMixed<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>
 {
@@ -200,7 +199,7 @@ protected:
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 11]
  */
 static util::LookupTable<&calculate_surface_fuel_consumption_jackpine>
-SURFACE_FUEL_CONSUMPTION_JACKPINE{};
+  SURFACE_FUEL_CONSUMPTION_JACKPINE{};
 /**
  * \brief A fuel with jackpine as base fuel type.
  * \tparam A Rate of spread parameter a [ST-X-3 table 6]
@@ -241,7 +240,7 @@ public:
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 12]
  */
 [[nodiscard]] static double
-calculate_surface_fuel_consumption_pine(const double bui) noexcept
+  calculate_surface_fuel_consumption_pine(const double bui) noexcept
 {
   return 5.0 * pow(1.0 - exp(-0.0149 * bui), 2.48);
 }
@@ -251,8 +250,7 @@ calculate_surface_fuel_consumption_pine(const double bui) noexcept
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 12]
  */
 static util::LookupTable<&calculate_surface_fuel_consumption_pine>
-SURFACE_FUEL_CONSUMPTION_PINE
-  {};
+  SURFACE_FUEL_CONSUMPTION_PINE{};
 /**
  * \brief A fuel with pine as the base fuel type.
  * \tparam A Rate of spread parameter a [ST-X-3 table 6]
@@ -346,8 +344,7 @@ public:
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <int A, int B, int C, int Bui0, int RosMultiplier, int PercentMixed, int
-          BulkDensity, int InorganicPercent, int DuffDepth>
+template <int A, int B, int C, int Bui0, int RosMultiplier, int PercentMixed, int BulkDensity, int InorganicPercent, int DuffDepth>
 class FuelMixed
   : public StandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>
 {
@@ -369,10 +366,10 @@ public:
                       const LogValue log_q)
     : StandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>(code,
                                                                                    name,
-																				   true,
-																				   log_q,
-																				   &Duff::Peat,
-																				   &Duff::Peat)
+                                                                                   true,
+                                                                                   log_q,
+                                                                                   &Duff::Peat,
+                                                                                   &Duff::Peat)
   {
   }
   /**
@@ -392,9 +389,7 @@ public:
    */
   [[nodiscard]] double crownConsumption(const double cfb) const noexcept override
   {
-    return ratioConifer() * StandardFuel<
-        A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>::
-      crownConsumption(cfb);
+    return ratioConifer() * StandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>::crownConsumption(cfb);
   }
   /**
    * \brief Calculate rate of spread (m/min) [ST-X-3 27/28, GLC-X-10 29/31]
@@ -406,8 +401,7 @@ public:
                                     const double isi) const noexcept override
   {
     static const fbp::FuelD1 F{14};
-    return ratioConifer() * this->rosBasic(isi) + rosMultiplier() * ratioDeciduous() * F.
-      rosBasic(isi);
+    return ratioConifer() * this->rosBasic(isi) + rosMultiplier() * ratioDeciduous() * F.rosBasic(isi);
   }
   /**
    * \brief Calculate ISI with slope influence and zero wind (ISF) [ST-X-3 eq 42]
@@ -418,15 +412,17 @@ public:
   [[nodiscard]] double calculateIsf(const SpreadInfo& spread,
                                     const double isi) const noexcept override
   {
-    return ratioConifer() * this->limitIsf(1.0,
-                                           spread.slopeFactor() * this->rosBasic(isi))
-      + ratioDeciduous() * isfD1(spread, isi);
+    return ratioConifer() * this->limitIsf(1.0, spread.slopeFactor() * this->rosBasic(isi))
+         + ratioDeciduous() * isfD1(spread, isi);
   }
   /**
    * \brief Percent Conifer (% / 100)
    * \return Percent Conifer (% / 100)
    */
-  [[nodiscard]] static constexpr double ratioConifer() { return PercentMixed / 100.0; }
+  [[nodiscard]] static constexpr double ratioConifer()
+  {
+    return PercentMixed / 100.0;
+  }
   /**
    * \brief Percent Deciduous (% / 100)
    * \return Percent Deciduous (% / 100)
@@ -440,7 +436,10 @@ protected:
    * \brief Rate of spread multiplier [ST-X-3 eq 27/28, GLC-X-10 eq 29/30]
    * \return Rate of spread multiplier [ST-X-3 eq 27/28, GLC-X-10 eq 29/30]
    */
-  [[nodiscard]] static constexpr double rosMultiplier() { return RosMultiplier / 10.0; }
+  [[nodiscard]] static constexpr double rosMultiplier()
+  {
+    return RosMultiplier / 10.0;
+  }
   /**
    * \brief Calculate ISI with slope influence and zero wind (ISF) for D-1 [ST-X-3 eq 41]
    * \param spread SpreadInfo to use
@@ -485,7 +484,7 @@ public:
                           const LogValue log_q)
     : FuelMixed<A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75>(code,
                                                                           name,
-																		  log_q)
+                                                                          log_q)
   {
   }
 };
@@ -514,7 +513,7 @@ public:
                           const char* name)
     : FuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>(code,
                                                                            name,
-																		   data::LOG_0_8)
+                                                                           data::LOG_0_8)
   {
   }
   /**
@@ -525,10 +524,8 @@ public:
   [[nodiscard]] double surfaceFuelConsumption(
     const SpreadInfo& spread) const noexcept override
   {
-    return this->ratioConifer() * FuelMixed<
-        110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>::
-      surfaceFuelConsumption(spread)
-      + this->ratioDeciduous() * SURFACE_FUEL_CONSUMPTION_D1(spread.bui().asDouble());
+    return this->ratioConifer() * FuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>::surfaceFuelConsumption(spread)
+         + this->ratioDeciduous() * SURFACE_FUEL_CONSUMPTION_D1(spread.bui().asDouble());
   }
 };
 /**
@@ -550,8 +547,8 @@ static util::LookupTable<calculate_length_to_breadth_grass> LENGTH_TO_BREADTH_GR
 [[nodiscard]] static double calculate_base_multiplier_curing(const double curing) noexcept
 {
   return (curing >= 58.8)
-           ? (0.176 + 0.02 * (curing - 58.8))
-           : (0.005 * expm1(0.061 * curing));
+         ? (0.176 + 0.02 * (curing - 58.8))
+         : (0.005 * expm1(0.061 * curing));
 }
 /**
  * \brief Base multiplier for rate of spread [GLC-X-10 eq 35a/35b]
@@ -566,8 +563,7 @@ static util::LookupTable<&calculate_base_multiplier_curing> BASE_MULTIPLIER_CURI
  */
 template <int A, int B, int C>
 class FuelGrass
-  : public StandardFuel<A, B, C, 1, 0, 0, 0, 0,
-                        static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>
+  : public StandardFuel<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>
 {
 public:
   FuelGrass() = delete;
@@ -585,14 +581,13 @@ public:
   constexpr FuelGrass(const FuelCodeSize& code,
                       const char* name,
                       const LogValue log_q)
-  // HACK: grass assumes no duff (total duff depth == ffmc depth => dmc depth is 0)
-    : StandardFuel<A, B, C, 1, 0, 0, 0, 0,
-                   static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>(code,
-                                                             name,
-															 false,
-															 log_q,
-															 &Duff::PeatMuck,
-															 &Duff::PeatMuck)
+    // HACK: grass assumes no duff (total duff depth == ffmc depth => dmc depth is 0)
+    : StandardFuel<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>(code,
+                                                                                     name,
+                                                                                     false,
+                                                                                     log_q,
+                                                                                     &Duff::PeatMuck,
+                                                                                     &Duff::PeatMuck)
   {
   }
   /**
@@ -614,9 +609,9 @@ public:
                                              const wx::FwiWeather& wx) noexcept
   {
     const double curing = wx.dc().asDouble() > 500
-                            ?  // we're in drought conditions
+                          ?   // we're in drought conditions
                             100
-                            : calculate_grass_curing(nd);
+                          : calculate_grass_curing(nd);
     return BASE_MULTIPLIER_CURING(curing);
   }
   /**
@@ -986,7 +981,7 @@ public:
   constexpr FuelM3(const FuelCodeSize& code, const char* name)
     : FuelMixedDead<120, 572, 140, 50, 10, PercentDeadFir>(code,
                                                            name,
-														   data::LOG_0_8)
+                                                           data::LOG_0_8)
   {
   }
 };
@@ -1012,7 +1007,7 @@ public:
   constexpr FuelM4(const FuelCodeSize& code, const char* name)
     : FuelMixedDead<100, 404, 148, 50, 2, PercentDeadFir>(code,
                                                           name,
-														  data::LOG_0_8)
+                                                          data::LOG_0_8)
   {
   }
 };
@@ -1071,8 +1066,7 @@ public:
  * \tparam WfcB Woody Fuel Consumption parameter b * 10000 [ST-X-3 eq 20/22/24]
  * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
  */
-template <int A, int B, int C, int Bui0, int FfcA, int FfcB, int WfcA, int WfcB, int
-          BulkDensity>
+template <int A, int B, int C, int Bui0, int FfcA, int FfcB, int WfcA, int WfcB, int BulkDensity>
 class FuelSlash : public FuelConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>
 {
 public:
@@ -1097,9 +1091,9 @@ public:
                       const Duff* duff_dmc)
     : FuelConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>(code,
                                                             name,
-															log_q,
-															duff_ffmc,
-															duff_dmc)
+                                                            log_q,
+                                                            duff_ffmc,
+                                                            duff_dmc)
   {
   }
   /**
@@ -1111,29 +1105,41 @@ public:
     const SpreadInfo& spread) const noexcept override
   {
     return ffcA() * (1.0 - exp(ffcB() * spread.bui().asDouble()))
-      + wfcA() * (1.0 - exp(wfcB() * spread.bui().asDouble()));
+         + wfcA() * (1.0 - exp(wfcB() * spread.bui().asDouble()));
   }
 private:
   /**
    * \brief Forest Floor Consumption parameter a [ST-X-3 eq 19/21/23]
    * \return Forest Floor Consumption parameter a [ST-X-3 eq 19/21/23]
    */
-  [[nodiscard]] static constexpr double ffcA() { return FfcA; }
+  [[nodiscard]] static constexpr double ffcA()
+  {
+    return FfcA;
+  }
   /**
    * \brief Forest Floor Consumption parameter b [ST-X-3 eq 19/21/23]
    * \return Forest Floor Consumption parameter b [ST-X-3 eq 19/21/23]
    */
-  [[nodiscard]] static constexpr double ffcB() { return FfcB / 10000.0; }
+  [[nodiscard]] static constexpr double ffcB()
+  {
+    return FfcB / 10000.0;
+  }
   /**
    * \brief Woody Fuel Consumption parameter a [ST-X-3 eq 20/22/24]
    * \return Woody Fuel Consumption parameter a [ST-X-3 eq 20/22/24]
    */
-  [[nodiscard]] static constexpr double wfcA() { return WfcA; }
+  [[nodiscard]] static constexpr double wfcA()
+  {
+    return WfcA;
+  }
   /**
    * \brief Woody Fuel Consumption parameter b [ST-X-3 eq 20/22/24]
    * \return Woody Fuel Consumption parameter b [ST-X-3 eq 20/22/24]
    */
-  [[nodiscard]] static constexpr double wfcB() { return WfcB / 10000.0; }
+  [[nodiscard]] static constexpr double wfcB()
+  {
+    return WfcB / 10000.0;
+  }
 };
 namespace fbp
 {
@@ -1218,12 +1224,12 @@ class FuelVariable;
 template <class FuelSpring, class FuelSummer>
 [[nodiscard]] const FuelType& find_fuel_by_season(const int nd,
                                                   const FuelVariable<
-                                                    FuelSpring, FuelSummer>& fuel)
-noexcept
+                                                    FuelSpring,
+                                                    FuelSummer>& fuel) noexcept
 {
   return calculate_is_green(nd)
-           ? fuel.spring()
-           : fuel.summer();
+         ? fuel.spring()
+         : fuel.summer();
 }
 template <class FuelSpring, class FuelSummer>
 [[nodiscard]] double compare_by_season(const FuelVariable<FuelSpring, FuelSummer>& fuel,
@@ -1233,8 +1239,8 @@ template <class FuelSpring, class FuelSummer>
   // HACK: use a function so that DEBUG section doesn't get out of sync
   const auto for_spring = fct(fuel.spring());
 #ifndef NDEBUG
-			const auto for_summer = fct(fuel.summer());
-			logging::check_fatal(for_spring != for_summer, "Expected spring and summer cfb to be identical");
+  const auto for_summer = fct(fuel.summer());
+  logging::check_fatal(for_spring != for_summer, "Expected spring and summer cfb to be identical");
 #endif
   return for_spring;
 }
@@ -1318,7 +1324,7 @@ public:
    */
   [[nodiscard]] double calculateIsf(const SpreadInfo& spread,
                                     const double isi) const
-  override
+    override
   {
     return find_fuel_by_season(spread.nd(), *this).calculateIsf(spread, isi);
   }
@@ -1396,7 +1402,7 @@ public:
    * \return Chance of survival (% / 100)
    */
   [[nodiscard]] double survivalProbability(const wx::FwiWeather& wx) const noexcept
-  override
+    override
   {
     return spring().survivalProbability(wx);
   }
@@ -1404,12 +1410,18 @@ public:
    * \brief Fuel to use before green-up
    * \return Fuel to use before green-up
    */
-  [[nodiscard]] constexpr const FuelType& spring() const { return *spring_; }
+  [[nodiscard]] constexpr const FuelType& spring() const
+  {
+    return *spring_;
+  }
   /**
    * \brief Fuel to use after green-up
    * \return Fuel to use after green-up
    */
-  [[nodiscard]] constexpr const FuelType& summer() const { return *summer_; }
+  [[nodiscard]] constexpr const FuelType& summer() const
+  {
+    return *summer_;
+  }
 private:
   /**
    * \brief Fuel to use before green-up

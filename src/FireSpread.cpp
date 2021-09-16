@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -45,11 +45,9 @@ int calculate_nd_for_point(const int elevation, const topo::Point& point) noexce
 {
   return static_cast<int>(truncl(
     elevation < 0
-      ? 0.5 + 151.0 * point.latitude() /
-      (23.4 * exp(-0.0360 * (150 - point.longitude())) + 46.0)
-      : 0.5 + 142.1 * point.latitude() /
-      (33.7 * exp(-0.0351 * (150 - point.longitude())) + 43.0)
-      + 0.0172 * elevation));
+      ? 0.5 + 151.0 * point.latitude() / (23.4 * exp(-0.0360 * (150 - point.longitude())) + 46.0)
+      : 0.5 + 142.1 * point.latitude() / (33.7 * exp(-0.0351 * (150 - point.longitude())) + 43.0)
+          + 0.0172 * elevation));
 }
 static double calculate_standard_back_isi_wsv(const double v) noexcept
 {
@@ -59,8 +57,8 @@ static const util::LookupTable<&calculate_standard_back_isi_wsv> STANDARD_BACK_I
 static double calculate_standard_wsv(const double v) noexcept
 {
   return v < 40.0
-           ? exp(0.05039 * v)
-           : 12.0 * (1.0 - exp(-0.0818 * (v - 28)));
+         ? exp(0.05039 * v)
+         : 12.0 * (1.0 - exp(-0.0818 * (v - 28)));
 }
 static const util::LookupTable<&calculate_standard_wsv> STANDARD_WSV{};
 SpreadInfo::SpreadInfo(const Scenario& scenario,
@@ -90,8 +88,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     auto wse = 0.0 == isf1 ? 0 : log(isf1 / isz) / 0.05039;
     if (wse > 40)
     {
-      wse = 28.0 - log(
-        1.0 - min(0.999 * 2.496 * ffmc_effect, isf1) / (2.496 * ffmc_effect)) / 0.0818;
+      wse = 28.0 - log(1.0 - min(0.999 * 2.496 * ffmc_effect, isf1) / (2.496 * ffmc_effect)) / 0.0818;
     }
     const auto heading = util::to_heading(
       util::to_radians(static_cast<double>(slope_azimuth)));
@@ -109,7 +106,8 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   const auto bui_eff = fuel->buiEffect(bui().asDouble());
   head_ros_ = fuel->calculateRos(nd,
                                  *weather,
-                                 isi) * bui_eff;
+                                 isi)
+            * bui_eff;
   const auto min_ros = Settings::minimumRos();
   if (min_ros > head_ros_)
   {
@@ -124,7 +122,8 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   const auto back_isi = ffmc_effect * STANDARD_BACK_ISI_WSV(wsv);
   auto back_ros = fuel->calculateRos(nd,
                                      *weather,
-                                     back_isi) * bui_eff;
+                                     back_isi)
+                * bui_eff;
   if (is_crown)
   {
     head_ros_ = fuel->finalRos(*this,
@@ -140,7 +139,10 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   const auto b_semi = has_no_slope ? 0 : cos(atan(percentSlope() / 100.0));
   const auto slope_radians = util::to_radians(slope_azimuth);
   // do check once and make function just return 1.0 if no slope
-  const auto no_correction = [](const double) noexcept { return 1.0; };
+  const auto no_correction = [](const double) noexcept
+  {
+    return 1.0;
+  };
   const auto do_correction = [b_semi, slope_radians](const double theta) noexcept
   {
     // never gets called if isInvalid() so don't check
@@ -152,8 +154,8 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     return sqrt(x * x + y * y);
   };
   const auto correction_factor = has_no_slope
-                                   ? std::function<double(double)>(no_correction)
-                                   : std::function<double(double)>(do_correction);
+                                 ? std::function<double(double)>(no_correction)
+                                 : std::function<double(double)>(do_correction);
   const auto cell_size = scenario.cellSize();
   const auto add_offset = [this, cell_size, min_ros](const double direction,
                                                      const double ros)
@@ -173,8 +175,8 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   double ros{};
   // HACK: set ros in boolean if we get that far so we don't have to repeat the if body
   if (head_ros_ < threshold
-    || sfc < COMPARE_LIMIT
-    || !add_offset(raz, ros = (head_ros_ * correction_factor(raz))))
+      || sfc < COMPARE_LIMIT
+      || !add_offset(raz, ros = (head_ros_ * correction_factor(raz))))
   {
     // mark as invalid
     head_ros_ = -1;
@@ -204,14 +206,12 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
     // 1.0 = cos^2 + sin^2
     const auto sin_t_sq = 1.0 - cos_t_sq;
-    return abs((a * ((flank_ros * cos_t *
-        sqrt(f_sq_cos_t_sq + a_sq_sub_c_sq * sin_t_sq) - ac * sin_t_sq)
-      / (f_sq_cos_t_sq + a_sq * sin_t_sq)) + c) / cos_t);
+    return abs((a * ((flank_ros * cos_t * sqrt(f_sq_cos_t_sq + a_sq_sub_c_sq * sin_t_sq) - ac * sin_t_sq) / (f_sq_cos_t_sq + a_sq * sin_t_sq)) + c) / cos_t);
   };
   const auto add_offsets =
     [&correction_factor, &add_offset, raz, threshold](
-    const double angle_radians,
-    const double ros_flat)
+      const double angle_radians,
+      const double ros_flat)
   {
     if (ros_flat < threshold)
     {
@@ -232,12 +232,12 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   };
   // HACK: rely on && to stop when first ros is too low
   if (add_offsets_calc_ros(util::to_radians(10))
-    && add_offsets_calc_ros(util::to_radians(20))
-    && add_offsets_calc_ros(util::to_radians(30))
-    && add_offsets_calc_ros(util::to_radians(60))
-    && add_offsets(util::to_radians(90.0), flank_ros * sqrt(a_sq_sub_c_sq) / a)
-    && add_offsets_calc_ros(util::to_radians(120))
-    && add_offsets_calc_ros(util::to_radians(150)))
+      && add_offsets_calc_ros(util::to_radians(20))
+      && add_offsets_calc_ros(util::to_radians(30))
+      && add_offsets_calc_ros(util::to_radians(60))
+      && add_offsets(util::to_radians(90.0), flank_ros * sqrt(a_sq_sub_c_sq) / a)
+      && add_offsets_calc_ros(util::to_radians(120))
+      && add_offsets_calc_ros(util::to_radians(150)))
   {
     //only use back ros if every other angle is spreading since this should be lowest
     // 180

@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -122,12 +122,18 @@ public:
    * \brief Direction as degrees, where 0 is North and values increase clockwise
    * \return Direction as degrees, where 0 is North and values increase clockwise
    */
-  [[nodiscard]] constexpr double asDegrees() const { return asDouble(); }
+  [[nodiscard]] constexpr double asDegrees() const
+  {
+    return asDouble();
+  }
   /**
    * \brief Heading (opposite of this direction)
    * \return Heading (opposite of this direction)
    */
-  [[nodiscard]] constexpr double heading() const { return util::to_heading(asRadians()); }
+  [[nodiscard]] constexpr double heading() const
+  {
+    return util::to_heading(asRadians());
+  }
   /**
    * \brief Direction of 0 (North)
    */
@@ -191,7 +197,10 @@ public:
    * \brief Speed of wind (km/h)
    * \return Speed of wind (km/h)
    */
-  [[nodiscard]] constexpr const Speed& speed() const noexcept { return speed_; }
+  [[nodiscard]] constexpr const Speed& speed() const noexcept
+  {
+    return speed_;
+  }
   /**
    * \brief Direction wind is coming from.
    * \return Direction wind is coming from.
@@ -204,17 +213,26 @@ public:
    * \brief Direction wind is going towards
    * \return Direction wind is going towards
    */
-  [[nodiscard]] constexpr double heading() const noexcept { return direction_.heading(); }
+  [[nodiscard]] constexpr double heading() const noexcept
+  {
+    return direction_.heading();
+  }
   /**
    * \brief X component of wind vector (km/h)
    * \return X component of wind vector (km/h)
    */
-  [[nodiscard]] constexpr double wsvX() const noexcept { return wsv_x_; }
+  [[nodiscard]] constexpr double wsvX() const noexcept
+  {
+    return wsv_x_;
+  }
   /**
    * \brief Y component of wind vector (km/h)
    * \return Y component of wind vector (km/h)
    */
-  [[nodiscard]] constexpr double wsvY() const noexcept { return wsv_y_; }
+  [[nodiscard]] constexpr double wsvY() const noexcept
+  {
+    return wsv_y_;
+  }
   /**
    * \brief Not equal to operator
    * \param rhs Wind to compare to
@@ -336,17 +354,26 @@ public:
    * \brief Temperature (Celcius)
    * \return Temperature (Celcius)
    */
-  [[nodiscard]] constexpr const Temperature& tmp() const noexcept { return tmp_; }
+  [[nodiscard]] constexpr const Temperature& tmp() const noexcept
+  {
+    return tmp_;
+  }
   /**
    * \brief Relative Humidity (%)
    * \return Relative Humidity (%)
    */
-  [[nodiscard]] constexpr const RelativeHumidity& rh() const noexcept { return rh_; }
+  [[nodiscard]] constexpr const RelativeHumidity& rh() const noexcept
+  {
+    return rh_;
+  }
   /**
    * \brief Wind (km/h)
    * \return Wind (km/h)
    */
-  [[nodiscard]] constexpr const Wind& wind() const noexcept { return wind_; }
+  [[nodiscard]] constexpr const Wind& wind() const noexcept
+  {
+    return wind_;
+  }
   /**
    * \brief Accumulated Precipitation (mm)
    * \return Accumulated Precipitation (mm)

@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -31,10 +31,10 @@ void read_directory(const string& name, vector<string>* v, const string& match)
   string full_match = ".*/" + match;
   logging::debug(("Matching '" + full_match + "'").c_str());
   static const std::regex re(full_match, std::regex_constants::icase);
-  for (const auto &entry : fs::directory_iterator(name))
+  for (const auto& entry : fs::directory_iterator(name))
   {
     logging::debug(("Checking if file: " + entry.path().string()).c_str());
-	  if (fs::is_regular_file(entry))
+    if (fs::is_regular_file(entry))
     {
       logging::verbose(("Checking regex match: " + entry.path().string()).c_str());
       if (std::regex_match(entry.path().string(), re))
@@ -52,22 +52,26 @@ vector<string> find_rasters(const string& dir, const int year)
 {
   const auto by_year = dir + "/" + to_string(year) + "/";
   const auto raster_root = directory_exists(by_year.c_str())
-                             ? by_year
-                             : dir + "/default/";
+                           ? by_year
+                           : dir + "/default/";
   vector<string> results{};
   read_directory(raster_root, &results, "fuel.*\\.tif");
   return results;
 }
 bool directory_exists(const char* dir) noexcept
 {
-  struct stat dir_info{};
+  struct stat dir_info
+  {
+  };
   return stat(dir, &dir_info) == 0 && dir_info.st_mode & S_IFDIR;
 }
 void make_directory(const char* dir) noexcept
 {
   if (-1 == mkdir(dir, 0777) && errno != EEXIST)
   {
-    struct stat dir_info{};
+    struct stat dir_info
+    {
+    };
     if (stat(dir, &dir_info) != 0)
     {
       logging::fatal("Cannot create directory %s", dir);

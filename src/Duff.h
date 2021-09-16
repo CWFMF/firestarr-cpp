@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -126,10 +126,10 @@ class DuffType final
 {
 public:
   DuffType() = default;
-#pragma warning (push)
-#pragma warning (disable: 26443)
+#pragma warning(push)
+#pragma warning(disable: 26443)
   virtual ~DuffType() = default;
-#pragma warning (pop)
+#pragma warning(pop)
   DuffType(const DuffType& rhs) noexcept = delete;
   DuffType(DuffType&& rhs) noexcept = delete;
   DuffType& operator=(const DuffType& rhs) noexcept = delete;
@@ -147,32 +147,50 @@ public:
    * \brief Inorganic content, percentage oven dry weight
    * \return Inorganic content, percentage oven dry weight
    */
-  [[nodiscard]] static constexpr double ash() { return Ash / 10.0; }
+  [[nodiscard]] static constexpr double ash()
+  {
+    return Ash / 10.0;
+  }
   /**
    * \brief Organic bulk density (kg/m^3)
    * \return Organic bulk density (kg/m^3)
    */
-  [[nodiscard]] static constexpr double rho() { return Rho / 10.0; }
+  [[nodiscard]] static constexpr double rho()
+  {
+    return Rho / 10.0;
+  }
   /**
    * \brief B_0 [table 2]
    * \return B_0 [table 2]
    */
-  [[nodiscard]] static constexpr double b0() { return B0 / 10000.0; }
+  [[nodiscard]] static constexpr double b0()
+  {
+    return B0 / 10000.0;
+  }
   /**
    * \brief B_1 [table 2]
    * \return B_1 [table 2]
    */
-  [[nodiscard]] static constexpr double b1() { return B1 / 10000.0; }
+  [[nodiscard]] static constexpr double b1()
+  {
+    return B1 / 10000.0;
+  }
   /**
    * \brief B_2 [table 2]
    * \return B_2 [table 2]
    */
-  [[nodiscard]] static constexpr double b2() { return B2 / 10000.0; }
+  [[nodiscard]] static constexpr double b2()
+  {
+    return B2 / 10000.0;
+  }
   /**
    * \brief B_3 [table 2]
    * \return B_3 [table 2]
    */
-  [[nodiscard]] static constexpr double b3() { return B3 / 10000.0; }
+  [[nodiscard]] static constexpr double b3()
+  {
+    return B3 / 10000.0;
+  }
 private:
   /**
    * \brief Constant part of ignition probability equation [eq Ig-1]

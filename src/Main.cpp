@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 /*! \mainpage FireSTARR Documentation
@@ -34,32 +34,36 @@ using firestarr::logging::Log;
 using firestarr::sim::Settings;
 void show_usage_and_exit(const char* name)
 {
-  cout << "Usage:" << name <<
-    " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]" << endl << endl
-    << " Run simulations and save output in the specified directory" << endl << endl
-    << "Usage: " << name <<
-    " <output_dir> <yyyy-mm-dd> <lat> <lon> <numDays> [-v | -q | -f]"
-    << endl << endl
-    << " Save WeatherSHIELD output for the give number of days in the specified directory"
-    << endl << endl
-    << "Usage: " << name << " test <output_dir> <numHours>"
-    << "[slope [aspect [wind_speed [wind_direction]]]]" << endl << endl
-    << " Run test cases and save output in the specified directory" << endl << endl
-    << " Input Options" << endl
-    << "   -h                        Show help" << endl
-    << "   -v                        Increase output level" << endl
-    << "   -q                        Decrease output level" << endl
-    << "   -a                        Run using actuals for weather" << endl
-    << "   -i                        Save intensity maps for simulations" << endl
-    << "   -s                        Run in synchronous mode" << endl
-    << "   -f                        Full export of all weather" << endl
-    << "   --wx                      Use input weather file instead of querying database" << endl
-    << "   --perim                   Start from perimeter" << endl
-    << "   --size                    Start from size" << endl
-    << "   --ffmc                    Override startup Fine Fuel Moisture Code" << endl
-    << "   --dmc                     Override startup Duff Moisture Code" << endl
-    << "   --dc                      Override startup Drought Code" << endl
-    << "   --apcp_0800               Override startup 0800 precipitation" << endl;
+  cout << "Usage:" << name << " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]" << endl
+       << endl
+       << " Run simulations and save output in the specified directory" << endl
+       << endl
+       << "Usage: " << name << " <output_dir> <yyyy-mm-dd> <lat> <lon> <numDays> [-v | -q | -f]"
+       << endl
+       << endl
+       << " Save WeatherSHIELD output for the give number of days in the specified directory"
+       << endl
+       << endl
+       << "Usage: " << name << " test <output_dir> <numHours>"
+       << "[slope [aspect [wind_speed [wind_direction]]]]" << endl
+       << endl
+       << " Run test cases and save output in the specified directory" << endl
+       << endl
+       << " Input Options" << endl
+       << "   -h                        Show help" << endl
+       << "   -v                        Increase output level" << endl
+       << "   -q                        Decrease output level" << endl
+       << "   -a                        Run using actuals for weather" << endl
+       << "   -i                        Save intensity maps for simulations" << endl
+       << "   -s                        Run in synchronous mode" << endl
+       << "   -f                        Full export of all weather" << endl
+       << "   --wx                      Use input weather file instead of querying database" << endl
+       << "   --perim                   Start from perimeter" << endl
+       << "   --size                    Start from size" << endl
+       << "   --ffmc                    Override startup Fine Fuel Moisture Code" << endl
+       << "   --dmc                     Override startup Duff Moisture Code" << endl
+       << "   --dc                      Override startup Drought Code" << endl
+       << "   --apcp_0800               Override startup 0800 precipitation" << endl;
   exit(-1);
 }
 const char* get_arg(const char* const name,
@@ -376,16 +380,15 @@ int main(const int argc, const char* const argv[])
       if (!wx_file_name.empty())
       {
         // if weather file is specified then we need startup indices
-          if (nullptr == ffmc ||
-              nullptr == dmc ||
-              nullptr == dc ||
-              nullptr == apcp_0800)
-          {
-              cout << "Must specify startup indices if specifying weather input file\n";
-              show_usage_and_exit(name);
-          }
+        if (nullptr == ffmc || nullptr == dmc || nullptr == dc || nullptr == apcp_0800)
+        {
+          cout << "Must specify startup indices if specifying weather input file\n";
+          show_usage_and_exit(name);
+        }
       }
-      struct stat info{};
+      struct stat info
+      {
+      };
       if (stat(output_directory.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR))
       {
         firestarr::util::make_directory_recursive(output_directory.c_str());

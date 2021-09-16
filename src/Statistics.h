@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -129,8 +129,7 @@ static constexpr array<double, 100> T_VALUES{
   1.290,
   1.290,
   1.290,
-  1.290
-};
+  1.290};
 /**
  * \brief Provides statistics calculation for vectors of values.
  */
@@ -141,37 +140,58 @@ public:
    * \brief Minimum value
    * \return Minimum value
    */
-  [[nodiscard]] double min() const noexcept { return percentiles_[0]; }
+  [[nodiscard]] double min() const noexcept
+  {
+    return percentiles_[0];
+  }
   /**
    * \brief Maximum value
    * \return Maximum value
    */
-  [[nodiscard]] double max() const noexcept { return percentiles_[100]; }
+  [[nodiscard]] double max() const noexcept
+  {
+    return percentiles_[100];
+  }
   /**
    * \brief Median value
    * \return Median value
    */
-  [[nodiscard]] double median() const noexcept { return percentiles_[50]; }
+  [[nodiscard]] double median() const noexcept
+  {
+    return percentiles_[50];
+  }
   /**
    * \brief Mean (average) value
    * \return Mean (average) value
    */
-  [[nodiscard]] double mean() const noexcept { return mean_; }
+  [[nodiscard]] double mean() const noexcept
+  {
+    return mean_;
+  }
   /**
    * \brief Standard Deviation
    * \return Standard Deviation
    */
-  [[nodiscard]] double standardDeviation() const noexcept { return standard_deviation_; }
+  [[nodiscard]] double standardDeviation() const noexcept
+  {
+    return standard_deviation_;
+  }
   /**
    * \brief Sample Variance
    * \return Sample Variance
    */
-  [[nodiscard]] double sampleVariance() const noexcept { return sample_variance_; }
+  [[nodiscard]] double sampleVariance() const noexcept
+  {
+    return sample_variance_;
+  }
   /**
    * \brief Number of data points in the set
    * \return Number of data points in the set
    */
-  [[nodiscard]] size_t n() const noexcept { return n_; }
+  [[nodiscard]] size_t n() const noexcept
+  {
+    return n_;
+  }
   /**
    * \brief Value for given percentile
    * \param i Percentile to retrieve value for
@@ -188,27 +208,42 @@ public:
    * \brief 80% Confidence Interval
    * \return 80% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval80() const { return confidenceInterval(1.28); }
+  [[nodiscard]] double confidenceInterval80() const
+  {
+    return confidenceInterval(1.28);
+  }
   /**
    * \brief 90% Confidence Interval
    * \return 90% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval90() const { return confidenceInterval(1.645); }
+  [[nodiscard]] double confidenceInterval90() const
+  {
+    return confidenceInterval(1.645);
+  }
   /**
    * \brief 95% Confidence Interval
    * \return 95% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval95() const { return confidenceInterval(1.96); }
+  [[nodiscard]] double confidenceInterval95() const
+  {
+    return confidenceInterval(1.96);
+  }
   /**
    * \brief 98% Confidence Interval
    * \return 98% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval98() const { return confidenceInterval(2.33); }
+  [[nodiscard]] double confidenceInterval98() const
+  {
+    return confidenceInterval(2.33);
+  }
   /**
    * \brief 99% Confidence Interval
    * \return 99% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval99() const { return confidenceInterval(2.58); }
+  [[nodiscard]] double confidenceInterval99() const
+  {
+    return confidenceInterval(2.58);
+  }
   /**
    * \brief Calculates statistics on a vector of values
    * \param values Values to use for calculation
@@ -233,8 +268,7 @@ public:
     {
       const auto pos = std::min(n_ - 1,
                                 static_cast<size_t>(truncl(
-                                  (static_cast<double>(i) / (percentiles_.size() - 1)) *
-                                  n_)));
+                                  (static_cast<double>(i) / (percentiles_.size() - 1)) * n_)));
       // note("For %d values %dth percentile is at %d", n_, i, pos);
       percentiles_[i] = values[pos];
     }
@@ -267,7 +301,7 @@ public:
   [[nodiscard]] double studentsT() const noexcept
   {
     const auto result = T_VALUES[std::min(T_VALUES.size(), n()) - 1]
-      * sqrt(sampleVariance() / n()) / abs(mean());
+                      * sqrt(sampleVariance() / n()) / abs(mean());
     // HACK: use n_ instead of i in sqrt()
     // cout << n() << " " << mean() << " " << sampleVariance() << " " << result << endl;
     return result;
@@ -299,7 +333,7 @@ public:
     const std::function<double(size_t)> fct = [this](const size_t i) noexcept
     {
       return T_VALUES[std::min(T_VALUES.size(), i) - 1]
-        * sqrt(sampleVariance() / i) / abs(mean());
+           * sqrt(sampleVariance() / i) / abs(mean());
     };
     return binary_find_checked(cur_runs, cur_runs + limit, re, fct) - cur_runs;
   }

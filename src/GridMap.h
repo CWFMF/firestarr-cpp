@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -110,8 +110,7 @@ public:
   {
     constexpr auto max_hash = numeric_limits<HashSize>::max();
     // HACK: we don't want overflow errors but we want to play with the hash size
-    const auto max_columns = static_cast<double>(max_hash) /
-      static_cast<double>(this->rows());
+    const auto max_columns = static_cast<double>(max_hash) / static_cast<double>(this->rows());
     logging::check_fatal(this->columns() >= max_columns,
                          "Grid is too big for cells to be hashed - "
                          "recompile with a larger HashSize value");
@@ -210,7 +209,10 @@ public:
    */
   void saveToAsciiFile(const string& dir, const string& base_name) const
   {
-    saveToAsciiFile<V>(dir, base_name, [](V value) { return value; });
+    saveToAsciiFile<V>(dir, base_name, [](V value)
+                       {
+                         return value;
+                       });
   }
   /**
    * \brief Save GridMap contents to .asc file
@@ -251,8 +253,7 @@ public:
     logging::verbose("Upper right corner is (%d, %d)", max_column, max_row);
     const double xll = this->xllcorner() + min_column * this->cellSize();
     // offset is different for y since it's flipped
-    const double yll = this->yllcorner() + (min_row) * this->
-      cellSize();
+    const double yll = this->yllcorner() + (min_row) * this->cellSize();
     logging::verbose("Lower left corner is (%f, %f)", xll, yll);
     // HACK: make sure it's always at least 1
     const auto num_rows = static_cast<double>(max_row) - min_row + 1;
@@ -278,7 +279,8 @@ public:
         //       prevents char type being output as characters
         out << +((this->data.find(idx) != this->data.end())
                    ? convert(this->data.at(idx))
-                   : this->noData()) << " ";
+                   : this->noData())
+            << " ";
       }
       out << "\n";
     }
@@ -297,7 +299,10 @@ public:
   {
     saveToAsciiFile<double>(dir,
                             base_name,
-                            [divisor](V value) { return value / divisor; });
+                            [divisor](V value)
+                            {
+                              return value / divisor;
+                            });
   }
   /**
    * \brief Calculate area for cells that have a value (ha)
@@ -330,7 +335,7 @@ public:
           {
             const Idx col_index = loc.column() + c;
             if (!(col_index < 0 || col_index >= this->columns())
-              && this->data.find(Location(row_index, col_index)) == this->data.end())
+                && this->data.find(Location(row_index, col_index)) == this->data.end())
             {
               on_edge = true;
             }
@@ -356,7 +361,10 @@ public:
     std::transform(this->data.begin(),
                    this->data.end(),
                    result.begin(),
-                   [](const pair<const Location, const T>& kv) { return kv.first; });
+                   [](const pair<const Location, const T>& kv)
+                   {
+                     return kv.first;
+                   });
     return result;
   }
 };

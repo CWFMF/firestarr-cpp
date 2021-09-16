@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -79,47 +79,74 @@ public:
    * \brief Cell size used for GridBase.
    * \return Cell height and width in meters.
    */
-  [[nodiscard]] constexpr double cellSize() const noexcept { return cell_size_; }
+  [[nodiscard]] constexpr double cellSize() const noexcept
+  {
+    return cell_size_;
+  }
   /**
    * \brief Number of rows in the GridBase.
    * \return Number of rows in the GridBase.
    */
-  [[nodiscard]] constexpr Idx rows() const noexcept { return rows_; }
+  [[nodiscard]] constexpr Idx rows() const noexcept
+  {
+    return rows_;
+  }
   /**
    * \brief Number of columns in the GridBase.
    * \return Number of columns in the GridBase.
    */
-  [[nodiscard]] constexpr Idx columns() const noexcept { return columns_; }
+  [[nodiscard]] constexpr Idx columns() const noexcept
+  {
+    return columns_;
+  }
   /**
    * \brief Value used for grid locations that have no data.
    * \return Value used for grid locations that have no data.
    */
-  [[nodiscard]] constexpr int nodata() const noexcept { return nodata_; }
+  [[nodiscard]] constexpr int nodata() const noexcept
+  {
+    return nodata_;
+  }
   /**
    * \brief Lower left corner X coordinate in meters.
    * \return Lower left corner X coordinate in meters.
    */
-  [[nodiscard]] constexpr double xllcorner() const noexcept { return xllcorner_; }
+  [[nodiscard]] constexpr double xllcorner() const noexcept
+  {
+    return xllcorner_;
+  }
   /**
    * \brief Lower left corner Y coordinate in meters.
    * \return Lower left corner Y coordinate in meters.
    */
-  [[nodiscard]] constexpr double yllcorner() const noexcept { return yllcorner_; }
+  [[nodiscard]] constexpr double yllcorner() const noexcept
+  {
+    return yllcorner_;
+  }
   /**
    * \brief Proj4 string defining coordinate system for this grid. Must be a UTM projection.
    * \return Proj4 string defining coordinate system for this grid.
    */
-  [[nodiscard]] constexpr const string& proj4() const noexcept { return proj4_; }
+  [[nodiscard]] constexpr const string& proj4() const noexcept
+  {
+    return proj4_;
+  }
   /**
    * \brief Central meridian of UTM zone for this grid.
    * \return Central meridian of UTM zone for this grid.
    */
-  [[nodiscard]] constexpr double meridian() const noexcept { return meridian_; }
+  [[nodiscard]] constexpr double meridian() const noexcept
+  {
+    return meridian_;
+  }
   /**
    * \brief UTM zone represented by proj4 string for this grid.
    * \return UTM zone represented by proj4 string for this grid.
    */
-  [[nodiscard]] constexpr double zone() const noexcept { return zone_; }
+  [[nodiscard]] constexpr double zone() const noexcept
+  {
+    return zone_;
+  }
   /**
    * \brief Constructor
    * \param cell_size Cell width and height (m)
@@ -208,7 +235,10 @@ public:
    * \brief Value representing no data
    * \return Value representing no data
    */
-  constexpr T noData() const noexcept { return no_data_; }
+  constexpr T noData() const noexcept
+  {
+    return no_data_;
+  }
   // NOTE: only use this for simple types because it's returning by value
   /**
    * \brief Value for grid at given Location.
@@ -271,14 +301,14 @@ protected:
   {
   }
 private:
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Value to use for representing no data at a Location.
    */
   T no_data_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 /**
  * \brief A Grid that defines the data structure used for storing values.
  * \tparam T Type of data after conversion from initialization type.
@@ -314,13 +344,13 @@ public:
            D&& data)
     : Grid<T, V>(cell_size,
                  rows,
-				 columns,
-				 no_data,
-				 nodata,
-				 xllcorner,
-				 yllcorner,
-				 std::forward<string>(proj4)),
-				 data(std::forward<D>(data))
+                 columns,
+                 no_data,
+                 nodata,
+                 xllcorner,
+                 yllcorner,
+                 std::forward<string>(proj4)),
+      data(std::forward<D>(data))
   {
   }
   ~GridData() = default;
@@ -448,8 +478,7 @@ template <typename T>
       const auto degrees = static_cast<int>(6.0 * (zone - 15.0) - 93);
       // HACK: assume utm zone is at start
       proj4 = string(
-        "+proj=tmerc +lat_0=0.000000000 +lon_0=" + to_string(degrees) +
-        ".000000000 +k=0.999600 +x_0=500000.000 +y_0=0.000");
+        "+proj=tmerc +lat_0=0.000000000 +lon_0=" + to_string(degrees) + ".000000000 +k=0.999600 +x_0=500000.000 +y_0=0.000");
     }
     return GridBase(cell_width,
                     static_cast<Idx>(rows),
@@ -474,8 +503,10 @@ template <class R>
   try
   {
     R result = fct(tif, gtif);
-    if (tif) XTIFFClose(tif);
-    if (gtif) GTIFFree(gtif);
+    if (tif)
+      XTIFFClose(tif);
+    if (gtif)
+      GTIFFree(gtif);
     GTIFDeaccessCSV();
     return result;
   }

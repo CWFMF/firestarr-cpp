@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -228,10 +228,10 @@ template <unsigned int N, class T>
 {
   // https://stackoverflow.com/questions/16443682/c-power-of-integer-template-meta-programming
   return N == 0
-           ? 1
-           : N % 2 == 0
-           ? pow_int<N / 2, T>(base) * pow_int<N / 2, T>(base)
-           : base * pow_int<(N - 1) / 2, T>(base) * pow_int<(N - 1) / 2, T>(base);
+         ? 1
+       : N % 2 == 0
+         ? pow_int<N / 2, T>(base) * pow_int<N / 2, T>(base)
+         : base * pow_int<(N - 1) / 2, T>(base) * pow_int<(N - 1) / 2, T>(base);
 }
 /**
  * \brief Makes a bit mask of all 1's the specified size
@@ -306,7 +306,7 @@ public:
  */
 template <typename T>
 [[nodiscard]] typename std::vector<T>::iterator
-insert_sorted(std::vector<T>* vec, T const& item)
+  insert_sorted(std::vector<T>* vec, T const& item)
 {
   return vec->insert(std::upper_bound(vec->begin(), vec->end(), item), item);
 }

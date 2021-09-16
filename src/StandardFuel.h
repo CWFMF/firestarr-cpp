@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -42,7 +42,7 @@ static constexpr double SLOPE_LIMIT_ISI = 0.01;
  * \brief Standard foliar moisture effect (FME) based on FMC [ST-X-3 eq 61]
  */
 static const util::LookupTable<&calculate_standard_foliar_moisture_fmc>
-STANDARD_FOLIAR_MOISTURE_FMC{};
+  STANDARD_FOLIAR_MOISTURE_FMC{};
 /**
  * \brief Crown fire spread rate (m/min) / Foliar Moisture Effect (RSC / (FME / FME_avg)) [ST-X-3 eq 64]
  * \param isi Initial Spread Index
@@ -58,7 +58,7 @@ STANDARD_FOLIAR_MOISTURE_FMC{};
  * \return RSC / (FME / FME_avg) [ST-X-3 eq 64]
  */
 static const util::LookupTable<&calculate_standard_foliar_moisture_isi>
-STANDARD_FOLIAR_MOISTURE_ISI{};
+  STANDARD_FOLIAR_MOISTURE_ISI{};
 /**
  * \brief Length to Breadth ratio [ST-X-3 eq 79]
  * \param ws Wind Speed (km/h)
@@ -73,8 +73,7 @@ STANDARD_FOLIAR_MOISTURE_ISI{};
  * \return Length to Breadth ratio [ST-X-3 eq 79]
  */
 static const util::LookupTable<&calculate_standard_length_to_breadth>
-STANDARD_LENGTH_TO_BREADTH
-  {};
+  STANDARD_LENGTH_TO_BREADTH{};
 /**
  * \brief A FuelBase made of a standard fuel type.
  * \tparam A Rate of spread parameter a [ST-X-3 table 6]
@@ -87,8 +86,7 @@ STANDARD_LENGTH_TO_BREADTH
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int
-          InorganicPercent, int DuffDepth>
+template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int InorganicPercent, int DuffDepth>
 class StandardFuel
   : public FuelBase<BulkDensity, InorganicPercent, DuffDepth>
 {
@@ -110,10 +108,10 @@ public:
                          const Duff* duff_dmc) noexcept
     : FuelBase<BulkDensity, InorganicPercent, DuffDepth>(code,
                                                          name,
-														 can_crown,
-														 duff_ffmc,
-														 duff_dmc),
-														 log_q_(log_q)
+                                                         can_crown,
+                                                         duff_ffmc,
+                                                         duff_dmc),
+      log_q_(log_q)
   {
   }
   /**
@@ -167,10 +165,7 @@ public:
    */
   [[nodiscard]] double limitIsf(const double mu, const double rsf) const noexcept
   {
-    return (1.0 / negB()) * log(max(SLOPE_LIMIT_ISI,
-                                    (rsf > 0.0)
-                                      ? (1.0 - pow((rsf / (mu * a())), (1.0 / c())))
-                                      : 1.0));
+    return (1.0 / negB()) * log(max(SLOPE_LIMIT_ISI, (rsf > 0.0) ? (1.0 - pow((rsf / (mu * a())), (1.0 / c()))) : 1.0));
   }
   /**
    * \brief Critical Surface Fire Intensity (CSI) [ST-X-3 eq 56]
@@ -178,7 +173,7 @@ public:
    * \return Critical Surface Fire Intensity (CSI) [ST-X-3 eq 56]
    */
   [[nodiscard]] double criticalSurfaceIntensity(const SpreadInfo& spread) const noexcept
-  override
+    override
   {
     return 0.001 * pow(cbh() * (460.0 + 25.9 * spread.foliarMoisture()), 1.5);
   }
@@ -219,22 +214,34 @@ protected:
    * \brief Average Build-up Index for the fuel type [ST-X-3 table 7]
    * \return Average Build-up Index for the fuel type [ST-X-3 table 7]
    */
-  [[nodiscard]] static constexpr double bui0() noexcept { return Bui0; }
+  [[nodiscard]] static constexpr double bui0() noexcept
+  {
+    return Bui0;
+  }
   /**
    * \brief Crown base height (m) [ST-X-3 table 8]
    * \return Crown base height (m) [ST-X-3 table 8]
    */
-  [[nodiscard]] static constexpr double cbh() noexcept { return Cbh; }
+  [[nodiscard]] static constexpr double cbh() noexcept
+  {
+    return Cbh;
+  }
   /**
    * \brief Crown fuel load (kg/m^2) [ST-X-3 table 8]
    * \return Crown fuel load (kg/m^2) [ST-X-3 table 8]
    */
-  [[nodiscard]] static constexpr double cfl() noexcept { return Cfl / 100.0; }
+  [[nodiscard]] static constexpr double cfl() noexcept
+  {
+    return Cfl / 100.0;
+  }
   /**
    * \brief Rate of spread parameter a [ST-X-3 table 6]
    * \return Rate of spread parameter a [ST-X-3 table 6]
    */
-  [[nodiscard]] static constexpr double a() noexcept { return A; }
+  [[nodiscard]] static constexpr double a() noexcept
+  {
+    return A;
+  }
   /**
    * \brief Negative of rate of spread parameter b [ST-X-3 table 6]
    * \return Negative of rate of spread parameter b [ST-X-3 table 6]
@@ -248,7 +255,10 @@ protected:
    * \brief Rate of spread parameter c [ST-X-3 table 6]
    * \return Rate of spread parameter c [ST-X-3 table 6]
    */
-  [[nodiscard]] static constexpr double c() noexcept { return C / 100.0; }
+  [[nodiscard]] static constexpr double c() noexcept
+  {
+    return C / 100.0;
+  }
   /**
    * \brief Crown fire spread rate (RSC) (m/min) [ST-X-3 eq 64]
    * \param isi Initial Spread Index

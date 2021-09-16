@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -88,27 +88,42 @@ public:
    * \brief Number of rows in grid
    * \return Number of rows in grid
    */
-  [[nodiscard]] constexpr Idx rows() const { return fuel_.rows(); }
+  [[nodiscard]] constexpr Idx rows() const
+  {
+    return fuel_.rows();
+  }
   /**
    * \brief Number of columns in grid
    * \return Number of columns in grid
    */
-  [[nodiscard]] constexpr Idx columns() const { return fuel_.columns(); }
+  [[nodiscard]] constexpr Idx columns() const
+  {
+    return fuel_.columns();
+  }
   /**
    * \brief Central meridian of UTM projection this uses
    * \return Central meridian of UTM projection this uses
    */
-  [[nodiscard]] constexpr double meridian() const { return fuel_.meridian(); }
+  [[nodiscard]] constexpr double meridian() const
+  {
+    return fuel_.meridian();
+  }
   /**
    * \brief UTM zone for projection this uses
    * \return UTM zone for projection this uses
    */
-  [[nodiscard]] constexpr double zone() const { return fuel_.zone(); }
+  [[nodiscard]] constexpr double zone() const
+  {
+    return fuel_.zone();
+  }
   /**
    * \brief UTM projection that this uses
    * \return UTM projection that this uses
    */
-  [[nodiscard]] constexpr const string& proj4() const { return fuel_.proj4(); }
+  [[nodiscard]] constexpr const string& proj4() const
+  {
+    return fuel_.proj4();
+  }
 private:
   /**
    * \brief Information about fuel raster

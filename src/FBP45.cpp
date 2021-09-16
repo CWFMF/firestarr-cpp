@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -31,7 +31,7 @@ double FuelD1::isfD1(const SpreadInfo& spread,
 {
   return limitIsf(ros_multiplier,
                   spread.slopeFactor() * (ros_multiplier * a())
-                  * pow(1.0 - exp(negB() * isi), c()));
+                    * pow(1.0 - exp(negB() * isi), c()));
 }
 /**
  * \brief Surface Fuel Consumption (SFC) (kg/m^2) [GLC-X-10 eq 9a/9b]
@@ -77,7 +77,7 @@ static double calculate_surface_fuel_consumption_c7_ffmc(const double ffmc) noex
  * \return Forest Floor Consumption (FFC) (kg/m^2) [ST-X-3 eq 13]
  */
 static LookupTable<&calculate_surface_fuel_consumption_c7_ffmc>
-SURFACE_FUEL_CONSUMPTION_C7_FFMC{};
+  SURFACE_FUEL_CONSUMPTION_C7_FFMC{};
 /**
  * \brief Woody Fuel Consumption (WFC) (kg/m^2) [ST-X-3 eq 14]
  * \return Woody Fuel Consumption (WFC) (kg/m^2) [ST-X-3 eq 14]
@@ -91,11 +91,10 @@ static double calculate_surface_fuel_consumption_c7_bui(const double bui) noexce
  * \return Woody Fuel Consumption (WFC) (kg/m^2) [ST-X-3 eq 14]
  */
 static LookupTable<&calculate_surface_fuel_consumption_c7_bui>
-SURFACE_FUEL_CONSUMPTION_C7_BUI{};
+  SURFACE_FUEL_CONSUMPTION_C7_BUI{};
 double FuelC7::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
-  return SURFACE_FUEL_CONSUMPTION_C7_FFMC(spread.ffmc().asDouble()) +
-    SURFACE_FUEL_CONSUMPTION_C7_BUI(spread.bui().asDouble());
+  return SURFACE_FUEL_CONSUMPTION_C7_FFMC(spread.ffmc().asDouble()) + SURFACE_FUEL_CONSUMPTION_C7_BUI(spread.bui().asDouble());
 }
 static double calculate_surface_fuel_consumption_d2(const double bui) noexcept
 {

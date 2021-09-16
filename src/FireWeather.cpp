@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -47,8 +47,7 @@ static array<double, DAY_HOURS> BY_HOUR = {
   .593,
   .586,
   .584,
-  .579
-};
+  .579};
 // ReSharper disable once CppNotAllPathsReturnValue
 inline double wind_speed_adjustment(const int hour) noexcept
 {
@@ -542,24 +541,19 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
   for (auto day = static_cast<Day>(max_date - 1); day >= min_date; --day)
   {
     const auto& wx = data.at(day);
-    const auto ffmc_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->ffmc().
-                                 asDouble();
-    const auto ffmc_at_2000 = r->at(util::time_index(day, 20, min_date))->ffmc().
-                                 asDouble();
+    const auto ffmc_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->ffmc().asDouble();
+    const auto ffmc_at_2000 = r->at(util::time_index(day, 20, min_date))->ffmc().asDouble();
     // need linear interpolation between 2000 and 0600
     const auto ffmc_slope = (ffmc_at_0600 - ffmc_at_2000) / 10.0;
-    const auto wind_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->wind().
-                                 speed().
-                                 asDouble();
-    const auto wind_at_2000 = r->at(util::time_index(day, 20, min_date))->wind().speed().
-                                 asDouble();
+    const auto wind_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->wind().speed().asDouble();
+    const auto wind_at_2000 = r->at(util::time_index(day, 20, min_date))->wind().speed().asDouble();
     // need linear interpolation between 2000 and 0600
     const auto wind_slope = (wind_at_0600 - wind_at_2000) / 10.0;
     const auto add_wx =
       [&r, &day, &wx, &min_date, &wind_at_2000, &ffmc_at_2000, &wind_slope, &ffmc_slope](
-      const Day day_offset,
-      const int hour,
-      const int offset)
+        const Day day_offset,
+        const int hour,
+        const int offset)
     {
       const auto i = util::time_index(day + day_offset, hour, min_date);
       r->at(i) = make_wx(Speed(wind_at_2000 + wind_slope * offset),

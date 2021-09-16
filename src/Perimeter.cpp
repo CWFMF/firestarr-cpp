@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -48,12 +48,9 @@ public:
                          "Invalid cell size for input perimeter raster - %f instead of %f",
                          perim_grid.cellSize(),
                          this->cellSize());
-    const auto offset_x = static_cast<Idx>((this->xllcorner() - perim_grid.xllcorner()) /
-      this->cellSize());
-    const auto perim_origin = static_cast<Idx>(perim_grid.rows() + perim_grid.yllcorner()
-      / this->cellSize());
-    const auto this_origin = static_cast<Idx>(this->rows() + this->yllcorner() / this->
-      cellSize());
+    const auto offset_x = static_cast<Idx>((this->xllcorner() - perim_grid.xllcorner()) / this->cellSize());
+    const auto perim_origin = static_cast<Idx>(perim_grid.rows() + perim_grid.yllcorner() / this->cellSize());
+    const auto this_origin = static_cast<Idx>(this->rows() + this->yllcorner() / this->cellSize());
     const auto offset_y = static_cast<Idx>((perim_origin - this_origin));
     // make sure we don't go out of bounds on grid
     const auto min_column = static_cast<Idx>(offset_x < 0 ? abs(offset_x) : 0);
@@ -112,8 +109,7 @@ Perimeter::Perimeter(const Location& location,
   // want to find cells in the area that fill up the size we're looking for
   size_t count = 0;
   // convert into number of cells
-  const auto num_cells = size / (100.0 * 100.0 / (perim_grid->cellSize()
-    * perim_grid->cellSize()));
+  const auto num_cells = size / (100.0 * 100.0 / (perim_grid->cellSize() * perim_grid->cellSize()));
   auto max_distance = sqrt(num_cells / M_PI);
   perim_grid->set(location, 1);
   ++count;

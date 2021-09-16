@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -31,22 +31,34 @@ public:
    * \brief Time that model data was generated
    * \return Time that model data was generated
    */
-  [[nodiscard]] constexpr const TIMESTAMP_STRUCT& generated() const { return generated_; }
+  [[nodiscard]] constexpr const TIMESTAMP_STRUCT& generated() const
+  {
+    return generated_;
+  }
   /**
    * \brief Name of this model
    * \return Name of this model
    */
-  [[nodiscard]] constexpr const string& name() const { return name_; }
+  [[nodiscard]] constexpr const string& name() const
+  {
+    return name_;
+  }
   /**
    * \brief Point this model represents
    * \return Point this model represents
    */
-  [[nodiscard]] constexpr const topo::Point& point() const { return point_; }
+  [[nodiscard]] constexpr const topo::Point& point() const
+  {
+    return point_;
+  }
   /**
    * \brief Distance that model data is from the Point being represented (m)
    * \return Distance that model data is from the Point being represented (m)
    */
-  [[nodiscard]] constexpr double distanceFrom() const { return distance_from_; }
+  [[nodiscard]] constexpr double distanceFrom() const
+  {
+    return distance_from_;
+  }
   /**
    * \brief Constructor
    * \param generated Time model was generated for

@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -36,7 +36,10 @@ constexpr auto PRECISION = 0.001;
 static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
 static util::MemoryPool<BurnedData> POOL_BURNED_DATA{};
-void IObserver_deleter::operator()(IObserver* ptr) const { delete ptr; }
+void IObserver_deleter::operator()(IObserver* ptr) const
+{
+  delete ptr;
+}
 void Scenario::clear() noexcept
 {
   scheduler_.clear();
@@ -65,8 +68,7 @@ static void make_threshold(vector<double>* thresholds,
                            const Day last_date,
                            double (*convert)(double value))
 {
-  const auto total_weight = Settings::thresholdScenarioWeight() +
-    Settings::thresholdDailyWeight() + Settings::thresholdHourlyWeight();
+  const auto total_weight = Settings::thresholdScenarioWeight() + Settings::thresholdDailyWeight() + Settings::thresholdHourlyWeight();
   uniform_real_distribution<double> rand(0.0, 1.0);
   const auto general = rand(*mt);
   for (size_t i = start_day; i < MAX_DAYS; ++i)
@@ -86,15 +88,15 @@ static void make_threshold(vector<double>* thresholds,
           convert(
             max(0.0,
                 min(1.0,
-                    1.0 -
-                    (Settings::thresholdScenarioWeight() * general
-                      + Settings::thresholdDailyWeight() * daily
-                      + Settings::thresholdHourlyWeight() * hourly) / total_weight)));
+                    1.0 - (Settings::thresholdScenarioWeight() * general + Settings::thresholdDailyWeight() * daily + Settings::thresholdHourlyWeight() * hourly) / total_weight)));
       }
     }
   }
 }
-constexpr double same(const double value) noexcept { return value; }
+constexpr double same(const double value) noexcept
+{
+  return value;
+}
 static void make_threshold(vector<double>* thresholds,
                            mt19937* mt,
                            const Day start_day,
@@ -162,42 +164,42 @@ void Scenario::evaluate(const Event& event)
   const auto& p = event.cell();
   switch (event.type())
   {
-  case Event::FIRE_SPREAD:
-    scheduleFireSpread(event);
-    break;
-  case Event::SAVE:
-    saveObservers(event.time());
-    saveStats(event.time());
-    break;
-  case Event::NEW_FIRE:
-    // HACK: don't do this in constructor because scenario creates this in its constructor
-    points_[p].emplace_back(easting(p), northing(p));
-    if (fuel::is_null_fuel(event.cell()))
-    {
-      logging::fatal("Trying to start a fire in non-fuel");
-    }
-    logging::verbose("Starting fire in fuel type %s at time %f",
-                     fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
-                     event.time());
-    if (!survives(event.time(), event.cell(), event.timeAtLocation()))
-    {
-      const auto wx = weather(event.time());
-      logging::info("Didn't survive ignition in %s with weather %f, %f",
-                    fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
-                    wx->ffmc(),
-                    wx->dmc());
-      // HACK: we still want the fire to have existed, so set the intensity of the origin
-    }
-    // fires start with intensity of 1
-    burn(event, 1);
-    scheduleFireSpread(event);
-    break;
-  case Event::END_SIMULATION:
-    logging::verbose("End simulation event reached at %f", event.time());
-    endSimulation();
-    break;
-  default:
-    throw runtime_error("Invalid event type");
+    case Event::FIRE_SPREAD:
+      scheduleFireSpread(event);
+      break;
+    case Event::SAVE:
+      saveObservers(event.time());
+      saveStats(event.time());
+      break;
+    case Event::NEW_FIRE:
+      // HACK: don't do this in constructor because scenario creates this in its constructor
+      points_[p].emplace_back(easting(p), northing(p));
+      if (fuel::is_null_fuel(event.cell()))
+      {
+        logging::fatal("Trying to start a fire in non-fuel");
+      }
+      logging::verbose("Starting fire in fuel type %s at time %f",
+                       fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
+                       event.time());
+      if (!survives(event.time(), event.cell(), event.timeAtLocation()))
+      {
+        const auto wx = weather(event.time());
+        logging::info("Didn't survive ignition in %s with weather %f, %f",
+                      fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
+                      wx->ffmc(),
+                      wx->dmc());
+        // HACK: we still want the fire to have existed, so set the intensity of the origin
+      }
+      // fires start with intensity of 1
+      burn(event, 1);
+      scheduleFireSpread(event);
+      break;
+    case Event::END_SIMULATION:
+      logging::verbose("End simulation event reached at %f", event.time());
+      endSimulation();
+      break;
+    default:
+      throw runtime_error("Invalid event type");
   }
 }
 Scenario::Scenario(Model* model,
@@ -345,7 +347,7 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
 void Scenario::burn(const Event& event, const IntensitySize burn_intensity)
 {
 #ifndef NDEBUG
-			logging::check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
+  logging::check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
 #endif
   // Observers only care about cells burning so do it here
   notify(event);
@@ -542,8 +544,7 @@ inline void Scenario::checkCondense(vector<InnerPos>& a)
       a[s_pos],
       a[sw_pos],
       a[w_pos],
-      a[nw_pos]
-    };
+      a[nw_pos]};
   }
 }
 void Scenario::scheduleFireSpread(const Event& event)
@@ -612,8 +613,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   //     max_ros_);
   const auto duration = ((max_ros_ > 0)
                            ? min(max_duration,
-                                 Settings::maximumSpreadDistance() * cellSize() /
-                                 max_ros_)
+                                 Settings::maximumSpreadDistance() * cellSize() / max_ros_)
                            : max_duration);
   //note("Spreading for %f minutes", duration);
   const auto new_time = time + duration / DAY_MINUTES;
@@ -671,8 +671,7 @@ void Scenario::scheduleFireSpread(const Event& event)
       // if surrounded then just drop all the points inside this cell
       if (!(*unburnable_)[for_cell.hash()])
       {
-        if (!isSurrounded(for_cell) &&
-          survives(new_time, for_cell, new_time - arrival_[for_cell]))
+        if (!isSurrounded(for_cell) && survives(new_time, for_cell, new_time - arrival_[for_cell]))
         {
           checkCondense(kv.second);
           //checkHull(for_cell, kv.second);

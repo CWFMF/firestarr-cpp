@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -156,16 +156,14 @@ public:
     const GridBase grid_info = read_header<T>(tif, gtif);
     const auto coordinates = grid_info.findCoordinates(point, false);
     auto min_column = max(static_cast<Idx>(0),
-                          static_cast<Idx>(std::get<1>(*coordinates) - MAX_COLUMNS /
-                            static_cast<Idx>(2)));
+                          static_cast<Idx>(std::get<1>(*coordinates) - MAX_COLUMNS / static_cast<Idx>(2)));
     if (min_column + MAX_COLUMNS >= grid_info.columns())
     {
       min_column = grid_info.columns() - MAX_COLUMNS;
     }
     const auto max_column = min_column + MAX_COLUMNS;
     auto min_row = max(static_cast<Idx>(0),
-                       static_cast<Idx>(std::get<0>(*coordinates) - MAX_COLUMNS /
-                         static_cast<Idx>(2)));
+                       static_cast<Idx>(std::get<0>(*coordinates) - MAX_COLUMNS / static_cast<Idx>(2)));
     if (min_row + MAX_COLUMNS >= grid_info.rows())
     {
       min_row = grid_info.rows() - MAX_COLUMNS;
@@ -194,15 +192,15 @@ public:
         const auto x_min = static_cast<Idx>(max(0, min_column - w));
         const auto x_limit = min(tile_width,
                                  min(static_cast<int>(grid_info.columns()),
-                                     max_column) - w);
+                                     max_column)
+                                   - w);
         for (auto y = y_min; y < y_limit; ++y)
         {
           // read in so that (0, 0) has a hash of 0
           const Idx i = MAX_COLUMNS - (static_cast<Idx>(h) + y + offset_y + 1);
           for (auto x = x_min; x < x_limit; ++x)
           {
-            const auto cur_hash = static_cast<HashSize>(i) * MAX_COLUMNS + w + x +
-              offset_x;
+            const auto cur_hash = static_cast<HashSize>(i) * MAX_COLUMNS + w + x + offset_x;
             const auto offset = y * tile_length + x;
             V cur = *(static_cast<V*>(buf) + offset);
 #ifndef NDEBUG
@@ -218,8 +216,7 @@ public:
     _TIFFfree(buf);
     logging::warning("%s: free end", filename.c_str());
     const auto new_xll = grid_info.xllcorner() - offset_x * grid_info.cellSize();
-    const auto new_yll = grid_info.yllcorner() + (static_cast<double>(grid_info.rows()) -
-      max_row) * grid_info.cellSize();
+    const auto new_yll = grid_info.yllcorner() + (static_cast<double>(grid_info.rows()) - max_row) * grid_info.cellSize();
     logging::check_fatal(new_yll < grid_info.yllcorner(),
                          "New yllcorner is outside original grid");
     logging::note("Translated lower left is (%f, %f) from (%f, %f)",

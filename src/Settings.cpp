@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -54,17 +54,26 @@ public:
    * \brief Name of file to save weather to
    * \return Name of file to save weather to
    */
-  [[nodiscard]] const char* weatherFile() const noexcept { return weather_file_.c_str(); }
+  [[nodiscard]] const char* weatherFile() const noexcept
+  {
+    return weather_file_.c_str();
+  }
   /**
    * \brief Set name of file to save weather to
    * \param f Name of file to save weather to
    */
-  void setWeatherFile(const string f) { weather_file_ = f; }
+  void setWeatherFile(const string f)
+  {
+    weather_file_ = f;
+  }
   /**
    * \brief Root directory that raster inputs are stored in
    * \return Root directory that raster inputs are stored in
    */
-  [[nodiscard]] const char* rasterRoot() const noexcept { return raster_root_.c_str(); }
+  [[nodiscard]] const char* rasterRoot() const noexcept
+  {
+    return raster_root_.c_str();
+  }
   /**
    * \brief Name of file that defines fuel lookup table
    * \return Name of file that defines fuel lookup table
@@ -77,7 +86,10 @@ public:
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */
-  [[nodiscard]] constexpr double minimumRos() const noexcept { return minimum_ros_; }
+  [[nodiscard]] constexpr double minimumRos() const noexcept
+  {
+    return minimum_ros_;
+  }
   /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    * \return Maximum distance that the fire is allowed to spread in one step (# of cells)
@@ -90,7 +102,10 @@ public:
    * \brief Minimum Fine Fuel Moisture Code required for spread during the day
    * \return Minimum Fine Fuel Moisture Code required for spread during the day
    */
-  [[nodiscard]] constexpr double minimumFfmc() const noexcept { return minimum_ffmc_; }
+  [[nodiscard]] constexpr double minimumFfmc() const noexcept
+  {
+    return minimum_ffmc_;
+  }
   /**
    * \brief Minimum Fine Fuel Moisture Code required for spread during the night
    * \return Minimum Fine Fuel Moisture Code required for spread during the night
@@ -111,7 +126,10 @@ public:
    * \brief Offset from sunrise at which the day is considered to end (hours)
    * \return Offset from sunrise at which the day is considered to end (hours)
    */
-  [[nodiscard]] constexpr double offsetSunset() const noexcept { return offset_sunset_; }
+  [[nodiscard]] constexpr double offsetSunset() const noexcept
+  {
+    return offset_sunset_;
+  }
   /**
    * \brief Default Percent Conifer to use for M1/M2 fuels where none is specified (%)
    * \return Percent of the stand that is composed of conifer (%)
@@ -188,7 +206,10 @@ public:
    * \brief Maximum grade target used for selecting WeatherSHIELD historic years
    * \return Maximum grade target used for selecting WeatherSHIELD historic years
    */
-  [[nodiscard]] constexpr double maxGrade() const noexcept { return max_grade_; }
+  [[nodiscard]] constexpr double maxGrade() const noexcept
+  {
+    return max_grade_;
+  }
   /**
    * \brief Confidence required before simulation stops (% / 100)
    * \return Confidence required before simulation stops (% / 100)
@@ -233,12 +254,18 @@ public:
    * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
    * \return Days to output probability contours for (1 is start date, 2 is day after, etc.)
    */
-  [[nodiscard]] vector<int> outputDateOffsets() const { return output_date_offsets_; }
+  [[nodiscard]] vector<int> outputDateOffsets() const
+  {
+    return output_date_offsets_;
+  }
   /**
    * \brief Whatever the maximum value in the date offsets is
    * \return Whatever the maximum value in the date offsets is
    */
-  [[nodiscard]] constexpr int maxDateOffset() const noexcept { return max_date_offset_; }
+  [[nodiscard]] constexpr int maxDateOffset() const noexcept
+  {
+    return max_date_offset_;
+  }
 private:
   /**
    * \brief Read settings from a file
@@ -350,15 +377,15 @@ private:
    */
   int intensity_max_moderate_;
 public:
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief Whether or not to run things asynchronously where possible
    * \return Whether or not to run things asynchronously where possible
    */
   atomic<bool> run_async = true;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 /**
  * \brief The singleton instance for this class
  * \return The singleton instance for this class
@@ -382,8 +409,8 @@ string get_value(unordered_map<string, string>& settings, const string& key)
   static const string Invalid = "INVALID";
   return Invalid;
 }
-#pragma warning (push)
-#pragma warning (disable: 26447)
+#pragma warning(push)
+#pragma warning(disable: 26447)
 SettingsImplementation::SettingsImplementation(const char* filename) noexcept
 {
   try
@@ -432,7 +459,10 @@ SettingsImplementation::SettingsImplementation(const char* filename) noexcept
     threshold_daily_weight_ = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
     threshold_hourly_weight_ = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
     output_date_offsets_ = parse_list<int>(get_value(settings, "OUTPUT_DATE_OFFSETS"),
-                                           [](const string& s) { return stoi(s); });
+                                           [](const string& s)
+                                           {
+                                             return stoi(s);
+                                           });
     default_percent_conifer_ = stoi(get_value(settings, "DEFAULT_PERCENT_CONIFER"));
     default_percent_dead_fir_ = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
     intensity_max_low_ = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
@@ -460,7 +490,7 @@ SettingsImplementation::SettingsImplementation(const char* filename) noexcept
     std::terminate();
   }
 }
-#pragma warning (pop)
+#pragma warning(pop)
 const char* Settings::weatherFile() noexcept
 {
   return SettingsImplementation::instance().weatherFile();

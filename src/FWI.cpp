@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -71,8 +71,7 @@ const FwiWeather FwiWeather::Zero{
   Dc(0),
   Isi(Speed(0), Ffmc(0)),
   Bui(Dmc(0), Dc(0)),
-  Fwi(Isi(Speed(0), Ffmc(0)), Bui(Dmc(0), Dc(0)))
-};
+  Fwi(Isi(Speed(0), Ffmc(0)), Bui(Dmc(0), Dc(0)))};
 // The following two functions refer to the MEA daylength adjustment 'note'.
 //
 //******************************************************************************************
@@ -97,8 +96,7 @@ static double day_length_factor(const double latitude, const int month) noexcept
     2.4,
     0.4,
     -1.6,
-    -1.6
-  };
+    -1.6};
   static constexpr double LfS[] = {
     6.4,
     5.0,
@@ -111,8 +109,7 @@ static double day_length_factor(const double latitude, const int month) noexcept
     -1.6,
     0.9,
     3.8,
-    5.8
-  };
+    5.8};
   //'    '/* Use Northern hemisphere numbers */
   //'   '/* something goes wrong with >= */
   if (latitude > 15.0)
@@ -144,8 +141,7 @@ static constexpr MonthArray DAY_LENGTH46_N{
   9.4,
   8.0,
   7.0,
-  6.0
-};
+  6.0};
 static constexpr MonthArray DAY_LENGTH20_N{
   7.9,
   8.4,
@@ -158,8 +154,7 @@ static constexpr MonthArray DAY_LENGTH20_N{
   9.1,
   8.6,
   8.1,
-  7.8
-};
+  7.8};
 static constexpr MonthArray DAY_LENGTH20_S{
   10.1,
   9.6,
@@ -172,8 +167,7 @@ static constexpr MonthArray DAY_LENGTH20_S{
   8.9,
   9.4,
   9.9,
-  10.2
-};
+  10.2};
 static constexpr MonthArray DAY_LENGTH40_S{
   11.5,
   10.5,
@@ -186,8 +180,7 @@ static constexpr MonthArray DAY_LENGTH40_S{
   8.7,
   10.0,
   11.2,
-  11.8
-};
+  11.8};
 //******************************************************************************************
 // Function Name: DayLength
 // Description: Calculates latitude/date dependent day length for DMC calculation
@@ -245,8 +238,7 @@ static double calculate_ffmc(const Temperature& temperature,
                              const Ffmc& ffmc_previous) noexcept
 {
   //'''/* 1  '*/
-  auto mo = 147.2 * (101.0 - ffmc_previous.asDouble()) /
-    (59.5 + ffmc_previous.asDouble());
+  auto mo = 147.2 * (101.0 - ffmc_previous.asDouble()) / (59.5 + ffmc_previous.asDouble());
   if (rain.asDouble() > 0.5)
   {
     //'''/* 2  '*/
@@ -267,28 +259,22 @@ static double calculate_ffmc(const Temperature& temperature,
   //'''/* 4  '*/
   const auto find_m = [&temperature, &rh, &wind, &mo]() noexcept
   {
-    const auto ed = 0.942 * pow(rh.asDouble(), 0.679) + 11.0 * exp(
-        (rh.asDouble() - 100.0) / 10.0) + 0.18 *
-      (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
+    const auto ed = 0.942 * pow(rh.asDouble(), 0.679) + 11.0 * exp((rh.asDouble() - 100.0) / 10.0) + 0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
     if (mo > ed)
     {
       //'''/* 6a '*/
-      const auto ko = 0.424 * (1.0 - pow(rh.asDouble() / 100.0, 1.7)) +
-        0.0694 * sqrt(wind.asDouble()) * (1.0 - util::pow_int<8>(rh.asDouble() / 100.0));
+      const auto ko = 0.424 * (1.0 - pow(rh.asDouble() / 100.0, 1.7)) + 0.0694 * sqrt(wind.asDouble()) * (1.0 - util::pow_int<8>(rh.asDouble() / 100.0));
       //'''/* 6b '*/
       const auto kd = ko * 0.581 * exp(0.0365 * temperature.asDouble());
       //'''/* 8  '*/
       return ed + (mo - ed) * pow(10.0, -kd);
     }
     //'''/* 5  '*/
-    const auto ew = 0.618 * pow(rh.asDouble(), 0.753) + 10.0 * exp(
-        (rh.asDouble() - 100.0) / 10.0) +
-      0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
+    const auto ew = 0.618 * pow(rh.asDouble(), 0.753) + 10.0 * exp((rh.asDouble() - 100.0) / 10.0) + 0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
     if (mo < ew)
     {
       //'''/* 7a '*/
-      const auto kl = 0.424 * (1.0 - pow((100.0 - rh.asDouble()) / 100.0, 1.7)) + 0.0694 *
-        sqrt(wind.asDouble()) * (1 - util::pow_int<8>((100.0 - rh.asDouble()) / 100.0));
+      const auto kl = 0.424 * (1.0 - pow((100.0 - rh.asDouble()) / 100.0, 1.7)) + 0.0694 * sqrt(wind.asDouble()) * (1 - util::pow_int<8>((100.0 - rh.asDouble()) / 100.0));
       //'''/* 7b '*/
       const auto kw = kl * 0.581 * exp(0.0365 * temperature.asDouble());
       //'''/* 9  '*/
@@ -334,13 +320,13 @@ static double calculate_dmc(const Temperature& temperature,
     //'''/* 12  '*/
     const auto mo = 20.0 + exp(5.6348 - previous / 43.43);
     const auto b = (previous <= 33.0)
-                     ?  //'''/* 13a '*/
+                   ?   //'''/* 13a '*/
                      100.0 / (0.5 + 0.3 * previous)
-                     : ((previous <= 65.0)
-                          ?  //'''/* 13b '*/
-                          14.0 - 1.3 * (log(previous))
-                          :  //'''/* 13c '*/
-                          6.2 * log(previous) - 17.2);
+                   : ((previous <= 65.0)
+                        ?   //'''/* 13b '*/
+                        14.0 - 1.3 * (log(previous))
+                        :   //'''/* 13c '*/
+                        6.2 * log(previous) - 17.2);
     //'''/* 14  '*/
     const auto mr = mo + 1000.0 * re / (48.77 + b * re);
     //'''/* 15  '*/
@@ -348,9 +334,8 @@ static double calculate_dmc(const Temperature& temperature,
     previous = max(pr, 0.0);
   }
   const auto k = (temperature.asDouble() > -1.1)
-                   ? 1.894 * (temperature.asDouble() + 1.1) * (100.0 - rh.asDouble()) *
-                   day_length(latitude, month) * 0.000001
-                   : 0.0;
+                 ? 1.894 * (temperature.asDouble() + 1.1) * (100.0 - rh.asDouble()) * day_length(latitude, month) * 0.000001
+                 : 0.0;
   //'''/* 17  '*/
   return (previous + 100.0 * k);
 }
@@ -435,7 +420,7 @@ Isi::Isi(const Speed& wind, const Ffmc& ffmc) noexcept
 }
 Isi::Isi(double
 #ifdef CHECK_CALCULATION
-			value
+           value
 #endif
          ,
          const Speed& wind,
@@ -443,10 +428,13 @@ Isi::Isi(double
   : Isi(wind, ffmc)
 {
 #ifdef CHECK_CALCULATION
-			// check that we're not more than 10% off of the value
-			logging::check_fatal(abs((*this - Isi(value)).asDouble()) >= abs(value / 10),
-				"ISI is incorrect %f, %f => %f not %f",
-				wind.asDouble(), ffmc.asDouble(), asDouble(), Isi(value).asDouble());
+  // check that we're not more than 10% off of the value
+  logging::check_fatal(abs((*this - Isi(value)).asDouble()) >= abs(value / 10),
+                       "ISI is incorrect %f, %f => %f not %f",
+                       wind.asDouble(),
+                       ffmc.asDouble(),
+                       asDouble(),
+                       Isi(value).asDouble());
 #endif
 }
 //******************************************************************************************
@@ -467,18 +455,15 @@ static double calculate_bui(const Dmc& dmc, const Dc& dc) noexcept
     }
     //'''/* 27a '*/
     return max(0.0,
-               0.8 * dmc.asDouble() * dc.asDouble() /
-               (dmc.asDouble() + 0.4 * dc.asDouble()));
+               0.8 * dmc.asDouble() * dc.asDouble() / (dmc.asDouble() + 0.4 * dc.asDouble()));
   }
   //'''/* 27b '*/
   return max(0.0,
-             dmc.asDouble() - (1.0 - 0.8 * dc.asDouble()
-               / (dmc.asDouble() + 0.4 * dc.asDouble()))
-             * (0.92 + pow(0.0114 * dmc.asDouble(), 1.7)));
+             dmc.asDouble() - (1.0 - 0.8 * dc.asDouble() / (dmc.asDouble() + 0.4 * dc.asDouble())) * (0.92 + pow(0.0114 * dmc.asDouble(), 1.7)));
 }
 Bui::Bui(double
 #ifdef CHECK_CALCULATION
-			value
+           value
 #endif
          ,
          const Dmc& dmc,
@@ -486,10 +471,13 @@ Bui::Bui(double
   : Bui(dmc, dc)
 {
 #ifdef CHECK_CALCULATION
-			// check that we're not more than 10% off of the value
-			logging::check_fatal(abs((*this - Bui(value)).asDouble()) >= abs(value / 10),
-				"BUI is incorrect %f, %f => %f not %f",
-				dmc.asDouble(), dc.asDouble(), asDouble(), Bui(value).asDouble());
+  // check that we're not more than 10% off of the value
+  logging::check_fatal(abs((*this - Bui(value)).asDouble()) >= abs(value / 10),
+                       "BUI is incorrect %f, %f => %f not %f",
+                       dmc.asDouble(),
+                       dc.asDouble(),
+                       asDouble(),
+                       Bui(value).asDouble());
 #endif
 }
 Bui::Bui(const Dmc& dmc, const Dc& dc) noexcept
@@ -506,9 +494,9 @@ Bui::Bui(const Dmc& dmc, const Dc& dc) noexcept
 static double calculate_fwi(const Isi& isi, const Bui& bui) noexcept
 {
   const auto f_d = (bui.asDouble() <= 80.0)
-                     ?  //'''/* 28a '*/
+                   ?   //'''/* 28a '*/
                      0.626 * pow(bui.asDouble(), 0.809) + 2.0
-                     :  //'''/* 28b '*/
+                   :   //'''/* 28b '*/
                      1000.0 / (25.0 + 108.64 * exp(-0.023 * bui.asDouble()));
   //'''/* 29  '*/
   const auto b = 0.1 * isi.asDouble() * f_d;
@@ -522,7 +510,7 @@ static double calculate_fwi(const Isi& isi, const Bui& bui) noexcept
 }
 Fwi::Fwi(double
 #ifdef CHECK_CALCULATION
-			value
+           value
 #endif
          ,
          const Isi& isi,
@@ -530,10 +518,13 @@ Fwi::Fwi(double
   : Fwi(isi, bui)
 {
 #ifdef CHECK_CALCULATION
-			// check that we're not more than 10% off of the value
-			logging::check_fatal(abs((*this - Fwi(value)).asDouble()) >= abs(value / 10),
-				"FWI is incorrect %f, %f => %f not %f",
-				isi.asDouble(), bui.asDouble(), asDouble(), Fwi(value).asDouble());
+  // check that we're not more than 10% off of the value
+  logging::check_fatal(abs((*this - Fwi(value)).asDouble()) >= abs(value / 10),
+                       "FWI is incorrect %f, %f => %f not %f",
+                       isi.asDouble(),
+                       bui.asDouble(),
+                       asDouble(),
+                       Fwi(value).asDouble());
 #endif
 }
 Fwi::Fwi(const Isi& isi, const Bui& bui) noexcept

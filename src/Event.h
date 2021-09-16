@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #pragma once
@@ -134,32 +134,50 @@ public:
    * \brief Time of Event (decimal days)
    * \return Time of Event (decimal days)
    */
-  [[nodiscard]] constexpr double time() const { return time_; }
+  [[nodiscard]] constexpr double time() const
+  {
+    return time_;
+  }
   /**
    * \brief Type of Event
    * \return Type of Event
    */
-  [[nodiscard]] constexpr Type type() const { return type_; }
+  [[nodiscard]] constexpr Type type() const
+  {
+    return type_;
+  }
   /**
    * \brief Duration that Event Cell has been burning (decimal days)
    * \return Duration that Event Cell has been burning (decimal days)
    */
-  [[nodiscard]] constexpr double timeAtLocation() const { return time_at_location_; }
+  [[nodiscard]] constexpr double timeAtLocation() const
+  {
+    return time_at_location_;
+  }
   /**
    * \brief Burn Intensity (kW/m)
    * \return Burn Intensity (kW/m)
    */
-  [[nodiscard]] constexpr IntensitySize intensity() const { return intensity_; }
+  [[nodiscard]] constexpr IntensitySize intensity() const
+  {
+    return intensity_;
+  }
   /**
    * \brief Cell Event takes place in
    * \return Cell Event takes place in
    */
-  [[nodiscard]] constexpr const topo::Cell& cell() const { return cell_; }
+  [[nodiscard]] constexpr const topo::Cell& cell() const
+  {
+    return cell_;
+  }
   /**
    * \brief CellIndex for relative Cell that spread into from
    * \return CellIndex for relative Cell that spread into from
    */
-  [[nodiscard]] constexpr CellIndex source() const { return source_; }
+  [[nodiscard]] constexpr CellIndex source() const
+  {
+    return source_;
+  }
 private:
   /**
    * \brief Constructor
@@ -204,13 +222,13 @@ private:
    * \brief Burn Intensity (kW/m)
    */
   IntensitySize intensity_;
-#pragma warning (push)
-#pragma warning (disable: 4820)
+#pragma warning(push)
+#pragma warning(disable: 4820)
   /**
    * \brief CellIndex for relative Cell that spread into from
    */
   CellIndex source_;
 };
-#pragma warning (pop)
+#pragma warning(pop)
 }
 }

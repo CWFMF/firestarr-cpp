@@ -1,18 +1,18 @@
 // Copyright (C) 2020  Queen's Printer for Ontario
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// 
+//
 // Last Updated 2020-04-07 <Evens, Jordan (MNRF)>
 
 #include "stdafx.h"
@@ -38,8 +38,8 @@ int Log::getLogLevel() noexcept
 {
   return logging_level_;
 }
-#pragma warning (push)
-#pragma warning (disable: 26447)
+#pragma warning(push)
+#pragma warning(disable: 26447)
 void Log::output(const char* name, const char* format, va_list* args) noexcept
 {
   try
@@ -61,7 +61,7 @@ void Log::output(const char* name, const char* format, va_list* args) noexcept
     std::terminate();
   }
 }
-#pragma warning (pop)
+#pragma warning(pop)
 void extensive(const char* format, ...) noexcept
 {
   if (Log::getLogLevel() <= LOG_EXTENSIVE)
@@ -69,10 +69,10 @@ void extensive(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("EXTENSIVE:", format, &args);
-#pragma warning (push)
-#pragma warning (disable: 26477)
+#pragma warning(push)
+#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning (pop)
+#pragma warning(pop)
   }
 }
 void verbose(const char* format, ...) noexcept
@@ -82,10 +82,10 @@ void verbose(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("VERBOSE:", format, &args);
-#pragma warning (push)
-#pragma warning (disable: 26477)
+#pragma warning(push)
+#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning (pop)
+#pragma warning(pop)
   }
 }
 void debug(const char* format, ...) noexcept
@@ -95,10 +95,10 @@ void debug(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("DEBUG: ", format, &args);
-#pragma warning (push)
-#pragma warning (disable: 26477)
+#pragma warning(push)
+#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning (pop)
+#pragma warning(pop)
   }
 }
 void info(const char* format, ...) noexcept
@@ -108,10 +108,10 @@ void info(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("INFO:  ", format, &args);
-#pragma warning (push)
-#pragma warning (disable: 26477)
+#pragma warning(push)
+#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning (pop)
+#pragma warning(pop)
   }
 }
 void note(const char* format, ...) noexcept
@@ -121,10 +121,10 @@ void note(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("NOTE:  ", format, &args);
-#pragma warning (push)
-#pragma warning (disable: 26477)
+#pragma warning(push)
+#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning (pop)
+#pragma warning(pop)
   }
 }
 void warning(const char* format, ...) noexcept
@@ -134,10 +134,10 @@ void warning(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("WARN:  ", format, &args);
-#pragma warning (push)
-#pragma warning (disable: 26477)
+#pragma warning(push)
+#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning (pop)
+#pragma warning(pop)
   }
 }
 void error(const char* format, ...) noexcept
@@ -147,10 +147,10 @@ void error(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("ERROR: ", format, &args);
-#pragma warning (push)
-#pragma warning (disable: 26477)
+#pragma warning(push)
+#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning (pop)
+#pragma warning(pop)
   }
 }
 void fatal(const char* format, va_list* args) noexcept
