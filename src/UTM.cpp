@@ -31,7 +31,7 @@ namespace topo
 // This is a simple port of the code on the Geographic/UTM Coordinate Converter (1) page
 // from Javascript to C++.
 // Using this you can easily convert between UTM and WGS84 (latitude and longitude).
-// Accuracy seems to be around 50cm (I suspect rounding errors are limiting precision).
+// Accuracy seems to be around 50 cm (I suspect rounding errors are limiting precision).
 // This code is provided as-is and has been minimally tested; enjoy but use at your own
 // risk!
 // The license for UTM.cpp and UTM.h is the same as the original Javascript:

@@ -589,7 +589,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                 all_scenarios.end(),
                 [](Scenario* lhs, Scenario* rhs) noexcept
                 {
-                  // sort so that scenarios with highest dsrs are at the front
+                  // sort so that scenarios with highest DSRs are at the front
                   return lhs->weightedDsr() > rhs->weightedDsr();
                 });
       for (auto s : all_scenarios)
@@ -715,7 +715,7 @@ int Model::runScenarios(const char* const output_directory,
   model.makeStarts(*position, start_point, yesterday, perimeter, size);
   auto start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60))
                      / DAY_HOURS);
-  // HACK: round to 2 digits so we can keep test output the same
+  // HACK: round to 2 digits so that we can keep test output the same
   start_hour = static_cast<double>(static_cast<int>(start_hour * 100)) / 100;
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);

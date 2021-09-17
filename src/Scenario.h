@@ -429,7 +429,7 @@ public:
                               const double time_at_location) const
   {
     const auto wx = weather_->at(time);
-    // use mike's table
+    // use Mike's table
     const auto mc = wx->mcDmcPct();
     if (100 > mc
         || 109 >= mc && 5 > time_at_location

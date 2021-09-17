@@ -101,7 +101,7 @@ public:
    */
   [[nodiscard]] constexpr SpreadKey key() const noexcept
   {
-    // should be able to fit this in a uint32
+    // should be able to fit this in uint32
     //constexpr auto key_mask = AspectMask | FuelMask | SlopeMask;
     //return static_cast<SpreadKey>((topo_data_ & key_mask) >> FuelShift);
     // can just shift since these are the only bits left after

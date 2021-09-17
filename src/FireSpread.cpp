@@ -71,7 +71,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
 {
   max_intensity_ = -1;
   const auto ffmc_effect = ffmcEffect();
-  // needs to be non-const so we can update if slopeEffect changes direction
+  // needs to be non-const so that we can update if slopeEffect changes direction
   auto raz = wind().heading();
   const auto isz = 0.208 * ffmc_effect;
   const auto slope_azimuth = cell_.aspect();
@@ -169,9 +169,9 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   };
   const auto threshold = scenario.spreadThresholdByRos(time_);
   // if not over spread threshold then don't spread
-  // HACK: assume there is no fuel where a crown fire's sfc is < COMPARE_LIMIT but it's fc is >
+  // HACK: assume there is no fuel where a crown fire's sfc is < COMPARE_LIMIT and its fc is >
   double ros{};
-  // HACK: set ros in boolean if we get that far so we don't have to repeat the if body
+  // HACK: set ros in boolean if we get that far so that we don't have to repeat the if body
   if (head_ros_ < threshold
       || sfc < COMPARE_LIMIT
       || !add_offset(raz, ros = (head_ros_ * correction_factor(raz))))

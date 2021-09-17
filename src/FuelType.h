@@ -41,7 +41,7 @@ namespace fuel
 //
 // default grass fuel load (t/ha)
 static constexpr double DEFAULT_GRASS_FUEL_LOAD = 3.5;
-// amount of duff to apply ffmc moisture to (cm) (1.2cm is from kerry's paper)
+// amount of duff to apply ffmc moisture to (cm) (1.2 cm is from Kerry's paper)
 static constexpr double DUFF_FFMC_DEPTH = 1.2;
 /**
  * \brief Fire Intensity (kW/m) [ST-X-3 eq 69]
@@ -314,7 +314,7 @@ public:
     //            (1 / (1 + EXP($G$43 + $I$43 * (2.5 * $O$43 + $N$43)))))
     //            / (1 / (1 + EXP($G$43 + $I$43 * $N$43))), 0)
     // HACK: use same constants for all fuels because they seem to work nicer than
-    // using the ratios but they change anyway because of the other fuel attributes
+    // using the ratios, but they change anyway because of the other fuel attributes
     static const auto WFfmc = 0.25;
     static const auto WDmc = 1.0;
     static const auto RatioHartford = 0.5;

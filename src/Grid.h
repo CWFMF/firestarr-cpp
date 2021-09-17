@@ -404,7 +404,7 @@ public:
   {
     return data.size();
   }
-  // HACK: use public access so we can get to the keys
+  // HACK: use public access so that we can get to the keys
   /**
    * \brief Structure that holds data represented by this GridData
    */

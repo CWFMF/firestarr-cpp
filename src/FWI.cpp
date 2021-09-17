@@ -29,7 +29,7 @@
 //      Weather Index System. Canadian Forest Service, Ottawa, Ont. For. Tech. Rep. 35.
 //      37 p.
 //
-//      Equation numbers from VW87 are listed throughout, to the right of the equations in
+//      Equation numbers from VW87 are listed throughout, to the right of the equations
 //      in the code.
 //
 //      A more recent technical description can be found in:
@@ -70,7 +70,7 @@ const FwiWeather FwiWeather::Zero{
   Isi(Speed(0), Ffmc(0)),
   Bui(Dmc(0), Dc(0)),
   Fwi(Isi(Speed(0), Ffmc(0)), Bui(Dmc(0), Dc(0)))};
-// The following two functions refer to the MEA daylength adjustment 'note'.
+// The following two functions refer to the MEA day length adjustment 'note'.
 //
 //******************************************************************************************
 // Function Name: DayLengthFactor
@@ -446,7 +446,7 @@ static double calculate_bui(const Dmc& dmc, const Dc& dc) noexcept
 {
   if (dmc.asDouble() <= 0.4 * dc.asDouble())
   {
-    // HACK: this isn't normally part of it but it's division by 0 without this
+    // HACK: this isn't normally part of it, but it's division by 0 without this
     if (0 == dc.asDouble())
     {
       return 0;
@@ -622,7 +622,7 @@ FwiWeather::FwiWeather(const Temperature& tmp,
     ffmc_(ffmc),
     dmc_(dmc),
     dc_(dc),
-    // HACK: recalculate so we can check that things are within tolerances
+    // HACK: recalculate so that we can check that things are within tolerances
     isi_(Isi(isi.asDouble(), wind.speed(), ffmc)),
     bui_(Bui(bui.asDouble(), dmc, dc)),
     fwi_(Fwi(fwi.asDouble(), isi, bui)),
