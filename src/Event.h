@@ -30,7 +30,7 @@ public:
    * \brief Cell representing no location
    */
   static constexpr topo::Cell NoLocation{};
-  // HACK: use type so we can sort without having to give different times to them
+  // HACK: use type, so we can sort without having to give different times to them
   /**
    * \brief Type of Event
    */

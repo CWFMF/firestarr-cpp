@@ -49,7 +49,7 @@ Iteration* Iteration::reset(mt19937* mt_extinction, mt19937* mt_spread)
 //			scenarios_.end(),
 //			[](Scenario* lhs, Scenario* rhs) noexcept
 //		{
-//			// sort so that scenarios with highest dsrs are at the front
+//			// sort so that scenarios with highest DSRs are at the front
 //		  //return lhs->weightedDsr() > rhs->weightedDsr();
 //		});
 //	if (Settings::runAsync())

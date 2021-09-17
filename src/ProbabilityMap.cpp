@@ -150,7 +150,7 @@ void ProbabilityMap::saveSizes(const string& dir, const string& base_name) const
   auto sizes = getSizes();
   if (!sizes.empty())
   {
-    // don't want to modify original array so we can still lookup in correct order
+    // don't want to modify original array so that we can still lookup in correct order
     sort(sizes.begin(), sizes.end());
   }
   for (const auto& s : sizes)

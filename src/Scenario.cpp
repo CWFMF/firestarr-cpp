@@ -378,7 +378,7 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   unburnable_ = POOL_BURNED_DATA.acquire();
   logging::check_fatal(ran(), "Scenario has already run");
   logging::debug("Running scenario %d.%04d", id_, simulation_);
-  // don't do this until we run so we don't allocate memory too soon
+  // don't do this until we run so that we don't allocate memory too soon
   intensity_ = make_unique<IntensityMap>(model());
   //surrounded_ = POOL_BURNED_DATA.acquire();
   for (auto time : save_points_)
@@ -402,7 +402,7 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
-  // HACK: make a copy of the event so it still exists after it gets processed
+  // HACK: make a copy of the event so that it still exists after it gets processed
   // NOTE: sorted so that EventSaveASCII is always just before this
   // Only run until last time we asked for a save for
   logging::verbose("Creating simulation end event for %f", last_save_);
@@ -532,8 +532,8 @@ inline void Scenario::checkCondense(vector<InnerPos>& a)
     //a.clear();
     //a.insert(a.begin(), condensed.begin(), condensed.end());
     //condensed.clear();
-    // keeping points is easier and near as fast as checking for duplicates
-    // but we don't need a member variable to do it
+    // keeping points is easier and near as fast as checking for duplicates,
+    // and we don't need a member variable to do it
     a = {
       a[n_pos],
       a[ne_pos],

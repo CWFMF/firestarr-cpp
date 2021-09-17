@@ -143,7 +143,7 @@ FwiStream::FwiStream(const vector<TIMESTAMP_STRUCT>& dates,
     Ffmc ffmc(wx.tmp(), wx.rh(), wx.wind().speed(), apcp, last_ffmc);
     if (shutdown)
     {
-      // HACK: if we got 2mm of pcp since shutdown then assume 0 indices
+      // HACK: if we got 2 mm of pcp since shutdown then assume 0 indices
       if (since_shutdown_accumulation > ZeroFfmcPrecipitationAmount)
       {
         ffmc = Ffmc(0.0);
@@ -158,7 +158,7 @@ FwiStream::FwiStream(const vector<TIMESTAMP_STRUCT>& dates,
     Dmc dmc(wx.tmp(), wx.rh(), apcp, last_dmc, month, latitude);
     if (shutdown)
     {
-      // HACK: if we got 10mm of pcp since shutdown then assume 0 indices
+      // HACK: if we got 10 mm of pcp since shutdown then assume 0 indices
       if (since_shutdown_accumulation > ZeroDmcPrecipitationAmount)
       {
         dmc = Dmc(0.0);

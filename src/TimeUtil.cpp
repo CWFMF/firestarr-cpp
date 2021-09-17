@@ -43,7 +43,7 @@ void to_tm_gm(const TIMESTAMP_STRUCT& s, tm* t) noexcept
   // this doesn't set yday or other things properly, so convert to time and back
   to_tm_no_fix(s, t);
   const time_t t_t = mktime(t);
-  // HACK: use gmtime_s instead of localtime_s so it doesn't mess with hours based on DST
+  // HACK: use gmtime_s instead of localtime_s so that it doesn't mess with hours based on DST
   t = gmtime(&t_t);
 }
 void to_ts(const tm& t, TIMESTAMP_STRUCT* s) noexcept

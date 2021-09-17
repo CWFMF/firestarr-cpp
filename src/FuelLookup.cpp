@@ -170,7 +170,7 @@ static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Dead Balsam Fir Mixedwood (95% Dead Fir)", "M-3/M-4 (95 PDF)"},
 };
 static_assert(0 == INVALID_FUEL_CODE);
-static InvalidFuel NULLFUEL{INVALID_FUEL_CODE, "Non-static Fuel"};
+static InvalidFuel NULL_FUEL{INVALID_FUEL_CODE, "Non-static Fuel"};
 static InvalidFuel INVALID{1, "Invalid"};
 static fbp::FuelC1 C1{2};
 static fbp::FuelC2 C2{3};
@@ -592,7 +592,7 @@ FuelLookup::FuelLookup(const char* filename)
 {
 }
 const array<const FuelType*, NUMBER_OF_FUELS> FuelLookup::Fuels{
-  &NULLFUEL,
+  &NULL_FUEL,
   &INVALID,
   &C1,
   &C2,

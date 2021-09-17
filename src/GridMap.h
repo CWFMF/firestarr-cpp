@@ -107,14 +107,14 @@ public:
                                                  unordered_map<Location, T>())
   {
     constexpr auto max_hash = numeric_limits<HashSize>::max();
-    // HACK: we don't want overflow errors but we want to play with the hash size
+    // HACK: we don't want overflow errors, but we want to play with the hash size
     const auto max_columns = static_cast<double>(max_hash) / static_cast<double>(this->rows());
     logging::check_fatal(this->columns() >= max_columns,
                          "Grid is too big for cells to be hashed - "
                          "recompile with a larger HashSize value");
     // HACK: reserve space for this based on how big our Idx is because that
     // tells us how many cells there could be
-    // HACK: divide because we expect most perimeters to be fairly small but we
+    // HACK: divide because we expect most perimeters to be fairly small, but we
     // want it to be reasonably large
     this->data.reserve(static_cast<size_t>(numeric_limits<Idx>::max() / 4));
   }
@@ -267,7 +267,7 @@ public:
                        static_cast<double>(this->noData()));
     for (Idx ro = 0; ro < num_rows; ++ro)
     {
-      // HACK: do this so we always get at least one pixel in output
+      // HACK: do this so that we always get at least one pixel in output
       // need to output in reverse order since (0,0) is bottom left
       const Idx r = static_cast<Idx>(max_row) - ro;
       for (Idx co = 0; co < num_columns; ++co)

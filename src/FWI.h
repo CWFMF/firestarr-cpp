@@ -31,7 +31,7 @@ public:
   //! @endcond
   /**
    * \brief Calculate Fine Fuel Moisture Code
-   * \param temperature Temperature (Celcius)
+   * \param temperature Temperature (Celsius)
    * \param rh Relative Humidity (%)
    * \param wind Wind (km/h)
    * \param rain Accumulated Precipitation (mm)
@@ -58,7 +58,7 @@ public:
   //! @endcond
   /**
    * \brief Duff Moisture Code
-   * \param temperature Temperature (Celcius)
+   * \param temperature Temperature (Celsius)
    * \param rh Relative Humidity (%)
    * \param rain Accumulated Precipitation (mm)
    * \param dmc_previous Duff Moisture Code for previous day
@@ -87,7 +87,7 @@ public:
   //! @endcond
   /**
    * \brief Calculate Drought Code
-   * \param temperature Temperature (Celcius)
+   * \param temperature Temperature (Celsius)
    * \param rain Accumulated Precipitation (mm)
    * \param dc_previous Drought Code from the previous day
    * \param month Month to calculate for
@@ -229,7 +229,7 @@ public:
   FwiWeather(istringstream* iss, string* str);
   /**
    * \brief Constructor
-   * \param tmp Temperature (Celcius)
+   * \param tmp Temperature (Celsius)
    * \param rh Relative Humidity (%)
    * \param wind Wind (km/h)
    * \param apcp Accumulated Precipitation (mm)

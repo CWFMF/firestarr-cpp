@@ -37,7 +37,7 @@ public:
     : GridMap<unsigned char, unsigned char>(
       *env.makeMap<unsigned char>(static_cast<unsigned char>(0)))
   {
-    // HACK: fix offset if the perimeter raster is different than this one
+    // HACK: fix offset if the perimeter raster is different from this one
     logging::check_fatal(0 != strcmp(perim_grid.proj4().c_str(), this->proj4().c_str()),
                          "Invalid projection for input perimeter raster - %s instead of %s",
                          perim_grid.proj4().c_str(),
