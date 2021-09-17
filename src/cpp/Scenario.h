@@ -496,7 +496,7 @@ public:
   ) const
   {
     const auto wx = weather_->at(time);
-    // use mike's table
+    // use Mike's table
     const auto mc = wx->mcDmcPct();
     if (100 > mc || 109 >= mc && 5 > time_at_location || 119 >= mc && 4 > time_at_location
         || 131 >= mc && 3 > time_at_location || 145 >= mc && 2 > time_at_location

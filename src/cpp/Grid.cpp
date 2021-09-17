@@ -144,7 +144,7 @@ GridBase::createPrj(
   out << "0.0 /* false northing (meters)\n";
   out.close();
 }
-// Use pair instead of Location so we can go above max columns & rows
+// Use pair instead of Location, so we can go above max columns & rows
 unique_ptr<Coordinates>
 GridBase::findCoordinates(
   const topo::Point& point,
@@ -164,9 +164,9 @@ GridBase::findCoordinates(
   );
   logging::debug("Lower left is (%f, %f)", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
-  // use INT64 so we can see if coordinates are out of bounds
+  // use INT64, so we can see if coordinates are out of bounds
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
-  // these are already flipped across the y axis on reading so it's the same as for x now
+  // these are already flipped across the y-axis on reading, so it's the same as for x now
   auto actual_y = (y - this->yllcorner_) / this->cell_size_;
   if (!flipped)
   {
@@ -177,7 +177,7 @@ GridBase::findCoordinates(
   if (0 > column || column >= columns_ || 0 > row || row >= rows_)
   {
     logging::debug(
-      "Returning nullptr fromfindCoordinates() for (%f, %f) => (%d, %d)",
+      "Returning nullptr from findCoordinates() for (%f, %f) => (%d, %d)",
       actual_x,
       actual_y,
       column,

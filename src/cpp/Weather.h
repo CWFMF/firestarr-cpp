@@ -23,7 +23,7 @@ public:
   using Index::Index;
   //! @endcond
   /**
-   * \brief 0 degrees Celcius
+   * \brief 0 degrees Celsius
    */
   static const Temperature Zero;
 };
@@ -333,7 +333,7 @@ public:
   constexpr Weather() noexcept = default;
   /**
    * \brief Construct with given indices
-   * \param tmp Temperature (Celcius)
+   * \param tmp Temperature (Celsius)
    * \param rh Relative Humidity (%)
    * \param wind Wind (km/h)
    * \param apcp Accumulated Precipitation (mm)
@@ -375,8 +375,8 @@ public:
   Weather&
   operator=(const Weather& rhs) = default;
   /**
-   * \brief Temperature (Celcius)
-   * \return Temperature (Celcius)
+   * \brief Temperature (Celsius)
+   * \return Temperature (Celsius)
    */
   [[nodiscard]] constexpr const Temperature&
   tmp() const noexcept
@@ -412,7 +412,7 @@ public:
   }
 private:
   /**
-   * \brief Temperature (Celcius)
+   * \brief Temperature (Celsius)
    */
   Temperature tmp_;
   /**

@@ -158,7 +158,7 @@ static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Dead Balsam Fir Mixedwood (95% Dead Fir)", "M-3/M-4 (95 PDF)"},
 };
 static_assert(0 == INVALID_FUEL_CODE);
-static InvalidFuel NULLFUEL{INVALID_FUEL_CODE, "Non-static Fuel"};
+static InvalidFuel NULL_FUEL{INVALID_FUEL_CODE, "Non-static Fuel"};
 static InvalidFuel INVALID{1, "Invalid"};
 static fbp::FuelC1 C1{2};
 static fbp::FuelC2 C2{3};
@@ -611,12 +611,12 @@ FuelLookup::FuelLookup(
 {
 }
 const array<const FuelType*, NUMBER_OF_FUELS> FuelLookup::Fuels{
-  &NULLFUEL, &INVALID,  &C1,       &C2,       &C3,       &C4,       &C5,       &C6,
-  &C7,       &D1,       &D2,       &O1_A,     &O1_B,     &S1,       &S2,       &S3,
-  &D1_D2,    &M1_M2_05, &M1_M2_10, &M1_M2_15, &M1_M2_20, &M1_M2_25, &M1_M2_30, &M1_M2_35,
-  &M1_M2_40, &M1_M2_45, &M1_M2_50, &M1_M2_55, &M1_M2_60, &M1_M2_65, &M1_M2_70, &M1_M2_75,
-  &M1_M2_80, &M1_M2_85, &M1_M2_90, &M1_M2_95, &M3_M4_05, &M3_M4_10, &M3_M4_15, &M3_M4_20,
-  &M3_M4_25, &M3_M4_30, &M3_M4_35, &M3_M4_40, &M3_M4_45, &M3_M4_50, &M3_M4_55, &M3_M4_60,
-  &M3_M4_65, &M3_M4_70, &M3_M4_75, &M3_M4_80, &M3_M4_85, &M3_M4_90, &M3_M4_95, &M3_M4_100,
+  &NULL_FUEL, &INVALID,  &C1,       &C2,       &C3,       &C4,       &C5,       &C6,
+  &C7,        &D1,       &D2,       &O1_A,     &O1_B,     &S1,       &S2,       &S3,
+  &D1_D2,     &M1_M2_05, &M1_M2_10, &M1_M2_15, &M1_M2_20, &M1_M2_25, &M1_M2_30, &M1_M2_35,
+  &M1_M2_40,  &M1_M2_45, &M1_M2_50, &M1_M2_55, &M1_M2_60, &M1_M2_65, &M1_M2_70, &M1_M2_75,
+  &M1_M2_80,  &M1_M2_85, &M1_M2_90, &M1_M2_95, &M3_M4_05, &M3_M4_10, &M3_M4_15, &M3_M4_20,
+  &M3_M4_25,  &M3_M4_30, &M3_M4_35, &M3_M4_40, &M3_M4_45, &M3_M4_50, &M3_M4_55, &M3_M4_60,
+  &M3_M4_65,  &M3_M4_70, &M3_M4_75, &M3_M4_80, &M3_M4_85, &M3_M4_90, &M3_M4_95, &M3_M4_100,
 };
 }
