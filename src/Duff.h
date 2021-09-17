@@ -66,14 +66,22 @@ public:
    * \return Chance of survival (% / 100)
    */
   [[nodiscard]] virtual double probabilityOfSurvival(double mc_pct) const noexcept = 0;
-  // from kerry's paper
-  // static const Duff FeatherMossUpper;
-  // static const Duff FeatherMossLower;
+  //  /**
+  //   * \brief Feather moss (upper) [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<172, 464, 139873, -3296, 4904, 568> FeatherMossUpper;
+  //  /**
+  //   * \brief Feather moss (lower) [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<191, 389, 132628, -1167, 3308, -2604> FeatherMossLower;
   /**
    * \brief Sphagnum (upper) [Frandsen table 2/3]
    */
   static const DuffType<124, 218, -88306, -608, 8095, 2735> SphagnumUpper;
-  // static const Duff SphagnumLower;
+  //  /**
+  //   * \brief Sphagnum (lower) [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<567, 1190, 3273347, -37655, -87849, 26684> SphagnumLower;
   /**
    * \brief Feather [Frandsen table 3]
    */
@@ -82,8 +90,14 @@ public:
    * \brief Reindeer/feather [Frandsen table 2/3]
    */
   static const DuffType<261, 563, 80359, -393, -591, -340> Reindeer;
-  // static const Duff SedgeMeadowUpper;
-  // static const Duff SedgeMeadowLower;
+  //  /**
+  //   * \brief Sedge meadow (upper) [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<233, 694, 398477, -1800, -3727, -1874> SedgeMeadowUpper;
+  //  /**
+  //   * \brief Sedge meadow (lower) [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<449, 915, 290818, -2059, -2319, -420> SedgeMeadowLower;
   /**
    * \brief White spruce duff [Frandsen table 2/3]
    */
@@ -96,7 +110,10 @@ public:
    * \brief Peat muck [Frandsen table 2/3]
    */
   static const DuffType<349, 2030, 372276, -1876, -2833, -951> PeatMuck;
-  // static const Duff SedgeMeadowSeney;
+  //  /**
+  //   * \brief Sedge meadow (Seney) [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<354, 1830, 71813, -1413, -1253, 390> SedgeMeadowSeney;
   /**
    * \brief Pine duff (Seney) [Frandsen table 2/3]
    */
@@ -105,13 +122,22 @@ public:
    * \brief Spruce/pine duff [Frandsen table 2/3]
    */
   static const DuffType<307, 1160, 586921, -2737, -5413, -1246> SprucePine;
-  // static const Duff GrassSedgeMarsh;
-  // static const Duff SouthernPine;
-  // static const Duff HardwoodSwamp;
+  //  /**
+  //   * \brief Grass/sedge marsh [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<352, 1200, 2362934, -8423, -25097, -4902> GrassSedgeMarsh;
+  //  /**
+  //   * \brief Southern pine duff [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<680, 1120, 586921, -2737, -5413, -1246> SouthernPine;
+  //  /**
+  //   * \brief Hardwood swamp (upper) [Frandsen table 2/3]
+  //   */
+  //  static const DuffType<182, 1380, 336907, -2946, -3002, -4040> HardwoodSwamp;
   // coefficients aren't defined in the table these came from
-  // static const Duff Pocosin;
-  // static const Duff SwampForest;
-  // static const Duff Flatwoods;
+  // static const DuffType Pocosin;
+  // static const DuffType SwampForest;
+  // static const DuffType Flatwoods;
 protected:
   Duff() = default;
 };
