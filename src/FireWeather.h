@@ -130,8 +130,6 @@ private:
    * \brief Minimum date present in stream
    */
   Day min_date_;
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Maximum date present in stream
    */
@@ -141,7 +139,6 @@ private:
    */
   size_t weighted_dsr_;
 };
-#pragma warning(pop)
 /**
  * \brief Equality operator
  * \param lhs First FireWeather
@@ -155,10 +152,7 @@ private:
     return false;
   }
   // FIX: why is this a warning?
-#pragma warning(push)
-#pragma warning(disable: 4365)
   for (Day day = lhs.minDate() + static_cast<Day>(1); day <= lhs.maxDate(); ++day)
-#pragma warning(pop)
   {
     for (auto hour = 0; hour < DAY_HOURS; ++hour)
     {

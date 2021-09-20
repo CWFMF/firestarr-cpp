@@ -271,8 +271,6 @@ public:
    * \param rhs FwiWeather to copy from
    */
   constexpr FwiWeather(const FwiWeather& rhs) noexcept = default;
-#pragma warning(push)
-#pragma warning(disable: 26456)
   /**
    * \brief Move assignment
    * \param rhs FwiWeather to move from
@@ -285,7 +283,6 @@ public:
    * \return This, after assignment
    */
   FwiWeather& operator=(const FwiWeather& rhs) = default;
-#pragma warning(pop)
   /**
    * \brief Fine Fuel Moisture Code
    * \return Fine Fuel Moisture Code

@@ -347,8 +347,6 @@ protected:
     logging::note("Start elevation is %d", elevation_);
     initializeNotBurnable();
   }
-#pragma warning(push)
-#pragma warning(disable: 26447)
   /**
    * \brief Construct from cells and elevation
    * \param cells Cells representing Environment
@@ -367,7 +365,6 @@ protected:
       std::terminate();
     }
   }
-#pragma warning(pop)
 private:
   /**
    * \brief Cells representing Environment
@@ -377,13 +374,10 @@ private:
    * \brief BurnedData of cells that are not burnable
    */
   sim::BurnedData not_burnable_{};
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Elevation at StartPoint
    */
   ElevationSize elevation_;
 };
-#pragma warning(pop)
 }
 }

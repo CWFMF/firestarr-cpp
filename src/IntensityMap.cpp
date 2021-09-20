@@ -27,8 +27,6 @@ static vector<unique_ptr<data::GridMap<IntensitySize>>> MAPS;
 static void release_map(unique_ptr<data::GridMap<IntensitySize>> map) noexcept
 {
   map->clear();
-#pragma warning(push)
-#pragma warning(disable: 26447)
   try
   {
     lock_guard<mutex> lock(MUTEX_MAPS);
@@ -38,12 +36,9 @@ static void release_map(unique_ptr<data::GridMap<IntensitySize>> map) noexcept
   {
     std::terminate();
   }
-#pragma warning(pop)
 }
 static unique_ptr<data::GridMap<IntensitySize>> acquire_map(const Model& model) noexcept
 {
-#pragma warning(push)
-#pragma warning(disable: 26447)
   try
   {
     lock_guard<mutex> lock(MUTEX_MAPS);
@@ -59,7 +54,6 @@ static unique_ptr<data::GridMap<IntensitySize>> acquire_map(const Model& model) 
   {
     std::terminate();
   }
-#pragma warning(pop)
 }
 IntensityMap::IntensityMap(const Model& model) noexcept
   : model_(model),

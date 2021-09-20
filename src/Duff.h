@@ -150,10 +150,7 @@ class DuffType final
 {
 public:
   DuffType() = default;
-#pragma warning(push)
-#pragma warning(disable: 26443)
   virtual ~DuffType() = default;
-#pragma warning(pop)
   DuffType(const DuffType& rhs) noexcept = delete;
   DuffType(DuffType&& rhs) noexcept = delete;
   DuffType& operator=(const DuffType& rhs) noexcept = delete;

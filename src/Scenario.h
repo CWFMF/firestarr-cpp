@@ -609,13 +609,10 @@ protected:
    * \brief Last day of simulation
    */
   Day last_date_;
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Whether or not this Scenario has completed running
    */
   bool ran_;
 };
-#pragma warning(pop)
 }
 }

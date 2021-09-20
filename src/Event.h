@@ -220,13 +220,10 @@ private:
    * \brief Burn Intensity (kW/m)
    */
   IntensitySize intensity_;
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief CellIndex for relative Cell that spread into from
    */
   CellIndex source_;
 };
-#pragma warning(pop)
 }
 }

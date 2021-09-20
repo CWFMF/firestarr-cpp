@@ -36,8 +36,6 @@ int Log::getLogLevel() noexcept
 {
   return logging_level_;
 }
-#pragma warning(push)
-#pragma warning(disable: 26447)
 void Log::output(const char* name, const char* format, va_list* args) noexcept
 {
   try
@@ -59,7 +57,6 @@ void Log::output(const char* name, const char* format, va_list* args) noexcept
     std::terminate();
   }
 }
-#pragma warning(pop)
 void extensive(const char* format, ...) noexcept
 {
   if (Log::getLogLevel() <= LOG_EXTENSIVE)
@@ -67,10 +64,7 @@ void extensive(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("EXTENSIVE:", format, &args);
-#pragma warning(push)
-#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning(pop)
   }
 }
 void verbose(const char* format, ...) noexcept
@@ -80,10 +74,7 @@ void verbose(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("VERBOSE:", format, &args);
-#pragma warning(push)
-#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning(pop)
   }
 }
 void debug(const char* format, ...) noexcept
@@ -93,10 +84,7 @@ void debug(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("DEBUG: ", format, &args);
-#pragma warning(push)
-#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning(pop)
   }
 }
 void info(const char* format, ...) noexcept
@@ -106,10 +94,7 @@ void info(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("INFO:  ", format, &args);
-#pragma warning(push)
-#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning(pop)
   }
 }
 void note(const char* format, ...) noexcept
@@ -119,10 +104,7 @@ void note(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("NOTE:  ", format, &args);
-#pragma warning(push)
-#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning(pop)
   }
 }
 void warning(const char* format, ...) noexcept
@@ -132,10 +114,7 @@ void warning(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("WARN:  ", format, &args);
-#pragma warning(push)
-#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning(pop)
   }
 }
 void error(const char* format, ...) noexcept
@@ -145,10 +124,7 @@ void error(const char* format, ...) noexcept
     va_list args;
     va_start(args, format);
     Log::output("ERROR: ", format, &args);
-#pragma warning(push)
-#pragma warning(disable: 26477)
     va_end(args);
-#pragma warning(pop)
   }
 }
 void fatal(const char* format, va_list* args) noexcept

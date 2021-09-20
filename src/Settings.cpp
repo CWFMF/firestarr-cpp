@@ -375,15 +375,12 @@ private:
    */
   int intensity_max_moderate_;
 public:
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Whether or not to run things asynchronously where possible
    * \return Whether or not to run things asynchronously where possible
    */
   atomic<bool> run_async = true;
 };
-#pragma warning(pop)
 /**
  * \brief The singleton instance for this class
  * \return The singleton instance for this class
@@ -407,8 +404,6 @@ string get_value(unordered_map<string, string>& settings, const string& key)
   static const string Invalid = "INVALID";
   return Invalid;
 }
-#pragma warning(push)
-#pragma warning(disable: 26447)
 SettingsImplementation::SettingsImplementation(const char* filename) noexcept
 {
   try
@@ -488,7 +483,6 @@ SettingsImplementation::SettingsImplementation(const char* filename) noexcept
     std::terminate();
   }
 }
-#pragma warning(pop)
 const char* Settings::weatherFile() noexcept
 {
   return SettingsImplementation::instance().weatherFile();

@@ -29,8 +29,6 @@ SafeVector::SafeVector(SafeVector&& rhs) noexcept
   : values_(std::move(rhs.values_))
 {
 }
-#pragma warning(push)
-#pragma warning(disable: 26447)
 SafeVector& SafeVector::operator=(const SafeVector& rhs) noexcept
 {
   try
@@ -44,9 +42,6 @@ SafeVector& SafeVector::operator=(const SafeVector& rhs) noexcept
     std::terminate();
   }
 }
-#pragma warning(pop)
-#pragma warning(push)
-#pragma warning(disable: 26447)
 SafeVector& SafeVector::operator=(SafeVector&& rhs) noexcept
 {
   try
@@ -60,7 +55,6 @@ SafeVector& SafeVector::operator=(SafeVector&& rhs) noexcept
     std::terminate();
   }
 }
-#pragma warning(pop)
 void SafeVector::addValue(const double value)
 {
   lock_guard<mutex> lock(mutex_);

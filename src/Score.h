@@ -68,13 +68,10 @@ private:
    * \brief Grade for this year
    */
   double grade_;
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Year this Score is for
    */
   int year_;
 };
-#pragma warning(pop)
 }
 }

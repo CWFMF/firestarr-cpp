@@ -299,14 +299,11 @@ protected:
   {
   }
 private:
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Value to use for representing no data at a Location.
    */
   T no_data_;
 };
-#pragma warning(pop)
 /**
  * \brief A Grid that defines the data structure used for storing values.
  * \tparam T Type of data after conversion from initialization type.

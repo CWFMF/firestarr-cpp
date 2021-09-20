@@ -180,13 +180,10 @@ private:
    * \brief Accumulated Precipitation at 0800 (mm)
    */
   AccumulatedPrecipitation apcp_0800_;
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Whether or not any of the indices have been overridden
    */
   bool is_overridden_;
 };
-#pragma warning(pop)
 }
 }
