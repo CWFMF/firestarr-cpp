@@ -120,8 +120,6 @@ StartPoint::StartPoint(const double latitude, const double longitude) noexcept
   : Point(latitude, longitude), days_(make_days(latitude, longitude))
 {
 }
-#pragma warning(push)
-#pragma warning(disable: 26456)
 StartPoint& StartPoint::operator=(StartPoint&& rhs) noexcept
 {
   if (this != &rhs)
@@ -134,6 +132,5 @@ StartPoint& StartPoint::operator=(StartPoint&& rhs) noexcept
   }
   return *this;
 }
-#pragma warning(pop)
 }
 }

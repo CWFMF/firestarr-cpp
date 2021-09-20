@@ -85,14 +85,11 @@ private:
    * \brief Condition variable to use for checking count
    */
   std::condition_variable cv_;
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Variable to keep count of threads in use
    */
   int count_;
 };
-#pragma warning(pop)
 /**
  * \brief Indicates a section of code that is limited to a certain number of threads running at once.
  */
@@ -118,8 +115,6 @@ public:
   CriticalSection& operator=(CriticalSection&& rhs) = delete;
   ~CriticalSection() noexcept
   {
-#pragma warning(push)
-#pragma warning(disable: 26447)
     try
     {
       s_.notify();
@@ -128,7 +123,6 @@ public:
     {
       std::terminate();
     }
-#pragma warning(pop)
   }
 };
 /**

@@ -597,7 +597,6 @@ FwiWeather read(istringstream* iss, string* str)
   const Wind wind(wd, ws);
   return {tmp, rh, wind, apcp, ffmc, dmc, dc, isi, bui, fwi};
 }
-#pragma warning(suppress: 26495)
 FwiWeather::FwiWeather(istringstream* iss, string* str)
   : FwiWeather(read(iss, str))
 {

@@ -251,13 +251,10 @@ private:
    * \brief Head fire rate of spread (m/min)
    */
   double head_ros_;
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Difference between date and the date of minimum foliar moisture content (from ST-X-3)
    */
   int nd_;
 };
-#pragma warning(pop)
 }
 }

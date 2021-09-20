@@ -53,15 +53,12 @@ public:
    * \return This, after assignment
    */
   StartPoint& operator=(const StartPoint& rhs) = default;
-#pragma warning(push)
-#pragma warning(disable: 26456)
   /**
    * \brief Move assignment
    * \param rhs StartPoint to move from
    * \return This, after assignment
    */
   StartPoint& operator=(StartPoint&& rhs) noexcept;
-#pragma warning(pop)
   /**
    * \brief Sunrise time
    * \param day Day

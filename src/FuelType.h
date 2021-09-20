@@ -229,14 +229,11 @@ private:
    * \brief Whether or not this fuel can have a crown fire
    */
   const bool can_crown_;
-#pragma warning(push)
-#pragma warning(disable: 4820)
   /**
    * \brief Code to identify fuel with
    */
   FuelCodeSize code_;
 };
-#pragma warning(pop)
 /**
  * \brief Base class for all FuelTypes.
  * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]

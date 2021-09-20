@@ -35,8 +35,6 @@ namespace sim
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 BurnedData* Model::getBurnedVector() const noexcept
 {
-#pragma warning(push)
-#pragma warning(disable: 26447)
   try
   {
     if (!vectors_.empty())
@@ -57,12 +55,9 @@ BurnedData* Model::getBurnedVector() const noexcept
   {
     std::terminate();
   }
-#pragma warning(pop)
 }
 void Model::releaseBurnedVector(BurnedData* has_burned) const noexcept
 {
-#pragma warning(push)
-#pragma warning(disable: 26447)
   try
   {
     environment().resetBurnedData(has_burned);
@@ -73,7 +68,6 @@ void Model::releaseBurnedVector(BurnedData* has_burned) const noexcept
   {
     std::terminate();
   }
-#pragma warning(pop)
 }
 Model::~Model()
 {
@@ -347,8 +341,6 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
                                const Day last_date)
 {
   vector<Scenario*> result{};
-#pragma warning(push)
-#pragma warning(disable: 4820)
   auto saves = Settings::outputDateOffsets();
   const auto setup_scenario = [&result, save_intensity, &saves](Scenario* scenario)
   {
@@ -365,7 +357,6 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
     }
     result.push_back(scenario);
   };
-#pragma warning(pop)
   for (const auto& kv : wx_)
   {
     const auto id = kv.first;

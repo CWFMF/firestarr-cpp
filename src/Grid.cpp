@@ -55,8 +55,6 @@ bool find_value(const string& key,
   }
   return false;
 }
-#pragma warning(push)
-#pragma warning(disable: 26447)
 double find_meridian(const string& proj4) noexcept
 {
   try
@@ -79,7 +77,6 @@ double find_meridian(const string& proj4) noexcept
                                   proj4.c_str());
   }
 }
-#pragma warning(pop)
 GridBase::GridBase(const double cell_size,
                    const Idx rows,
                    const Idx columns,

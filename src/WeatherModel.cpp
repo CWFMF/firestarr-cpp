@@ -32,7 +32,6 @@ WeatherModel::WeatherModel(const TIMESTAMP_STRUCT& generated,
     distance_from_(distance_from)
 {
 }
-#pragma warning(suppress: 26495)
 WeatherModel& WeatherModel::operator=(const WeatherModel& rhs)
 {
   if (this != &rhs)
