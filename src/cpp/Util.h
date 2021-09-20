@@ -192,7 +192,6 @@ to_heading(
  * \return
  */
 template <class Elem, class Traits, class Alloc>
-// ReSharper disable once IdentifierTypo
 std::basic_istream<Elem, Traits>&
 getline(
   std::basic_istream<Elem, Traits>* stream,

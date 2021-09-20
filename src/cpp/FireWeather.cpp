@@ -12,7 +12,6 @@ namespace fs::wx
 static array<double, DAY_HOURS> BY_HOUR = {.570, .565, .563, .563, .564, .581,  .642, .725,
                                            .808, .880, .936, .977, 1,    1.008, .999, .973,
                                            .915, .831, .724, .631, .593, .586,  .584, .579};
-// ReSharper disable once CppNotAllPathsReturnValue
 inline double
 wind_speed_adjustment(
   const int hour

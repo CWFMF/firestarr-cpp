@@ -133,7 +133,6 @@ IntensityMap::isSurrounded(
   }
   return true;
 }
-// ReSharper disable once CppMemberFunctionMayBeConst
 void
 IntensityMap::burn(
   const Location& location,
