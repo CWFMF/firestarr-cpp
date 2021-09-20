@@ -705,13 +705,11 @@ Model::runScenarios(
   logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
   logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
   model.readWeather(lookup, weather_input, for_actuals, yesterday, start_point.latitude());
-  auto kv = std::views::keys(model.wx_);
-  std::vector<int> keys{kv.begin(), kv.end()};
-  if (0 == keys.size())
+  if (model.wx_.empty())
   {
     logging::fatal("No weather provided");
   }
-  const auto w = model.wx_[keys[0]];
+  const auto w = model.wx_.begin()->second;
   logging::debug("Have weather from day %d to %d", w->minDate(), w->maxDate());
   const auto numDays = (w->maxDate() - w->minDate() + 1);
   const auto needDays = Settings::maxDateOffset();
