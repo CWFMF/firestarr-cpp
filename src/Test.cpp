@@ -321,10 +321,8 @@ int test(const int argc, const char* const argv[])
       const auto slope = static_cast<SlopeSize>(argc > i ? stoi(argv[i++]) : 0);
       const auto aspect = static_cast<AspectSize>(argc > i ? stoi(argv[i++]) : 0);
       const wx::Speed wind_speed(argc > i ? stoi(argv[i++]) : 20);
-      // ReSharper disable CppAssignedValueIsNeverUsed
       const wx::Direction wind_direction(argc > i ? stoi(argv[i++]) : 180, false);
       const wx::Wind wind(wind_direction, wind_speed);
-      // ReSharper restore CppAssignedValueIsNeverUsed
       assert(i == argc);
       logging::note(
         "Running tests with constant inputs for %d:\n"

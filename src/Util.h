@@ -167,7 +167,6 @@ static constexpr double RAD_180 = to_radians(180);
 template <class Elem,
           class Traits,
           class Alloc>
-// ReSharper disable once IdentifierTypo
 std::basic_istream<Elem, Traits>& getline(
   std::basic_istream<Elem, Traits>* stream,
   std::basic_string<Elem, Traits, Alloc>* str,

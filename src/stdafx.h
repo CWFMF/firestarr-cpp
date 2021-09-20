@@ -16,9 +16,7 @@
 #pragma once
 // #define VLD_FORCE_ENABLE
 // #include "vld.h"
-// ReSharper disable CppInconsistentNaming
 #define _USE_MATH_DEFINES
-// ReSharper restore CppInconsistentNaming
 #define NOMINMAX
 #include <ctime>
 #include <chrono>
