@@ -57,28 +57,18 @@
 #include <sys/stat.h>
 // unreferenced inline function has been removed
 // Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are
-// no longer caught
-// function 'X' selected for automatic inline expansion
-// function not inlined
+// no longer caught function 'X' selected for automatic inline expansion function not inlined
 // selected for automatic inline expansion
 // Do not assign the result of an allocation or a function call with an owner<T> return value to a
-// raw pointer, use owner<T> instead
-// Do not delete a raw pointer that is not an owner<T>
-// Return a scoped object instead of a heap-allocated if it has a move constructor
-// Reset or explicitly delete an owner<T> pointer
-// Do not assign to an owner<T> which may be in valid state
-// Do not assign a raw pointer to an owner<T>
-// Prefer scoped objects, don't heap-allocate unnecessarily
-// Avoid calling new and delete explicitly, use std::make_unique<T> instead
-// Global initializer calls a non-constexpr function
-// Symbol is never tested for nullness, it can be marked as not_null
-// Function hides a non-virtual function
-// prefer to use gsl::at()
-// Don't use a static_cast for arithmetic conversions. Use brace initialization, gsl::narrow_cast or
-// gsl::narrow
-// Don't use pointer arithmetic. Use span instead
-// Only index into arrays using constant expressions
-// No array to pointer decay
+// raw pointer, use owner<T> instead Do not delete a raw pointer that is not an owner<T> Return a
+// scoped object instead of a heap-allocated if it has a move constructor Reset or explicitly delete
+// an owner<T> pointer Do not assign to an owner<T> which may be in valid state Do not assign a raw
+// pointer to an owner<T> Prefer scoped objects, don't heap-allocate unnecessarily Avoid calling new
+// and delete explicitly, use std::make_unique<T> instead Global initializer calls a non-constexpr
+// function Symbol is never tested for nullness, it can be marked as not_null Function hides a
+// non-virtual function prefer to use gsl::at() Don't use a static_cast for arithmetic conversions.
+// Use brace initialization, gsl::narrow_cast or gsl::narrow Don't use pointer arithmetic. Use span
+// instead Only index into arrays using constant expressions No array to pointer decay
 using std::abs;
 using std::array;
 using std::async;
