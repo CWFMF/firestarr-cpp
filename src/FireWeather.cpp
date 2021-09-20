@@ -46,7 +46,6 @@ static array<double, DAY_HOURS> BY_HOUR = {
   .586,
   .584,
   .579};
-// ReSharper disable once CppNotAllPathsReturnValue
 inline double wind_speed_adjustment(const int hour) noexcept
 {
   return BY_HOUR.at(static_cast<size_t>(hour));

@@ -119,7 +119,6 @@ bool IntensityMap::isSurrounded(const Location& location) const
   }
   return true;
 }
-// ReSharper disable once CppMemberFunctionMayBeConst
 void IntensityMap::burn(const Location& location, const IntensitySize intensity)
 {
   lock_guard<mutex> lock(mutex_);
