@@ -479,6 +479,17 @@ add_statistics(
   }
   return true;
 }
+/*!
+ * \page ending Simulation stop conditions
+ *
+ * Simulations will continue to run until a stop condition is reached.
+ *
+ * 1) the program has reached the time defined in the settings file as the maximum
+ * run duration.
+ *
+ * 2) the amount of variability in the output statistics has decreased to a point
+ * that is less than the confidence level defined in the settings file
+ */
 size_t
 runs_required(
   const size_t i,

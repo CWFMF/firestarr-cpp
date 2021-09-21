@@ -8,6 +8,18 @@
 
 namespace fs::wx
 {
+/*!
+ * \page weather Hourly fire and weather indices
+ *
+ * Generally, indices are constant for all cells for the day in each simulation.
+ * The exceptions to this are Wind and FFMC, and by extension, ISI and FWI.
+ *
+ * Hourly wind is calculated based on a simple statistical analysis, with wind
+ * for each hour being a proportion of the daily wind.
+ *
+ * FFMC is calculated using the method described in
+ * https://www.for.gov.bc.ca/hfd/pubs/Docs/Frr/FRR245.pdf
+ */
 // adjust based on statistical analysis of hourly wind
 static array<double, DAY_HOURS> BY_HOUR = {.570, .565, .563, .563, .564, .581,  .642, .725,
                                            .808, .880, .936, .977, 1,    1.008, .999, .973,
@@ -450,7 +462,6 @@ ffmc_1100_low(
   constexpr auto e = 0.356051255;
   return ffmc_from_moisture((a + c * ln_x + e * ln_x_sq) / (1 + b * ln_x + d * ln_x_sq));
 }
-// https://www.for.gov.bc.ca/hfd/pubs/Docs/Frr/FRR245.pdf
 FireWeather::~FireWeather()
 {
   delete weather_by_hour_by_day_;
