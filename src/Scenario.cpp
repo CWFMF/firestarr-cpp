@@ -60,6 +60,23 @@ Scenario::~Scenario()
 {
   clear();
 }
+/*!
+ * \page probability Probability of events
+ *
+ * Probability throughout the simulations is handled using pre-rolled random numbers
+ * based on a fixed seed, so that simulation results are reproducible.
+ *
+ * Probability is stored as 'thresholds' for a certain event on a day-by-day and hour-by-hour
+ * basis. If the calculated probability of that type of event matches or exceeds the threshold
+ * then the event will occur.
+ *
+ * Each iteration of a scenario will have its own thresholds, and thus different behaviour
+ * can occur with the same input indices.
+ *
+ * Thresholds are used to determine:
+ * - extinction
+ * - spread events
+ */
 static void make_threshold(vector<double>* thresholds,
                            mt19937* mt,
                            const Day start_day,

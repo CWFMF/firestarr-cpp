@@ -19,15 +19,28 @@ namespace firestarr
 {
 namespace fuel
 {
-// References
-// Lawson, B.D.; Frandsen, W.H.; Hawkes, B.C.; Dalrymple, G.N. 1997.
-// Probability of sustained smoldering ignitions for some boreal forest duff types.
-// https://cfs.nrcan.gc.ca/pubwarehouse/pdfs/11900.pdf
-//
-// Frandsen, W.H. 1997.
-// Ignition probability of organic soils.
-// https://www.nrcresearchpress.com/doi/pdf/10.1139/x97-106
-//
+/*! \page survival Probability of fire survival
+ *
+ * Fire survival is determined for each point at each time step. Survival is
+ * dependent on FFMC, DMC, and fuel in the cell. If the fire is determined to have
+ * not survived in both the FFMC and DMC fuels then it is considered extinguished
+ * and all points in that cell are removed from the simulation. Since the cell is
+ * already marked as burned at this point, it will not burn again.
+ *
+ * Probability of survival is determined as per the papers referenced, with the
+ * FBP fuel types having been assigned an FFMC duff type and a DMC duff type,
+ * and the moisture for each type being calculated based off the current indices.
+ *
+ * \section References
+ *
+ * Lawson, B.D.; Frandsen, W.H.; Hawkes, B.C.; Dalrymple, G.N. 1997.
+ * Probability of sustained smoldering ignitions for some boreal forest duff types.
+ * https://cfs.nrcan.gc.ca/pubwarehouse/pdfs/11900.pdf
+ *
+ * Frandsen, W.H. 1997.
+ * Ignition probability of organic soils.
+ * https://www.nrcresearchpress.com/doi/pdf/10.1139/x97-106
+ */
 template <int Ash, int Rho, int B0, int B1, int B2, int B3>
 class DuffType;
 /**
