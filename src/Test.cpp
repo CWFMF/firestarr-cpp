@@ -195,6 +195,8 @@ int run_test(const char* output_directory,
     -1,
     TEST_XLLCORNER,
     TEST_YLLCORNER,
+    TEST_XLLCORNER + TEST_GRID_SIZE * MAX_COLUMNS,
+    TEST_YLLCORNER + TEST_GRID_SIZE * MAX_ROWS,
     TEST_PROJ4,
     std::move(values)};
   TestEnvironment env(cells);

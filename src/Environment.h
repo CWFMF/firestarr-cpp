@@ -329,6 +329,8 @@ protected:
                                         -1,
                                         fuel.xllcorner(),
                                         fuel.yllcorner(),
+                                        fuel.xurcorner(),
+                                        fuel.yurcorner(),
                                         string(fuel.proj4()),
                                         std::move(values));
   }
