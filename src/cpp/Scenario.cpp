@@ -167,6 +167,8 @@ Scenario::reset(
   util::SafeVector* final_sizes
 )
 {
+  // track this here because reset is always called before use
+  ++COUNT;
   ++simulation_;
   clear();
   const auto num = (static_cast<size_t>(last_date_) - start_day_ + 1) * DAY_HOURS;
@@ -272,7 +274,6 @@ Scenario::Scenario(
     last_date_(last_date),
     ran_(false)
 {
-  ++COUNT;
   last_save_ = weather_->minDate();
 }
 void
