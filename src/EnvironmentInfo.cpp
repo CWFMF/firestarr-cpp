@@ -39,21 +39,21 @@ EnvironmentInfo::EnvironmentInfo(string in_fuel,
     in_aspect_(std::move(in_aspect)),
     in_elevation_(std::move(in_elevation))
 {
-  logging::debug("fuel: %dx%d => (%f, %f)", fuel.columns(), fuel.rows(), fuel.xllcorner(), fuel.yllcorner());
-  logging::debug("slope: %dx%d => (%f, %f)", slope.columns(), slope.rows(), slope.xllcorner(), slope.yllcorner());
-  logging::debug("aspect: %dx%d => (%f, %f)", aspect.columns(), aspect.rows(), aspect.xllcorner(), aspect.yllcorner());
-  logging::check_fatal(!(fuel.rows() == slope.rows()
-                         && fuel.columns() == slope.columns()
+  logging::debug("fuel: %dx%d => (%f, %f)", fuel.calculateColumns(), fuel.calculateRows(), fuel.xllcorner(), fuel.yllcorner());
+  logging::debug("slope: %dx%d => (%f, %f)", slope.calculateColumns(), slope.calculateRows(), slope.xllcorner(), slope.yllcorner());
+  logging::debug("aspect: %dx%d => (%f, %f)", aspect.calculateColumns(), aspect.calculateRows(), aspect.xllcorner(), aspect.yllcorner());
+  logging::check_fatal(!(fuel.calculateRows() == slope.calculateRows()
+                         && fuel.calculateColumns() == slope.calculateColumns()
                          && fuel.cellSize() == slope.cellSize()
                          && fuel.xllcorner() == slope.xllcorner()
                          && fuel.yllcorner() == slope.yllcorner()
-                         && fuel.rows() == aspect.rows()
-                         && fuel.columns() == aspect.columns()
+                         && fuel.calculateRows() == aspect.calculateRows()
+                         && fuel.calculateColumns() == aspect.calculateColumns()
                          && fuel.cellSize() == aspect.cellSize()
                          && fuel.xllcorner() == aspect.xllcorner()
                          && fuel.yllcorner() == aspect.yllcorner()
-                         && fuel.rows() == elevation.rows()
-                         && fuel.columns() == elevation.columns()
+                         && fuel.calculateRows() == elevation.calculateRows()
+                         && fuel.calculateColumns() == elevation.calculateColumns()
                          && fuel.cellSize() == elevation.cellSize()
                          && fuel.xllcorner() == elevation.xllcorner()
                          && fuel.yllcorner() == elevation.yllcorner()),
@@ -130,6 +130,12 @@ unique_ptr<Coordinates> EnvironmentInfo::findCoordinates(
   const bool flipped) const
 {
   return fuel_.findCoordinates(point, flipped);
+}
+unique_ptr<FullCoordinates> EnvironmentInfo::findFullCoordinates(
+  const Point& point,
+  const bool flipped) const
+{
+  return fuel_.findFullCoordinates(point, flipped);
 }
 }
 }

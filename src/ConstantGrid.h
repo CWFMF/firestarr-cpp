@@ -158,23 +158,23 @@ public:
     V max_value = std::numeric_limits<V>::min();
 #endif
     const GridBase grid_info = read_header<T>(tif, gtif);
-    const auto coordinates = grid_info.findCoordinates(point, false);
-    auto min_column = max(static_cast<Idx>(0),
-                          static_cast<Idx>(std::get<1>(*coordinates) - MAX_COLUMNS / static_cast<Idx>(2)));
-    if (min_column + MAX_COLUMNS >= grid_info.columns())
+    const auto coordinates = grid_info.findFullCoordinates(point, false);
+    auto min_column = max(static_cast<FullIdx>(0),
+                          static_cast<FullIdx>(std::get<1>(*coordinates) - static_cast<FullIdx>(MAX_COLUMNS) / static_cast<FullIdx>(2)));
+    if (min_column + MAX_COLUMNS >= grid_info.calculateColumns())
     {
-      min_column = grid_info.columns() - MAX_COLUMNS;
+      min_column = grid_info.calculateColumns() - MAX_COLUMNS;
     }
-    const auto max_column = min_column + MAX_COLUMNS;
-    auto min_row = max(static_cast<Idx>(0),
-                       static_cast<Idx>(std::get<0>(*coordinates) - MAX_COLUMNS / static_cast<Idx>(2)));
-    if (min_row + MAX_COLUMNS >= grid_info.rows())
+    const auto max_column = static_cast<FullIdx>(min_column + MAX_COLUMNS);
+    auto min_row = max(static_cast<FullIdx>(0),
+                       static_cast<FullIdx>(std::get<0>(*coordinates) - static_cast<FullIdx>(MAX_ROWS) / static_cast<FullIdx>(2)));
+    if (min_row + MAX_COLUMNS >= grid_info.calculateRows())
     {
-      min_row = grid_info.rows() - MAX_COLUMNS;
+      min_row = grid_info.calculateRows() - MAX_COLUMNS;
     }
-    const auto max_row = min_row + MAX_COLUMNS;
-    const Idx offset_x = -min_column;
-    const Idx offset_y = -min_row;
+    const auto max_row = static_cast<FullIdx>(min_row + MAX_COLUMNS);
+    const FullIdx offset_x = -min_column;
+    const FullIdx offset_y = -min_row;
     T no_data = convert(grid_info.nodata(), grid_info.nodata());
     vector<T> values(MAX_COLUMNS * MAX_COLUMNS, no_data);
     int tile_width;
@@ -185,23 +185,23 @@ public:
     const auto buf = _TIFFmalloc(TIFFTileSize(tif));
     logging::warning("%s: read start", filename.c_str());
     const tsample_t smp{};
-    for (auto h = 0; h < grid_info.rows(); h += tile_length)
+    for (auto h = 0; h < grid_info.calculateRows(); h += tile_length)
     {
-      const auto y_min = static_cast<Idx>(max(0, min_row - h));
-      const auto y_limit = min(tile_length,
-                               min(static_cast<int>(grid_info.rows()), max_row) - h);
-      for (auto w = 0; w < grid_info.columns(); w += tile_width)
+      const auto y_min = static_cast<FullIdx>(max(static_cast<FullIdx>(0), min_row - h));
+      const auto y_limit = min(static_cast<FullIdx>(tile_length),
+                               min(static_cast<FullIdx>(grid_info.calculateRows()), max_row) - h);
+      for (auto w = 0; w < grid_info.calculateColumns(); w += tile_width)
       {
         TIFFReadTile(tif, buf, static_cast<uint32>(w), static_cast<uint32>(h), 0, smp);
-        const auto x_min = static_cast<Idx>(max(0, min_column - w));
-        const auto x_limit = min(tile_width,
-                                 min(static_cast<int>(grid_info.columns()),
+        const auto x_min = static_cast<FullIdx>(max(static_cast<FullIdx>(0), min_column - w));
+        const auto x_limit = min(static_cast<FullIdx>(tile_width),
+                                 min(grid_info.calculateColumns(),
                                      max_column)
                                    - w);
         for (auto y = y_min; y < y_limit; ++y)
         {
           // read in so that (0, 0) has a hash of 0
-          const Idx i = MAX_COLUMNS - (static_cast<Idx>(h) + y + offset_y + 1);
+          const FullIdx i = static_cast<FullIdx>(MAX_COLUMNS) - (static_cast<FullIdx>(h) + y + offset_y + 1);
           for (auto x = x_min; x < x_limit; ++x)
           {
             const auto cur_hash = static_cast<HashSize>(i) * MAX_COLUMNS + w + x + offset_x;
@@ -220,7 +220,9 @@ public:
     _TIFFfree(buf);
     logging::warning("%s: free end", filename.c_str());
     const auto new_xll = grid_info.xllcorner() - offset_x * grid_info.cellSize();
-    const auto new_yll = grid_info.yllcorner() + (static_cast<double>(grid_info.rows()) - max_row) * grid_info.cellSize();
+    const auto new_yll = grid_info.yllcorner()
+                       + (static_cast<double>(grid_info.calculateRows()) - max_row)
+                           * grid_info.cellSize();
     logging::check_fatal(new_yll < grid_info.yllcorner(),
                          "New yllcorner is outside original grid");
     logging::note("Translated lower left is (%f, %f) from (%f, %f)",
@@ -292,17 +294,17 @@ private:
    */
   ConstantGrid(const GridBase& grid_info, const T& no_data, vector<T>&& values)
     : ConstantGrid(grid_info.cellSize(),
-                   grid_info.rows(),
-                   grid_info.columns(),
                    no_data,
                    grid_info.nodata(),
                    grid_info.xllcorner(),
                    grid_info.yllcorner(),
+                   grid_info.xurcorner(),
+                   grid_info.yurcorner(),
                    string(grid_info.proj4()),
                    std::move(values))
   {
     logging::check_fatal(
-      this->data.size() != static_cast<size_t>(grid_info.rows()) * MAX_COLUMNS,
+      this->data.size() != static_cast<size_t>(grid_info.calculateRows()) * MAX_COLUMNS,
       "Invalid grid size");
   }
 };

@@ -78,8 +78,6 @@ double find_meridian(const string& proj4) noexcept
   }
 }
 GridBase::GridBase(const double cell_size,
-                   const Idx rows,
-                   const Idx columns,
                    const int nodata,
                    const double xllcorner,
                    const double yllcorner,
@@ -92,11 +90,9 @@ GridBase::GridBase(const double cell_size,
     yllcorner_(yllcorner),
     xurcorner_(xurcorner),
     yurcorner_(yurcorner),
-    nodata_(nodata),
-    rows_(rows),
-    // HACK: don't know if meridian is initialized yet, so repeat calculation
-    columns_(columns)
+    nodata_(nodata)
 {
+  // HACK: don't know if meridian is initialized yet, so repeat calculation
   meridian_ = find_meridian(this->proj4_);
   zone_ = topo::meridian_to_zone(find_meridian(this->proj4_));
 }
@@ -104,11 +100,11 @@ GridBase::GridBase() noexcept
   : cell_size_(-1),
     xllcorner_(-1),
     yllcorner_(-1),
+    xurcorner_(-1),
+    yurcorner_(-1),
     meridian_(-1),
     zone_(-1),
-    nodata_(-1),
-    rows_(-1),
-    columns_(-1)
+    nodata_(-1)
 {
 }
 void GridBase::createPrj(const string& dir, const string& base_name) const
@@ -139,9 +135,18 @@ void GridBase::createPrj(const string& dir, const string& base_name) const
   out << "0.0 /* false northing (meters)\n";
   out.close();
 }
-// Use pair instead of Location, so we can go above max columns & rows
 unique_ptr<Coordinates> GridBase::findCoordinates(const topo::Point& point,
                                                   const bool flipped) const
+{
+  auto full = findFullCoordinates(point, flipped);
+  return make_unique<Coordinates>(static_cast<Idx>(std::get<0>(*full)),
+                                  static_cast<Idx>(std::get<1>(*full)),
+                                  std::get<2>(*full),
+                                  std::get<3>(*full));
+}
+// Use pair instead of Location, so we can go above max columns & rows
+unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& point,
+                                                          const bool flipped) const
 {
   auto x = 0.0;
   auto y = 0.0;
@@ -154,19 +159,18 @@ unique_ptr<Coordinates> GridBase::findCoordinates(const topo::Point& point,
                 y);
   logging::debug("Lower left is (%f, %f)", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
-  // use INT64, so we can see if coordinates are out of bounds
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
   auto actual_y = (y - this->yllcorner_) / this->cell_size_;
   if (!flipped)
   {
-    actual_y = static_cast<double>(this->rows_) - actual_y;
+    actual_y = static_cast<double>(this->calculateRows()) - actual_y;
   }
-  const auto column = static_cast<int64_t>(actual_x);
-  const auto row = static_cast<int64_t>(round(actual_y - 0.5));
-  if (0 > column || column >= columns_ || 0 > row || row >= rows_)
+  const auto column = static_cast<FullIdx>(actual_x);
+  const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
+  if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
-    logging::debug("Returning nullptr from findCoordinates() for (%f, %f) => (%d, %d)",
+    logging::debug("Returning nullptr from findFullCoordinates() for (%f, %f) => (%d, %d)",
                    actual_x,
                    actual_y,
                    column,
@@ -175,10 +179,10 @@ unique_ptr<Coordinates> GridBase::findCoordinates(const topo::Point& point,
   }
   const auto sub_x = static_cast<SubSize>((actual_x - column) * 1000);
   const auto sub_y = static_cast<SubSize>((actual_y - row) * 1000);
-  return make_unique<Coordinates>(static_cast<Idx>(row),
-                                  static_cast<Idx>(column),
-                                  sub_x,
-                                  sub_y);
+  return make_unique<FullCoordinates>(static_cast<FullIdx>(row),
+                                      static_cast<FullIdx>(column),
+                                      sub_x,
+                                      sub_y);
 }
 void write_ascii_header(ofstream& out,
                         const double num_columns,
