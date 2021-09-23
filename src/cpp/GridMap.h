@@ -139,8 +139,6 @@ public:
   )
     : GridMap<T, V>(
         grid.cellSize(),
-        grid.rows(),
-        grid.columns(),
         grid.noData(),
         grid.nodata(),
         grid.xllcorner(),
@@ -162,8 +160,8 @@ public:
   )
     : GridMap<T, V>(
         grid_info.cellSize(),
-        grid_info.rows(),
-        grid_info.columns(),
+        static_cast<Idx>(grid_info.calculateRows()),
+        static_cast<Idx>(grid_info.calculateColumns()),
         no_data,
         static_cast<int>(no_data),
         grid_info.xllcorner(),

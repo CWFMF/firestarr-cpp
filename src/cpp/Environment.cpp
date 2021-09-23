@@ -25,22 +25,22 @@ read_tiff_point(
 )
 {
   const data::GridBase grid_info = data::read_header<T>(tif, gtif);
-  const auto coordinates = grid_info.findCoordinates(point, false);
+  const auto coordinates = grid_info.findFullCoordinates(point, false);
   auto min_column = max(
-    static_cast<Idx>(0),
-    static_cast<Idx>(std::get<1>(*coordinates) - MAX_COLUMNS / static_cast<Idx>(2))
+    static_cast<FullIdx>(0),
+    static_cast<FullIdx>(std::get<1>(*coordinates) - MAX_COLUMNS / static_cast<FullIdx>(2))
   );
-  if (min_column + MAX_COLUMNS >= grid_info.columns())
+  if (min_column + MAX_COLUMNS >= grid_info.calculateColumns())
   {
-    min_column = grid_info.columns() - MAX_COLUMNS;
+    min_column = grid_info.calculateColumns() - MAX_COLUMNS;
   }
   auto min_row = max(
-    static_cast<Idx>(0),
-    static_cast<Idx>(std::get<0>(*coordinates) - MAX_COLUMNS / static_cast<Idx>(2))
+    static_cast<FullIdx>(0),
+    static_cast<FullIdx>(std::get<0>(*coordinates) - MAX_COLUMNS / static_cast<FullIdx>(2))
   );
-  if (min_row + MAX_COLUMNS >= grid_info.rows())
+  if (min_row + MAX_COLUMNS >= grid_info.calculateRows())
   {
-    min_row = grid_info.rows() - MAX_COLUMNS;
+    min_row = grid_info.calculateRows() - MAX_COLUMNS;
   }
   int tile_width;
   int tile_length;
@@ -164,7 +164,7 @@ Environment::loadEnvironment(
   logging::info("Running using inputs directory '%s'", path.c_str());
   auto rasters = util::find_rasters(path, year);
   auto best_x = numeric_limits<double>::max();
-  auto best_y = numeric_limits<Idx>::max();
+  auto best_y = numeric_limits<FullIdx>::max();
   unique_ptr<const EnvironmentInfo> env_info = nullptr;
   unique_ptr<data::GridBase> for_info = nullptr;
   if (!perimeter.empty())
@@ -195,16 +195,16 @@ Environment::loadEnvironment(
       if (cur_x != best_x)
       {
         // if we're switching zones then we need to reset this
-        best_y = numeric_limits<Idx>::max();
+        best_y = numeric_limits<FullIdx>::max();
       }
       best_x = cur_x;
       // overwrite should delete current pointer
-      const auto coordinates = cur_info->findCoordinates(point, false);
+      const auto coordinates = cur_info->findFullCoordinates(point, false);
       if (nullptr != coordinates)
       {
         logging::debug("CHECK Y");
-        const auto cur_y = static_cast<Idx>(
-          abs(std::get<0>(*coordinates) - cur_info->rows() / static_cast<Idx>(2))
+        const auto cur_y = static_cast<FullIdx>(
+          abs(std::get<0>(*coordinates) - cur_info->calculateRows() / static_cast<FullIdx>(2))
         );
         logging::debug(("Current y value is " + std::to_string(cur_y)).c_str());
         if (cur_y < best_y)

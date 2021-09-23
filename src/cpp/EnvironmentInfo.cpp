@@ -31,32 +31,34 @@ EnvironmentInfo::EnvironmentInfo(
 {
   logging::debug(
     "fuel: %dx%d => (%f, %f)",
-    fuel.columns(),
-    fuel.rows(),
+    fuel.calculateColumns(),
+    fuel.calculateRows(),
     fuel.xllcorner(),
     fuel.yllcorner()
   );
   logging::debug(
     "slope: %dx%d => (%f, %f)",
-    slope.columns(),
-    slope.rows(),
+    slope.calculateColumns(),
+    slope.calculateRows(),
     slope.xllcorner(),
     slope.yllcorner()
   );
   logging::debug(
     "aspect: %dx%d => (%f, %f)",
-    aspect.columns(),
-    aspect.rows(),
+    aspect.calculateColumns(),
+    aspect.calculateRows(),
     aspect.xllcorner(),
     aspect.yllcorner()
   );
   logging::check_fatal(
-    !(fuel.rows() == slope.rows() && fuel.columns() == slope.columns()
-      && fuel.cellSize() == slope.cellSize() && fuel.xllcorner() == slope.xllcorner()
-      && fuel.yllcorner() == slope.yllcorner() && fuel.rows() == aspect.rows()
-      && fuel.columns() == aspect.columns() && fuel.cellSize() == aspect.cellSize()
-      && fuel.xllcorner() == aspect.xllcorner() && fuel.yllcorner() == aspect.yllcorner()
-      && fuel.rows() == elevation.rows() && fuel.columns() == elevation.columns()
+    !(fuel.calculateRows() == slope.calculateRows()
+      && fuel.calculateColumns() == slope.calculateColumns() && fuel.cellSize() == slope.cellSize()
+      && fuel.xllcorner() == slope.xllcorner() && fuel.yllcorner() == slope.yllcorner()
+      && fuel.calculateRows() == aspect.calculateRows()
+      && fuel.calculateColumns() == aspect.calculateColumns()
+      && fuel.cellSize() == aspect.cellSize() && fuel.xllcorner() == aspect.xllcorner()
+      && fuel.yllcorner() == aspect.yllcorner() && fuel.calculateRows() == elevation.calculateRows()
+      && fuel.calculateColumns() == elevation.calculateColumns()
       && fuel.cellSize() == elevation.cellSize() && fuel.xllcorner() == elevation.xllcorner()
       && fuel.yllcorner() == elevation.yllcorner()),
     "Grids are not aligned"
@@ -141,5 +143,13 @@ EnvironmentInfo::findCoordinates(
 ) const
 {
   return fuel_.findCoordinates(point, flipped);
+}
+unique_ptr<FullCoordinates>
+EnvironmentInfo::findFullCoordinates(
+  const Point& point,
+  const bool flipped
+) const
+{
+  return fuel_.findFullCoordinates(point, flipped);
 }
 }
