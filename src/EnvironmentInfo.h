@@ -75,6 +75,15 @@ public:
     const Point& point,
     bool flipped) const;
   /**
+   * \brief Determine FullCoordinates in the grid for the Point
+   * \param point Point to find FullCoordinates for
+   * \param flipped Whether the grid data is flipped across the horizontal axis
+   * \return Coordinates that would be at Point within this EnvironmentInfo, or nullptr if it is not
+   */
+  [[nodiscard]] unique_ptr<FullCoordinates> findFullCoordinates(
+    const Point& point,
+    bool flipped) const;
+  /**
    * \brief Load the full Environment using the given FuelLookup to determine fuels
    * \param lookup FuelLookup to use for translating fuels
    * \param point Origin Point
@@ -86,17 +95,17 @@ public:
    * \brief Number of rows in grid
    * \return Number of rows in grid
    */
-  [[nodiscard]] constexpr Idx rows() const
+  [[nodiscard]] constexpr FullIdx calculateRows() const
   {
-    return fuel_.rows();
+    return fuel_.calculateRows();
   }
   /**
    * \brief Number of columns in grid
    * \return Number of columns in grid
    */
-  [[nodiscard]] constexpr Idx columns() const
+  [[nodiscard]] constexpr FullIdx calculateColumns() const
   {
-    return fuel_.columns();
+    return fuel_.calculateColumns();
   }
   /**
    * \brief Central meridian of UTM projection this uses

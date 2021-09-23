@@ -147,6 +147,10 @@ using CellIndex = char;
  */
 using Idx = int16;
 /**
+ * \brief A row or column index for a grid not in memory yet
+ */
+using FullIdx = int64;
+/**
  * \brief Type used for fuel raster
  */
 using FuelSize = uint16;
@@ -252,6 +256,10 @@ using SubSize = uint16;
  * \brief Coordinates (row, column, sub-row, sub-column)
  */
 using Coordinates = tuple<Idx, Idx, SubSize, SubSize>;
+/**
+ * \brief FullCoordinates (row, column, sub-row, sub-column)
+ */
+using FullCoordinates = tuple<FullIdx, FullIdx, SubSize, SubSize>;
 /**
  * \brief Type of clock to use for times
  */

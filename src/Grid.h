@@ -85,17 +85,17 @@ public:
    * \brief Number of rows in the GridBase.
    * \return Number of rows in the GridBase.
    */
-  [[nodiscard]] constexpr Idx rows() const noexcept
+  [[nodiscard]] constexpr FullIdx calculateRows() const noexcept
   {
-    return rows_;
+    return static_cast<FullIdx>((yurcorner() - yllcorner()) / cellSize());
   }
   /**
    * \brief Number of columns in the GridBase.
    * \return Number of columns in the GridBase.
    */
-  [[nodiscard]] constexpr Idx columns() const noexcept
+  [[nodiscard]] constexpr FullIdx calculateColumns() const noexcept
   {
-    return columns_;
+    return static_cast<FullIdx>((xurcorner() - xllcorner()) / cellSize());
   }
   /**
    * \brief Value used for grid locations that have no data.
@@ -164,8 +164,6 @@ public:
   /**
    * \brief Constructor
    * \param cell_size Cell width and height (m)
-   * \param rows Number of rows
-   * \param columns Number of columns
    * \param nodata Value that represents no data
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
@@ -174,9 +172,7 @@ public:
    * \param proj4 Proj4 projection definition 
    */
   GridBase(double cell_size,
-           Idx rows,
-           Idx columns,
-           int nodata,
+           const int nodata,
            double xllcorner,
            double yllcorner,
            double xurcorner,
@@ -199,6 +195,15 @@ public:
    * \return Coordinates for Point translated to Grid
    */
   [[nodiscard]] unique_ptr<Coordinates> findCoordinates(
+    const topo::Point& point,
+    bool flipped) const;
+  /**
+   * \brief Find FullCoordinates for Point
+   * \param point Point to translate to Grid Coordinate
+   * \param flipped Whether or not Grid data is flipped along x axis
+   * \return Coordinates for Point translated to Grid
+   */
+  [[nodiscard]] unique_ptr<FullCoordinates> findFullCoordinates(
     const topo::Point& point,
     bool flipped) const;
 private:
@@ -238,14 +243,6 @@ private:
    * \brief Value used to represent no data at a Location.
    */
   int nodata_;
-  /**
-   * \brief Number of rows in the grid.
-   */
-  Idx rows_;
-  /**
-   * \brief Number of columns in the grid.
-   */
-  Idx columns_;
 };
 /**
  * \brief A GridBase with an associated type of data.
@@ -257,6 +254,22 @@ class Grid
   : public GridBase
 {
 public:
+  /**
+   * \brief Number of rows in the GridBase.
+   * \return Number of rows in the GridBase.
+   */
+  [[nodiscard]] constexpr Idx rows() const noexcept
+  {
+    return rows_;
+  }
+  /**
+   * \brief Number of columns in the GridBase.
+   * \return Number of columns in the GridBase.
+   */
+  [[nodiscard]] constexpr Idx columns() const noexcept
+  {
+    return columns_;
+  }
   /**
    * \brief Value representing no data
    * \return Value representing no data
@@ -303,14 +316,14 @@ protected:
        const double yurcorner,
        string&& proj4) noexcept
     : GridBase(cell_size,
-               rows,
-               columns,
                nodata,
                xllcorner,
                yllcorner,
                xurcorner,
                yurcorner,
                std::forward<string>(proj4)),
+      rows_(rows),
+      columns_(columns),
       no_data_(no_data)
   {
   }
@@ -321,8 +334,8 @@ protected:
    */
   Grid(const GridBase& grid_info, T no_data) noexcept
     : Grid(grid_info.cellSize(),
-           grid_info.rows(),
-           grid_info.columns(),
+           static_cast<Idx>(grid_info.calculateRows()),
+           static_cast<Idx>(grid_info.calculateColumns()),
            no_data,
            to_string(no_data),
            grid_info.xllcorner(),
@@ -337,6 +350,14 @@ private:
    * \brief Value to use for representing no data at a Location.
    */
   T no_data_;
+  /**
+   * \brief Number of rows in the grid.
+   */
+  Idx rows_;
+  /**
+   * \brief Number of columns in the grid.
+   */
+  Idx columns_;
 };
 /**
  * \brief A Grid that defines the data structure used for storing values.
@@ -465,13 +486,13 @@ template <typename T>
     int columns;
     int rows;
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &columns);
-    logging::check_fatal(columns > numeric_limits<Idx>::max(),
-                         "Cannot use grids with more than %d columns",
-                         numeric_limits<Idx>::max());
+    //    logging::check_fatal(columns > numeric_limits<Idx>::max(),
+    //                         "Cannot use grids with more than %d columns",
+    //                         numeric_limits<Idx>::max());
     TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &rows);
-    logging::check_fatal(rows > numeric_limits<Idx>::max(),
-                         "Cannot use grids with more than %d rows",
-                         numeric_limits<Idx>::max());
+    //    logging::check_fatal(rows > numeric_limits<Idx>::max(),
+    //                         "Cannot use grids with more than %d rows",
+    //                         numeric_limits<Idx>::max());
     TIFFGetField(tif, GDAL_NODATA, &count, &data);
     const auto nodata = stoi(string(static_cast<char*>(data)));
     double x = 0.0;
@@ -518,8 +539,6 @@ template <typename T>
     const auto xurcorner = xllcorner + cell_width * columns;
     const auto yurcorner = yllcorner + cell_width * rows;
     return GridBase(cell_width,
-                    static_cast<Idx>(rows),
-                    static_cast<Idx>(columns),
                     nodata,
                     xllcorner,
                     yllcorner,
