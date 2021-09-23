@@ -122,6 +122,22 @@ public:
     return yllcorner_;
   }
   /**
+   * \brief Upper right corner X coordinate in meters.
+   * \return Upper right corner X coordinate in meters.
+   */
+  [[nodiscard]] constexpr double xurcorner() const noexcept
+  {
+    return xurcorner_;
+  }
+  /**
+   * \brief Upper right corner Y coordinate in meters.
+   * \return Upper right corner Y coordinate in meters.
+   */
+  [[nodiscard]] constexpr double yurcorner() const noexcept
+  {
+    return yurcorner_;
+  }
+  /**
    * \brief Proj4 string defining coordinate system for this grid. Must be a UTM projection.
    * \return Proj4 string defining coordinate system for this grid.
    */
@@ -153,6 +169,8 @@ public:
    * \param nodata Value that represents no data
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
+   * \param xurcorner Upper right corner X coordinate (m)
+   * \param yurcorner Upper right corner Y coordinate (m)
    * \param proj4 Proj4 projection definition 
    */
   GridBase(double cell_size,
@@ -161,6 +179,8 @@ public:
            int nodata,
            double xllcorner,
            double yllcorner,
+           double xurcorner,
+           double yurcorner,
            string&& proj4) noexcept;
   /**
    * \brief Default constructor
@@ -198,6 +218,14 @@ private:
    * \brief Lower left corner Y coordinate in meters.
    */
   double yllcorner_;
+  /**
+   * \brief Upper right corner X coordinate in meters.
+   */
+  double xurcorner_;
+  /**
+   * \brief Upper right corner Y coordinate in meters.
+   */
+  double yurcorner_;
   /**
    * \brief Central meridian of projection in degrees.
    */
@@ -271,6 +299,8 @@ protected:
        const int nodata,
        const double xllcorner,
        const double yllcorner,
+       const double xurcorner,
+       const double yurcorner,
        string&& proj4) noexcept
     : GridBase(cell_size,
                rows,
@@ -278,6 +308,8 @@ protected:
                nodata,
                xllcorner,
                yllcorner,
+               xurcorner,
+               yurcorner,
                std::forward<string>(proj4)),
       no_data_(no_data)
   {
@@ -295,6 +327,8 @@ protected:
            to_string(no_data),
            grid_info.xllcorner(),
            grid_info.yllcorner(),
+           grid_info.xurcorner(),
+           grid_info.yurcorner(),
            grid_info.proj4())
   {
   }
@@ -325,6 +359,8 @@ public:
    * \param nodata Integer value that represents no data
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
+   * \param xurcorner Upper right corner X coordinate (m)
+   * \param yurcorner Upper right corner Y coordinate (m)
    * \param proj4 Proj4 projection definition
    * \param data Data to populate GridData with
    */
@@ -335,6 +371,8 @@ public:
            const int nodata,
            const double xllcorner,
            const double yllcorner,
+           const double xurcorner,
+           const double yurcorner,
            string&& proj4,
            D&& data)
     : Grid<T, V>(cell_size,
@@ -344,6 +382,8 @@ public:
                  nodata,
                  xllcorner,
                  yllcorner,
+                 xurcorner,
+                 yurcorner,
                  std::forward<string>(proj4)),
       data(std::forward<D>(data))
   {
@@ -475,12 +515,16 @@ template <typename T>
       proj4 = string(
         "+proj=tmerc +lat_0=0.000000000 +lon_0=" + to_string(degrees) + ".000000000 +k=0.999600 +x_0=500000.000 +y_0=0.000");
     }
+    const auto xurcorner = xllcorner + cell_width * columns;
+    const auto yurcorner = yllcorner + cell_width * rows;
     return GridBase(cell_width,
                     static_cast<Idx>(rows),
                     static_cast<Idx>(columns),
                     nodata,
                     xllcorner,
                     yllcorner,
+                    xurcorner,
+                    yurcorner,
                     string(proj4));
   }
   throw runtime_error("Cannot read TIFF header");
