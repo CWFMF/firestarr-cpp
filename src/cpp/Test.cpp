@@ -198,6 +198,8 @@ run_test(
     -1,
     TEST_XLLCORNER,
     TEST_YLLCORNER,
+    TEST_XLLCORNER + TEST_GRID_SIZE * MAX_COLUMNS,
+    TEST_YLLCORNER + TEST_GRID_SIZE * MAX_ROWS,
     TEST_PROJ4,
     std::move(values)
   };

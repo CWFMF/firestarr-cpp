@@ -77,6 +77,8 @@ public:
    * \param nodata Integer value that represents no data
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
+   * \param xurcorner Upper right corner X coordinate (m)
+   * \param yurcorner Upper right corner Y coordinate (m)
    * \param proj4 Proj4 projection definition
    * \param data Data to set as grid data
    */
@@ -88,6 +90,8 @@ public:
     const int nodata,
     const double xllcorner,
     const double yllcorner,
+    const double xurcorner,
+    const double yurcorner,
     string&& proj4,
     vector<T>&& data
   )
@@ -99,6 +103,8 @@ public:
         nodata,
         xllcorner,
         yllcorner,
+        xurcorner,
+        yurcorner,
         std::forward<string>(proj4),
         std::move(data)
       )
@@ -241,12 +247,14 @@ public:
     );
     auto result = new ConstantGrid<T, V>(
       grid_info.cellSize(),
-      MAX_COLUMNS,
+      MAX_ROWS,
       MAX_COLUMNS,
       no_data,
       grid_info.nodata(),
       new_xll,
       new_yll,
+      new_xll + MAX_COLUMNS * grid_info.cellSize(),
+      new_yll + MAX_ROWS * grid_info.cellSize(),
       string(grid_info.proj4()),
       std::move(values)
     );
