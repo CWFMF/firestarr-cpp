@@ -205,6 +205,10 @@ static constexpr auto M_2_X_PI = 2.0 * M_PI;
  */
 static constexpr auto M_3_X_PI_2 = 3.0 * M_PI_2;
 /**
+ * \brief Ratio of degrees to radians
+ */
+static constexpr auto M_RADIANS_TO_DEGREES = 180.0 / M_PI;
+/**
  * \brief Number of hours in a day
  */
 static constexpr int DAY_HOURS = 24;
