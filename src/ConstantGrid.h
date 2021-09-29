@@ -154,8 +154,8 @@ public:
   {
     logging::info("Reading file %s", filename.c_str());
 #ifndef NDEBUG
-    V min_value = std::numeric_limits<V>::max();
-    V max_value = std::numeric_limits<V>::min();
+    auto min_value = std::numeric_limits<int16>::max();
+    auto max_value = std::numeric_limits<int16>::min();
 #endif
     const GridBase grid_info = read_header<T>(tif, gtif);
     const auto coordinates = grid_info.findFullCoordinates(point, false);
@@ -206,7 +206,7 @@ public:
           {
             const auto cur_hash = static_cast<HashSize>(i) * MAX_COLUMNS + w + x + offset_x;
             const auto offset = y * tile_length + x;
-            V cur = *(static_cast<V*>(buf) + offset);
+            auto cur = *(static_cast<int16*>(buf) + offset);
 #ifndef NDEBUG
             min_value = min(cur, min_value);
             max_value = max(cur, max_value);
