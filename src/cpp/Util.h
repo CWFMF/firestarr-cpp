@@ -146,7 +146,7 @@ to_radians(
   const double degrees
 ) noexcept
 {
-  return fix_radians(degrees / 180.0 * M_PI);
+  return fix_radians(degrees / M_RADIANS_TO_DEGREES);
 }
 // only calculate this once and reuse it
 /**
@@ -167,7 +167,7 @@ to_degrees(
   const double radians
 )
 {
-  return fix_radians(radians) * 180.0 / M_PI;
+  return fix_radians(radians) * M_RADIANS_TO_DEGREES;
 }
 /**
  * \brief Convert Bearing to Heading (opposite angle)

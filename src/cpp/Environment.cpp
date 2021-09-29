@@ -110,14 +110,14 @@ Environment::load(
     });
     auto elevation = async(launch::async, [&in_elevation, &point]() {
       logging::info("Loading %s", in_elevation.c_str());
-      return read_tiff_point<ElevationSize>(in_elevation, point);
+      return ElevationGrid::readTiff(in_elevation, point);
     });
     logging::debug("Waiting for grids");
     return Environment(
       *unique_ptr<FuelGrid>(fuel.get()),
       *unique_ptr<SlopeGrid>(slope.get()),
       *unique_ptr<AspectGrid>(aspect.get()),
-      elevation.get()
+      *unique_ptr<ElevationGrid>(elevation.get())
     );
   }
   logging::warning("Loading grids async");
@@ -126,7 +126,7 @@ Environment::load(
     *unique_ptr<FuelGrid>(FuelGrid::readTiff(string(in_fuel), point, lookup)),
     *unique_ptr<SlopeGrid>(SlopeGrid::readTiff(string(in_slope), point)),
     *unique_ptr<AspectGrid>(AspectGrid::readTiff(string(in_aspect), point)),
-    read_tiff_point<ElevationSize>(string(in_elevation), point)
+    *unique_ptr<ElevationGrid>(ElevationGrid::readTiff(string(in_elevation), point))
   );
 }
 sim::ProbabilityMap*
