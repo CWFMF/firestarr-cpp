@@ -515,13 +515,12 @@ Scenario::run(
   ++COMPLETED;
   // HACK: use + to pull value out of atomic
   logging::info(
-    "Completed scenario %d.%04d  [%d of %d] with final size %0.1f ha (%zu)",
+    "Completed scenario %d.%04d [%d of %d] with final size %0.1f ha",
     id_,
     simulation_,
     +COMPLETED,
     +COUNT,
-    currentFireSize(),
-    weightedDsr()
+    currentFireSize()
   );
   ran_ = true;
   unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
