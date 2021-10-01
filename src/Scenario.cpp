@@ -33,6 +33,8 @@ constexpr auto CELL_CENTER = 0.5555555555555555;
 constexpr auto PRECISION = 0.001;
 static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
+static std::mutex MUTEX_SIM_COUNTS;
+static map<size_t, size_t> SIM_COUNTS{};
 static util::MemoryPool<BurnedData> POOL_BURNED_DATA{};
 void IObserver_deleter::operator()(IObserver* ptr) const
 {
@@ -151,7 +153,11 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
 {
   // track this here because reset is always called before use
   ++COUNT;
-  ++simulation_;
+  {
+    // want a global count of how many times this scenario ran
+    std::lock_guard<std::mutex> lk(MUTEX_SIM_COUNTS);
+    simulation_ = ++SIM_COUNTS[id_];
+  }
   clear();
   const auto num = (static_cast<size_t>(last_date_) - start_day_ + 1) * DAY_HOURS;
   extinction_thresholds_.resize(num);
