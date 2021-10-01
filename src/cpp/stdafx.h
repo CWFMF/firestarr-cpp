@@ -135,19 +135,19 @@ using Idx = int16_t;
  */
 using FullIdx = int64_t;
 /**
- * \brief Type used for fuel raster
+ * \brief Type used for fuel values (uses [0 - 999]?)
  */
 using FuelSize = uint16_t;
 /**
- * \brief Type used for aspect raster
+ * \brief Type used for aspect values (uses [0 - 359])
  */
 using AspectSize = uint16_t;
 /**
- * \brief Type used for elevation raster
+ * \brief Type used for elevation values (uses [? - 9800?])
  */
 using ElevationSize = int16_t;
 /**
- * \brief Type used for slope raster
+ * \brief Type used for slope values (uses [0 - MAX_SLOPE_FOR_DISTANCE])
  */
 using SlopeSize = uint8_t;
 /**

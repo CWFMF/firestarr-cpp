@@ -87,8 +87,6 @@ Environment::load(
   const fuel::FuelLookup& lookup,
   const Point& point,
   const string& in_fuel,
-  const string& in_slope,
-  const string& in_aspect,
   const string& in_elevation
 )
 {
@@ -100,14 +98,6 @@ Environment::load(
       logging::info("Loading %s", in_fuel.c_str());
       return FuelGrid::readTiff(in_fuel, point, lookup);
     });
-    auto slope = async(launch::async, [&in_slope, &point]() {
-      logging::info("Loading %s", in_slope.c_str());
-      return SlopeGrid::readTiff(in_slope, point);
-    });
-    auto aspect = async(launch::async, [&in_aspect, &point]() {
-      logging::info("Loading %s", in_aspect.c_str());
-      return AspectGrid::readTiff(in_aspect, point);
-    });
     auto elevation = async(launch::async, [&in_elevation, &point]() {
       logging::info("Loading %s", in_elevation.c_str());
       return ElevationGrid::readTiff(in_elevation, point);
@@ -115,8 +105,6 @@ Environment::load(
     logging::debug("Waiting for grids");
     return Environment(
       *unique_ptr<FuelGrid>(fuel.get()),
-      *unique_ptr<SlopeGrid>(slope.get()),
-      *unique_ptr<AspectGrid>(aspect.get()),
       *unique_ptr<ElevationGrid>(elevation.get())
     );
   }
@@ -124,8 +112,6 @@ Environment::load(
   // HACK: need to copy strings since closures do that above
   return Environment(
     *unique_ptr<FuelGrid>(FuelGrid::readTiff(string(in_fuel), point, lookup)),
-    *unique_ptr<SlopeGrid>(SlopeGrid::readTiff(string(in_slope), point)),
-    *unique_ptr<AspectGrid>(AspectGrid::readTiff(string(in_aspect), point)),
     *unique_ptr<ElevationGrid>(ElevationGrid::readTiff(string(in_elevation), point))
   );
 }
@@ -184,8 +170,7 @@ Environment::loadEnvironment(
     const auto aspect = string(fuel).replace(find_start, find_len, "aspect");
     const auto slope = string(fuel).replace(find_start, find_len, "slope");
     const auto elevation = string(fuel).replace(find_start, find_len, "dem");
-    unique_ptr<const EnvironmentInfo>
-      cur_info = EnvironmentInfo::loadInfo(fuel, slope, aspect, elevation);
+    unique_ptr<const EnvironmentInfo> cur_info = EnvironmentInfo::loadInfo(fuel, elevation);
     const auto cur_x = abs(point.longitude() - cur_info->meridian());
     logging::verbose("Zone %0.1f meridian is %0.2f degrees from point", cur_info->zone(), cur_x);
     // HACK: assume floating point is going to always be exactly the same result
