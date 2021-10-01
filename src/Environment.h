@@ -32,8 +32,6 @@ namespace firestarr
 namespace topo
 {
 using FuelGrid = data::ConstantGrid<const fuel::FuelType*, FuelSize>;
-using SlopeGrid = data::ConstantGrid<SlopeSize>;
-using AspectGrid = data::ConstantGrid<AspectSize>;
 using ElevationGrid = data::ConstantGrid<ElevationSize>;
 /*!
  * \page environment Fire environment
@@ -83,16 +81,12 @@ public:
    * \param lookup FuelLookup to use for translating fuel codes
    * \param point Origin point
    * \param in_fuel Fuel raster
-   * \param in_slope Slope raster
-   * \param in_aspect Aspect raster
    * \param in_elevation Elevation raster
    * \return Environment
    */
   [[nodiscard]] static Environment load(const fuel::FuelLookup& lookup,
                                         const Point& point,
                                         const string& in_fuel,
-                                        const string& in_slope,
-                                        const string& in_aspect,
                                         const string& in_elevation);
   ~Environment();
   /**
@@ -258,25 +252,17 @@ public:
 protected:
   /**
    * \brief Combine rasters into ConstantGrid<Cell>
-   * \param fuel Fuel raster
-   * \param slope Slope raster
-   * \param aspect Aspect raster
+   * \param elevation Elevation raster
    * \return 
    */
   [[nodiscard]] static data::ConstantGrid<Cell>* makeCells(
     const FuelGrid& fuel,
-    const SlopeGrid& slope,
-    const AspectGrid& aspect,
     const ElevationGrid& elevation)
   {
-    logging::check_fatal(fuel.yllcorner() != slope.yllcorner(),
+    logging::check_fatal(fuel.yllcorner() != elevation.yllcorner(),
                          "Expected yllcorner %f but got %f",
                          fuel.yllcorner(),
-                         slope.yllcorner());
-    logging::check_fatal(fuel.yllcorner() != aspect.yllcorner(),
-                         "Expected yllcorner %f but got %f",
-                         fuel.yllcorner(),
-                         aspect.yllcorner());
+                         elevation.yllcorner());
     static Cell nodata{};
     auto values = vector<Cell>{fuel.data.size()};
     vector<HashSize> hashes{};
@@ -288,15 +274,12 @@ protected:
       std::execution::par_unseq,
       hashes.begin(),
       hashes.end(),
-      [&fuel, &slope, &aspect, &values, &elevation](auto&& h)
+      [&fuel, &values, &elevation](auto&& h)
       {
         const topo::Location loc{h};
         const auto r = loc.row();
         const auto c = loc.column();
         const auto f = fuel::FuelType::safeCode(fuel.at(h));
-        const auto s_grid = min(static_cast<SlopeSize>(MAX_SLOPE_FOR_DISTANCE),
-                                slope.at(h));
-        const auto a_grid = 0 == s_grid ? static_cast<AspectSize>(0) : aspect.at(h);
         auto s = static_cast<SlopeSize>(0);
         auto a = static_cast<AspectSize>(0);
         if (r > 0 && r < MAX_ROWS - 1 && c > 0 && c < MAX_COLUMNS - 1)
@@ -337,16 +320,6 @@ protected:
           }
 
           a = static_cast<AspectSize>(round(aspect_azimuth));
-          if (s != s_grid || a != a_grid)
-          {
-            printf("%f | %f | %f\n", dem[0], dem[1], dem[2]);
-            printf("%f | %f | %f\n", dem[3], dem[4], dem[5]);
-            printf("%f | %f | %f\n", dem[6], dem[7], dem[8]);
-            printf("%f     %f\n", dx, dy);
-            logging::debug("Slope %d from %f => %d", s, slope_pct, s_grid);
-            logging::debug("Aspect %d from %f => %d", a, aspect_azimuth, a_grid);
-            logging::fatal("Slope and aspect calculation produced incorrect results");
-          }
         }
         const auto cell = Cell{h, s, a, f};
         values.at(h) = cell;
@@ -406,18 +379,12 @@ protected:
   /**
    * \brief Load from rasters
    * \param fuel Fuel raster
-   * \param slope Slope raster
-   * \param aspect Aspect raster
    * \param elevation Elevation raster
    */
   Environment(
     const FuelGrid& fuel,
-    const SlopeGrid& slope,
-    const AspectGrid& aspect,
     const ElevationGrid& elevation)
     : cells_(makeCells(fuel,
-                       slope,
-                       aspect,
                        elevation))
   {
     // HACK: just take elevation in middle of grid since that's where fire should be

@@ -31,26 +31,18 @@ public:
   /**
    * \brief Load EnvironmentInfo from given rasters
    * \param in_fuel Fuel raster
-   * \param in_slope Slope Raster
-   * \param in_aspect Aspect raster
    * \param in_elevation Elevation raster
    * \return EnvironmentInfo
    */
   [[nodiscard]] static unique_ptr<EnvironmentInfo> loadInfo(const string& in_fuel,
-                                                            const string& in_slope,
-                                                            const string& in_aspect,
                                                             const string& in_elevation);
   ~EnvironmentInfo();
   /**
    * \brief Construct from given rasters
    * \param in_fuel Fuel raster
-   * \param in_slope Slope raster
-   * \param in_aspect Aspect raster
    * \param in_elevation Elevation raster
    */
   EnvironmentInfo(const string& in_fuel,
-                  const string& in_slope,
-                  const string& in_aspect,
                   const string& in_elevation);
   /**
    * \brief Move constructor
@@ -137,14 +129,6 @@ private:
    */
   data::GridBase fuel_;
   /**
-   * \brief Information about slope raster
-   */
-  data::GridBase slope_;
-  /**
-   * \brief Information about aspect raster
-   */
-  data::GridBase aspect_;
-  /**
    * \brief Information about elevation raster
    */
   data::GridBase elevation_;
@@ -153,35 +137,19 @@ private:
    */
   string in_fuel_;
   /**
-   * \brief Slope raster path
-   */
-  string in_slope_;
-  /**
-   * \brief Aspect raster path
-   */
-  string in_aspect_;
-  /**
    * \brief Elevation raster path
    */
   string in_elevation_;
   /**
    * \brief Constructor
    * \param in_fuel Fuel raster path
-   * \param in_slope Slope raster path
-   * \param in_aspect Aspect raster path
    * \param in_elevation Elevation raster path
    * \param fuel Information about fuel raster
-   * \param slope Information about slope raster
-   * \param aspect Information about aspect raster
    * \param elevation Information about elevation raster
    */
   EnvironmentInfo(string in_fuel,
-                  string in_slope,
-                  string in_aspect,
                   string in_elevation,
                   data::GridBase&& fuel,
-                  data::GridBase&& slope,
-                  data::GridBase&& aspect,
                   data::GridBase&& elevation) noexcept;
 };
 }
