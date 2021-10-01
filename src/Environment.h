@@ -279,95 +279,79 @@ protected:
                          aspect.yllcorner());
     static Cell nodata{};
     auto values = vector<Cell>{fuel.data.size()};
-    logging::note("Checking slope");
     vector<HashSize> hashes{};
     for (HashSize h = 0; h < static_cast<size_t>(fuel.rows()) * fuel.columns(); ++h)
     {
       hashes.emplace_back(h);
     }
-    for (Idx i = 1; i < elevation.rows() - 1; ++i)
-    {
-      for (Idx j = 1; j < elevation.columns() - 1; ++j)
-      {
-        double dem[9];
-        for (int c = -1; c < 2; ++c)
-        {
-          for (int r = -1; r < 2; ++r)
-          {
-            // grid is (0, 0) at bottom left, but want [0] in array to be NW corner
-            auto actual_row = static_cast<Idx>(i - r);
-            auto actual_column = static_cast<Idx>(j + c);
-            auto loc = Location{actual_row, actual_column};
-            auto h = loc.hash();
-            dem[3 * (r + 1) + (c + 1)] = 1.0 * elevation.at(h);
-          }
-        }
-        // Horn's algorithm
-        const double dx = ((dem[2] + dem[5] + dem[5] + dem[8])
-                           - (dem[0] + dem[3] + dem[3] + dem[6]))
-                        / elevation.cellSize();
-        const double dy = ((dem[6] + dem[7] + dem[7] + dem[8])
-                           - (dem[0] + dem[1] + dem[1] + dem[2]))
-                        / elevation.cellSize();
-        const double key = (dx * dx + dy * dy);
-        auto slope_pct = static_cast<float>(100 * (sqrt(key) / 8.0));
-        auto s = slope_pct;
-        auto s_int = static_cast<SlopeSize>(round(s));
-        auto loc = Location{i, j};
-        auto h = loc.hash();
-        const auto s_orig = min(static_cast<SlopeSize>(MAX_SLOPE_FOR_DISTANCE),
-                                slope.at(h));
-        const auto a_orig = 0 == s_int ? static_cast<AspectSize>(0) : aspect.at(h);
-        const auto f = fuel::FuelType::safeCode(fuel.at(h));
-        const auto cell = Cell(h, s_orig, a_orig, f);
-        const auto s_real = cell.slope();
-        const auto s_grid = slope.at(h);
-        const auto a_real = cell.aspect();
-
-        float a = 0.0;
-
-        if (dx != 0 || dy != 0)
-        {
-          a = static_cast<float>(atan2(dy, -dx) * M_RADIANS_TO_DEGREES);
-          a = (a > 90.0f) ? (450.0f - a) : (90.0f - a);
-          if (a == 360.0f)
-          {
-            a = 0.0;
-          }
-        }
-
-        auto a_grid = aspect.at(h);
-        auto a_int = static_cast<AspectSize>(round(a));
-        if (s_int != s_grid || a_int != a_grid)
-        {
-          printf("%f | %f | %f\n", dem[0], dem[1], dem[2]);
-          printf("%f | %f | %f\n", dem[3], dem[4], dem[5]);
-          printf("%f | %f | %f\n", dem[6], dem[7], dem[8]);
-          printf("%f     %f\n", dx, dy);
-          logging::debug("Slope %d from %f => %d/%d", s_int, s, s_real, s_grid);
-          logging::debug("Aspect %d from %f => %d/%d", a_int, a, a_real, a_grid);
-          logging::fatal("Slope and aspect calculation produced incorrect results");
-        }
-      }
-    }
-    logging::note("Done checking slope");
     std::for_each(
       std::execution::par_unseq,
       hashes.begin(),
       hashes.end(),
-      [&fuel, &slope, &aspect, &values](auto&& h)
+      [&fuel, &slope, &aspect, &values, &elevation](auto&& h)
       {
-        const auto s = min(static_cast<SlopeSize>(MAX_SLOPE_FOR_DISTANCE),
-                           slope.at(h));
-        const auto a = 0 == s ? static_cast<AspectSize>(0) : aspect.at(h);
-        const auto f = fuel::FuelType::safeCode(fuel.at(h));
-        const auto cell = Cell(h, s, a, f);
-        values.at(h) = cell;
-#ifndef NDEBUG
-#ifndef VLD_RPTHOOK_INSTALL
         const topo::Location loc{h};
         const auto r = loc.row();
         const auto c = loc.column();
+        const auto f = fuel::FuelType::safeCode(fuel.at(h));
+        const auto s_grid = min(static_cast<SlopeSize>(MAX_SLOPE_FOR_DISTANCE),
+                                slope.at(h));
+        const auto a_grid = 0 == s_grid ? static_cast<AspectSize>(0) : aspect.at(h);
+        auto s = static_cast<SlopeSize>(0);
+        auto a = static_cast<AspectSize>(0);
+        if (r > 0 && r < MAX_ROWS - 1 && c > 0 && c < MAX_COLUMNS - 1)
+        {
+          double dem[9];
+          for (int i = -1; i < 2; ++i)
+          {
+            for (int j = -1; j < 2; ++j)
+            {
+              // grid is (0, 0) at bottom left, but want [0] in array to be NW corner
+              auto actual_row = static_cast<Idx>(r - i);
+              auto actual_column = static_cast<Idx>(c + j);
+              auto cur_loc = Location{actual_row, actual_column};
+              auto cur_h = cur_loc.hash();
+              dem[3 * (i + 1) + (j + 1)] = 1.0 * elevation.at(cur_h);
+            }
+          }
+          // Horn's algorithm
+          const double dx = ((dem[2] + dem[5] + dem[5] + dem[8])
+                             - (dem[0] + dem[3] + dem[3] + dem[6]))
+                          / elevation.cellSize();
+          const double dy = ((dem[6] + dem[7] + dem[7] + dem[8])
+                             - (dem[0] + dem[1] + dem[1] + dem[2]))
+                          / elevation.cellSize();
+          const double key = (dx * dx + dy * dy);
+          auto slope_pct = static_cast<float>(100 * (sqrt(key) / 8.0));
+          s = static_cast<SlopeSize>(round(slope_pct));
+          float aspect_azimuth = 0.0;
+
+          if (s > 0 && (dx != 0 || dy != 0))
+          {
+            aspect_azimuth = static_cast<float>(atan2(dy, -dx) * M_RADIANS_TO_DEGREES);
+            aspect_azimuth = (aspect_azimuth > 90.0f) ? (450.0f - aspect_azimuth) : (90.0f - aspect_azimuth);
+            if (aspect_azimuth == 360.0f)
+            {
+              aspect_azimuth = 0.0;
+            }
+          }
+
+          a = static_cast<AspectSize>(round(aspect_azimuth));
+          if (s != s_grid || a != a_grid)
+          {
+            printf("%f | %f | %f\n", dem[0], dem[1], dem[2]);
+            printf("%f | %f | %f\n", dem[3], dem[4], dem[5]);
+            printf("%f | %f | %f\n", dem[6], dem[7], dem[8]);
+            printf("%f     %f\n", dx, dy);
+            logging::debug("Slope %d from %f => %d", s, slope_pct, s_grid);
+            logging::debug("Aspect %d from %f => %d", a, aspect_azimuth, a_grid);
+            logging::fatal("Slope and aspect calculation produced incorrect results");
+          }
+        }
+        const auto cell = Cell{h, s, a, f};
+        values.at(h) = cell;
+#ifndef NDEBUG
+#ifndef VLD_RPTHOOK_INSTALL
         logging::check_fatal(cell.row() != r, "Cell row %d not %d", cell.row(), r);
         logging::check_fatal(cell.column() != c, "Cell column %d not %d", cell.column(), c);
         logging::check_fatal(cell.slope() != s, "Cell slope %d not %d", cell.slope(), s);
