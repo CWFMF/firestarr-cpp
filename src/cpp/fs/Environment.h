@@ -170,7 +170,7 @@ protected:
    * \param fuel Fuel raster
    * \param elevation Elevation raster
    */
-  Environment(const FuelGrid& fuel, const ElevationGrid& elevation);
+  Environment(const FuelGrid& fuel, const ElevationGrid& elevation, const Point& point);
 #ifdef FIX_THIS_LATER
   void saveToFile(const string& output_directory) const;
 #endif

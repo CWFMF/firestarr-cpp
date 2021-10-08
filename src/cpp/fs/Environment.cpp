@@ -28,13 +28,14 @@ Environment Environment::load(
       return ElevationGrid::readTiff(in_elevation, point);
     });
     logging::debug("Waiting for grids");
-    return Environment(fuel.get(), elevation.get());
+    return Environment(fuel.get(), elevation.get(), point);
   }
   logging::warning("Loading grids synchronously");
   // HACK: need to copy strings since closures do that above
   return Environment(
     FuelGrid::readTiff(string(in_fuel), point, lookup),
-    ElevationGrid::readTiff(string(in_elevation), point)
+    ElevationGrid::readTiff(string(in_elevation), point),
+    point
   );
 }
 ProbabilityMap* Environment::makeProbabilityMap(
@@ -292,11 +293,13 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
     std::move(values)
   );
 }
-Environment::Environment(const FuelGrid& fuel, const ElevationGrid& elevation)
-  : cells_{makeCells(fuel, elevation)}, not_burnable_{fuel},
-    elevation_{elevation.at(Location{MAX_ROWS / 2, MAX_COLUMNS / 2})}
+Environment::Environment(const FuelGrid& fuel, const ElevationGrid& elevation, const Point& point)
+  : Environment(
+      makeCells(fuel, elevation),
+      elevation.at(Location(*elevation.findCoordinates(point, false).get()))
+    )
 {
-  // HACK: just take elevation in middle of grid since that's where fire should be
+  // take elevation at point so that if max grid size changes elevation doesn't
   logging::note("Start elevation is %d", elevation_);
 }
 string_view Environment::proj4() const { return cells_.proj4(); }
