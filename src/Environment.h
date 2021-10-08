@@ -383,12 +383,15 @@ protected:
    */
   Environment(
     const FuelGrid& fuel,
-    const ElevationGrid& elevation)
+    const ElevationGrid& elevation,
+    const Point& point)
     : cells_(makeCells(fuel,
                        elevation))
   {
-    // HACK: just take elevation in middle of grid since that's where fire should be
-    elevation_ = elevation.at(Location{MAX_ROWS / 2, MAX_COLUMNS / 2});
+    // take elevation at point so that if max grid size changes elevation doesn't
+    const auto coord = elevation.findCoordinates(point, false);
+    const auto loc = Location(std::get<0>(*coord), std::get<1>(*coord));
+    elevation_ = elevation.at(loc);
     logging::note("Start elevation is %d", elevation_);
     initializeNotBurnable();
   }
