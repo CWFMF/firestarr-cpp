@@ -106,14 +106,16 @@ Environment Environment::load(const fuel::FuelLookup& lookup,
                            });
     logging::debug("Waiting for grids");
     return Environment(*unique_ptr<FuelGrid>(fuel.get()),
-                       *unique_ptr<ElevationGrid>(elevation.get()));
+                       *unique_ptr<ElevationGrid>(elevation.get()),
+                       point);
   }
   logging::warning("Loading grids async");
   // HACK: need to copy strings since closures do that above
   return Environment(*unique_ptr<FuelGrid>(
                        FuelGrid::readTiff(string(in_fuel), point, lookup)),
                      *unique_ptr<ElevationGrid>(
-                       ElevationGrid::readTiff(string(in_elevation), point)));
+                       ElevationGrid::readTiff(string(in_elevation), point)),
+                     point);
 }
 sim::ProbabilityMap* Environment::makeProbabilityMap(const char* for_what,
                                                      const double time,
