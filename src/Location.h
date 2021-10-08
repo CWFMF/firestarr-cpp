@@ -102,13 +102,13 @@ protected:
   /**
    * \brief Number of bits to use for storing location data
    */
-  static constexpr uint32 LocationBits = 22;
+  static constexpr uint32 LocationBits = 32;
   /**
    * \brief Hash mask for bits being used for location data
    */
   static constexpr Topo HashMask = util::bit_mask<LocationBits, Topo>();
-  static_assert(HashMask == 0x3FFFFF);
-  static_assert(HashMask == MAX_COLUMNS * MAX_ROWS - 1);
+  static_assert(HashMask >= MAX_COLUMNS * MAX_ROWS - 1);
+  static_assert(HashMask <= std::numeric_limits<HashSize>::max());
   /**
    * \brief Construct with given hash that may contain data from subclasses
    * \param topo Hash to store

@@ -167,7 +167,9 @@ protected:
   /**
    * \brief Shift for fuel bitmask
    */
-  static constexpr uint32 FuelShift = LocationBits + 10;
+  static constexpr uint32 FuelShift = 32;
+  // Need to make sure that fuel, slope & aspect aren't in first 32 bits
+  static_assert(32 <= FuelShift);
   /**
    * \brief Number of bits in fuel bitmask
    */
@@ -221,7 +223,6 @@ protected:
    * \brief Bitmask for Cell information in Topo
    */
   static constexpr Topo CellMask = HashMask | FuelMask | AspectMask | SlopeMask;
-  static_assert(CellMask == 0x3FFFFF003FFFFF);
 };
 /**
  * \brief Less than operator
