@@ -239,7 +239,7 @@ template <unsigned int N, class T>
 template <unsigned int N, class T>
 [[nodiscard]] constexpr T bit_mask()
 {
-  return pow_int<N, T>(2) - 1;
+  return static_cast<T>(pow_int<N, int64_t>(2) - 1);
 }
 /**
  * \brief Round value to specified precision
