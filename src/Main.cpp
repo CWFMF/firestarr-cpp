@@ -111,7 +111,8 @@ int main(const int argc, const char* const argv[])
       {
         output_directory += '/';
       }
-      firestarr::logging::debug("Output directory is %s", output_directory.c_str());
+      Settings::setOutputDirectory(output_directory);
+      firestarr::logging::debug("Output directory is %s", Settings::outputDirectory);
       string date(argv[i++]);
       TIMESTAMP_STRUCT start_date{};
       start_date.year = static_cast<SQLSMALLINT>(stoi(date.substr(0, 4)));
@@ -387,9 +388,9 @@ int main(const int argc, const char* const argv[])
       struct stat info
       {
       };
-      if (stat(output_directory.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR))
+      if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
       {
-        firestarr::util::make_directory_recursive(output_directory.c_str());
+        firestarr::util::make_directory_recursive(Settings::outputDirectory());
       }
       if (nullptr == ffmc)
       {
@@ -434,8 +435,7 @@ int main(const int argc, const char* const argv[])
         cout << " " << argv[j];
       }
       cout << "\n";
-      return firestarr::sim::Model::runScenarios(output_directory.c_str(),
-                                                 wx_file_name.c_str(),
+      return firestarr::sim::Model::runScenarios(wx_file_name.c_str(),
                                                  Settings::fuelLookupTable(),
                                                  Settings::rasterRoot(),
                                                  yesterday,

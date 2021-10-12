@@ -134,14 +134,6 @@ public:
    */
   void burn(const Event& event, IntensitySize burn_intensity);
   /**
-   * \brief Directory to output files to
-   * \return Directory to output files to
-   */
-  [[nodiscard]] constexpr const string& outputDirectory() const
-  {
-    return model_->outputDirectory();
-  }
-  /**
    * \brief Get Cell for given row and column
    * \param row Row
    * \param column Column

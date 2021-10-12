@@ -143,10 +143,10 @@ void ProbabilityMap::show() const
     s.mean(),
     s.median());
 }
-void ProbabilityMap::saveSizes(const string& dir, const string& base_name) const
+void ProbabilityMap::saveSizes(const string& base_name) const
 {
   ofstream out;
-  out.open(dir + base_name + ".csv");
+  out.open(Settings::outputDirectory() + base_name + ".csv");
   auto sizes = getSizes();
   if (!sizes.empty())
   {
@@ -191,27 +191,22 @@ void ProbabilityMap::saveAll(const Model& model,
   results.push_back(async(launch::async,
                           &ProbabilityMap::saveTotal,
                           this,
-                          model.outputDirectory(),
                           make_string(for_actuals ? "actuals" : "wxshield")));
   results.push_back(async(launch::async,
                           &ProbabilityMap::saveLow,
                           this,
-                          model.outputDirectory(),
                           make_string("intensity_L")));
   results.push_back(async(launch::async,
                           &ProbabilityMap::saveModerate,
                           this,
-                          model.outputDirectory(),
                           make_string("intensity_M")));
   results.push_back(async(launch::async,
                           &ProbabilityMap::saveHigh,
                           this,
-                          model.outputDirectory(),
                           make_string("intensity_H")));
   results.push_back(async(launch::async,
                           &ProbabilityMap::saveSizes,
                           this,
-                          model.outputDirectory(),
                           make_string("sizes")));
   for (auto& result : results)
   {
@@ -223,21 +218,21 @@ void ProbabilityMap::saveAll(const Model& model,
                 fuel::calculate_is_green(nd) ? "after" : "before",
                 fuel::calculate_grass_curing(nd));
 }
-void ProbabilityMap::saveTotal(const string& dir, const string& base_name) const
+void ProbabilityMap::saveTotal(const string& base_name) const
 {
-  all_.saveToProbabilityFile(dir, base_name, static_cast<double>(numSizes()));
+  all_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
 }
-void ProbabilityMap::saveHigh(const string& dir, const string& base_name) const
+void ProbabilityMap::saveHigh(const string& base_name) const
 {
-  high_.saveToProbabilityFile(dir, base_name, static_cast<double>(numSizes()));
+  high_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
 }
-void ProbabilityMap::saveModerate(const string& dir, const string& base_name) const
+void ProbabilityMap::saveModerate(const string& base_name) const
 {
-  med_.saveToProbabilityFile(dir, base_name, static_cast<double>(numSizes()));
+  med_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
 }
-void ProbabilityMap::saveLow(const string& dir, const string& base_name) const
+void ProbabilityMap::saveLow(const string& base_name) const
 {
-  low_.saveToProbabilityFile(dir, base_name, static_cast<double>(numSizes()));
+  low_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
 }
 }
 }

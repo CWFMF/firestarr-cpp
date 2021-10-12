@@ -274,7 +274,7 @@ void Scenario::saveObservers(const string& base_name) const
 {
   for (const auto& o : observers_)
   {
-    o->save(outputDirectory(), base_name);
+    o->save(Settings::outputDirectory(), base_name);
   }
 }
 void Scenario::saveObservers(const double time) const
