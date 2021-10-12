@@ -75,10 +75,9 @@ unique_ptr<EnvironmentInfo> EnvironmentInfo::loadInfo(const string& in_fuel,
                                      data::read_header<ElevationSize>(in_elevation));
   return unique_ptr<EnvironmentInfo>(e);
 }
-Environment EnvironmentInfo::load(const fuel::FuelLookup& lookup,
-                                  const Point& point) const
+Environment EnvironmentInfo::load(const Point& point) const
 {
-  return Environment::load(lookup, point, in_fuel_, in_elevation_);
+  return Environment::load(point, in_fuel_, in_elevation_);
 }
 unique_ptr<Coordinates> EnvironmentInfo::findCoordinates(
   const Point& point,

@@ -19,6 +19,8 @@
 #include "FuelLookup.h"
 #include "ProbabilityMap.h"
 #include "Scenario.h"
+#include "Settings.h"
+
 namespace firestarr
 {
 namespace topo
@@ -83,8 +85,7 @@ static T read_tiff_point(const string& filename,
 {
   return read_tiff_point<T, T>(filename, point, util::no_convert<T>);
 }
-Environment Environment::load(const fuel::FuelLookup& lookup,
-                              const Point& point,
+Environment Environment::load(const Point& point,
                               const string& in_fuel,
                               const string& in_elevation)
 {
@@ -93,10 +94,10 @@ Environment Environment::load(const fuel::FuelLookup& lookup,
   {
     logging::debug("Loading grids async");
     auto fuel = async(launch::async,
-                      [&in_fuel, &point, lookup]()
+                      [&in_fuel, &point]()
                       {
                         logging::info("Loading %s", in_fuel.c_str());
-                        return FuelGrid::readTiff(in_fuel, point, lookup);
+                        return FuelGrid::readTiff(in_fuel, point, sim::Settings::fuelLookup());
                       });
     auto elevation = async(launch::async,
                            [&in_elevation, &point]()
@@ -112,7 +113,7 @@ Environment Environment::load(const fuel::FuelLookup& lookup,
   logging::warning("Loading grids async");
   // HACK: need to copy strings since closures do that above
   return Environment(*unique_ptr<FuelGrid>(
-                       FuelGrid::readTiff(string(in_fuel), point, lookup)),
+                       FuelGrid::readTiff(string(in_fuel), point, sim::Settings::fuelLookup())),
                      *unique_ptr<ElevationGrid>(
                        ElevationGrid::readTiff(string(in_elevation), point)),
                      point);
@@ -134,8 +135,7 @@ sim::ProbabilityMap* Environment::makeProbabilityMap(const char* for_what,
                                  max_value,
                                  *cells_);
 }
-Environment Environment::loadEnvironment(const fuel::FuelLookup& lookup,
-                                         const string& path,
+Environment Environment::loadEnvironment(const string& path,
                                          const Point& point,
                                          const string& perimeter,
                                          const int year)
@@ -214,7 +214,7 @@ Environment Environment::loadEnvironment(const fuel::FuelLookup& lookup,
                  env_info->meridian());
   logging::note("Projection is %s", env_info->proj4().c_str());
   // envInfo should get deleted automatically because it uses unique_ptr
-  return env_info->load(lookup, point);
+  return env_info->load(point);
 }
 unique_ptr<Coordinates> Environment::findCoordinates(const Point& point,
                                                      const bool flipped) const

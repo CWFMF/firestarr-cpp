@@ -160,7 +160,6 @@ public:
   }
 };
 int run_test(const char* output_directory,
-             const fuel::FuelLookup& fuel_lookup,
              const string& fuel_name,
              const SlopeSize slope,
              const AspectSize aspect,
@@ -177,7 +176,7 @@ int run_test(const char* output_directory,
   const auto start_date = 123;
   const auto end_date = start_date + static_cast<double>(num_hours) / DAY_HOURS;
   util::make_directory_recursive(output_directory);
-  const auto fuel = fuel_lookup.byName(fuel_name);
+  const auto fuel = Settings::fuelLookup().byName(fuel_name);
   auto values = vector<topo::Cell>();
   values.reserve(MAX_ROWS * MAX_COLUMNS);
   for (Idx r = 0; r < MAX_ROWS; ++r)
@@ -248,7 +247,6 @@ int test(const int argc, const char* const argv[])
     }
     logging::debug("Output directory is %s", output_directory.c_str());
     util::make_directory_recursive(output_directory.c_str());
-    const fuel::FuelLookup fuel_lookup(Settings::fuelLookupTableFile());
     if (i == argc - 1 && 0 == strcmp(argv[i], "all"))
     {
       const auto num_hours = DEFAULT_HOURS;
@@ -300,7 +298,6 @@ int test(const int argc, const char* const argv[])
                         wind_direction,
                         wind_speed);
                 result += run_test(out,
-                                   fuel_lookup,
                                    fuel,
                                    slope,
                                    aspect,
@@ -338,7 +335,6 @@ int test(const int argc, const char* const argv[])
         wind_speed,
         wind_direction);
       result = run_test(output_directory.c_str(),
-                        fuel_lookup,
                         "C-2",
                         slope,
                         aspect,
