@@ -65,6 +65,26 @@ public:
     weather_file_ = f;
   }
   /**
+   * \brief Path to directory that outputs are saved to
+   * \return Path to directory that outputs are saved to
+   */
+  [[nodiscard]] const char*
+  outputDirectory() const noexcept
+  {
+    return output_directory_.c_str();
+  }
+  /**
+   * \brief Set path to directory that outputs are saved to
+   * \param d Path to directory that outputs are saved to
+   */
+  void
+  setOutputDirectory(
+    const string d
+  )
+  {
+    output_directory_ = d;
+  }
+  /**
    * \brief Root directory that raster inputs are stored in
    * \return Root directory that raster inputs are stored in
    */
@@ -309,6 +329,10 @@ private:
    */
   string weather_file_;
   /**
+   * \brief Path to directory that outputs are saved to
+   */
+  string output_directory_;
+  /**
    * \brief Root directory that raster inputs are stored in
    */
   string raster_root_;
@@ -535,6 +559,18 @@ Settings::setWeatherFile(
 )
 {
   SettingsImplementation::instance().setWeatherFile(f);
+}
+const char*
+Settings::outputDirectory() noexcept
+{
+  return SettingsImplementation::instance().outputDirectory();
+}
+void
+Settings::setOutputDirectory(
+  string d
+)
+{
+  SettingsImplementation::instance().setOutputDirectory(d);
 }
 const char*
 Settings::rasterRoot() noexcept

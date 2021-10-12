@@ -180,6 +180,7 @@ run_test(
   const auto start_date = 123;
   const auto end_date = start_date + static_cast<double>(num_hours) / DAY_HOURS;
   util::make_directory_recursive(output_directory);
+  Settings::setOutputDirectory(output_directory);
   const auto fuel = fuel_lookup.byName(fuel_name);
   auto values = vector<topo::Cell>();
   values.reserve(MAX_ROWS * MAX_COLUMNS);
@@ -205,7 +206,7 @@ run_test(
   };
   TestEnvironment env(cells);
   const Location start_location(static_cast<Idx>(MAX_ROWS / 2), static_cast<Idx>(MAX_COLUMNS / 2));
-  Model model(ForPoint, output_directory, &env);
+  Model model(ForPoint, &env);
   const auto start_cell = make_shared<topo::Cell>(model.cell(start_location));
   TestWeather weather(fuel, start_date, dc, bui, dmc, ffmc, wind);
   TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather);

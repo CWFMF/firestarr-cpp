@@ -135,7 +135,6 @@ class Model
 public:
   /**
    * \brief Run Scenarios initialized from given inputs
-   * \param output_directory Directory to output results to
    * \param weather_input Name of file to read weather from
    * \param fuels_table Name of file to read fuel lookup table from
    * \param raster_root Directory to read raster inputs from
@@ -150,7 +149,6 @@ public:
    */
   [[nodiscard]] static int
   runScenarios(
-    const char* output_directory,
     const char* weather_input,
     const char* fuels_table,
     const char* raster_root,
@@ -162,15 +160,6 @@ public:
     const string& perimeter,
     size_t size
   );
-  /**
-   * \brief Directory to output results to
-   * \return Directory to output results to
-   */
-  [[nodiscard]] constexpr const string&
-  outputDirectory() const
-  {
-    return output_directory_;
-  }
   /**
    * \brief Cell at the given row and column
    * \param row Row
@@ -306,10 +295,9 @@ public:
   /**
    * \brief Constructor
    * \param start_point StartPoint to use for sunrise/sunset times
-   * \param output_directory Directory to save outputs to
    * \param env Environment to run simulations in
    */
-  Model(const topo::StartPoint& start_point, const char* output_directory, topo::Environment* env);
+  Model(const topo::StartPoint& start_point, topo::Environment* env);
   Model(Model&& rhs) noexcept = delete;
   Model(const Model& rhs) = delete;
   Model&
@@ -441,10 +429,6 @@ private:
    * \brief Environment to use for Model
    */
   topo::Environment* env_;
-  /**
-   * \brief Directory to output results to
-   */
-  string output_directory_;
 };
 }
 }

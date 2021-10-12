@@ -145,12 +145,11 @@ ProbabilityMap::show() const
 }
 void
 ProbabilityMap::saveSizes(
-  const string& dir,
   const string& base_name
 ) const
 {
   ofstream out;
-  out.open(dir + base_name + ".csv");
+  out.open(Settings::outputDirectory() + base_name + ".csv");
   auto sizes = getSizes();
   if (!sizes.empty())
   {
@@ -192,37 +191,17 @@ ProbabilityMap::saveAll(
     launch::async,
     &ProbabilityMap::saveTotal,
     this,
-    model.outputDirectory(),
     make_string(for_actuals ? "actuals" : "wxshield")
   ));
-  results.push_back(async(
-    launch::async,
-    &ProbabilityMap::saveLow,
-    this,
-    model.outputDirectory(),
-    make_string("intensity_L")
-  ));
-  results.push_back(async(
-    launch::async,
-    &ProbabilityMap::saveModerate,
-    this,
-    model.outputDirectory(),
-    make_string("intensity_M")
-  ));
-  results.push_back(async(
-    launch::async,
-    &ProbabilityMap::saveHigh,
-    this,
-    model.outputDirectory(),
-    make_string("intensity_H")
-  ));
-  results.push_back(async(
-    launch::async,
-    &ProbabilityMap::saveSizes,
-    this,
-    model.outputDirectory(),
-    make_string("sizes")
-  ));
+  results.push_back(async(launch::async, &ProbabilityMap::saveLow, this, make_string("intensity_L"))
+  );
+  results.push_back(
+    async(launch::async, &ProbabilityMap::saveModerate, this, make_string("intensity_M"))
+  );
+  results.push_back(
+    async(launch::async, &ProbabilityMap::saveHigh, this, make_string("intensity_H"))
+  );
+  results.push_back(async(launch::async, &ProbabilityMap::saveSizes, this, make_string("sizes")));
   for (auto& result : results)
   {
     result.wait();
@@ -237,34 +216,34 @@ ProbabilityMap::saveAll(
 }
 void
 ProbabilityMap::saveTotal(
-  const string& dir,
   const string& base_name
 ) const
 {
-  all_.saveToProbabilityFile(dir, base_name, static_cast<double>(numSizes()));
+  all_
+    .saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
 }
 void
 ProbabilityMap::saveHigh(
-  const string& dir,
   const string& base_name
 ) const
 {
-  high_.saveToProbabilityFile(dir, base_name, static_cast<double>(numSizes()));
+  high_
+    .saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
 }
 void
 ProbabilityMap::saveModerate(
-  const string& dir,
   const string& base_name
 ) const
 {
-  med_.saveToProbabilityFile(dir, base_name, static_cast<double>(numSizes()));
+  med_
+    .saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
 }
 void
 ProbabilityMap::saveLow(
-  const string& dir,
   const string& base_name
 ) const
 {
-  low_.saveToProbabilityFile(dir, base_name, static_cast<double>(numSizes()));
+  low_
+    .saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
 }
 }

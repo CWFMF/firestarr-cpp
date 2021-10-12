@@ -317,7 +317,7 @@ Scenario::saveObservers(
 {
   for (const auto& o : observers_)
   {
-    o->save(outputDirectory(), base_name);
+    o->save(Settings::outputDirectory(), base_name);
   }
 }
 void

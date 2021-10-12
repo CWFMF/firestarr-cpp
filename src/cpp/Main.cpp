@@ -109,7 +109,8 @@ main(
       {
         output_directory += '/';
       }
-      fs::logging::debug("Output directory is %s", output_directory.c_str());
+      Settings::setOutputDirectory(output_directory);
+      fs::logging::debug("Output directory is %s", Settings::outputDirectory);
       string date(argv[i++]);
       TIMESTAMP_STRUCT start_date{};
       start_date.year = static_cast<SQLSMALLINT>(stoi(date.substr(0, 4)));
@@ -384,9 +385,9 @@ main(
         }
       }
       struct stat info{};
-      if (stat(output_directory.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR))
+      if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
       {
-        fs::util::make_directory_recursive(output_directory.c_str());
+        fs::util::make_directory_recursive(Settings::outputDirectory());
       }
       if (nullptr == ffmc)
       {
@@ -434,7 +435,6 @@ main(
       }
       cout << "\n";
       return fs::sim::Model::runScenarios(
-        output_directory.c_str(),
         wx_file_name.c_str(),
         Settings::fuelLookupTable(),
         Settings::rasterRoot(),
