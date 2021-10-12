@@ -67,12 +67,11 @@ public:
   findFullCoordinates(const Point& point, bool flipped) const;
   /**
    * \brief Load the full Environment using the given FuelLookup to determine fuels
-   * \param lookup FuelLookup to use for translating fuels
    * \param point Origin Point
    * \return
    */
   [[nodiscard]] Environment
-  load(const fuel::FuelLookup& lookup, const Point& point) const;
+  load(const Point& point) const;
   /**
    * \brief Number of rows in grid
    * \return Number of rows in grid

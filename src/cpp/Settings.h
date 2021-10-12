@@ -6,6 +6,8 @@
 #define FS_SETTINGS_H
 
 #include <vector>
+#include "FuelLookup.h"
+
 namespace fs
 {
 namespace sim
@@ -57,11 +59,11 @@ public:
   [[nodiscard]] static const char*
   rasterRoot() noexcept;
   /**
-   * \brief Name of file that defines fuel lookup table
-   * \return Name of file that defines fuel lookup table
+   * \brief Fuel lookup table
+   * \return Fuel lookup table
    */
-  [[nodiscard]] static const char*
-  fuelLookupTableFile() noexcept;
+  [[nodiscard]] static const fuel::FuelLookup&
+  fuelLookup() noexcept;
   /**
    * \brief Whether or not to run things asynchronously where possible
    * \return Whether or not to run things asynchronously where possible

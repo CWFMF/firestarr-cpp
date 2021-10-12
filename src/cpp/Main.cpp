@@ -436,7 +436,6 @@ main(
       cout << "\n";
       return fs::sim::Model::runScenarios(
         wx_file_name.c_str(),
-        Settings::fuelLookupTableFile(),
         Settings::rasterRoot(),
         yesterday,
         start_point,

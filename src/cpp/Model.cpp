@@ -88,7 +88,6 @@ Model::Model(
 }
 void
 Model::readWeather(
-  const fuel::FuelLookup& fuel_lookup,
   const string& filename,
   const bool for_actuals,
   const wx::FwiWeather& yesterday,
@@ -210,6 +209,7 @@ Model::readWeather(
     new_wx.emplace(static_cast<Day>(min_date - 1), yesterday);
     kv.second = new_wx;
   }
+  const auto fuel_lookup = sim::Settings::fuelLookup();
   // loop through and try to find duplicates
   for (const auto& kv : wx)
   {
@@ -675,7 +675,6 @@ Model::runIterations(
 int
 Model::runScenarios(
   const char* const weather_input,
-  const char* const fuels_table,
   const char* const raster_root,
   const wx::FwiWeather& yesterday,
   const topo::StartPoint& start_point,
@@ -686,9 +685,7 @@ Model::runScenarios(
   const size_t size
 )
 {
-  const fuel::FuelLookup lookup(fuels_table);
   auto env = topo::Environment::loadEnvironment(
-    lookup,
     raster_root,
     start_point,
     perimeter,
@@ -711,7 +708,7 @@ Model::runScenarios(
   logging::note("UTM coordinates are: %d %d %d", zone, static_cast<int>(x), static_cast<int>(y));
   logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
   logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
-  model.readWeather(lookup, weather_input, for_actuals, yesterday, start_point.latitude());
+  model.readWeather(weather_input, for_actuals, yesterday, start_point.latitude());
   if (model.wx_.empty())
   {
     logging::fatal("No weather provided");

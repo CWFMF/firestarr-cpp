@@ -94,13 +94,19 @@ public:
     return raster_root_.c_str();
   }
   /**
-   * \brief Name of file that defines fuel lookup table
-   * \return Name of file that defines fuel lookup table
+   * \brief Fuel lookup table
+   * \return Fuel lookup table
    */
-  [[nodiscard]] const char*
-  fuelLookupTableFile() const noexcept
+  [[nodiscard]] const fuel::FuelLookup&
+  fuelLookup() noexcept
   {
-    return fuel_lookup_table_file_.c_str();
+    if (nullptr == fuel_lookup_.get())
+    {
+      // do this here because it relies on instance being created already
+      fuel_lookup_ = std::make_unique<fuel::FuelLookup>(fuel_lookup_table_file_.c_str());
+      logging::check_fatal(nullptr == fuel_lookup_.get(), "Fuel lookup table has not been loaded");
+    }
+    return *fuel_lookup_.get();
   }
   /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
@@ -341,6 +347,10 @@ private:
    */
   string fuel_lookup_table_file_;
   /**
+   * \brief fuel lookup table
+   */
+  unique_ptr<fuel::FuelLookup> fuel_lookup_ = nullptr;
+  /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    */
   double minimum_ros_;
@@ -577,10 +587,10 @@ Settings::rasterRoot() noexcept
 {
   return SettingsImplementation::instance().rasterRoot();
 }
-const char*
-Settings::fuelLookupTableFile() noexcept
+const fuel::FuelLookup&
+Settings::fuelLookup() noexcept
 {
-  return SettingsImplementation::instance().fuelLookupTableFile();
+  return SettingsImplementation::instance().fuelLookup();
 }
 bool
 Settings::runAsync() noexcept
