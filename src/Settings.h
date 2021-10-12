@@ -64,7 +64,7 @@ public:
    * \brief Name of file that defines fuel lookup table
    * \return Name of file that defines fuel lookup table
    */
-  [[nodiscard]] static const char* fuelLookupTable() noexcept;
+  [[nodiscard]] static const char* fuelLookupTableFile() noexcept;
   /**
    * \brief Whether or not to run things asynchronously where possible
    * \return Whether or not to run things asynchronously where possible

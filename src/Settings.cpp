@@ -92,9 +92,9 @@ public:
    * \brief Name of file that defines fuel lookup table
    * \return Name of file that defines fuel lookup table
    */
-  [[nodiscard]] const char* fuelLookupTable() const noexcept
+  [[nodiscard]] const char* fuelLookupTableFile() const noexcept
   {
-    return fuel_lookup_table_.c_str();
+    return fuel_lookup_table_file_.c_str();
   }
   /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
@@ -305,7 +305,7 @@ private:
   /**
    * \brief Name of file that defines fuel lookup table
    */
-  string fuel_lookup_table_;
+  string fuel_lookup_table_file_;
   /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    */
@@ -454,7 +454,7 @@ SettingsImplementation::SettingsImplementation(const char* filename) noexcept
     }
     weather_file_ = get_value(settings, "WEATHER_FILE");
     raster_root_ = get_value(settings, "RASTER_ROOT");
-    fuel_lookup_table_ = get_value(settings, "FUEL_LOOKUP_TABLE");
+    fuel_lookup_table_file_ = get_value(settings, "FUEL_LOOKUP_TABLE");
     // HACK: run into fuel consumption being too low if we don't have a minimum ros
     static const auto MinRos = 0.05;
     // HACK: make sure this is always > 0 so that we don't have to check
@@ -523,9 +523,9 @@ const char* Settings::rasterRoot() noexcept
 {
   return SettingsImplementation::instance().rasterRoot();
 }
-const char* Settings::fuelLookupTable() noexcept
+const char* Settings::fuelLookupTableFile() noexcept
 {
-  return SettingsImplementation::instance().fuelLookupTable();
+  return SettingsImplementation::instance().fuelLookupTableFile();
 }
 bool Settings::runAsync() noexcept
 {

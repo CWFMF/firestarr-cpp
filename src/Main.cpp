@@ -436,7 +436,7 @@ int main(const int argc, const char* const argv[])
       }
       cout << "\n";
       return firestarr::sim::Model::runScenarios(wx_file_name.c_str(),
-                                                 Settings::fuelLookupTable(),
+                                                 Settings::fuelLookupTableFile(),
                                                  Settings::rasterRoot(),
                                                  yesterday,
                                                  start_point,
