@@ -64,28 +64,24 @@ class Environment
 public:
   /**
    * \brief Load from rasters in folder that have same projection as Perimeter
-   * \param lookup FuelLookup to use for translating fuel codes
    * \param path Folder to read rasters from
    * \param point Origin point
    * \param perimeter Perimeter to use projection from
    * \param year Year to look for rasters for if available
    * \return Environment
    */
-  [[nodiscard]] static Environment loadEnvironment(const fuel::FuelLookup& lookup,
-                                                   const string& path,
+  [[nodiscard]] static Environment loadEnvironment(const string& path,
                                                    const Point& point,
                                                    const string& perimeter,
                                                    int year);
   /**
    * \brief Load from rasters
-   * \param lookup FuelLookup to use for translating fuel codes
    * \param point Origin point
    * \param in_fuel Fuel raster
    * \param in_elevation Elevation raster
    * \return Environment
    */
-  [[nodiscard]] static Environment load(const fuel::FuelLookup& lookup,
-                                        const Point& point,
+  [[nodiscard]] static Environment load(const Point& point,
                                         const string& in_fuel,
                                         const string& in_elevation);
   ~Environment();

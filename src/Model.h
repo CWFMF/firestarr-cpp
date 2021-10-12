@@ -134,7 +134,6 @@ public:
   /**
    * \brief Run Scenarios initialized from given inputs
    * \param weather_input Name of file to read weather from
-   * \param fuels_table Name of file to read fuel lookup table from
    * \param raster_root Directory to read raster inputs from
    * \param yesterday FwiWeather yesterday used for startup indices
    * \param start_point StartPoint to use for sunrise/sunset
@@ -146,7 +145,6 @@ public:
    * \return 
    */
   [[nodiscard]] static int runScenarios(const char* weather_input,
-                                        const char* fuels_table,
                                         const char* raster_root,
                                         const wx::FwiWeather& yesterday,
                                         const topo::StartPoint& start_point,
@@ -277,14 +275,12 @@ public:
   Model& operator=(const Model& rhs) = delete;
   /**
    * \brief Read weather used for Scenarios
-   * \param fuel_lookup File name of fuel lookup table
    * \param filename Weather file to read
    * \param for_actuals Whether or not this is for actual observed weather
    * \param yesterday FwiWeather for yesterday
    * \param latitude to use for calculating DC & DMC
    */
-  void readWeather(const fuel::FuelLookup& fuel_lookup,
-                   const string& filename,
+  void readWeather(const string& filename,
                    bool for_actuals,
                    const wx::FwiWeather& yesterday,
                    const double latitude);
