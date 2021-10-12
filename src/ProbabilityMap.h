@@ -91,10 +91,9 @@ public:
   void show() const;
   /**
    * \brief Save list of sizes
-   * \param dir Directory to save to
    * \param base_name Base name of file to save into
    */
-  void saveSizes(const string& dir, const string& base_name) const;
+  void saveSizes(const string& base_name) const;
   /**
    * \brief Save total, low, moderate, and high maps, and output information to log
    * \param model Model this was derived from
@@ -110,28 +109,24 @@ public:
                double start_day) const;
   /**
    * \brief Save map representing all intensities
-   * \param dir Directory to save to
    * \param base_name Base file name to save to
    */
-  void saveTotal(const string& dir, const string& base_name) const;
+  void saveTotal(const string& base_name) const;
   /**
    * \brief Save map representing high intensities
-   * \param dir Directory to save to
    * \param base_name Base file name to save to
    */
-  void saveHigh(const string& dir, const string& base_name) const;
+  void saveHigh(const string& base_name) const;
   /**
    * \brief Save map representing moderate intensities
-   * \param dir Directory to save to
    * \param base_name Base file name to save to
    */
-  void saveModerate(const string& dir, const string& base_name) const;
+  void saveModerate(const string& base_name) const;
   /**
    * \brief Save map representing low intensities
-   * \param dir Directory to save to
    * \param base_name Base file name to save to
    */
-  void saveLow(const string& dir, const string& base_name) const;
+  void saveLow(const string& base_name) const;
 private:
   /**
    * \brief Map representing all intensities

@@ -202,7 +202,7 @@ int run_test(const char* output_directory,
   TestEnvironment env(cells);
   const Location start_location(static_cast<Idx>(MAX_ROWS / 2),
                                 static_cast<Idx>(MAX_COLUMNS / 2));
-  Model model(ForPoint, output_directory, &env);
+  Model model(ForPoint, &env);
   const auto start_cell = make_shared<topo::Cell>(model.cell(start_location));
   TestWeather weather(fuel, start_date, dc, bui, dmc, ffmc, wind);
   TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather);

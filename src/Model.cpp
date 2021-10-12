@@ -73,14 +73,11 @@ Model::~Model()
 {
 }
 Model::Model(const topo::StartPoint& start_point,
-             const char* const output_directory,
              topo::Environment* env)
   : start_time_(Clock::now()),
     time_limit_(std::chrono::seconds(Settings::maximumTimeSeconds())),
-    env_(env),
-    output_directory_(output_directory)
+    env_(env)
 {
-  util::make_directory_recursive(output_directory_.c_str());
   logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
   const auto nd_for_point =
     calculate_nd_for_point(env->elevation(), start_point);
@@ -660,8 +657,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   }
   return probabilities;
 }
-int Model::runScenarios(const char* const output_directory,
-                        const char* const weather_input,
+int Model::runScenarios(const char* const weather_input,
                         const char* const fuels_table,
                         const char* const raster_root,
                         const wx::FwiWeather& yesterday,
@@ -687,7 +683,7 @@ int Model::runScenarios(const char* const output_directory,
     std::get<1>(*position));
   logging::info("Position is (%d, %d)", std::get<0>(*position), std::get<1>(*position));
   const Location location{std::get<0>(*position), std::get<1>(*position)};
-  Model model(start_point, output_directory, &env);
+  Model model(start_point, &env);
   auto x = 0.0;
   auto y = 0.0;
   const auto zone = lat_lon_to_utm(start_point, &x, &y);
