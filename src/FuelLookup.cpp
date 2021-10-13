@@ -462,6 +462,7 @@ public:
             {
               logging::note("Fuel '%s' is treated like '%s'", name.c_str(), fuel.c_str());
             }
+            fuel_grid_codes_[(*by_name).second] = value;
           }
           else
           {
@@ -540,6 +541,26 @@ public:
     return result;
   }
   /**
+   * \brief Look up the original grid code for a FuelType
+   * \param value Value to use for lookup
+   * \return Original grid code for the FuelType
+   */
+  int fuelToInt(const FuelType* const value) const
+  {
+    if (nullptr == value)
+    {
+      // HACK: for now assume 0 is always the invalid fuel type
+      return 0;
+    }
+    const auto seek = fuel_grid_codes_.find(value);
+    if (seek != fuel_grid_codes_.end())
+    {
+      return seek->second;
+    }
+    logging::fatal("Invalid FuelType lookup - was never used in grid");
+    return 0;
+  }
+  /**
    * \brief Look up a FuelType based on the given name
    * \param name Name of the fuel to find
    * \return FuelType based on the given name
@@ -559,6 +580,10 @@ private:
    */
   array<const FuelType*, numeric_limits<FuelSize>::max()>* fuel_types_;
   /**
+   * \brief Map of FuelType to (first) original grid value
+   */
+  unordered_map<const FuelType*, int> fuel_grid_codes_{};
+  /**
    * \brief Map of fuel name to FuelType
    */
   unordered_map<string, const FuelType*> fuel_by_name_{};
@@ -574,6 +599,10 @@ private:
 const FuelType* FuelLookup::intToFuel(const int value, const int nodata) const
 {
   return impl_->intToFuel(value, nodata);
+}
+int FuelLookup::fuelToInt(const FuelType* const value) const
+{
+  return impl_->fuelToInt(value);
 }
 const FuelType* FuelLookup::operator()(const int value, const int nodata) const
 {

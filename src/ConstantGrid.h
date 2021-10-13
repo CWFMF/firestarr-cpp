@@ -285,6 +285,66 @@ public:
   {
     return readTiff(filename, point, util::no_convert<T>);
   }
+  /**
+   * \brief Save contents to .asc file
+   * \param dir Directory to save into
+   * \param base_name File base name to use
+   */
+  void saveToAsciiFile(const string& dir,
+                       const string& base_name) const
+  {
+    saveToAsciiFile<V>(dir, base_name, [](V value)
+                       {
+                         return value;
+                       });
+  }
+  /**
+   * \brief Save contents to .asc file
+   * \tparam R Type to be written to .asc file
+   * \param dir Directory to save into
+   * \param base_name File base name to use
+   * \param convert Function to convert from V to R
+   */
+  template <class R>
+  void saveToAsciiFile(const string& dir,
+                       const string& base_name,
+                       std::function<R(T value)> convert) const
+  {
+    Idx min_row = 0;
+    Idx num_rows = MAX_ROWS;
+    Idx min_column = 0;
+    Idx num_columns = MAX_COLUMNS;
+    const double xll = this->xllcorner() + min_column * this->cellSize();
+    // offset is different for y since it's flipped
+    const double yll = this->yllcorner() + (min_row) * this->cellSize();
+    logging::verbose("Lower left corner is (%f, %f)", xll, yll);
+    ofstream out;
+    out.open(dir + base_name + ".asc");
+    write_ascii_header(out,
+                       num_columns,
+                       num_rows,
+                       xll,
+                       yll,
+                       this->cellSize(),
+                       static_cast<double>(this->noDataInt()));
+    for (Idx ro = 0; ro < num_rows; ++ro)
+    {
+      // HACK: do this so that we always get at least one pixel in output
+      // need to output in reverse order since (0,0) is bottom left
+      const Idx r = num_rows - 1 - ro;
+      for (Idx co = 0; co < num_columns; ++co)
+      {
+        const Location idx(static_cast<Idx>(r), static_cast<Idx>(min_column + co));
+        // HACK: use + here so that it gets promoted to a printable number
+        //       prevents char type being output as characters
+        out << +(convert(this->at(idx)))
+            << " ";
+      }
+      out << "\n";
+    }
+    out.close();
+    this->createPrj(dir, base_name);
+  }
 private:
   /**
    * \brief Constructor

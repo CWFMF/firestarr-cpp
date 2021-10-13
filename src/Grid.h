@@ -162,6 +162,14 @@ public:
     return zone_;
   }
   /**
+   * \brief Value used to represent no data at a Location.
+   * \return Value used to represent no data at a Location.
+   */
+  [[nodiscard]] constexpr double noDataInt() const noexcept
+  {
+    return nodata_;
+  }
+  /**
    * \brief Constructor
    * \param cell_size Cell width and height (m)
    * \param nodata Value that represents no data
