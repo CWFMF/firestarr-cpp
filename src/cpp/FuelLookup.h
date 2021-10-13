@@ -62,6 +62,13 @@ public:
   [[nodiscard]] const FuelType*
   intToFuel(int value, int nodata) const;
   /**
+   * \brief Look up the original code for the given FuelType
+   * \param value Value to use for lookup
+   * \return code for the given FuelType
+   */
+  [[nodiscard]] int
+  fuelToInt(const FuelType* const fuel) const;
+  /**
    * \brief Look up a FuelType based on the given code
    * \param value Value to use for lookup
    * \param nodata Value that represents no data
@@ -114,7 +121,7 @@ check_fuel(
   const topo::Cell& cell
 )
 {
-  return FuelLookup::Fuels.at(cell.fuelCode());
+  return fuel_by_code(cell.fuelCode());
 }
 /**
  * \brief Whether or not there is no fuel in the Cell

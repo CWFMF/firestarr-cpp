@@ -18,6 +18,8 @@
 #include "GridMap.h"
 #include "IntensityMap.h"
 #include "Point.h"
+#include "Settings.h"
+
 namespace fs
 {
 namespace topo
@@ -410,6 +412,19 @@ protected:
   )
     : cells_(makeCells(fuel, elevation))
   {
+#ifndef NDEBUG
+    const auto lookup = sim::Settings::fuelLookup();
+    fuel.saveToAsciiFile<int>(
+      string(sim::Settings::outputDirectory()),
+      "fuel",
+      [&lookup](const fuel::FuelType* const value) {
+        return lookup.fuelToInt(value);
+        // return lookup.fuelToInt(value);
+        // return value->code();
+      }
+    );
+    elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
+#endif
     // take elevation at point so that if max grid size changes elevation doesn't
     const auto coord = elevation.findCoordinates(point, false);
     const auto loc = Location(std::get<0>(*coord), std::get<1>(*coord));

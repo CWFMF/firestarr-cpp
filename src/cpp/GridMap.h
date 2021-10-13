@@ -305,7 +305,7 @@ public:
       xll,
       yll,
       this->cellSize(),
-      static_cast<double>(this->noData())
+      static_cast<double>(this->noDataInt())
     );
     for (Idx ro = 0; ro < num_rows; ++ro)
     {
