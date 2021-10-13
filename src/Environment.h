@@ -27,6 +27,8 @@
 #include "GridMap.h"
 #include "IntensityMap.h"
 #include "Point.h"
+#include "Settings.h"
+
 namespace firestarr
 {
 namespace topo
@@ -187,9 +189,9 @@ public:
   /**
    * \brief Cell at Location with offset of row and column from Location of Event
    * \param event Event to use for base Location
-   * \param row 
-   * \param column 
-   * \return 
+   * \param row
+   * \param column
+   * \return
    */
   [[nodiscard]] constexpr Cell offset(const sim::Event& event,
                                       const Idx row,
@@ -249,7 +251,7 @@ protected:
   /**
    * \brief Combine rasters into ConstantGrid<Cell>
    * \param elevation Elevation raster
-   * \return 
+   * \return
    */
   [[nodiscard]] static data::ConstantGrid<Cell>* makeCells(
     const FuelGrid& fuel,
@@ -384,6 +386,18 @@ protected:
     : cells_(makeCells(fuel,
                        elevation))
   {
+#ifndef NDEBUG
+    const auto lookup = sim::Settings::fuelLookup();
+    fuel.saveToAsciiFile<int>(string(sim::Settings::outputDirectory()),
+                              "fuel",
+                              [&lookup](const fuel::FuelType* const value)
+                              {
+                                return lookup.fuelToInt(value);
+                                //return lookup.fuelToInt(value);
+                                //return value->code();
+                              });
+    elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
+#endif
     // take elevation at point so that if max grid size changes elevation doesn't
     const auto coord = elevation.findCoordinates(point, false);
     const auto loc = Location(std::get<0>(*coord), std::get<1>(*coord));
