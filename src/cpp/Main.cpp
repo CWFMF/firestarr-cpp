@@ -29,11 +29,6 @@ show_usage_and_exit(
        << endl
        << " Run simulations and save output in the specified directory" << endl
        << endl
-       << "Usage: " << name << " <output_dir> <yyyy-mm-dd> <lat> <lon> <numDays> [-v | -q | -f]"
-       << endl
-       << endl
-       << " Save WeatherSHIELD output for the give number of days in the specified directory"
-       << endl
        << endl
        << "Usage: " << name << " test <output_dir> <numHours>"
        << "[slope [aspect [wind_speed [wind_direction]]]]" << endl
@@ -47,7 +42,6 @@ show_usage_and_exit(
        << "   -a                        Run using actuals for weather" << endl
        << "   -i                        Save intensity maps for simulations" << endl
        << "   -s                        Run in synchronous mode" << endl
-       << "   -f                        Full export of all weather" << endl
        << "   --wx                      Use input weather file instead of querying database" << endl
        << "   --perim                   Start from perimeter" << endl
        << "   --size                    Start from size" << endl
@@ -120,11 +114,9 @@ main(
       const auto longitude = stod(argv[i++]);
       const fs::topo::StartPoint start_point(latitude, longitude);
       size_t num_days = 0;
-      auto is_wx_only = false;
       string arg(argv[i++]);
       auto save_intensity = false;
       auto actuals_only = false;
-      auto full_wx = false;
       string wx_file_name;
       string perim;
       size_t size = 0;
@@ -278,102 +270,7 @@ main(
       }
       else
       {
-        // we weren't given a time as the argument, so it's number of days
-        try
-        {
-          is_wx_only = true;
-          num_days = static_cast<size_t>(stoi(arg));
-          if (0 != strcmp(to_string(num_days).c_str(), arg.c_str()))
-          {
-            show_usage_and_exit(name);
-          }
-          while (i < argc)
-          {
-            if (0 == strcmp(argv[i], "-f"))
-            {
-              if (full_wx)
-              {
-                show_usage_and_exit(name);
-              }
-              fs::logging::note("Dumping all weather");
-              full_wx = true;
-            }
-            else if (0 == strcmp(argv[i], "-v"))
-            {
-              // can be used multiple times
-              Log::increaseLogLevel();
-            }
-            else if (0 == strcmp(argv[i], "-q"))
-            {
-              // if they want to specify -v and -q then that's fine
-              Log::decreaseLogLevel();
-            }
-            else if (0 == strcmp(argv[i], "-a"))
-            {
-              if (actuals_only)
-              {
-                show_usage_and_exit(name);
-              }
-              actuals_only = true;
-            }
-            else if (0 == strcmp(argv[i], "-w"))
-            {
-              Settings::setWeatherFile(string(get_arg("w", &i, argc, argv)));
-            }
-            else if (0 == strcmp(argv[i], "--score"))
-            {
-              if (0 != score)
-              {
-                show_usage_and_exit(name);
-              }
-              score = stod(get_arg("score", &i, argc, argv));
-              Settings::setMaxGrade(score);
-            }
-            else if (0 == strcmp(argv[i], "--ffmc"))
-            {
-              if (nullptr != ffmc)
-              {
-                show_usage_and_exit(name);
-              }
-              ffmc = new fs::wx::Ffmc(stod(get_arg("ffmc", &i, argc, argv)));
-            }
-            else if (0 == strcmp(argv[i], "--dmc"))
-            {
-              if (nullptr != dmc)
-              {
-                show_usage_and_exit(name);
-              }
-              dmc = new fs::wx::Dmc(stod(get_arg("dmc", &i, argc, argv)));
-            }
-            else if (0 == strcmp(argv[i], "--dc"))
-            {
-              if (nullptr != dc)
-              {
-                show_usage_and_exit(name);
-              }
-              dc = new fs::wx::Dc(stod(get_arg("dc", &i, argc, argv)));
-            }
-            else if (0 == strcmp(argv[i], "--apcp_0800"))
-            {
-              if (nullptr != apcp_0800)
-              {
-                show_usage_and_exit(name);
-              }
-              apcp_0800 = new fs::wx::AccumulatedPrecipitation(
-                stod(get_arg("apcp_0800", &i, argc, argv))
-              );
-            }
-            else
-            {
-              show_usage_and_exit(name);
-            }
-            ++i;
-          }
-        }
-        catch (std::exception&)
-        {
-          show_usage_and_exit(name);
-        }
+        show_usage_and_exit(name);
       }
       if (!wx_file_name.empty())
       {
