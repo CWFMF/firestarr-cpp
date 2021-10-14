@@ -29,62 +29,6 @@ Environment::~Environment()
 {
   delete cells_;
 }
-template <class V, class T = V>
-static V read_tiff_point(TIFF* tif,
-                         GTIF* gtif,
-                         const Point& point,
-                         std::function<T(int, int)> convert)
-{
-  const data::GridBase grid_info = data::read_header<T>(tif, gtif);
-  const auto coordinates = grid_info.findFullCoordinates(point, false);
-  auto min_column = max(static_cast<FullIdx>(0),
-                        static_cast<FullIdx>(std::get<1>(*coordinates) - MAX_COLUMNS / static_cast<FullIdx>(2)));
-  if (min_column + MAX_COLUMNS >= grid_info.calculateColumns())
-  {
-    min_column = grid_info.calculateColumns() - MAX_COLUMNS;
-  }
-  auto min_row = max(static_cast<FullIdx>(0),
-                     static_cast<FullIdx>(std::get<0>(*coordinates) - MAX_COLUMNS / static_cast<FullIdx>(2)));
-  if (min_row + MAX_COLUMNS >= grid_info.calculateRows())
-  {
-    min_row = grid_info.calculateRows() - MAX_COLUMNS;
-  }
-  int tile_width;
-  int tile_length;
-  TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tile_width);
-  TIFFGetField(tif, TIFFTAG_TILELENGTH, &tile_length);
-  const auto buf = _TIFFmalloc(TIFFTileSize(tif));
-  const tsample_t smp{};
-  const auto mid = MAX_COLUMNS / 2;
-  const auto h = (min_row + mid) / tile_length * tile_length;
-  const auto w = (min_column + mid) / tile_width * tile_width;
-  const auto f_y = h - min_row - (h - min_row) / tile_length * tile_length;
-  const auto y = static_cast<Idx>(tile_length - f_y);
-  const auto f_x = w - min_column - (w - min_column) / tile_width * tile_width;
-  const auto x = static_cast<Idx>(tile_width - f_x);
-  TIFFReadTile(tif, buf, static_cast<uint32>(w), static_cast<uint32>(h), 0, smp);
-  const auto offset = y * tile_length + x;
-  V cur = *(static_cast<V*>(buf) + offset);
-  _TIFFfree(buf);
-  return convert(cur, grid_info.nodata());
-}
-template <class V, class T = V>
-static V read_tiff_point(const string& filename,
-                         const Point& point,
-                         std::function<T(int, int)> convert)
-{
-  return data::with_tiff<V>(filename,
-                            [&convert, &point](TIFF* tif, GTIF* gtif)
-                            {
-                              return read_tiff_point<T, V>(tif, gtif, point, convert);
-                            });
-}
-template <class T>
-static T read_tiff_point(const string& filename,
-                         const Point& point)
-{
-  return read_tiff_point<T, T>(filename, point, util::no_convert<T>);
-}
 Environment Environment::load(const Point& point,
                               const string& in_fuel,
                               const string& in_elevation)
