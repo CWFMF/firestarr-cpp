@@ -84,7 +84,7 @@ public:
   [[nodiscard]] constexpr FullIdx
   calculateRows() const noexcept
   {
-    return static_cast<FullIdx>((yurcorner() - yllcorner()) / cellSize());
+    return static_cast<FullIdx>((yurcorner() - yllcorner()) / cellSize()) - 1;
   }
   /**
    * \brief Number of columns in the GridBase.
@@ -93,7 +93,7 @@ public:
   [[nodiscard]] constexpr FullIdx
   calculateColumns() const noexcept
   {
-    return static_cast<FullIdx>((xurcorner() - xllcorner()) / cellSize());
+    return static_cast<FullIdx>((xurcorner() - xllcorner()) / cellSize()) - 1;
   }
   /**
    * \brief Value used for grid locations that have no data.
@@ -350,6 +350,8 @@ protected:
       rows_(rows),
       columns_(columns)
   {
+    logging::check_fatal(rows > MAX_ROWS, "Too many rows (%d > %d)", rows, MAX_ROWS);
+    logging::check_fatal(columns > MAX_COLUMNS, "Too many columns (%d > %d)", columns, MAX_COLUMNS);
   }
   /**
    * \brief Construct based on GridBase and no data value
@@ -618,20 +620,20 @@ with_tiff(
   logging::check_fatal(!tif, "Cannot open file %s as a TIF", filename.c_str());
   auto gtif = GTIFNew(tif);
   logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
-  try
-  {
-    R result = fct(tif, gtif);
-    if (tif)
-      XTIFFClose(tif);
-    if (gtif)
-      GTIFFree(gtif);
-    GTIFDeaccessCSV();
-    return result;
-  }
-  catch (std::exception&)
-  {
-    return logging::fatal<R>("Unable to process file %s", filename.c_str());
-  }
+  //  try
+  //  {
+  R result = fct(tif, gtif);
+  if (tif)
+    XTIFFClose(tif);
+  if (gtif)
+    GTIFFree(gtif);
+  GTIFDeaccessCSV();
+  return result;
+  //  }
+  //  catch (std::exception&)
+  //  {
+  //    return logging::fatal<R>("Unable to process file %s", filename.c_str());
+  //  }
 }
 template <typename T>
 [[nodiscard]] GridBase

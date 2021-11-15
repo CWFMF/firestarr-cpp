@@ -42,7 +42,7 @@ Environment::load(
       point
     );
   }
-  logging::warning("Loading grids async");
+  logging::warning("Loading grids synchronously");
   // HACK: need to copy strings since closures do that above
   return Environment(
     *unique_ptr<FuelGrid>(FuelGrid::readTiff(string(in_fuel), point, sim::Settings::fuelLookup())),

@@ -186,25 +186,41 @@ ProbabilityMap::saveAll(
     sprintf(tmp, mask, name, day, for_time.year, for_time.month, for_time.day);
     return string(tmp);
   };
-  vector<std::future<void>> results{};
-  results.push_back(async(
-    launch::async,
-    &ProbabilityMap::saveTotal,
-    this,
-    make_string(for_actuals ? "actuals" : "wxshield")
-  ));
-  results.push_back(async(launch::async, &ProbabilityMap::saveLow, this, make_string("intensity_L"))
-  );
-  results.push_back(
-    async(launch::async, &ProbabilityMap::saveModerate, this, make_string("intensity_M"))
-  );
-  results.push_back(
-    async(launch::async, &ProbabilityMap::saveHigh, this, make_string("intensity_H"))
-  );
-  results.push_back(async(launch::async, &ProbabilityMap::saveSizes, this, make_string("sizes")));
-  for (auto& result : results)
+  if (sim::Settings::runAsync())
   {
-    result.wait();
+    vector<std::future<void>> results{};
+    results.push_back(async(
+      launch::async,
+      &ProbabilityMap::saveTotal,
+      this,
+      make_string(for_actuals ? "actuals" : "wxshield")
+    ));
+    results.push_back(
+      async(launch::async, &ProbabilityMap::saveTotalCount, this, make_string("occurrence"))
+    );
+    results.push_back(
+      async(launch::async, &ProbabilityMap::saveLow, this, make_string("intensity_L"))
+    );
+    results.push_back(
+      async(launch::async, &ProbabilityMap::saveModerate, this, make_string("intensity_M"))
+    );
+    results.push_back(
+      async(launch::async, &ProbabilityMap::saveHigh, this, make_string("intensity_H"))
+    );
+    results.push_back(async(launch::async, &ProbabilityMap::saveSizes, this, make_string("sizes")));
+    for (auto& result : results)
+    {
+      result.wait();
+    }
+  }
+  else
+  {
+    saveTotal(make_string(for_actuals ? "actuals" : "wxshield"));
+    saveTotalCount(make_string("occurrence"));
+    saveLow(make_string("intensity_L"));
+    saveModerate(make_string("intensity_M"));
+    saveHigh(make_string("intensity_H"));
+    saveSizes(make_string("sizes"));
   }
   const auto nd = model.nd(day);
   logging::note(
@@ -221,6 +237,13 @@ ProbabilityMap::saveTotal(
 {
   all_
     .saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
+}
+void
+ProbabilityMap::saveTotalCount(
+  const string& base_name
+) const
+{
+  all_.saveToProbabilityFile(Settings::outputDirectory(), base_name, 1.0);
 }
 void
 ProbabilityMap::saveHigh(

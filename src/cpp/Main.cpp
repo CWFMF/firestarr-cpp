@@ -104,7 +104,15 @@ main(
         output_directory += '/';
       }
       Settings::setOutputDirectory(output_directory);
-      fs::logging::debug("Output directory is %s", Settings::outputDirectory);
+      struct stat info{};
+      if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
+      {
+        fs::util::make_directory_recursive(Settings::outputDirectory());
+      }
+      const string log_file = (string(Settings::outputDirectory()) + "log.txt");
+      fs::logging::check_fatal(!Log::openLogFile(log_file.c_str()), "Can't open log file");
+      fs::logging::note("Output directory is %s", Settings::outputDirectory());
+      fs::logging::note("Output log is %s", log_file.c_str());
       string date(argv[i++]);
       TIMESTAMP_STRUCT start_date{};
       start_date.year = static_cast<SQLSMALLINT>(stoi(date.substr(0, 4)));
@@ -281,11 +289,6 @@ main(
           show_usage_and_exit(name);
         }
       }
-      struct stat info{};
-      if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
-      {
-        fs::util::make_directory_recursive(Settings::outputDirectory());
-      }
       if (nullptr == ffmc)
       {
         fs::logging::fatal("FFMC is required");
@@ -349,4 +352,5 @@ main(
   {
     fs::logging::fatal(err.what());
   }
+  Log::closeLogFile();
 }

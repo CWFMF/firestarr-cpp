@@ -182,7 +182,7 @@ run_test(
   Settings::setOutputDirectory(output_directory);
   const auto fuel = Settings::fuelLookup().byName(fuel_name);
   auto values = vector<topo::Cell>();
-  values.reserve(MAX_ROWS * MAX_COLUMNS);
+  //  values.reserve(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS);
   for (Idx r = 0; r < MAX_ROWS; ++r)
   {
     for (Idx c = 0; c < MAX_COLUMNS; ++c)

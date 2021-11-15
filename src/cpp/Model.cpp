@@ -26,9 +26,9 @@ Model::getBurnedVector() const noexcept
 {
   try
   {
+    lock_guard<mutex> lock(vector_mutex_);
     if (!vectors_.empty())
     {
-      lock_guard<mutex> lock(vector_mutex_);
       // check again once we have the mutex
       if (!vectors_.empty())
       {
@@ -38,7 +38,9 @@ Model::getBurnedVector() const noexcept
         return v;
       }
     }
-    return environment().makeBurnedData().release();
+    auto result = environment().makeBurnedData().release();
+    //    environment().resetBurnedData(result);
+    return result;
   }
   catch (...)
   {
@@ -239,7 +241,8 @@ Model::findStarts(
         // make sure we only look at the outside of the box
         if (1 == range || abs(x) == range || abs(y) == range)
         {
-          const auto loc = env_->cell(location.hash() + y + (x * MAX_COLUMNS));
+          //          const auto loc = env_->cell(location.hash() + (y * MAX_COLUMNS) + x);
+          const auto loc = env_->cell(Location(location.row() + y, location.column() + x));
           if (!fuel::is_null_fuel(loc))
           {
             starts_.push_back(make_shared<topo::Cell>(cell(loc)));
@@ -300,7 +303,8 @@ Model::makeStarts(
       perimeter_ = nullptr;
     }
     logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
-    if (0 == size && fuel::is_null_fuel(cell(location.hash())))
+    //    if (0 == size && fuel::is_null_fuel(cell(location.hash())))
+    if (0 == size && fuel::is_null_fuel(cell(location)))
     {
       findStarts(location);
     }
@@ -570,6 +574,8 @@ Model::runIterations(
   );
   auto runs_left = Settings::minimumSimulationRounds();
   const auto recheck_interval = Settings::simulationRecheckInterval();
+  // HACK: just do this here so that we know it happened
+  // iterations.reset(&mt_extinction, &mt_spread);
   if (Settings::runAsync())
   {
     vector<Iteration> all_iterations{};
@@ -599,15 +605,14 @@ Model::runIterations(
         all_scenarios.insert(all_scenarios.end(), s.begin(), s.end());
         ++runs;
       }
-      // sort in run so that they still get the same extinction thresholds as when unsorted
-      std::sort(
-        all_scenarios.begin(),
-        all_scenarios.end(),
-        [](Scenario* lhs, Scenario* rhs) noexcept {
-          // sort so that scenarios with highest DSRs are at the front
-          return lhs->weightedDsr() > rhs->weightedDsr();
-        }
-      );
+      //      // sort in run so that they still get the same extinction thresholds as when unsorted
+      //      std::sort(all_scenarios.begin(),
+      //                all_scenarios.end(),
+      //                [](Scenario* lhs, Scenario* rhs) noexcept
+      //                {
+      //                  // sort so that scenarios with highest DSRs are at the front
+      //                  return lhs->weightedDsr() > rhs->weightedDsr();
+      //                });
       for (auto s : all_scenarios)
       {
         threads.emplace_back(&Scenario::run, s, &probabilities);
@@ -651,6 +656,8 @@ Model::runIterations(
         iterations.reset(&mt_extinction, &mt_spread);
         for (auto s : iterations.getScenarios())
         {
+          //          s->run_fake(&probabilities);
+          //          iterations.reset(&mt_extinction, &mt_spread);
           s->run(&probabilities);
         }
         ++i;
@@ -694,7 +701,7 @@ Model::runScenarios(
   logging::debug("Environment loaded");
   const auto position = env.findCoordinates(start_point, true);
   logging::check_fatal(
-    std::get<0>(*position) > MAX_COLUMNS || std::get<1>(*position) > MAX_COLUMNS,
+    std::get<0>(*position) > MAX_ROWS || std::get<1>(*position) > MAX_COLUMNS,
     "Location loaded outside of grid at position (%d, %d)",
     std::get<0>(*position),
     std::get<1>(*position)

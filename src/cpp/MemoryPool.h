@@ -32,9 +32,9 @@ public:
   T*
   acquire()
   {
+    lock_guard<mutex> lock(mutex_);
     if (!assets_.empty())
     {
-      lock_guard<mutex> lock(mutex_);
       // check again once we have the mutex
       if (!assets_.empty())
       {
@@ -44,7 +44,9 @@ public:
         return v;
       }
     }
-    return new T();
+    auto result = new T();
+    result->reset();
+    return result;
   }
   /**
    * \brief Add a T* to the pool of available T*s
@@ -109,7 +111,8 @@ check_reset(
 {
   if (nullptr != t)
   {
-    t->reset();
+    //    t->reset();
+    t = {};
     pool.release(t);
   }
   return nullptr;

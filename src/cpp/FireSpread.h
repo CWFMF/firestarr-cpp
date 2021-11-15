@@ -96,7 +96,7 @@ public:
    * \brief Offsets from origin point that represent spread under these conditions
    * \return Offsets from origin point that represent spread under these conditions
    */
-  [[nodiscard]] vector<InnerPos>
+  [[nodiscard]] OffsetSet
   offsets() const
   {
     return offsets_;
@@ -244,7 +244,7 @@ private:
   /**
    * \brief Offsets from origin point that represent spread under these conditions
    */
-  vector<InnerPos> offsets_{};
+  OffsetSet offsets_{};
   /**
    * \brief Maximum intensity in any direction for spread (kW/m)
    */
