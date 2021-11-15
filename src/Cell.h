@@ -33,8 +33,8 @@ public:
    * \brief Default constructor
    */
   constexpr Cell() noexcept
-    : Cell(MAX_ROWS + 1,
-           MAX_COLUMNS + 1,
+    : Cell(-1,
+           -1,
            numeric_limits<SlopeSize>::min(),
            numeric_limits<AspectSize>::min(),
            numeric_limits<FuelCodeSize>::min())
@@ -173,7 +173,7 @@ protected:
   /**
    * \brief Number of bits in fuel bitmask
    */
-  static constexpr uint32 FuelBits = 6;
+  static constexpr uint32 FuelBits = std::bit_width<uint32>(NUMBER_OF_FUELS);
   /**
    * \brief Bitmask for fuel information in Topo before shift
    */
@@ -191,7 +191,7 @@ protected:
   /**
    * \brief Number of bits in aspect bitmask
    */
-  static constexpr uint32 AspectBits = 9;
+  static constexpr uint32 AspectBits = std::bit_width<uint32>(MAX_ASPECT);
   /**
    * \brief Bitmask for aspect in Topo before shift
    */
@@ -208,7 +208,8 @@ protected:
   /**
    * \brief Number of bits in slope bitmask
    */
-  static constexpr uint32 SlopeBits = 7;
+  static constexpr uint32 SlopeBits = std::bit_width<uint32>(MAX_SLOPE_FOR_DISTANCE);
+  static_assert(SlopeBits == 7);
   /**
    * \brief Bitmask for slope in Topo before shift
    */
@@ -223,6 +224,7 @@ protected:
    * \brief Bitmask for Cell information in Topo
    */
   static constexpr Topo CellMask = HashMask | FuelMask | AspectMask | SlopeMask;
+  static_assert(std::bit_width(std::numeric_limits<Topo>::max()) >= SlopeBits + SlopeShift);
 };
 /**
  * \brief Less than operator

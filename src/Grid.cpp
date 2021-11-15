@@ -111,7 +111,7 @@ void GridBase::createPrj(const string& dir, const string& base_name) const
 {
   ofstream out;
   out.open(dir + base_name + ".prj");
-  logging::debug(proj4_.c_str());
+  logging::extensive(proj4_.c_str());
   // HACK: use what we know is true for the grids that were generated and
   // hope it's correct otherwise
   const auto proj = find_value("+proj=", proj4_);
@@ -161,10 +161,14 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& poi
   // convert coordinates into cell position
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
-  auto actual_y = (y - this->yllcorner_) / this->cell_size_;
+  auto actual_y = -1.0;
   if (!flipped)
   {
-    actual_y = static_cast<double>(this->calculateRows()) - actual_y;
+    actual_y = (y - this->yllcorner_) / this->cell_size_;
+  }
+  else
+  {
+    actual_y = (yurcorner_ - y) / cell_size_;
   }
   const auto column = static_cast<FullIdx>(actual_x);
   const auto row = static_cast<FullIdx>(round(actual_y - 0.5));

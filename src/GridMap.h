@@ -18,7 +18,7 @@
 #include <limits>
 #include <list>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <utility>
 #include "Grid.h"
 namespace firestarr
@@ -32,7 +32,7 @@ namespace data
  */
 template <class T, class V = T>
 class GridMap
-  : public GridData<T, V, unordered_map<Location, T>>
+  : public GridData<T, V, map<Location, T>>
 {
 public:
   /**
@@ -65,15 +65,16 @@ public:
    */
   void set(const Location& location, const T value) override
   {
-    const auto seek = this->data.find(location);
-    if (seek == this->data.end())
-    {
-      this->data.emplace(location, value);
-    }
-    else
-    {
-      this->data.at(location) = value;
-    }
+    //    const auto seek = this->data.find(location);
+    //    if (seek == this->data.end())
+    //    {
+    //      this->data.emplace(location, value);
+    //    }
+    //    else
+    //    {
+    //      this->data.at(location) = value;
+    //    }
+    this->data[location] = value;
     assert(at(location) == value);
   }
   ~GridMap() = default;
@@ -100,17 +101,17 @@ public:
           const double xurcorner,
           const double yurcorner,
           string&& proj4)
-    : GridData<T, V, unordered_map<Location, T>>(cell_size,
-                                                 rows,
-                                                 columns,
-                                                 no_data,
-                                                 nodata,
-                                                 xllcorner,
-                                                 yllcorner,
-                                                 xurcorner,
-                                                 yurcorner,
-                                                 std::forward<string>(proj4),
-                                                 unordered_map<Location, T>())
+    : GridData<T, V, map<Location, T>>(cell_size,
+                                       rows,
+                                       columns,
+                                       no_data,
+                                       nodata,
+                                       xllcorner,
+                                       yllcorner,
+                                       xurcorner,
+                                       yurcorner,
+                                       std::forward<string>(proj4),
+                                       map<Location, T>())
   {
     constexpr auto max_hash = numeric_limits<HashSize>::max();
     // HACK: we don't want overflow errors, but we want to play with the hash size
@@ -122,7 +123,8 @@ public:
     // tells us how many cells there could be
     // HACK: divide because we expect most perimeters to be fairly small, but we
     // want it to be reasonably large
-    this->data.reserve(static_cast<size_t>(numeric_limits<Idx>::max() / 4));
+    //    this->data.reserve(static_cast<size_t>(numeric_limits<Idx>::max() / 4));
+    //    this->data.reserve(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS);
   }
   /**
    * \brief Construct empty GridMap with same extent as given Grid
@@ -162,7 +164,7 @@ public:
    * \param rhs GridMap to move from
    */
   GridMap(GridMap&& rhs) noexcept
-    : GridData<T, V, unordered_map<Location, T>>(std::move(rhs))
+    : GridData<T, V, map<Location, T>>(std::move(rhs))
   {
     this->data = std::move(rhs.data);
   }
@@ -171,7 +173,7 @@ public:
    * \param rhs GridMap to copy from
    */
   explicit GridMap(const GridMap& rhs)
-    : GridData<T, V, unordered_map<Location, T>>(rhs)
+    : GridData<T, V, map<Location, T>>(rhs)
   {
     this->data = rhs.data;
   }
@@ -206,7 +208,9 @@ public:
    */
   void clear() noexcept
   {
-    this->data.clear();
+    //    this->data.clear();
+    this->data = {};
+    //    this->data.reserve(static_cast<size_t>(numeric_limits<Idx>::max() / 4));
   }
   /**
    * \brief Save GridMap contents to .asc file
@@ -255,12 +259,12 @@ public:
     {
       min_column = max_column = this->columns() / 2;
     }
-    logging::verbose("Lower left corner is (%d, %d)", min_column, min_row);
-    logging::verbose("Upper right corner is (%d, %d)", max_column, max_row);
+    logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
+    logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
     const double xll = this->xllcorner() + min_column * this->cellSize();
     // offset is different for y since it's flipped
     const double yll = this->yllcorner() + (min_row) * this->cellSize();
-    logging::verbose("Lower left corner is (%f, %f)", xll, yll);
+    logging::extensive("Lower left corner is (%f, %f)", xll, yll);
     // HACK: make sure it's always at least 1
     const auto num_rows = static_cast<double>(max_row) - min_row + 1;
     const auto num_columns = static_cast<double>(max_column) - min_column + 1;

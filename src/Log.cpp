@@ -18,6 +18,7 @@
 namespace firestarr::logging
 {
 int Log::logging_level_ = LOG_DEBUG;
+mutex mutex_;
 void Log::setLogLevel(const int log_level) noexcept
 {
   logging_level_ = log_level;
@@ -36,21 +37,44 @@ int Log::getLogLevel() noexcept
 {
   return logging_level_;
 }
-void Log::output(const char* name, const char* format, va_list* args) noexcept
+static ofstream out_stream_;
+int Log::openLogFile(const char* filename) noexcept
 {
+  out_stream_.open(filename);
+  return out_stream_.is_open();
+}
+int Log::closeLogFile() noexcept
+{
+  out_stream_.close();
+  return !out_stream_.is_open();
+}
+void output(const int log_level, const char* format, va_list* args) noexcept
+{
+  if (Log::getLogLevel() > log_level)
+  {
+    return;
+  }
   try
   {
-    const time_t now = time(nullptr);
-    auto buf = localtime(&now);
     // NOTE: create string first so that entire line writes
     // (otherwise threads might mix lines)
     const string tmp;
     stringstream iss(tmp);
-    iss << put_time(buf, "[%F %T] ") << name;
+#ifdef NDEBUG
+    const time_t now = time(nullptr);
+    auto buf = localtime(&now);
+    iss << put_time(buf, "[%F %T] ");
+#endif
+    // try to make output consistent if in debug mode
+    iss << LOG_LABELS[log_level];
     static char buffer[1024]{0};
     vsprintf(buffer, format, *args);
     iss << buffer << "\n";
-    cout << iss.str();
+    {
+      lock_guard<mutex> lock(mutex_);
+      cout << iss.str();
+      out_stream_ << iss.str();
+    }
   }
   catch (...)
   {
@@ -63,7 +87,7 @@ void extensive(const char* format, ...) noexcept
   {
     va_list args;
     va_start(args, format);
-    Log::output("EXTENSIVE:", format, &args);
+    output(LOG_EXTENSIVE, format, &args);
     va_end(args);
   }
 }
@@ -73,7 +97,7 @@ void verbose(const char* format, ...) noexcept
   {
     va_list args;
     va_start(args, format);
-    Log::output("VERBOSE:", format, &args);
+    output(LOG_VERBOSE, format, &args);
     va_end(args);
   }
 }
@@ -83,7 +107,7 @@ void debug(const char* format, ...) noexcept
   {
     va_list args;
     va_start(args, format);
-    Log::output("DEBUG: ", format, &args);
+    output(LOG_DEBUG, format, &args);
     va_end(args);
   }
 }
@@ -93,7 +117,7 @@ void info(const char* format, ...) noexcept
   {
     va_list args;
     va_start(args, format);
-    Log::output("INFO:  ", format, &args);
+    output(LOG_INFO, format, &args);
     va_end(args);
   }
 }
@@ -103,7 +127,7 @@ void note(const char* format, ...) noexcept
   {
     va_list args;
     va_start(args, format);
-    Log::output("NOTE:  ", format, &args);
+    output(LOG_NOTE, format, &args);
     va_end(args);
   }
 }
@@ -113,7 +137,7 @@ void warning(const char* format, ...) noexcept
   {
     va_list args;
     va_start(args, format);
-    Log::output("WARN:  ", format, &args);
+    output(LOG_WARNING, format, &args);
     va_end(args);
   }
 }
@@ -123,7 +147,7 @@ void error(const char* format, ...) noexcept
   {
     va_list args;
     va_start(args, format);
-    Log::output("ERROR: ", format, &args);
+    output(LOG_ERROR, format, &args);
     va_end(args);
   }
 }
@@ -157,5 +181,81 @@ void check_fatal(const bool condition, const char* format, ...) noexcept
     // cppcheck-suppress va_end_missing
     // va_end(args);
   }
+}
+
+void SelfLogger::log_extensive(const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::output(LOG_EXTENSIVE, fmt.c_str(), &args);
+  va_end(args);
+}
+void SelfLogger::log_verbose(const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::output(LOG_VERBOSE, fmt.c_str(), &args);
+  va_end(args);
+}
+void SelfLogger::log_debug(const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::output(LOG_DEBUG, fmt.c_str(), &args);
+  va_end(args);
+}
+void SelfLogger::log_info(const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::output(LOG_INFO, fmt.c_str(), &args);
+  va_end(args);
+}
+void SelfLogger::log_note(const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::output(LOG_NOTE, fmt.c_str(), &args);
+  va_end(args);
+}
+
+void SelfLogger::log_warning(const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::output(LOG_WARNING, fmt.c_str(), &args);
+  va_end(args);
+}
+
+void SelfLogger::log_error(const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::output(LOG_ERROR, fmt.c_str(), &args);
+  va_end(args);
+}
+void SelfLogger::log_check_fatal(bool condition, const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::check_fatal(condition, fmt.c_str(), &args);
+  va_end(args);
+}
+
+void SelfLogger::log_fatal(const char* format, ...) const noexcept
+{
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::fatal(fmt.c_str(), &args);
+  va_end(args);
 }
 }

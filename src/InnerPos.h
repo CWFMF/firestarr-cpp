@@ -28,19 +28,49 @@ struct InnerPos
   /**
    * \brief X coordinate
    */
-  double x;
+  Idx x;
   /**
    * \brief Y coordinate
    */
-  double y;
+  Idx y;
   /**
-   * \brief Constructor
+   * \brief X location within cell
+   */
+  double sub_x;
+  /**
+   * \brief Y location within cell
+   */
+  double sub_y;
+  /**
+   * \brief Create InnerPos from (x, y) and offsets
    * \param x X coordinate
    * \param y Y coordinate
+   * \param sub_x Sub-coordinate for X
+   * \param sub_y Sub-coordinate for Y
    */
-  InnerPos(const double x, const double y) noexcept
-    : x(x), y(y)
+  constexpr static InnerPos create(Idx a, Idx b, double sub_a, double sub_b)
   {
+    if (sub_a >= 1)
+    {
+      a += 1;
+      sub_a -= 1;
+    }
+    else if (sub_a < 0)
+    {
+      a -= 1;
+      sub_a += 1;
+    }
+    if (sub_b >= 1)
+    {
+      b += 1;
+      sub_b -= 1;
+    }
+    else if (sub_b < 0)
+    {
+      b -= 1;
+      sub_b += 1;
+    }
+    return InnerPos(a, b, sub_a, sub_b);
   }
   /**
    * \brief Less than operator
@@ -51,7 +81,20 @@ struct InnerPos
   {
     if (x == rhs.x)
     {
-      return y < rhs.y;
+      if (abs(sub_x - rhs.sub_x) < COMPARE_LIMIT)
+      {
+        if (y == rhs.y)
+        {
+          if (abs(sub_y - rhs.sub_y) < COMPARE_LIMIT)
+          {
+            // they are "identical" so this is false
+            return false;
+          }
+          return sub_y < rhs.sub_y;
+        }
+        return y < rhs.y;
+      }
+      return sub_x < rhs.sub_x;
     }
     return x < rhs.x;
   }
@@ -62,7 +105,32 @@ struct InnerPos
    */
   bool operator==(const InnerPos& rhs) const noexcept
   {
-    return abs(x - rhs.x) < COMPARE_LIMIT && abs(y - rhs.y) < COMPARE_LIMIT;
+    return (x == rhs.x)
+        && (y == rhs.y)
+        && (abs(sub_x - rhs.sub_x) < COMPARE_LIMIT)
+        && (abs(sub_y - rhs.sub_y) < COMPARE_LIMIT);
+  }
+  /**
+   * \brief Add offset to position and return result
+   */
+  InnerPos add(const Offset o) const noexcept
+  {
+    return create(x,
+                  y,
+                  sub_x + o.x,
+                  sub_y + o.y);
+  }
+  /**
+   * \brief Constructor
+   * \param x X coordinate
+   * \param y Y coordinate
+   * \param sub_x X location within cell
+   * \param sub_y Y location within cell
+   */
+  constexpr InnerPos(const Idx x, const Idx y, const double sub_x, const double sub_y) noexcept
+    : x(x), y(y), sub_x(sub_x), sub_y(sub_y)
+  {
+    logging::check_fatal(sub_x >= 1 || sub_x < 0 || sub_y >= 1 || sub_y < 0, "Sub-coordinates are outside cell");
   }
 };
 }

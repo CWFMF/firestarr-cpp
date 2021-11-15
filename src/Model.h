@@ -177,10 +177,10 @@ public:
    * \param hash_size Hash size for Location to get Cell for
    * \return Cell at the Location represented by the given hash
    */
-  [[nodiscard]] constexpr topo::Cell cell(const HashSize hash_size) const
-  {
-    return env_->cell(hash_size);
-  }
+  //  [[nodiscard]] constexpr topo::Cell cell(const HashSize hash_size) const
+  //  {
+  //    return env_->cell(hash_size);
+  //  }
   /**
    * \brief Number of rows in extent
    * \return Number of rows in extent

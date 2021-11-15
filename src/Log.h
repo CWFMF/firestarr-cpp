@@ -27,6 +27,17 @@ static const int LOG_WARNING = 5;
 static const int LOG_ERROR = 6;
 static const int LOG_FATAL = 7;
 static const int LOG_SILENT = 8;
+static const char* LOG_LABELS[] =
+  {
+    "EXTENSIVE: ",
+    "VERBOSE:   ",
+    "DEBUG:     ",
+    "INFO:      ",
+    "NOTE:      ",
+    "WARNING:   ",
+    "ERROR:     ",
+    "FATAL:     ",
+    "SILENT:    "};
 /**
  * \brief Provides logging functionality.
  */
@@ -37,14 +48,6 @@ class Log
    */
   static int logging_level_;
 public:
-  /**
-   * \brief Output a message to the log
-   * \param name Name of logging level to mark message with
-   * \param format Format string for message
-   * \param args Arguments to use in format string
-   * \return None
-   */
-  static void output(const char* name, const char* format, va_list* args) noexcept;
   /**
    * \brief Set logging level to a specific level
    * \param log_level Log level to use
@@ -66,7 +69,25 @@ public:
    * \return Current logging level
    */
   static int getLogLevel() noexcept;
+  /**
+   * \brief Set output log file
+   * \return Return value of open()
+   */
+  static int openLogFile(const char* filename) noexcept;
+  /**
+   * \brief Set output log file
+   * \return Return value of close()
+   */
+  static int closeLogFile() noexcept;
 };
+/**
+   * \brief Output a message to the log
+   * \param log_level Log level to use for label
+   * \param format Format string for message
+   * \param args Arguments to use in format string
+   * \return None
+   */
+void output(int log_level, const char* format, va_list* args) noexcept;
 /**
  * \brief Log with EXTENSIVE level
  * \param format Format string for message
@@ -134,7 +155,8 @@ void fatal(const char* format, ...) noexcept;
 template <class T>
 T fatal(const char* format, va_list* args) noexcept
 {
-  Log::output("FATAL: ", format, args);
+  output(LOG_FATAL, format, args);
+  Log::closeLogFile();
   exit(EXIT_FAILURE);
 }
 /**
@@ -153,5 +175,19 @@ T fatal(const char* format, ...) noexcept
   return fatal<T>(format, &args);
   //  va_end(args);
 }
+class SelfLogger
+{
+protected:
+  virtual string add_log(const char* format) const noexcept = 0;
+  void log_extensive(const char* format, ...) const noexcept;
+  void log_verbose(const char* format, ...) const noexcept;
+  void log_debug(const char* format, ...) const noexcept;
+  void log_info(const char* format, ...) const noexcept;
+  void log_note(const char* format, ...) const noexcept;
+  void log_warning(const char* format, ...) const noexcept;
+  void log_error(const char* format, ...) const noexcept;
+  void log_check_fatal(bool condition, const char* format, ...) const noexcept;
+  void log_fatal(const char* format, ...) const noexcept;
+};
 }
 }

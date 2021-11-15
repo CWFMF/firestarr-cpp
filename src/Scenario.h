@@ -45,6 +45,7 @@ struct IObserver_deleter
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
  */
 class Scenario
+  : public logging::SelfLogger
 {
 public:
   /**
@@ -157,10 +158,10 @@ public:
    * \param hash_size Hash
    * \return Cell for Location with given hash
    */
-  [[nodiscard]] constexpr topo::Cell cell(const HashSize hash_size) const
-  {
-    return model_->cell(hash_size);
-  }
+  //  [[nodiscard]] constexpr topo::Cell cell(const HashSize hash_size) const
+  //  {
+  //    return model_->cell(hash_size);
+  //  }
   /**
    * \brief Number of rows
    * \return Number of rows
@@ -306,18 +307,6 @@ public:
    */
   [[nodiscard]] bool isSurrounded(const Location& location) const;
   /**
-   * \brief Easting
-   * \param p Cell
-   * \return Easting
-   */
-  [[nodiscard]] double easting(const topo::Cell& p) const noexcept;
-  /**
-   * \brief Northing
-   * \param p Cell
-   * \return Northing
-   */
-  [[nodiscard]] double northing(const topo::Cell& p) const noexcept;
-  /**
    * \brief Cell that InnerPos falls within
    * \param p InnerPos
    * \return Cell that InnerPos falls within
@@ -350,7 +339,7 @@ public:
    * \param hash Hash for Cell to check
    * \return Whether or not Cell with the given hash can burn
    */
-  [[nodiscard]] bool canBurn(HashSize hash) const;
+  //  [[nodiscard]] bool canBurn(HashSize hash) const;
   /**
    * \brief Whether or not Location has burned already
    * \param location Location to check
@@ -362,7 +351,7 @@ public:
    * \param hash Hash of Location to check
    * \return Whether or not Location with given hash has burned already
    */
-  [[nodiscard]] bool hasBurned(HashSize hash) const;
+  //  [[nodiscard]] bool hasBurned(HashSize hash) const;
   /**
    * \brief Add an Event to the queue
    * \param event Event to add
@@ -424,11 +413,11 @@ public:
     // use Mike's table
     const auto mc = wx->mcDmcPct();
     if (100 > mc
-        || 109 >= mc && 5 > time_at_location
-        || 119 >= mc && 4 > time_at_location
-        || 131 >= mc && 3 > time_at_location
-        || 145 >= mc && 2 > time_at_location
-        || 218 >= mc && 1 > time_at_location)
+        || (109 >= mc && 5 > time_at_location)
+        || (119 >= mc && 4 > time_at_location)
+        || (131 >= mc && 3 > time_at_location)
+        || (145 >= mc && 2 > time_at_location)
+        || (218 >= mc && 1 > time_at_location))
     {
       return true;
     }
@@ -467,6 +456,7 @@ public:
    */
   void clear() noexcept;
 protected:
+  string add_log(const char* format) const noexcept;
   /**
    * \brief Constructor
    * \param model Model running this Scenario
@@ -487,7 +477,7 @@ protected:
   /**
    * \brief Map of Cells to the PointSets in them
    */
-  unordered_map<topo::Cell, PointSet> point_map_{};
+  map<topo::Cell, PointSet> point_map_{};
   /**
    * \brief Condense set of points down to a smaller number
    * \param a Set of points to condense
@@ -516,7 +506,7 @@ protected:
   /**
    * \brief Map of Cells to the PointSets within them
    */
-  unordered_map<topo::Cell, PointSet> points_{};
+  map<topo::Cell, PointSet> points_{};
   /**
    * \brief Contains information on cells that are not burnable
    */
@@ -536,15 +526,15 @@ protected:
   /**
    * \brief Calculated offsets from origin Point for spread given SpreadKey for current time
    */
-  unordered_map<topo::SpreadKey, PointSet> offsets_{};
+  map<topo::SpreadKey, OffsetSet> offsets_{};
   /**
    * \brief Calculated maximum intensity for spread given SpreadKey for current time
    */
-  unordered_map<topo::SpreadKey, double> max_intensity_{};
+  map<topo::SpreadKey, double> max_intensity_{};
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
-  unordered_map<topo::Cell, double> arrival_{};
+  map<topo::Cell, double> arrival_{};
   /**
    * \brief Maximum rate of spread for current time
    */
