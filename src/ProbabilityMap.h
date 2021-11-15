@@ -113,6 +113,11 @@ public:
    */
   void saveTotal(const string& base_name) const;
   /**
+   * \brief Save map representing all intensities occurrence
+   * \param base_name Base file name to save to
+   */
+  void saveTotalCount(const string& base_name) const;
+  /**
    * \brief Save map representing high intensities
    * \param base_name Base file name to save to
    */

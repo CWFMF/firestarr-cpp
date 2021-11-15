@@ -29,7 +29,7 @@ namespace sim
 {
 class ProbabilityMap;
 class Model;
-using BurnedData = std::bitset<MAX_COLUMNS * MAX_COLUMNS>;
+using BurnedData = std::bitset<static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS>;
 /**
  * \brief Represents a map of intensities that cells have burned at for a single Scenario.
  */
@@ -54,7 +54,7 @@ public:
    * \brief Number of rows in this extent
    * \return Number of rows in this extent
    */
-  [[nodiscard]] Idx rows()
+  [[nodiscard]] Idx rows() const
   {
     return map_->rows();
   }
@@ -62,7 +62,7 @@ public:
    * \brief Number of columns in this extent
    * \return Number of columns in this extent
    */
-  [[nodiscard]] Idx columns()
+  [[nodiscard]] Idx columns() const
   {
     return map_->columns();
   }
@@ -82,7 +82,7 @@ public:
    * \param hash Hash for Cell to check
    * \return Whether or not the Cell with the given hash can burn
    */
-  [[nodiscard]] bool canBurn(HashSize hash) const;
+  //  [[nodiscard]] bool canBurn(HashSize hash) const;
   /**
    * \brief Whether or not the Location can burn
    * \param location Location to check
@@ -94,7 +94,7 @@ public:
    * \param hash Hash for Location to check
    * \return Whether or not the Location with the given hash can burn
    */
-  [[nodiscard]] bool hasBurned(HashSize hash) const;
+  //  [[nodiscard]] bool hasBurned(HashSize hash) const;
   /**
    * \brief Whether or not all Locations surrounding the given Location are burned
    * \param location Location to check
@@ -122,13 +122,13 @@ public:
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
    */
-  [[nodiscard]] unordered_map<Location, IntensitySize>::const_iterator
+  [[nodiscard]] map<Location, IntensitySize>::const_iterator
     cbegin() const noexcept;
   /**
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
    */
-  [[nodiscard]] unordered_map<Location, IntensitySize>::const_iterator
+  [[nodiscard]] map<Location, IntensitySize>::const_iterator
     cend() const noexcept;
 private:
   /**

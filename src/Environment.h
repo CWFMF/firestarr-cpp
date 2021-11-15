@@ -182,10 +182,10 @@ public:
    * \param hash_size Hash
    * \return Cell at Location with given hash
    */
-  [[nodiscard]] constexpr Cell cell(const HashSize hash_size) const
-  {
-    return cells_->at(hash_size);
-  }
+  //  [[nodiscard]] constexpr Cell cell(const HashSize hash_size) const
+  //  {
+  //    return cells_->at(hash_size);
+  //  }
   /**
    * \brief Cell at Location with offset of row and column from Location of Event
    * \param event Event to use for base Location
@@ -198,7 +198,8 @@ public:
                                       const Idx column) const
   {
     const auto& p = event.cell();
-    return cell(p.hash() + column + MAX_COLUMNS * row);
+    //return cell(p.hash() + column + static_cast<HashSize>(MAX_COLUMNS) * row);
+    return cell(Location(p.row() + row, p.column() + column));
   }
   /**
    * \brief Make a ProbabilityMap that covers this Environment
@@ -235,8 +236,7 @@ public:
    */
   [[nodiscard]] unique_ptr<sim::BurnedData> makeBurnedData() const
   {
-    auto result = make_unique<sim::BurnedData>();
-    resetBurnedData(&*result);
+    auto result = make_unique<sim::BurnedData>(not_burnable_);
     return result;
   }
   /**
@@ -245,6 +245,7 @@ public:
    */
   void resetBurnedData(sim::BurnedData* data) const noexcept
   {
+    *data = {};
     *data = not_burnable_;
   }
 protected:
@@ -264,86 +265,106 @@ protected:
     static Cell nodata{};
     auto values = vector<Cell>{fuel.data.size()};
     vector<HashSize> hashes{};
-    for (HashSize h = 0; h < static_cast<size_t>(fuel.rows()) * fuel.columns(); ++h)
+    //    for (HashSize h = 0; h < static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS; ++h)
+    //    {
+    //      hashes.emplace_back(h);
+    //    }
+    for (Idx r = 0; r < fuel.rows(); ++r)
     {
-      hashes.emplace_back(h);
-    }
-    std::for_each(
-      std::execution::par_unseq,
-      hashes.begin(),
-      hashes.end(),
-      [&fuel, &values, &elevation](auto&& h)
+      for (Idx c = 0; c < fuel.columns(); ++c)
       {
-        const topo::Location loc{h};
-        const auto r = loc.row();
-        const auto c = loc.column();
-        const auto f = fuel::FuelType::safeCode(fuel.at(h));
-        auto s = static_cast<SlopeSize>(0);
-        auto a = static_cast<AspectSize>(0);
-        if (r > 0 && r < MAX_ROWS - 1 && c > 0 && c < MAX_COLUMNS - 1)
+        const auto h = hashes.emplace_back(Location(r, c).hash());
+        //        hashes.emplace_back(Location(r, c).hash());
+        //      }
+        //    }
+        //    std::for_each(
+        //      std::execution::par_unseq,
+        //      hashes.begin(),
+        //      hashes.end(),
+        //      [&fuel, &values, &elevation](auto&& h)
+        //      {
+        const topo::Location loc{r, c, h};
+        //        const topo::Location loc{static_cast<Idx>(h / MAX_COLUMNS),
+        //                                 static_cast<Idx>(h % MAX_COLUMNS),
+        //                                 h};
+        //        const auto r = loc.row();
+        //        const auto c = loc.column();
+        //        const auto f = fuel::FuelType::safeCode(fuel.at(h));
+        if (r >= 0 && r < fuel.rows() && c >= 0 && c < fuel.columns())
         {
-          double dem[9];
-          for (int i = -1; i < 2; ++i)
+          const auto f = fuel::FuelType::safeCode(fuel.at(loc));
+          auto s = static_cast<SlopeSize>(0);
+          auto a = static_cast<AspectSize>(0);
+          // HACK: don't calculate for outside box of cells
+          if (r > 0 && r < fuel.rows() - 1 && c > 0 && c < fuel.columns() - 1)
           {
-            for (int j = -1; j < 2; ++j)
+            double dem[9];
+            for (int i = -1; i < 2; ++i)
             {
-              // grid is (0, 0) at bottom left, but want [0] in array to be NW corner
-              auto actual_row = static_cast<Idx>(r - i);
-              auto actual_column = static_cast<Idx>(c + j);
-              auto cur_loc = Location{actual_row, actual_column};
-              auto cur_h = cur_loc.hash();
-              dem[3 * (i + 1) + (j + 1)] = 1.0 * elevation.at(cur_h);
+              for (int j = -1; j < 2; ++j)
+              {
+                // grid is (0, 0) at bottom left, but want [0] in array to be NW corner
+                auto actual_row = static_cast<Idx>(r - i);
+                auto actual_column = static_cast<Idx>(c + j);
+                auto cur_loc = Location{actual_row, actual_column};
+                auto cur_h = cur_loc.hash();
+                //              dem[3 * (i + 1) + (j + 1)] = 1.0 * elevation.at(cur_h);
+                dem[3 * (i + 1) + (j + 1)] = 1.0 * elevation.at(cur_loc);
+              }
             }
-          }
-          // Horn's algorithm
-          const double dx = ((dem[2] + dem[5] + dem[5] + dem[8])
-                             - (dem[0] + dem[3] + dem[3] + dem[6]))
-                          / elevation.cellSize();
-          const double dy = ((dem[6] + dem[7] + dem[7] + dem[8])
-                             - (dem[0] + dem[1] + dem[1] + dem[2]))
-                          / elevation.cellSize();
-          const double key = (dx * dx + dy * dy);
-          auto slope_pct = static_cast<float>(100 * (sqrt(key) / 8.0));
-          s = static_cast<SlopeSize>(round(slope_pct));
-          float aspect_azimuth = 0.0;
+            // Horn's algorithm
+            const double dx = ((dem[2] + dem[5] + dem[5] + dem[8])
+                               - (dem[0] + dem[3] + dem[3] + dem[6]))
+                            / elevation.cellSize();
+            const double dy = ((dem[6] + dem[7] + dem[7] + dem[8])
+                               - (dem[0] + dem[1] + dem[1] + dem[2]))
+                            / elevation.cellSize();
+            const double key = (dx * dx + dy * dy);
+            auto slope_pct = static_cast<float>(100 * (sqrt(key) / 8.0));
+            s = min(static_cast<SlopeSize>(MAX_SLOPE_FOR_DISTANCE), static_cast<SlopeSize>(round(slope_pct)));
+            static_assert(std::numeric_limits<SlopeSize>::max() >= MAX_SLOPE_FOR_DISTANCE);
+            float aspect_azimuth = 0.0;
 
-          if (s > 0 && (dx != 0 || dy != 0))
-          {
-            aspect_azimuth = static_cast<float>(atan2(dy, -dx) * M_RADIANS_TO_DEGREES);
-            aspect_azimuth = (aspect_azimuth > 90.0f) ? (450.0f - aspect_azimuth) : (90.0f - aspect_azimuth);
-            if (aspect_azimuth == 360.0f)
+            if (s > 0 && (dx != 0 || dy != 0))
             {
-              aspect_azimuth = 0.0;
+              aspect_azimuth = static_cast<float>(atan2(dy, -dx) * M_RADIANS_TO_DEGREES);
+              aspect_azimuth = (aspect_azimuth > 90.0f) ? (450.0f - aspect_azimuth) : (90.0f - aspect_azimuth);
+              if (aspect_azimuth == 360.0f)
+              {
+                aspect_azimuth = 0.0;
+              }
             }
-          }
 
-          a = static_cast<AspectSize>(round(aspect_azimuth));
-        }
-        const auto cell = Cell{h, s, a, f};
-        values.at(h) = cell;
+            a = static_cast<AspectSize>(round(aspect_azimuth));
+          }
+          const auto cell = Cell{h, s, a, f};
+          values.at(h) = cell;
 #ifndef NDEBUG
 #ifndef VLD_RPTHOOK_INSTALL
-        logging::check_fatal(cell.row() != r, "Cell row %d not %d", cell.row(), r);
-        logging::check_fatal(cell.column() != c, "Cell column %d not %d", cell.column(), c);
-        logging::check_fatal(cell.slope() != s, "Cell slope %d not %d", cell.slope(), s);
-        logging::check_fatal(cell.aspect() != a, "Cell aspect %d not %d", cell.aspect(), a);
-        logging::check_fatal(cell.fuelCode() != f, "Cell fuel %d not %d", cell.fuelCode(), f);
-        const auto v = values.at(h);
-        logging::check_fatal(v.row() != r, "Row %d not %d", v.row(), r);
-        logging::check_fatal(v.column() != c, "Column %d not %d", v.column(), c);
-        logging::check_fatal(v.slope() != s, "Slope %d not %d", v.slope(), s);
-        if (0 != s)
-        {
-          logging::check_fatal(v.aspect() != a, "Aspect %d not %d", v.aspect(), a);
-        }
-        else
-        {
-          logging::check_fatal(v.aspect() != 0, "Aspect %d not %d", v.aspect(), 0);
-        }
-        logging::check_fatal(v.fuelCode() != f, "Fuel %d not %d", v.fuelCode(), f);
+          logging::check_fatal(cell.row() != r, "Cell row %d not %d", cell.row(), r);
+          logging::check_fatal(cell.column() != c, "Cell column %d not %d", cell.column(), c);
+          logging::check_fatal(cell.slope() != s, "Cell slope %d not %d", cell.slope(), s);
+          logging::check_fatal(cell.aspect() != a, "Cell aspect %d not %d", cell.aspect(), a);
+          logging::check_fatal(cell.fuelCode() != f, "Cell fuel %d not %d", cell.fuelCode(), f);
+          const auto v = values.at(h);
+          logging::check_fatal(v.row() != r, "Row %d not %d", v.row(), r);
+          logging::check_fatal(v.column() != c, "Column %d not %d", v.column(), c);
+          logging::check_fatal(v.slope() != s, "Slope %d not %d", v.slope(), s);
+          if (0 != s)
+          {
+            logging::check_fatal(v.aspect() != a, "Aspect %d not %d", v.aspect(), a);
+          }
+          else
+          {
+            logging::check_fatal(v.aspect() != 0, "Aspect %d not %d", v.aspect(), 0);
+          }
+          logging::check_fatal(v.fuelCode() != f, "Fuel %d not %d", v.fuelCode(), f);
 #endif
 #endif
-      });
+        }
+        //      });
+      }
+    }
     return new data::ConstantGrid<Cell>(fuel.cellSize(),
                                         fuel.rows(),
                                         fuel.columns(),
@@ -359,20 +380,24 @@ protected:
   /**
    * \brief Creates a map of areas that are not burnable either because of fuel or the initial perimeter.
    */
-  void initializeNotBurnable()
+  sim::BurnedData initializeNotBurnable(const FuelGrid& fuel)
   {
+    sim::BurnedData result{};
+    //    std::fill(not_burnable_.begin(), not_burnable_.end(), false);
     // make a template we can copy to reset things
     for (Idx r = 0; r < rows(); ++r)
     {
       for (Idx c = 0; c < columns(); ++c)
       {
         const Location location(r, c);
-        if (fuel::is_null_fuel(cell(location)))
-        {
-          not_burnable_[location.hash()] = true;
-        }
+        result[location.hash()] = (nullptr == fuel.at(location));
+        //        if (fuel::is_null_fuel(cell(location)))
+        //        {
+        //          not_burnable_[location.hash()] = true;
+        //        }
       }
     }
+    return result;
   }
   /**
    * \brief Load from rasters
@@ -384,7 +409,8 @@ protected:
     const ElevationGrid& elevation,
     const Point& point)
     : cells_(makeCells(fuel,
-                       elevation))
+                       elevation)),
+      not_burnable_(initializeNotBurnable(fuel))
   {
 #ifndef NDEBUG
     const auto lookup = sim::Settings::fuelLookup();
@@ -398,12 +424,12 @@ protected:
                               });
     elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
 #endif
+    const auto coord = fuel.findCoordinates(point, false);
     // take elevation at point so that if max grid size changes elevation doesn't
-    const auto coord = elevation.findCoordinates(point, false);
     const auto loc = Location(std::get<0>(*coord), std::get<1>(*coord));
     elevation_ = elevation.at(loc);
     logging::note("Start elevation is %d", elevation_);
-    initializeNotBurnable();
+    //    initializeNotBurnable();
   }
   /**
    * \brief Construct from cells and elevation
@@ -412,16 +438,16 @@ protected:
    */
   Environment(data::ConstantGrid<Cell>* cells,
               const ElevationSize elevation) noexcept
-    : cells_(cells), elevation_(elevation)
+    : cells_(cells), elevation_(elevation), not_burnable_(false)
   {
-    try
-    {
-      initializeNotBurnable();
-    }
-    catch (...)
-    {
-      std::terminate();
-    }
+    //    try
+    //    {
+    //      initializeNotBurnable();
+    //    }
+    //    catch (...)
+    //    {
+    //      std::terminate();
+    //    }
   }
 private:
   /**
@@ -431,7 +457,7 @@ private:
   /**
    * \brief BurnedData of cells that are not burnable
    */
-  sim::BurnedData not_burnable_{};
+  const sim::BurnedData not_burnable_;
   /**
    * \brief Elevation at StartPoint
    */

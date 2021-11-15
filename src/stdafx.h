@@ -175,7 +175,6 @@ using IntensitySize = uint16;
  */
 using Day = uint16;
 static constexpr Day MAX_DAYS = 366;
-// HACK: make sure this is 4002 or less since that's what the geoprocessing results in
 /**
  * \brief Maximum number of columns for an Environment
  */
@@ -184,6 +183,11 @@ static constexpr Idx MAX_COLUMNS = 2048;
  * \brief Maximum number of rows for an Environment
  */
 static constexpr Idx MAX_ROWS = MAX_COLUMNS;
+//static_assert(static_cast<size_t>(MAX_ROWS) * (MAX_COLUMNS - 1) <= std::numeric_limits<Idx>::max());
+/**
+ * \brief Maximum aspect value (360 == 0)
+ */
+static constexpr auto MAX_ASPECT = 359;
 /**
  * \brief Maximum slope that affects ISI - everything after this is the same factor
  */
@@ -268,4 +272,22 @@ using FullCoordinates = tuple<FullIdx, FullIdx, SubSize, SubSize>;
  * \brief Type of clock to use for times
  */
 using Clock = std::chrono::steady_clock;
+/**
+ * \brief Offset from a position
+ */
+struct Offset
+{
+  /**
+   * \brief Offset in the x direction (column)
+   */
+  const double x;
+  /**
+   * \brief Offset in the y direction (row)
+   */
+  const double y;
+};
+/**
+ * \brief Collection of Offsets
+ */
+using OffsetSet = vector<Offset>;
 }

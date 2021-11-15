@@ -29,6 +29,7 @@
 #include "SafeVector.h"
 namespace firestarr::sim
 {
+// FIX: why is this not just 0.5?
 constexpr auto CELL_CENTER = 0.5555555555555555;
 constexpr auto PRECISION = 0.001;
 static atomic<size_t> COUNT = 0;
@@ -42,13 +43,20 @@ void IObserver_deleter::operator()(IObserver* ptr) const
 }
 void Scenario::clear() noexcept
 {
-  scheduler_.clear();
-  arrival_.clear();
-  points_.clear();
-  point_map_.clear();
-  offsets_.clear();
+  //  scheduler_.clear();
+  scheduler_ = set<Event, EventCompare>();
+  //  arrival_.clear();
+  arrival_ = {};
+  //  points_.clear();
+  points_ = {};
+  //  point_map_.clear();
+  point_map_ = {};
+  //  offsets_.clear();
+  offsets_ = {};
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
+  max_ros_ = 0;
+  log_check_fatal(!scheduler_.empty(), "Scheduler isn't empty after clear()");
 }
 size_t Scenario::completed() noexcept
 {
@@ -106,6 +114,7 @@ static void make_threshold(vector<double>* thresholds,
             max(0.0,
                 min(1.0,
                     1.0 - (Settings::thresholdScenarioWeight() * general + Settings::thresholdDailyWeight() * daily + Settings::thresholdHourlyWeight() * hourly) / total_weight)));
+        //        thresholds->at((i - start_day) * DAY_HOURS + h) = 0.0;
       }
     }
   }
@@ -151,15 +160,24 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
                           mt19937* mt_spread,
                           util::SafeVector* final_sizes)
 {
+  current_time_ = start_time_;
+  unburnable_ = nullptr;
+  intensity_ = nullptr;
+  max_ros_ = 0;
+  //  weather_(weather);
+  //  model_(model);
+  probabilities_ = nullptr;
+  final_sizes_ = final_sizes;
+  //  start_point_(std::move(start_point));
+  //  id_(id);
+  //  start_time_(start_time);
+  //  simulation_(-1);
+  //  start_day_(start_day);
+  //  last_date_(last_date);
+  ran_ = false;
   // track this here because reset is always called before use
-  ++COUNT;
-  {
-    // want a global count of how many times this scenario ran
-    std::lock_guard<std::mutex> lk(MUTEX_SIM_COUNTS);
-    simulation_ = ++SIM_COUNTS[id_];
-  }
-  clear();
   const auto num = (static_cast<size_t>(last_date_) - start_day_ + 1) * DAY_HOURS;
+  clear();
   extinction_thresholds_.resize(num);
   spread_thresholds_by_ros_.resize(num);
   make_threshold(&extinction_thresholds_, mt_extinction, start_day_, last_date_);
@@ -168,22 +186,41 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
                  start_day_,
                  last_date_,
                  &SpreadInfo::calculateRosFromThreshold);
-  probabilities_ = nullptr;
-  final_sizes_ = final_sizes;
-  ran_ = false;
-  current_time_ = start_time_;
+  //  std::fill(extinction_thresholds_.begin(), extinction_thresholds_.end(), 1.0 - abs(1.0 / (10 * id_)));
+  //  std::fill(spread_thresholds_by_ros_.begin(), spread_thresholds_by_ros_.end(), 1.0 - abs(1.0 / (10 * id_)));
+  //std::fill(extinction_thresholds_.begin(), extinction_thresholds_.end(), 0.5);
+  //  std::fill(spread_thresholds_by_ros_.begin(), spread_thresholds_by_ros_.end(), SpreadInfo::calculateRosFromThreshold(0.5));
   for (const auto& o : observers_)
   {
     o->reset();
+  }
+  point_map_ = {};
+  current_time_ = start_time_ - 1;
+  points_ = {};
+  unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
+  unburnable_ = POOL_BURNED_DATA.acquire();
+  // don't do this until we run so that we don't allocate memory too soon
+  intensity_ = make_unique<IntensityMap>(model());
+  offsets_ = {};
+  max_intensity_ = {};
+  arrival_ = {};
+  max_ros_ = 0;
+  //surrounded_ = POOL_BURNED_DATA.acquire();
+  current_time_index_ = numeric_limits<size_t>::max();
+  ++COUNT;
+  {
+    // want a global count of how many times this scenario ran
+    std::lock_guard<std::mutex> lk(MUTEX_SIM_COUNTS);
+    simulation_ = ++SIM_COUNTS[id_];
   }
   return this;
 }
 void Scenario::evaluate(const Event& event)
 {
-  logging::check_fatal(event.time() < current_time_,
-                       "Expected time to be > %f but got %f",
-                       current_time_,
-                       event.time());
+  log_check_fatal(event.time() < current_time_,
+                  "Expected time to be > %f but got %f",
+                  current_time_,
+                  event.time());
   const auto& p = event.cell();
   switch (event.type())
   {
@@ -196,21 +233,23 @@ void Scenario::evaluate(const Event& event)
       break;
     case Event::NEW_FIRE:
       // HACK: don't do this in constructor because scenario creates this in its constructor
-      points_[p].emplace_back(easting(p), northing(p));
+      points_[p].emplace_back(p.column(), p.row(), CELL_CENTER, CELL_CENTER);
       if (fuel::is_null_fuel(event.cell()))
       {
-        logging::fatal("Trying to start a fire in non-fuel");
+        log_fatal("Trying to start a fire in non-fuel");
       }
-      logging::verbose("Starting fire in fuel type %s at time %f",
-                       fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
-                       event.time());
+      log_verbose("Starting fire at point (%f, %f) in fuel type %s at time %f",
+                  p.column() + CELL_CENTER,
+                  p.row() + CELL_CENTER,
+                  fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
+                  event.time());
       if (!survives(event.time(), event.cell(), event.timeAtLocation()))
       {
         const auto wx = weather(event.time());
-        logging::info("Didn't survive ignition in %s with weather %f, %f",
-                      fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
-                      wx->ffmc(),
-                      wx->dmc());
+        log_info("Didn't survive ignition in %s with weather %f, %f",
+                 fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
+                 wx->ffmc(),
+                 wx->dmc());
         // HACK: we still want the fire to have existed, so set the intensity of the origin
       }
       // fires start with intensity of 1
@@ -218,7 +257,7 @@ void Scenario::evaluate(const Event& event)
       scheduleFireSpread(event);
       break;
     case Event::END_SIMULATION:
-      logging::verbose("End simulation event reached at %f", event.time());
+      log_verbose("End simulation event reached at %f", event.time());
       endSimulation();
       break;
     default:
@@ -368,9 +407,9 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
 }
 void Scenario::burn(const Event& event, const IntensitySize burn_intensity)
 {
-#ifndef NDEBUG
-  logging::check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
-#endif
+  //#ifndef NDEBUG
+  log_check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
+  //#endif
   // Observers only care about cells burning so do it here
   notify(event);
   intensity_->burn(event.cell(), burn_intensity);
@@ -381,30 +420,40 @@ bool Scenario::isSurrounded(const Location& location) const
 {
   return intensity_->isSurrounded(location);
 }
-double Scenario::easting(const topo::Cell& p) const noexcept
-{
-  return (p.column() + CELL_CENTER);
-}
-double Scenario::northing(const topo::Cell& p) const noexcept
-{
-  return (p.row() + CELL_CENTER);
-}
 topo::Cell Scenario::cell(const InnerPos& p) const noexcept
 {
-  const auto r = static_cast<Idx>(p.y);
-  const auto c = static_cast<Idx>(p.x);
-  return cell(r, c);
+  return cell(p.y, p.x);
 }
+string Scenario::add_log(const char* format) const noexcept
+{
+  const string tmp;
+  stringstream iss(tmp);
+  static char buffer[1024]{0};
+  sprintf(buffer, "Scenario %4d.%04d (%3f): ", id(), simulation(), current_time_);
+  iss << buffer << format;
+  //  cout << '"' << iss.str() << '"' << '\n';
+  return iss.str();
+}
+#ifndef NDEBUG
+void saveProbabilities(const string& dir,
+                       const string& base_name,
+                       vector<double>& thresholds)
+{
+  ofstream out;
+  out.open(dir + base_name + ".csv");
+  for (auto v : thresholds)
+  {
+    out << v << '\n';
+  }
+  out.close();
+}
+#endif
 Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
 {
+  log_check_fatal(ran(), "Scenario has already run");
+  log_debug("Starting");
   CriticalSection _(Model::task_limiter);
   probabilities_ = probabilities;
-  unburnable_ = POOL_BURNED_DATA.acquire();
-  logging::check_fatal(ran(), "Scenario has already run");
-  logging::debug("Running scenario %d.%04d", id_, simulation_);
-  // don't do this until we run so that we don't allocate memory too soon
-  intensity_ = make_unique<IntensityMap>(model());
-  //surrounded_ = POOL_BURNED_DATA.acquire();
   for (auto time : save_points_)
   {
     // NOTE: these happen in this order because of the way they sort based on type
@@ -420,16 +469,20 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
     const auto& env = model().environment();
     for (const auto& location : perimeter_->edge())
     {
-      const auto cell = env.cell(location.hash());
-      logging::check_fatal(fuel::is_null_fuel(cell), "Null fuel in perimeter");
-      points_[cell].emplace_back(easting(cell), northing(cell));
+      //      const auto cell = env.cell(location.hash());
+      const auto cell = env.cell(location);
+      log_check_fatal(fuel::is_null_fuel(cell), "Null fuel in perimeter");
+      log_verbose("Adding point (%d, %d)",
+                  cell.column() + CELL_CENTER,
+                  cell.row() + CELL_CENTER);
+      points_[cell].emplace_back(cell.column(), cell.row(), CELL_CENTER, CELL_CENTER);
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
   // HACK: make a copy of the event so that it still exists after it gets processed
   // NOTE: sorted so that EventSaveASCII is always just before this
   // Only run until last time we asked for a save for
-  logging::verbose("Creating simulation end event for %f", last_save_);
+  log_verbose("Creating simulation end event for %f", last_save_);
   addEvent(Event::makeEnd(last_save_));
   // mark all original points as burned at start
   for (auto& kv : points_)
@@ -451,14 +504,33 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   }
   ++COMPLETED;
   // HACK: use + to pull value out of atomic
-  logging::info("Completed scenario %d.%04d [%d of %d] with final size %0.1f ha",
-                id_,
-                simulation_,
-                +COMPLETED,
-                +COUNT,
-                currentFireSize());
+#ifdef NDEBUG
+  log_info("[% d of % d] Completed with final size % 0.1f ha",
+           +COMPLETED,
+           +COUNT,
+           currentFireSize());
+#else
+  // try to make output consistent if in debug mode
+  log_info("Completed with final size %0.1f ha",
+           currentFireSize());
+#endif
   ran_ = true;
-  unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
+  //  delete unburnable_;
+  //  unburnable_ = nullptr;
+#ifndef NDEBUG
+  static const size_t BufferSize = 64;
+  char buffer[BufferSize + 1] = {0};
+  sprintf(buffer,
+          "%03zu_%06lld_extinction",
+          id(),
+          simulation());
+  saveProbabilities(Settings::outputDirectory(), string(buffer), extinction_thresholds_);
+  sprintf(buffer,
+          "%03zu_%06lld_spread",
+          id(),
+          simulation());
+  saveProbabilities(Settings::outputDirectory(), string(buffer), spread_thresholds_by_ros_);
+#endif
   return this;
 }
 [[nodiscard]] ostream& operator<<(ostream& os, const PointSet& a)
@@ -489,32 +561,31 @@ inline void Scenario::checkCondense(vector<InnerPos>& a)
     auto w = numeric_limits<double>::max();
     size_t nw_pos = 0;
     auto nw = numeric_limits<double>::min();
-    // should always be in the same cell so do this once
-    const auto cell_x = static_cast<Idx>(a[0].x);
-    const auto cell_y = static_cast<Idx>(a[0].y);
     for (size_t i = 0; i < a.size(); ++i)
     {
       const auto& p = a[i];
-      const auto x = p.x - cell_x;
-      const auto y = p.y - cell_y;
+      const auto x = p.sub_x - 0.5;
+      const auto y = p.sub_y - 0.5;
+      // NOTE: seems like it should be else if, but want to make sure
+      // all of these are initialized after the first point
       if (y > n)
       {
         n_pos = i;
         n = y;
       }
-      else if (y < s)
+      if (y < s)
       {
         s_pos = i;
         s = y;
       }
       const auto cur_ne = x + y;
-      const auto cur_sw = (1 - x) + (1 - y);
+      const auto cur_sw = -x - y;
       if (cur_ne > ne)
       {
         ne_pos = i;
         ne = cur_ne;
       }
-      else if (cur_sw > sw)
+      if (cur_sw > sw)
       {
         sw_pos = i;
         sw = cur_sw;
@@ -524,40 +595,26 @@ inline void Scenario::checkCondense(vector<InnerPos>& a)
         e_pos = i;
         e = x;
       }
-      else if (x < w)
+      if (x < w)
       {
         w_pos = i;
         w = x;
       }
-      const auto cur_se = x + (1 - y);
-      const auto cur_nw = (1 - x) + y;
+      const auto cur_se = x - y;
+      const auto cur_nw = -x + y;
       if (cur_se > se)
       {
         se_pos = i;
         se = cur_se;
       }
-      else if (cur_nw > nw)
+      if (cur_nw > nw)
       {
         nw_pos = i;
         nw = cur_nw;
       }
     }
-    //// NOTE: use member variable since making a set on every call really slows this down
-    //// use a set so duplicates don't get added
-    //condensed.insert(a[n_pos]);
-    //condensed.insert(a[ne_pos]);
-    //condensed.insert(a[e_pos]);
-    //condensed.insert(a[se_pos]);
-    //condensed.insert(a[s_pos]);
-    //condensed.insert(a[sw_pos]);
-    //condensed.insert(a[w_pos]);
-    //condensed.insert(a[nw_pos]);
-    //a.clear();
-    //a.insert(a.begin(), condensed.begin(), condensed.end());
-    //condensed.clear();
-    // keeping points is easier and near as fast as checking for duplicates,
-    // and we don't need a member variable to do it
-    a = {
+    // NOTE: temporarily use a set to ensure no duplicates
+    const std::set<InnerPos> result{
       a[n_pos],
       a[ne_pos],
       a[e_pos],
@@ -566,6 +623,8 @@ inline void Scenario::checkCondense(vector<InnerPos>& a)
       a[sw_pos],
       a[w_pos],
       a[nw_pos]};
+    a = {};
+    a.assign(result.begin(), result.end());
   }
 }
 void Scenario::scheduleFireSpread(const Event& event)
@@ -574,7 +633,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   //note("time is %f", time);
   current_time_ = time;
   const auto wx = weather(time);
-  //  logging::note("%d points", points_->size());
+  //  log_note("%d points", points_->size());
   const auto this_time = util::time_index(time);
   const auto next_time = static_cast<double>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
@@ -587,14 +646,16 @@ void Scenario::scheduleFireSpread(const Event& event)
   if (wx->ffmc().asDouble() < minimumFfmcForSpread(time))
   {
     addEvent(Event::makeFireSpread(max_time));
-    logging::verbose("Waiting until %f because of FFMC", max_time);
+    log_verbose("Waiting until %f because of FFMC", max_time);
     return;
   }
   if (current_time_index_ != this_time)
   {
     current_time_index_ = this_time;
-    offsets_.clear();
-    max_intensity_.clear();
+    //    offsets_.clear();
+    //    max_intensity_.clear();
+    offsets_ = {};
+    max_intensity_ = {};
     max_ros_ = 0.0;
   }
   auto any_spread = false;
@@ -625,7 +686,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   if (!any_spread || max_ros_ < Settings::minimumRos())
   {
-    logging::verbose("Waiting until %f", max_time);
+    log_verbose("Waiting until %f", max_time);
     addEvent(Event::makeFireSpread(max_time));
     return;
   }
@@ -650,13 +711,15 @@ void Scenario::scheduleFireSpread(const Event& event)
         // offsets in meters
         const auto offset_x = o.x * duration;
         const auto offset_y = o.y * duration;
+        const Offset offset{offset_x, offset_y};
         //note("%f, %f", offset_x, offset_y);
         for (auto& p : kv.second)
         {
-          const InnerPos pos(p.x + offset_x, p.y + offset_y);
+          const InnerPos pos = p.add(offset);
           const auto for_cell = cell(pos);
           if (!(fuel::is_null_fuel(for_cell) || (*unburnable_)[for_cell.hash()]))
           {
+            //log_extensive("Adding point (%f, %f)", pos.x, pos.y);
             point_map_[for_cell].emplace_back(pos);
           }
         }
@@ -667,8 +730,10 @@ void Scenario::scheduleFireSpread(const Event& event)
       // can't just keep existing points by swapping because something may have spread into this cell
       auto& pts = point_map_[location];
       pts.insert(pts.end(), kv.second.begin(), kv.second.end());
+      std::sort(pts.begin(), pts.end());
     }
-    kv.second.clear();
+    //    kv.second.clear();
+    kv.second = {};
   }
   vector<topo::Cell> erase_what{};
   for (auto& kv : point_map_)
@@ -705,7 +770,8 @@ void Scenario::scheduleFireSpread(const Event& event)
           erase_what.emplace_back(for_cell);
         }
       }
-      kv.second.clear();
+      //      kv.second.clear();
+      kv.second = {};
     }
   }
   for (auto& c : erase_what)
@@ -713,7 +779,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     point_map_.erase(c);
     points_.erase(c);
   }
-  logging::verbose("Spreading %d points until %f", points_.size(), new_time);
+  log_verbose("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
 double Scenario::currentFireSize() const
@@ -724,22 +790,23 @@ bool Scenario::canBurn(const topo::Cell& location) const
 {
   return intensity_->canBurn(location);
 }
-bool Scenario::canBurn(const HashSize hash) const
-{
-  return intensity_->canBurn(hash);
-}
+//bool Scenario::canBurn(const HashSize hash) const
+//{
+//  return intensity_->canBurn(hash);
+//}
 bool Scenario::hasBurned(const Location& location) const
 {
   return intensity_->hasBurned(location);
 }
-bool Scenario::hasBurned(const HashSize hash) const
-{
-  return intensity_->hasBurned(hash);
-}
+//bool Scenario::hasBurned(const HashSize hash) const
+//{
+//  return intensity_->hasBurned(hash);
+//}
 void Scenario::endSimulation() noexcept
 {
-  logging::verbose("Ending simulation");
-  clear();
+  log_verbose("Ending simulation");
+  //  scheduler_.clear();
+  scheduler_ = set<Event, EventCompare>();
 }
 void Scenario::addSaveByOffset(const int offset)
 {
@@ -765,6 +832,9 @@ void Scenario::evaluateNextEvent()
   // make sure to actually copy it before we erase it
   const auto& event = *scheduler_.begin();
   evaluate(event);
-  scheduler_.erase(event);
+  if (!scheduler_.empty())
+  {
+    scheduler_.erase(event);
+  }
 }
 }

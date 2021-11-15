@@ -15,6 +15,7 @@
 
 #pragma once
 #include "Util.h"
+#include "Log.h"
 namespace firestarr
 {
 namespace topo
@@ -30,9 +31,16 @@ public:
    * \brief Construct using hash of row and column
    * \param hash HashSize derived form row and column
    */
-  explicit constexpr Location(const HashSize hash) noexcept
+  explicit constexpr Location(const Idx row, const Idx column, const HashSize hash) noexcept
     : topo_data_(hash & HashMask)
   {
+#ifndef NDEBUG
+    logging::check_fatal((row != unhashRow(topo_data_))
+                           || column != unhashColumn(topo_data_),
+                         "Hash is incorrect (%d, %d)",
+                         row,
+                         column);
+#endif
   }
   /**
    * \brief Constructor
@@ -40,8 +48,11 @@ public:
    * \param column Column
    */
   constexpr Location(const Idx row, const Idx column) noexcept
-    : Location(doHash(row, column))
+    : Location(row, column, doHash(row, column) & HashMask)
   {
+#ifndef NDEBUG
+    logging::check_fatal(row >= MAX_ROWS || column >= MAX_COLUMNS, "Location out of bounds (%d, %d)", row, column);
+#endif
   }
   /**
    * \brief Row
@@ -49,7 +60,7 @@ public:
    */
   [[nodiscard]] constexpr Idx row() const noexcept
   {
-    return static_cast<Idx>(hash() / MAX_COLUMNS);
+    return unhashRow(hash());
   }
   /**
    * \brief Column
@@ -57,7 +68,7 @@ public:
    */
   [[nodiscard]] constexpr Idx column() const noexcept
   {
-    return static_cast<Idx>(hash() % MAX_COLUMNS);
+    return unhashColumn(hash());
   }
   /**
    * \brief Hash derived from row and column
@@ -100,14 +111,28 @@ protected:
    */
   Topo topo_data_;
   /**
+   * \brief Number of bits to use for storing one coordinate of location data
+   */
+  static constexpr uint32 XYBits = std::bit_width<uint32>(MAX_ROWS - 1);
+  static_assert(util::pow_int<XYBits, size_t>(2) == MAX_ROWS);
+  static_assert(util::pow_int<XYBits, size_t>(2) == MAX_COLUMNS);
+  /**
    * \brief Number of bits to use for storing location data
    */
-  static constexpr uint32 LocationBits = 32;
+  static constexpr uint32 LocationBits = XYBits * 2;
+  /**
+   * \brief Hash mask for bits being used for location data
+   */
+  static constexpr Topo ColumnMask = util::bit_mask<XYBits, Topo>();
+  /**
+   * \brief Hash mask for bits being used for location data
+   */
+  static constexpr Topo RowMask = ColumnMask << XYBits;
   /**
    * \brief Hash mask for bits being used for location data
    */
   static constexpr Topo HashMask = util::bit_mask<LocationBits, Topo>();
-  static_assert(HashMask >= MAX_COLUMNS * MAX_ROWS - 1);
+  static_assert(HashMask >= static_cast<size_t>(MAX_COLUMNS) * MAX_ROWS - 1);
   static_assert(HashMask <= std::numeric_limits<HashSize>::max());
   /**
    * \brief Construct with given hash that may contain data from subclasses
@@ -127,8 +152,42 @@ protected:
     const Idx row,
     const Idx column) noexcept
   {
-    return static_cast<HashSize>(row) * static_cast<HashSize>(MAX_COLUMNS) + static_cast<HashSize>(column);
+    return (static_cast<HashSize>(row) << XYBits) + static_cast<HashSize>(column);
+  }
+  /**
+   * \brief Row from hash
+   * \return Row from hash
+   */
+  [[nodiscard]] constexpr Idx unhashRow(const Topo row) const noexcept
+  {
+    //return static_cast<Idx>((row & RowMask) >> XYBits);
+    // don't need to use mask since bits just get shifted out
+    return static_cast<Idx>(row >> XYBits);
+  }
+  /**
+   * \brief Column
+   * \return Column
+   */
+  [[nodiscard]] constexpr Idx unhashColumn(const Topo column) const noexcept
+  {
+    return static_cast<Idx>(column & ColumnMask);
   }
 };
+inline bool operator<(const Location& lhs, const Location& rhs)
+{
+  return lhs.hash() < rhs.hash();
+}
+inline bool operator>(const Location& lhs, const Location& rhs)
+{
+  return rhs < lhs;
+}
+inline bool operator<=(const Location& lhs, const Location& rhs)
+{
+  return !(lhs > rhs);
+}
+inline bool operator>=(const Location& lhs, const Location& rhs)
+{
+  return !(lhs < rhs);
+}
 }
 }

@@ -68,6 +68,7 @@ IntensityMap::~IntensityMap() noexcept
 }
 void IntensityMap::applyPerimeter(const topo::Perimeter& perimeter) noexcept
 {
+  lock_guard<mutex> lock(mutex_);
   std::for_each(
     std::execution::par_unseq,
     perimeter.burned().begin(),
@@ -77,23 +78,25 @@ void IntensityMap::applyPerimeter(const topo::Perimeter& perimeter) noexcept
       burn(location, 1);
     });
 }
-bool IntensityMap::canBurn(const HashSize hash) const
-{
-  return !hasBurned(hash);
-}
+//bool IntensityMap::canBurn(const HashSize hash) const
+//{
+//  return !hasBurned(hash);
+//}
 bool IntensityMap::canBurn(const topo::Cell& location) const
 {
   return !hasBurned(location);
 }
 bool IntensityMap::hasBurned(const Location& location) const
 {
-  return hasBurned(location.hash());
-}
-bool IntensityMap::hasBurned(const HashSize hash) const
-{
   lock_guard<mutex> lock(mutex_);
-  return (*is_burned_)[hash];
+  return (*is_burned_)[location.hash()];
+  //  return hasBurned(location.hash());
 }
+//bool IntensityMap::hasBurned(const HashSize hash) const
+//{
+//  lock_guard<mutex> lock(mutex_);
+//  return (*is_burned_)[hash];
+//}
 bool IntensityMap::isSurrounded(const Location& location) const
 {
   // implement here so we can just lock once
@@ -101,20 +104,21 @@ bool IntensityMap::isSurrounded(const Location& location) const
   const auto x = location.column();
   const auto y = location.row();
   const auto min_row = static_cast<Idx>(max(y - 1, 0));
-  const auto max_row = min(y + 1, MAX_ROWS - 1);
+  const auto max_row = min(y + 1, this->rows() - 1);
   const auto min_column = static_cast<Idx>(max(x - 1, 0));
-  const auto max_column = min(x + 1, MAX_COLUMNS - 1);
+  const auto max_column = min(x + 1, this->columns() - 1);
   for (auto r = min_row; r <= max_row; ++r)
   {
-    auto h = static_cast<size_t>(r) * MAX_COLUMNS + min_column;
+    //    auto h = static_cast<size_t>(r) * MAX_COLUMNS + min_column;
     for (auto c = min_column; c <= max_column; ++c)
     {
       // actually check x, y too since we care if the cell itself is burned
-      if (!(*is_burned_)[h])
+      //      if (!(*is_burned_)[h])
+      if (!(*is_burned_)[Location(r, c).hash()])
       {
         return false;
       }
-      ++h;
+      //      ++h;
     }
   }
   return true;
@@ -135,12 +139,12 @@ double IntensityMap::fireSize() const
   lock_guard<mutex> lock(mutex_);
   return map_->fireSize();
 }
-unordered_map<Location, IntensitySize>::const_iterator
+map<Location, IntensitySize>::const_iterator
   IntensityMap::cend() const noexcept
 {
   return map_->data.cend();
 }
-unordered_map<Location, IntensitySize>::const_iterator
+map<Location, IntensitySize>::const_iterator
   IntensityMap::cbegin() const noexcept
 {
   return map_->data.cbegin();

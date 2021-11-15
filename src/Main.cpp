@@ -106,7 +106,18 @@ int main(const int argc, const char* const argv[])
         output_directory += '/';
       }
       Settings::setOutputDirectory(output_directory);
-      firestarr::logging::debug("Output directory is %s", Settings::outputDirectory);
+      struct stat info
+      {
+      };
+      if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
+      {
+        firestarr::util::make_directory_recursive(Settings::outputDirectory());
+      }
+      const string log_file = (string(Settings::outputDirectory()) + "log.txt");
+      firestarr::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
+                                      "Can't open log file");
+      firestarr::logging::note("Output directory is %s", Settings::outputDirectory());
+      firestarr::logging::note("Output log is %s", log_file.c_str());
       string date(argv[i++]);
       TIMESTAMP_STRUCT start_date{};
       start_date.year = static_cast<SQLSMALLINT>(stoi(date.substr(0, 4)));
@@ -283,13 +294,6 @@ int main(const int argc, const char* const argv[])
           show_usage_and_exit(name);
         }
       }
-      struct stat info
-      {
-      };
-      if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
-      {
-        firestarr::util::make_directory_recursive(Settings::outputDirectory());
-      }
       if (nullptr == ffmc)
       {
         firestarr::logging::fatal("FFMC is required");
@@ -349,4 +353,5 @@ int main(const int argc, const char* const argv[])
   {
     firestarr::logging::fatal(err.what());
   }
+  Log::closeLogFile();
 }

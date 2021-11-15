@@ -28,7 +28,7 @@ const size_t ACTUALS = 0;
 /**
  * \brief Difference minimum for doubles to be considered the same
  */
-static const double COMPARE_LIMIT = 0.00001;
+static const double COMPARE_LIMIT = 1.0E-20f;
 /**
  * \brief Reads and provides access to settings for the simulation.
  */
