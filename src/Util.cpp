@@ -53,7 +53,14 @@ vector<string> find_rasters(const string& dir, const int year)
                            ? by_year
                            : dir + "/default/";
   vector<string> results{};
-  read_directory(raster_root, &results, "fuel.*\\.tif");
+  try
+  {
+    read_directory(raster_root, &results, "fuel.*\\.tif");
+  }
+  catch (const std::exception& e)
+  {
+    logging::error("Unable to read directory %s", raster_root.c_str());
+  }
   return results;
 }
 bool directory_exists(const char* dir) noexcept
