@@ -423,6 +423,13 @@ protected:
                                 //return value->code();
                               });
     elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
+    fuel.saveToTiffFile<int>(string(sim::Settings::outputDirectory()),
+                             "fuel",
+                             [&lookup](const fuel::FuelType* const value)
+                             {
+                               return lookup.fuelToInt(value);
+                             });
+    elevation.saveToTiffFile(sim::Settings::outputDirectory(), "dem");
 #endif
     const auto coord = fuel.findCoordinates(point, false);
     // take elevation at point so that if max grid size changes elevation doesn't
