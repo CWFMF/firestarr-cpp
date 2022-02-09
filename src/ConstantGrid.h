@@ -16,6 +16,8 @@
 #pragma once
 #include <algorithm>
 #include <string>
+#include <tiffio.h>
+#include <geotiff/geotiffio.h>
 #include <utility>
 #include <vector>
 #include "Grid.h"
@@ -372,6 +374,110 @@ public:
     }
     out.close();
     this->createPrj(dir, base_name);
+  }
+  /**
+   * \brief Save contents to .tif file
+   * \param dir Directory to save into
+   * \param base_name File base name to use
+   */
+  void saveToTiffFile(const string& dir,
+                       const string& base_name) const
+  {
+    saveToTiffFile<V>(dir, base_name, [](V value)
+                       {
+                         return value;
+                       });
+  }
+  /**
+   * \brief Save contents to .tif file
+   * \tparam R Type to be written to .tif file
+   * \param dir Directory to save into
+   * \param base_name File base name to use
+   * \param convert Function to convert from V to R
+   */
+  template <class R>
+  void saveToTiffFile(const string& dir,
+                      const string& base_name,
+                      std::function<R(T value)> convert) const
+  {
+    Idx min_row = 0;
+    Idx num_rows = this->rows();
+    Idx min_column = 0;
+    Idx num_columns = this->columns();
+    const double xll = this->xllcorner() + min_column * this->cellSize();
+    // offset is different for y since it's flipped
+    const double yll = this->yllcorner() + (min_row) * this->cellSize();
+    logging::extensive("Lower left corner is (%f, %f)", xll, yll);
+    constexpr uint32 tileWidth = 256;
+    constexpr uint32 tileHeight = 256;
+    // ensure this is always divisible by tile size
+    static_assert(0 == MAX_ROWS % tileWidth);
+    static_assert(0 == MAX_COLUMNS % tileHeight);
+    uint32 width = this->columns();
+    uint32 height = this->rows();
+    string filename = dir + base_name + ".tif";
+    TIFF* tif = TIFFOpen(filename.c_str(), "w");
+    auto gtif = GTIFNew(tif);
+    logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
+    const double xul = this->xllcorner();
+    const double yul = this->yllcorner() + (this->cellSize() * this->rows());
+    double tiePoints[6] = {
+      0.0,
+      0.0,
+      0.0,
+      xul,
+      yul,
+      0.0
+    };
+    double pixelScale[3] = {
+      this->cellSize(),
+      this->cellSize(),
+      0.0
+    };
+    // HACK: why does this have to be +1?
+    uint32 bps = std::numeric_limits<R>::digits + 1;
+    TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);
+    TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height);
+    TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, bps);
+    TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileWidth);
+    TIFFSetField(tif, TIFFTAG_TILELENGTH, tileHeight);
+    TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+    TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+    TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+    GTIFSetFromProj4(gtif, this->proj4().c_str());
+    TIFFSetField(tif, TIFFTAG_GEOTIEPOINTS, 6, tiePoints);
+    TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
+    size_t tileSize = tileWidth * tileHeight;
+    R *buf = (R *)_TIFFmalloc(tileSize * sizeof(R));
+    for (size_t i = 0; i < width; i += tileWidth) {
+      for (size_t j = 0; j < height; j += tileHeight)
+      {
+        // need to put data from grid into buffer, but flipped vertically
+        for (size_t x = 0; x < tileWidth; ++x)
+        {
+          for (size_t y = 0; y < tileHeight; ++y)
+          {
+            const size_t actual_x = i + x;
+            const size_t actual_y = j + y;
+            const size_t flipped_y = height - actual_y - 1;
+            const size_t actual = actual_x + flipped_y * width;
+            buf[x + y * tileWidth] = convert(this->data[actual]);
+          }
+        }
+        if(TIFFWriteTile(tif, buf, i, j, 0, 0) < 0)
+        {
+          exit(-1);
+        }
+      }
+    }
+    GTIFWriteKeys(gtif);
+    if (gtif)
+    {
+      GTIFFree(gtif);
+    }
+    _TIFFfree(buf);
+    TIFFClose(tif);
   }
 private:
   /**
