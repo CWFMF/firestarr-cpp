@@ -465,10 +465,7 @@ public:
             buf[x + y * tileWidth] = convert(this->data[actual]);
           }
         }
-        if(TIFFWriteTile(tif, buf, i, j, 0, 0) < 0)
-        {
-          exit(-1);
-        }
+        logging::check_fatal(TIFFWriteTile(tif, buf, i, j, 0, 0) < 0, "Cannot write tile to %s", filename.c_str());
       }
     }
     GTIFWriteKeys(gtif);
