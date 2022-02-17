@@ -19,6 +19,7 @@
 #include "FuelType.h"
 #include "Scenario.h"
 #include "Settings.h"
+#include "unstable.h"
 namespace firestarr
 {
 namespace sim
@@ -91,8 +92,8 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     const auto heading = util::to_heading(
       util::to_radians(static_cast<double>(slope_azimuth)));
     // we know that at->raz is already set to be the wind heading
-    const auto wsv_x = wind().wsvX() + wse * cos(heading);
-    const auto wsv_y = wind().wsvY() + wse * sin(heading);
+    const auto wsv_x = wind().wsvX() + wse * _cos(heading);
+    const auto wsv_y = wind().wsvY() + wse * _sin(heading);
     wsv = sqrt(wsv_x * wsv_x + wsv_y * wsv_y);
     raz = acos(wsv_y / wsv);
     if (wsv_x < 0)
@@ -164,7 +165,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     }
     // spreading, so figure out offset from current point
     const auto ros_cell = ros / cell_size;
-    offsets_.emplace_back(ros_cell * sin(direction), ros_cell * cos(direction));
+    offsets_.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction));
     return true;
   };
   const auto threshold = scenario.spreadThresholdByRos(time_);
