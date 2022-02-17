@@ -323,14 +323,14 @@ void Scenario::saveObservers(const double time) const
   if (id() == ACTUALS)
   {
     sprintf(buffer,
-            "actuals_%06lld_%03d",
+            "actuals_%06ld_%03d",
             simulation(),
             static_cast<int>(time));
   }
   else
   {
     sprintf(buffer,
-            "%03zu_%06lld_%03d",
+            "%03zu_%06ld_%03d",
             id(),
             simulation(),
             static_cast<int>(time));
@@ -429,7 +429,7 @@ string Scenario::add_log(const char* format) const noexcept
   const string tmp;
   stringstream iss(tmp);
   static char buffer[1024]{0};
-  sprintf(buffer, "Scenario %4d.%04d (%3f): ", id(), simulation(), current_time_);
+  sprintf(buffer, "Scenario %4ld.%04ld (%3f): ", id(), simulation(), current_time_);
   iss << buffer << format;
   //  cout << '"' << iss.str() << '"' << '\n';
   return iss.str();
@@ -521,12 +521,12 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   static const size_t BufferSize = 64;
   char buffer[BufferSize + 1] = {0};
   sprintf(buffer,
-          "%03zu_%06lld_extinction",
+          "%03zu_%06ld_extinction",
           id(),
           simulation());
   saveProbabilities(Settings::outputDirectory(), string(buffer), extinction_thresholds_);
   sprintf(buffer,
-          "%03zu_%06lld_spread",
+          "%03zu_%06ld_spread",
           id(),
           simulation());
   saveProbabilities(Settings::outputDirectory(), string(buffer), spread_thresholds_by_ros_);

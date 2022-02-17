@@ -401,9 +401,9 @@ public:
                       std::function<R(T value)> convert) const
   {
     Idx min_row = 0;
-    Idx num_rows = this->rows();
+//    Idx num_rows = this->rows();
     Idx min_column = 0;
-    Idx num_columns = this->columns();
+//    Idx num_columns = this->columns();
     const double xll = this->xllcorner() + min_column * this->cellSize();
     // offset is different for y since it's flipped
     const double yll = this->yllcorner() + (min_row) * this->cellSize();

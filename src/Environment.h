@@ -307,7 +307,7 @@ protected:
                 auto actual_row = static_cast<Idx>(r - i);
                 auto actual_column = static_cast<Idx>(c + j);
                 auto cur_loc = Location{actual_row, actual_column};
-                auto cur_h = cur_loc.hash();
+//                auto cur_h = cur_loc.hash();
                 //              dem[3 * (i + 1) + (j + 1)] = 1.0 * elevation.at(cur_h);
                 dem[3 * (i + 1) + (j + 1)] = 1.0 * elevation.at(cur_loc);
               }
@@ -445,7 +445,9 @@ protected:
    */
   Environment(data::ConstantGrid<Cell>* cells,
               const ElevationSize elevation) noexcept
-    : cells_(cells), elevation_(elevation), not_burnable_(false)
+    : cells_(cells),
+      not_burnable_(false),
+      elevation_(elevation)
   {
     //    try
     //    {
