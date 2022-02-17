@@ -27,17 +27,7 @@ static const int LOG_WARNING = 5;
 static const int LOG_ERROR = 6;
 static const int LOG_FATAL = 7;
 static const int LOG_SILENT = 8;
-static const char* LOG_LABELS[] =
-  {
-    "EXTENSIVE: ",
-    "VERBOSE:   ",
-    "DEBUG:     ",
-    "INFO:      ",
-    "NOTE:      ",
-    "WARNING:   ",
-    "ERROR:     ",
-    "FATAL:     ",
-    "SILENT:    "};
+
 /**
  * \brief Provides logging functionality.
  */
