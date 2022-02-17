@@ -493,7 +493,7 @@ Scenario::add_log(
   const string tmp;
   stringstream iss(tmp);
   static char buffer[1024]{0};
-  sprintf(buffer, "Scenario %4zu.%04ld (%3f): ", id(), simulation(), current_time_);
+  sprintf(buffer, "Scenario %4ld.%04ld (%3f): ", id(), simulation(), current_time_);
   iss << buffer << format;
   //  cout << '"' << iss.str() << '"' << '\n';
   return iss.str();
@@ -590,9 +590,9 @@ Scenario::run(
 #ifndef NDEBUG
   static const size_t BufferSize = 64;
   char buffer[BufferSize + 1] = {0};
-  sprintf(buffer, "%03zu_%06lld_extinction", id(), simulation());
+  sprintf(buffer, "%03zu_%06ld_extinction", id(), simulation());
   saveProbabilities(Settings::outputDirectory(), string(buffer), extinction_thresholds_);
-  sprintf(buffer, "%03zu_%06lld_spread", id(), simulation());
+  sprintf(buffer, "%03zu_%06ld_spread", id(), simulation());
   saveProbabilities(Settings::outputDirectory(), string(buffer), spread_thresholds_by_ros_);
 #endif
   return this;
