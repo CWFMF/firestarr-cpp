@@ -277,6 +277,7 @@ using Clock = std::chrono::steady_clock;
  */
 struct Offset
 {
+public:
   /**
    * \brief Offset in the x direction (column)
    */
@@ -285,6 +286,11 @@ struct Offset
    * \brief Offset in the y direction (row)
    */
   const double y;
+  Offset(const double a, const double b):
+      x(a),
+      y(b)
+  {
+  }
 };
 /**
  * \brief Collection of Offsets
