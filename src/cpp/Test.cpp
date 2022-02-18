@@ -5,14 +5,8 @@
 #include "stdafx.h"
 #include "Test.h"
 #include "FireSpread.h"
-#include "FuelLookup.h"
-#include "FWI.h"
 #include "Model.h"
 #include "Observer.h"
-#include "SafeVector.h"
-#include "Scenario.h"
-#include "Util.h"
-
 namespace fs::sim
 {
 /**
@@ -68,7 +62,7 @@ make_weather(
 class TestWeather final : public wx::FireWeather
 {
 public:
-  ~TestWeather() = default;
+  ~TestWeather() override = default;
   TestWeather(const TestWeather& rhs) = delete;
   TestWeather(TestWeather&& rhs) = delete;
   TestWeather&
@@ -109,7 +103,7 @@ public:
 class TestScenario final : public Scenario
 {
 public:
-  ~TestScenario() = default;
+  ~TestScenario() override = default;
   TestScenario(const TestScenario& rhs) = delete;
   TestScenario(TestScenario&& rhs) = delete;
   TestScenario&

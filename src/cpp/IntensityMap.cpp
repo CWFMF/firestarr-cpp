@@ -4,10 +4,8 @@
 
 #include "stdafx.h"
 #include "IntensityMap.h"
-#include "MemoryPool.h"
 #include "Model.h"
 #include "Perimeter.h"
-
 namespace fs::sim
 {
 static mutex MUTEX_MAPS;

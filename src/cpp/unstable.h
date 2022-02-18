@@ -2,6 +2,9 @@
 /* SPDX-FileCopyrightText: 2024 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
+#ifndef FS_UNSTABLE_H
+#define FS_UNSTABLE_H
+
 // Provides wrappers around functions that have different results when using
 // different optimization flags, so they can be compiled with the same
 // flags in release and debug mode to avoid changing the outputs.
@@ -11,8 +14,9 @@ namespace fs
 namespace sim
 {
 double
-_cos(const double angle) noexcept;
+_cos(double angle) noexcept;
 double
-_sin(const double angle) noexcept;
+_sin(double angle) noexcept;
 }
 }
+#endif

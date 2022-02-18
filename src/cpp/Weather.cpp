@@ -6,7 +6,6 @@
 #include "Weather.h"
 #include "Log.h"
 #include "TimeUtil.h"
-
 namespace fs::wx
 {
 const Temperature Temperature::Zero = Temperature(0);

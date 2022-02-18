@@ -265,7 +265,7 @@ template <int BulkDensity, int InorganicPercent, int DuffDepth>
 class FuelBase : public FuelType
 {
 public:
-  ~FuelBase() = default;
+  ~FuelBase() override = default;
   /**
    * \brief Constructor
    * \param code Code to identify fuel with
@@ -472,7 +472,7 @@ public:
     : FuelType(code, name, false)
   {
   }
-  ~InvalidFuel() = default;
+  ~InvalidFuel() override = default;
   InvalidFuel(const InvalidFuel& rhs) noexcept = delete;
   InvalidFuel(InvalidFuel&& rhs) noexcept = delete;
   InvalidFuel&

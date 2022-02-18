@@ -7,7 +7,6 @@
 #include "Log.h"
 #include <regex>
 #include <filesystem>
-
 namespace fs::util
 {
 void

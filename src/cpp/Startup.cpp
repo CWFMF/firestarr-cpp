@@ -4,8 +4,6 @@
 
 #include "stdafx.h"
 #include "Startup.h"
-#include "TimeUtil.h"
-
 namespace fs::wx
 {
 Startup::Startup(

@@ -7,10 +7,7 @@
 #include "FBP45.h"
 #include "IntensityMap.h"
 #include "Model.h"
-#include "Statistics.h"
 #include "TimeUtil.h"
-#include "Util.h"
-
 namespace fs::sim
 {
 ProbabilityMap::ProbabilityMap(

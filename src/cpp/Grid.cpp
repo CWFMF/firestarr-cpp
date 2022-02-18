@@ -4,10 +4,8 @@
 
 #include "stdafx.h"
 #include "Grid.h"
-#include "Point.h"
 #include "UTM.h"
 using fs::Idx;
-
 namespace fs::data
 {
 string
@@ -180,15 +178,8 @@ GridBase::findFullCoordinates(
   // convert coordinates into cell position
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
-  auto actual_y = -1.0;
-  if (!flipped)
-  {
-    actual_y = (y - this->yllcorner_) / this->cell_size_;
-  }
-  else
-  {
-    actual_y = (yurcorner_ - y) / cell_size_;
-  }
+  auto actual_y = (!flipped) ? (y - this->yllcorner_) / this->cell_size_
+                             : (yurcorner_ - y) / cell_size_;
   const auto column = static_cast<FullIdx>(actual_x);
   const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())

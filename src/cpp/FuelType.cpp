@@ -6,7 +6,6 @@
 #include "FuelType.h"
 #include "FireSpread.h"
 #include "Log.h"
-
 namespace fs::fuel
 {
 double

@@ -9,7 +9,6 @@
 #include "Scenario.h"
 #include "Settings.h"
 #include "unstable.h"
-
 namespace fs::sim
 {
 SlopeTableArray

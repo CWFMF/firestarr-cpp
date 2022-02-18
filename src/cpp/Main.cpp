@@ -14,8 +14,6 @@
 #include "Scenario.h"
 #include "Test.h"
 #include "TimeUtil.h"
-#include "Util.h"
-#include "InnerPos.h"
 #include "Log.h"
 using fs::logging::Log;
 using fs::sim::Settings;

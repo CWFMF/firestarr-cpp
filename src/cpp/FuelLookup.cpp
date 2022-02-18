@@ -7,7 +7,6 @@
 #include "FBP45.h"
 #include "Log.h"
 #include "Settings.h"
-
 namespace fs::fuel
 {
 static const map<const string_view, const string_view> DEFAULT_TYPES{

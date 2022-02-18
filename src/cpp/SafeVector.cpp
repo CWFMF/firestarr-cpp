@@ -5,8 +5,6 @@
 #include "stdafx.h"
 #include "SafeVector.h"
 #include "Statistics.h"
-#include "Util.h"
-
 namespace fs::util
 {
 SafeVector::SafeVector(

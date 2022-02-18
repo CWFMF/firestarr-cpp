@@ -5,19 +5,11 @@
 #include "stdafx.h"
 #include "Model.h"
 #include "Scenario.h"
-#include "Settings.h"
-#include "FireWeather.h"
 #include "FBP45.h"
-#include "FireSpread.h"
-#include "FuelLookup.h"
 #include "Observer.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
-#include "SafeVector.h"
-#include "Statistics.h"
 #include "UTM.h"
-#include <ranges>
-
 namespace fs::sim
 {
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
@@ -62,9 +54,6 @@ Model::releaseBurnedVector(
   {
     std::terminate();
   }
-}
-Model::~Model()
-{
 }
 Model::Model(
   const topo::StartPoint& start_point,
@@ -114,7 +103,7 @@ Model::readWeather(
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     constexpr auto expected_header = "Scenario,Date,APCP,TMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
     logging::check_fatal(
-      0 != str.compare(expected_header),
+      expected_header != str,
       "Input CSV must have columns in this order:\n'%s'\n but got:\n'%s'",
       expected_header,
       str.c_str()
@@ -252,7 +241,7 @@ Model::findStarts(
     }
     ++range;
   }
-  logging::check_fatal(0 == starts_.size(), "Fuel grid is empty");
+  logging::check_fatal(starts_.empty(), "Fuel grid is empty");
   logging::info("Using %d start locations:", starts_.size());
   for (const auto& s : starts_)
   {

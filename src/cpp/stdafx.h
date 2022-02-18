@@ -39,9 +39,9 @@
 #include <sqlext.h>
 #include <sqltypes.h>
 #include <sstream>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -229,10 +229,6 @@ using SlopeTableArray = array<double, MAX_SLOPE_FOR_DISTANCE + 1>;
  * \brief Array of results of a function for all possible integer angles in degrees
  */
 using AngleTableArray = array<double, 361>;
-/**
- * \brief A single bit set to 1
- */
-static constexpr auto BIT = static_cast<uint64_t>(0x1);
 /**
  * \brief Size to use for representing fuel types
  */

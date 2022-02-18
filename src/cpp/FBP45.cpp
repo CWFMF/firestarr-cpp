@@ -4,9 +4,7 @@
 
 #include "stdafx.h"
 #include "FBP45.h"
-#include "FireSpread.h"
 using fs::util::LookupTable;
-
 namespace fs::fuel::fbp
 {
 double

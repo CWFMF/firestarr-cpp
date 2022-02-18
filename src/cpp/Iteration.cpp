@@ -6,7 +6,6 @@
 #include "Iteration.h"
 #include "ProbabilityMap.h"
 #include "Scenario.h"
-
 namespace fs::sim
 {
 Iteration::~Iteration()

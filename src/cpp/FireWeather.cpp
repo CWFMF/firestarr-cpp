@@ -5,7 +5,6 @@
 #include "stdafx.h"
 #include "FireWeather.h"
 #include "FuelType.h"
-
 namespace fs::wx
 {
 /*!

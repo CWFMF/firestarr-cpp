@@ -6,7 +6,6 @@
 #include "UTM.h"
 #include "Point.h"
 #include "Util.h"
-
 namespace fs::topo
 {
 // UTM.c

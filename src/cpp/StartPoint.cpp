@@ -5,8 +5,6 @@
 #include "stdafx.h"
 #include "StartPoint.h"
 #include "Settings.h"
-#include "Util.h"
-
 namespace fs::topo
 {
 template <typename T>

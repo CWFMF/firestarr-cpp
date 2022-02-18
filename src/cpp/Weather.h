@@ -284,7 +284,7 @@ public:
   /**
    * \brief Wind with 0 Speed from Direction 0
    */
-  static const Wind Zero;
+  [[maybe_unused]] static const Wind Zero;
 private:
   /**
    * \brief Wind speed vector in X direction (East is positive)

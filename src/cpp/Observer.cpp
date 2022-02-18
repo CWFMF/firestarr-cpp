@@ -4,9 +4,6 @@
 
 #include "stdafx.h"
 #include "Observer.h"
-#include "Event.h"
-#include "Scenario.h"
-
 namespace fs::sim
 {
 string

@@ -5,7 +5,6 @@
 #include "stdafx.h"
 #include "Trim.h"
 // from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-
 namespace fs::util
 {
 // trim from start (in place)
