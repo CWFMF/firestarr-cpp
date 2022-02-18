@@ -146,12 +146,13 @@ public:
   {
     return a() * pow(1.0 - exp(negB() * isi), c());
   }
-  /**
+  virtual /**
    * \brief Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
    * \param cfb Crown Fraction Burned (CFB) [ST-X-3 eq 58]
    * \return Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
    */
-  [[nodiscard]] double crownConsumption(const double cfb) const noexcept override
+    double
+    crownConsumption(const double cfb) const noexcept override
   {
     return cfl() * cfb;
   }
@@ -189,10 +190,10 @@ public:
    * \param rss Surface Rate of spread (ROS) (m/min) [ST-X-3 eq 55]
    * \return Final rate of spread (m/min)
    */
-  [[nodiscard]] double finalRos(const SpreadInfo&,
-                                double,
-                                double,
-                                const double rss) const noexcept override
+  double finalRos(const SpreadInfo&,
+                  double,
+                  double,
+                  const double rss) const noexcept override
   {
     return rss;
   }

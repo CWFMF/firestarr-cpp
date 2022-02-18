@@ -17,9 +17,7 @@
 #include "Weather.h"
 #include "Log.h"
 #include "TimeUtil.h"
-namespace firestarr
-{
-namespace wx
+namespace firestarr::wx
 {
 const Temperature Temperature::Zero = Temperature(0);
 const RelativeHumidity RelativeHumidity::Zero = RelativeHumidity(0);
@@ -28,5 +26,4 @@ const Speed Speed::Zero = Speed(0);
 const Wind Wind::Zero = Wind(Direction(0, false), Speed(0));
 const AccumulatedPrecipitation AccumulatedPrecipitation::Zero =
   AccumulatedPrecipitation(0);
-}
 }

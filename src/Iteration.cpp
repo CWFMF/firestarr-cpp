@@ -17,9 +17,7 @@
 #include "Iteration.h"
 #include "ProbabilityMap.h"
 #include "Scenario.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 Iteration::~Iteration()
 {
@@ -103,6 +101,5 @@ size_t Iteration::size() const noexcept
 util::SafeVector Iteration::finalSizes() const
 {
   return final_sizes_;
-}
 }
 }

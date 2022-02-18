@@ -15,9 +15,7 @@
 
 #pragma once
 #include "Event.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 /**
  * \brief Defines how Events are compared for sorting.
@@ -43,5 +41,4 @@ struct EventCompare
     return x.time() < y.time();
   }
 };
-}
 }

@@ -18,12 +18,8 @@
 #include "FBP45.h"
 #include "IntensityMap.h"
 #include "Model.h"
-#include "Statistics.h"
 #include "TimeUtil.h"
-#include "Util.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 ProbabilityMap::ProbabilityMap(const char* const for_what,
                                const double time,
@@ -253,6 +249,5 @@ void ProbabilityMap::saveModerate(const string& base_name) const
 void ProbabilityMap::saveLow(const string& base_name) const
 {
   low_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
-}
 }
 }

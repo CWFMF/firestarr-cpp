@@ -16,9 +16,7 @@
 #pragma once
 #include "Settings.h"
 
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 /**
  * \brief The position within a Cell that a spreading point has.
@@ -70,7 +68,7 @@ struct InnerPos
       b -= 1;
       sub_b += 1;
     }
-    return InnerPos(a, b, sub_a, sub_b);
+    return {a, b, sub_a, sub_b};
   }
   /**
    * \brief Less than operator
@@ -113,7 +111,7 @@ struct InnerPos
   /**
    * \brief Add offset to position and return result
    */
-  InnerPos add(const Offset o) const noexcept
+  [[nodiscard]] InnerPos add(const Offset o) const noexcept
   {
     return create(x,
                   y,
@@ -133,5 +131,4 @@ struct InnerPos
     logging::check_fatal(sub_x >= 1 || sub_x < 0 || sub_y >= 1 || sub_y < 0, "Sub-coordinates are outside cell");
   }
 };
-}
 }

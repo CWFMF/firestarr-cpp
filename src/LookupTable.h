@@ -15,9 +15,7 @@
 
 #pragma once
 #include "Util.h"
-namespace firestarr
-{
-namespace util
+namespace firestarr::util
 {
 /**
  * \brief A table initialized using the given function ranging over the number of digits and precision.
@@ -70,5 +68,4 @@ public:
     return values_.at(static_cast<size_t>(value * pow_int<Precision>(10)));
   }
 };
-}
 }

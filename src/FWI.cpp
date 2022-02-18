@@ -16,7 +16,6 @@
 #include "stdafx.h"
 #include "FWI.h"
 #include "Log.h"
-#include "Weather.h"
 #define CHECK_CALCULATION 1
 #undef CHECK_CALCULATION
 // adapted from http://www.columbia.edu/~rf2426/index_files/FWI.vba
@@ -48,9 +47,7 @@
 //
 //      Robert Field, robert.field@utoronto.ca
 //******************************************************************************************
-namespace firestarr
-{
-namespace wx
+namespace firestarr::wx
 {
 const Ffmc Ffmc::Zero = Ffmc(0);
 const Dmc Dmc::Zero = Dmc(0);
@@ -64,12 +61,12 @@ const FwiWeather FwiWeather::Zero{
   RelativeHumidity(0),
   Wind(Direction(0, false), Speed(0)),
   AccumulatedPrecipitation(0),
-  Ffmc(0),
-  Dmc(0),
-  Dc(0),
-  Isi(Speed(0), Ffmc(0)),
-  Bui(Dmc(0), Dc(0)),
-  Fwi(Isi(Speed(0), Ffmc(0)), Bui(Dmc(0), Dc(0)))};
+  Ffmc::Zero,
+  Dmc::Zero,
+  Dc::Zero,
+  Isi::Zero,
+  Bui::Zero,
+  Fwi::Zero};
 // The following two functions refer to the MEA day length adjustment 'note'.
 //
 //******************************************************************************************
@@ -657,6 +654,5 @@ FwiWeather::FwiWeather(const FwiWeather& wx, const Speed& ws, const Ffmc& ffmc) 
 FwiWeather::FwiWeather() noexcept
   : FwiWeather(Zero)
 {
-}
 }
 }

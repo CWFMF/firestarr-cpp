@@ -15,11 +15,7 @@
 
 #include "stdafx.h"
 #include "Observer.h"
-#include "Event.h"
-#include "Scenario.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 string IObserver::makeName(const string& base_name, const string& suffix)
 {
@@ -60,6 +56,5 @@ void IntensityObserver::save(const string& dir, const string& base_name) const
 void IntensityObserver::reset() noexcept
 {
   // HACK: do nothing because Scenario tracks intensity
-}
 }
 }

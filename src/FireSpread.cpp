@@ -20,9 +20,7 @@
 #include "Scenario.h"
 #include "Settings.h"
 #include "unstable.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 SlopeTableArray make_slope_table() noexcept
 {
@@ -253,5 +251,4 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
 //   // note: based off spread event probability from wotton
 //   return 1 / (1 + exp(1.64 - 0.16 * ros));
 // }
-}
 }

@@ -15,12 +15,9 @@
 
 #include "stdafx.h"
 #include "IntensityMap.h"
-#include "MemoryPool.h"
 #include "Model.h"
 #include "Perimeter.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 static mutex MUTEX_MAPS;
 static vector<unique_ptr<data::GridMap<IntensitySize>>> MAPS;
@@ -148,6 +145,5 @@ map<Location, IntensitySize>::const_iterator
   IntensityMap::cbegin() const noexcept
 {
   return map_->data.cbegin();
-}
 }
 }

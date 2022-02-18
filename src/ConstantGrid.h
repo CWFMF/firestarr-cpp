@@ -22,9 +22,7 @@
 #include <vector>
 #include "Grid.h"
 #include "Util.h"
-namespace firestarr
-{
-namespace data
+namespace firestarr::data
 {
 /**
  * \brief A GridData<T, V, const vector<T>> that cannot change once initialized.
@@ -249,9 +247,9 @@ public:
     logging::warning("%s: read end", filename.c_str());
     _TIFFfree(buf);
     logging::warning("%s: free end", filename.c_str());
-    const auto new_xll = grid_info.xllcorner() + (min_column * grid_info.cellSize());
+    const auto new_xll = grid_info.xllcorner() + (static_cast<double>(min_column) * grid_info.cellSize());
     const auto new_yll = grid_info.yllcorner()
-                       + (static_cast<double>(actual_rows) - max_row)
+                       + (static_cast<double>(actual_rows) - static_cast<double>(max_row))
                            * grid_info.cellSize();
     logging::check_fatal(new_yll < grid_info.yllcorner(),
                          "New yllcorner is outside original grid");
@@ -269,8 +267,8 @@ public:
                                          grid_info.nodata(),
                                          new_xll,
                                          new_yll,
-                                         new_xll + (num_columns + 1) * grid_info.cellSize(),
-                                         new_yll + (num_rows + 1) * grid_info.cellSize(),
+                                         new_xll + (static_cast<double>(num_columns) + 1) * grid_info.cellSize(),
+                                         new_yll + (static_cast<double>(num_rows) + 1) * grid_info.cellSize(),
                                          string(grid_info.proj4()),
                                          std::move(values));
     auto new_location = result->findCoordinates(point, true);
@@ -340,7 +338,7 @@ public:
   template <class R>
   void saveToAsciiFile(const string& dir,
                        const string& base_name,
-                       std::function<R(T value)> convert) const
+                       std::function<R(T)> convert) const
   {
     Idx min_row = 0;
     Idx num_rows = this->rows();
@@ -381,12 +379,12 @@ public:
    * \param base_name File base name to use
    */
   void saveToTiffFile(const string& dir,
-                       const string& base_name) const
+                      const string& base_name) const
   {
     saveToTiffFile<V>(dir, base_name, [](V value)
-                       {
-                         return value;
-                       });
+                      {
+                        return value;
+                      });
   }
   /**
    * \brief Save contents to .tif file
@@ -398,12 +396,12 @@ public:
   template <class R>
   void saveToTiffFile(const string& dir,
                       const string& base_name,
-                      std::function<R(T value)> convert) const
+                      std::function<R(T)> convert) const
   {
     Idx min_row = 0;
-//    Idx num_rows = this->rows();
+    //    Idx num_rows = this->rows();
     Idx min_column = 0;
-//    Idx num_columns = this->columns();
+    //    Idx num_columns = this->columns();
     const double xll = this->xllcorner() + min_column * this->cellSize();
     // offset is different for y since it's flipped
     const double yll = this->yllcorner() + (min_row) * this->cellSize();
@@ -427,13 +425,11 @@ public:
       0.0,
       xul,
       yul,
-      0.0
-    };
+      0.0};
     double pixelScale[3] = {
       this->cellSize(),
       this->cellSize(),
-      0.0
-    };
+      0.0};
     // HACK: why does this have to be +1?
     uint32 bps = std::numeric_limits<R>::digits + 1;
     TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);
@@ -449,8 +445,9 @@ public:
     TIFFSetField(tif, TIFFTAG_GEOTIEPOINTS, 6, tiePoints);
     TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
     size_t tileSize = tileWidth * tileHeight;
-    R *buf = (R *)_TIFFmalloc(tileSize * sizeof(R));
-    for (size_t i = 0; i < width; i += tileWidth) {
+    R* buf = (R*)_TIFFmalloc(tileSize * sizeof(R));
+    for (size_t i = 0; i < width; i += tileWidth)
+    {
       for (size_t j = 0; j < height; j += tileHeight)
       {
         // need to put data from grid into buffer, but flipped vertically
@@ -499,5 +496,4 @@ private:
       "Invalid grid size");
   }
 };
-}
 }

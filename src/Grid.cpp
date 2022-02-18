@@ -15,12 +15,9 @@
 
 #include "stdafx.h"
 #include "Grid.h"
-#include "Point.h"
 #include "UTM.h"
 using firestarr::Idx;
-namespace firestarr
-{
-namespace data
+namespace firestarr::data
 {
 string find_value(const string& key, const string& within)
 {
@@ -161,15 +158,9 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& poi
   // convert coordinates into cell position
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
-  auto actual_y = -1.0;
-  if (!flipped)
-  {
-    actual_y = (y - this->yllcorner_) / this->cell_size_;
-  }
-  else
-  {
-    actual_y = (yurcorner_ - y) / cell_size_;
-  }
+  auto actual_y = (!flipped)
+                  ? (y - this->yllcorner_) / this->cell_size_
+                  : (yurcorner_ - y) / cell_size_;
   const auto column = static_cast<FullIdx>(actual_x);
   const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
@@ -202,6 +193,5 @@ void write_ascii_header(ofstream& out,
   out << "yllcorner     " << fixed << setprecision(6) << yll << "\n";
   out << "cellsize      " << cell_size << "\n";
   out << "NODATA_value  " << no_data << "\n";
-}
 }
 }

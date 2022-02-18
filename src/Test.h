@@ -14,9 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 static const double TEST_GRID_SIZE = 100.0;
 static const char TEST_PROJ4[] =
@@ -31,5 +29,4 @@ static const double TEST_YLLCORNER = 12646355.311160;
  * \return 
  */
 int test(int argc, const char* const argv[]);
-}
 }

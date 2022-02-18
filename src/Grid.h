@@ -40,9 +40,7 @@ struct std::hash<Location>
     return location.hash();
   }
 };
-namespace firestarr
-{
-namespace data
+namespace firestarr::data
 {
 /**
  * \brief The base class with information for a grid of data with geographic coordinates.
@@ -180,7 +178,7 @@ public:
    * \param proj4 Proj4 projection definition 
    */
   GridBase(double cell_size,
-           const int nodata,
+           int nodata,
            double xllcorner,
            double yllcorner,
            double xurcorner,
@@ -363,11 +361,11 @@ private:
   /**
    * \brief Number of rows in the grid.
    */
-  Idx rows_;
+  Idx rows_{};
   /**
    * \brief Number of columns in the grid.
    */
-  Idx columns_;
+  Idx columns_{};
 };
 /**
  * \brief A Grid that defines the data structure used for storing values.
@@ -424,7 +422,7 @@ public:
    * \brief Copy constructor
    * \param rhs GridData to copy from
    */
-  explicit GridData(const GridData& rhs)
+  GridData(const GridData& rhs)
     : Grid<T, V>(rhs), data(rhs.data)
   {
   }
@@ -432,7 +430,7 @@ public:
    * \brief Move constructor
    * \param rhs GridData to move from
    */
-  explicit GridData(GridData&& rhs) noexcept
+  GridData(GridData&& rhs) noexcept
     : Grid<T, V>(rhs), data(std::move(rhs.data))
   {
   }
@@ -549,13 +547,14 @@ template <typename T>
     }
     const auto xurcorner = xllcorner + cell_width * columns;
     const auto yurcorner = yllcorner + cell_width * rows;
-    return GridBase(cell_width,
-                    nodata,
-                    xllcorner,
-                    yllcorner,
-                    xurcorner,
-                    yurcorner,
-                    string(proj4));
+    return {
+      cell_width,
+      nodata,
+      xllcorner,
+      yllcorner,
+      xurcorner,
+      yurcorner,
+      string(proj4)};
   }
   throw runtime_error("Cannot read TIFF header");
 }
@@ -592,6 +591,5 @@ template <typename T>
                              {
                                return read_header<T>(tif, gtif);
                              });
-}
 }
 }

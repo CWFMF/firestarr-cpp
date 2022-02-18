@@ -16,9 +16,7 @@
 #pragma once
 #include "stdafx.h"
 #include "Cell.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 /**
  * \brief A specific Event scheduled in a specific Scenario.
@@ -225,5 +223,4 @@ private:
    */
   CellIndex source_;
 };
-}
 }

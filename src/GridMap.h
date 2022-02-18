@@ -21,9 +21,7 @@
 #include <map>
 #include <utility>
 #include "Grid.h"
-namespace firestarr
-{
-namespace data
+namespace firestarr::data
 {
 /**
  * \brief A GridData that uses an unordered_map for storage.
@@ -172,7 +170,7 @@ public:
    * \brief Copy constructor
    * \param rhs GridMap to copy from
    */
-  explicit GridMap(const GridMap& rhs)
+  GridMap(const GridMap& rhs)
     : GridData<T, V, map<Location, T>>(rhs)
   {
     this->data = rhs.data;
@@ -378,5 +376,4 @@ public:
     return result;
   }
 };
-}
 }

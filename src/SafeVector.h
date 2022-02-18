@@ -15,9 +15,7 @@
 
 #pragma once
 #include <vector>
-namespace firestarr
-{
-namespace util
+namespace firestarr::util
 {
 class Statistics;
 /**
@@ -28,7 +26,7 @@ class SafeVector
   /**
    * \brief Vector of stored values
    */
-  vector<double> values_{};
+  std::vector<double> values_{};
   /**
    * \brief Mutex for parallel access
    */
@@ -73,7 +71,7 @@ public:
    * \brief Get a vector with the stored values
    * \return A vector with the stored values
    */
-  [[nodiscard]] vector<double> getValues() const;
+  [[nodiscard]] std::vector<double> getValues() const;
   /**
    * \brief Calculate Statistics for values in this SafeVector
    * \return Statistics for values in this SafeVector
@@ -85,5 +83,4 @@ public:
    */
   [[nodiscard]] size_t size() const noexcept;
 };
-}
 }

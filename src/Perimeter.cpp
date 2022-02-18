@@ -16,8 +16,6 @@
 #include "stdafx.h"
 #include "Perimeter.h"
 #include "Environment.h"
-#include "FuelLookup.h"
-#include "GridMap.h"
 namespace firestarr::topo
 {
 /**

@@ -15,18 +15,11 @@
 
 #include "stdafx.h"
 #include "Scenario.h"
-#include "Event.h"
-#include "Grid.h"
 #include "Observer.h"
-#include "Settings.h"
 #include "FireSpread.h"
-#include "FuelLookup.h"
-#include "FuelType.h"
-#include "Log.h"
 #include "MemoryPool.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
-#include "SafeVector.h"
 namespace firestarr::sim
 {
 // FIX: why is this not just 0.5?

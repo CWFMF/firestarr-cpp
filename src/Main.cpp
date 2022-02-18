@@ -25,8 +25,6 @@
 #include "Scenario.h"
 #include "Test.h"
 #include "TimeUtil.h"
-#include "Util.h"
-#include "InnerPos.h"
 #include "Log.h"
 using firestarr::logging::Log;
 using firestarr::sim::Settings;

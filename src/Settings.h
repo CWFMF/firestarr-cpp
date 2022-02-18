@@ -45,7 +45,7 @@ public:
    * \param f Name of file to save weather to
    * \return None
    */
-  static void setWeatherFile(string f);
+  static void setWeatherFile(const string& f);
   /**
    * \brief Path to directory that outputs are saved to
    * \return Name of file to save weather to
@@ -56,7 +56,7 @@ public:
    * \param d Path to directory that outputs are saved to
    * \return None
    */
-  static void setOutputDirectory(string d);
+  static void setOutputDirectory(const string& d);
   /**
    * \brief Root directory that raster inputs are stored in
    * \return Root directory that raster inputs are stored in

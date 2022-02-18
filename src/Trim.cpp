@@ -16,9 +16,7 @@
 #include "stdafx.h"
 #include "Trim.h"
 // from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-namespace firestarr
-{
-namespace util
+namespace firestarr::util
 {
 // trim from start (in place)
 void trim_left(string* s)
@@ -66,6 +64,5 @@ string trim_copy(string s)
 {
   trim(&s);
   return s;
-}
 }
 }

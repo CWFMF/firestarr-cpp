@@ -11,17 +11,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 // Provides wrappers around functions that have different results when using
 // different optimization flags, so they can be compiled with the same
 // flags in release and debug mode to avoid changing the outputs.
 #pragma once
 #include <cmath>
-namespace firestarr
+namespace firestarr::sim
 {
-namespace sim
-{
-double _cos(const double angle) noexcept;
-double _sin(const double angle) noexcept;
-}
+double _cos(double angle) noexcept;
+double _sin(double angle) noexcept;
 }

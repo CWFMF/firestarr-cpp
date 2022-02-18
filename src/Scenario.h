@@ -27,9 +27,7 @@
 #include "Settings.h"
 #include "StartPoint.h"
 #include "InnerPos.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 class IObserver;
 class Event;
@@ -456,7 +454,7 @@ public:
    */
   void clear() noexcept;
 protected:
-  string add_log(const char* format) const noexcept;
+  string add_log(const char* format) const noexcept override;
   /**
    * \brief Constructor
    * \param model Model running this Scenario
@@ -596,5 +594,4 @@ protected:
    */
   bool ran_;
 };
-}
 }

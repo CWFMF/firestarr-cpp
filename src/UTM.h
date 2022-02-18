@@ -33,9 +33,7 @@
 // restriction."
 //
 // 1) http://home.hiwaay.net/~taylorc/toolbox/geography/geoutm.html
-namespace firestarr
-{
-namespace topo
+namespace firestarr::topo
 {
 class Point;
 /**
@@ -171,5 +169,4 @@ void utm_to_lat_lon(double x,
                     bool is_southern_hemisphere,
                     double* lat,
                     double* lon) noexcept;
-}
 }

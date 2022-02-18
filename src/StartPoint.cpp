@@ -16,10 +16,7 @@
 #include "stdafx.h"
 #include "StartPoint.h"
 #include "Settings.h"
-#include "Util.h"
-namespace firestarr
-{
-namespace topo
+namespace firestarr::topo
 {
 template <typename T>
 static T fix_range(T value, T min_value, T max_value) noexcept
@@ -131,6 +128,5 @@ StartPoint& StartPoint::operator=(StartPoint&& rhs) noexcept
     }
   }
   return *this;
-}
 }
 }
