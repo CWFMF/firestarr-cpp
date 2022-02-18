@@ -16,9 +16,7 @@
 #pragma once
 #include <odbcinst.h>
 #include <odbcinstext.h>
-namespace firestarr
-{
-namespace util
+namespace firestarr::util
 {
 /**
  * \brief Equality operator
@@ -90,12 +88,5 @@ void to_tm(const TIMESTAMP_STRUCT& s, tm* t) noexcept;
  * \param s Input value
  * \param t Output value
  */
-void to_tm_gm(const TIMESTAMP_STRUCT& s, tm* t) noexcept;
-/**
- * \brief Convert to TIMESTAMP_STRUCT
- * \param t Input value
- * \param s Output value
- */
 void to_ts(const tm& t, TIMESTAMP_STRUCT* s) noexcept;
-}
 }

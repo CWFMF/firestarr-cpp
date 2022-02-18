@@ -14,9 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-namespace firestarr
-{
-namespace wx
+namespace firestarr::wx
 {
 class FwiWeather;
 class Weather;
@@ -58,5 +56,4 @@ private:
    */
   FwiVector wx_;
 };
-}
 }

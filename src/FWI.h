@@ -16,9 +16,7 @@
 #pragma once
 #include <string>
 #include "Weather.h"
-namespace firestarr
-{
-namespace wx
+namespace firestarr::wx
 {
 /**
  * \brief Fine Fuel Moisture Code value.
@@ -260,7 +258,7 @@ public:
   /**
    * \brief Destructor
    */
-  ~FwiWeather() = default;
+  ~FwiWeather() override = default;
   /**
    * \brief Move constructor
    * \param rhs FwiWeather to move from
@@ -477,6 +475,5 @@ private:
 [[nodiscard]] constexpr bool operator==(const FwiWeather& lhs, const FwiWeather& rhs)
 {
   return !(lhs != rhs);
-}
 }
 }

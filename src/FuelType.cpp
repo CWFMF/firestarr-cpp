@@ -17,9 +17,7 @@
 #include "FuelType.h"
 #include "FireSpread.h"
 #include "Log.h"
-namespace firestarr
-{
-namespace fuel
+namespace firestarr::fuel
 {
 double InvalidFuel::buiEffect(double) const
 {
@@ -64,6 +62,5 @@ double InvalidFuel::probabilityPeat(double) const noexcept
 double InvalidFuel::survivalProbability(const wx::FwiWeather&) const noexcept
 {
   return logging::fatal<double>("Invalid fuel type in fuel map");
-}
 }
 }

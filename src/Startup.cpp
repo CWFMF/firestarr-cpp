@@ -15,10 +15,7 @@
 
 #include "stdafx.h"
 #include "Startup.h"
-#include "TimeUtil.h"
-namespace firestarr
-{
-namespace wx
+namespace firestarr::wx
 {
 Startup::Startup(string station,
                  const TIMESTAMP_STRUCT& generated,
@@ -39,6 +36,5 @@ Startup::Startup(string station,
     apcp_0800_(apcp_0800),
     is_overridden_(overridden)
 {
-}
 }
 }

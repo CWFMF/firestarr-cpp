@@ -17,9 +17,7 @@
 #include <limits>
 #include "Location.h"
 #include "Util.h"
-namespace firestarr
-{
-namespace topo
+namespace firestarr::topo
 {
 using SpreadKey = uint32;
 /**
@@ -235,7 +233,6 @@ protected:
 constexpr bool operator<(const Cell& lhs, const Cell& rhs)
 {
   return lhs.topoHash() < rhs.topoHash();
-}
 }
 }
 namespace std

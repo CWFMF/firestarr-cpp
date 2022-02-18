@@ -15,13 +15,8 @@
 
 #include "stdafx.h"
 #include "FBP45.h"
-#include "FireSpread.h"
 using firestarr::util::LookupTable;
-namespace firestarr
-{
-namespace fuel
-{
-namespace fbp
+namespace firestarr::fuel::fbp
 {
 double FuelD1::isfD1(const SpreadInfo& spread,
                      const double ros_multiplier,
@@ -108,7 +103,5 @@ double FuelD2::calculateRos(const int,
                             const double isi) const noexcept
 {
   return (wx.bui().asDouble() >= 80) ? rosBasic(isi) : 0.0;
-}
-}
 }
 }

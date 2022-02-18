@@ -15,9 +15,7 @@
 
 #pragma once
 #include "LookupTable.h"
-namespace firestarr
-{
-namespace fuel
+namespace firestarr::fuel
 {
 /*! \page survival Probability of fire survival
  *
@@ -163,7 +161,7 @@ class DuffType final
 {
 public:
   DuffType() = default;
-  virtual ~DuffType() = default;
+  ~DuffType() override = default;
   DuffType(const DuffType& rhs) noexcept = delete;
   DuffType(DuffType&& rhs) noexcept = delete;
   DuffType& operator=(const DuffType& rhs) noexcept = delete;
@@ -251,5 +249,4 @@ private:
    */
   const util::LookupTable<&duffFunction> probability_of_survival_{};
 };
-}
 }

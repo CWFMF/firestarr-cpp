@@ -29,9 +29,7 @@
 #include "Point.h"
 #include "Settings.h"
 
-namespace firestarr
-{
-namespace topo
+namespace firestarr::topo
 {
 using FuelGrid = data::ConstantGrid<const fuel::FuelType*, FuelSize>;
 using ElevationGrid = data::ConstantGrid<ElevationSize>;
@@ -307,7 +305,7 @@ protected:
                 auto actual_row = static_cast<Idx>(r - i);
                 auto actual_column = static_cast<Idx>(c + j);
                 auto cur_loc = Location{actual_row, actual_column};
-//                auto cur_h = cur_loc.hash();
+                //                auto cur_h = cur_loc.hash();
                 //              dem[3 * (i + 1) + (j + 1)] = 1.0 * elevation.at(cur_h);
                 dem[3 * (i + 1) + (j + 1)] = 1.0 * elevation.at(cur_loc);
               }
@@ -323,13 +321,13 @@ protected:
             auto slope_pct = static_cast<float>(100 * (sqrt(key) / 8.0));
             s = min(static_cast<SlopeSize>(MAX_SLOPE_FOR_DISTANCE), static_cast<SlopeSize>(round(slope_pct)));
             static_assert(std::numeric_limits<SlopeSize>::max() >= MAX_SLOPE_FOR_DISTANCE);
-            float aspect_azimuth = 0.0;
+            double aspect_azimuth = 0.0;
 
             if (s > 0 && (dx != 0 || dy != 0))
             {
-              aspect_azimuth = static_cast<float>(atan2(dy, -dx) * M_RADIANS_TO_DEGREES);
-              aspect_azimuth = (aspect_azimuth > 90.0f) ? (450.0f - aspect_azimuth) : (90.0f - aspect_azimuth);
-              if (aspect_azimuth == 360.0f)
+              aspect_azimuth = atan2(dy, -dx) * M_RADIANS_TO_DEGREES;
+              aspect_azimuth = (aspect_azimuth > 90.0) ? (450.0 - aspect_azimuth) : (90.0 - aspect_azimuth);
+              if (aspect_azimuth == 360.0)
               {
                 aspect_azimuth = 0.0;
               }
@@ -380,7 +378,7 @@ protected:
   /**
    * \brief Creates a map of areas that are not burnable either because of fuel or the initial perimeter.
    */
-  sim::BurnedData initializeNotBurnable(const FuelGrid& fuel)
+  sim::BurnedData initializeNotBurnable(const FuelGrid& fuel) const
   {
     sim::BurnedData result{};
     //    std::fill(not_burnable_.begin(), not_burnable_.end(), false);
@@ -472,5 +470,4 @@ private:
    */
   ElevationSize elevation_;
 };
-}
 }

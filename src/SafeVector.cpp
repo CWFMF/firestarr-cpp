@@ -16,10 +16,7 @@
 #include "stdafx.h"
 #include "SafeVector.h"
 #include "Statistics.h"
-#include "Util.h"
-namespace firestarr
-{
-namespace util
+namespace firestarr::util
 {
 SafeVector::SafeVector(const SafeVector& rhs)
   : values_(rhs.values_)
@@ -72,6 +69,5 @@ Statistics SafeVector::getStatistics() const
 size_t SafeVector::size() const noexcept
 {
   return values_.size();
-}
 }
 }

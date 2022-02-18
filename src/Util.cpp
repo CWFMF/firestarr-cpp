@@ -20,9 +20,7 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-namespace firestarr
-{
-namespace util
+namespace firestarr::util
 {
 void read_directory(const string& name, vector<string>* v, const string& match)
 {
@@ -133,6 +131,5 @@ UsageCount& UsageCount::operator++() noexcept
 {
   ++count_;
   return *this;
-}
 }
 }

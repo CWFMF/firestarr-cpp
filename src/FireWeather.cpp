@@ -16,9 +16,7 @@
 #include "stdafx.h"
 #include "FireWeather.h"
 #include "FuelType.h"
-namespace firestarr
-{
-namespace wx
+namespace firestarr::wx
 {
 /*!
  * \page weather Hourly fire and weather indices
@@ -673,6 +671,5 @@ FireWeather::FireWeather(const set<const fuel::FuelType*>& used_fuels,
       weight *= 0.8;
     }
   }
-}
 }
 }

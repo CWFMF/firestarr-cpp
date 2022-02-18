@@ -16,9 +16,7 @@
 #pragma once
 #include <string>
 // from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-namespace firestarr
-{
-namespace util
+namespace firestarr::util
 {
 /**
  * \brief Remove whitespace from left side of string
@@ -53,5 +51,4 @@ void trim(string* s);
  * \return new string with whitespace removed from both sides
  */
 [[nodiscard]] string trim_copy(string s);
-}
 }

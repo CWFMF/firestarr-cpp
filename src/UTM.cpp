@@ -17,9 +17,7 @@
 #include "UTM.h"
 #include "Point.h"
 #include "Util.h"
-namespace firestarr
-{
-namespace topo
+namespace firestarr::topo
 {
 // UTM.c
 // Original Javascript by Chuck Taylor
@@ -226,6 +224,5 @@ void utm_to_lat_lon(double x,
   y /= UTM_SCALE_FACTOR;
   const auto central_meridian = utm_central_meridian(zone);
   map_xy_to_lat_lon(x, y, central_meridian, lat, lon);
-}
 }
 }

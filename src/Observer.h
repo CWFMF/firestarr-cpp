@@ -19,9 +19,7 @@
 #include "Event.h"
 #include "GridMap.h"
 #include "Scenario.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 class Event;
 class Scenario;
@@ -73,7 +71,7 @@ class MapObserver
   : public IObserver
 {
 public:
-  ~MapObserver() = default;
+  ~MapObserver() override = default;
   MapObserver(const MapObserver& rhs) = delete;
   MapObserver(MapObserver&& rhs) = delete;
   MapObserver& operator=(const MapObserver& rhs) = delete;
@@ -135,7 +133,7 @@ class ArrivalObserver final
   : public MapObserver<double>
 {
 public:
-  ~ArrivalObserver() = default;
+  ~ArrivalObserver() override = default;
   ArrivalObserver(const ArrivalObserver& rhs) = delete;
   ArrivalObserver(ArrivalObserver&& rhs) = delete;
   ArrivalObserver& operator=(const ArrivalObserver& rhs) = delete;
@@ -154,7 +152,7 @@ class SourceObserver final
   : public MapObserver<CellIndex>
 {
 public:
-  ~SourceObserver() = default;
+  ~SourceObserver() override = default;
   SourceObserver(const SourceObserver& rhs) = delete;
   SourceObserver(SourceObserver&& rhs) = delete;
   SourceObserver& operator=(const SourceObserver& rhs) = delete;
@@ -173,7 +171,7 @@ class IntensityObserver final
   : public IObserver
 {
 public:
-  ~IntensityObserver() = default;
+  ~IntensityObserver() override = default;
   IntensityObserver(const IntensityObserver& rhs) = delete;
   IntensityObserver(IntensityObserver&& rhs) = delete;
   IntensityObserver& operator=(const IntensityObserver& rhs) = delete;
@@ -209,5 +207,4 @@ private:
    */
   string suffix_;
 };
-}
 }

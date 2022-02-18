@@ -21,9 +21,7 @@
 #ifndef NDEBUG
 #include "Log.h"
 #endif
-namespace firestarr
-{
-namespace fuel
+namespace firestarr::fuel
 {
 /**
  * \brief Calculate if green-up has occurred
@@ -83,7 +81,7 @@ class FuelNonMixed
 {
 public:
   FuelNonMixed() = delete;
-  ~FuelNonMixed() = default;
+  ~FuelNonMixed() override = default;
   FuelNonMixed(const FuelNonMixed& rhs) noexcept = delete;
   FuelNonMixed(FuelNonMixed&& rhs) noexcept = delete;
   FuelNonMixed& operator=(const FuelNonMixed& rhs) noexcept = delete;
@@ -106,14 +104,15 @@ protected:
                                        isi)
                             * spread.slopeFactor());
   }
-  /**
+  virtual /**
    * \brief Initial rate of spread (m/min) [ST-X-3 eq 26]
    * \param isi Initial Spread Index
    * \return Initial rate of spread (m/min) [ST-X-3 eq 26]
    */
-  [[nodiscard]] double calculateRos(const int,
-                                    const wx::FwiWeather&,
-                                    const double isi) const noexcept override
+    double
+    calculateRos(const int,
+                 const wx::FwiWeather&,
+                 const double isi) const noexcept override
   {
     return this->rosBasic(isi);
   }
@@ -136,7 +135,7 @@ class FuelConifer
 {
 public:
   FuelConifer() = delete;
-  ~FuelConifer() = default;
+  ~FuelConifer() override = default;
   FuelConifer(const FuelConifer& rhs) noexcept = delete;
   FuelConifer(FuelConifer&& rhs) noexcept = delete;
   FuelConifer& operator=(const FuelConifer& rhs) noexcept = delete;
@@ -215,7 +214,7 @@ class FuelJackpine
 {
 public:
   FuelJackpine() = delete;
-  ~FuelJackpine() = default;
+  ~FuelJackpine() override = default;
   FuelJackpine(const FuelJackpine& rhs) noexcept = delete;
   FuelJackpine(FuelJackpine&& rhs) noexcept = delete;
   FuelJackpine& operator=(const FuelJackpine& rhs) noexcept = delete;
@@ -265,7 +264,7 @@ class FuelPine : public FuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, Du
 {
 public:
   FuelPine() = delete;
-  ~FuelPine() = default;
+  ~FuelPine() override = default;
   FuelPine(const FuelPine& rhs) noexcept = delete;
   FuelPine(FuelPine&& rhs) noexcept = delete;
   FuelPine& operator=(const FuelPine& rhs) noexcept = delete;
@@ -291,7 +290,7 @@ class FuelD1 : public FuelNonMixed<30, 232, 160, 32, 0, 0, 61, 59, 24>
 {
 public:
   FuelD1() = delete;
-  ~FuelD1() = default;
+  ~FuelD1() override = default;
   FuelD1(const FuelD1& rhs) noexcept = delete;
   FuelD1(FuelD1&& rhs) noexcept = delete;
   FuelD1& operator=(const FuelD1& rhs) noexcept = delete;
@@ -565,7 +564,7 @@ class FuelGrass
 {
 public:
   FuelGrass() = delete;
-  ~FuelGrass() = default;
+  ~FuelGrass() override = default;
   FuelGrass(const FuelGrass& rhs) noexcept = delete;
   FuelGrass(FuelGrass&& rhs) noexcept = delete;
   FuelGrass& operator=(const FuelGrass& rhs) noexcept = delete;
@@ -669,7 +668,7 @@ class FuelC1 : public FuelConifer<90, 649, 450, 72, 2, 75, 45, 5, 34>
 {
 public:
   FuelC1() = delete;
-  ~FuelC1() = default;
+  ~FuelC1() override = default;
   FuelC1(const FuelC1& rhs) noexcept = delete;
   FuelC1(FuelC1&& rhs) noexcept = delete;
   FuelC1& operator=(const FuelC1& rhs) noexcept = delete;
@@ -701,7 +700,7 @@ class FuelC2 : public FuelConifer<110, 282, 150, 64, 3, 80, 34, 0, 100>
 {
 public:
   FuelC2() = delete;
-  ~FuelC2() = default;
+  ~FuelC2() override = default;
   FuelC2(const FuelC2& rhs) noexcept = delete;
   FuelC2(FuelC2&& rhs) noexcept = delete;
   FuelC2& operator=(const FuelC2& rhs) noexcept = delete;
@@ -732,7 +731,7 @@ class FuelC3 : public FuelJackpine<110, 444, 300, 62, 8, 115, 20, 65>
 {
 public:
   FuelC3() = delete;
-  ~FuelC3() = default;
+  ~FuelC3() override = default;
   FuelC3(const FuelC3& rhs) noexcept = delete;
   FuelC3(FuelC3&& rhs) noexcept = delete;
   FuelC3& operator=(const FuelC3& rhs) noexcept = delete;
@@ -757,7 +756,7 @@ class FuelC4 : public FuelJackpine<110, 293, 150, 66, 4, 120, 31, 62>
 {
 public:
   FuelC4() = delete;
-  ~FuelC4() = default;
+  ~FuelC4() override = default;
   FuelC4(const FuelC4& rhs) noexcept = delete;
   FuelC4(FuelC4&& rhs) noexcept = delete;
   FuelC4& operator=(const FuelC4& rhs) noexcept = delete;
@@ -781,7 +780,7 @@ class FuelC5 : public FuelPine<30, 697, 400, 56, 18, 120, 93, 46>
 {
 public:
   FuelC5() = delete;
-  ~FuelC5() = default;
+  ~FuelC5() override = default;
   FuelC5(const FuelC5& rhs) noexcept = delete;
   FuelC5(FuelC5&& rhs) noexcept = delete;
   FuelC5& operator=(const FuelC5& rhs) noexcept = delete;
@@ -805,7 +804,7 @@ class FuelC6 : public FuelPine<30, 800, 300, 62, 7, 180, 50, 50>
 {
 public:
   FuelC6() = delete;
-  ~FuelC6() = default;
+  ~FuelC6() override = default;
   FuelC6(const FuelC6& rhs) noexcept = delete;
   FuelC6(FuelC6&& rhs) noexcept = delete;
   FuelC6& operator=(const FuelC6& rhs) noexcept = delete;
@@ -842,7 +841,7 @@ class FuelC7 : public FuelConifer<45, 305, 200, 106, 10, 50, 20, 15, 50>
 {
 public:
   FuelC7() = delete;
-  ~FuelC7() = default;
+  ~FuelC7() override = default;
   FuelC7(const FuelC7& rhs) noexcept = delete;
   FuelC7(FuelC7&& rhs) noexcept = delete;
   FuelC7& operator=(const FuelC7& rhs) noexcept = delete;
@@ -873,7 +872,7 @@ class FuelD2 : public FuelNonMixed<6, 232, 160, 32, 0, 0, 61, 59, 24>
 {
 public:
   FuelD2() = delete;
-  ~FuelD2() = default;
+  ~FuelD2() override = default;
   FuelD2(const FuelD2& rhs) noexcept = delete;
   FuelD2(FuelD2&& rhs) noexcept = delete;
   FuelD2& operator=(const FuelD2& rhs) noexcept = delete;
@@ -1016,7 +1015,7 @@ class FuelO1A : public FuelGrass<190, 310, 140>
 {
 public:
   FuelO1A() = delete;
-  ~FuelO1A() = default;
+  ~FuelO1A() override = default;
   FuelO1A(const FuelO1A& rhs) noexcept = delete;
   FuelO1A(FuelO1A&& rhs) noexcept = delete;
   FuelO1A& operator=(const FuelO1A& rhs) noexcept = delete;
@@ -1037,7 +1036,7 @@ class FuelO1B : public FuelGrass<250, 350, 170>
 {
 public:
   FuelO1B() = delete;
-  ~FuelO1B() = default;
+  ~FuelO1B() override = default;
   FuelO1B(const FuelO1B& rhs) noexcept = delete;
   FuelO1B(FuelO1B&& rhs) noexcept = delete;
   FuelO1B& operator=(const FuelO1B& rhs) noexcept = delete;
@@ -1069,7 +1068,7 @@ class FuelSlash : public FuelConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>
 {
 public:
   FuelSlash() = delete;
-  ~FuelSlash() = default;
+  ~FuelSlash() override = default;
   FuelSlash(const FuelSlash& rhs) noexcept = delete;
   FuelSlash(FuelSlash&& rhs) noexcept = delete;
   FuelSlash& operator=(const FuelSlash& rhs) noexcept = delete;
@@ -1148,7 +1147,7 @@ class FuelS1 : public FuelSlash<75, 297, 130, 38, 4, -250, 4, -340, 78>
 {
 public:
   FuelS1() = delete;
-  ~FuelS1() = default;
+  ~FuelS1() override = default;
   FuelS1(const FuelS1& rhs) noexcept = delete;
   FuelS1(FuelS1&& rhs) noexcept = delete;
   FuelS1& operator=(const FuelS1& rhs) noexcept = delete;
@@ -1173,7 +1172,7 @@ class FuelS2 : public FuelSlash<40, 438, 170, 63, 10, -130, 6, -600, 132>
 {
 public:
   FuelS2() = delete;
-  ~FuelS2() = default;
+  ~FuelS2() override = default;
   FuelS2(const FuelS2& rhs) noexcept = delete;
   FuelS2(FuelS2&& rhs) noexcept = delete;
   FuelS2& operator=(const FuelS2& rhs) noexcept = delete;
@@ -1198,7 +1197,7 @@ class FuelS3 : public FuelSlash<55, 829, 320, 31, 12, -166, 20, -210, 100>
 {
 public:
   FuelS3() = delete;
-  ~FuelS3() = default;
+  ~FuelS3() override = default;
   FuelS3(const FuelS3& rhs) noexcept = delete;
   FuelS3(FuelS3&& rhs) noexcept = delete;
   FuelS3& operator=(const FuelS3& rhs) noexcept = delete;
@@ -1231,7 +1230,7 @@ template <class FuelSpring, class FuelSummer>
 }
 template <class FuelSpring, class FuelSummer>
 [[nodiscard]] double compare_by_season(const FuelVariable<FuelSpring, FuelSummer>& fuel,
-                                       const function<double(const FuelType&)> fct)
+                                       const function<double(const FuelType&)>& fct)
 {
   // HACK: no way to tell which is which, so let's assume they have to be the same??
   // HACK: use a function so that DEBUG section doesn't get out of sync
@@ -1252,7 +1251,7 @@ class FuelVariable : public FuelType
 {
 public:
   // don't delete pointers since they're handled elsewhere
-  ~FuelVariable() = default;
+  ~FuelVariable() override = default;
   /**
    * \brief A slash fuel type
    * \param code Code to identify fuel with
@@ -1439,7 +1438,7 @@ class FuelD1D2 : public FuelVariable<FuelD1, FuelD2>
 {
 public:
   FuelD1D2() = delete;
-  ~FuelD1D2() = default;
+  ~FuelD1D2() override = default;
   FuelD1D2(const FuelD1D2& rhs) noexcept = delete;
   FuelD1D2(FuelD1D2&& rhs) noexcept = delete;
   FuelD1D2& operator=(const FuelD1D2& rhs) noexcept = delete;
@@ -1516,6 +1515,5 @@ public:
   {
   }
 };
-}
 }
 }

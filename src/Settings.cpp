@@ -15,7 +15,6 @@
 
 #include "stdafx.h"
 #include "Settings.h"
-#include "Log.h"
 #include "Trim.h"
 namespace firestarr::sim
 {
@@ -60,7 +59,7 @@ public:
    * \brief Set name of file to save weather to
    * \param f Name of file to save weather to
    */
-  void setWeatherFile(const string f)
+  void setWeatherFile(const string& f)
   {
     weather_file_ = f;
   }
@@ -76,7 +75,7 @@ public:
    * \brief Set path to directory that outputs are saved to
    * \param d Path to directory that outputs are saved to
    */
-  void setOutputDirectory(const string d)
+  void setOutputDirectory(const string& d)
   {
     output_directory_ = d;
   }
@@ -94,13 +93,13 @@ public:
    */
   [[nodiscard]] const fuel::FuelLookup& fuelLookup() noexcept
   {
-    if (nullptr == fuel_lookup_.get())
+    if (nullptr == fuel_lookup_)
     {
       // do this here because it relies on instance being created already
       fuel_lookup_ = std::make_unique<fuel::FuelLookup>(fuel_lookup_table_file_.c_str());
-      logging::check_fatal(nullptr == fuel_lookup_.get(), "Fuel lookup table has not been loaded");
+      logging::check_fatal(nullptr == fuel_lookup_, "Fuel lookup table has not been loaded");
     }
-    return *fuel_lookup_.get();
+    return *fuel_lookup_;
   }
   /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
@@ -517,7 +516,7 @@ const char* Settings::weatherFile() noexcept
 {
   return SettingsImplementation::instance().weatherFile();
 }
-void Settings::setWeatherFile(const string f)
+void Settings::setWeatherFile(const string& f)
 {
   SettingsImplementation::instance().setWeatherFile(f);
 }
@@ -525,7 +524,7 @@ const char* Settings::outputDirectory() noexcept
 {
   return SettingsImplementation::instance().outputDirectory();
 }
-void Settings::setOutputDirectory(string d)
+void Settings::setOutputDirectory(const string& d)
 {
   SettingsImplementation::instance().setOutputDirectory(d);
 }

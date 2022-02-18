@@ -15,9 +15,7 @@
 
 #include "stdafx.h"
 #include "Duff.h"
-namespace firestarr
-{
-namespace fuel
+namespace firestarr::fuel
 {
 //const DuffType<172, 464, 139873, -3296, 4904, 568> Duff::FeatherMossUpper{};
 //const DuffType<191, 389, 132628, -1167, 3308, -2604> Duff::FeatherMossLower{};
@@ -36,5 +34,4 @@ const DuffType<307, 1160, 586921, -2737, -5413, -1246> Duff::SprucePine{};
 //const DuffType<352, 1200, 2362934, -8423, -25097, -4902> Duff::GrassSedgeMarsh{};
 //const DuffType<680, 1120, 586921, -2737, -5413, -1246> Duff::SouthernPine{};
 //const DuffType<182, 1380, 336907, -2946, -3002, -4040> Duff::HardwoodSwamp{};
-}
 }

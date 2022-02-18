@@ -12,9 +12,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "unstable.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 double _cos(const double angle) noexcept
 {
@@ -23,6 +21,5 @@ double _cos(const double angle) noexcept
 double _sin(const double angle) noexcept
 {
   return sin(angle);
-}
 }
 }

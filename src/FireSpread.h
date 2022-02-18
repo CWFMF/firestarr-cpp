@@ -20,20 +20,12 @@
 #include "Settings.h"
 #include "Util.h"
 #include "InnerPos.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 class Scenario;
 /**
  * \brief Possible results of an attempt to spread.
  */
-enum SpreadResult
-{
-  SPREAD_TOO_SLOW,
-  SPREAD_IMPOSSIBLE,
-  SPREAD_SCHEDULED
-};
 int calculate_nd_for_point(int elevation, const topo::Point& point) noexcept;
 /**
  * \brief Information regarding spread within a Cell for a specific Scenario and time.
@@ -256,5 +248,4 @@ private:
    */
   int nd_;
 };
-}
 }

@@ -82,7 +82,7 @@ public:
    * \param value Direction to use
    * \param is_radians Whether the given direction is in radians (as opposed to degrees)
    */
-  constexpr Direction(const double value, const bool is_radians)
+  constexpr Direction(const double value, const bool is_radians) noexcept
     : Index(is_radians ? util::to_degrees(value) : value)
   {
   }
@@ -265,7 +265,7 @@ public:
   /**
    * \brief Wind with 0 Speed from Direction 0
    */
-  static const Wind Zero;
+  [[maybe_unused]] static const Wind Zero;
 private:
   /**
    * \brief Wind speed vector in X direction (East is positive)

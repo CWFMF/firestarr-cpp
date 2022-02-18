@@ -46,7 +46,7 @@ public:
    * \brief Create a Semaphore that limits number of concurrent things running
    * \param n Number of concurrent things running
    */
-  Semaphore(const int n)
+  explicit Semaphore(const int n)
     : count_{n}
   {
     logging::note("Semaphore count is %d", count_);
@@ -104,7 +104,7 @@ public:
    * \brief Constructor
    * \param ss Semaphore to wait on
    */
-  CriticalSection(Semaphore& ss)
+  explicit CriticalSection(Semaphore& ss)
     : s_{ss}
   {
     s_.wait();
@@ -261,7 +261,7 @@ public:
                                                    int low_max,
                                                    int med_max,
                                                    int max_value) const;
-  ~Model();
+  ~Model() = default;
   /**
    * \brief Constructor
    * \param start_point StartPoint to use for sunrise/sunset times
@@ -283,7 +283,7 @@ public:
   void readWeather(const string& filename,
                    bool for_actuals,
                    const wx::FwiWeather& yesterday,
-                   const double latitude);
+                   double latitude);
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at

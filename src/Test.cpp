@@ -16,16 +16,9 @@
 #include "stdafx.h"
 #include "Test.h"
 #include "FireSpread.h"
-#include "FuelLookup.h"
-#include "FWI.h"
 #include "Model.h"
 #include "Observer.h"
-#include "SafeVector.h"
-#include "Scenario.h"
-#include "Util.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 /**
  * \brief An Environment with no elevation and the same value in every Cell.
@@ -79,7 +72,7 @@ class TestWeather final
   : public wx::FireWeather
 {
 public:
-  ~TestWeather() = default;
+  ~TestWeather() override = default;
   TestWeather(const TestWeather& rhs) = delete;
   TestWeather(TestWeather&& rhs) = delete;
   TestWeather& operator=(const TestWeather& rhs) = delete;
@@ -115,7 +108,7 @@ class TestScenario final
   : public Scenario
 {
 public:
-  ~TestScenario() = default;
+  ~TestScenario() override = default;
   TestScenario(const TestScenario& rhs) = delete;
   TestScenario(TestScenario&& rhs) = delete;
   TestScenario& operator=(const TestScenario& rhs) = delete;
@@ -352,6 +345,5 @@ int test(const int argc, const char* const argv[])
     logging::fatal(err.what());
   }
   return 0;
-}
 }
 }

@@ -19,9 +19,7 @@
 #include <string>
 #include "Cell.h"
 #include "Util.h"
-namespace firestarr
-{
-namespace fuel
+namespace firestarr::fuel
 {
 class FuelLookupImpl;
 class FuelType;
@@ -72,7 +70,7 @@ public:
    * \param value Value to use for lookup
    * \return code for the given FuelType
    */
-  [[nodiscard]] int fuelToInt(const FuelType* const fuel) const;
+  [[nodiscard]] int fuelToInt(const FuelType* fuel) const;
   /**
    * \brief Look up a FuelType based on the given code
    * \param value Value to use for lookup
@@ -127,6 +125,5 @@ private:
 [[nodiscard]] constexpr bool is_null_fuel(const topo::Cell& cell)
 {
   return INVALID_FUEL_CODE == cell.fuelCode();
-}
 }
 }

@@ -14,9 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-namespace firestarr
-{
-namespace util
+namespace firestarr::util
 {
 /**
  * \brief Keeps track of data structures so they can be reused instead of freeing and reacquiring them.
@@ -111,6 +109,5 @@ T* check_reset(T* t, MemoryPool<T>& pool)
     pool.release(t);
   }
   return nullptr;
-}
 }
 }

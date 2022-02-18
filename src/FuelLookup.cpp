@@ -18,9 +18,7 @@
 #include "FBP45.h"
 #include "Log.h"
 #include "Settings.h"
-namespace firestarr
-{
-namespace fuel
+namespace firestarr::fuel
 {
 static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Spruce-Lichen Woodland", "C-1"},
@@ -678,5 +676,4 @@ const array<const FuelType*, NUMBER_OF_FUELS> FuelLookup::Fuels{
   &M3_M4_95,
   &M3_M4_100,
 };
-}
 }

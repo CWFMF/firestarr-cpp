@@ -17,9 +17,7 @@
 #include <random>
 #include <vector>
 #include "SafeVector.h"
-namespace firestarr
-{
-namespace sim
+namespace firestarr::sim
 {
 class ProbabilityMap;
 class Scenario;
@@ -68,7 +66,7 @@ public:
    * \brief List of Scenarios this Iteration contains
    * \return List of Scenarios this Iteration contains
    */
-  const vector<Scenario*>& getScenarios() const noexcept
+  [[nodiscard]] const vector<Scenario*>& getScenarios() const noexcept
   {
     return scenarios_;
   }
@@ -102,5 +100,4 @@ private:
    */
   util::SafeVector final_sizes_{};
 };
-}
 }

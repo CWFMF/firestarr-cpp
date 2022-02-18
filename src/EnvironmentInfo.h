@@ -18,9 +18,7 @@
 #include <string>
 #include "Environment.h"
 #include "Grid.h"
-namespace firestarr
-{
-namespace topo
+namespace firestarr::topo
 {
 /**
  * \brief Information regarding an Environment, such as grids to read and location.
@@ -150,5 +148,4 @@ private:
                   data::GridBase&& fuel,
                   data::GridBase&& elevation) noexcept;
 };
-}
 }
