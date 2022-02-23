@@ -12,7 +12,23 @@
 #include "Location.h"
 #include "Log.h"
 #include "Point.h"
-const int GDAL_NODATA = 42113;
+#define TIFFTAG_GDAL_NODATA 42113
+
+/**
+ * Register GDALNoDataValue field on the tiff so that we can write to it
+ * @param tif TIFF to add field to
+ */
+static void
+add_gdal_tag(
+  TIFF* tif
+)
+{
+  static const TIFFFieldInfo info_nodata[] = {
+    {TIFFTAG_GDAL_NODATA, -1, -1, TIFF_ASCII, FIELD_CUSTOM, true, false, (char*)"GDALNoDataValue"}
+  };
+  TIFFMergeFieldInfo(tif, info_nodata, 1);
+}
+
 using fs::topo::Location;
 /**
  * \brief Provides hash function for Location.
@@ -547,7 +563,7 @@ read_header(
     //    logging::check_fatal(rows > numeric_limits<Idx>::max(),
     //                         "Cannot use grids with more than %d rows",
     //                         numeric_limits<Idx>::max());
-    TIFFGetField(tif, GDAL_NODATA, &count, &data);
+    TIFFGetField(tif, TIFFTAG_GDAL_NODATA, &count, &data);
     const auto nodata = stoi(string(static_cast<char*>(data)));
     double x = 0.0;
     double y = rows;

@@ -13,9 +13,7 @@
 #ifndef NDEBUG
 #include "Log.h"
 #endif
-namespace fs
-{
-namespace wx
+namespace fs::wx
 {
 // use an array instead of a map since number of values is so small and access should be faster
 using SurvivalMap = array<vector<float>, NUMBER_OF_FUELS>;
@@ -185,7 +183,6 @@ operator!=(
 )
 {
   return !(lhs == rhs);
-}
 }
 }
 #endif
