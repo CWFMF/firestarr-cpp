@@ -130,6 +130,7 @@ void IntensityMap::saveToAsciiFile(const string& dir, const string& base_name) c
 {
   lock_guard<mutex> lock(mutex_);
   map_->saveToAsciiFile(dir, base_name);
+//  map_->saveToTiffFile(dir, base_name);
 }
 double IntensityMap::fireSize() const
 {

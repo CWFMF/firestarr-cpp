@@ -21,6 +21,7 @@
 #include <map>
 #include <utility>
 #include "Grid.h"
+#include "ConstantGrid.h"
 namespace firestarr::data
 {
 /**
@@ -294,6 +295,195 @@ public:
     }
     out.close();
     this->createPrj(dir, base_name);
+  }
+  /**
+   * \brief Save contents to .tif file
+   * \param dir Directory to save into
+   * \param base_name File base name to use
+   */
+  void saveToTiffFile(const string& dir,
+                      const string& base_name) const
+  {
+    saveToTiffFile<V>(dir, base_name, [](V value)
+                      {
+                        return value;
+                      });
+  }
+  /**
+   * \brief Save GridMap contents to .tif file
+   * \tparam R Type to be written to .tif file
+   * \param dir Directory to save into
+   * \param base_name File base name to use
+   * \param convert Function to convert from V to R
+   */
+  template <class R>
+  void saveToTiffFile(const string& dir,
+                      const string& base_name,
+                      std::function<R(V value)> convert) const
+  {
+    constexpr uint32 tileWidth = 256;
+    constexpr uint32 tileHeight = 256;
+    Idx min_row = this->rows();
+    int16 max_row = 0;
+    Idx min_column = this->columns();
+    Idx max_column = 0;
+    for (const auto& kv : this->data)
+    {
+      const Idx r = kv.first.row();
+      const Idx c = kv.first.column();
+      min_row = min(min_row, r);
+      max_row = max(max_row, r);
+      min_column = min(min_column, c);
+      max_column = max(max_column, c);
+    }
+    // do this so that we take the center point when there's no data since it should
+    // stay the same if the grid is centered on the fire
+    if (min_row > max_row)
+    {
+      min_row = max_row = this->rows() / 2;
+    }
+    if (min_column > max_column)
+    {
+      min_column = max_column = this->columns() / 2;
+    }
+    Idx c_min = 0;
+    while (c_min + tileWidth <= min_column)
+    {
+      c_min += tileWidth;
+    }
+    Idx c_max = c_min + tileWidth;
+    while (c_max < max_column)
+    {
+      c_max += tileWidth;
+    }
+    min_column = c_min;
+    max_column = c_max;
+    Idx r_min = 0;
+    while (r_min + tileHeight <= min_row)
+    {
+      r_min += tileHeight;
+    }
+    Idx r_max = r_min + tileHeight;
+    while (r_max < max_row)
+    {
+      r_max += tileHeight;
+    }
+    min_row = r_min;
+    max_row = r_max;
+//    min_column = tileWidth;
+//    max_column = this->columns();
+//    min_row = tileHeight;
+//    max_row = this->rows();
+    logging::warning("(%d, %d) => (%d, %d)", min_column, min_row, max_column, max_row);
+    logging::check_fatal((max_row - min_row) % tileHeight != 0,"Invalid start and end rows");
+    logging::check_fatal((max_column - min_column) % tileHeight != 0,"Invalid start and end columns");
+    logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
+    logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
+    const double xll = this->xllcorner() + min_column * this->cellSize();
+    // offset is different for y since it's flipped
+    const double yll = this->yllcorner() + (min_row) * this->cellSize();
+    logging::extensive("Lower left corner is (%f, %f)", xll, yll);
+    const auto num_rows = max_row - min_row;
+    const auto num_columns = max_column - min_column;
+    // ensure this is always divisible by tile size
+    logging::check_fatal(0 != (num_rows % tileWidth), "%d rows not divisible by tiles", num_rows);
+    logging::check_fatal(0 != (num_columns % tileHeight), "%d columns not divisible by tiles", num_columns);
+    string filename = dir + base_name + ".tif";
+    TIFF* tif = TIFFOpen(filename.c_str(), "w");
+    auto gtif = GTIFNew(tif);
+    logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
+    const double xul = xll;
+//    const double yul = this->yllcorner() + (this->cellSize() * (min_row + num_rows));
+//    const double yul = this->yllcorner() + (this->cellSize() * (this->rows() - max_row));
+//    const double yul = this->yllcorner() + (this->cellSize() * (max_row + tileHeight));
+    // we know that making this bigger moves things north, which makes sense
+    const double yul = this->yllcorner() + (this->cellSize() * max_row);
+    double tiePoints[6] = {
+      0.0,
+      0.0,
+      0.0,
+      xul,
+      yul,
+      0.0};
+    double pixelScale[3] = {
+      this->cellSize(),
+      this->cellSize(),
+      0.0};
+    // HACK: why does this have to be +1?
+//    uint32 bps = min(32, std::numeric_limits<V>::digits + 1);
+//    uint32 bps = std::numeric_limits<V>::digits + 1;
+    uint32 bps = sizeof(R) * 8;
+////     HACK: deal with double for now
+//    bps = bps == 54 ? 64 : bps;
+    add_gdal_tag(tif);
+    // make sure to use floating point if values are
+    if (std::is_floating_point<R>::value)
+    {
+      TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+//      bps = 32;
+      int length = snprintf(NULL, 0, "%f", this->noDataInt());
+      char* str = static_cast<char*>(malloc(length + 1));
+      snprintf(str, length + 1, "%f", this->noDataInt());
+      TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
+//      GTIFKeySet(gtif, (geokey_t)TIFFTAG_GDAL_NODATA, TYPE_ASCII, length, str);
+      free(str);
+    }
+    else
+    {
+      int length = snprintf(NULL, 0, "%d", this->noData());
+      char* str = static_cast<char*>(malloc(length + 1));
+      snprintf(str, length + 1, "%d", this->noData());
+      TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
+//      GTIFKeySet(gtif, (geokey_t)TIFFTAG_GDAL_NODATA, TYPE_ASCII, length, str);
+      free(str);
+    }
+//    logging::warning("%s takes %d bits", base_name.c_str(), bps);
+    TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);
+    TIFFSetField(tif, TIFFTAG_IMAGELENGTH, num_rows);
+    TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, bps);
+    TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileWidth);
+    TIFFSetField(tif, TIFFTAG_TILELENGTH, tileHeight);
+    TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+    TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+    TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+    GTIFSetFromProj4(gtif, this->proj4().c_str());
+    TIFFSetField(tif, TIFFTAG_GEOTIEPOINTS, 6, tiePoints);
+    TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
+    size_t tileSize = tileWidth * tileHeight;
+    const auto buf_size = tileSize * sizeof(V);
+//    const auto buf_size = tileSize * bps;
+//    const auto buf_size = tileSize * (bps / 8);
+//    logging::warning("%s has buffer size %d", base_name.c_str(), buf_size);
+    T* buf = (T*)_TIFFmalloc(buf_size);
+    for (size_t co = 0; co < num_columns; co += tileWidth)
+    {
+      for (size_t ro = 0; ro < num_rows; ro += tileHeight)
+      {
+        // NOTE: shouldn't need to check if writing outside of tile because we made bounds on tile edges above
+        // need to put data from grid into buffer, but flipped vertically
+        for (size_t x = 0; x < tileWidth; ++x)
+        {
+          for (size_t y = 0; y < tileHeight; ++y)
+          {
+            const Idx r = static_cast<Idx>(max_row) - (ro + y + 1);
+            const Idx c = static_cast<Idx>(min_column) + co + x;
+            const Location idx(r, c);
+            const R value = convert(at(idx));
+            buf[x + y * tileWidth] = value;
+//            buf[x + y * tileWidth] = static_cast<R>(r);
+          }
+        }
+        logging::check_fatal(TIFFWriteTile(tif, buf, co, ro, 0, 0) < 0, "Cannot write tile to %s", filename.c_str());
+      }
+    }
+    GTIFWriteKeys(gtif);
+    if (gtif)
+    {
+      GTIFFree(gtif);
+    }
+    _TIFFfree(buf);
+    TIFFClose(tif);
   }
   /**
    * \brief Save GridMap contents to .asc file as probability
