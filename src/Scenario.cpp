@@ -444,7 +444,7 @@ void saveProbabilities(const string& dir,
 Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
 {
   log_check_fatal(ran(), "Scenario has already run");
-  log_debug("Starting");
+  log_verbose("Starting");
   CriticalSection _(Model::task_limiter);
   probabilities_ = probabilities;
   for (auto time : save_points_)
