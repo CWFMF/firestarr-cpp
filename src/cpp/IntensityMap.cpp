@@ -140,14 +140,14 @@ IntensityMap::burn(
   (*is_burned_).set(location.hash());
 }
 void
-IntensityMap::saveToAsciiFile(
+IntensityMap::save(
   const string& dir,
   const string& base_name
 ) const
 {
   lock_guard<mutex> lock(mutex_);
   map_->saveToAsciiFile(dir, base_name);
-  //  map_->saveToTiffFile(dir, base_name);
+  map_->saveToTiffFile(dir, base_name);
 }
 double
 IntensityMap::fireSize() const

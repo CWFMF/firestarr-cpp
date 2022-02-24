@@ -113,7 +113,7 @@ public:
    * \param base_name Base file name to save to
    */
   void
-  saveToAsciiFile(const string& dir, const string& base_name) const;
+  save(const string& dir, const string& base_name) const;
   /**
    * \brief Size of the fire represented by this
    * \return Size of the fire represented by this
