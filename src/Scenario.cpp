@@ -332,7 +332,8 @@ void Scenario::saveObservers(const double time) const
 }
 void Scenario::saveIntensity(const string& dir, const string& base_name) const
 {
-  intensity_->saveToAsciiFile(dir, base_name);
+  intensity_->save(dir, base_name);
+
 }
 bool Scenario::ran() const noexcept
 {
