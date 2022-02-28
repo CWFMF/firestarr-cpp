@@ -34,7 +34,7 @@ ArrivalObserver::getValue(
 SourceObserver::SourceObserver(
   const Scenario& scenario
 )
-  : MapObserver<CellIndex>(scenario, -1, "source")
+  : MapObserver<CellIndex>(scenario, static_cast<CellIndex>(255), "source")
 {
 }
 CellIndex
