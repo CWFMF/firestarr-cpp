@@ -47,25 +47,35 @@ struct InnerPos
     double sub_b
   )
   {
-    if (sub_a >= 1)
+    bool changed = true;
+    while (changed)
     {
-      a += 1;
-      sub_a -= 1;
-    }
-    else if (sub_a < 0)
-    {
-      a -= 1;
-      sub_a += 1;
-    }
-    if (sub_b >= 1)
-    {
-      b += 1;
-      sub_b -= 1;
-    }
-    else if (sub_b < 0)
-    {
-      b -= 1;
-      sub_b += 1;
+      changed = false;
+      // HACK: rounding error means something + 1 can originally be >0 but then equal 1 exactly
+      if (sub_a >= 1)
+      {
+        a += 1;
+        sub_a -= 1;
+        changed = true;
+      }
+      else if (sub_a < 0)
+      {
+        a -= 1;
+        sub_a += 1;
+        changed = true;
+      }
+      if (sub_b >= 1)
+      {
+        b += 1;
+        sub_b -= 1;
+        changed = true;
+      }
+      else if (sub_b < 0)
+      {
+        b -= 1;
+        sub_b += 1;
+        changed = true;
+      }
     }
     return InnerPos(a, b, sub_a, sub_b);
   }
