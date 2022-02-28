@@ -141,7 +141,7 @@ using HashSize = uint32_t;
 /**
  * \brief Size of the index for a Cell
  */
-using CellIndex = char;
+using CellIndex = uint8;
 /**
  * \brief A row or column index for a grid
  */

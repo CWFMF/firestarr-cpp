@@ -628,6 +628,85 @@ inline void Scenario::checkCondense(vector<InnerPos>& a)
     a.assign(result.begin(), result.end());
   }
 }
+
+// want to be able to make a bitmask of all directions it came from
+//  064  008  032
+//  001  000  002
+//  016  004  128
+static constexpr CellIndex DIRECTION_NONE = 0b00000000;
+static constexpr CellIndex DIRECTION_W = 0b00000001;
+static constexpr CellIndex DIRECTION_E = 0b00000010;
+static constexpr CellIndex DIRECTION_S = 0b00000100;
+static constexpr CellIndex DIRECTION_N = 0b00001000;
+static constexpr CellIndex DIRECTION_SW = 0b00010000;
+static constexpr CellIndex DIRECTION_NE = 0b00100000;
+static constexpr CellIndex DIRECTION_NW = 0b01000000;
+static constexpr CellIndex DIRECTION_SE = 0b10000000;
+
+/**
+ * Determine the direction that a given cell is in from another cell. This is the
+ * same convention as wind (i.e. the direction it is coming from, not the direction
+ * it is going towards).
+ * @param for_cell The cell to find directions relative to
+ * @param from_cell The cell to find the direction of
+ * @return Direction that you would have to go in to get to from_cell from for_cell
+ */
+CellIndex relativeIndex(const topo::Cell& for_cell, const topo::Cell& from_cell)
+{
+  const auto r = for_cell.row();
+  const auto r_o = from_cell.row();
+  const auto c = for_cell.column();
+  const auto c_o = from_cell.column();
+  if (r == r_o)
+  {
+    // center row
+    // same cell, so source is 0
+    if (c == c_o)
+    {
+      return DIRECTION_NONE;
+    }
+    if (c < c_o)
+    {
+      //center right
+      return DIRECTION_E;
+    }
+    // else has to be c > c_o
+    // center left
+    return DIRECTION_W;
+  }
+  if (r < r_o)
+  {
+    // came from the row to the north
+    if (c == c_o)
+    {
+      // center top
+      return DIRECTION_N;
+    }
+    if (c < c_o)
+    {
+      // top right
+      return DIRECTION_NE;
+    }
+    // else has to be c > c_o
+    // top left
+    return DIRECTION_NW;
+  }
+  // else r > r_o
+  // came from the row to the south
+  if (c == c_o)
+  {
+    // center bottom
+    return DIRECTION_S;
+  }
+  if (c < c_o)
+  {
+    // bottom right
+    return DIRECTION_SE;
+  }
+  // else has to be c > c_o
+  // bottom left
+  return DIRECTION_SW;
+}
 void Scenario::scheduleFireSpread(const Event& event)
 {
   const auto time = event.time();
@@ -699,6 +778,7 @@ void Scenario::scheduleFireSpread(const Event& event)
                                  Settings::maximumSpreadDistance() * cellSize() / max_ros_)
                            : max_duration);
   //note("Spreading for %f minutes", duration);
+  map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
   for (auto& kv : points_)
   {
@@ -718,6 +798,8 @@ void Scenario::scheduleFireSpread(const Event& event)
         {
           const InnerPos pos = p.add(offset);
           const auto for_cell = cell(pos);
+          const auto source = relativeIndex(for_cell, location);
+          sources[for_cell] |= source;
           if (!(fuel::is_null_fuel(for_cell) || (*unburnable_)[for_cell.hash()]))
           {
             //log_extensive("Adding point (%f, %f)", pos.x, pos.y);
@@ -748,10 +830,13 @@ void Scenario::scheduleFireSpread(const Event& event)
         const auto intensity = static_cast<IntensitySize>(max(
           1.0,
           max_intensity_[for_cell.key()]));
+        // HACK: just use the first cell as the source
+        const auto source = sources[for_cell];
         const auto fake_event = Event::makeFireSpread(
           new_time,
           intensity,
-          for_cell);
+          for_cell,
+          source);
         burn(fake_event, intensity);
       }
       // check if this cell is surrounded by burned cells or non-fuels
