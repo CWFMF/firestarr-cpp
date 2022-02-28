@@ -132,24 +132,18 @@ public:
                1,
                weather,
                start_date,
+               start_cell,
                start_point,
                static_cast<Day>(start_date),
                static_cast<Day>(end_date))
   {
-    start_cell_ = start_cell;
     registerObserver(new IntensityObserver(*this, "intensity"));
     registerObserver(new ArrivalObserver(*this));
     registerObserver(new SourceObserver(*this));
     addEvent(Event::makeEnd(end_date));
     last_save_ = end_date;
-    const auto num = (static_cast<size_t>(last_date_) - start_day_ + 1) * DAY_HOURS;
-    // these should be all 0's after resize
-    extinction_thresholds_.resize(num);
-    spread_thresholds_by_ros_.resize(num);
-    probabilities_ = nullptr;
     final_sizes_ = {};
-    ran_ = false;
-    current_time_ = start_time_;
+    reset(nullptr, nullptr, reinterpret_cast<util::SafeVector*>(&final_sizes_));
   }
 };
 int run_test(const char* output_directory,
@@ -204,6 +198,8 @@ int run_test(const char* output_directory,
                          model.nd(start_date),
                          weather.at(start_date));
   map<double, ProbabilityMap*> probabilities{};
+  logging::debug("Starting simulation");
+  // NOTE: don't want to reset first because TestScenario handles what that does
   scenario.run(&probabilities);
   scenario.saveObservers("");
   logging::note("Final Size: %0.0f, ROS: %0.2f",
@@ -227,6 +223,9 @@ int test(const int argc, const char* const argv[])
   assert(argc > 1 && 0 == strcmp(argv[1], "test"));
   try
   {
+    // increase logging level because there's no way to on command line right now
+    logging::Log::increaseLogLevel();
+    logging::Log::increaseLogLevel();
     auto result = 0;
     // HACK: use a variable and ++ so in case arg indices change
     auto i = 1;
@@ -240,6 +239,7 @@ int test(const int argc, const char* const argv[])
     }
     logging::debug("Output directory is %s", output_directory.c_str());
     util::make_directory_recursive(output_directory.c_str());
+    Settings::setOutputDirectory(output_directory);
     if (i == argc - 1 && 0 == strcmp(argv[i], "all"))
     {
       const auto num_hours = DEFAULT_HOURS;
@@ -290,6 +290,7 @@ int test(const int argc, const char* const argv[])
                         aspect,
                         wind_direction,
                         wind_speed);
+                Settings::setOutputDirectory(out);
                 result += run_test(out,
                                    fuel,
                                    slope,
