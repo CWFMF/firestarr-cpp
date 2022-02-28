@@ -19,6 +19,16 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+const int TIFFTAG_GDAL_NODATA = 42113;
+
+/**
+ * Open file and register GeoTIFF tags so we can read and write properly
+ * @param filename Name of file to open
+ * @param mode Mode to open file with
+ * @return Handle to open TIFF with fields registered
+ */
+TIFF* GeoTiffOpen(const char* const filename, const char* const mode);
+
 namespace firestarr
 {
 namespace util
