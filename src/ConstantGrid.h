@@ -414,7 +414,7 @@ public:
     uint32 width = this->columns();
     uint32 height = this->rows();
     string filename = dir + base_name + ".tif";
-    TIFF* tif = TIFFOpen(filename.c_str(), "w");
+    TIFF* tif = GeoTiffOpen(filename.c_str(), "w");
     auto gtif = GTIFNew(tif);
     logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
     const double xul = this->xllcorner();
