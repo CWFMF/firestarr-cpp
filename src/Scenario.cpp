@@ -173,12 +173,19 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
   clear();
   extinction_thresholds_.resize(num);
   spread_thresholds_by_ros_.resize(num);
-  make_threshold(&extinction_thresholds_, mt_extinction, start_day_, last_date_);
-  make_threshold(&spread_thresholds_by_ros_,
-                 mt_spread,
-                 start_day_,
-                 last_date_,
-                 &SpreadInfo::calculateRosFromThreshold);
+  // if these are null then all probability thresholds remain 0
+  if (NULL != mt_extinction)
+  {
+    make_threshold(&extinction_thresholds_, mt_extinction, start_day_, last_date_);
+  }
+  if (NULL != mt_spread)
+  {
+    make_threshold(&spread_thresholds_by_ros_,
+                   mt_spread,
+                   start_day_,
+                   last_date_,
+                   &SpreadInfo::calculateRosFromThreshold);
+  }
   //  std::fill(extinction_thresholds_.begin(), extinction_thresholds_.end(), 1.0 - abs(1.0 / (10 * id_)));
   //  std::fill(spread_thresholds_by_ros_.begin(), spread_thresholds_by_ros_.end(), 1.0 - abs(1.0 / (10 * id_)));
   //std::fill(extinction_thresholds_.begin(), extinction_thresholds_.end(), 0.5);
