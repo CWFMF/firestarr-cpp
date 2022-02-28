@@ -101,7 +101,22 @@ public:
     const IntensitySize intensity,
     const topo::Cell& cell)
   {
-    return {time, cell, 0, FIRE_SPREAD, intensity, 0};
+    return makeFireSpread(time, intensity, cell, 254);
+  }
+  /**
+   * \brief Make fire spread event
+   * \param time Time to schedule for
+   * \param intensity Intensity to spread with (kW/m)
+   * \param cell Cell to spread in
+   * \return Event created
+   */
+  [[nodiscard]] static Event constexpr makeFireSpread(
+    const double time,
+    const IntensitySize intensity,
+    const topo::Cell& cell,
+    const CellIndex source)
+  {
+    return {time, cell, source, FIRE_SPREAD, intensity, 0};
   }
   ~Event() = default;
   /**
