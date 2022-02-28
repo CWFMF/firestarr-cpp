@@ -10,6 +10,20 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#ifndef TIFFTAG_GDAL_NODATA
+#define TIFFTAG_GDAL_NODATA 42113
+#endif
+
+/**
+ * Open file and register GeoTIFF tags so we can read and write properly
+ * @param filename Name of file to open
+ * @param mode Mode to open file with
+ * @return Handle to open TIFF with fields registered
+ */
+TIFF*
+GeoTiffOpen(const char* const filename, const char* const mode);
+
 namespace fs
 {
 namespace util

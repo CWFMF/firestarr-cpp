@@ -430,7 +430,7 @@ public:
       num_columns
     );
     string filename = dir + base_name + ".tif";
-    TIFF* tif = TIFFOpen(filename.c_str(), "w");
+    TIFF* tif = GeoTiffOpen(filename.c_str(), "w");
     auto gtif = GTIFNew(tif);
     logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
     const double xul = xll;
@@ -438,7 +438,6 @@ public:
     double tiePoints[6] = {0.0, 0.0, 0.0, xul, yul, 0.0};
     double pixelScale[3] = {this->cellSize(), this->cellSize(), 0.0};
     uint32_t bps = sizeof(R) * 8;
-    add_gdal_tag(tif);
     // make sure to use floating point if values are
     if (std::is_floating_point<V>::value)
     {

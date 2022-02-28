@@ -7,6 +7,41 @@
 #include "Log.h"
 #include <regex>
 #include <filesystem>
+TIFF*
+GeoTiffOpen(
+  const char* const filename,
+  const char* const mode
+)
+{
+  TIFF* tif = XTIFFOpen(filename, mode);
+  static const TIFFFieldInfo xtiffFieldInfo[] = {
+    {TIFFTAG_GDAL_NODATA, -1, -1, TIFF_ASCII, FIELD_CUSTOM, true, false, (char*)"GDALNoDataValue"},
+    {TIFFTAG_GEOPIXELSCALE, -1, -1, TIFF_DOUBLE, FIELD_CUSTOM, true, true, (char*)"GeoPixelScale"},
+    {TIFFTAG_GEOTRANSMATRIX,
+     -1,
+     -1,
+     TIFF_DOUBLE,
+     FIELD_CUSTOM,
+     true,
+     true,
+     (char*)"GeoTransformationMatrix"},
+    {TIFFTAG_GEOTIEPOINTS, -1, -1, TIFF_DOUBLE, FIELD_CUSTOM, true, true, (char*)"GeoTiePoints"},
+    {TIFFTAG_GEOKEYDIRECTORY, -1, -1, TIFF_SHORT, FIELD_CUSTOM, true, true, (char*)"GeoKeyDirectory"
+    },
+    {TIFFTAG_GEODOUBLEPARAMS,
+     -1,
+     -1,
+     TIFF_DOUBLE,
+     FIELD_CUSTOM,
+     true,
+     true,
+     (char*)"GeoDoubleParams"},
+    {TIFFTAG_GEOASCIIPARAMS, -1, -1, TIFF_ASCII, FIELD_CUSTOM, true, true, (char*)"GeoASCIIParams"}
+  };
+  TIFFMergeFieldInfo(tif, xtiffFieldInfo, sizeof(xtiffFieldInfo) / sizeof(xtiffFieldInfo[0]));
+  return tif;
+}
+
 namespace fs::util
 {
 void

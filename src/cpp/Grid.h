@@ -12,22 +12,6 @@
 #include "Location.h"
 #include "Log.h"
 #include "Point.h"
-#define TIFFTAG_GDAL_NODATA 42113
-
-/**
- * Register GDALNoDataValue field on the tiff so that we can write to it
- * @param tif TIFF to add field to
- */
-static void
-add_gdal_tag(
-  TIFF* tif
-)
-{
-  static const TIFFFieldInfo info_nodata[] = {
-    {TIFFTAG_GDAL_NODATA, -1, -1, TIFF_ASCII, FIELD_CUSTOM, true, false, (char*)"GDALNoDataValue"}
-  };
-  TIFFMergeFieldInfo(tif, info_nodata, 1);
-}
 
 using fs::topo::Location;
 /**
@@ -632,7 +616,7 @@ with_tiff(
   logging::debug("Reading file %s", filename.c_str());
   // suppress warnings about geotiff tags that aren't found
   TIFFSetWarningHandler(nullptr);
-  auto tif = XTIFFOpen(filename.c_str(), "r");
+  auto tif = GeoTiffOpen(filename.c_str(), "r");
   logging::check_fatal(!tif, "Cannot open file %s as a TIF", filename.c_str());
   auto gtif = GTIFNew(tif);
   logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
