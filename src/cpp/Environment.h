@@ -20,9 +20,7 @@
 #include "Point.h"
 #include "Settings.h"
 
-namespace fs
-{
-namespace topo
+namespace fs::topo
 {
 using FuelGrid = data::ConstantGrid<const fuel::FuelType*, FuelSize>;
 using ElevationGrid = data::ConstantGrid<ElevationSize>;
@@ -344,14 +342,16 @@ protected:
               static_cast<SlopeSize>(round(slope_pct))
             );
             static_assert(std::numeric_limits<SlopeSize>::max() >= MAX_SLOPE_FOR_DISTANCE);
-            float aspect_azimuth = 0.0;
+            double aspect_azimuth = 0.0;
 
             if (s > 0 && (dx != 0 || dy != 0))
             {
-              aspect_azimuth = static_cast<float>(atan2(dy, -dx) * M_RADIANS_TO_DEGREES);
-              aspect_azimuth = (aspect_azimuth > 90.0f) ? (450.0f - aspect_azimuth)
-                                                        : (90.0f - aspect_azimuth);
-              if (aspect_azimuth == 360.0f)
+              aspect_azimuth = atan2(dy, -dx) * M_RADIANS_TO_DEGREES;
+              // NOTE: need to change this out of 'math' direction into 'real' direction (i.e. N is
+              // 0, not E)
+              aspect_azimuth = (aspect_azimuth > 90.0) ? (450.0 - aspect_azimuth)
+                                                       : (90.0 - aspect_azimuth);
+              if (aspect_azimuth == 360.0)
               {
                 aspect_azimuth = 0.0;
               }
@@ -408,7 +408,7 @@ protected:
   sim::BurnedData
   initializeNotBurnable(
     const FuelGrid& fuel
-  )
+  ) const
   {
     sim::BurnedData result{};
     //    std::fill(not_burnable_.begin(), not_burnable_.end(), false);
@@ -504,6 +504,5 @@ private:
    */
   ElevationSize elevation_;
 };
-}
 }
 #endif
