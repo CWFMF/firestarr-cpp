@@ -105,8 +105,6 @@ Environment Environment::loadEnvironment(const string& path,
     const auto find_what = string("fuel");
     const auto find_len = find_what.length();
     const auto find_start = fuel.find(find_what, fuel.find_last_of('/'));
-    const auto aspect = string(fuel).replace(find_start, find_len, "aspect");
-    const auto slope = string(fuel).replace(find_start, find_len, "slope");
     const auto elevation = string(fuel).replace(find_start, find_len, "dem");
     unique_ptr<const EnvironmentInfo> cur_info = EnvironmentInfo::loadInfo(
       fuel,
