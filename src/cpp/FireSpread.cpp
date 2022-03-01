@@ -375,20 +375,34 @@ SpreadInfo::SpreadInfo(
   const auto add_offsets_calc_ros = [&add_offsets, &calculate_ros](const MathSize angle_radians) {
     return add_offsets(angle_radians, calculate_ros(angle_radians));
   };
-  // HACK: rely on && to stop when first ros is too low
-  if (add_offsets_calc_ros(to_radians(10)) && add_offsets_calc_ros(to_radians(20))
-      && add_offsets_calc_ros(to_radians(30)) && add_offsets_calc_ros(to_radians(60))
-      && add_offsets(to_radians(90.0), flank_ros * sqrt(a_sq_sub_c_sq) / a)
-      && add_offsets_calc_ros(to_radians(120)) && add_offsets_calc_ros(to_radians(150)))
+  bool added = true;
+  constexpr size_t STEP = 10;
+  size_t i = STEP;
+  while (added && i < 90)
   {
-    // only use back ros if every other angle is spreading since this should be lowest
-    //  180
-    if (back_ros < min_ros)
+    added = add_offsets_calc_ros(to_radians(i));
+    i += STEP;
+  }
+  if (added)
+  {
+    added = add_offsets(to_radians(90), flank_ros * sqrt(a_sq_sub_c_sq) / a);
+    i = 90 + STEP;
+    while (added && i < 180)
     {
-      return;
+      added = add_offsets_calc_ros(to_radians(i));
+      i += STEP;
     }
-    const auto direction = fix_radians(RAD_180 + raz);
-    static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
+    if (added)
+    {
+      // only use back ros if every other angle is spreading since this should be lowest
+      //  180
+      if (back_ros < min_ros)
+      {
+        return;
+      }
+      const auto direction = fix_radians(RAD_180 + raz);
+      static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
+    }
   }
 }
 }
