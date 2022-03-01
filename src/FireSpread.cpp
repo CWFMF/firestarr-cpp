@@ -90,8 +90,8 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     const auto heading = util::to_heading(
       util::to_radians(static_cast<double>(slope_azimuth)));
     // we know that at->raz is already set to be the wind heading
-    const auto wsv_x = wind().wsvX() + wse * _cos(heading);
-    const auto wsv_y = wind().wsvY() + wse * _sin(heading);
+    const auto wsv_x = wind().wsvX() + wse * _sin(heading);
+    const auto wsv_y = wind().wsvY() + wse * _cos(heading);
     wsv = sqrt(wsv_x * wsv_x + wsv_y * wsv_y);
     raz = acos(wsv_y / wsv);
     if (wsv_x < 0)

@@ -326,6 +326,7 @@ protected:
             if (s > 0 && (dx != 0 || dy != 0))
             {
               aspect_azimuth = atan2(dy, -dx) * M_RADIANS_TO_DEGREES;
+              // NOTE: need to change this out of 'math' direction into 'real' direction (i.e. N is 0, not E)
               aspect_azimuth = (aspect_azimuth > 90.0) ? (450.0 - aspect_azimuth) : (90.0 - aspect_azimuth);
               if (aspect_azimuth == 360.0)
               {
