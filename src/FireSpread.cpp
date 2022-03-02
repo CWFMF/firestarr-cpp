@@ -93,7 +93,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     const auto wsv_x = wind().wsvX() + wse * _sin(heading);
     const auto wsv_y = wind().wsvY() + wse * _cos(heading);
     wsv = sqrt(wsv_x * wsv_x + wsv_y * wsv_y);
-    raz = acos(wsv_y / wsv);
+    raz = (0 == wsv) ? 0 : acos(wsv_y / wsv);
     if (wsv_x < 0)
     {
       raz = util::RAD_360 - raz;
@@ -133,7 +133,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
                               back_ros);
   }
   // do everything we can to avoid calling trig functions unnecessarily
-  const auto b_semi = has_no_slope ? 0 : cos(atan(percentSlope() / 100.0));
+  const auto b_semi = has_no_slope ? 0 : _cos(atan(percentSlope() / 100.0));
   const auto slope_radians = util::to_radians(slope_azimuth);
   // do check once and make function just return 1.0 if no slope
   const auto no_correction = [](const double) noexcept
@@ -144,15 +144,20 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   {
     // never gets called if isInvalid() so don't check
     // figure out how far the ground distance is in map distance horizontally
-    const auto angle_unrotated = theta - slope_radians;
+    auto angle_unrotated = theta - slope_radians;
+    if (util::to_degrees(angle_unrotated) == 270 || util::to_degrees(angle_unrotated) == 90)
+    {
+      angle_unrotated += 0.01;
+    }
     const auto tan_u = tan(angle_unrotated);
+    logging::warning("Angle %f gives degrees %f and tan of %f", angle_unrotated, util::to_degrees(angle_unrotated), tan_u);
     const auto y = b_semi / sqrt(b_semi * tan_u * (b_semi * tan_u) + 1.0);
     const auto x = y * tan_u;
     return sqrt(x * x + y * y);
   };
   const auto correction_factor = has_no_slope
                                  ? std::function<double(double)>(no_correction)
-                                 : std::function<double(double)>(do_correction);
+                                 : std::function<double(double)>(no_correction);
   const auto cell_size = scenario.cellSize();
   const auto add_offset = [this, cell_size, min_ros](const double direction,
                                                      const double ros)
@@ -198,11 +203,17 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   const auto calculate_ros =
     [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](const double theta) noexcept
   {
-    const auto cos_t = cos(theta);
+    if (util::to_degrees(theta) == 90 || util::to_degrees(theta) == 270)
+    {
+      logging::error("Spreading in a direction that tangent doesn't work");
+    }
+    const auto cos_t = _cos(theta);
     const auto cos_t_sq = cos_t * cos_t;
     const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
     // 1.0 = cos^2 + sin^2
-    const auto sin_t_sq = 1.0 - cos_t_sq;
+//    const auto sin_t_sq = 1.0 - cos_t_sq;
+    const auto sin_t = _sin(theta);
+    const auto sin_t_sq = sin_t * sin_t;
     return abs((a * ((flank_ros * cos_t * sqrt(f_sq_cos_t_sq + a_sq_sub_c_sq * sin_t_sq) - ac * sin_t_sq) / (f_sq_cos_t_sq + a_sq * sin_t_sq)) + c) / cos_t);
   };
   const auto add_offsets =
@@ -215,6 +226,10 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
       return false;
     }
     auto direction = util::fix_radians(angle_radians + raz);
+//    if (util::to_degrees(direction) == 90 || util::to_degrees(direction) == 270)
+//    {
+//      logging::error("Adding offsets in a direction that tangent doesn't work");
+//    }
     // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
     // intentionally don't use || because we want both of these to happen all the time
     auto added = add_offset(direction, ros_flat * correction_factor(direction));
@@ -228,13 +243,26 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     return add_offsets(angle_radians, calculate_ros(angle_radians));
   };
   // HACK: rely on && to stop when first ros is too low
-  if (add_offsets_calc_ros(util::to_radians(10))
+  if (add_offset(raz, head_ros_)
+    && add_offsets_calc_ros(util::to_radians(10))
       && add_offsets_calc_ros(util::to_radians(20))
       && add_offsets_calc_ros(util::to_radians(30))
+      && add_offsets_calc_ros(util::to_radians(40))
+      && add_offsets_calc_ros(util::to_radians(50))
       && add_offsets_calc_ros(util::to_radians(60))
-      && add_offsets(util::to_radians(90.0), flank_ros * sqrt(a_sq_sub_c_sq) / a)
+      && add_offsets_calc_ros(util::to_radians(60))
+      && add_offsets_calc_ros(util::to_radians(70))
+      && add_offsets_calc_ros(util::to_radians(80))
+      && add_offsets(util::to_radians(90), flank_ros * sqrt(a_sq_sub_c_sq) / a)
+      && add_offsets_calc_ros(util::to_radians(100))
+      && add_offsets_calc_ros(util::to_radians(110))
       && add_offsets_calc_ros(util::to_radians(120))
-      && add_offsets_calc_ros(util::to_radians(150)))
+      && add_offsets_calc_ros(util::to_radians(130))
+      && add_offsets_calc_ros(util::to_radians(140))
+      && add_offsets_calc_ros(util::to_radians(150))
+      && add_offsets_calc_ros(util::to_radians(160))
+      && add_offsets_calc_ros(util::to_radians(170))
+      )
   {
     //only use back ros if every other angle is spreading since this should be lowest
     // 180

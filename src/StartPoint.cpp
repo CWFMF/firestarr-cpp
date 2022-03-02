@@ -16,6 +16,7 @@
 #include "stdafx.h"
 #include "StartPoint.h"
 #include "Settings.h"
+#include "unstable.h"
 namespace firestarr::topo
 {
 template <typename T>
@@ -54,15 +55,15 @@ static double sunrise_sunset(const int jd,
   const auto t = jd + (t_hour - lng_hour) / 24;
   const auto m = 0.9856 * t - 3.289;
   const auto l = fix_degrees(
-    m + 1.916 * sin(util::to_radians(m)) + 0.020 * sin(util::to_radians(2 * m)) + 282.634);
+    m + 1.916 * _sin(util::to_radians(m)) + 0.020 * _sin(util::to_radians(2 * m)) + 282.634);
   auto ra = fix_degrees(util::to_degrees(atan(0.91764 * tan(util::to_radians(l)))));
   const auto l_quadrant = floor(l / 90) * 90;
   const auto ra_quadrant = floor(ra / 90) * 90;
   ra += l_quadrant - ra_quadrant;
   ra /= 15;
-  const auto sin_dec = 0.39782 * sin(util::to_radians(l));
-  const auto cos_dec = cos(asin(sin_dec));
-  const auto cos_h = (cos(Zenith) - sin_dec * sin(util::to_radians(latitude))) / (cos_dec * cos(util::to_radians(latitude)));
+  const auto sin_dec = 0.39782 * _sin(util::to_radians(l));
+  const auto cos_dec = _cos(asin(sin_dec));
+  const auto cos_h = (_cos(Zenith) - sin_dec * _sin(util::to_radians(latitude))) / (cos_dec * _cos(util::to_radians(latitude)));
   if (cos_h > 1)
   {
     // sun never rises

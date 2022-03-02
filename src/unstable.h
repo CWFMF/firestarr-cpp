@@ -16,8 +16,5 @@
 // flags in release and debug mode to avoid changing the outputs.
 #pragma once
 #include <cmath>
-namespace firestarr::sim
-{
 double _cos(double angle) noexcept;
 double _sin(double angle) noexcept;
-}

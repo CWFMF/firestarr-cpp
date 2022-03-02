@@ -138,7 +138,9 @@ struct InnerPos
   constexpr InnerPos(const Idx x, const Idx y, const double sub_x, const double sub_y) noexcept
     : x(x), y(y), sub_x(sub_x), sub_y(sub_y)
   {
-    logging::check_fatal(sub_x >= 1 || sub_x < 0 || sub_y >= 1 || sub_y < 0, "Sub-coordinates are outside cell");
+    logging::check_fatal(sub_x >= 1 || sub_x < 0 || sub_y >= 1 || sub_y < 0,
+                         "Sub-coordinates (%f, %f) are outside cell",
+                         sub_x, sub_y);
   }
 };
 }
