@@ -16,6 +16,7 @@
 #pragma once
 #include "Index.h"
 #include "Util.h"
+#include "unstable.h"
 namespace firestarr
 {
 using data::Index;
@@ -163,8 +164,8 @@ public:
    * \param speed Speed of wind
    */
   Wind(const Direction& direction, const Speed speed) noexcept
-    : wsv_x_(speed.asDouble() * sin(direction.heading())),
-      wsv_y_(speed.asDouble() * cos(direction.heading())),
+    : wsv_x_(speed.asDouble() * _sin(direction.heading())),
+      wsv_y_(speed.asDouble() * _cos(direction.heading())),
       direction_(direction),
       speed_(speed)
   {
