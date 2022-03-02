@@ -98,11 +98,11 @@ struct InnerPos
   {
     if (x == rhs.x)
     {
-      if (abs(sub_x - rhs.sub_x) < COMPARE_LIMIT)
+      if (sub_x == rhs.sub_x)
       {
         if (y == rhs.y)
         {
-          if (abs(sub_y - rhs.sub_y) < COMPARE_LIMIT)
+          if (sub_y == rhs.sub_y)
           {
             // they are "identical" so this is false
             return false;
@@ -122,8 +122,7 @@ struct InnerPos
    */
   bool operator==(const InnerPos& rhs) const noexcept
   {
-    return (x == rhs.x) && (y == rhs.y) && (abs(sub_x - rhs.sub_x) < COMPARE_LIMIT)
-        && (abs(sub_y - rhs.sub_y) < COMPARE_LIMIT);
+    return (x == rhs.x) && (y == rhs.y) && (sub_x == rhs.sub_x) && (sub_y == rhs.sub_y);
   }
   /**
    * \brief Add offset to position and return result
@@ -140,9 +139,17 @@ struct InnerPos
     : x(x), y(y), sub_x(sub_x), sub_y(sub_y)
   {
     logging::check_fatal(
-      sub_x >= 1 || sub_x < 0 || sub_y >= 1 || sub_y < 0, "Sub-coordinates are outside cell"
+      sub_x >= 1 || sub_x < 0 || sub_y >= 1 || sub_y < 0,
+      "Sub-coordinates (%f, %f) are outside cell",
+      sub_x,
+      sub_y
     );
   }
+  /**
+   * Copy constructor
+   * @param p Object to copy values from
+   */
+  constexpr InnerPos(const InnerPos& p) noexcept : InnerPos(p.x, p.y, p.sub_x, p.sub_y) { }
 };
 static constexpr MathSize x(const auto& p) { return p.x; }
 static constexpr MathSize y(const auto& p) { return p.y; }
