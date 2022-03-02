@@ -12,8 +12,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "unstable.h"
-namespace fs::sim
-{
 double
 _cos(
   const double angle
@@ -27,5 +25,4 @@ _sin(
 ) noexcept
 {
   return sin(angle);
-}
 }

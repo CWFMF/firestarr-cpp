@@ -6,6 +6,7 @@
 #include "UTM.h"
 #include "Point.h"
 #include "Util.h"
+#include "unstable.h"
 namespace fs::topo
 {
 // UTM.c
@@ -45,8 +46,8 @@ arc_length_of_meridian(
   const auto epsilon = (315.0 * pow_int<4>(n) / 512.0);
   /* Now calculate the sum of the series and return */
   return alpha
-       * (phi + (beta * sin(2.0 * phi)) + (gamma * sin(4.0 * phi)) + (delta * sin(6.0 * phi))
-          + (epsilon * sin(8.0 * phi)));
+       * (phi + (beta * _sin(2.0 * phi)) + (gamma * _sin(4.0 * phi)) + (delta * _sin(6.0 * phi))
+          + (epsilon * _sin(8.0 * phi)));
 }
 constexpr double
 utm_central_meridian(
@@ -84,8 +85,8 @@ footpoint_latitude(
   /* Precalculate epsilon_ (Eq. 10.22) */
   const auto epsilon = (1097.0 * pow_int<4>(n) / 512.0);
   /* Now calculate the sum of the series (Eq. 10.21) */
-  return y_alpha + (beta * sin(2.0 * y_alpha)) + (gamma * sin(4.0 * y_alpha))
-       + (delta * sin(6.0 * y_alpha)) + (epsilon * sin(8.0 * y_alpha));
+  return y_alpha + (beta * _sin(2.0 * y_alpha)) + (gamma * _sin(4.0 * y_alpha))
+       + (delta * _sin(6.0 * y_alpha)) + (epsilon * _sin(8.0 * y_alpha));
 }
 void
 map_lat_lon_to_xy(
@@ -97,7 +98,7 @@ map_lat_lon_to_xy(
 ) noexcept
 {
   const auto ep2 = (pow_int<2>(SM_A) - pow_int<2>(SM_B)) / pow_int<2>(SM_B);
-  const auto c = cos(phi);
+  const auto c = _cos(phi);
   const auto nu2 = ep2 * pow_int<2>(c);
   const auto n = pow_int<2>(SM_A) / (SM_B * sqrt(1 + nu2));
   const auto t = tan(phi);
@@ -141,7 +142,7 @@ map_xy_to_lat_lon(
   /* Get the value of phi_f, the footpoint latitude. */
   const auto phi_f = footpoint_latitude(y);
   const auto ep2 = (pow_int<2>(SM_A) - pow_int<2>(SM_B)) / pow_int<2>(SM_B);
-  const auto cf = cos(phi_f);
+  const auto cf = _cos(phi_f);
   const auto nuf2 = ep2 * pow_int<2>(cf);
   /* Precalculate Nf and initialize nf_power */
   const auto nf = pow_int<2>(SM_A) / (SM_B * sqrt(1 + nuf2));

@@ -79,6 +79,45 @@ struct InnerPos
     }
     return InnerPos(a, b, sub_a, sub_b);
   }
+  //  /**
+  //   * \brief Less than operator
+  //   * \param rhs InnerPos to compare to
+  //   * \return Whether or not this is less than the other
+  //   */
+  //  bool operator<(const InnerPos& rhs) const noexcept
+  //  {
+  //    if (x == rhs.x)
+  //    {
+  //      if (abs(sub_x - rhs.sub_x) < COMPARE_LIMIT)
+  //      {
+  //        if (y == rhs.y)
+  //        {
+  //          if (abs(sub_y - rhs.sub_y) < COMPARE_LIMIT)
+  //          {
+  //            // they are "identical" so this is false
+  //            return false;
+  //          }
+  //          return sub_y < rhs.sub_y;
+  //        }
+  //        return y < rhs.y;
+  //      }
+  //      return sub_x < rhs.sub_x;
+  //    }
+  //    return x < rhs.x;
+  //  }
+  //  /**
+  //   * \brief Equality operator
+  //   * \param rhs InnerPos to compare to
+  //   * \return Whether or not this is equivalent to the other
+  //   */
+  //  bool operator==(const InnerPos& rhs) const noexcept
+  //  {
+  //    return (x == rhs.x)
+  //        && (y == rhs.y)
+  //        && (abs(sub_x - rhs.sub_x) < COMPARE_LIMIT)
+  //        && (abs(sub_y - rhs.sub_y) < COMPARE_LIMIT);
+  //  }
+
   /**
    * \brief Less than operator
    * \param rhs InnerPos to compare to
@@ -91,11 +130,11 @@ struct InnerPos
   {
     if (x == rhs.x)
     {
-      if (abs(sub_x - rhs.sub_x) < COMPARE_LIMIT)
+      if (sub_x == rhs.sub_x)
       {
         if (y == rhs.y)
         {
-          if (abs(sub_y - rhs.sub_y) < COMPARE_LIMIT)
+          if (sub_y == rhs.sub_y)
           {
             // they are "identical" so this is false
             return false;
@@ -118,8 +157,7 @@ struct InnerPos
     const InnerPos& rhs
   ) const noexcept
   {
-    return (x == rhs.x) && (y == rhs.y) && (abs(sub_x - rhs.sub_x) < COMPARE_LIMIT)
-        && (abs(sub_y - rhs.sub_y) < COMPARE_LIMIT);
+    return (x == rhs.x) && (y == rhs.y) && (sub_x == rhs.sub_x) && (sub_y == rhs.sub_y);
   }
   /**
    * \brief Add offset to position and return result
@@ -151,8 +189,21 @@ struct InnerPos
   {
     logging::check_fatal(
       sub_x >= 1 || sub_x < 0 || sub_y >= 1 || sub_y < 0,
-      "Sub-coordinates are outside cell"
+      "Sub-coordinates (%f, %f) are outside cell",
+      sub_x,
+      sub_y
     );
+  }
+
+  /**
+   * Copy constructor
+   * @param p Object to copy values from
+   */
+  constexpr InnerPos(
+    const InnerPos& p
+  ) noexcept
+    : InnerPos(p.x, p.y, p.sub_x, p.sub_y)
+  {
   }
 };
 }

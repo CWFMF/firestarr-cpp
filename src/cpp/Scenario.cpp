@@ -9,6 +9,8 @@
 #include "MemoryPool.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
+#include "hull2d.h"
+#include "exclusionlist.h"
 namespace fs::sim
 {
 // FIX: why is this not just 0.5?
@@ -609,6 +611,20 @@ operator<<(
   }
   return os;
 }
+
+inline void
+doCondense(
+  vector<InnerPos>& a
+)
+{
+  // three points have to make a triangle (unless they're co-linear?)
+  if (a.size() <= 3)
+  {
+    return;
+  }
+  peel(a);
+}
+
 inline void
 Scenario::checkCondense(
   vector<InnerPos>& a
@@ -616,79 +632,7 @@ Scenario::checkCondense(
 {
   if (a.size() > Settings::maxCellPoints())
   {
-    size_t n_pos = 0;
-    auto n = numeric_limits<double>::min();
-    size_t ne_pos = 0;
-    auto ne = numeric_limits<double>::min();
-    size_t e_pos = 0;
-    auto e = numeric_limits<double>::min();
-    size_t se_pos = 0;
-    auto se = numeric_limits<double>::min();
-    size_t s_pos = 0;
-    auto s = numeric_limits<double>::max();
-    size_t sw_pos = 0;
-    auto sw = numeric_limits<double>::min();
-    size_t w_pos = 0;
-    auto w = numeric_limits<double>::max();
-    size_t nw_pos = 0;
-    auto nw = numeric_limits<double>::min();
-    for (size_t i = 0; i < a.size(); ++i)
-    {
-      const auto& p = a[i];
-      const auto x = p.sub_x - 0.5;
-      const auto y = p.sub_y - 0.5;
-      // NOTE: seems like it should be else if, but want to make sure
-      // all of these are initialized after the first point
-      if (y > n)
-      {
-        n_pos = i;
-        n = y;
-      }
-      if (y < s)
-      {
-        s_pos = i;
-        s = y;
-      }
-      const auto cur_ne = x + y;
-      const auto cur_sw = -x - y;
-      if (cur_ne > ne)
-      {
-        ne_pos = i;
-        ne = cur_ne;
-      }
-      if (cur_sw > sw)
-      {
-        sw_pos = i;
-        sw = cur_sw;
-      }
-      if (x > e)
-      {
-        e_pos = i;
-        e = x;
-      }
-      if (x < w)
-      {
-        w_pos = i;
-        w = x;
-      }
-      const auto cur_se = x - y;
-      const auto cur_nw = -x + y;
-      if (cur_se > se)
-      {
-        se_pos = i;
-        se = cur_se;
-      }
-      if (cur_nw > nw)
-      {
-        nw_pos = i;
-        nw = cur_nw;
-      }
-    }
-    // NOTE: temporarily use a set to ensure no duplicates
-    const std::set<InnerPos>
-      result{a[n_pos], a[ne_pos], a[e_pos], a[se_pos], a[s_pos], a[sw_pos], a[w_pos], a[nw_pos]};
-    a = {};
-    a.assign(result.begin(), result.end());
+    doCondense(a);
   }
 }
 
