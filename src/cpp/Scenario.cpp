@@ -704,22 +704,11 @@ Scenario::run(
 }
 
 inline void
-doCondense(
-  PointSet& a
-)
-{
-  hull(a);
-}
-
-inline void
 Scenario::checkCondense(
   PointSet& a
 )
 {
-  if (a.size() > Settings::maxCellPoints())
-  {
-    doCondense(a);
-  }
+  hull(a);
 }
 
 /**

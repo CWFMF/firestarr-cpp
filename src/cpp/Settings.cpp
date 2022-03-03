@@ -197,16 +197,6 @@ public:
   }
 
   /**
-   * \brief Maximum number of points in a Cell before they are condensed
-   * \return Maximum number of points in a Cell before they are condensed
-   */
-  [[nodiscard]] constexpr size_t
-  maxCellPoints() const noexcept
-  {
-    return max_cell_points_;
-  }
-
-  /**
    * \brief The maximum fire intensity for the 'low' range of intensity (kW/m)
    * \return The maximum fire intensity for the 'low' range of intensity (kW/m)
    */
@@ -491,18 +481,6 @@ private:
    */
   int default_percent_dead_fir_;
   /**
-   * \brief Maximum number of Iterations to run at once if running async
-   */
-  size_t concurrent_simulation_rounds_;
-  /**
-   * \brief Minimum number of Iterations to run before precision required to stop is considered
-   */
-  size_t minimum_simulation_rounds_;
-  /**
-   * \brief Maximum number of points in a Cell before they are condensed
-   */
-  size_t max_cell_points_;
-  /**
    * \brief Whatever the maximum value in the date offsets is
    */
   int max_date_offset_;
@@ -720,7 +698,6 @@ SettingsImplementation::setRoot(
     default_percent_dead_fir_ = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
     intensity_max_low_ = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
     intensity_max_moderate_ = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
-    max_date_offset_ = *std::max_element(output_date_offsets_.begin(), output_date_offsets_.end());
     if (!settings.empty())
     {
       logging::warning("Unused settings in settings file %s", filename.c_str());
@@ -1043,12 +1020,6 @@ int
 Settings::defaultPercentDeadFir() noexcept
 {
   return SettingsImplementation::instance().defaultPercentDeadFir();
-}
-
-size_t
-Settings::maxCellPoints() noexcept
-{
-  return SettingsImplementation::instance().maxCellPoints();
 }
 
 int
