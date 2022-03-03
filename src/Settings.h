@@ -134,11 +134,6 @@ public:
    */
   [[nodiscard]] static size_t minimumSimulationRounds() noexcept;
   /**
-   * \brief Maximum number of points in a Cell before they are condensed
-   * \return 
-   */
-  [[nodiscard]] static size_t maxCellPoints() noexcept;
-  /**
    * \brief The maximum fire intensity for the 'low' range of intensity (kW/m)
    * \return The maximum fire intensity for the 'low' range of intensity (kW/m)
    */
