@@ -181,15 +181,6 @@ public:
     return default_percent_dead_fir_;
   }
   /**
-   * \brief Maximum number of points in a Cell before they are condensed
-   * \return Maximum number of points in a Cell before they are condensed
-   */
-  [[nodiscard]] constexpr size_t
-  maxCellPoints() const noexcept
-  {
-    return max_cell_points_;
-  }
-  /**
    * \brief The maximum fire intensity for the 'low' range of intensity (kW/m)
    * \return The maximum fire intensity for the 'low' range of intensity (kW/m)
    */
@@ -423,10 +414,6 @@ private:
    */
   size_t minimum_simulation_rounds_;
   /**
-   * \brief Maximum number of points in a Cell before they are condensed
-   */
-  size_t max_cell_points_;
-  /**
    * \brief Whatever the maximum value in the date offsets is
    */
   int max_date_offset_;
@@ -541,7 +528,6 @@ SettingsImplementation::SettingsImplementation(
     minimum_simulation_rounds_ = static_cast<size_t>(
       stoi(get_value(settings, "MINIMUM_SIMULATION_ROUNDS"))
     );
-    max_cell_points_ = static_cast<size_t>(stoi(get_value(settings, "MAX_CELL_POINTS")));
     max_date_offset_ = *std::max_element(output_date_offsets_.begin(), output_date_offsets_.end());
     if (!settings.empty())
     {
@@ -657,11 +643,6 @@ size_t
 Settings::minimumSimulationRounds() noexcept
 {
   return SettingsImplementation::instance().minimumSimulationRounds();
-}
-size_t
-Settings::maxCellPoints() noexcept
-{
-  return SettingsImplementation::instance().maxCellPoints();
 }
 int
 Settings::intensityMaxLow() noexcept
