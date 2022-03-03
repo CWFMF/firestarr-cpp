@@ -151,7 +151,6 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
       return 1.0;
     }
     const auto tan_u = tan(angle_unrotated);
-//    logging::warning("Angle %f gives degrees %f and tan of %f", angle_unrotated, util::to_degrees(angle_unrotated), tan_u);
     const auto y = b_semi / sqrt(b_semi * tan_u * (b_semi * tan_u) + 1.0);
     const auto x = y * tan_u;
     // CHECK: Pretty sure you can't spread farther horizontally than the spread distance, regardless of angle?
@@ -205,15 +204,11 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   const auto calculate_ros =
     [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](const double theta) noexcept
   {
-    if (util::to_degrees(theta) == 90 || util::to_degrees(theta) == 270)
-    {
-      logging::error("Spreading in a direction that tangent doesn't work");
-    }
     const auto cos_t = _cos(theta);
     const auto cos_t_sq = cos_t * cos_t;
     const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
     // 1.0 = cos^2 + sin^2
-//    const auto sin_t_sq = 1.0 - cos_t_sq;
+    //    const auto sin_t_sq = 1.0 - cos_t_sq;
     const auto sin_t = _sin(theta);
     const auto sin_t_sq = sin_t * sin_t;
     return abs((a * ((flank_ros * cos_t * sqrt(f_sq_cos_t_sq + a_sq_sub_c_sq * sin_t_sq) - ac * sin_t_sq) / (f_sq_cos_t_sq + a_sq * sin_t_sq)) + c) / cos_t);
@@ -228,10 +223,6 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
       return false;
     }
     auto direction = util::fix_radians(angle_radians + raz);
-//    if (util::to_degrees(direction) == 90 || util::to_degrees(direction) == 270)
-//    {
-//      logging::error("Adding offsets in a direction that tangent doesn't work");
-//    }
     // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
     // intentionally don't use || because we want both of these to happen all the time
     auto added = add_offset(direction, ros_flat * correction_factor(direction));
@@ -246,7 +237,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   };
   // HACK: rely on && to stop when first ros is too low
   if (add_offset(raz, head_ros_)
-    && add_offsets_calc_ros(util::to_radians(10))
+      && add_offsets_calc_ros(util::to_radians(10))
       && add_offsets_calc_ros(util::to_radians(20))
       && add_offsets_calc_ros(util::to_radians(30))
       && add_offsets_calc_ros(util::to_radians(40))
@@ -262,8 +253,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
       && add_offsets_calc_ros(util::to_radians(140))
       && add_offsets_calc_ros(util::to_radians(150))
       && add_offsets_calc_ros(util::to_radians(160))
-      && add_offsets_calc_ros(util::to_radians(170))
-      )
+      && add_offsets_calc_ros(util::to_radians(170)))
   {
     //only use back ros if every other angle is spreading since this should be lowest
     // 180
