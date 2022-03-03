@@ -141,8 +141,6 @@ SpreadInfo::SpreadInfo(
       return 1.0;
     }
     const auto tan_u = tan(angle_unrotated);
-    //    logging::warning("Angle %f gives degrees %f and tan of %f", angle_unrotated,
-    //    util::to_degrees(angle_unrotated), tan_u);
     const auto y = b_semi / sqrt(b_semi * tan_u * (b_semi * tan_u) + 1.0);
     const auto x = y * tan_u;
     // CHECK: Pretty sure you can't spread farther horizontally than the spread distance, regardless
@@ -193,10 +191,6 @@ SpreadInfo::SpreadInfo(
   const auto calculate_ros = [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](
                                const double theta
                              ) noexcept {
-    if (util::to_degrees(theta) == 90 || util::to_degrees(theta) == 270)
-    {
-      logging::error("Spreading in a direction that tangent doesn't work");
-    }
     const auto cos_t = _cos(theta);
     const auto cos_t_sq = cos_t * cos_t;
     const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
@@ -219,10 +213,6 @@ SpreadInfo::SpreadInfo(
       return false;
     }
     auto direction = util::fix_radians(angle_radians + raz);
-    //    if (util::to_degrees(direction) == 90 || util::to_degrees(direction) == 270)
-    //    {
-    //      logging::error("Adding offsets in a direction that tangent doesn't work");
-    //    }
     // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
     // intentionally don't use || because we want both of these to happen all the time
     auto added = add_offset(direction, ros_flat * correction_factor(direction));
