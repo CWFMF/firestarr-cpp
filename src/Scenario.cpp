@@ -20,7 +20,7 @@
 #include "MemoryPool.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
-#include "hull2d.h"
+#include "ConvexHull.h"
 namespace firestarr::sim
 {
 // FIX: why is this not just 0.5?
