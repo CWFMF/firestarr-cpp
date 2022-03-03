@@ -1,87 +1,85 @@
-#include "hull2d.h"
+// Copyright (c) 2005-2022, Jordan Evens
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#include "ConvexHull.h"
 
 //#define DEBUG_HULL
 
-/*
- * Calculates distance from point a to point b
- */
-double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b)
+inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b)
 {
-  int abX = (b.sub_x - a.sub_x);
-  int abY = (b.sub_y - a.sub_y);
+  const auto abX = (b.sub_x - a.sub_x);
+  const auto abY = (b.sub_y - a.sub_y);
   return (abX * abX + abY * abY);
 }
 
 void hull(vector<firestarr::sim::InnerPos>& a)
 {
-#ifdef DEBUG_HULL
-  size_t orig_size = a.size();
-#endif
-//  // first thing is just making sure all points are unique
-//  set<firestarr::sim::InnerPos> tmp{};
-//  tmp.insert(a.cbegin(), a.cend());
-//  a = {};
-//  a.insert(a.end(), tmp.cbegin(), tmp.cend());
-#ifdef DEBUG_HULL
-  size_t set_size = a.size();
-#endif
-//  vector<std::pair<firestarr::sim::InnerPos, firestarr::sim::InnerPos>> edges{};
   set<firestarr::sim::InnerPos> hullPoints{};
   double maxX = std::numeric_limits<double>::min();
   double minX = std::numeric_limits<double>::max();
-  firestarr::sim::InnerPos maxNode{0, 0, 0, 0};
-  firestarr::sim::InnerPos minNode{0, 0, 0, 0};
+  firestarr::sim::InnerPos maxPos{0, 0, 0, 0};
+  firestarr::sim::InnerPos minPos{0, 0, 0, 0};
 
   for (const auto p : a)
   {
     if (p.sub_x > maxX)
     {
       maxX = p.sub_x;
-      maxNode = p;
+      maxPos = p;
     }
+    // don't use else if because first point should be set for both
     if (p.sub_x < minX)
     {
       minX = p.sub_x;
-      minNode = p;
+      minPos = p;
     }
   }
 
   //get rid of max & min nodes & call quickhull
-  if (maxNode != minNode)
+  if (maxPos != minPos)
   {
-    a.erase(std::remove(a.begin(), a.end(), maxNode), a.end());
-    a.erase(std::remove(a.begin(), a.end(), minNode), a.end());
-    quickHull(a, hullPoints, minNode, maxNode);
-    quickHull(a, hullPoints, maxNode, minNode);
-    // points should all be unique
+    a.erase(std::remove(a.begin(), a.end(), maxPos), a.end());
+    a.erase(std::remove(a.begin(), a.end(), minPos), a.end());
+    quickHull(a, hullPoints, minPos, maxPos);
+    quickHull(a, hullPoints, maxPos, minPos);
+    // points should all be unique, so just insert them
     a = {};
     a.insert(a.end(), hullPoints.cbegin(), hullPoints.cend());
   }
   else
   {
-    // points might not be unique
-      set<firestarr::sim::InnerPos> tmp{};
-      tmp.insert(a.cbegin(), a.cend());
-      a = {};
-      a.insert(a.end(), tmp.cbegin(), tmp.cend());
+    // points might not be unique, so use a set<> to make sure they are
+    set<firestarr::sim::InnerPos> tmp{};
+    tmp.insert(a.cbegin(), a.cend());
+    a = {};
+    a.insert(a.end(), tmp.cbegin(), tmp.cend());
   }
 }
 
-/*
- * Does quickhull, using an excList to push & pop Nodes so that it's a little faster
- */
 void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::InnerPos>& hullPoints, firestarr::sim::InnerPos& n1, firestarr::sim::InnerPos& n2)
 {
 #ifdef DEBUG_HULL
   firestarr::logging::warning("Checking %d points", a->size());
 #endif
-  double maxD = -1;   //just make sure it's not >= 0
+  double maxD = -1.0;   //just make sure it's not >= 0
   firestarr::sim::InnerPos maxPos{0, 0, 0, 0};
   vector<firestarr::sim::InnerPos> usePoints{};
 
   //since we do distLinePt so often, calculate the parts that are always the same
-  double abX = (n2.sub_x - n1.sub_x);
-  double abY = (n2.sub_y - n1.sub_y);
+  const auto abX = (n2.sub_x - n1.sub_x);
+  const auto abY = (n2.sub_y - n1.sub_y);
   /* so instead of:
 	 * return ( (b->x - a->x)*(a->y - p->y) - (a->x - p->x)*(b->y - a->y) );
 	 * we can do the equivalent of:
@@ -92,14 +90,14 @@ void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::In
   for (const auto p : a)
   {
     //loop through points, looking for furthest
-    const double d = (abX * (n1.sub_y - p.sub_y) - (n1.sub_x - p.sub_x) * abY);
-    if (d >= 0 && d > maxD)
-    {               //if further away
-      maxD = d;     //update max dist
-      maxPos = p;   //update furthest Node
-    }
+    const auto d = (abX * (n1.sub_y - p.sub_y) - (n1.sub_x - p.sub_x) * abY);
     if (d >= 0)
     {
+      if (d > maxD)
+      {               // if further away
+        maxD = d;     // update max dist
+        maxPos = p;
+      }
       // only use in next step if on positive side of line
 #ifdef DEBUG_HULL
       firestarr::logging::warning("Adding point (%d, %d) (%f, %f)",
@@ -112,7 +110,8 @@ void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::In
     }
   }
   if (maxD == 0)
-  {   //we have co-linear points
+  {
+//we have co-linear points
 #ifdef DEBUG_HULL
     size_t before = usePoints->size();
 #endif
@@ -122,11 +121,12 @@ void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::In
     firestarr::logging::check_fatal(before == after, "Remove did not get rid of point (%d, %d) (%f, %f)", maxPos.x, maxPos.y, maxPos.sub_x, maxPos.sub_y);
 #endif
     //need to figure out which direction we're going in
-    const double d1 = distPtPt(n1, maxPos);
-    const double d2 = distPtPt(n1, n2);
-    const double d3 = distPtPt(maxPos, n2);
+    const auto d1 = distPtPt(n1, maxPos);
+    const auto d2 = distPtPt(n1, n2);
 
-    if (d1 < d2 && d3 < d2)
+    // if either of these isn't true then this must be an edge
+    auto is_not_edge = (d1 < d2) && (distPtPt(maxPos, n2) < d2);
+    if (is_not_edge)
     {
       // maxNode is between n1 & n2
 #ifdef DEBUG_HULL
@@ -150,7 +150,7 @@ void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::In
   }
   else
   {
-    //this is not an edge
+    //this is not an edge, so recurse on the lines between n1, n2, & maxPos
 #ifdef DEBUG_HULL
     size_t before = usePoints->size();
 #endif
