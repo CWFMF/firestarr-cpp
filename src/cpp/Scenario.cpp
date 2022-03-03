@@ -6,11 +6,8 @@
 
 #include "Scenario.h"
 
+#include "ConvexHull.h"
 #include "FireSpread.h"
-#include "FuelLookup.h"
-#include "FuelType.h"
-#include "hull2d.h"
-#include "IntensityMap.h"
 #include "Observer.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
