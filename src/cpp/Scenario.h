@@ -545,7 +545,7 @@ protected:
    * \param a Set of points to condense
    */
   inline void
-  checkCondense(vector<InnerPos>& a);
+  checkCondense(PointSet& a);
   /**
    * \brief Observers to be notified when cells burn
    */

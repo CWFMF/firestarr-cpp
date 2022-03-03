@@ -1,6 +1,4 @@
 #include "hull2d.h"
-#include <malloc.h>
-#include "stdafx.h"
 
 // #define DEBUG_HULL
 
@@ -17,15 +15,25 @@ distPtPt(
   int abY = (b.sub_y - a.sub_y);
   return (abX * abX + abY * abY);
 }
-/*
- * does peel by repeatedly calling hull
- */
+
 void
-peel(
+hull(
   vector<fs::sim::InnerPos>& a
 )
 {
-  vector<std::pair<fs::sim::InnerPos, fs::sim::InnerPos>> edges{};
+#ifdef DEBUG_HULL
+  size_t orig_size = a.size();
+#endif
+//  // first thing is just making sure all points are unique
+//  set<fs::sim::InnerPos> tmp{};
+//  tmp.insert(a.cbegin(), a.cend());
+//  a = {};
+//  a.insert(a.end(), tmp.cbegin(), tmp.cend());
+#ifdef DEBUG_HULL
+  size_t set_size = a.size();
+#endif
+  //  vector<std::pair<fs::sim::InnerPos, fs::sim::InnerPos>> edges{};
+  set<fs::sim::InnerPos> hullPoints{};
   double maxX = std::numeric_limits<double>::min();
   double minX = std::numeric_limits<double>::max();
   fs::sim::InnerPos maxNode{0, 0, 0, 0};
@@ -50,24 +58,20 @@ peel(
   {
     a.erase(std::remove(a.begin(), a.end(), maxNode), a.end());
     a.erase(std::remove(a.begin(), a.end(), minNode), a.end());
-    quickHull(&a, edges, minNode, maxNode);
-    quickHull(&a, edges, maxNode, minNode);
+    quickHull(a, hullPoints, minNode, maxNode);
+    quickHull(a, hullPoints, maxNode, minNode);
+    // points should all be unique
+    a = {};
+    a.insert(a.end(), hullPoints.cbegin(), hullPoints.cend());
   }
-  size_t i = 0;
-  std::set<fs::sim::InnerPos> tmp{};
-  for (const auto e : edges)
+  else
   {
-    ++i;
-    tmp.emplace(std::get<0>(e));
+    // points might not be unique
+    set<fs::sim::InnerPos> tmp{};
+    tmp.insert(a.cbegin(), a.cend());
+    a = {};
+    a.insert(a.end(), tmp.cbegin(), tmp.cend());
   }
-  // HACK: does this need to happen?
-  tmp.emplace(maxNode);
-  if (maxNode != minNode)
-  {
-    tmp.emplace(minNode);
-  }
-  a = {};
-  a.insert(a.end(), tmp.cbegin(), tmp.cend());
 }
 
 /*
@@ -75,25 +79,18 @@ peel(
  */
 void
 quickHull(
-  const vector<fs::sim::InnerPos>* a,
-  vector<std::pair<fs::sim::InnerPos, fs::sim::InnerPos>>& edges,
+  const vector<fs::sim::InnerPos>& a,
+  set<fs::sim::InnerPos>& hullPoints,
   fs::sim::InnerPos& n1,
   fs::sim::InnerPos& n2
 )
 {
-  if (a->empty())
-  {
-    return;
-  }
 #ifdef DEBUG_HULL
   fs::logging::warning("Checking %d points", a->size());
 #endif
   double maxD = -1;   // just make sure it's not >= 0
   fs::sim::InnerPos maxPos{0, 0, 0, 0};
-  double d;
-  double d1, d2, d3;
-  // HACK: use ptr so this isn't on the stack
-  auto usePoints = new vector<fs::sim::InnerPos>();
+  vector<fs::sim::InnerPos> usePoints{};
 
   // since we do distLinePt so often, calculate the parts that are always the same
   double abX = (n2.sub_x - n1.sub_x);
@@ -105,25 +102,22 @@ quickHull(
    * for distance from the line n1n2 to the current point
    */
 
-  for (const auto p : *a)
+  for (const auto p : a)
   {
     // loop through points, looking for furthest
-    d = (abX * (n1.sub_y - p.sub_y) - (n1.sub_x - p.sub_x) * abY);
+    const double d = (abX * (n1.sub_y - p.sub_y) - (n1.sub_x - p.sub_x) * abY);
     if (d >= 0 && d > maxD)
     {               // if further away
       maxD = d;     // update max dist
       maxPos = p;   // update furthest Node
     }
-    if (d < 0)
-    {   // if > maxD must be at least 0, so do else if
-        // we don't care about this point?
-    }
-    else
-    {   // only move forward if didn't push
+    if (d >= 0)
+    {
+      // only use in next step if on positive side of line
 #ifdef DEBUG_HULL
       fs::logging::warning("Adding point (%d, %d) (%f, %f)", p.x, p.y, p.sub_x, p.sub_y);
 #endif
-      usePoints->emplace_back(p);
+      usePoints.emplace_back(p);
     }
   }
   if (maxD == 0)
@@ -131,7 +125,7 @@ quickHull(
 #ifdef DEBUG_HULL
     size_t before = usePoints->size();
 #endif
-    usePoints->erase(std::remove(usePoints->begin(), usePoints->end(), maxPos), usePoints->end());
+    usePoints.erase(std::remove(usePoints.begin(), usePoints.end(), maxPos), usePoints.end());
 #ifdef DEBUG_HULL
     size_t after = usePoints->size();
     fs::logging::check_fatal(
@@ -144,37 +138,42 @@ quickHull(
     );
 #endif
     // need to figure out which direction we're going in
-    d1 = distPtPt(n1, maxPos);
-    d2 = distPtPt(n1, maxPos);
-    d3 = distPtPt(maxPos, n2);
+    const double d1 = distPtPt(n1, maxPos);
+    const double d2 = distPtPt(n1, n2);
+    const double d3 = distPtPt(maxPos, n2);
 
     if (d1 < d2 && d3 < d2)
-    {   // maxNode bet n1 & n2*/
+    {
+      // maxNode is between n1 & n2
 #ifdef DEBUG_HULL
       fs::logging::check_fatal(
         usePoints->size() == a->size(),
         "Recursing without eliminating any points"
       );
 #endif
-      quickHull(usePoints, edges, n1, maxPos);
-      quickHull(usePoints, edges, maxPos, n2);
+      quickHull(usePoints, hullPoints, n1, maxPos);
+      quickHull(usePoints, hullPoints, maxPos, n2);
     }
     // n1 -> n2 must be an edge, but then maxNode is on one side of them
     else
     {
-      edges.emplace_back(n1, n2);
+      hullPoints.emplace(n1);
+      hullPoints.emplace(n2);
     }
   }
   else if (maxD < 0)
-  {   // no valid points, this must be edge
-    edges.emplace_back(n1, n2);
+  {
+    // no valid points, this must be edge
+    hullPoints.emplace(n1);
+    hullPoints.emplace(n2);
   }
   else
-  {   // this is not an edge
+  {
+    // this is not an edge
 #ifdef DEBUG_HULL
     size_t before = usePoints->size();
 #endif
-    usePoints->erase(std::remove(usePoints->begin(), usePoints->end(), maxPos), usePoints->end());
+    usePoints.erase(std::remove(usePoints.begin(), usePoints.end(), maxPos), usePoints.end());
 #ifdef DEBUG_HULL
     size_t after = usePoints->size();
     fs::logging::check_fatal(
@@ -190,8 +189,7 @@ quickHull(
       "Recursing without eliminating any points"
     );
 #endif
-    quickHull(usePoints, edges, n1, maxPos);
-    quickHull(usePoints, edges, maxPos, n2);
+    quickHull(usePoints, hullPoints, n1, maxPos);
+    quickHull(usePoints, hullPoints, maxPos, n2);
   }
-  delete usePoints;
 }
