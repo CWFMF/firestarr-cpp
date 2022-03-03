@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "InnerPos.h"
 #define RANDOM 1		//random points
 
 //node in a point list (NodeX since excList uses node)
@@ -42,7 +43,7 @@ void delEdge(edge* e);
 void delEdgeList(edgeList* l);
 void delList(linkedList* l);
 void delNodeX(NodeX* n);
-double distPtPt(point* a,point* b);
+double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b);
 double distLinePt(point* a,point* b,point* p);
 //void drawpic(void);
 linkedList* gridList(int numX, int numY);
@@ -54,13 +55,7 @@ edge* newEdge(point a, point b, edge* next);
 linkedList* newList();
 edgeList* newEdgeList();
 NodeX* newNodeX(point p, NodeX* next);
-void partitionAndDraw(linkedList* l, int num);
-edgeList* peel(excList* l);
-void quickHull(excList* l, edgeList* edges, Node* n1, Node* n2);
-void randomizePoints(int num, linkedList* l);
-linkedList* randPoints(int num);
-//void saveImage(Image* img);
-//void saveVisible();
-//void showControls();
+void peel(vector<firestarr::sim::InnerPos>& a);
+void quickHull(const vector<firestarr::sim::InnerPos>* a, vector<std::pair<firestarr::sim::InnerPos, firestarr::sim::InnerPos>>& edges, firestarr::sim::InnerPos& n1, firestarr::sim::InnerPos& n2);
 
 #endif

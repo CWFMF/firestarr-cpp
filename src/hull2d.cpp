@@ -2,245 +2,86 @@
 #include <malloc.h>
 #include "stdafx.h"
 
-edge* junkEdges = nullptr;
-NodeX* junkNodeXs = nullptr;
-
-
-/*
- * adds edge (a,b) to given linkedList
- */
-void addEdge(point a, point b, edgeList* l) {
-	l->first = newEdge(a, b, l->first);
-	l->length++;
-}
-
-/*
- * gets rid of all junk edges & nodeXs
- */
-void cleanJunk() {
-	NodeX* curNodeX = junkNodeXs;
-	NodeX* tmpNodeX;
-	edge* curEdge = junkEdges;
-	edge* tmpEdge;
-
-	while (curNodeX != nullptr) {
-		tmpNodeX = curNodeX;
-		curNodeX = curNodeX->next;
-		free(tmpNodeX);
-	}
-	junkNodeXs = nullptr;
-
-	while (curEdge != nullptr) {
-		tmpEdge = curEdge;
-		curEdge = curEdge->next;
-		free(tmpEdge);
-	}
-	junkEdges = nullptr;
-}
-
-/*
- * copies given linkedList to an excList
- */
-excList* copyList(linkedList* l) {
-	NodeX* cur = l->head->next;
-	excList* ret = newExcList();
-	while(cur != nullptr) {
-		insert(cur->pt,ret);
-		cur = cur->next;
-	}
-	return ret;
-}
-
-/*
- * deletes given edge
- */
-void delEdge(edge* e) {
-	e->next = junkEdges;
-	junkEdges = e;
-}
-
-/*
- * delete edge linkedList
- */
-void delEdgeList(edgeList* l) {
-	edge* tmp;
-	edge* cur = l->first;
-
-	while (cur != nullptr) {
-		tmp = cur;
-		cur = cur->next;
-		delEdge(tmp);
-	}
-	free(l);
-}
-
-/*
- * deletes given linkedList
- */
-void delList(linkedList* l) {
-	NodeX* cur = l->head;
-	NodeX* tmp;
-
-	while (cur != nullptr) {
-		tmp = cur;
-		cur = cur->next;
-		delNodeX(tmp);
-	}
-	free(l);
-}
-
-/*
- * deletes given NodeX
- */
-void delNodeX(NodeX* n) {
-	n->next = junkNodeXs;
-	junkNodeXs = n;
-}
-
-/*
- * Calculates distance from line (a,b) to point p
- */
-double distLinePt(point* a,point* b,point* p) {
-	return ( (b->x - a->x)*(a->y - p->y) - (a->x - p->x)*(b->y - a->y) );
-}
+//#define DEBUG_HULL
 
 /*
  * Calculates distance from point a to point b
  */
-double distPtPt(point* a,point* b) {
-	int abX = (b->x - a->x);
-    int abY = (b->y - a->y);
-	
-	return (abX*abX + abY*abY);
+double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b)
+{
+	int abX = (b.sub_x - a.sub_x);
+  int abY = (b.sub_y - a.sub_y);
+  return (abX*abX + abY*abY);
 }
-/*
- * inserts point in given linkedList
- */
-void insertList(point p, linkedList* l) {		//insert at end
-	l->head->next = newNodeX(p,l->head->next);
-	l->length++;
-}
-
-/*
- * gets new edge, either using malloc or an edge from junkEdges
- */
-edge* newEdge(point a, point b, edge* next) {
-	edge* ret;
-	if (junkEdges != nullptr) {
-		ret = junkEdges;
-		junkEdges = junkEdges->next;
-	}
-	else {
-		ret = (edge*)malloc(sizeof(edge));
-	}
-	ret->a = a;
-	ret->b = b;
-	ret->next = next;
-	return ret;
-}
-
-/*
- * makes new edgelist
- */
-edgeList* newEdgeList() {
-	edgeList* ret = (edgeList*)malloc(sizeof(edgeList));
-	ret->length = 0;
-	ret->first = nullptr;
-	return ret;
-}
-
-/*
- * makes new linkedList
- */
-linkedList* newList() {
-  linkedList* ret;// = (linkedList*)malloc(sizeof(linkedList));
-	point p = {0,0};
-	ret = (linkedList*)malloc(sizeof(linkedList));
-	ret->head = newNodeX(p,nullptr);
-	ret->length = 0;
-	return ret;
-}
-
-/*
- * gets new NodeX, either using malloc or one from junkNodeXs
- */
-NodeX* newNodeX(point p, NodeX* next) {
-	NodeX* ret;// = (NodeX*)malloc(sizeof(NodeX));
-	if (junkNodeXs) {
-		ret = junkNodeXs;
-		junkNodeXs = ret->next;
-	}
-	else {
-		ret = (NodeX*)malloc(sizeof(NodeX));
-	}
-	ret->pt = p;
-	ret->next = next;
-	return ret;
-}
-
 /*
  * does peel by repeatedly calling hull
  */
-edgeList* peel(excList* l) {
-  edgeList* edges = newEdgeList();
-	double maxX, minX;
-	Node* curNode;
-	Node* maxNode;
-	Node* minNode;
-	Node* maxPrev;
-	Node* minPrev;
-	
-//	while(l->length >= 3) {
-		maxX = std::numeric_limits<double>::min();
-		minX = std::numeric_limits<double>::max();
-		curNode = l->head;
-		maxNode = nullptr;
-		minNode = nullptr;
-		
-		while (curNode->fwd != nullptr) {	//find max & min
-			if (curNode->fwd->pt.x > maxX) {
-				maxX = curNode->fwd->pt.x;
-				maxPrev = curNode;
-			}
-			if (curNode->fwd->pt.x < minX) {
-				minX = curNode->fwd->pt.x;
-				minPrev = curNode;
-			}
-			curNode = curNode->fwd;
-		}
+void peel(vector<firestarr::sim::InnerPos>& a) {
+  vector<std::pair<firestarr::sim::InnerPos, firestarr::sim::InnerPos>> edges{};
+	double maxX = std::numeric_limits<double>::min();
+  double minX = std::numeric_limits<double>::max();
+  firestarr::sim::InnerPos maxNode{0, 0, 0, 0};
+  firestarr::sim::InnerPos minNode{0, 0, 0, 0};
 
-		maxNode = maxPrev->fwd;
-		minNode = minPrev->fwd;
+  for (const auto p : a)
+  {
+    if (p.sub_x > maxX)
+    {
+      maxX = p.sub_x;
+      maxNode = p;
+    }
+    if (p.sub_x < minX)
+    {
+      minX = p.sub_x;
+      minNode = p;
+    }
+  }
 
-		//get rid of max & min nodes & call quickhull
-		if (maxNode != minNode) {
-			removeAfterNode(minPrev,l);
-			removeAfterNode(maxPrev,l);
-			quickHull(l, edges, minNode, maxNode);
-			quickHull(l, edges, maxNode, minNode);
-		}
-//		else {
-//			break;
-//		}
-//	}
-//  delEdgeList(edges);
-  return(edges);
+  //get rid of max & min nodes & call quickhull
+  if (maxNode != minNode) {
+    a.erase(std::remove(a.begin(), a.end(), maxNode), a.end());
+    a.erase(std::remove(a.begin(), a.end(), minNode), a.end());
+    quickHull(&a, edges, minNode, maxNode);
+    quickHull(&a, edges, maxNode, minNode);
+  }
+  size_t i = 0;
+  std::set<firestarr::sim::InnerPos> tmp{};
+  for (const auto e : edges)
+  {
+    ++i;
+    tmp.emplace(std::get<0>(e));
+  }
+  // HACK: does this need to happen?
+  tmp.emplace(maxNode);
+  if (maxNode != minNode)
+  {
+    tmp.emplace(minNode);
+  }
+  a =  {};
+  a.insert(a.end(), tmp.cbegin(), tmp.cend());
 }
 
 /*
  * Does quickhull, using an excList to push & pop Nodes so that it's a little faster
  */
-void quickHull(excList* l, edgeList* edges, Node* n1, Node* n2) {
-	double maxD = -1;				//just make sure it's not >= 0
-	double d;
-	Node* curNode = l->head;
-	Node* maxPrev;
-	Node* maxNode;// = nullptr;
-	double d1,d2,d3;
+void quickHull(const vector<firestarr::sim::InnerPos>* a, vector<std::pair<firestarr::sim::InnerPos, firestarr::sim::InnerPos>>& edges, firestarr::sim::InnerPos& n1, firestarr::sim::InnerPos& n2) {
+  if (a->empty())
+  {
+    return;
+  }
+#ifdef DEBUG_HULL
+	firestarr::logging::warning("Checking %d points", a->size());
+#endif
+  double maxD = -1;				//just make sure it's not >= 0
+	firestarr::sim::InnerPos maxPos{0, 0, 0, 0};
+  double d;
+  double d1,d2,d3;
+  // HACK: use ptr so this isn't on the stack
+  auto usePoints = new vector<firestarr::sim::InnerPos>();
 
 	//since we do distLinePt so often, calculate the parts that are always the same
-	double abX =(n2->pt.x - n1->pt.x);
-	double abY = (n2->pt.y - n1->pt.y);
+	double abX =(n2.sub_x - n1.sub_x);
+	double abY = (n2.sub_y - n1.sub_y);
 	/* so instead of:
 	 * return ( (b->x - a->x)*(a->y - p->y) - (a->x - p->x)*(b->y - a->y) );
 	 * we can do the equivalent of:
@@ -248,63 +89,69 @@ void quickHull(excList* l, edgeList* edges, Node* n1, Node* n2) {
 	 * for distance from the line n1n2 to the current point
 	 */
 
-	addFrame(l);
-
-	while (curNode->fwd != nullptr) {				//loop through points, looking for furthest
-		d = ( abX*(n1->pt.y - curNode->fwd->pt.y) - (n1->pt.x - curNode->fwd->pt.x)*abY );
-		if (d > maxD) {						//if further away
+  for (const auto p : *a)
+  {
+    //loop through points, looking for furthest
+		d = ( abX * (n1.sub_y - p.sub_y) - (n1.sub_x - p.sub_x) * abY );
+		if (d >= 0 && d > maxD) {						//if further away
 			maxD = d;						//update max dist
-			maxPrev = curNode;			//update furthest Node
-			//maxPrev = curNode;
+			maxPos = p;			//update furthest Node
 		}
 		if (d < 0) {					//if > maxD must be at least 0, so do else if				
-			pushAfterNode(curNode,l);
+      // we don't care about this point?
 		}
 		else {							//only move forward if didn't push
-			curNode = curNode->fwd;
+#ifdef DEBUG_HULL
+      firestarr::logging::warning("Adding point (%d, %d) (%f, %f)",
+                                  p.x, p.y, p.sub_x, p.sub_y);
+#endif
+      usePoints->emplace_back(p);
 		}
 	}
 	if (maxD == 0) {							//we have co-linear points
-		maxNode = maxPrev->fwd;
-		removeAfterNode(maxPrev,l);			//maxNode removed, but not deleted
+#ifdef DEBUG_HULL
+    size_t before = usePoints->size();
+#endif
+    usePoints->erase(std::remove(usePoints->begin(), usePoints->end(), maxPos), usePoints->end());
+#ifdef DEBUG_HULL
+    size_t after = usePoints->size();
+    firestarr::logging::check_fatal(before == after, "Remove did not get rid of point (%d, %d) (%f, %f)",
+                                    maxPos.x, maxPos.y, maxPos.sub_x, maxPos.sub_y);
+#endif
 		//need to figure out which direction we're going in
-		d1 = distPtPt(&n1->pt,&maxNode->pt);
-		d2 = distPtPt(&n1->pt,&n2->pt);
-		d3 = distPtPt(&maxNode->pt,&n2->pt);
+		d1 = distPtPt(n1, maxPos);
+		d2 = distPtPt(n1, maxPos);
+		d3 = distPtPt(maxPos, n2);
 		
 		if (d1 < d2 && d3 < d2) {				//maxNode bet n1 & n2*/
-			quickHull(l, edges, n1, maxNode);
-			quickHull(l, edges, maxNode, n2);
+#ifdef DEBUG_HULL
+      firestarr::logging::check_fatal(usePoints->size() == a->size(), "Recursing without eliminating any points");
+#endif
+			quickHull(usePoints, edges, n1, maxPos);
+			quickHull(usePoints, edges, maxPos, n2);
 		}
 		//n1 -> n2 must be an edge, but then maxNode is on one side of them
-		else {			
-			addEdge(n1->pt,n2->pt, edges);
-//			glColor3fv(globVars.curCol);
-//			glBegin(GL_LINES);						//draw in this edge
-//				glVertex2i(n1->pt.x,n1->pt.y);
-//				glVertex2i(n2->pt.x,n2->pt.y);
-//			glEnd();
-//			glFlush();								//flush buffer
+		else {
+      edges.emplace_back(n1, n2);
 		}
-		delNode(maxNode);
 	}
 	else if (maxD < 0) {					//no valid points, this must be edge
-		addEdge(n1->pt,n2->pt, edges);
-//		glColor3fv(globVars.curCol);
-//		glBegin(GL_LINES);						//draw in this edge
-//			glVertex2i(n1->pt.x,n1->pt.y);
-//			glVertex2i(n2->pt.x,n2->pt.y);
-//		glEnd();
-//		glFlush();								//flush buffer
+    edges.emplace_back(n1, n2);
 	}
 	else {										//this is not an edge
-		maxNode = maxPrev->fwd;
-		removeAfterNode(maxPrev,l);			//maxNode removed, but not deleted
-		quickHull(l, edges, n1, maxNode);
-		quickHull(l, edges, maxNode, n2);
-		delNode(maxNode);
+#ifdef DEBUG_HULL
+    size_t before = usePoints->size();
+#endif
+    usePoints->erase(std::remove(usePoints->begin(), usePoints->end(), maxPos), usePoints->end());
+#ifdef DEBUG_HULL
+    size_t after = usePoints->size();
+    firestarr::logging::check_fatal(before == after, "Remove did not get rid of point (%d, %d) (%f, %f)",
+                                    maxPos.x, maxPos.y, maxPos.sub_x, maxPos.sub_y);
+    firestarr::logging::check_fatal(usePoints->size() == a->size(), "Recursing without eliminating any points");
+#endif
+		quickHull(usePoints, edges, n1, maxPos);
+		quickHull(usePoints, edges, maxPos, n2);
 	}
-
-	popFrame(l);
+  delete usePoints;
 }
 
