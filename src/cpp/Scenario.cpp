@@ -549,16 +549,8 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
 #endif
   return this;
 }
-inline void doCondense(vector<InnerPos>& a)
-{
-  // three points have to make a triangle (unless they're co-linear?)
-  if (a.size() <= 3)
-  {
-    return;
-  }
-  peel(a);
-}
-inline void Scenario::checkCondense(vector<InnerPos>& a)
+inline void doCondense(PointSet& a) { hull(a); }
+inline void Scenario::checkCondense(PointSet& a)
 {
   if (a.size() > Settings::maxCellPoints())
   {
@@ -723,7 +715,6 @@ void Scenario::scheduleFireSpread(const Event& event)
       // cell
       auto& pts = point_map_[location];
       pts.insert(pts.end(), kv.second.begin(), kv.second.end());
-      std::sort(pts.begin(), pts.end());
     }
     kv.second = {};
   }
