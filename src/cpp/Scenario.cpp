@@ -546,14 +546,7 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
 #endif
   return this;
 }
-inline void doCondense(PointSet& a) { hull(a); }
-inline void Scenario::checkCondense(PointSet& a)
-{
-  if (a.size() > Settings::maxCellPoints())
-  {
-    doCondense(a);
-  }
-}
+inline void Scenario::checkCondense(PointSet& a) { hull(a); }
 /**
  * Determine the direction that a given cell is in from another cell. This is the
  * same convention as wind (i.e. the direction it is coming from, not the direction
