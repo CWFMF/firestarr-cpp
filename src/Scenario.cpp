@@ -21,7 +21,6 @@
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "hull2d.h"
-#include "exclusionlist.h"
 namespace firestarr::sim
 {
 // FIX: why is this not just 0.5?
@@ -545,17 +544,12 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   return os;
 }
 
-inline void doCondense(vector<InnerPos>& a)
+inline void doCondense(PointSet& a)
 {
-  // three points have to make a triangle (unless they're co-linear?)
-  if (a.size() <= 3)
-  {
-    return;
-  }
-  peel(a);
+  hull(a);
 }
 
-inline void Scenario::checkCondense(vector<InnerPos>& a)
+inline void Scenario::checkCondense(PointSet& a)
 {
   if (a.size() > Settings::maxCellPoints())
   {
@@ -747,7 +741,6 @@ void Scenario::scheduleFireSpread(const Event& event)
       // can't just keep existing points by swapping because something may have spread into this cell
       auto& pts = point_map_[location];
       pts.insert(pts.end(), kv.second.begin(), kv.second.end());
-      std::sort(pts.begin(), pts.end());
     }
     //    kv.second.clear();
     kv.second = {};

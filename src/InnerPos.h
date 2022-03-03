@@ -181,14 +181,5 @@ struct InnerPos
                          "Sub-coordinates (%f, %f) are outside cell",
                          sub_x, sub_y);
   }
-
-  /**
-   * Copy constructor
-   * @param p Object to copy values from
-   */
-  constexpr InnerPos(const InnerPos& p) noexcept
-  : InnerPos(p.x, p.y, p.sub_x, p.sub_y)
-  {
-  }
 };
 }
