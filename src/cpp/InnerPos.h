@@ -191,17 +191,6 @@ struct InnerPos
       sub_y
     );
   }
-
-  /**
-   * Copy constructor
-   * @param p Object to copy values from
-   */
-  constexpr InnerPos(
-    const InnerPos& p
-  ) noexcept
-    : InnerPos(p.x, p.y, p.sub_x, p.sub_y)
-  {
-  }
 };
 
 static constexpr MathSize

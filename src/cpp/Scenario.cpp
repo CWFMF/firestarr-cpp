@@ -708,20 +708,15 @@ Scenario::run(
 
 inline void
 doCondense(
-  vector<InnerPos>& a
+  PointSet& a
 )
 {
-  // three points have to make a triangle (unless they're co-linear?)
-  if (a.size() <= 3)
-  {
-    return;
-  }
-  peel(a);
+  hull(a);
 }
 
 inline void
 Scenario::checkCondense(
-  vector<InnerPos>& a
+  PointSet& a
 )
 {
   if (a.size() > Settings::maxCellPoints())
@@ -896,7 +891,6 @@ Scenario::scheduleFireSpread(
       // cell
       auto& pts = point_map_[location];
       pts.insert(pts.end(), kv.second.begin(), kv.second.end());
-      std::sort(pts.begin(), pts.end());
     }
     kv.second = {};
   }
