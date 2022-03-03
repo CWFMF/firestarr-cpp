@@ -147,17 +147,19 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     auto angle_unrotated = theta - slope_radians;
     if (util::to_degrees(angle_unrotated) == 270 || util::to_degrees(angle_unrotated) == 90)
     {
-      angle_unrotated += 0.01;
+      // CHECK: if we're going directly across the slope then horizontal distance is same as spread distance
+      return 1.0;
     }
     const auto tan_u = tan(angle_unrotated);
-    logging::warning("Angle %f gives degrees %f and tan of %f", angle_unrotated, util::to_degrees(angle_unrotated), tan_u);
+//    logging::warning("Angle %f gives degrees %f and tan of %f", angle_unrotated, util::to_degrees(angle_unrotated), tan_u);
     const auto y = b_semi / sqrt(b_semi * tan_u * (b_semi * tan_u) + 1.0);
     const auto x = y * tan_u;
-    return sqrt(x * x + y * y);
+    // CHECK: Pretty sure you can't spread farther horizontally than the spread distance, regardless of angle?
+    return min(1.0, sqrt(x * x + y * y));
   };
   const auto correction_factor = has_no_slope
                                  ? std::function<double(double)>(no_correction)
-                                 : std::function<double(double)>(no_correction);
+                                 : std::function<double(double)>(do_correction);
   const auto cell_size = scenario.cellSize();
   const auto add_offset = [this, cell_size, min_ros](const double direction,
                                                      const double ros)
@@ -249,7 +251,6 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
       && add_offsets_calc_ros(util::to_radians(30))
       && add_offsets_calc_ros(util::to_radians(40))
       && add_offsets_calc_ros(util::to_radians(50))
-      && add_offsets_calc_ros(util::to_radians(60))
       && add_offsets_calc_ros(util::to_radians(60))
       && add_offsets_calc_ros(util::to_radians(70))
       && add_offsets_calc_ros(util::to_radians(80))
