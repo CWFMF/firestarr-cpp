@@ -544,17 +544,9 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   return os;
 }
 
-inline void doCondense(PointSet& a)
-{
-  hull(a);
-}
-
 inline void Scenario::checkCondense(PointSet& a)
 {
-  if (a.size() > Settings::maxCellPoints())
-  {
-    doCondense(a);
-  }
+  hull(a);
 }
 
 // want to be able to make a bitmask of all directions it came from
