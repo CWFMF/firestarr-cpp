@@ -235,34 +235,34 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   {
     return add_offsets(angle_radians, calculate_ros(angle_radians));
   };
-  // HACK: rely on && to stop when first ros is too low
-  if (add_offset(raz, head_ros_)
-      && add_offsets_calc_ros(util::to_radians(10))
-      && add_offsets_calc_ros(util::to_radians(20))
-      && add_offsets_calc_ros(util::to_radians(30))
-      && add_offsets_calc_ros(util::to_radians(40))
-      && add_offsets_calc_ros(util::to_radians(50))
-      && add_offsets_calc_ros(util::to_radians(60))
-      && add_offsets_calc_ros(util::to_radians(70))
-      && add_offsets_calc_ros(util::to_radians(80))
-      && add_offsets(util::to_radians(90), flank_ros * sqrt(a_sq_sub_c_sq) / a)
-      && add_offsets_calc_ros(util::to_radians(100))
-      && add_offsets_calc_ros(util::to_radians(110))
-      && add_offsets_calc_ros(util::to_radians(120))
-      && add_offsets_calc_ros(util::to_radians(130))
-      && add_offsets_calc_ros(util::to_radians(140))
-      && add_offsets_calc_ros(util::to_radians(150))
-      && add_offsets_calc_ros(util::to_radians(160))
-      && add_offsets_calc_ros(util::to_radians(170)))
+  bool added = add_offset(raz, head_ros_);
+  constexpr size_t STEP = 10;
+  size_t i = STEP;
+  while (added && i < 90)
   {
-    //only use back ros if every other angle is spreading since this should be lowest
-    // 180
-    if (back_ros < threshold)
+    added = add_offsets_calc_ros(util::to_radians(i));
+    i += STEP;
+  }
+  if (added)
+  {
+    added = add_offsets(util::to_radians(90), flank_ros * sqrt(a_sq_sub_c_sq) / a);
+    i = 90 + STEP;
+    while (added && i < 180)
     {
-      return;
+      added = add_offsets_calc_ros(util::to_radians(i));
+      i += STEP;
     }
-    const auto direction = util::fix_radians(util::RAD_180 + raz);
-    static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
+    if (added)
+    {
+      //only use back ros if every other angle is spreading since this should be lowest
+      // 180
+      if (back_ros < threshold)
+      {
+        return;
+      }
+      const auto direction = util::fix_radians(util::RAD_180 + raz);
+      static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
+    }
   }
 }
 // double SpreadInfo::calculateSpreadProbability(const double ros)
