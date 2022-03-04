@@ -5,8 +5,8 @@ namespace fs
 {
 inline double distPtPt(InnerPos& a, InnerPos& b)
 {
-  const auto abX = (b.sub_x - a.sub_x);
-  const auto abY = (b.sub_y - a.sub_y);
+  const auto abX = (b.x - a.x);
+  const auto abY = (b.y - a.y);
   return (abX * abX + abY * abY);
 }
 void hull(vector<InnerPos>& a)
@@ -14,19 +14,19 @@ void hull(vector<InnerPos>& a)
   set<InnerPos> hullPoints{};
   double maxX = std::numeric_limits<double>::min();
   double minX = std::numeric_limits<double>::max();
-  InnerPos maxPos{0, 0, 0, 0};
-  InnerPos minPos{0, 0, 0, 0};
+  InnerPos maxPos{minX, minX};
+  InnerPos minPos{maxX, maxX};
   for (const auto p : a)
   {
-    if (p.sub_x > maxX)
+    if (p.x > maxX)
     {
-      maxX = p.sub_x;
+      maxX = p.x;
       maxPos = p;
     }
     // don't use else if because first point should be set for both
-    if (p.sub_x < minX)
+    if (p.x < minX)
     {
-      minX = p.sub_x;
+      minX = p.x;
       minPos = p;
     }
   }
@@ -56,11 +56,11 @@ void quickHull(const vector<InnerPos>& a, set<InnerPos>& hullPoints, InnerPos& n
   fs::logging::warning("Checking %d points", a->size());
 #endif
   double maxD = -1.0;   // just make sure it's not >= 0
-  InnerPos maxPos{0, 0, 0, 0};
+  InnerPos maxPos{std::numeric_limits<double>::min(), std::numeric_limits<double>::min()};
   vector<InnerPos> usePoints{};
   // since we do distLinePt so often, calculate the parts that are always the same
-  const auto abX = (n2.sub_x - n1.sub_x);
-  const auto abY = (n2.sub_y - n1.sub_y);
+  const auto abX = (n2.x - n1.x);
+  const auto abY = (n2.y - n1.y);
   /* so instead of:
    * return ( (b->x - a->x)*(a->y - p->y) - (a->x - p->x)*(b->y - a->y) );
    * we can do the equivalent of:
@@ -70,7 +70,7 @@ void quickHull(const vector<InnerPos>& a, set<InnerPos>& hullPoints, InnerPos& n
   for (const auto p : a)
   {
     // loop through points, looking for furthest
-    const auto d = (abX * (n1.sub_y - p.sub_y) - (n1.sub_x - p.sub_x) * abY);
+    const auto d = (abX * (n1.y - p.y) - (n1.x - p.x) * abY);
     if (d >= 0)
     {
       if (d > maxD)
@@ -80,7 +80,7 @@ void quickHull(const vector<InnerPos>& a, set<InnerPos>& hullPoints, InnerPos& n
       }
       // only use in next step if on positive side of line
 #ifdef DEBUG_HULL
-      fs::logging::warning("Adding point (%d, %d) (%f, %f)", p.x, p.y, p.sub_x, p.sub_y);
+      fs::logging::warning("Adding point (%d, %d) (%f, %f)", p.x, p.y, p.x, p.y);
 #endif
       usePoints.emplace_back(p);
     }
@@ -99,8 +99,8 @@ void quickHull(const vector<InnerPos>& a, set<InnerPos>& hullPoints, InnerPos& n
       "Remove did not get rid of point (%d, %d) (%f, %f)",
       maxPos.x,
       maxPos.y,
-      maxPos.sub_x,
-      maxPos.sub_y
+      maxPos.x,
+      maxPos.y
     );
 #endif
     // need to figure out which direction we're going in
@@ -146,8 +146,8 @@ void quickHull(const vector<InnerPos>& a, set<InnerPos>& hullPoints, InnerPos& n
       "Remove did not get rid of point (%d, %d) (%f, %f)",
       maxPos.x,
       maxPos.y,
-      maxPos.sub_x,
-      maxPos.sub_y
+      maxPos.x,
+      maxPos.y
     );
     fs::logging::check_fatal(
       usePoints->size() == a->size(), "Recursing without eliminating any points"
