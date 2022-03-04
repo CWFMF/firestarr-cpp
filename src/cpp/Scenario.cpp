@@ -266,7 +266,7 @@ void Scenario::evaluate(const Event& event)
         step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER
       );
       // HACK: don't do this in constructor because scenario creates this in its constructor
-      points_[p].emplace_back(p.column(), p.row(), CELL_CENTER, CELL_CENTER);
+      points_[p].emplace_back(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       if (is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -490,7 +490,7 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
       log_check_fatal(is_null_fuel(cell), "Null fuel in perimeter");
 #endif
       log_verbose("Adding point (%d, %d)", cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
-      points_[cell].emplace_back(cell.column(), cell.row(), CELL_CENTER, CELL_CENTER);
+      points_[cell].emplace_back(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
     }
     addEvent(Event::makeFireSpread(start_time_));
   }

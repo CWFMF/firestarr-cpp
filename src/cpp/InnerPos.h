@@ -35,60 +35,11 @@ struct InnerPos
   /**
    * \brief X coordinate
    */
-  Idx x;
+  double x;
   /**
    * \brief Y coordinate
    */
-  Idx y;
-  /**
-   * \brief X location within cell
-   */
-  double sub_x;
-  /**
-   * \brief Y location within cell
-   */
-  double sub_y;
-  /**
-   * \brief Create InnerPos from (x, y) and offsets
-   * \param x X coordinate
-   * \param y Y coordinate
-   * \param sub_x Sub-coordinate for X
-   * \param sub_y Sub-coordinate for Y
-   */
-  constexpr static InnerPos create(Idx a, Idx b, double sub_a, double sub_b)
-  {
-    bool changed = true;
-    while (changed)
-    {
-      changed = false;
-      // HACK: rounding error means something + 1 can originally be >0 but then equal 1 exactly
-      if (sub_a >= 1)
-      {
-        a += 1;
-        sub_a -= 1;
-        changed = true;
-      }
-      else if (sub_a < 0)
-      {
-        a -= 1;
-        sub_a += 1;
-        changed = true;
-      }
-      if (sub_b >= 1)
-      {
-        b += 1;
-        sub_b -= 1;
-        changed = true;
-      }
-      else if (sub_b < 0)
-      {
-        b -= 1;
-        sub_b += 1;
-        changed = true;
-      }
-    }
-    return InnerPos(a, b, sub_a, sub_b);
-  }
+  double y;
   /**
    * \brief Less than operator
    * \param rhs InnerPos to compare to
@@ -98,20 +49,12 @@ struct InnerPos
   {
     if (x == rhs.x)
     {
-      if (sub_x == rhs.sub_x)
+      if (y == rhs.y)
       {
-        if (y == rhs.y)
-        {
-          if (sub_y == rhs.sub_y)
-          {
-            // they are "identical" so this is false
-            return false;
-          }
-          return sub_y < rhs.sub_y;
-        }
-        return y < rhs.y;
+        // they are "identical" so this is false
+        return false;
       }
-      return sub_x < rhs.sub_x;
+      return y < rhs.y;
     }
     return x < rhs.x;
   }
@@ -120,31 +63,20 @@ struct InnerPos
    * \param rhs InnerPos to compare to
    * \return Whether or not this is equivalent to the other
    */
-  bool operator==(const InnerPos& rhs) const noexcept
-  {
-    return (x == rhs.x) && (y == rhs.y) && (sub_x == rhs.sub_x) && (sub_y == rhs.sub_y);
-  }
+  bool operator==(const InnerPos& rhs) const noexcept { return (x == rhs.x) && (y == rhs.y); }
   /**
    * \brief Add offset to position and return result
    */
-  InnerPos add(const Offset o) const noexcept { return create(x, y, sub_x + o.x, sub_y + o.y); }
+  [[nodiscard]] constexpr InnerPos add(const Offset o) const noexcept
+  {
+    return InnerPos(x + o.x, y + o.y);
+  }
   /**
    * \brief Constructor
    * \param x X coordinate
    * \param y Y coordinate
-   * \param sub_x X location within cell
-   * \param sub_y Y location within cell
    */
-  constexpr InnerPos(const Idx x, const Idx y, const double sub_x, const double sub_y) noexcept
-    : x(x), y(y), sub_x(sub_x), sub_y(sub_y)
-  {
-    logging::check_fatal(
-      sub_x >= 1 || sub_x < 0 || sub_y >= 1 || sub_y < 0,
-      "Sub-coordinates (%f, %f) are outside cell",
-      sub_x,
-      sub_y
-    );
-  }
+  constexpr InnerPos(const double x, const double y) noexcept : x(x), y(y) { }
 };
 static constexpr MathSize x(const auto& p) { return p.x; }
 static constexpr MathSize y(const auto& p) { return p.y; }
