@@ -473,10 +473,6 @@ protected:
            Day start_day,
            Day last_date);
   /**
-   * \brief Map of Cells to the PointSets in them
-   */
-  map<topo::Cell, PointSet> point_map_{};
-  /**
    * \brief Condense set of points down to a smaller number
    * \param a Set of points to condense
    */
