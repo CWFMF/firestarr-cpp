@@ -57,20 +57,29 @@ static constexpr MathSize calculate_standard_wsv(const MathSize v) noexcept
   return v < 40.0 ? exp(0.05039 * v) : 12.0 * (1.0 - exp(-0.0818 * (v - 28)));
 }
 static const LookupTable<&calculate_standard_wsv> STANDARD_WSV{};
-double SpreadInfo::initial(
+SpreadInfo::SpreadInfo(
+  const Scenario& scenario,
+  const DurationSize time,
+  const SpreadKey& key,
+  const int nd,
+  const ptr<const FwiWeather> weather
+)
+  : SpreadInfo(scenario, time, key, nd, weather, weather)
+{ }
+MathSize SpreadInfo::initial(
   SpreadInfo& spread,
   const FwiWeather& weather,
-  double& ffmc_effect,
-  double& wsv,
-  double& rso,
-  double& raz,
+  MathSize& ffmc_effect,
+  MathSize& wsv,
+  MathSize& rso,
+  MathSize& raz,
   const FuelType* const fuel,
   bool has_no_slope,
-  double heading_sin,
-  double heading_cos,
-  double bui_eff,
-  double min_ros,
-  double critical_surface_intensity
+  MathSize heading_sin,
+  MathSize heading_cos,
+  MathSize bui_eff,
+  MathSize min_ros,
+  MathSize critical_surface_intensity
 )
 {
   ffmc_effect = spread.ffmcEffect();
@@ -106,7 +115,7 @@ double SpreadInfo::initial(
   spread.head_ros_ = fuel->calculateRos(spread.nd(), weather, isi) * bui_eff;
   if (min_ros > spread.head_ros_)
   {
-    spread.head_ros_ = -1;
+    spread.head_ros_ = INVALID_ROS;
   }
   else
   {
@@ -123,7 +132,7 @@ double SpreadInfo::initial(
   }
   return spread.head_ros_;
 }
-static double find_min_ros(const Scenario& scenario, const double time)
+static MathSize find_min_ros(const Scenario& scenario, const DurationSize time)
 {
   return Settings::deterministic()
          ? Settings::minimumRos()
@@ -134,29 +143,32 @@ SpreadInfo::SpreadInfo(
   const DurationSize time,
   const SpreadKey& key,
   const int nd,
-  const ptr<const FwiWeather> weather
+  const ptr<const FwiWeather> weather,
+  const ptr<const FwiWeather> weather_daily
 )
-  : SpreadInfo(time, find_min_ros(scenario, time), scenario.cellSize(), key, nd, weather)
+  : SpreadInfo(
+      time,
+      find_min_ros(scenario, time),
+      scenario.cellSize(),
+      key,
+      nd,
+      weather,
+      weather_daily
+    )
 { }
 static SpreadKey make_key(const SlopeSize slope, const AspectSize aspect, const char* fuel_name)
 {
-  const auto lookup = fs::Settings::fuelLookup();
+  const auto lookup = Settings::fuelLookup();
   const auto key =
     Cell::key(Cell::hashCell(slope, aspect, FuelType::safeCode(lookup.byName(fuel_name))));
   const auto a = Cell::aspect(key);
   const auto s = Cell::slope(key);
   const auto fuel = fuel_by_code(Cell::fuelCode(key));
-  logging::check_fatal(s != slope, "Expected slope to be %d but got %d", slope, s);
-  const auto aspect_expected = 0 == slope ? 0 : aspect;
-  logging::check_fatal(
-    a != aspect_expected, "Expected aspect to be %d but got %d", aspect_expected, a
+  logging::check_equal(s, slope, "slope");
+  logging::check_equal(
+    a, (static_cast<SlopeSize>(0) == slope ? static_cast<AspectSize>(0) : aspect), "aspect"
   );
-  logging::check_fatal(
-    0 != strcmp(fuel->name(), fuel_name),
-    "Expected fuel to be %s but got %s",
-    fuel_name,
-    fuel->name()
-  );
+  logging::check_equal(fuel->name(), fuel_name, "fuel");
   return key;
 }
 SpreadInfo::SpreadInfo(
@@ -203,27 +215,39 @@ SpreadInfo::SpreadInfo(
     )
 { }
 SpreadInfo::SpreadInfo(
-  const double time,
-  const double min_ros,
-  const double cell_size,
+  const DurationSize time,
+  const MathSize min_ros,
+  const MathSize cell_size,
   const SlopeSize slope,
   const AspectSize aspect,
   const char* fuel_name,
   const int nd,
   const ptr<const FwiWeather> weather
 )
-  : SpreadInfo(time, min_ros, cell_size, make_key(slope, aspect, fuel_name), nd, weather)
+  : SpreadInfo(time, min_ros, cell_size, make_key(slope, aspect, fuel_name), nd, weather, weather)
 { }
 SpreadInfo::SpreadInfo(
-  const double time,
-  const double min_ros,
-  const double cell_size,
+  const DurationSize time,
+  const MathSize min_ros,
+  const MathSize cell_size,
   const SpreadKey& key,
   const int nd,
   const ptr<const FwiWeather> weather
 )
+  : SpreadInfo(time, min_ros, cell_size, key, nd, weather, weather)
+{ }
+SpreadInfo::SpreadInfo(
+  const DurationSize time,
+  const MathSize min_ros,
+  const MathSize cell_size,
+  const SpreadKey& key,
+  const int nd,
+  const ptr<const FwiWeather> weather,
+  const ptr<const FwiWeather> weather_daily
+)
   : key_(key), weather_(weather), time_(time), nd_(nd)
 {
+  // HACK: use weather_daily to figure out probability of spread but hourly for ROS
   const auto slope_azimuth = Cell::aspect(key_);
   const auto fuel = fuel_by_code(Cell::fuelCode(key_));
   if (is_null_fuel(fuel))
@@ -231,11 +255,11 @@ SpreadInfo::SpreadInfo(
     return;
   }
   const auto has_no_slope = 0 == percentSlope();
-  double heading_sin = 0;
-  double heading_cos = 0;
+  MathSize heading_sin = 0;
+  MathSize heading_cos = 0;
   if (!has_no_slope)
   {
-    const auto heading = to_heading(to_radians(static_cast<double>(slope_azimuth)));
+    const auto heading = to_heading(to_radians(static_cast<MathSize>(slope_azimuth)));
     heading_sin = sin(heading);
     heading_cos = cos(heading);
   }
@@ -244,30 +268,54 @@ SpreadInfo::SpreadInfo(
   const auto bui_eff = fuel->buiEffect(_bui);
   // FIX: gets calculated when not necessary sometimes
   const auto critical_surface_intensity = fuel->criticalSurfaceIntensity(*this);
-  double ffmc_effect;
-  double wsv;
-  double rso;
-  double raz;
-  if ((min_ros > SpreadInfo::initial(
-         *this,
-         *weather,
-         ffmc_effect,
-         wsv,
-         rso,
-         raz,
-         fuel,
-         has_no_slope,
-         heading_sin,
-         heading_cos,
-         bui_eff,
-         min_ros,
-         critical_surface_intensity
-       )
-       || sfc_ < COMPARE_LIMIT))
+  MathSize ffmc_effect;
+  MathSize wsv;
+  MathSize rso;
+  MathSize raz;
+  if (min_ros > SpreadInfo::initial(
+        *this,
+        *weather_daily,
+        ffmc_effect,
+        wsv,
+        rso,
+        raz,
+        fuel,
+        has_no_slope,
+        heading_sin,
+        heading_cos,
+        bui_eff,
+        min_ros,
+        critical_surface_intensity
+      )
+      || sfc_ < COMPARE_LIMIT)
   {
-    // no spread with hourly weather
-    // NOTE: only would happen if FFMC hourly is lower than FFMC daily?
     return;
+  }
+  // Now use hourly weather for actual spread calculations
+  // don't check again if pointing at same weather
+  if (weather != weather_daily)
+  {
+    if ((min_ros > SpreadInfo::initial(
+           *this,
+           *weather,
+           ffmc_effect,
+           wsv,
+           rso,
+           raz,
+           fuel,
+           has_no_slope,
+           heading_sin,
+           heading_cos,
+           bui_eff,
+           min_ros,
+           critical_surface_intensity
+         )
+         || sfc_ < COMPARE_LIMIT))
+    {
+      // no spread with hourly weather
+      // NOTE: only would happen if FFMC hourly is lower than FFMC daily?
+      return;
+    }
   }
   const auto back_isi = ffmc_effect * STANDARD_BACK_ISI_WSV(wsv);
   auto back_ros = fuel->calculateRos(nd, *weather, back_isi) * bui_eff;

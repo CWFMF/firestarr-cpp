@@ -29,7 +29,6 @@ void Scenario::clear() noexcept
   scheduler_ = set<Event, EventCompare>();
   arrival_ = {};
   points_ = {};
-  point_map_ = {};
   offsets_ = {};
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
@@ -215,7 +214,6 @@ Scenario* Scenario::reset(mt19937* mt_extinction, mt19937* mt_spread, ptr<SafeVe
   {
     o->reset();
   }
-  point_map_ = {};
   current_time_ = start_time_ - 1;
   points_ = {};
   intensity_ = make_unique<IntensityMap>(model());
@@ -672,9 +670,12 @@ void Scenario::scheduleFireSpread(const Event& event)
                     : max_duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
+  map<Cell, PointSet> point_map_{};
+  map<Cell, size_t> count{};
   for (auto& kv : points_)
   {
     const auto& location = kv.first;
+    count[location] = kv.second.size();
     const auto key = location.key();
     auto& offsets = offsets_.at(key);
     if (!offsets.empty())
@@ -730,7 +731,11 @@ void Scenario::scheduleFireSpread(const Event& event)
         // do survival check first since it should be easier
         if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
         {
-          checkCondense(kv.second);
+          if (count[for_cell] > 1)
+          {
+            // no point in doing hull if only one point spread
+            hull(kv.second);
+          }
           points_log_.log(step_, STAGE_CONDENSE, new_time, kv.second);
           std::swap(points_[for_cell], kv.second);
         }
@@ -750,8 +755,39 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   for (auto& c : erase_what)
   {
-    point_map_.erase(c);
     points_.erase(c);
+  }
+  const auto pts = hull(points_);
+  map<Cell, vector<InnerPos>> tmp_points{};
+  // put points back in the proper places
+  for (auto& p : pts)
+  {
+    tmp_points[cell(p)].emplace_back(p);
+  }
+  map<Cell, bool> keepCells{};
+  // should have all points generated, so now do a hull of each of the cells
+  for (auto& kv : points_)
+  {
+    if (!tmp_points.contains(kv.first))
+    {
+      // if this cell isn't in the hull then want to keep it and all the cells around its cells
+      for (Idx r = -1; r <= 1; ++r)
+      {
+        for (Idx c = -1; c <= 1; ++c)
+        {
+          keepCells[cell(r + kv.first.row(), c + kv.first.column())] = true;
+        }
+      }
+    }
+  }
+  // now check all the cells again
+  for (auto& kv : points_)
+  {
+    if (!keepCells.contains(kv.first))
+    {
+      // use points from the main hull
+      points_[kv.first] = tmp_points[kv.first];
+    }
   }
   log_extensive("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));

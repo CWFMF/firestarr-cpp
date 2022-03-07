@@ -3,9 +3,11 @@
 /* SPDX-FileCopyrightText: 2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "ConvexHull.h"
-// #define DEBUG_HULL
 namespace fs
 {
+// #define DEBUG_HULL
+constexpr double MIN_X = std::numeric_limits<double>::min();
+constexpr double MAX_X = std::numeric_limits<double>::max();
 inline double distPtPt(InnerPos& a, InnerPos& b)
 {
   const auto abX = (b.x - a.x);
@@ -15,21 +17,17 @@ inline double distPtPt(InnerPos& a, InnerPos& b)
 void hull(vector<InnerPos>& a)
 {
   set<InnerPos> hullPoints{};
-  double maxX = std::numeric_limits<double>::min();
-  double minX = std::numeric_limits<double>::max();
-  InnerPos maxPos{minX, minX};
-  InnerPos minPos{maxX, maxX};
+  InnerPos maxPos{MIN_X, MIN_X};
+  InnerPos minPos{MAX_X, MAX_X};
   for (const auto p : a)
   {
-    if (p.x > maxX)
+    if (p.x > maxPos.x)
     {
-      maxX = p.x;
       maxPos = p;
     }
     // don't use else if because first point should be set for both
-    if (p.x < minX)
+    if (p.x < minPos.x)
     {
-      minX = p.x;
       minPos = p;
     }
   }
@@ -44,14 +42,45 @@ void hull(vector<InnerPos>& a)
     a = {};
     a.insert(a.end(), hullPoints.cbegin(), hullPoints.cend());
   }
-  else
+}
+vector<InnerPos> hull(map<Cell, vector<InnerPos>>& a)
+{
+  vector<InnerPos> pts{};
+  set<InnerPos> hullPoints{};
+  InnerPos maxPos{MIN_X, MIN_X};
+  InnerPos minPos{MAX_X, MAX_X};
+  for (const auto& kv : a)
   {
-    // points might not be unique, so use a set<> to make sure they are
-    set<InnerPos> tmp{};
-    tmp.insert(a.cbegin(), a.cend());
-    a = {};
-    a.insert(a.end(), tmp.cbegin(), tmp.cend());
+    for (const auto& p : kv.second)
+    {
+      if (p.x > maxPos.x)
+      {
+        maxPos = p;
+      }
+      // don't use else if because first point should be set for both
+      if (p.x < minPos.x)
+      {
+        minPos = p;
+      }
+      pts.emplace_back(p);
+    }
   }
+  if (pts.empty())
+  {
+    return pts;
+  }
+  // get rid of max & min nodes & call quickhull
+  if (maxPos != minPos)
+  {
+    pts.erase(std::remove(pts.begin(), pts.end(), maxPos), pts.end());
+    pts.erase(std::remove(pts.begin(), pts.end(), minPos), pts.end());
+    quickHull(pts, hullPoints, minPos, maxPos);
+    quickHull(pts, hullPoints, maxPos, minPos);
+    // points should all be unique, so just insert them
+    pts = {};
+    pts.insert(pts.end(), hullPoints.cbegin(), hullPoints.cend());
+  }
+  return pts;
 }
 void quickHull(const vector<InnerPos>& a, set<InnerPos>& hullPoints, InnerPos& n1, InnerPos& n2)
 {
@@ -61,6 +90,8 @@ void quickHull(const vector<InnerPos>& a, set<InnerPos>& hullPoints, InnerPos& n
   double maxD = -1.0;   // just make sure it's not >= 0
   InnerPos maxPos{std::numeric_limits<double>::min(), std::numeric_limits<double>::min()};
   vector<InnerPos> usePoints{};
+  // worst case scenario
+  usePoints.reserve(a.size());
   // since we do distLinePt so often, calculate the parts that are always the same
   const auto abX = (n2.x - n1.x);
   const auto abY = (n2.y - n1.y);
