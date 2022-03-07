@@ -397,6 +397,11 @@ public:
    * \return Whether or not to run things asynchronously where possible
    */
   atomic<bool> run_async = true;
+  /**
+   * \brief Whether or not to save grids as .asc
+   * \return Whether or not to save grids as .asc
+   */
+  atomic<bool> save_as_ascii = false;
 };
 /**
  * \brief The singleton instance for this class
@@ -530,6 +535,14 @@ bool Settings::runAsync() noexcept
 void Settings::setRunAsync(const bool value) noexcept
 {
   SettingsImplementation::instance().run_async = value;
+}
+bool Settings::saveAsAscii() noexcept
+{
+  return SettingsImplementation::instance().save_as_ascii;
+}
+void Settings::setSaveAsAscii(const bool value) noexcept
+{
+  SettingsImplementation::instance().save_as_ascii = value;
 }
 double Settings::minimumRos() noexcept
 {
