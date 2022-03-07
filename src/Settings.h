@@ -79,6 +79,17 @@ public:
    */
   static void setRunAsync(bool value) noexcept;
   /**
+   * \brief Whether or not to save grids as .asc
+   * \return Whether or not to save grids as .asc
+   */
+  [[nodiscard]] static bool saveAsAscii() noexcept;
+  /**
+   * \brief Set whether or not to save grids as .asc
+   * \param value Whether or not to save grids as .asc
+   * \return None
+   */
+  static void setSaveAsAscii(bool value) noexcept;
+  /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */

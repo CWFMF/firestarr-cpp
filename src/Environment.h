@@ -413,22 +413,28 @@ protected:
   {
 #ifndef NDEBUG
     const auto lookup = sim::Settings::fuelLookup();
-    fuel.saveToAsciiFile<int>(string(sim::Settings::outputDirectory()),
-                              "fuel",
-                              [&lookup](const fuel::FuelType* const value)
-                              {
-                                return lookup.fuelToInt(value);
-                                //return lookup.fuelToInt(value);
-                                //return value->code();
-                              });
-    elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
-    fuel.saveToTiffFile<int>(string(sim::Settings::outputDirectory()),
-                             "fuel",
-                             [&lookup](const fuel::FuelType* const value)
-                             {
-                               return lookup.fuelToInt(value);
-                             });
-    elevation.saveToTiffFile(sim::Settings::outputDirectory(), "dem");
+    if (sim::Settings::saveAsAscii())
+    {
+      fuel.saveToAsciiFile<int>(string(sim::Settings::outputDirectory()),
+                                "fuel",
+                                [&lookup](const fuel::FuelType* const value)
+                                {
+                                  return lookup.fuelToInt(value);
+                                  //return lookup.fuelToInt(value);
+                                  //return value->code();
+                                });
+      elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
+    }
+    else
+    {
+      fuel.saveToTiffFile<int>(string(sim::Settings::outputDirectory()),
+                               "fuel",
+                               [&lookup](const fuel::FuelType* const value)
+                               {
+                                 return lookup.fuelToInt(value);
+                               });
+      elevation.saveToTiffFile(sim::Settings::outputDirectory(), "dem");
+    }
 #endif
     const auto coord = fuel.findCoordinates(point, false);
     // take elevation at point so that if max grid size changes elevation doesn't
