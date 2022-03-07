@@ -757,7 +757,8 @@ void Scenario::scheduleFireSpread(const Event& event)
       // if surrounded then just drop all the points inside this cell
       if (!(*unburnable_)[for_cell.hash()])
       {
-        if (!isSurrounded(for_cell) && survives(new_time, for_cell, new_time - arrival_[for_cell]))
+        // do survival check first since it should be easier
+        if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
         {
           if (count[for_cell] > 1 && kv.second.size() > 3)
           {
