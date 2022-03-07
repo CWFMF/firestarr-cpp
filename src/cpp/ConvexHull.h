@@ -22,6 +22,8 @@ distPtPt(fs::sim::InnerPos& a, fs::sim::InnerPos& b);
  */
 void
 hull(vector<fs::sim::InnerPos>& a);
+vector<fs::sim::InnerPos>
+hull(map<fs::topo::Cell, vector<fs::sim::InnerPos>>& a);
 
 /**
  * Implementation of the quickhull algorithm to find a convex hull.
