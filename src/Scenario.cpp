@@ -541,11 +541,6 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   return os;
 }
 
-inline void Scenario::checkCondense(PointSet& a)
-{
-  hull(a);
-}
-
 // want to be able to make a bitmask of all directions it came from
 //  064  008  032
 //  001  000  002
@@ -764,17 +759,12 @@ void Scenario::scheduleFireSpread(const Event& event)
       {
         if (!isSurrounded(for_cell) && survives(new_time, for_cell, new_time - arrival_[for_cell]))
         {
-          //checkCondense(kv.second);
-          //checkHull(for_cell, kv.second);
-          if (count[for_cell] > 1)
+          if (count[for_cell] > 1 && kv.second.size() > 3)
           {
             // no point in doing hull if only one point spread
+            // 3 points should just be a triangle usually (could be co-linear, but that's fine
             hull(kv.second);
           }
-//          else
-//          {
-//            firestarr::logging::warning("Not condensing %d points", count[for_cell]);
-//          }
           std::swap(points_[for_cell], kv.second);
         }
         else
