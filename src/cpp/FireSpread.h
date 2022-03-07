@@ -11,10 +11,14 @@
 #include "FWI.h"
 #include "InnerPos.h"
 #include "Point.h"
+#include "Weather.h"
 
 namespace fs
 {
 class FuelType;
+static constexpr MathSize INVALID_ROS = -1.0;
+static constexpr MathSize INVALID_INTENSITY = -1.0;
+
 class Scenario;
 
 /**
@@ -56,7 +60,7 @@ public:
     DurationSize time,
     const SpreadKey& key,
     int nd,
-    ptr<const FwiWeather> weather
+    const ptr<const FwiWeather> weather
   );
   constexpr SpreadInfo(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo(const SpreadInfo& rhs) noexcept = default;
@@ -70,15 +74,15 @@ public:
    * \param threshold Probability of spread threshold
    * \return Rate of spread at given threshold (m/min)
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   calculateRosFromThreshold(
-    const double threshold
+    const ThresholdSize threshold
   )
   {
     // for some reason it returns -nan instead of nan if it's 1, so return this instead
     if (1.0 == threshold)
     {
-      return std::numeric_limits<double>::infinity();
+      return std::numeric_limits<ThresholdSize>::infinity();
     }
     if (0.0 == threshold)
     {
@@ -93,7 +97,7 @@ public:
    * \brief Maximum intensity in any direction for spread (kW/m)
    * \return Maximum intensity in any direction for spread (kW/m)
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   maxIntensity() const noexcept
   {
     return max_intensity_;
@@ -193,7 +197,7 @@ public:
    * \brief FFMC effect used for spread
    * \return FFMC effect used for spread
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   ffmcEffect() const
   {
     return weather()->ffmcEffect();
@@ -203,7 +207,7 @@ public:
    * \brief Time used for spread
    * \return Time used for spread
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr DurationSize
   time() const
   {
     return time_;
@@ -220,10 +224,20 @@ public:
   }
 
   /**
+   * \brief Aspect used for spread (degrees)
+   * \return Aspect used for spread (degrees)
+   */
+  [[nodiscard]] constexpr AspectSize
+  slopeAzimuth() const
+  {
+    return Cell::aspect(key_);
+  }
+
+  /**
    * \brief Head fire rate of spread (m/min)
    * \return Head fire rate of spread (m/min)
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   headRos() const
   {
     return head_ros_;
@@ -243,7 +257,7 @@ public:
    * \brief Slope factor calculated from percent slope
    * \return Slope factor calculated from percent slope
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   slopeFactor() const
   {
     // HACK: slope can be infinite, but anything > 60 is the same as 60
@@ -284,7 +298,7 @@ public:
   [[nodiscard]] constexpr bool
   isInvalid() const
   {
-    return -1 == head_ros_;
+    return INVALID_ROS == head_ros_;
   }
 
   SpreadInfo(
@@ -310,13 +324,13 @@ public:
     const ptr<const FwiWeather> weather
   );
 
-  double
+  MathSize
   crownFractionBurned() const
   {
     return cfb_;
   }
 
-  double
+  MathSize
   crownFuelConsumption() const
   {
     return cfc_;
@@ -328,26 +342,45 @@ public:
     return cfb_ >= 0.9 ? 'C' : (cfb_ < 0.1 ? 'S' : 'I');
   }
 
-  double
+  MathSize
   surfaceFuelConsumption() const
   {
     return sfc_;
   }
 
-  double
+  MathSize
   totalFuelConsumption() const
   {
     return tfc_;
   }
 
 private:
+  // HACK: have private constructor so is_spreading() can short-circuit the calculation,
+  // but nothing else can get a partially constructed SpreadInfo object
+  /**
+   * \brief Calculate fire spread for time and place
+   * \param scenario Scenario this is spreading in
+   * \param time Time spread is occurring
+   * \param key Attributes for Cell spread is occurring in
+   * \param nd Difference between date and the date of minimum foliar moisture content
+   *DurationSize timether FwiWeather to use for calculations
+   * \param weather_daily FwiWeather to use for spread event probability
+   */
+  SpreadInfo(
+    const Scenario& scenario,
+    DurationSize time,
+    const SpreadKey& key,
+    int nd,
+    const ptr<const FwiWeather> weather,
+    const ptr<const FwiWeather> weather_daily
+  );
   /**
    * Actual fire spread calculation without needing to worry about settings or scenarios
    */
   SpreadInfo(
-    double time,
-    double min_ros,
-    double cell_size,
+    DurationSize time,
+    MathSize min_ros,
+    MathSize cell_size,
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
@@ -355,32 +388,41 @@ private:
     const ptr<const FwiWeather> weather
   );
   SpreadInfo(
-    double time,
-    double min_ros,
-    double cell_size,
+    DurationSize time,
+    MathSize min_ros,
+    MathSize cell_size,
     const SpreadKey& key,
     int nd,
     const ptr<const FwiWeather> weather
+  );
+  SpreadInfo(
+    DurationSize time,
+    MathSize min_ros,
+    MathSize cell_size,
+    const SpreadKey& key,
+    int nd,
+    const ptr<const FwiWeather> weather,
+    const ptr<const FwiWeather> weather_daily
   );
   /**
    * Do initial spread calculations
    * \return Initial head ros calculation (-1 for none)
    */
-  static double
+  static MathSize
   initial(
     SpreadInfo& spread,
     const FwiWeather& weather,
-    double& ffmc_effect,
-    double& wsv,
-    double& rso,
-    double& raz,
+    MathSize& ffmc_effect,
+    MathSize& wsv,
+    MathSize& rso,
+    MathSize& raz,
     const FuelType* const fuel,
     bool has_no_slope,
-    double heading_sin,
-    double heading_cos,
-    double bui_eff,
-    double min_ros,
-    double critical_surface_intensity
+    MathSize heading_sin,
+    MathSize heading_cos,
+    MathSize bui_eff,
+    MathSize min_ros,
+    MathSize critical_surface_intensity
   );
   /**
    * \brief Offsets from origin point that represent spread under these conditions
@@ -389,9 +431,9 @@ private:
   /**
    * \brief Maximum intensity in any direction for spread (kW/m)
    */
-  double max_intensity_ = -1;
+  MathSize max_intensity_ = INVALID_INTENSITY;
   /**
-  DurationSize time_tributes for Cell spread is occurring in
+   * \brief Attributes for Cell spread is occurring in
    */
   SpreadKey key_ = 0;
   /**
@@ -405,16 +447,16 @@ private:
   /**
    * \brief Head fire rate of spread (m/min)
    */
-  double head_ros_ = -1;
-  double cfb_ = -1;
-  double cfc_ = -1;
-  double tfc_ = -1;
-  double sfc_ = -1;
+  MathSize head_ros_ = INVALID_ROS;
+  MathSize cfb_ = -1;
+  MathSize cfc_ = -1;
+  MathSize tfc_ = -1;
+  MathSize sfc_ = -1;
   bool is_crown_ = false;
   /**
    * \brief Head fire spread direction
    */
-  Direction raz_;
+  Direction raz_{Direction::Invalid};
   /**
    * \brief Difference between date and the date of minimum foliar moisture content (from ST-X-3)
    */

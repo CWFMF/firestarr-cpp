@@ -6,6 +6,7 @@
 #ifndef FS_CONVEXHULL_H
 #define FS_CONVEXHULL_H
 
+#include "Cell.h"
 #include "InnerPos.h"
 
 namespace fs
@@ -27,6 +28,8 @@ distPtPt(InnerPos& a, InnerPos& b);
  */
 void
 hull(vector<InnerPos>& a);
+vector<InnerPos>
+hull(map<Cell, vector<InnerPos>>& a);
 
 /**
  * Implementation of the quickhull algorithm to find a convex hull.
