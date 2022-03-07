@@ -33,7 +33,7 @@ hull(vector<fs::sim::InnerPos>& a) noexcept;
 void
 quickHull(
   const vector<fs::sim::InnerPos>& a,
-  set<fs::sim::InnerPos>& hullPoints,
+  vector<fs::sim::InnerPos>& hullPoints,
   fs::sim::InnerPos& n1,
   fs::sim::InnerPos& n2
 ) noexcept;

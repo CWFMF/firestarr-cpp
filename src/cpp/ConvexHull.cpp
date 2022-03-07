@@ -22,7 +22,7 @@ hull(
   vector<fs::sim::InnerPos>& a
 ) noexcept
 {
-  set<fs::sim::InnerPos> hullPoints{};
+  vector<fs::sim::InnerPos> hullPoints{};
   fs::sim::InnerPos maxPos{MIN_X, MIN_X};
   fs::sim::InnerPos minPos{MAX_X, MAX_X};
 
@@ -46,16 +46,17 @@ hull(
     a.erase(std::remove(a.begin(), a.end(), minPos), a.end());
     quickHull(a, hullPoints, minPos, maxPos);
     quickHull(a, hullPoints, maxPos, minPos);
-    // points should all be unique, so just insert them
-    a = {};
-    a.insert(a.end(), hullPoints.cbegin(), hullPoints.cend());
+    // make sure we have unique points
+    std::sort(hullPoints.begin(), hullPoints.end());
+    hullPoints.erase(std::unique(hullPoints.begin(), hullPoints.end()), hullPoints.end());
+    std::swap(a, hullPoints);
   }
 }
 
 void
 quickHull(
   const vector<fs::sim::InnerPos>& a,
-  set<fs::sim::InnerPos>& hullPoints,
+  vector<fs::sim::InnerPos>& hullPoints,
   fs::sim::InnerPos& n1,
   fs::sim::InnerPos& n2
 ) noexcept
@@ -121,7 +122,7 @@ quickHull(
   else
   {
     // n1 -> n2 must be an edge
-    hullPoints.emplace(n1);
-    hullPoints.emplace(n2);
+    hullPoints.emplace_back(n1);
+    // Must add n2 as the first point of a different line
   }
 }
