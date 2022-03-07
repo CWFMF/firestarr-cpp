@@ -120,8 +120,14 @@ public:
     const string& base_name
   ) const override
   {
-    map_->saveToAsciiFile(dir, makeName(base_name, suffix_));
-    map_->saveToTiffFile(dir, makeName(base_name, suffix_));
+    if (Settings::saveAsAscii())
+    {
+      map_->saveToAsciiFile(dir, makeName(base_name, suffix_));
+    }
+    else
+    {
+      map_->saveToTiffFile(dir, makeName(base_name, suffix_));
+    }
   }
   /**
    * \brief Clear all observations

@@ -39,6 +39,7 @@ show_usage_and_exit(
        << "   -q                        Decrease output level" << endl
        << "   -a                        Run using actuals for weather" << endl
        << "   -i                        Save intensity maps for simulations" << endl
+       << "   -a                        Save grids as .asc" << endl
        << "   -s                        Run in synchronous mode" << endl
        << "   --wx                      Use input weather file instead of querying database" << endl
        << "   --perim                   Start from perimeter" << endl
@@ -169,6 +170,14 @@ main(
               show_usage_and_exit(name);
             }
             save_intensity = true;
+          }
+          else if (0 == strcmp(argv[i], "-a"))
+          {
+            if (Settings::saveAsAscii())
+            {
+              show_usage_and_exit(name);
+            }
+            Settings::setSaveAsAscii(true);
           }
           else if (0 == strcmp(argv[i], "-s"))
           {
