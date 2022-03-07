@@ -25,7 +25,7 @@ inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b)
 
 void hull(vector<firestarr::sim::InnerPos>& a) noexcept
 {
-  set<firestarr::sim::InnerPos> hullPoints{};
+  vector<firestarr::sim::InnerPos> hullPoints{};
   firestarr::sim::InnerPos maxPos{MIN_X, MIN_X};
   firestarr::sim::InnerPos minPos{MAX_X, MAX_X};
 
@@ -49,14 +49,15 @@ void hull(vector<firestarr::sim::InnerPos>& a) noexcept
     a.erase(std::remove(a.begin(), a.end(), minPos), a.end());
     quickHull(a, hullPoints, minPos, maxPos);
     quickHull(a, hullPoints, maxPos, minPos);
-    // points should all be unique, so just insert them
-    a = {};
-    a.insert(a.end(), hullPoints.cbegin(), hullPoints.cend());
+    // make sure we have unique points
+    std::sort(hullPoints.begin(), hullPoints.end());
+    hullPoints.erase(std::unique(hullPoints.begin(), hullPoints.end()), hullPoints.end());
+    std::swap(a, hullPoints);
   }
 }
 
 void quickHull(const vector<firestarr::sim::InnerPos>& a,
-               set<firestarr::sim::InnerPos>& hullPoints,
+               vector<firestarr::sim::InnerPos>& hullPoints,
                firestarr::sim::InnerPos& n1,
                firestarr::sim::InnerPos& n2) noexcept
 {
@@ -121,7 +122,7 @@ void quickHull(const vector<firestarr::sim::InnerPos>& a,
   else
   {
     // n1 -> n2 must be an edge
-    hullPoints.emplace(n1);
-    hullPoints.emplace(n2);
+    hullPoints.emplace_back(n1);
+    // Must add n2 as the first point of a different line
   }
 }

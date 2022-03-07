@@ -41,6 +41,6 @@ void hull(vector<firestarr::sim::InnerPos>& a) noexcept;
  * @param n2 Second point
  */
 void quickHull(const vector<firestarr::sim::InnerPos>& a,
-               set<firestarr::sim::InnerPos>& hullPoints,
+               vector<firestarr::sim::InnerPos>& hullPoints,
                firestarr::sim::InnerPos& n1,
                firestarr::sim::InnerPos& n2) noexcept;
