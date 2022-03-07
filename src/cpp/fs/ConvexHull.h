@@ -1,10 +1,13 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_CONVEXHULL_H
-#define FS_CONVEXHULL_H
-#include "Cell.h"
+#ifndef FS_CONVEX_HULL_H
+#define FS_CONVEX_HULL_H
 #include "InnerPos.h"
 namespace fs
 {
+/**
+ * Maximum number of points to allow in a cell before condensing them.
+ */
+constexpr auto MAX_BEFORE_CONDENSE = 3;
 /**
  * Calculates distance from point a to point b (squared I think? - we only
  * care about relative values, so no need to do sqrt)
@@ -12,7 +15,7 @@ namespace fs
  * @param b Second point
  * @return 'distance' from point a to point b
  */
-inline double distPtPt(InnerPos& a, InnerPos& b) noexcept;
+inline constexpr double distPtPt(const InnerPos& a, const InnerPos& b) noexcept;
 /**
  * Find a convex hull for the points in the given vector and modify the
  * input to only have the hull points on return
@@ -28,9 +31,9 @@ void hull(vector<InnerPos>& a) noexcept;
  */
 void quickHull(
   const vector<InnerPos>& a,
-  set<InnerPos>& hullPoints,
-  InnerPos& n1,
-  InnerPos& n2
+  vector<InnerPos>& hullPoints,
+  const InnerPos& n1,
+  const InnerPos& n2
 ) noexcept;
 }
 #endif

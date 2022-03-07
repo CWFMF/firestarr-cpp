@@ -4,7 +4,7 @@ namespace fs
 {
 constexpr double MIN_X = std::numeric_limits<double>::min();
 constexpr double MAX_X = std::numeric_limits<double>::max();
-inline double distPtPt(InnerPos& a, InnerPos& b) noexcept
+inline constexpr double distPtPt(const InnerPos& a, const InnerPos& b) noexcept
 {
 #ifdef _WIN32
   return (((b.x - a.x) * (b.x - a.x)) + ((b.y - a.y) * (b.y - a.y)));
@@ -14,7 +14,7 @@ inline double distPtPt(InnerPos& a, InnerPos& b) noexcept
 }
 void hull(vector<InnerPos>& a) noexcept
 {
-  set<InnerPos> hullPoints{};
+  vector<InnerPos> hullPoints{};
   InnerPos maxPos{MIN_X, MIN_X};
   InnerPos minPos{MAX_X, MAX_X};
   for (const auto p : a)
@@ -36,16 +36,17 @@ void hull(vector<InnerPos>& a) noexcept
     a.erase(std::remove(a.begin(), a.end(), minPos), a.end());
     quickHull(a, hullPoints, minPos, maxPos);
     quickHull(a, hullPoints, maxPos, minPos);
-    // points should all be unique, so just insert them
-    a = {};
-    a.insert(a.end(), hullPoints.cbegin(), hullPoints.cend());
+    // make sure we have unique points
+    std::sort(hullPoints.begin(), hullPoints.end());
+    hullPoints.erase(std::unique(hullPoints.begin(), hullPoints.end()), hullPoints.end());
+    std::swap(a, hullPoints);
   }
 }
 void quickHull(
   const vector<InnerPos>& a,
-  set<InnerPos>& hullPoints,
-  InnerPos& n1,
-  InnerPos& n2
+  vector<InnerPos>& hullPoints,
+  const InnerPos& n1,
+  const InnerPos& n2
 ) noexcept
 {
   double maxD = -1.0;   // just make sure it's not >= 0
@@ -88,16 +89,12 @@ void quickHull(
       }
     }
   }
-  auto is_not_edge = maxD > 0;
-  if (0 == maxD)
-  {
-    // we have co-linear points
-    // need to figure out which direction we're going in
-    const auto d2 = distPtPt(n1, n2);
-    // if either of these isn't true then this must be an edge
-    is_not_edge = (distPtPt(n1, maxPos) < d2) && (distPtPt(maxPos, n2) < d2);
-  }
-  if (is_not_edge)
+  if (maxD > 0
+      || (0 == maxD
+          //we have co-linear points
+          // if either of these isn't true then this must be an edge
+          && (distPtPt(n1, maxPos) < distPtPt(n1, n2))
+          && (distPtPt(maxPos, n2) < distPtPt(n1, n2))))
   {
     // this is not an edge, so recurse on the lines between n1, n2, & maxPos
     quickHull(usePoints, hullPoints, n1, maxPos);
@@ -106,8 +103,8 @@ void quickHull(
   else
   {
     // n1 -> n2 must be an edge
-    hullPoints.emplace(n1);
-    hullPoints.emplace(n2);
+    hullPoints.emplace_back(n1);
+    // Must add n2 as the first point of a different line
   }
 }
 }
