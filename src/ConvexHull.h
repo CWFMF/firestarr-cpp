@@ -32,6 +32,7 @@ inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b)
  * @param a Points to find a convex hull for
  */
 void hull(vector<firestarr::sim::InnerPos>& a);
+vector<firestarr::sim::InnerPos> hull(map<firestarr::topo::Cell, vector<firestarr::sim::InnerPos>>& a);
 
 /**
  * Implementation of the quickhull algorithm to find a convex hull.

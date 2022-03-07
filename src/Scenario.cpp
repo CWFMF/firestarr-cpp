@@ -43,8 +43,6 @@ void Scenario::clear() noexcept
   arrival_ = {};
   //  points_.clear();
   points_ = {};
-  //  point_map_.clear();
-  point_map_ = {};
   //  offsets_.clear();
   offsets_ = {};
   extinction_thresholds_.clear();
@@ -195,7 +193,6 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
   {
     o->reset();
   }
-  point_map_ = {};
   current_time_ = start_time_ - 1;
   points_ = {};
   unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
@@ -700,9 +697,12 @@ void Scenario::scheduleFireSpread(const Event& event)
   //note("Spreading for %f minutes", duration);
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
+  map<topo::Cell, PointSet> point_map_{};
+  map<topo::Cell, size_t> count{};
   for (auto& kv : points_)
   {
     const auto& location = kv.first;
+    count[location] = kv.second.size();
     const auto key = location.key();
     auto& offsets = offsets_.at(key);
     if (!offsets.empty())
@@ -764,8 +764,17 @@ void Scenario::scheduleFireSpread(const Event& event)
       {
         if (!isSurrounded(for_cell) && survives(new_time, for_cell, new_time - arrival_[for_cell]))
         {
-          checkCondense(kv.second);
+          //checkCondense(kv.second);
           //checkHull(for_cell, kv.second);
+          if (count[for_cell] > 1)
+          {
+            // no point in doing hull if only one point spread
+            hull(kv.second);
+          }
+//          else
+//          {
+//            firestarr::logging::warning("Not condensing %d points", count[for_cell]);
+//          }
           std::swap(points_[for_cell], kv.second);
         }
         else
@@ -781,9 +790,67 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   for (auto& c : erase_what)
   {
-    point_map_.erase(c);
     points_.erase(c);
   }
+  // try doing a hull of all points_
+//  vector<InnerPos> pts{};
+//  for (auto& kv : points_)
+//  {
+//    pts.insert(pts.end(), kv.second.cbegin(), kv.second.cend());
+//  }
+  const auto pts = hull(points_);
+  // HULL HERE
+  map<topo::Cell, vector<InnerPos>> tmp_points{};
+//  hull(pts);
+  // put points back in the proper places
+  for (auto& p : pts)
+  {
+    tmp_points[cell(p)].emplace_back(p);
+  }
+  map<topo::Cell, bool> keepCells{};
+  // should have all points generated, so now do a hull of each of the cells
+  for (auto& kv : points_)
+  {
+    if (!tmp_points.contains(kv.first))
+    {
+      // if this cell isn't in the hull then want to keep it and all the cells around its cells
+      for (Idx r = -1; r <= 1; ++r)
+      {
+        for (Idx c = -1; c <= 1; ++c)
+        {
+          keepCells[cell(r + kv.first.row(), c + kv.first.column())] = true;
+        }
+      }
+    }
+  }
+  // now check all the cells again
+  for (auto& kv : points_)
+  {
+    if (!keepCells.contains(kv.first))
+    {
+      // use points from the main hull
+      points_[kv.first] = tmp_points[kv.first];
+    }
+    else
+    {
+      // should have been hulled already
+//      hull(kv.second);
+    }
+  }
+//  // should have all points generated, so now do a hull of each of the cells
+//  for (auto& kv : points_)
+//  {
+//    if (tmp_points.contains(kv.first))
+//    {
+//      // use points from the main hull
+//      points_[kv.first] = tmp_points[kv.first];
+//    }
+//    else
+//    {
+//      // should have been hulled already
+////      hull(kv.second);
+//    }
+//  }
   log_verbose("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
