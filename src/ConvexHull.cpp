@@ -23,7 +23,7 @@ inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b)
   return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
 }
 
-void hull(vector<firestarr::sim::InnerPos>& a)
+void hull(vector<firestarr::sim::InnerPos>& a) noexcept
 {
   set<firestarr::sim::InnerPos> hullPoints{};
   firestarr::sim::InnerPos maxPos{MIN_X, MIN_X};
@@ -55,7 +55,10 @@ void hull(vector<firestarr::sim::InnerPos>& a)
   }
 }
 
-void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::InnerPos>& hullPoints, firestarr::sim::InnerPos& n1, firestarr::sim::InnerPos& n2)
+void quickHull(const vector<firestarr::sim::InnerPos>& a,
+               set<firestarr::sim::InnerPos>& hullPoints,
+               firestarr::sim::InnerPos& n1,
+               firestarr::sim::InnerPos& n2) noexcept
 {
   double maxD = -1.0;   //just make sure it's not >= 0
   firestarr::sim::InnerPos maxPos{MIN_X, MIN_X};

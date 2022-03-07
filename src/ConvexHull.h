@@ -31,7 +31,7 @@ inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b)
  * input to only have the hull points on return
  * @param a Points to find a convex hull for
  */
-void hull(vector<firestarr::sim::InnerPos>& a);
+void hull(vector<firestarr::sim::InnerPos>& a) noexcept;
 
 /**
  * Implementation of the quickhull algorithm to find a convex hull.
@@ -40,4 +40,7 @@ void hull(vector<firestarr::sim::InnerPos>& a);
  * @param n1 First point
  * @param n2 Second point
  */
-void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::InnerPos>& hullPoints, firestarr::sim::InnerPos& n1, firestarr::sim::InnerPos& n2);
+void quickHull(const vector<firestarr::sim::InnerPos>& a,
+               set<firestarr::sim::InnerPos>& hullPoints,
+               firestarr::sim::InnerPos& n1,
+               firestarr::sim::InnerPos& n2) noexcept;
