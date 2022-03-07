@@ -757,39 +757,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   {
     points_.erase(c);
   }
-  const auto pts = hull(points_);
-  map<Cell, vector<InnerPos>> tmp_points{};
-  // put points back in the proper places
-  for (auto& p : pts)
-  {
-    tmp_points[cell(p)].emplace_back(p);
-  }
-  map<Cell, bool> keepCells{};
-  // should have all points generated, so now do a hull of each of the cells
-  for (auto& kv : points_)
-  {
-    if (!tmp_points.contains(kv.first))
-    {
-      // if this cell isn't in the hull then want to keep it and all the cells around its cells
-      for (Idx r = -1; r <= 1; ++r)
-      {
-        for (Idx c = -1; c <= 1; ++c)
-        {
-          keepCells[cell(r + kv.first.row(), c + kv.first.column())] = true;
-        }
-      }
-    }
-  }
-  // now check all the cells again
-  for (auto& kv : points_)
-  {
-    if (!keepCells.contains(kv.first))
-    {
-      // use points from the main hull
-      points_[kv.first] = tmp_points[kv.first];
-    }
-  }
-  log_extensive("Spreading %d points until %f", points_.size(), new_time);
+  log_verbose("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
 double Scenario::currentFireSize() const { return intensity_->fireSize(); }

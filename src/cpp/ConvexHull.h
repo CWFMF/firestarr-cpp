@@ -15,14 +15,13 @@ namespace fs
  * @param b Second point
  * @return 'distance' from point a to point b
  */
-inline double distPtPt(InnerPos& a, InnerPos& b);
+inline double distPtPt(InnerPos& a, InnerPos& b) noexcept;
 /**
  * Find a convex hull for the points in the given vector and modify the
  * input to only have the hull points on return
  * @param a Points to find a convex hull for
  */
-void hull(vector<InnerPos>& a);
-vector<InnerPos> hull(map<Cell, vector<InnerPos>>& a);
+void hull(vector<InnerPos>& a) noexcept;
 /**
  * Implementation of the quickhull algorithm to find a convex hull.
  * @param a Points to find hull for
@@ -30,6 +29,11 @@ vector<InnerPos> hull(map<Cell, vector<InnerPos>>& a);
  * @param n1 First point
  * @param n2 Second point
  */
-void quickHull(const vector<InnerPos>& a, set<InnerPos>& hullPoints, InnerPos& n1, InnerPos& n2);
+void quickHull(
+  const vector<InnerPos>& a,
+  set<InnerPos>& hullPoints,
+  InnerPos& n1,
+  InnerPos& n2
+) noexcept;
 }
 #endif
