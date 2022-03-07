@@ -15,15 +15,12 @@
 
 #include "ConvexHull.h"
 
-//#define DEBUG_HULL
 constexpr double MIN_X = std::numeric_limits<double>::min();
 constexpr double MAX_X = std::numeric_limits<double>::max();
 
-inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b)
+inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b) noexcept
 {
-  const auto abX = (b.x - a.x);
-  const auto abY = (b.y - a.y);
-  return (abX * abX + abY * abY);
+  return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
 }
 
 void hull(vector<firestarr::sim::InnerPos>& a)
@@ -56,76 +53,12 @@ void hull(vector<firestarr::sim::InnerPos>& a)
     a = {};
     a.insert(a.end(), hullPoints.cbegin(), hullPoints.cend());
   }
-//  else
-//  {
-//    // points might not be unique, so use a set<> to make sure they are
-//    set<firestarr::sim::InnerPos> tmp{};
-//    tmp.insert(a.cbegin(), a.cend());
-//    a = {};
-//    a.insert(a.end(), tmp.cbegin(), tmp.cend());
-//  }
-}
-
-
-vector<firestarr::sim::InnerPos> hull(map<firestarr::topo::Cell, vector<firestarr::sim::InnerPos>>& a)
-{
-//  size_t before = 0;
-  vector<firestarr::sim::InnerPos> pts{};
-  set<firestarr::sim::InnerPos> hullPoints{};
-  firestarr::sim::InnerPos maxPos{MIN_X, MIN_X};
-  firestarr::sim::InnerPos minPos{MAX_X, MAX_X};
-
-  for (const auto& kv : a)
-  {
-    for (const auto& p : kv.second)
-    {
-      if (p.x > maxPos.x)
-      {
-        maxPos = p;
-      }
-      // don't use else if because first point should be set for both
-      if (p.x < minPos.x)
-      {
-        minPos = p;
-      }
-      pts.emplace_back(p);
-//      ++before;
-    }
-  }
-  if (pts.empty())
-  {
-    return pts;
-  }
-  //get rid of max & min nodes & call quickhull
-  if (maxPos != minPos)
-  {
-    pts.erase(std::remove(pts.begin(), pts.end(), maxPos), pts.end());
-    pts.erase(std::remove(pts.begin(), pts.end(), minPos), pts.end());
-    quickHull(pts, hullPoints, minPos, maxPos);
-    quickHull(pts, hullPoints, maxPos, minPos);
-    // points should all be unique, so just insert them
-    pts = {};
-    pts.insert(pts.end(), hullPoints.cbegin(), hullPoints.cend());
-  }
-//  else
-//  {
-//    // points might not be unique, so use a set<> to make sure they are
-//    set<firestarr::sim::InnerPos> tmp{};
-//    tmp.insert(pts.cbegin(), pts.cend());
-//    pts = {};
-//    pts.insert(pts.end(), tmp.cbegin(), tmp.cend());
-//  }
-//  firestarr::logging::warning("Started with %d points and ended with %d", before, pts.size());
-  return pts;
 }
 
 void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::InnerPos>& hullPoints, firestarr::sim::InnerPos& n1, firestarr::sim::InnerPos& n2)
 {
-#ifdef DEBUG_HULL
-  firestarr::logging::warning("Checking %d points", a->size());
-#endif
   double maxD = -1.0;   //just make sure it's not >= 0
-  firestarr::sim::InnerPos maxPos{std::numeric_limits<double>::min(), std::numeric_limits<double>::min()};
+  firestarr::sim::InnerPos maxPos{MIN_X, MIN_X};
   vector<firestarr::sim::InnerPos> usePoints{};
   // worst case scenario
   usePoints.reserve(a.size());
@@ -147,73 +80,45 @@ void quickHull(const vector<firestarr::sim::InnerPos>& a, set<firestarr::sim::In
     if (d >= 0)
     {
       if (d > maxD)
-      {               // if further away
-        maxD = d;     // update max dist
+      {
+        // if further away
+        if (maxD >= 0)
+        {
+          // already have one, so add old one to the list
+          // NOTE: delayed add instead of erasing maxPos later
+          usePoints.emplace_back(maxPos);
+        }
+        // update max dist
+        maxD = d;
         maxPos = p;
       }
-      // only use in next step if on positive side of line
-#ifdef DEBUG_HULL
-      firestarr::logging::warning("Adding point (%d, %d) (%f, %f)",
-                                  p.x,
-                                  p.y,
-                                  p.x,
-                                  p.y);
-#endif
-      usePoints.emplace_back(p);
+      else
+      {
+        // only use in next step if on positive side of line
+        usePoints.emplace_back(p);
+      }
     }
   }
-  if (maxD == 0)
+  auto is_not_edge = maxD > 0;
+  if (0 == maxD)
   {
-//we have co-linear points
-#ifdef DEBUG_HULL
-    size_t before = usePoints->size();
-#endif
-    usePoints.erase(std::remove(usePoints.begin(), usePoints.end(), maxPos), usePoints.end());
-#ifdef DEBUG_HULL
-    size_t after = usePoints->size();
-    firestarr::logging::check_fatal(before == after, "Remove did not get rid of point (%d, %d) (%f, %f)", maxPos.x, maxPos.y, maxPos.x, maxPos.y);
-#endif
+    //we have co-linear points
     //need to figure out which direction we're going in
-    const auto d1 = distPtPt(n1, maxPos);
     const auto d2 = distPtPt(n1, n2);
 
     // if either of these isn't true then this must be an edge
-    auto is_not_edge = (d1 < d2) && (distPtPt(maxPos, n2) < d2);
-    if (is_not_edge)
-    {
-      // maxNode is between n1 & n2
-#ifdef DEBUG_HULL
-      firestarr::logging::check_fatal(usePoints->size() == a->size(), "Recursing without eliminating any points");
-#endif
-      quickHull(usePoints, hullPoints, n1, maxPos);
-      quickHull(usePoints, hullPoints, maxPos, n2);
-    }
-    //n1 -> n2 must be an edge, but then maxNode is on one side of them
-    else
-    {
-      hullPoints.emplace(n1);
-      hullPoints.emplace(n2);
-    }
+    is_not_edge = (distPtPt(n1, maxPos) < d2) && (distPtPt(maxPos, n2) < d2);
   }
-  else if (maxD < 0)
+  if (is_not_edge)
   {
-    //no valid points, this must be edge
-    hullPoints.emplace(n1);
-    hullPoints.emplace(n2);
+    // this is not an edge, so recurse on the lines between n1, n2, & maxPos
+    quickHull(usePoints, hullPoints, n1, maxPos);
+    quickHull(usePoints, hullPoints, maxPos, n2);
   }
   else
   {
-    //this is not an edge, so recurse on the lines between n1, n2, & maxPos
-#ifdef DEBUG_HULL
-    size_t before = usePoints->size();
-#endif
-    usePoints.erase(std::remove(usePoints.begin(), usePoints.end(), maxPos), usePoints.end());
-#ifdef DEBUG_HULL
-    size_t after = usePoints->size();
-    firestarr::logging::check_fatal(before == after, "Remove did not get rid of point (%d, %d) (%f, %f)", maxPos.x, maxPos.y, maxPos.x, maxPos.y);
-    firestarr::logging::check_fatal(usePoints->size() == a->size(), "Recursing without eliminating any points");
-#endif
-    quickHull(usePoints, hullPoints, n1, maxPos);
-    quickHull(usePoints, hullPoints, maxPos, n2);
+    // n1 -> n2 must be an edge
+    hullPoints.emplace(n1);
+    hullPoints.emplace(n2);
   }
 }
