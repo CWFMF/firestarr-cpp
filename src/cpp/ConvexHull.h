@@ -13,7 +13,7 @@
  * @return 'distance' from point a to point b
  */
 inline double
-distPtPt(fs::sim::InnerPos& a, fs::sim::InnerPos& b);
+distPtPt(fs::sim::InnerPos& a, fs::sim::InnerPos& b) noexcept;
 
 /**
  * Find a convex hull for the points in the given vector and modify the
@@ -22,8 +22,6 @@ distPtPt(fs::sim::InnerPos& a, fs::sim::InnerPos& b);
  */
 void
 hull(vector<fs::sim::InnerPos>& a);
-vector<fs::sim::InnerPos>
-hull(map<fs::topo::Cell, vector<fs::sim::InnerPos>>& a);
 
 /**
  * Implementation of the quickhull algorithm to find a convex hull.

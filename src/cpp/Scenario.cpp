@@ -863,65 +863,6 @@ Scenario::scheduleFireSpread(
   {
     points_.erase(c);
   }
-  // try doing a hull of all points_
-  //  vector<InnerPos> pts{};
-  //  for (auto& kv : points_)
-  //  {
-  //    pts.insert(pts.end(), kv.second.cbegin(), kv.second.cend());
-  //  }
-  const auto pts = hull(points_);
-  // HULL HERE
-  map<topo::Cell, vector<InnerPos>> tmp_points{};
-  //  hull(pts);
-  // put points back in the proper places
-  for (auto& p : pts)
-  {
-    tmp_points[cell(p)].emplace_back(p);
-  }
-  map<topo::Cell, bool> keepCells{};
-  // should have all points generated, so now do a hull of each of the cells
-  for (auto& kv : points_)
-  {
-    if (!tmp_points.contains(kv.first))
-    {
-      // if this cell isn't in the hull then want to keep it and all the cells around its cells
-      for (Idx r = -1; r <= 1; ++r)
-      {
-        for (Idx c = -1; c <= 1; ++c)
-        {
-          keepCells[cell(r + kv.first.row(), c + kv.first.column())] = true;
-        }
-      }
-    }
-  }
-  // now check all the cells again
-  for (auto& kv : points_)
-  {
-    if (!keepCells.contains(kv.first))
-    {
-      // use points from the main hull
-      points_[kv.first] = tmp_points[kv.first];
-    }
-    else
-    {
-      // should have been hulled already
-      //      hull(kv.second);
-    }
-  }
-  //  // should have all points generated, so now do a hull of each of the cells
-  //  for (auto& kv : points_)
-  //  {
-  //    if (tmp_points.contains(kv.first))
-  //    {
-  //      // use points from the main hull
-  //      points_[kv.first] = tmp_points[kv.first];
-  //    }
-  //    else
-  //    {
-  //      // should have been hulled already
-  ////      hull(kv.second);
-  //    }
-  //  }
   log_verbose("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
