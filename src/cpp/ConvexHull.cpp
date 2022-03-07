@@ -20,7 +20,7 @@ distPtPt(
 void
 hull(
   vector<fs::sim::InnerPos>& a
-)
+) noexcept
 {
   set<fs::sim::InnerPos> hullPoints{};
   fs::sim::InnerPos maxPos{MIN_X, MIN_X};
@@ -58,7 +58,7 @@ quickHull(
   set<fs::sim::InnerPos>& hullPoints,
   fs::sim::InnerPos& n1,
   fs::sim::InnerPos& n2
-)
+) noexcept
 {
   double maxD = -1.0;   // just make sure it's not >= 0
   fs::sim::InnerPos maxPos{MIN_X, MIN_X};

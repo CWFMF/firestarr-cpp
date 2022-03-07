@@ -21,7 +21,7 @@ distPtPt(fs::sim::InnerPos& a, fs::sim::InnerPos& b) noexcept;
  * @param a Points to find a convex hull for
  */
 void
-hull(vector<fs::sim::InnerPos>& a);
+hull(vector<fs::sim::InnerPos>& a) noexcept;
 
 /**
  * Implementation of the quickhull algorithm to find a convex hull.
@@ -36,4 +36,4 @@ quickHull(
   set<fs::sim::InnerPos>& hullPoints,
   fs::sim::InnerPos& n1,
   fs::sim::InnerPos& n2
-);
+) noexcept;
