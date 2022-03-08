@@ -282,7 +282,7 @@ public:
    * \brief Offset in the y direction (row)
    */
   const double y;
-  Offset(const double a, const double b)
+  constexpr Offset(const double a, const double b) noexcept
     : x(a),
       y(b)
   {
