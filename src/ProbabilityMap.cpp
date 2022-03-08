@@ -246,22 +246,22 @@ void ProbabilityMap::saveAll(const Model& model,
 }
 void ProbabilityMap::saveTotal(const string& base_name) const
 {
-  all_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
+  all_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveTotalCount(const string& base_name) const
 {
-  all_.saveToProbabilityFile(Settings::outputDirectory(), base_name, 1.0);
+  all_.saveToProbabilityFile<uint32>(Settings::outputDirectory(), base_name, 1);
 }
 void ProbabilityMap::saveHigh(const string& base_name) const
 {
-  high_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
+  high_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveModerate(const string& base_name) const
 {
-  med_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
+  med_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveLow(const string& base_name) const
 {
-  low_.saveToProbabilityFile(Settings::outputDirectory(), base_name, static_cast<double>(numSizes()));
+  low_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
 }
 }
