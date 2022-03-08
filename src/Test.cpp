@@ -143,7 +143,8 @@ public:
     addEvent(Event::makeEnd(end_date));
     last_save_ = end_date;
     final_sizes_ = {};
-    reset(nullptr, nullptr, reinterpret_cast<util::SafeVector*>(&final_sizes_));
+    // cast to avoid warning
+    static_cast<void*>(reset(nullptr, nullptr, reinterpret_cast<util::SafeVector*>(&final_sizes_)));
   }
 };
 int run_test(const char* output_directory,
