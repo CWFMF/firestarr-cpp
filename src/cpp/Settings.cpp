@@ -226,26 +226,6 @@ public:
     return minimum_simulation_rounds_;
   }
   /**
-   * \brief Set maximum grade target used for selecting WeatherSHIELD historic years
-   * \param value Maximum grade target used for selecting WeatherSHIELD historic years
-   */
-  void
-  setMaxGrade(
-    const double value
-  ) noexcept
-  {
-    max_grade_ = value;
-  }
-  /**
-   * \brief Maximum grade target used for selecting WeatherSHIELD historic years
-   * \return Maximum grade target used for selecting WeatherSHIELD historic years
-   */
-  [[nodiscard]] constexpr double
-  maxGrade() const noexcept
-  {
-    return max_grade_;
-  }
-  /**
    * \brief Confidence required before simulation stops (% / 100)
    * \return Confidence required before simulation stops (% / 100)
    */
@@ -364,10 +344,6 @@ private:
    * \brief Offset from sunrise at which the day is considered to end (hours)
    */
   double offset_sunset_;
-  /**
-   * \brief Maximum grade target used for selecting WeatherSHIELD historic years
-   */
-  double max_grade_;
   /**
    * \brief Confidence required before simulation stops (% / 100)
    */
@@ -500,7 +476,6 @@ SettingsImplementation::SettingsImplementation(
       }
       in.close();
     }
-    weather_file_ = get_value(settings, "WEATHER_FILE");
     raster_root_ = get_value(settings, "RASTER_ROOT");
     fuel_lookup_table_file_ = get_value(settings, "FUEL_LOOKUP_TABLE");
     // HACK: run into fuel consumption being too low if we don't have a minimum ros
@@ -513,7 +488,6 @@ SettingsImplementation::SettingsImplementation(
     minimum_ffmc_at_night_ = stod(get_value(settings, "MINIMUM_FFMC_AT_NIGHT"));
     offset_sunrise_ = stod(get_value(settings, "OFFSET_SUNRISE"));
     offset_sunset_ = stod(get_value(settings, "OFFSET_SUNSET"));
-    max_grade_ = stod(get_value(settings, "MAX_GRADE"));
     confidence_level_ = stod(get_value(settings, "CONFIDENCE_LEVEL"));
     maximum_time_seconds_ = stol(get_value(settings, "MAXIMUM_TIME"));
     threshold_scenario_weight_ = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
@@ -687,18 +661,6 @@ int
 Settings::intensityMaxModerate() noexcept
 {
   return SettingsImplementation::instance().intensityMaxModerate();
-}
-void
-Settings::setMaxGrade(
-  const double value
-) noexcept
-{
-  SettingsImplementation::instance().setMaxGrade(value);
-}
-double
-Settings::maxGrade() noexcept
-{
-  return SettingsImplementation::instance().maxGrade();
 }
 double
 Settings::confidenceLevel() noexcept

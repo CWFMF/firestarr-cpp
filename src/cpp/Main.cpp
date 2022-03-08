@@ -6,8 +6,7 @@
  *
  * \section intro_sec Introduction
  *
- * FireSTARR is a probabilistic fire growth model that relies on the presence of
- * WeatherSHIELD for its inputs.
+ * FireSTARR is a probabilistic fire growth model.
  */
 #include "stdafx.h"
 #include "Model.h"
@@ -42,7 +41,7 @@ show_usage_and_exit(
        << "   -s                        Run in synchronous mode" << endl
        << "   --ascii                   Save grids as .asc" << endl
        << "   --no-intensity            Do not output intensity grids" << endl
-       << "   --wx                      Use input weather file instead of querying database" << endl
+       << "   --wx                      Use input weather file" << endl
        << "   --perim                   Start from perimeter" << endl
        << "   --size                    Start from size" << endl
        << "   --ffmc                    Override startup Fine Fuel Moisture Code" << endl
@@ -128,7 +127,6 @@ main(
       string wx_file_name;
       string perim;
       size_t size = 0;
-      auto score = 0.0;
       fs::wx::Ffmc* ffmc = nullptr;
       fs::wx::Dmc* dmc = nullptr;
       fs::wx::Dc* dc = nullptr;
@@ -242,15 +240,6 @@ main(
             }
             size = static_cast<size_t>(stoi(get_arg("size", &i, argc, argv)));
           }
-          else if (0 == strcmp(argv[i], "--score"))
-          {
-            if (0 != score)
-            {
-              show_usage_and_exit(name);
-            }
-            score = stod(get_arg("score", &i, argc, argv));
-            Settings::setMaxGrade(score);
-          }
           else if (0 == strcmp(argv[i], "--ffmc"))
           {
             if (nullptr != ffmc)
@@ -304,6 +293,10 @@ main(
           cout << "Must specify startup indices if specifying weather input file\n";
           show_usage_and_exit(name);
         }
+      }
+      else
+      {
+        fs::logging::fatal("Weather input file is required");
       }
       if (nullptr == ffmc)
       {

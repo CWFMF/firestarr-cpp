@@ -198,7 +198,7 @@ ProbabilityMap::saveAll(
       launch::async,
       &ProbabilityMap::saveTotal,
       this,
-      make_string(for_actuals ? "actuals" : "wxshield")
+      make_string(for_actuals ? "actuals" : "probability")
     ));
     results.push_back(
       async(launch::async, &ProbabilityMap::saveTotalCount, this, make_string("occurrence"))
@@ -223,7 +223,7 @@ ProbabilityMap::saveAll(
   }
   else
   {
-    saveTotal(make_string(for_actuals ? "actuals" : "wxshield"));
+    saveTotal(make_string(for_actuals ? "actuals" : "probability"));
     saveTotalCount(make_string("occurrence"));
     if (Settings::saveIntensity())
     {
