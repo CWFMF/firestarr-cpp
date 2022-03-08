@@ -166,17 +166,6 @@ public:
    */
   [[nodiscard]] static int intensityMaxModerate() noexcept;
   /**
-   * \brief Set maximum grade target used for selecting WeatherSHIELD historic years
-   * \param value Maximum grade target used for selecting WeatherSHIELD historic years
-   * \return None
-   */
-  static void setMaxGrade(double value) noexcept;
-  /**
-   * \brief Maximum grade target used for selecting WeatherSHIELD historic years
-   * \return Maximum grade target used for selecting WeatherSHIELD historic years
-   */
-  [[nodiscard]] static double maxGrade() noexcept;
-  /**
    * \brief Confidence required before simulation stops (% / 100)
    * \return Confidence required before simulation stops (% / 100)
    */
