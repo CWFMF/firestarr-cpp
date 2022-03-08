@@ -103,17 +103,12 @@ void quickHull(const vector<firestarr::sim::InnerPos>& a,
       }
     }
   }
-  auto is_not_edge = maxD > 0;
-  if (0 == maxD)
-  {
-    //we have co-linear points
-    //need to figure out which direction we're going in
-    const auto d2 = distPtPt(n1, n2);
-
-    // if either of these isn't true then this must be an edge
-    is_not_edge = (distPtPt(n1, maxPos) < d2) && (distPtPt(maxPos, n2) < d2);
-  }
-  if (is_not_edge)
+  if (maxD > 0
+      || (0 == maxD
+          //we have co-linear points
+          // if either of these isn't true then this must be an edge
+          && (distPtPt(n1, maxPos) < distPtPt(n1, n2))
+          && (distPtPt(maxPos, n2) < distPtPt(n1, n2))))
   {
     // this is not an edge, so recurse on the lines between n1, n2, & maxPos
     quickHull(usePoints, hullPoints, n1, maxPos);
