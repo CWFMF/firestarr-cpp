@@ -90,6 +90,17 @@ public:
    */
   static void setSaveAsAscii(bool value) noexcept;
   /**
+   * \brief Whether or not to save intensity grids
+   * \return Whether or not to save intensity grids
+   */
+  [[nodiscard]] static bool saveIntensity() noexcept;
+  /**
+   * \brief Set whether or not to save intensity grids
+   * \param value Whether or not to save intensity grids
+   * \return None
+   */
+  static void setSaveIntensity(bool value) noexcept;
+  /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */

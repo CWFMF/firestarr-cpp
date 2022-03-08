@@ -62,17 +62,20 @@ void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
   logging::check_fatal(rhs.low_max_ != low_max_, "Wrong low max value");
   logging::check_fatal(rhs.med_max_ != med_max_, "Wrong med max value");
   lock_guard<mutex> lock(mutex_);
-  for (auto&& kv : rhs.low_.data)
+  if (Settings::saveIntensity())
   {
-    low_.data[kv.first] += kv.second;
-  }
-  for (auto&& kv : rhs.med_.data)
-  {
-    med_.data[kv.first] += kv.second;
-  }
-  for (auto&& kv : rhs.high_.data)
-  {
-    high_.data[kv.first] += kv.second;
+    for (auto&& kv : rhs.low_.data)
+    {
+      low_.data[kv.first] += kv.second;
+    }
+    for (auto&& kv : rhs.med_.data)
+    {
+      med_.data[kv.first] += kv.second;
+    }
+    for (auto&& kv : rhs.high_.data)
+    {
+      high_.data[kv.first] += kv.second;
+    }
   }
   for (auto&& kv : rhs.all_.data)
   {
@@ -94,21 +97,24 @@ void ProbabilityMap::addProbability(const IntensityMap& for_time)
       const auto k = kv.first;
       const auto v = kv.second;
       all_.data[k] += 1;
-      if (v >= min_value_ && v <= low_max_)
+      if (Settings::saveIntensity())
       {
-        low_.data[k] += 1;
-      }
-      else if (v > low_max_ && v <= med_max_)
-      {
-        med_.data[k] += 1;
-      }
-      else if (v > med_max_ && v <= max_value_)
-      {
-        high_.data[k] += 1;
-      }
-      else
-      {
-        logging::fatal("Value %d doesn't fit into any range", v);
+        if (v >= min_value_ && v <= low_max_)
+        {
+          low_.data[k] += 1;
+        }
+        else if (v > low_max_ && v <= med_max_)
+        {
+          med_.data[k] += 1;
+        }
+        else if (v > med_max_ && v <= max_value_)
+        {
+          high_.data[k] += 1;
+        }
+        else
+        {
+          logging::fatal("Value %d doesn't fit into any range", v);
+        }
       }
     });
   const auto size = for_time.fireSize();
@@ -196,18 +202,21 @@ void ProbabilityMap::saveAll(const Model& model,
                             &ProbabilityMap::saveTotalCount,
                             this,
                             make_string("occurrence")));
-    results.push_back(async(launch::async,
-                            &ProbabilityMap::saveLow,
-                            this,
-                            make_string("intensity_L")));
-    results.push_back(async(launch::async,
-                            &ProbabilityMap::saveModerate,
-                            this,
-                            make_string("intensity_M")));
-    results.push_back(async(launch::async,
-                            &ProbabilityMap::saveHigh,
-                            this,
-                            make_string("intensity_H")));
+    if (Settings::saveIntensity())
+    {
+      results.push_back(async(launch::async,
+                              &ProbabilityMap::saveLow,
+                              this,
+                              make_string("intensity_L")));
+      results.push_back(async(launch::async,
+                              &ProbabilityMap::saveModerate,
+                              this,
+                              make_string("intensity_M")));
+      results.push_back(async(launch::async,
+                              &ProbabilityMap::saveHigh,
+                              this,
+                              make_string("intensity_H")));
+    }
     results.push_back(async(launch::async,
                             &ProbabilityMap::saveSizes,
                             this,
@@ -221,9 +230,12 @@ void ProbabilityMap::saveAll(const Model& model,
   {
     saveTotal(make_string(for_actuals ? "actuals" : "wxshield"));
     saveTotalCount(make_string("occurrence"));
-    saveLow(make_string("intensity_L"));
-    saveModerate(make_string("intensity_M"));
-    saveHigh(make_string("intensity_H"));
+    if (Settings::saveIntensity())
+    {
+      saveLow(make_string("intensity_L"));
+      saveModerate(make_string("intensity_M"));
+      saveHigh(make_string("intensity_H"));
+    }
     saveSizes(make_string("sizes"));
   }
   const auto nd = model.nd(day);
