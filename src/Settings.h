@@ -101,6 +101,17 @@ public:
    */
   static void setSaveIntensity(bool value) noexcept;
   /**
+   * \brief Whether or not to save occurrence grids
+   * \return Whether or not to save occurrence grids
+   */
+  [[nodiscard]] static bool saveOccurrence() noexcept;
+  /**
+   * \brief Set whether or not to save occurrence grids
+   * \param value Whether or not to save occurrence grids
+   * \return None
+   */
+  static void setSaveOccurrence(bool value) noexcept;
+  /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */
