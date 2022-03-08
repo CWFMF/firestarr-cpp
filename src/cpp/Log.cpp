@@ -338,11 +338,14 @@ SelfLogger::log_check_fatal(
   ...
 ) const noexcept
 {
-  va_list args;
-  va_start(args, format);
-  const auto fmt = add_log(format);
-  logging::check_fatal(condition, fmt.c_str(), &args);
-  va_end(args);
+  if (condition)
+  {
+    va_list args;
+    va_start(args, format);
+    const auto fmt = add_log(format);
+    logging::fatal(fmt.c_str(), &args);
+    va_end(args);
+  }
 }
 
 void
