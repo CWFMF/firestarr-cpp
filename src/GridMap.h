@@ -404,7 +404,7 @@ public:
       0.0};
     uint32 bps = sizeof(R) * 8;
     // make sure to use floating point if values are
-    if (std::is_floating_point<V>::value)
+    if (std::is_floating_point<R>::value)
     {
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
     }
@@ -427,9 +427,9 @@ public:
     TIFFSetField(tif, TIFFTAG_GEOTIEPOINTS, 6, tiePoints);
     TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
     size_t tileSize = tileWidth * tileHeight;
-    const auto buf_size = tileSize * sizeof(V);
+    const auto buf_size = tileSize * sizeof(R);
     logging::extensive("%s has buffer size %d", base_name.c_str(), buf_size);
-    T* buf = (T*)_TIFFmalloc(buf_size);
+    R* buf = (R*)_TIFFmalloc(buf_size);
     for (size_t co = 0; co < num_columns; co += tileWidth)
     {
       for (size_t ro = 0; ro < num_rows; ro += tileHeight)
@@ -464,27 +464,22 @@ public:
    * \param base_name File base name to use
    * \param divisor Number of simulations to divide by to calculate probability per cell
    */
+  template <class R>
   void saveToProbabilityFile(const string& dir,
                              const string& base_name,
-                             const double divisor) const
+                             const R divisor) const
   {
+    auto div = [divisor](V value)
+    {
+      return static_cast<R>(value / divisor);
+    };
     if (firestarr::sim::Settings::saveAsAscii())
     {
-      saveToAsciiFile<double>(dir,
-                              base_name,
-                              [divisor](V value)
-                              {
-                                return value / divisor;
-                              });
+      saveToAsciiFile<R>(dir, base_name, div);
     }
     else
     {
-      saveToTiffFile<double>(dir,
-                             base_name,
-                             [divisor](V value)
-                             {
-                               return value / divisor;
-                             });
+      saveToTiffFile<R>(dir, base_name, div);
     }
   }
   /**
