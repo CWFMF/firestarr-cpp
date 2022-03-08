@@ -61,7 +61,7 @@ struct InnerPos
   /**
    * \brief Add offset to position and return result
    */
-  [[nodiscard]] InnerPos
+  [[nodiscard]] constexpr InnerPos
   add(
     const Offset o
   ) const noexcept
