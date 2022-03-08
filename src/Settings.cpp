@@ -387,6 +387,11 @@ public:
    * \return Whether or not to save intensity grids
    */
   atomic<bool> save_intensity = true;
+  /**
+   * \brief Whether or not to save occurrence grids
+   * \return Whether or not to save occurrence grids
+   */
+  atomic<bool> save_occurrence = false;
 };
 /**
  * \brief The singleton instance for this class
@@ -534,6 +539,14 @@ bool Settings::saveIntensity() noexcept
 void Settings::setSaveIntensity(const bool value) noexcept
 {
   SettingsImplementation::instance().save_intensity = value;
+}
+bool Settings::saveOccurrence() noexcept
+{
+  return SettingsImplementation::instance().save_occurrence;
+}
+void Settings::setSaveOccurrence(const bool value) noexcept
+{
+  SettingsImplementation::instance().save_occurrence = value;
 }
 double Settings::minimumRos() noexcept
 {

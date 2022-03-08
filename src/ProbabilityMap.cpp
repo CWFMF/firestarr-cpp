@@ -198,10 +198,13 @@ void ProbabilityMap::saveAll(const Model& model,
                             &ProbabilityMap::saveTotal,
                             this,
                             make_string(for_actuals ? "actuals" : "probability")));
-    results.push_back(async(launch::async,
-                            &ProbabilityMap::saveTotalCount,
-                            this,
-                            make_string("occurrence")));
+    if (Settings::saveOccurrence())
+    {
+      results.push_back(async(launch::async,
+                              &ProbabilityMap::saveTotalCount,
+                              this,
+                              make_string("occurrence")));
+    }
     if (Settings::saveIntensity())
     {
       results.push_back(async(launch::async,
@@ -229,7 +232,10 @@ void ProbabilityMap::saveAll(const Model& model,
   else
   {
     saveTotal(make_string(for_actuals ? "actuals" : "probability"));
-    saveTotalCount(make_string("occurrence"));
+    if (Settings::saveOccurrence())
+    {
+      saveTotalCount(make_string("occurrence"));
+    }
     if (Settings::saveIntensity())
     {
       saveLow(make_string("intensity_L"));
