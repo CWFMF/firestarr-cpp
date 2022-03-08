@@ -255,11 +255,14 @@ void SelfLogger::log_error(const char* format, ...) const noexcept
 }
 void SelfLogger::log_check_fatal(bool condition, const char* format, ...) const noexcept
 {
-  va_list args;
-  va_start(args, format);
-  const auto fmt = add_log(format);
-  logging::check_fatal(condition, fmt.c_str(), &args);
-  va_end(args);
+  if (condition)
+  {
+    va_list args;
+    va_start(args, format);
+    const auto fmt = add_log(format);
+    logging::fatal(fmt.c_str(), &args);
+    va_end(args);
+  }
 }
 
 void SelfLogger::log_fatal(const char* format, ...) const noexcept
