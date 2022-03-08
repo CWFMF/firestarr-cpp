@@ -12,8 +12,8 @@
  * @param b Second point
  * @return 'distance' from point a to point b
  */
-inline double
-distPtPt(fs::sim::InnerPos& a, fs::sim::InnerPos& b) noexcept;
+inline constexpr double
+distPtPt(const fs::sim::InnerPos& a, const fs::sim::InnerPos& b) noexcept;
 
 /**
  * Find a convex hull for the points in the given vector and modify the
@@ -34,6 +34,6 @@ void
 quickHull(
   const vector<fs::sim::InnerPos>& a,
   vector<fs::sim::InnerPos>& hullPoints,
-  fs::sim::InnerPos& n1,
-  fs::sim::InnerPos& n2
+  const fs::sim::InnerPos& n1,
+  const fs::sim::InnerPos& n2
 ) noexcept;

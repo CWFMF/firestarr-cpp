@@ -8,10 +8,10 @@
 constexpr double MIN_X = std::numeric_limits<double>::min();
 constexpr double MAX_X = std::numeric_limits<double>::max();
 
-inline double
+inline constexpr double
 distPtPt(
-  fs::sim::InnerPos& a,
-  fs::sim::InnerPos& b
+  const fs::sim::InnerPos& a,
+  const fs::sim::InnerPos& b
 ) noexcept
 {
   return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
@@ -57,8 +57,8 @@ void
 quickHull(
   const vector<fs::sim::InnerPos>& a,
   vector<fs::sim::InnerPos>& hullPoints,
-  fs::sim::InnerPos& n1,
-  fs::sim::InnerPos& n2
+  const fs::sim::InnerPos& n1,
+  const fs::sim::InnerPos& n2
 ) noexcept
 {
   double maxD = -1.0;   // just make sure it's not >= 0
