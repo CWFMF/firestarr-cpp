@@ -194,12 +194,15 @@ ProbabilityMap::saveAll(
   if (sim::Settings::runAsync())
   {
     vector<std::future<void>> results{};
-    results.push_back(async(
-      launch::async,
-      &ProbabilityMap::saveTotal,
-      this,
-      make_string(for_actuals ? "actuals" : "probability")
-    ));
+    if (Settings::saveProbability())
+    {
+      results.push_back(async(
+        launch::async,
+        &ProbabilityMap::saveTotal,
+        this,
+        make_string(for_actuals ? "actuals" : "probability")
+      ));
+    }
     if (Settings::saveOccurrence())
     {
       results.push_back(
@@ -226,7 +229,10 @@ ProbabilityMap::saveAll(
   }
   else
   {
-    saveTotal(make_string(for_actuals ? "actuals" : "probability"));
+    if (Settings::saveProbability())
+    {
+      saveTotal(make_string(for_actuals ? "actuals" : "probability"));
+    }
     if (Settings::saveOccurrence())
     {
       saveTotalCount(make_string("occurrence"));
