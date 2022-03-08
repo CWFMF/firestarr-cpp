@@ -48,6 +48,7 @@ void show_usage_and_exit(const char* name)
        << "   -i                        Save intensity maps for simulations" << endl
        << "   -s                        Run in synchronous mode" << endl
        << "   --ascii                   Save grids as .asc" << endl
+       << "   --no-intensity            Do not output intensity grids" << endl
        << "   --wx                      Use input weather file instead of querying database" << endl
        << "   --perim                   Start from perimeter" << endl
        << "   --size                    Start from size" << endl
@@ -184,6 +185,14 @@ int main(const int argc, const char* const argv[])
               show_usage_and_exit(name);
             }
             Settings::setSaveAsAscii(true);
+          }
+          else if (0 == strcmp(argv[i], "--no-intensity"))
+          {
+            if (!Settings::saveIntensity())
+            {
+              show_usage_and_exit(name);
+            }
+            Settings::setSaveIntensity(false);
           }
           else if (0 == strcmp(argv[i], "-s"))
           {

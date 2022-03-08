@@ -402,6 +402,11 @@ public:
    * \return Whether or not to save grids as .asc
    */
   atomic<bool> save_as_ascii = false;
+  /**
+   * \brief Whether or not to save intensity grids
+   * \return Whether or not to save intensity grids
+   */
+  atomic<bool> save_intensity = true;
 };
 /**
  * \brief The singleton instance for this class
@@ -543,6 +548,14 @@ bool Settings::saveAsAscii() noexcept
 void Settings::setSaveAsAscii(const bool value) noexcept
 {
   SettingsImplementation::instance().save_as_ascii = value;
+}
+bool Settings::saveIntensity() noexcept
+{
+  return SettingsImplementation::instance().save_intensity;
+}
+void Settings::setSaveIntensity(const bool value) noexcept
+{
+  SettingsImplementation::instance().save_intensity = value;
 }
 double Settings::minimumRos() noexcept
 {
