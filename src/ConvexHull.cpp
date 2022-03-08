@@ -18,7 +18,7 @@
 constexpr double MIN_X = std::numeric_limits<double>::min();
 constexpr double MAX_X = std::numeric_limits<double>::max();
 
-inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b) noexcept
+inline constexpr double distPtPt(const firestarr::sim::InnerPos& a, const firestarr::sim::InnerPos& b) noexcept
 {
   return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
 }
@@ -58,8 +58,8 @@ void hull(vector<firestarr::sim::InnerPos>& a) noexcept
 
 void quickHull(const vector<firestarr::sim::InnerPos>& a,
                vector<firestarr::sim::InnerPos>& hullPoints,
-               firestarr::sim::InnerPos& n1,
-               firestarr::sim::InnerPos& n2) noexcept
+               const firestarr::sim::InnerPos& n1,
+               const firestarr::sim::InnerPos& n2) noexcept
 {
   double maxD = -1.0;   //just make sure it's not >= 0
   firestarr::sim::InnerPos maxPos{MIN_X, MIN_X};

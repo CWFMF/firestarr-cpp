@@ -24,7 +24,7 @@
  * @param b Second point
  * @return 'distance' from point a to point b
  */
-inline double distPtPt(firestarr::sim::InnerPos& a, firestarr::sim::InnerPos& b) noexcept;
+inline constexpr double distPtPt(const firestarr::sim::InnerPos& a, const firestarr::sim::InnerPos& b) noexcept;
 
 /**
  * Find a convex hull for the points in the given vector and modify the
@@ -42,5 +42,5 @@ void hull(vector<firestarr::sim::InnerPos>& a) noexcept;
  */
 void quickHull(const vector<firestarr::sim::InnerPos>& a,
                vector<firestarr::sim::InnerPos>& hullPoints,
-               firestarr::sim::InnerPos& n1,
-               firestarr::sim::InnerPos& n2) noexcept;
+               const firestarr::sim::InnerPos& n1,
+               const firestarr::sim::InnerPos& n2) noexcept;
