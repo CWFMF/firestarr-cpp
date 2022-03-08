@@ -48,6 +48,7 @@ void show_usage_and_exit(const char* name)
        << "   -s                        Run in synchronous mode" << endl
        << "   --ascii                   Save grids as .asc" << endl
        << "   --no-intensity            Do not output intensity grids" << endl
+       << "   --no-probability          Do not output probability grids" << endl
        << "   --occurrence              Output occurrence grids" << endl
        << "   --wx                      Use input weather file" << endl
        << "   --perim                   Start from perimeter" << endl
@@ -192,6 +193,14 @@ int main(const int argc, const char* const argv[])
               show_usage_and_exit(name);
             }
             Settings::setSaveIntensity(false);
+          }
+          else if (0 == strcmp(argv[i], "--no-probability"))
+          {
+            if (!Settings::saveProbability())
+            {
+              show_usage_and_exit(name);
+            }
+            Settings::setSaveProbability(false);
           }
           else if (0 == strcmp(argv[i], "--occurrence"))
           {

@@ -101,6 +101,17 @@ public:
    */
   static void setSaveIntensity(bool value) noexcept;
   /**
+   * \brief Whether or not to save probability grids
+   * \return Whether or not to save probability grids
+   */
+  [[nodiscard]] static bool saveProbability() noexcept;
+  /**
+   * \brief Set whether or not to save probability grids
+   * \param value Whether or not to save probability grids
+   * \return None
+   */
+  static void setSaveProbability(bool value) noexcept;
+  /**
    * \brief Whether or not to save occurrence grids
    * \return Whether or not to save occurrence grids
    */
