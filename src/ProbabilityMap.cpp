@@ -91,22 +91,24 @@ void ProbabilityMap::addProbability(const IntensityMap& for_time)
     for_time.cend(),
     [this](auto&& kv)
     {
-      all_.data[kv.first] += 1;
-      if (kv.second >= min_value_ && kv.second <= low_max_)
+      const auto k = kv.first;
+      const auto v = kv.second;
+      all_.data[k] += 1;
+      if (v >= min_value_ && v <= low_max_)
       {
-        low_.data[kv.first] += 1;
+        low_.data[k] += 1;
       }
-      else if (kv.second > low_max_ && kv.second <= med_max_)
+      else if (v > low_max_ && v <= med_max_)
       {
-        med_.data[kv.first] += 1;
+        med_.data[k] += 1;
       }
-      else if (kv.second > med_max_ && kv.second <= max_value_)
+      else if (v > med_max_ && v <= max_value_)
       {
-        high_.data[kv.first] += 1;
+        high_.data[k] += 1;
       }
       else
       {
-        logging::fatal("Value %d doesn't fit into any range", kv.second);
+        logging::fatal("Value %d doesn't fit into any range", v);
       }
     });
   const auto size = for_time.fireSize();
