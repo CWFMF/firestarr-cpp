@@ -13,6 +13,7 @@
 #include <utility>
 #include "Grid.h"
 #include "ConstantGrid.h"
+#include "Settings.h"
 namespace fs::data
 {
 /**
@@ -510,9 +511,18 @@ public:
     const double divisor
   ) const
   {
-    saveToAsciiFile<double>(dir, base_name, [divisor](V value) {
-      return value / divisor;
-    });
+    if (fs::sim::Settings::saveAsAscii())
+    {
+      saveToAsciiFile<double>(dir, base_name, [divisor](V value) {
+        return value / divisor;
+      });
+    }
+    else
+    {
+      saveToTiffFile<double>(dir, base_name, [divisor](V value) {
+        return value / divisor;
+      });
+    }
   }
   /**
    * \brief Calculate area for cells that have a value (ha)
