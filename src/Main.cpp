@@ -46,8 +46,8 @@ void show_usage_and_exit(const char* name)
        << "   -q                        Decrease output level" << endl
        << "   -a                        Run using actuals for weather" << endl
        << "   -i                        Save intensity maps for simulations" << endl
-       << "   -a                        Save grids as .asc" << endl
        << "   -s                        Run in synchronous mode" << endl
+       << "   --ascii                   Save grids as .asc" << endl
        << "   --wx                      Use input weather file instead of querying database" << endl
        << "   --perim                   Start from perimeter" << endl
        << "   --size                    Start from size" << endl
@@ -177,7 +177,7 @@ int main(const int argc, const char* const argv[])
             }
             save_intensity = true;
           }
-          else if (0 == strcmp(argv[i], "-a"))
+          else if (0 == strcmp(argv[i], "--ascii"))
           {
             if (Settings::saveAsAscii())
             {
