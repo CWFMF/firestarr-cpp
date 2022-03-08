@@ -41,6 +41,7 @@ show_usage_and_exit(
        << "   -s                        Run in synchronous mode" << endl
        << "   --ascii                   Save grids as .asc" << endl
        << "   --no-intensity            Do not output intensity grids" << endl
+       << "   --occurrence              Output occurrence grids" << endl
        << "   --wx                      Use input weather file" << endl
        << "   --perim                   Start from perimeter" << endl
        << "   --size                    Start from size" << endl
@@ -185,6 +186,14 @@ main(
               show_usage_and_exit(name);
             }
             Settings::setSaveIntensity(false);
+          }
+          else if (0 == strcmp(argv[i], "--occurrence"))
+          {
+            if (Settings::saveOccurrence())
+            {
+              show_usage_and_exit(name);
+            }
+            Settings::setSaveOccurrence(true);
           }
           else if (0 == strcmp(argv[i], "-s"))
           {
