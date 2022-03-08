@@ -137,10 +137,7 @@ public:
                static_cast<Day>(start_date),
                static_cast<Day>(end_date))
   {
-    if (Settings::saveIntensity())
-    {
-      registerObserver(new IntensityObserver(*this, "intensity"));
-    }
+    registerObserver(new IntensityObserver(*this, "intensity"));
     registerObserver(new ArrivalObserver(*this));
     registerObserver(new SourceObserver(*this));
     addEvent(Event::makeEnd(end_date));
