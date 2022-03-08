@@ -388,6 +388,11 @@ public:
    */
   atomic<bool> save_intensity = true;
   /**
+   * \brief Whether or not to save probability grids
+   * \return Whether or not to save probability grids
+   */
+  atomic<bool> save_probability = true;
+  /**
    * \brief Whether or not to save occurrence grids
    * \return Whether or not to save occurrence grids
    */
@@ -539,6 +544,14 @@ bool Settings::saveIntensity() noexcept
 void Settings::setSaveIntensity(const bool value) noexcept
 {
   SettingsImplementation::instance().save_intensity = value;
+}
+bool Settings::saveProbability() noexcept
+{
+  return SettingsImplementation::instance().save_probability;
+}
+void Settings::setSaveProbability(const bool value) noexcept
+{
+  SettingsImplementation::instance().save_probability = value;
 }
 bool Settings::saveOccurrence() noexcept
 {
