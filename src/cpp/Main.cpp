@@ -44,6 +44,7 @@ show_usage_and_exit(
        << "   --no-probability          Do not output probability grids" << endl
        << "   --occurrence              Output occurrence grids" << endl
        << "   --wx                      Use input weather file" << endl
+       << "   --confidence              Use specified confidence level" << endl
        << "   --perim                   Start from perimeter" << endl
        << "   --size                    Start from size" << endl
        << "   --ffmc                    Override startup Fine Fuel Moisture Code" << endl
@@ -126,6 +127,7 @@ main(
       string arg(argv[i++]);
       auto save_intensity = false;
       auto actuals_only = false;
+      auto have_confidence = false;
       string wx_file_name;
       string perim;
       size_t size = 0;
@@ -245,6 +247,15 @@ main(
               show_usage_and_exit(name);
             }
             perim = get_arg("perim", &i, argc, argv);
+          }
+          else if (0 == strcmp(argv[i], "--confidence"))
+          {
+            if (have_confidence)
+            {
+              show_usage_and_exit(name);
+            }
+            have_confidence = true;
+            Settings::setConfidenceLevel(stod(get_arg("confidence", &i, argc, argv)));
           }
           else if (0 == strcmp(argv[i], "-w"))
           {
