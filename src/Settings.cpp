@@ -209,9 +209,17 @@ public:
    * \brief Confidence required before simulation stops (% / 100)
    * \return Confidence required before simulation stops (% / 100)
    */
-  [[nodiscard]] constexpr double confidenceLevel() const noexcept
+  [[nodiscard]] double confidenceLevel() const noexcept
   {
     return confidence_level_;
+  }
+  /**
+   * \brief Set confidence required before simulation stops (% / 100)
+   * \return Set confidence required before simulation stops (% / 100)
+   */
+  void setConfidenceLevel(const double value) noexcept
+  {
+    confidence_level_ = value;
   }
   /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used (s)
@@ -318,7 +326,7 @@ private:
   /**
    * \brief Confidence required before simulation stops (% / 100)
    */
-  double confidence_level_;
+  atomic<double> confidence_level_;
   /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used (s)
    */
@@ -616,6 +624,10 @@ int Settings::intensityMaxModerate() noexcept
 double Settings::confidenceLevel() noexcept
 {
   return SettingsImplementation::instance().confidenceLevel();
+}
+void Settings::setConfidenceLevel(const double value) noexcept
+{
+  SettingsImplementation::instance().setConfidenceLevel(value);
 }
 int64_t Settings::maximumTimeSeconds() noexcept
 {

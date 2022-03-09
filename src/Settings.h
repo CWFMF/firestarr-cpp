@@ -193,6 +193,11 @@ public:
    */
   [[nodiscard]] static double confidenceLevel() noexcept;
   /**
+   * \brief Set confidence required before simulation stops (% / 100)
+   * \return Set confidence required before simulation stops (% / 100)
+   */
+  static void setConfidenceLevel(const double value) noexcept;
+  /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used (s)
    * \return Maximum time simulation can run before it is ended and whatever results it has are used (s)
    */
