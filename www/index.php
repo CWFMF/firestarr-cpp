@@ -3,7 +3,7 @@
           <head>
             <meta charset="utf-8">
             <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
-            <title>FireSTARR Outputs</title>
+            <title>TBD Outputs</title>
 
             <!-- Leaflet -->
             <link rel="stylesheet" href="//npmcdn.com/leaflet@1.2.0/dist/leaflet.css" />
@@ -94,7 +94,7 @@
             return this._div;
         };
         title.update = function(props) {
-            this._div.innerHTML = "FireSTARR Outputs";
+            this._div.innerHTML = "TBD Outputs";
         };
         title.addTo(map);
 

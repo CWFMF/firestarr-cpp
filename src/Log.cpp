@@ -15,7 +15,7 @@
 
 #include "stdafx.h"
 #include "Log.h"
-namespace firestarr::logging
+namespace tbd::logging
 {
 int Log::logging_level_ = LOG_DEBUG;
 // do this in .cpp so that we don't get unused warnings including the .h

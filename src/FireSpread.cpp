@@ -20,7 +20,7 @@
 #include "Scenario.h"
 #include "Settings.h"
 #include "unstable.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 SlopeTableArray make_slope_table() noexcept
 {

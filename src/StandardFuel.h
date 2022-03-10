@@ -17,7 +17,7 @@
 #include "FireSpread.h"
 #include "FuelType.h"
 #include "LookupTable.h"
-namespace firestarr
+namespace tbd
 {
 using sim::SpreadInfo;
 namespace fuel

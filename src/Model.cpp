@@ -21,7 +21,7 @@
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "UTM.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 BurnedData* Model::getBurnedVector() const noexcept
@@ -198,15 +198,15 @@ void Model::readWeather(const string& filename,
     {
       auto& day = kv2.first;
       auto& w = kv2.second;
-      const firestarr::wx::Ffmc ffmc(w.tmp(), w.rh(), w.wind().speed(), apcp, last_ffmc);
+      const tbd::wx::Ffmc ffmc(w.tmp(), w.rh(), w.wind().speed(), apcp, last_ffmc);
       const auto t = dates[day];
       const auto month = t.tm_mon + 1;
-      const firestarr::wx::Dmc dmc(w.tmp(), w.rh(), apcp, last_dmc, month, latitude);
-      const firestarr::wx::Dc dc(w.tmp(), apcp, last_dc, month, latitude);
-      const firestarr::wx::Isi isi(w.wind().speed(), ffmc);
-      const firestarr::wx::Bui bui(dmc, dc);
-      const firestarr::wx::Fwi fwi(isi, bui);
-      const firestarr::wx::FwiWeather n(w.tmp(),
+      const tbd::wx::Dmc dmc(w.tmp(), w.rh(), apcp, last_dmc, month, latitude);
+      const tbd::wx::Dc dc(w.tmp(), apcp, last_dc, month, latitude);
+      const tbd::wx::Isi isi(w.wind().speed(), ffmc);
+      const tbd::wx::Bui bui(dmc, dc);
+      const tbd::wx::Fwi fwi(isi, bui);
+      const tbd::wx::FwiWeather n(w.tmp(),
                                         w.rh(),
                                         w.wind(),
                                         apcp,

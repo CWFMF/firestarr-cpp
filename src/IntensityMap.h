@@ -18,7 +18,7 @@
 #include <string>
 #include <bitset>
 #include "GridMap.h"
-namespace firestarr
+namespace tbd
 {
 namespace topo
 {

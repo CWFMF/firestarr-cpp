@@ -22,7 +22,7 @@
 #include <vector>
 #include "Grid.h"
 #include "Util.h"
-namespace firestarr::data
+namespace tbd::data
 {
 /**
  * \brief A GridData<T, V, const vector<T>> that cannot change once initialized.

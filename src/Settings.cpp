@@ -16,7 +16,7 @@
 #include "stdafx.h"
 #include "Settings.h"
 #include "Trim.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 template <class T>
 static vector<T> parse_list(string str, T (*convert)(const string& s))

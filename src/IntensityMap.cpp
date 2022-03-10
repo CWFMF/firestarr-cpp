@@ -17,7 +17,7 @@
 #include "IntensityMap.h"
 #include "Model.h"
 #include "Perimeter.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 static mutex MUTEX_MAPS;
 static vector<unique_ptr<data::GridMap<IntensitySize>>> MAPS;

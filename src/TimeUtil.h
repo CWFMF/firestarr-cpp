@@ -16,7 +16,7 @@
 #pragma once
 #include <odbcinst.h>
 #include <odbcinstext.h>
-namespace firestarr::util
+namespace tbd::util
 {
 /**
  * \brief Equality operator

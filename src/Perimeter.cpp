@@ -16,7 +16,7 @@
 #include "stdafx.h"
 #include "Perimeter.h"
 #include "Environment.h"
-namespace firestarr::topo
+namespace tbd::topo
 {
 /**
  * \brief A map of locations which have burned in a Scenario.

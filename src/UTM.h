@@ -33,7 +33,7 @@
 // restriction."
 //
 // 1) http://home.hiwaay.net/~taylorc/toolbox/geography/geoutm.html
-namespace firestarr::topo
+namespace tbd::topo
 {
 class Point;
 /**

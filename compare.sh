@@ -3,5 +3,5 @@ cmake -S . -B cmake-build-debug -D CMAKE_BUILD_TYPE=Debug
 cmake -S . -B cmake-build-release -D CMAKE_BUILD_TYPE=Release
 cmake --build cmake-build-debug -j 48
 cmake --build cmake-build-release -j 48
-cmake-build-debug/FireSTARR ./Data/output.debug ${ARGS}
-cmake-build-release/FireSTARR ./Data/output.release ${ARGS}
+cmake-build-debug/TBD ./Data/output.debug ${ARGS}
+cmake-build-release/TBD ./Data/output.release ${ARGS}

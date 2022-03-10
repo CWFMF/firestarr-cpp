@@ -15,7 +15,7 @@
 
 #include "stdafx.h"
 #include "TimeUtil.h"
-namespace firestarr::util
+namespace tbd::util
 {
 /**
  * \brief Convert from TIMESTAMP_STRUCT to tm

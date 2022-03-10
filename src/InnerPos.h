@@ -16,7 +16,7 @@
 #pragma once
 #include "Settings.h"
 
-namespace firestarr::sim
+namespace tbd::sim
 {
 /**
  * \brief The position within a Cell that a spreading point has.

@@ -15,7 +15,7 @@
 
 #include "stdafx.h"
 #include "Observer.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 string IObserver::makeName(const string& base_name, const string& suffix)
 {

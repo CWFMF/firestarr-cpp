@@ -35,7 +35,7 @@ TIFF* GeoTiffOpen(const char* const filename, const char* const mode)
   return tif;
 }
 
-namespace firestarr::util
+namespace tbd::util
 {
 void read_directory(const string& name, vector<string>* v, const string& match)
 {

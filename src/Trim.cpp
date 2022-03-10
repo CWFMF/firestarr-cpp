@@ -16,7 +16,7 @@
 #include "stdafx.h"
 #include "Trim.h"
 // from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-namespace firestarr::util
+namespace tbd::util
 {
 // trim from start (in place)
 void trim_left(string* s)

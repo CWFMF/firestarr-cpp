@@ -29,7 +29,7 @@
 #include "Point.h"
 #include "Settings.h"
 
-namespace firestarr::topo
+namespace tbd::topo
 {
 using FuelGrid = data::ConstantGrid<const fuel::FuelType*, FuelSize>;
 using ElevationGrid = data::ConstantGrid<ElevationSize>;

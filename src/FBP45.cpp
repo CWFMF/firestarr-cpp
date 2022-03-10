@@ -15,8 +15,8 @@
 
 #include "stdafx.h"
 #include "FBP45.h"
-using firestarr::util::LookupTable;
-namespace firestarr::fuel::fbp
+using tbd::util::LookupTable;
+namespace tbd::fuel::fbp
 {
 double FuelD1::isfD1(const SpreadInfo& spread,
                      const double ros_multiplier,

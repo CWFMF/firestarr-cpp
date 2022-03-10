@@ -16,7 +16,7 @@
 #include "stdafx.h"
 #include "FireWeather.h"
 #include "FuelType.h"
-namespace firestarr::wx
+namespace tbd::wx
 {
 /*!
  * \page weather Hourly fire and weather indices

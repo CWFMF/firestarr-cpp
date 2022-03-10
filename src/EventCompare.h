@@ -15,7 +15,7 @@
 
 #pragma once
 #include "Event.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 /**
  * \brief Defines how Events are compared for sorting.

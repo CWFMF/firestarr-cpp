@@ -29,7 +29,7 @@ const int TIFFTAG_GDAL_NODATA = 42113;
  */
 TIFF* GeoTiffOpen(const char* const filename, const char* const mode);
 
-namespace firestarr
+namespace tbd
 {
 namespace util
 {

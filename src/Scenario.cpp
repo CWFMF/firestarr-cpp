@@ -21,7 +21,7 @@
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "ConvexHull.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 // FIX: why is this not just 0.5?
 constexpr auto CELL_CENTER = 0.5555555555555555;

@@ -17,7 +17,7 @@
 #include "Weather.h"
 #include "Log.h"
 #include "TimeUtil.h"
-namespace firestarr::wx
+namespace tbd::wx
 {
 const Temperature Temperature::Zero = Temperature(0);
 const RelativeHumidity RelativeHumidity::Zero = RelativeHumidity(0);

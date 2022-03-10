@@ -15,7 +15,7 @@
 
 #include "stdafx.h"
 #include "Startup.h"
-namespace firestarr::wx
+namespace tbd::wx
 {
 Startup::Startup(string station,
                  const TIMESTAMP_STRUCT& generated,

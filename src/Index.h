@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-namespace firestarr::data
+namespace tbd::data
 {
 /**
  * \brief A wrapper around a double to ensure correct types are used.

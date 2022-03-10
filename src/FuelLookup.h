@@ -19,7 +19,7 @@
 #include <string>
 #include "Cell.h"
 #include "Util.h"
-namespace firestarr::fuel
+namespace tbd::fuel
 {
 class FuelLookupImpl;
 class FuelType;

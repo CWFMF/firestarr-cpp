@@ -23,7 +23,7 @@
 #include "Grid.h"
 #include "ConstantGrid.h"
 #include "Settings.h"
-namespace firestarr::data
+namespace tbd::data
 {
 /**
  * \brief A GridData that uses an unordered_map for storage.
@@ -473,7 +473,7 @@ public:
     {
       return static_cast<R>(value / divisor);
     };
-    if (firestarr::sim::Settings::saveAsAscii())
+    if (tbd::sim::Settings::saveAsAscii())
     {
       saveToAsciiFile<R>(dir, base_name, div);
     }

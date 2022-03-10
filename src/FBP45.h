@@ -21,7 +21,7 @@
 #ifndef NDEBUG
 #include "Log.h"
 #endif
-namespace firestarr::fuel
+namespace tbd::fuel
 {
 /**
  * \brief Calculate if green-up has occurred

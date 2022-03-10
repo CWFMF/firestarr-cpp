@@ -18,7 +18,7 @@
 #include <vector>
 #include "GridMap.h"
 #include "Statistics.h"
-namespace firestarr
+namespace tbd
 {
 namespace sim
 {
