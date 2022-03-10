@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-namespace firestarr::util
+namespace tbd::util
 {
 /**
  * \brief Keeps track of data structures so they can be reused instead of freeing and reacquiring them.

@@ -17,7 +17,7 @@
 #include "Iteration.h"
 #include "ProbabilityMap.h"
 #include "Scenario.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 Iteration::~Iteration()
 {

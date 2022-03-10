@@ -17,7 +17,7 @@
 #include "FuelType.h"
 #include "FireSpread.h"
 #include "Log.h"
-namespace firestarr::fuel
+namespace tbd::fuel
 {
 double InvalidFuel::buiEffect(double) const
 {

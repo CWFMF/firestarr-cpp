@@ -15,7 +15,7 @@
 
 #pragma once
 #include "Util.h"
-namespace firestarr::util
+namespace tbd::util
 {
 /**
  * \brief A table initialized using the given function ranging over the number of digits and precision.

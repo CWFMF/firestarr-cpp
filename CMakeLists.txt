@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(FireSTARR)
+project(TBD)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)

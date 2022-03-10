@@ -16,8 +16,8 @@
 #include "stdafx.h"
 #include "Grid.h"
 #include "UTM.h"
-using firestarr::Idx;
-namespace firestarr::data
+using tbd::Idx;
+namespace tbd::data
 {
 string find_value(const string& key, const string& within)
 {

@@ -27,7 +27,7 @@
 #include "Settings.h"
 #include "StartPoint.h"
 #include "InnerPos.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 class IObserver;
 class Event;

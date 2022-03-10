@@ -132,7 +132,7 @@ using std::unique_ptr;
 using std::unordered_map;
 using std::vector;
 using std::wstring;
-namespace firestarr
+namespace tbd
 {
 /**
  * \brief Size of the hash of a Cell

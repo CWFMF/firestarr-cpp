@@ -19,7 +19,7 @@
 #include "IntensityMap.h"
 #include "Model.h"
 #include "TimeUtil.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 ProbabilityMap::ProbabilityMap(const char* const for_what,
                                const double time,

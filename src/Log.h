@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-namespace firestarr::logging
+namespace tbd::logging
 {
 static const int LOG_EXTENSIVE = 0;
 static const int LOG_VERBOSE = 1;

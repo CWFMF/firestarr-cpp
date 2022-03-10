@@ -22,7 +22,7 @@
 #include "Log.h"
 #include "Point.h"
 
-using firestarr::topo::Location;
+using tbd::topo::Location;
 /**
  * \brief Provides hash function for Location.
  */
@@ -34,13 +34,13 @@ struct std::hash<Location>
    * \param location Location to get value for
    * \return Hash value for a Location
    */
-  [[nodiscard]] constexpr firestarr::HashSize operator()(
+  [[nodiscard]] constexpr tbd::HashSize operator()(
     const Location& location) const noexcept
   {
     return location.hash();
   }
 };
-namespace firestarr::data
+namespace tbd::data
 {
 /**
  * \brief The base class with information for a grid of data with geographic coordinates.

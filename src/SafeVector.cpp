@@ -16,7 +16,7 @@
 #include "stdafx.h"
 #include "SafeVector.h"
 #include "Statistics.h"
-namespace firestarr::util
+namespace tbd::util
 {
 SafeVector::SafeVector(const SafeVector& rhs)
   : values_(rhs.values_)

@@ -18,7 +18,7 @@
 #include "FBP45.h"
 #include "Log.h"
 #include "Settings.h"
-namespace firestarr::fuel
+namespace tbd::fuel
 {
 static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Spruce-Lichen Woodland", "C-1"},

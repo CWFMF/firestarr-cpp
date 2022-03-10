@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-namespace firestarr::sim
+namespace tbd::sim
 {
 static const double TEST_GRID_SIZE = 100.0;
 static const char TEST_PROJ4[] =

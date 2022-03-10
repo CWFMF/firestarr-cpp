@@ -18,7 +18,7 @@
 #include <string>
 #include "Environment.h"
 #include "Grid.h"
-namespace firestarr::topo
+namespace tbd::topo
 {
 /**
  * \brief Information regarding an Environment, such as grids to read and location.

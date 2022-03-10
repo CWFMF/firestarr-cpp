@@ -17,7 +17,7 @@
 #include "StartPoint.h"
 #include "Settings.h"
 #include "unstable.h"
-namespace firestarr::topo
+namespace tbd::topo
 {
 template <typename T>
 static T fix_range(T value, T min_value, T max_value) noexcept

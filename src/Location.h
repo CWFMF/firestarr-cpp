@@ -16,7 +16,7 @@
 #pragma once
 #include "Util.h"
 #include "Log.h"
-namespace firestarr::topo
+namespace tbd::topo
 {
 /**
  * \brief A location with a row and column.

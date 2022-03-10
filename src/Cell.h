@@ -17,7 +17,7 @@
 #include <limits>
 #include "Location.h"
 #include "Util.h"
-namespace firestarr::topo
+namespace tbd::topo
 {
 using SpreadKey = uint32;
 /**
@@ -241,14 +241,14 @@ namespace std
  * \brief Provides hashing of Cell objects
  */
 template <>
-struct hash<firestarr::topo::Cell>
+struct hash<tbd::topo::Cell>
 {
   /**
    * \brief Provides hash for Cell objects
    * \param k Cell to get hash for
    * \return Hash value
    */
-  std::size_t operator()(const firestarr::topo::Cell& k) const noexcept
+  std::size_t operator()(const tbd::topo::Cell& k) const noexcept
   {
     return k.fullHash();
   }

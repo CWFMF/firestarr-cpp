@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-/*! \mainpage FireSTARR Documentation
+/*! \mainpage TBD Documentation
  *
  * \section intro_sec Introduction
  *
- * FireSTARR is a probabilistic fire growth model.
+ * TBD is a probabilistic fire growth model.
  */
 #include "stdafx.h"
 #include "Model.h"
@@ -25,8 +25,8 @@
 #include "Test.h"
 #include "TimeUtil.h"
 #include "Log.h"
-using firestarr::logging::Log;
-using firestarr::sim::Settings;
+using tbd::logging::Log;
+using tbd::sim::Settings;
 void show_usage_and_exit(const char* name)
 {
   cout << "Usage:" << name << " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]" << endl
@@ -66,9 +66,9 @@ const char* get_arg(const char* const name,
                     const char* const argv[]) noexcept
 {
   // check if we don't have any more arguments
-  firestarr::logging::check_fatal(*i + 1 >= argc, "Missing argument to --%s", name);
+  tbd::logging::check_fatal(*i + 1 >= argc, "Missing argument to --%s", name);
   // check if we have another flag right after
-  firestarr::logging::check_fatal('-' == argv[*i + 1][0],
+  tbd::logging::check_fatal('-' == argv[*i + 1][0],
                                   "Missing argument to --%s",
                                   name);
   return argv[++*i];
@@ -81,7 +81,7 @@ int main(const int argc, const char* const argv[])
   cout << "**************************************************\n";
 #endif
   // _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-  Log::setLogLevel(firestarr::logging::LOG_NOTE);
+  Log::setLogLevel(tbd::logging::LOG_NOTE);
   auto bin = string(argv[0]);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
@@ -95,7 +95,7 @@ int main(const int argc, const char* const argv[])
   {
     if (argc > 3 && 0 == strcmp(argv[1], "test"))
     {
-      return firestarr::sim::test(argc, argv);
+      return tbd::sim::test(argc, argv);
     }
     if (6 <= argc)
     {
@@ -113,13 +113,13 @@ int main(const int argc, const char* const argv[])
       };
       if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
       {
-        firestarr::util::make_directory_recursive(Settings::outputDirectory());
+        tbd::util::make_directory_recursive(Settings::outputDirectory());
       }
       const string log_file = (string(Settings::outputDirectory()) + "log.txt");
-      firestarr::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
+      tbd::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
                                       "Can't open log file");
-      firestarr::logging::note("Output directory is %s", Settings::outputDirectory());
-      firestarr::logging::note("Output log is %s", log_file.c_str());
+      tbd::logging::note("Output directory is %s", Settings::outputDirectory());
+      tbd::logging::note("Output log is %s", log_file.c_str());
       string date(argv[i++]);
       TIMESTAMP_STRUCT start_date{};
       start_date.year = static_cast<SQLSMALLINT>(stoi(date.substr(0, 4)));
@@ -127,7 +127,7 @@ int main(const int argc, const char* const argv[])
       start_date.day = static_cast<SQLUSMALLINT>(stoi(date.substr(8, 2)));
       const auto latitude = stod(argv[i++]);
       const auto longitude = stod(argv[i++]);
-      const firestarr::topo::StartPoint start_point(latitude, longitude);
+      const tbd::topo::StartPoint start_point(latitude, longitude);
       size_t num_days = 0;
       string arg(argv[i++]);
       auto save_intensity = false;
@@ -136,10 +136,10 @@ int main(const int argc, const char* const argv[])
       string wx_file_name;
       string perim;
       size_t size = 0;
-      firestarr::wx::Ffmc* ffmc = nullptr;
-      firestarr::wx::Dmc* dmc = nullptr;
-      firestarr::wx::Dc* dc = nullptr;
-      firestarr::wx::AccumulatedPrecipitation* apcp_0800 = nullptr;
+      tbd::wx::Ffmc* ffmc = nullptr;
+      tbd::wx::Dmc* dmc = nullptr;
+      tbd::wx::Dc* dc = nullptr;
+      tbd::wx::AccumulatedPrecipitation* apcp_0800 = nullptr;
       tm start{};
       if (5 == arg.size() && ':' == arg[2])
       {
@@ -149,7 +149,7 @@ int main(const int argc, const char* const argv[])
           start_date.hour = static_cast<SQLUSMALLINT>(stoi(arg.substr(0, 2)));
           start_date.minute = static_cast<SQLUSMALLINT>(stoi(arg.substr(3, 2)));
           // we were given a time, so number of days is until end of year
-          firestarr::util::to_tm(start_date, &start);
+          tbd::util::to_tm(start_date, &start);
           // HACK: make sure we have the same start hour
           start.tm_hour = start_date.hour;
           const auto start_t = mktime(&start);
@@ -159,8 +159,8 @@ int main(const int argc, const char* const argv[])
           const auto seconds = difftime(mktime(&year_end), start_t);
           // start day counts too, so +1
           // HACK: but we don't want to go to Jan 1 so don't add 1
-          num_days = static_cast<size_t>(seconds / firestarr::DAY_SECONDS);
-          firestarr::logging::debug("Calculated number of days until end of year: %d",
+          num_days = static_cast<size_t>(seconds / tbd::DAY_SECONDS);
+          tbd::logging::debug("Calculated number of days until end of year: %d",
                                     num_days);
           // +1 because day 1 counts too
           // +2 so that results don't change when we change number of days
@@ -281,7 +281,7 @@ int main(const int argc, const char* const argv[])
             {
               show_usage_and_exit(name);
             }
-            ffmc = new firestarr::wx::Ffmc(stod(get_arg("ffmc", &i, argc, argv)));
+            ffmc = new tbd::wx::Ffmc(stod(get_arg("ffmc", &i, argc, argv)));
           }
           else if (0 == strcmp(argv[i], "--dmc"))
           {
@@ -289,7 +289,7 @@ int main(const int argc, const char* const argv[])
             {
               show_usage_and_exit(name);
             }
-            dmc = new firestarr::wx::Dmc(stod(get_arg("dmc", &i, argc, argv)));
+            dmc = new tbd::wx::Dmc(stod(get_arg("dmc", &i, argc, argv)));
           }
           else if (0 == strcmp(argv[i], "--dc"))
           {
@@ -297,7 +297,7 @@ int main(const int argc, const char* const argv[])
             {
               show_usage_and_exit(name);
             }
-            dc = new firestarr::wx::Dc(stod(get_arg("dc", &i, argc, argv)));
+            dc = new tbd::wx::Dc(stod(get_arg("dc", &i, argc, argv)));
           }
           else if (0 == strcmp(argv[i], "--apcp_0800"))
           {
@@ -305,7 +305,7 @@ int main(const int argc, const char* const argv[])
             {
               show_usage_and_exit(name);
             }
-            apcp_0800 = new firestarr::wx::AccumulatedPrecipitation(
+            apcp_0800 = new tbd::wx::AccumulatedPrecipitation(
               stod(get_arg("apcp_0800", &i, argc, argv)));
           }
           else
@@ -330,43 +330,43 @@ int main(const int argc, const char* const argv[])
       }
       else
       {
-        firestarr::logging::fatal("Weather input file is required");
+        tbd::logging::fatal("Weather input file is required");
       }
       if (nullptr == ffmc)
       {
-        firestarr::logging::fatal("FFMC is required");
+        tbd::logging::fatal("FFMC is required");
       }
       if (nullptr == dmc)
       {
-        firestarr::logging::fatal("DMC is required");
+        tbd::logging::fatal("DMC is required");
       }
       if (nullptr == dc)
       {
-        firestarr::logging::fatal("DC is required");
+        tbd::logging::fatal("DC is required");
       }
       if (nullptr == apcp_0800)
       {
-        firestarr::logging::warning("Assuming 0 precipitation");
-        apcp_0800 = new firestarr::wx::AccumulatedPrecipitation(0);
+        tbd::logging::warning("Assuming 0 precipitation");
+        apcp_0800 = new tbd::wx::AccumulatedPrecipitation(0);
       }
       const auto ffmc_fixed = *ffmc;
       const auto dmc_fixed = *dmc;
       const auto dc_fixed = *dc;
       // HACK: ISI for yesterday really doesn't matter so just use any wind
-      const auto isi_fixed = firestarr::wx::Isi(firestarr::wx::Speed(0), ffmc_fixed);
-      const auto bui_fixed = firestarr::wx::Bui(dmc_fixed, dc_fixed);
-      const auto fwi_fixed = firestarr::wx::Fwi(isi_fixed, bui_fixed);
-      const auto yesterday = firestarr::wx::FwiWeather(firestarr::wx::Temperature(0),
-                                                       firestarr::wx::RelativeHumidity(0),
-                                                       firestarr::wx::Wind(firestarr::wx::Direction(0, false), firestarr::wx::Speed(0)),
-                                                       firestarr::wx::AccumulatedPrecipitation(0),
+      const auto isi_fixed = tbd::wx::Isi(tbd::wx::Speed(0), ffmc_fixed);
+      const auto bui_fixed = tbd::wx::Bui(dmc_fixed, dc_fixed);
+      const auto fwi_fixed = tbd::wx::Fwi(isi_fixed, bui_fixed);
+      const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
+                                                 tbd::wx::RelativeHumidity(0),
+                                                 tbd::wx::Wind(tbd::wx::Direction(0, false), tbd::wx::Speed(0)),
+                                                 tbd::wx::AccumulatedPrecipitation(0),
                                                        ffmc_fixed,
                                                        dmc_fixed,
                                                        dc_fixed,
                                                        isi_fixed,
                                                        bui_fixed,
                                                        fwi_fixed);
-      firestarr::util::to_tm(start_date, &start);
+      tbd::util::to_tm(start_date, &start);
       // HACK: make sure we have the same start hour
       start.tm_hour = start_date.hour;
       cout << "Arguments are:\n";
@@ -375,7 +375,7 @@ int main(const int argc, const char* const argv[])
         cout << " " << argv[j];
       }
       cout << "\n";
-      return firestarr::sim::Model::runScenarios(wx_file_name.c_str(),
+      return tbd::sim::Model::runScenarios(wx_file_name.c_str(),
                                                  Settings::rasterRoot(),
                                                  yesterday,
                                                  start_point,
@@ -389,7 +389,7 @@ int main(const int argc, const char* const argv[])
   }
   catch (const runtime_error& err)
   {
-    firestarr::logging::fatal(err.what());
+    tbd::logging::fatal(err.what());
   }
   Log::closeLogFile();
 }

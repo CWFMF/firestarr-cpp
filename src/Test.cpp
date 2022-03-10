@@ -18,7 +18,7 @@
 #include "FireSpread.h"
 #include "Model.h"
 #include "Observer.h"
-namespace firestarr::sim
+namespace tbd::sim
 {
 /**
  * \brief An Environment with no elevation and the same value in every Cell.

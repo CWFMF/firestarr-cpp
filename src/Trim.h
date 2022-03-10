@@ -16,7 +16,7 @@
 #pragma once
 #include <string>
 // from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-namespace firestarr::util
+namespace tbd::util
 {
 /**
  * \brief Remove whitespace from left side of string

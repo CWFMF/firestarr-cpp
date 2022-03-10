@@ -18,16 +18,16 @@
 constexpr double MIN_X = std::numeric_limits<double>::min();
 constexpr double MAX_X = std::numeric_limits<double>::max();
 
-inline constexpr double distPtPt(const firestarr::sim::InnerPos& a, const firestarr::sim::InnerPos& b) noexcept
+inline constexpr double distPtPt(const tbd::sim::InnerPos& a, const tbd::sim::InnerPos& b) noexcept
 {
   return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
 }
 
-void hull(vector<firestarr::sim::InnerPos>& a) noexcept
+void hull(vector<tbd::sim::InnerPos>& a) noexcept
 {
-  vector<firestarr::sim::InnerPos> hullPoints{};
-  firestarr::sim::InnerPos maxPos{MIN_X, MIN_X};
-  firestarr::sim::InnerPos minPos{MAX_X, MAX_X};
+  vector<tbd::sim::InnerPos> hullPoints{};
+  tbd::sim::InnerPos maxPos{MIN_X, MIN_X};
+  tbd::sim::InnerPos minPos{MAX_X, MAX_X};
 
   for (const auto p : a)
   {
@@ -56,14 +56,14 @@ void hull(vector<firestarr::sim::InnerPos>& a) noexcept
   }
 }
 
-void quickHull(const vector<firestarr::sim::InnerPos>& a,
-               vector<firestarr::sim::InnerPos>& hullPoints,
-               const firestarr::sim::InnerPos& n1,
-               const firestarr::sim::InnerPos& n2) noexcept
+void quickHull(const vector<tbd::sim::InnerPos>& a,
+               vector<tbd::sim::InnerPos>& hullPoints,
+               const tbd::sim::InnerPos& n1,
+               const tbd::sim::InnerPos& n2) noexcept
 {
   double maxD = -1.0;   //just make sure it's not >= 0
-  firestarr::sim::InnerPos maxPos{MIN_X, MIN_X};
-  vector<firestarr::sim::InnerPos> usePoints{};
+  tbd::sim::InnerPos maxPos{MIN_X, MIN_X};
+  vector<tbd::sim::InnerPos> usePoints{};
   // worst case scenario
   usePoints.reserve(a.size());
 
