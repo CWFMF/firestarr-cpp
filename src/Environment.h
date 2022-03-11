@@ -40,7 +40,7 @@ using ElevationGrid = data::ConstantGrid<ElevationSize>;
  * all simulations. These attributes are loaded from rasters at the start of the
  * process. These rasters must be in a UTM projection, and all rasters for a zone
  * must be named consistently across the different attributes. The GIS scripts
- * provided in the FireGUARD project can generate these rasters for you.
+ * provided in the TBD project can generate these rasters for you.
  *
  * Elevation is only read at the ignition point and it is assumed that elevation
  * is the same wherever it is used in a calculation. Despite this, slope and aspect
