@@ -502,6 +502,7 @@ template <typename T>
     //                         "Cannot use grids with more than %d rows",
     //                         numeric_limits<Idx>::max());
     TIFFGetField(tif, TIFFTAG_GDAL_NODATA, &count, &data);
+    logging::check_fatal(0 == count, "NODATA value is not set in input");
     const auto nodata = stoi(string(static_cast<char*>(data)));
     double x = 0.0;
     double y = rows;
