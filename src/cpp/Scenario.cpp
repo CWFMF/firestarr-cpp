@@ -42,6 +42,7 @@ Scenario::clear() noexcept
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
   log_check_fatal(!scheduler_.empty(), "Scheduler isn't empty after clear()");
+  unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
 }
 size_t
 Scenario::completed() noexcept
@@ -170,8 +171,8 @@ Scenario::reset(
   util::SafeVector* final_sizes
 )
 {
+  unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
   current_time_ = start_time_;
-  unburnable_ = nullptr;
   intensity_ = nullptr;
   max_ros_ = 0;
   //  weather_(weather);
@@ -217,7 +218,6 @@ Scenario::reset(
   }
   current_time_ = start_time_ - 1;
   points_ = {};
-  unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
   unburnable_ = POOL_BURNED_DATA.acquire();
   // don't do this until we run so that we don't allocate memory too soon
   intensity_ = make_unique<IntensityMap>(model());
