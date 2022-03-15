@@ -533,7 +533,7 @@ template <typename T>
     logging::debug("Cell size is %f", cell_width);
     const auto proj4_char = GTIFGetProj4Defn(&definition);
     auto proj4 = string(proj4_char);
-    delete proj4_char;
+    free(proj4_char);
     const auto zone_pos = proj4.find("+zone=");
     if (string::npos != zone_pos && string::npos != proj4.find("+proj=utm"))
     {
