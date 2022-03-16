@@ -610,7 +610,10 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       }
       runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Done %d iterations", total_runs);
-      runs_left = max(runs_left, min_rounds - total_runs);
+      if (min_rounds > total_runs)
+      {
+        runs_left = max(runs_left, min_rounds - total_runs);
+      }
       logging::note("Need another %d iterations", runs_left);
       if (runs_left > recheck_interval)
       {
