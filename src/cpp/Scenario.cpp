@@ -805,9 +805,9 @@ Scenario::scheduleFireSpread(
   vector<topo::Cell> erase_what{};
   for (auto& kv : point_map_)
   {
+    auto& for_cell = kv.first;
     if (!kv.second.empty())
     {
-      auto& for_cell = kv.first;
       if (canBurn(for_cell) && max_intensity_[for_cell.key()] > 0)
       {
         // HACK: make sure it can't round down to 0
@@ -841,6 +841,10 @@ Scenario::scheduleFireSpread(
       }
       //      kv.second.clear();
       kv.second = {};
+    }
+    else
+    {
+      erase_what.emplace_back(for_cell);
     }
   }
   for (auto& c : erase_what)
