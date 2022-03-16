@@ -17,7 +17,6 @@
 #include "Scenario.h"
 #include "Observer.h"
 #include "FireSpread.h"
-#include "MemoryPool.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "ConvexHull.h"
@@ -30,7 +29,6 @@ static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
 static std::mutex MUTEX_SIM_COUNTS;
 static map<size_t, size_t> SIM_COUNTS{};
-static util::MemoryPool<BurnedData> POOL_BURNED_DATA{};
 void IObserver_deleter::operator()(IObserver* ptr) const
 {
   delete ptr;
@@ -49,7 +47,7 @@ void Scenario::clear() noexcept
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
   log_check_fatal(!scheduler_.empty(), "Scheduler isn't empty after clear()");
-  unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
+  unburnable_.reset();
 }
 size_t Scenario::completed() noexcept
 {
@@ -153,7 +151,7 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
                           mt19937* mt_spread,
                           util::SafeVector* final_sizes)
 {
-  unburnable_ = check_reset(unburnable_, POOL_BURNED_DATA);
+  unburnable_.reset();
   current_time_ = start_time_;
   intensity_ = nullptr;
   max_ros_ = 0;
@@ -196,7 +194,6 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
   }
   current_time_ = start_time_ - 1;
   points_ = {};
-  unburnable_ = POOL_BURNED_DATA.acquire();
   // don't do this until we run so that we don't allocate memory too soon
   intensity_ = make_unique<IntensityMap>(model());
   offsets_ = {};
@@ -270,7 +267,7 @@ Scenario::Scenario(Model* model,
                    const Day start_day,
                    const Day last_date)
   : current_time_(start_time),
-    unburnable_(nullptr),
+    unburnable_(0),
     intensity_(nullptr),
     //surrounded_(nullptr),
     max_ros_(0),
@@ -351,7 +348,7 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     spread_thresholds_by_ros_(std::move(rhs.spread_thresholds_by_ros_)),
     current_time_(rhs.current_time_),
     points_(std::move(rhs.points_)),
-    unburnable_(rhs.unburnable_),
+    unburnable_(std::move(rhs.unburnable_)),
     scheduler_(std::move(rhs.scheduler_)),
     intensity_(std::move(rhs.intensity_)),
     perimeter_(std::move(rhs.perimeter_)),
@@ -372,7 +369,6 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     last_date_(rhs.last_date_),
     ran_(rhs.ran_)
 {
-  rhs.unburnable_ = nullptr;
 }
 Scenario& Scenario::operator=(Scenario&& rhs) noexcept
 {
@@ -715,7 +711,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;
-          if (!(fuel::is_null_fuel(for_cell) || (*unburnable_)[for_cell.hash()]))
+          if (!(fuel::is_null_fuel(for_cell) || unburnable_[for_cell.hash()]))
           {
             //log_extensive("Adding point (%f, %f)", pos.x, pos.y);
             point_map_[for_cell].emplace_back(pos);
@@ -755,7 +751,7 @@ void Scenario::scheduleFireSpread(const Event& event)
       }
       // check if this cell is surrounded by burned cells or non-fuels
       // if surrounded then just drop all the points inside this cell
-      if (!(*unburnable_)[for_cell.hash()])
+      if (!unburnable_[for_cell.hash()])
       {
         // do survival check first since it should be easier
         if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
@@ -771,7 +767,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         else
         {
           // whether it went out or is surrounded just mark it as unburnable
-          (*unburnable_)[for_cell.hash()] = true;
+          unburnable_[for_cell.hash()] = true;
           erase_what.emplace_back(for_cell);
         }
       }
