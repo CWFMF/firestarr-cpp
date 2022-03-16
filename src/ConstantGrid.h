@@ -194,9 +194,9 @@ public:
     logging::check_fatal(max_row > actual_rows, "Can't have more than actual %d rows", actual_rows);
     T no_data = convert(grid_info.nodata(), grid_info.nodata());
     vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, no_data);
-    logging::warning("%s: malloc start", filename.c_str());
+    logging::verbose("%s: malloc start", filename.c_str());
     const auto buf = _TIFFmalloc(TIFFTileSize(tif));
-    logging::warning("%s: read start", filename.c_str());
+    logging::verbose("%s: read start", filename.c_str());
     const tsample_t smp{};
     logging::debug("Want to clip grid to (%d, %d) => (%d, %d)", min_row, min_column, max_row, max_column);
     for (auto h = tile_row; h <= max_row; h += tile_length)
@@ -244,9 +244,9 @@ public:
         }
       }
     }
-    logging::warning("%s: read end", filename.c_str());
+    logging::verbose("%s: read end", filename.c_str());
     _TIFFfree(buf);
-    logging::warning("%s: free end", filename.c_str());
+    logging::verbose("%s: free end", filename.c_str());
     const auto new_xll = grid_info.xllcorner() + (static_cast<double>(min_column) * grid_info.cellSize());
     const auto new_yll = grid_info.yllcorner()
                        + (static_cast<double>(actual_rows) - static_cast<double>(max_row))
