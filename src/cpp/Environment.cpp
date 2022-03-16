@@ -108,7 +108,7 @@ Environment::loadEnvironment(
     // HACK: assume floating point is going to always be exactly the same result
     if ((nullptr == for_info || cur_info->meridian() == for_info->meridian()) && cur_x <= best_x)
     {
-      logging::debug("SWITCH X");
+      logging::verbose("SWITCH X");
       if (cur_x != best_x)
       {
         // if we're switching zones then we need to reset this
@@ -119,21 +119,21 @@ Environment::loadEnvironment(
       const auto coordinates = cur_info->findFullCoordinates(point, false);
       if (nullptr != coordinates)
       {
-        logging::debug("CHECK Y");
+        logging::verbose("CHECK Y");
         const auto cur_y = static_cast<FullIdx>(
           abs(std::get<0>(*coordinates) - cur_info->calculateRows() / static_cast<FullIdx>(2))
         );
-        logging::debug(("Current y value is " + std::to_string(cur_y)).c_str());
+        logging::verbose(("Current y value is " + std::to_string(cur_y)).c_str());
         if (cur_y < best_y)
         {
-          logging::debug("SWITCH Y");
+          logging::verbose("SWITCH Y");
           env_info = std::move(cur_info);
           best_y = cur_y;
         }
       }
       else
       {
-        logging::debug("NULLPTR");
+        logging::verbose("NULLPTR");
       }
     }
   }

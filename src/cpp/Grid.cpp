@@ -166,7 +166,7 @@ GridBase::findFullCoordinates(
   auto x = 0.0;
   auto y = 0.0;
   lat_lon_to_utm(point, this->zone(), &x, &y);
-  logging::note(
+  logging::debug(
     "Coordinates (%f, %f) converted to (%0.1f, %f, %f)",
     point.latitude(),
     point.longitude(),
@@ -174,7 +174,7 @@ GridBase::findFullCoordinates(
     x,
     y
   );
-  logging::debug("Lower left is (%f, %f)", this->xllcorner_, this->yllcorner_);
+  logging::verbose("Lower left is (%f, %f)", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
@@ -184,7 +184,7 @@ GridBase::findFullCoordinates(
   const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
-    logging::debug(
+    logging::verbose(
       "Returning nullptr from findFullCoordinates() for (%f, %f) => (%d, %d)",
       actual_x,
       actual_y,
