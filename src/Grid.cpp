@@ -148,13 +148,13 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& poi
   auto x = 0.0;
   auto y = 0.0;
   lat_lon_to_utm(point, this->zone(), &x, &y);
-  logging::note("Coordinates (%f, %f) converted to (%0.1f, %f, %f)",
-                point.latitude(),
-                point.longitude(),
-                this->zone(),
-                x,
-                y);
-  logging::debug("Lower left is (%f, %f)", this->xllcorner_, this->yllcorner_);
+  logging::debug("Coordinates (%f, %f) converted to (%0.1f, %f, %f)",
+                 point.latitude(),
+                 point.longitude(),
+                 this->zone(),
+                 x,
+                 y);
+  logging::verbose("Lower left is (%f, %f)", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
@@ -165,11 +165,11 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& poi
   const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
-    logging::debug("Returning nullptr from findFullCoordinates() for (%f, %f) => (%d, %d)",
-                   actual_x,
-                   actual_y,
-                   column,
-                   row);
+    logging::verbose("Returning nullptr from findFullCoordinates() for (%f, %f) => (%d, %d)",
+                     actual_x,
+                     actual_y,
+                     column,
+                     row);
     return nullptr;
   }
   const auto sub_x = static_cast<SubSize>((actual_x - column) * 1000);
