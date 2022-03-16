@@ -542,7 +542,8 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                      Settings::intensityMaxLow(),
                                      Settings::intensityMaxModerate(),
                                      numeric_limits<int>::max());
-  auto runs_left = Settings::minimumSimulationRounds();
+  const auto min_rounds = Settings::minimumSimulationRounds();
+  auto runs_left = min_rounds;
   const auto recheck_interval = Settings::simulationRecheckInterval();
   // HACK: just do this here so that we know it happened
   //iterations.reset(&mt_extinction, &mt_spread);
@@ -555,9 +556,9 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     while (runs_left > 0)
     {
       // run what's left, up to min rounds at a time
-      const auto cur_runs = runs_left;
+      const auto cur_runs = min(runs_left, max_concurrent);
       const auto total_runs = i + cur_runs;
-      while (min(cur_runs, max_concurrent) > all_iterations.size())
+      while (cur_runs > all_iterations.size())
       {
         all_iterations.push_back(readScenarios(start_point,
                                                start,
@@ -608,6 +609,8 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         }
       }
       runs_left = runs_required(i, &means, &pct, *this);
+      logging::note("Done %d iterations", total_runs);
+      runs_left = max(runs_left, min_rounds - total_runs);
       logging::note("Need another %d iterations", runs_left);
       if (runs_left > recheck_interval)
       {
