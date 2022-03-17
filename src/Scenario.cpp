@@ -151,6 +151,7 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
                           mt19937* mt_spread,
                           util::SafeVector* final_sizes)
 {
+  cancelled_ = false;
   unburnable_.reset();
   current_time_ = start_time_;
   intensity_ = nullptr;
@@ -493,9 +494,13 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
       burn(fake_event, static_cast<IntensitySize>(1));
     }
   }
-  while (!scheduler_.empty())
+  while (!cancelled_ && !scheduler_.empty())
   {
     evaluateNextEvent();
+  }
+  if (cancelled_)
+  {
+    return nullptr;
   }
   ++COMPLETED;
   // HACK: use + to pull value out of atomic
@@ -840,5 +845,9 @@ void Scenario::evaluateNextEvent()
   {
     scheduler_.erase(event);
   }
+}
+void Scenario::cancel() noexcept
+{
+  cancelled_ = true;
 }
 }

@@ -133,6 +133,10 @@ public:
    */
   void burn(const Event& event, IntensitySize burn_intensity);
   /**
+   * Mark as cancelled so it stops computing on next event.
+   */
+  void cancel() noexcept;
+  /**
    * \brief Get Cell for given row and column
    * \param row Row
    * \param column Column
@@ -584,5 +588,9 @@ protected:
    * \brief Whether or not this Scenario has completed running
    */
   bool ran_;
+  /**
+   * \brief Whether this has been cancelled.
+   */
+   bool cancelled_ = false;
 };
 }
