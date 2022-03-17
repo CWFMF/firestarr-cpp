@@ -178,9 +178,11 @@ public:
     // make sure we're at the start of a tile
     const auto tile_column = tile_width * static_cast<FullIdx>(min_column / tile_width);
     const auto max_column = static_cast<FullIdx>(min(min_column + MAX_COLUMNS - 1, actual_columns));
+#ifndef NDEBUG
     logging::check_fatal(min_column < 0, "Column can't be less than 0");
     logging::check_fatal(max_column - min_column > MAX_COLUMNS, "Can't have more than %d columns", MAX_COLUMNS);
     logging::check_fatal(max_column > actual_columns, "Can't have more than actual %d columns", actual_columns);
+#endif
     auto min_row = max(static_cast<FullIdx>(0),
                        static_cast<FullIdx>(std::get<0>(*coordinates) - static_cast<FullIdx>(MAX_ROWS) / static_cast<FullIdx>(2)));
     if (min_row + MAX_COLUMNS >= actual_rows)
@@ -189,9 +191,11 @@ public:
     }
     const auto tile_row = tile_width * static_cast<FullIdx>(min_row / tile_width);
     const auto max_row = static_cast<FullIdx>(min(min_row + MAX_ROWS - 1, actual_rows));
+#ifndef NDEBUG
     logging::check_fatal(min_row < 0, "Row can't be less than 0 but is %d", min_row);
     logging::check_fatal(max_row - min_row > MAX_ROWS, "Can't have more than %d rows but have %d", MAX_ROWS, max_row - min_row);
     logging::check_fatal(max_row > actual_rows, "Can't have more than actual %d rows", actual_rows);
+#endif
     T no_data = convert(grid_info.nodata(), grid_info.nodata());
     vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, no_data);
     logging::verbose("%s: malloc start", filename.c_str());
@@ -251,8 +255,10 @@ public:
     const auto new_yll = grid_info.yllcorner()
                        + (static_cast<double>(actual_rows) - static_cast<double>(max_row))
                            * grid_info.cellSize();
+#ifndef NDEBUG
     logging::check_fatal(new_yll < grid_info.yllcorner(),
                          "New yllcorner is outside original grid");
+#endif
     logging::verbose("Translated lower left is (%f, %f) from (%f, %f)",
                      new_xll,
                      new_yll,
@@ -272,7 +278,9 @@ public:
                                          string(grid_info.proj4()),
                                          std::move(values));
     auto new_location = result->findCoordinates(point, true);
+#ifndef NDEBUG
     logging::check_fatal(nullptr == new_location, "Invalid location after reading");
+#endif
     logging::note("Coordinates are (%d, %d => %f, %f)",
                   std::get<0>(*new_location),
                   std::get<1>(*new_location),
@@ -491,9 +499,11 @@ private:
                    string(grid_info.proj4()),
                    std::move(values))
   {
+#ifndef NDEBUG
     logging::check_fatal(
       this->data.size() != static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS,
       "Invalid grid size");
+#endif
   }
 };
 }
