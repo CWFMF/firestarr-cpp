@@ -332,8 +332,10 @@ protected:
       rows_(rows),
       columns_(columns)
   {
+#ifndef NDEBUG
     logging::check_fatal(rows > MAX_ROWS, "Too many rows (%d > %d)", rows, MAX_ROWS);
     logging::check_fatal(columns > MAX_COLUMNS, "Too many columns (%d > %d)", columns, MAX_COLUMNS);
+#endif
   }
   /**
    * \brief Construct based on GridBase and no data value
