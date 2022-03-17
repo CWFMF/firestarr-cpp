@@ -107,11 +107,13 @@ public:
     const uint8_t i
   ) const noexcept
   {
+#ifndef NDEBUG
     logging::check_fatal(
       static_cast<size_t>(i) >= percentiles_.size(),
       "Invalid percentile %d requested",
       i
     );
+#endif
     return percentiles_.at(i);
   }
   /**
@@ -201,6 +203,7 @@ public:
     );
     standard_deviation_ = sqrt(total / n_);
     sample_variance_ = total / (n_ - 1);
+#ifndef NDEBUG
     logging::check_fatal(
       min_ != percentiles_[0],
       "Expected min to be %f not %f",
@@ -219,6 +222,7 @@ public:
       median_,
       percentiles_[50]
     );
+#endif
   }
   /**
    * \brief Calculate Student's T value

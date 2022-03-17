@@ -709,12 +709,14 @@ Model::runScenarios(
   );
   logging::debug("Environment loaded");
   const auto position = env.findCoordinates(start_point, true);
+#ifndef NDEBUG
   logging::check_fatal(
     std::get<0>(*position) > MAX_ROWS || std::get<1>(*position) > MAX_COLUMNS,
     "Location loaded outside of grid at position (%d, %d)",
     std::get<0>(*position),
     std::get<1>(*position)
   );
+#endif
   logging::info("Position is (%d, %d)", std::get<0>(*position), std::get<1>(*position));
   const Location location{std::get<0>(*position), std::get<1>(*position)};
   Model model(start_point, &env);

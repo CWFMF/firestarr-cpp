@@ -69,10 +69,12 @@ public:
         }
       }
     }
+#ifndef NDEBUG
     for (auto& kv : data)
     {
       logging::check_fatal(fuel::is_null_fuel(env.cell(kv.first)), "Null fuel in BurnedData");
     }
+#endif
     logging::info(
       "Loaded burned area of size %lu ha",
       static_cast<size_t>(this->cellSize() / 100.0 * count)
@@ -91,10 +93,12 @@ Perimeter::Perimeter(
   const BurnedMap burned(*perim_grid, env);
   burned_ = burned.makeList();
   edge_ = burned.makeEdge();
+#ifndef NDEBUG
   for (auto c : edge_)
   {
     logging::check_fatal(fuel::is_null_fuel(env.cell(c)), "Null fuel in perimeter edge");
   }
+#endif
 }
 Perimeter::Perimeter(
   const Location& location,

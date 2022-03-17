@@ -39,7 +39,9 @@ Scenario::clear() noexcept
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
+#ifndef NDEBUG
   log_check_fatal(!scheduler_.empty(), "Scheduler isn't empty after clear()");
+#endif
   model_->releaseBurnedVector(unburnable_);
   unburnable_ = nullptr;
 }
@@ -240,12 +242,14 @@ Scenario::evaluate(
   const Event& event
 )
 {
+#ifndef NDEBUG
   log_check_fatal(
     event.time() < current_time_,
     "Expected time to be > %f but got %f",
     current_time_,
     event.time()
   );
+#endif
   const auto& p = event.cell();
   switch (event.type())
   {
@@ -459,10 +463,10 @@ Scenario::burn(
   const IntensitySize burn_intensity
 )
 {
-  // #ifndef NDEBUG
+#ifndef NDEBUG
   log_check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
-  // #endif
-  //  Observers only care about cells burning so do it here
+#endif
+  // Observers only care about cells burning so do it here
   notify(event);
   intensity_->burn(event.cell(), burn_intensity);
   arrival_[event.cell()] = event.time();
@@ -517,7 +521,9 @@ Scenario::run(
   map<double, ProbabilityMap*>* probabilities
 )
 {
+#ifndef NDEBUG
   log_check_fatal(ran(), "Scenario has already run");
+#endif
   log_verbose("Starting");
   CriticalSection _(Model::task_limiter);
   unburnable_ = model_->getBurnedVector();
@@ -539,7 +545,9 @@ Scenario::run(
     {
       //      const auto cell = env.cell(location.hash());
       const auto cell = env.cell(location);
+#ifndef NDEBUG
       log_check_fatal(fuel::is_null_fuel(cell), "Null fuel in perimeter");
+#endif
       log_verbose("Adding point (%d, %d)", cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
       points_[cell].emplace_back(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
     }

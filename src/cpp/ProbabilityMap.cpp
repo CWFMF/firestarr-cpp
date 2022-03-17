@@ -52,12 +52,14 @@ ProbabilityMap::addProbabilities(
   const ProbabilityMap& rhs
 )
 {
+#ifndef NDEBUG
   logging::check_fatal(rhs.time_ != time_, "Wrong time");
   logging::check_fatal(rhs.start_time_ != start_time_, "Wrong start time");
   logging::check_fatal(rhs.min_value_ != min_value_, "Wrong min value");
   logging::check_fatal(rhs.max_value_ != max_value_, "Wrong max value");
   logging::check_fatal(rhs.low_max_ != low_max_, "Wrong low max value");
   logging::check_fatal(rhs.med_max_ != med_max_, "Wrong med max value");
+#endif
   lock_guard<mutex> lock(mutex_);
   if (Settings::saveIntensity())
   {
