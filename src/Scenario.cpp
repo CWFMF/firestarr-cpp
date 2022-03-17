@@ -47,7 +47,8 @@ void Scenario::clear() noexcept
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
   log_check_fatal(!scheduler_.empty(), "Scheduler isn't empty after clear()");
-  unburnable_.reset();
+  model_->releaseBurnedVector(unburnable_);
+  unburnable_ = nullptr;
 }
 size_t Scenario::completed() noexcept
 {
@@ -152,7 +153,8 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
                           util::SafeVector* final_sizes)
 {
   cancelled_ = false;
-  unburnable_.reset();
+  model_->releaseBurnedVector(unburnable_);
+  unburnable_ = nullptr;
   current_time_ = start_time_;
   intensity_ = nullptr;
   max_ros_ = 0;
@@ -268,7 +270,7 @@ Scenario::Scenario(Model* model,
                    const Day start_day,
                    const Day last_date)
   : current_time_(start_time),
-    unburnable_(0),
+    unburnable_(nullptr),
     intensity_(nullptr),
     //surrounded_(nullptr),
     max_ros_(0),
@@ -449,6 +451,7 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   log_check_fatal(ran(), "Scenario has already run");
   log_verbose("Starting");
   CriticalSection _(Model::task_limiter);
+  unburnable_ = model_->getBurnedVector();
   probabilities_ = probabilities;
   for (auto time : save_points_)
   {
@@ -498,6 +501,8 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   {
     evaluateNextEvent();
   }
+  model_->releaseBurnedVector(unburnable_);
+  unburnable_ = nullptr;
   if (cancelled_)
   {
     return nullptr;
@@ -515,8 +520,6 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
            currentFireSize());
 #endif
   ran_ = true;
-  //  delete unburnable_;
-  //  unburnable_ = nullptr;
 #ifndef NDEBUG
   static const size_t BufferSize = 64;
   char buffer[BufferSize + 1] = {0};
@@ -716,7 +719,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;
-          if (!(fuel::is_null_fuel(for_cell) || unburnable_[for_cell.hash()]))
+          if (!(*unburnable_)[for_cell.hash()])
           {
             //log_extensive("Adding point (%f, %f)", pos.x, pos.y);
             point_map_[for_cell].emplace_back(pos);
@@ -756,7 +759,7 @@ void Scenario::scheduleFireSpread(const Event& event)
       }
       // check if this cell is surrounded by burned cells or non-fuels
       // if surrounded then just drop all the points inside this cell
-      if (!unburnable_[for_cell.hash()])
+      if (!(*unburnable_)[for_cell.hash()])
       {
         // do survival check first since it should be easier
         if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
@@ -772,7 +775,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         else
         {
           // whether it went out or is surrounded just mark it as unburnable
-          unburnable_[for_cell.hash()] = true;
+          (*unburnable_)[for_cell.hash()] = true;
           erase_what.emplace_back(for_cell);
         }
       }
