@@ -542,6 +542,15 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                      Settings::intensityMaxLow(),
                                      Settings::intensityMaxModerate(),
                                      numeric_limits<int>::max());
+  vector<map<double, ProbabilityMap*>> all_probabilities{};
+  all_probabilities.push_back(make_prob_map(*this,
+                                     saves,
+                                     for_actuals,
+                                     started,
+                                     0,
+                                     Settings::intensityMaxLow(),
+                                     Settings::intensityMaxModerate(),
+                                     numeric_limits<int>::max()));
   const auto min_rounds = Settings::minimumSimulationRounds();
   auto runs_left = min_rounds;
   const auto recheck_interval = Settings::simulationRecheckInterval();
@@ -551,63 +560,69 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   {
     vector<Iteration> all_iterations{};
     all_iterations.push_back(std::move(iterations));
-    size_t runs = 0;
-    const auto max_concurrent = Settings::concurrentSimulationRounds();
-    while (runs_left > 0)
+    auto threads = list<std::thread>{};
+    // run what's left, up to min rounds at a time
+    size_t total_runs = 0;
+    for (size_t x = 0; x < min_rounds; ++x)
     {
-      // run what's left, up to min rounds at a time
-      const auto cur_runs = min(runs_left, max_concurrent);
-      const auto total_runs = i + cur_runs;
-      while (cur_runs > all_iterations.size())
-      {
-        all_iterations.push_back(readScenarios(start_point,
-                                               start,
-                                               save_intensity,
-                                               start_day,
-                                               last_date));
-      }
-      auto threads = vector<std::thread>{};
-      auto all_scenarios = vector<Scenario*>{};
-      // need at least this many results
-      threads.reserve(max_concurrent);
-      for (size_t k = 0; k < min(cur_runs, all_iterations.size()); ++k)
-      {
-        logging::debug("Running iteration [%d of %d]", runs + 1, total_runs);
-        all_iterations.at(k).reset(&mt_extinction, &mt_spread);
-        auto& s = all_iterations.at(k).getScenarios();
-        all_scenarios.insert(all_scenarios.end(), s.begin(), s.end());
-        ++runs;
-      }
-      //      // sort in run so that they still get the same extinction thresholds as when unsorted
-      //      std::sort(all_scenarios.begin(),
-      //                all_scenarios.end(),
-      //                [](Scenario* lhs, Scenario* rhs) noexcept
-      //                {
-      //                  // sort so that scenarios with highest DSRs are at the front
-      //                  return lhs->weightedDsr() > rhs->weightedDsr();
-      //                });
-      for (auto s : all_scenarios)
+      all_iterations.push_back(readScenarios(start_point,
+                                             start,
+                                             save_intensity,
+                                             start_day,
+                                             last_date));
+      all_probabilities.push_back(make_prob_map(*this,
+                                            saves,
+                                            for_actuals,
+                                            started,
+                                            0,
+                                            Settings::intensityMaxLow(),
+                                            Settings::intensityMaxModerate(),
+                                            numeric_limits<int>::max()));
+    }
+    size_t cur_iter = 0;
+    for (auto& iter : all_iterations)
+    {
+      iter.reset(&mt_extinction, &mt_spread);
+      auto& scenarios = iter.getScenarios();
+      for (auto s : scenarios)
       {
         threads.emplace_back(&Scenario::run,
                              s,
-                             &probabilities);
+                             &all_probabilities[cur_iter]);
       }
-      for (auto& t : threads)
+      ++cur_iter;
+    }
+//    auto per = iterations.size();
+    auto per = threads.size() / all_iterations.size();
+    logging::note("One iteration is %d scenarios", per);
+    cur_iter = 0;
+    while (runs_left > 0)
+    {
+      // so now try to loop through and add iterations as they finish
+      size_t k = 0;
+      while (k < per)
       {
+        auto& t = threads.front();
         t.join();
+        threads.pop_front();
+        ++k;
       }
-      for (size_t k = 0; k < min(cur_runs, all_iterations.size()); ++k)
+      // should have completed one iteration, so add it
+      auto& iteration = all_iterations[cur_iter];
+      auto final_sizes = iteration.finalSizes();
+      ++i;
+      for (auto& kv : all_probabilities[cur_iter])
       {
-        auto& iteration = all_iterations.at(k);
-        auto final_sizes = iteration.finalSizes();
-        ++i;
-        //note("Adding %d", i);
-        if (!add_statistics(i, &means, &pct, *this, final_sizes))
-        {
-          // ran out of time
-          return probabilities;
-        }
+        probabilities[kv.first]->addProbabilities(*kv.second);
+        // clear so we don't double count
+        kv.second->reset();
       }
+      if (!add_statistics(i, &means, &pct, *this, final_sizes))
+      {
+        // ran out of time
+        return probabilities;
+      }
+      ++total_runs;
       runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Done %d iterations", total_runs);
       if (min_rounds > total_runs)
@@ -619,6 +634,32 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       {
         runs_left = recheck_interval;
         logging::note("Capping at %d iterations before checking again", runs_left);
+      }
+      if (runs_left > 0)
+      {
+        iteration.reset(&mt_extinction, &mt_spread);
+        auto& scenarios = iteration.getScenarios();
+        for (auto s : scenarios)
+        {
+          threads.emplace_back(&Scenario::run,
+                               s,
+                               &all_probabilities[cur_iter]);
+        }
+        ++cur_iter;
+        // loop around to start if required
+        cur_iter %= all_iterations.size();
+      }
+      else
+      {
+        for (auto& iter : all_iterations)
+        {
+          iter.cancel();
+        }
+        for (auto& t : threads)
+        {
+          // wait but ignore results for now
+          t.join();
+        }
       }
     }
     // everything should be done when this section ends
@@ -636,8 +677,6 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         iterations.reset(&mt_extinction, &mt_spread);
         for (auto s : iterations.getScenarios())
         {
-          //          s->run_fake(&probabilities);
-          //          iterations.reset(&mt_extinction, &mt_spread);
           s->run(&probabilities);
         }
         ++i;

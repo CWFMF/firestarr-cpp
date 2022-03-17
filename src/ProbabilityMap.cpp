@@ -276,4 +276,12 @@ void ProbabilityMap::saveLow(const string& base_name) const
 {
   low_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
 }
+void ProbabilityMap::reset()
+{
+  all_.clear();
+  low_.clear();
+  med_.clear();
+  high_.clear();
+  sizes_.clear();
+}
 }
