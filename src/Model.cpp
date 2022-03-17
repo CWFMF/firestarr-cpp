@@ -558,8 +558,6 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     vector<Iteration> all_iterations{};
     all_iterations.push_back(std::move(iterations));
     auto threads = list<std::thread>{};
-    // run what's left, up to min rounds at a time
-    size_t total_runs = 0;
     for (size_t x = 1; x < std::thread::hardware_concurrency() / 4; ++x)
     {
       all_iterations.push_back(readScenarios(start_point,
@@ -589,23 +587,19 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       }
       ++cur_iter;
     }
-//    auto per = iterations.size();
-    auto per = threads.size() / all_iterations.size();
-    logging::note("One iteration is %d scenarios", per);
     cur_iter = 0;
     while (runs_left > 0)
     {
+      // should have completed one iteration, so add it
+      auto& iteration = all_iterations[cur_iter];
       // so now try to loop through and add iterations as they finish
       size_t k = 0;
-      while (k < per)
+      while (k < iteration.size())
       {
-        auto& t = threads.front();
-        t.join();
+        threads.front().join();
         threads.pop_front();
         ++k;
       }
-      // should have completed one iteration, so add it
-      auto& iteration = all_iterations[cur_iter];
       auto final_sizes = iteration.finalSizes();
       ++i;
       for (auto& kv : all_probabilities[cur_iter])
@@ -619,7 +613,6 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         // ran out of time
         return probabilities;
       }
-      ++total_runs;
       runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
       if (runs_left > 0)
@@ -644,7 +637,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         }
         for (auto& t : threads)
         {
-          // wait but ignore results for now
+          // wait but ignore results
           t.join();
         }
       }
