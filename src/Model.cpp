@@ -497,8 +497,7 @@ size_t runs_required(const size_t i,
   }
   const auto for_means = util::Statistics{*means};
   const auto for_pct = util::Statistics{*pct};
-  if (!(i < Settings::minimumSimulationRounds()
-        || !for_means.isConfident(Settings::confidenceLevel())
+  if (!(!for_means.isConfident(Settings::confidenceLevel())
         || !for_pct.isConfident(Settings::confidenceLevel())))
   {
     return 0;
@@ -551,9 +550,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                      Settings::intensityMaxLow(),
                                      Settings::intensityMaxModerate(),
                                      numeric_limits<int>::max()));
-  const auto min_rounds = Settings::minimumSimulationRounds();
-  auto runs_left = min_rounds;
-  const auto recheck_interval = Settings::simulationRecheckInterval();
+  auto runs_left = 1;
   // HACK: just do this here so that we know it happened
   //iterations.reset(&mt_extinction, &mt_spread);
   if (Settings::runAsync())
@@ -563,7 +560,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     auto threads = list<std::thread>{};
     // run what's left, up to min rounds at a time
     size_t total_runs = 0;
-    for (size_t x = 0; x < min_rounds; ++x)
+    for (size_t x = 1; x < std::thread::hardware_concurrency() / 4; ++x)
     {
       all_iterations.push_back(readScenarios(start_point,
                                              start,
@@ -624,17 +621,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       }
       ++total_runs;
       runs_left = runs_required(i, &means, &pct, *this);
-      logging::note("Done %d iterations", total_runs);
-      if (min_rounds > total_runs)
-      {
-        runs_left = max(runs_left, min_rounds - total_runs);
-      }
       logging::note("Need another %d iterations", runs_left);
-      if (runs_left > recheck_interval)
-      {
-        runs_left = recheck_interval;
-        logging::note("Capping at %d iterations before checking again", runs_left);
-      }
       if (runs_left > 0)
       {
         iteration.reset(&mt_extinction, &mt_spread);
@@ -669,31 +656,20 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     logging::note("Running in synchronous mode");
     while (runs_left > 0)
     {
-      const auto cur_runs = runs_left;
-      size_t k = 0;
-      while (k < cur_runs)
+      logging::note("Running iteration %d", i + 1);
+      iterations.reset(&mt_extinction, &mt_spread);
+      for (auto s : iterations.getScenarios())
       {
-        logging::note("Running iteration %d", i + 1);
-        iterations.reset(&mt_extinction, &mt_spread);
-        for (auto s : iterations.getScenarios())
-        {
-          s->run(&probabilities);
-        }
-        ++i;
-        if (!add_statistics(i, &means, &pct, *this, iterations.finalSizes()))
-        {
-          // ran out of time
-          return probabilities;
-        }
-        ++k;
+        s->run(&probabilities);
+      }
+      ++i;
+      if (!add_statistics(i, &means, &pct, *this, iterations.finalSizes()))
+      {
+        // ran out of time
+        return probabilities;
       }
       runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
-      if (runs_left > recheck_interval)
-      {
-        runs_left = recheck_interval;
-        logging::note("Capping at %d iterations before checking again", runs_left);
-      }
     }
   }
   return probabilities;

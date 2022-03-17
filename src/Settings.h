@@ -163,21 +163,6 @@ public:
    */
   [[nodiscard]] static int defaultPercentDeadFir() noexcept;
   /**
-   * \brief Maximum number of Iterations to run before checking if accuracy is good enough to stop
-   * \return Maximum number of Iterations to run before checking if accuracy is good enough to stop
-   */
-  [[nodiscard]] static size_t simulationRecheckInterval() noexcept;
-  /**
-   * \brief Maximum number of Iterations to run at once if running async
-   * \return Maximum number of Iterations to run at once if running async
-   */
-  [[nodiscard]] static size_t concurrentSimulationRounds() noexcept;
-  /**
-   * \brief Minimum number of Iterations to run before precision required to stop is considered
-   * \return Minimum number of Iterations to run before precision required to stop is considered
-   */
-  [[nodiscard]] static size_t minimumSimulationRounds() noexcept;
-  /**
    * \brief The maximum fire intensity for the 'low' range of intensity (kW/m)
    * \return The maximum fire intensity for the 'low' range of intensity (kW/m)
    */
