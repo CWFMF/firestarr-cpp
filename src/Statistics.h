@@ -326,14 +326,12 @@ public:
                                     const double relative_error) const
   {
     const auto re = relative_error / (1 + relative_error);
-    // HACK: set a limit just in case it wouldn't stop
-    const auto limit = sim::Settings::minimumSimulationRounds() * cur_runs;
     const std::function<double(size_t)> fct = [this](const size_t i) noexcept
     {
       return T_VALUES[std::min(T_VALUES.size(), i) - 1]
            * sqrt(sampleVariance() / i) / abs(mean());
     };
-    return binary_find_checked(cur_runs, cur_runs + limit, re, fct) - cur_runs;
+    return binary_find_checked(cur_runs, 10 * cur_runs, re, fct) - cur_runs;
   }
 private:
   /**

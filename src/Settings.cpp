@@ -182,30 +182,6 @@ public:
     return intensity_max_moderate_;
   }
   /**
-   * \brief Maximum number of Iterations to run before checking if accuracy is good enough to stop
-   * \return Maximum number of Iterations to run before checking if accuracy is good enough to stop
-   */
-  [[nodiscard]] constexpr size_t simulationRecheckInterval() const noexcept
-  {
-    return simulation_recheck_interval_;
-  }
-  /**
-   * \brief Maximum number of Iterations to run at once if running async
-   * \return Maximum number of Iterations to run at once if running async
-   */
-  [[nodiscard]] constexpr size_t concurrentSimulationRounds() const noexcept
-  {
-    return concurrent_simulation_rounds_;
-  }
-  /**
-   * \brief Minimum number of Iterations to run before precision required to stop is considered
-   * \return Minimum number of Iterations to run before precision required to stop is considered
-   */
-  [[nodiscard]] constexpr size_t minimumSimulationRounds() const noexcept
-  {
-    return minimum_simulation_rounds_;
-  }
-  /**
    * \brief Confidence required before simulation stops (% / 100)
    * \return Confidence required before simulation stops (% / 100)
    */
@@ -356,18 +332,6 @@ private:
    */
   int default_percent_dead_fir_;
   /**
-   * \brief Maximum number of Iterations to run before checking if accuracy is good enough to stop
-   */
-  size_t simulation_recheck_interval_;
-  /**
-   * \brief Maximum number of Iterations to run at once if running async
-   */
-  size_t concurrent_simulation_rounds_;
-  /**
-   * \brief Minimum number of Iterations to run before precision required to stop is considered
-   */
-  size_t minimum_simulation_rounds_;
-  /**
    * \brief Whatever the maximum value in the date offsets is
    */
   int max_date_offset_;
@@ -483,12 +447,6 @@ SettingsImplementation::SettingsImplementation(const char* filename) noexcept
     default_percent_dead_fir_ = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
     intensity_max_low_ = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
     intensity_max_moderate_ = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
-    simulation_recheck_interval_ = static_cast<size_t>(stoi(
-      get_value(settings, "SIMULATION_RECHECK_INTERVAL")));
-    concurrent_simulation_rounds_ = static_cast<size_t>(stoi(
-      get_value(settings, "CONCURRENT_SIMULATION_ROUNDS")));
-    minimum_simulation_rounds_ = static_cast<size_t>(stoi(
-      get_value(settings, "MINIMUM_SIMULATION_ROUNDS")));
     max_date_offset_ = *std::max_element(output_date_offsets_.begin(),
                                          output_date_offsets_.end());
     if (!settings.empty())
@@ -600,18 +558,6 @@ int Settings::defaultPercentConifer() noexcept
 int Settings::defaultPercentDeadFir() noexcept
 {
   return SettingsImplementation::instance().defaultPercentDeadFir();
-}
-size_t Settings::simulationRecheckInterval() noexcept
-{
-  return SettingsImplementation::instance().simulationRecheckInterval();
-}
-size_t Settings::concurrentSimulationRounds() noexcept
-{
-  return SettingsImplementation::instance().concurrentSimulationRounds();
-}
-size_t Settings::minimumSimulationRounds() noexcept
-{
-  return SettingsImplementation::instance().minimumSimulationRounds();
 }
 int Settings::intensityMaxLow() noexcept
 {
