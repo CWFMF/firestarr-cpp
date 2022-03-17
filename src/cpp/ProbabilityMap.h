@@ -139,6 +139,11 @@ public:
    */
   void
   saveLow(const string& base_name) const;
+  /**
+   * \brief Clear maps and return to initial state
+   */
+  void
+  reset();
 private:
   /**
    * \brief Map representing all intensities

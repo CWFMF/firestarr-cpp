@@ -68,6 +68,11 @@ public:
     return scenarios_;
   }
   /**
+   * Mark as cancelled so it stops computing on next event.
+   */
+  void
+  cancel() noexcept;
+  /**
    * \brief Points in time that ProbabilityMaps get saved for
    * \return Points in time that ProbabilityMaps get saved for
    */
@@ -100,6 +105,10 @@ private:
    * \brief SafeVector of sizes that Scenarios have resulted in
    */
   util::SafeVector final_sizes_{};
+  /**
+   * \brief Whether this has been cancelled and should stop computing.
+   */
+  bool cancelled_ = false;
 };
 }
 }

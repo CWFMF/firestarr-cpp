@@ -169,6 +169,7 @@ Scenario::reset(
   util::SafeVector* final_sizes
 )
 {
+  cancelled_ = false;
   unburnable_.reset();
   current_time_ = start_time_;
   intensity_ = nullptr;
@@ -561,9 +562,13 @@ Scenario::run(
       burn(fake_event, static_cast<IntensitySize>(1));
     }
   }
-  while (!scheduler_.empty())
+  while (!cancelled_ && !scheduler_.empty())
   {
     evaluateNextEvent();
+  }
+  if (cancelled_)
+  {
+    return nullptr;
   }
   ++COMPLETED;
   // HACK: use + to pull value out of atomic
@@ -927,5 +932,10 @@ Scenario::evaluateNextEvent()
   {
     scheduler_.erase(event);
   }
+}
+void
+Scenario::cancel() noexcept
+{
+  cancelled_ = true;
 }
 }

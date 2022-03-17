@@ -27,6 +27,7 @@ Iteration::reset(
   mt19937* mt_spread
 )
 {
+  cancelled_ = false;
   final_sizes_ = {};
   for (auto& scenario : scenarios_)
   {
@@ -100,5 +101,14 @@ util::SafeVector
 Iteration::finalSizes() const
 {
   return final_sizes_;
+}
+void
+Iteration::cancel() noexcept
+{
+  cancelled_ = true;
+  for (auto& s : scenarios_)
+  {
+    s->cancel();
+  }
 }
 }
