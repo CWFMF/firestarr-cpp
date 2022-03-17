@@ -51,6 +51,10 @@ BurnedData* Model::getBurnedVector() const noexcept
 }
 void Model::releaseBurnedVector(BurnedData* has_burned) const noexcept
 {
+  if (nullptr == has_burned)
+  {
+    return;
+  }
   try
   {
     environment().resetBurnedData(has_burned);

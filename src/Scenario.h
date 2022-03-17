@@ -503,7 +503,7 @@ protected:
   /**
    * \brief Contains information on cells that are not burnable
    */
-  BurnedData unburnable_;
+  BurnedData* unburnable_;
   /**
    * \brief Event scheduler used for ordering events
    */
