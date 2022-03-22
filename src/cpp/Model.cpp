@@ -634,6 +634,17 @@ Model::runIterations(
       if (!add_statistics(i, &means, &pct, *this, final_sizes))
       {
         // ran out of time
+        for (auto& iter : all_iterations)
+        {
+          iter.cancel();
+        }
+        for (auto& t : threads)
+        {
+          if (t.joinable())
+          {
+            t.join();
+          }
+        }
         return probabilities;
       }
       runs_left = runs_required(i, &means, &pct, *this);
@@ -658,8 +669,10 @@ Model::runIterations(
         }
         for (auto& t : threads)
         {
-          // wait but ignore results
-          t.join();
+          if (t.joinable())
+          {
+            t.join();
+          }
         }
       }
     }
