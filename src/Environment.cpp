@@ -62,16 +62,14 @@ Environment Environment::load(const Point& point,
                        ElevationGrid::readTiff(string(in_elevation), point)),
                      point);
 }
-sim::ProbabilityMap* Environment::makeProbabilityMap(const char* for_what,
-                                                     const double time,
+sim::ProbabilityMap* Environment::makeProbabilityMap(const double time,
                                                      const double start_time,
                                                      const int min_value,
                                                      const int low_max,
                                                      const int med_max,
                                                      const int max_value) const
 {
-  return new sim::ProbabilityMap(for_what,
-                                 time,
+  return new sim::ProbabilityMap(time,
                                  start_time,
                                  min_value,
                                  low_max,

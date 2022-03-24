@@ -43,7 +43,6 @@ void show_usage_and_exit(const char* name)
        << "   -h                        Show help" << endl
        << "   -v                        Increase output level" << endl
        << "   -q                        Decrease output level" << endl
-       << "   -a                        Run using actuals for weather" << endl
        << "   -i                        Save intensity maps for simulations" << endl
        << "   -s                        Run in synchronous mode" << endl
        << "   --ascii                   Save grids as .asc" << endl
@@ -131,7 +130,6 @@ int main(const int argc, const char* const argv[])
       size_t num_days = 0;
       string arg(argv[i++]);
       auto save_intensity = false;
-      auto actuals_only = false;
       auto have_confidence = false;
       string wx_file_name;
       string perim;
@@ -229,14 +227,6 @@ int main(const int argc, const char* const argv[])
           {
             // if they want to specify -v and -q then that's fine
             Log::decreaseLogLevel();
-          }
-          else if (0 == strcmp(argv[i], "-a"))
-          {
-            if (actuals_only)
-            {
-              show_usage_and_exit(name);
-            }
-            actuals_only = true;
           }
           else if (0 == strcmp(argv[i], "--wx"))
           {
@@ -381,7 +371,6 @@ int main(const int argc, const char* const argv[])
                                                  start_point,
                                                  start,
                                                  save_intensity,
-                                                 actuals_only,
                                                  perim,
                                                  size);
     }
