@@ -567,32 +567,8 @@ FwiWeather read(istringstream* iss, string* str)
   util::getline(iss, str, ',');
   logging::extensive("WD is %s", str->c_str());
   const Direction wd(stod(str), false);
-  // FFMC
-  util::getline(iss, str, ',');
-  logging::extensive("FFMC is %s", str->c_str());
-  const Ffmc ffmc(stod(str));
-  // DMC
-  util::getline(iss, str, ',');
-  logging::extensive("DMC is %s", str->c_str());
-  const Dmc dmc(stod(str));
-  // DC
-  util::getline(iss, str, ',');
-  logging::extensive("DC is %s", str->c_str());
-  const Dc dc(stod(str));
-  // ISI
-  util::getline(iss, str, ',');
-  logging::extensive("ISI is %s", str->c_str());
-  const Isi isi(stod(str), ws, ffmc);
-  // BUI
-  util::getline(iss, str, ',');
-  logging::extensive("BUI is %s", str->c_str());
-  const Bui bui(stod(str), dmc, dc);
-  // FWI
-  util::getline(iss, str, ',');
-  logging::extensive("FWI is %s", str->c_str());
-  const Fwi fwi(stod(str), isi, bui);
   const Wind wind(wd, ws);
-  return {tmp, rh, wind, apcp, ffmc, dmc, dc, isi, bui, fwi};
+  return {tmp, rh, wind, apcp, Ffmc::Zero, Dmc::Zero, Dc::Zero, Isi::Zero, Bui::Zero, Fwi::Zero};
 }
 FwiWeather::FwiWeather(istringstream* iss, string* str)
   : FwiWeather(read(iss, str))
