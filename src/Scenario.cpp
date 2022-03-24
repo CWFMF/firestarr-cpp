@@ -322,21 +322,11 @@ void Scenario::saveObservers(const double time) const
 {
   static const size_t BufferSize = 64;
   char buffer[BufferSize + 1] = {0};
-  if (id() == ACTUALS)
-  {
-    sprintf(buffer,
-            "actuals_%06ld_%03d",
-            simulation(),
-            static_cast<int>(time));
-  }
-  else
-  {
-    sprintf(buffer,
-            "%03zu_%06ld_%03d",
-            id(),
-            simulation(),
-            static_cast<int>(time));
-  }
+  sprintf(buffer,
+          "%03zu_%06ld_%03d",
+          id(),
+          simulation(),
+          static_cast<int>(time));
   saveObservers(string(buffer));
 }
 void Scenario::saveIntensity(const string& dir, const string& base_name) const

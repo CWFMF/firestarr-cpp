@@ -139,7 +139,6 @@ public:
    * \param start_point StartPoint to use for sunrise/sunset
    * \param start_time Start time for simulation
    * \param save_intensity Whether or not to save all intensity files
-   * \param for_actuals Whether or not this is for actual observed weather
    * \param perimeter Perimeter to initialize fire from, if there is one
    * \param size Size to start fire at if no Perimeter
    * \return 
@@ -150,7 +149,6 @@ public:
                                         const topo::StartPoint& start_point,
                                         const tm& start_time,
                                         bool save_intensity,
-                                        bool for_actuals,
                                         const string& perimeter,
                                         size_t size);
   /**
@@ -245,7 +243,6 @@ public:
   }
   /**
    * \brief Create a ProbabilityMap with the same extent as this
-   * \param for_what What type of fire size is being tracked (Actuals vs Fire)
    * \param time Time in simulation this ProbabilityMap represents
    * \param start_time Start time of simulation
    * \param min_value Lower bound of 'low' intensity range
@@ -254,8 +251,7 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \return ProbabilityMap with the same extent as this
    */
-  [[nodiscard]] ProbabilityMap* makeProbabilityMap(const char* for_what,
-                                                   double time,
+  [[nodiscard]] ProbabilityMap* makeProbabilityMap(double time,
                                                    double start_time,
                                                    int min_value,
                                                    int low_max,
@@ -276,12 +272,10 @@ public:
   /**
    * \brief Read weather used for Scenarios
    * \param filename Weather file to read
-   * \param for_actuals Whether or not this is for actual observed weather
    * \param yesterday FwiWeather for yesterday
    * \param latitude to use for calculating DC & DMC
    */
   void readWeather(const string& filename,
-                   bool for_actuals,
                    const wx::FwiWeather& yesterday,
                    double latitude);
   /**
@@ -340,14 +334,12 @@ private:
    * \param start Start time for simulation
    * \param start_day Start day for simulation
    * \param save_intensity Whether or not to save all intensity files
-   * \param for_actuals Whether or not this is for actual observed weather
    * \return Map of times to ProbabilityMap for that time
    */
   map<double, ProbabilityMap*> runIterations(const topo::StartPoint& start_point,
                                              double start,
                                              Day start_day,
-                                             bool save_intensity,
-                                             bool for_actuals);
+                                             bool save_intensity);
   /**
    * \brief Find Cell(s) that can burn closest to Location
    * \param location Location to look for start Cells

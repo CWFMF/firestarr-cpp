@@ -22,10 +22,6 @@ namespace tbd
 namespace sim
 {
 /**
- * \brief Value to use for actual weather observation stream
- */
-const size_t ACTUALS = 0;
-/**
  * \brief Difference minimum for doubles to be considered the same
  */
 static const double COMPARE_LIMIT = 1.0E-20f;
