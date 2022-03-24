@@ -11,7 +11,6 @@
 namespace fs::sim
 {
 ProbabilityMap::ProbabilityMap(
-  const char* const for_what,
   const double time,
   const double start_time,
   const int min_value,
@@ -24,7 +23,6 @@ ProbabilityMap::ProbabilityMap(
     high_(data::GridMap<size_t>(grid_info, 0)),
     med_(data::GridMap<size_t>(grid_info, 0)),
     low_(data::GridMap<size_t>(grid_info, 0)),
-    for_what_(for_what),
     time_(time),
     start_time_(start_time),
     min_value_(min_value),
@@ -36,16 +34,7 @@ ProbabilityMap::ProbabilityMap(
 ProbabilityMap*
 ProbabilityMap::copyEmpty() const
 {
-  return new ProbabilityMap(
-    for_what_,
-    time_,
-    start_time_,
-    min_value_,
-    low_max_,
-    med_max_,
-    max_value_,
-    all_
-  );
+  return new ProbabilityMap(time_, start_time_, min_value_, low_max_, med_max_, max_value_, all_);
 }
 void
 ProbabilityMap::addProbabilities(
@@ -141,8 +130,7 @@ ProbabilityMap::show() const
   const auto day = static_cast<int>(time_ - floor(start_time_));
   const auto s = getStatistics();
   logging::note(
-    "%s size at end of day %d: %0.1f ha - %0.1f ha (mean %0.1f ha, median %0.1f ha)",
-    for_what_,
+    "Fire size at end of day %d: %0.1f ha - %0.1f ha (mean %0.1f ha, median %0.1f ha)",
     day,
     s.min(),
     s.max(),
@@ -173,7 +161,6 @@ void
 ProbabilityMap::saveAll(
   const Model& model,
   const tm& start_time,
-  const bool for_actuals,
   const double time,
   const double start_day
 ) const
@@ -198,12 +185,9 @@ ProbabilityMap::saveAll(
     vector<std::future<void>> results{};
     if (Settings::saveProbability())
     {
-      results.push_back(async(
-        launch::async,
-        &ProbabilityMap::saveTotal,
-        this,
-        make_string(for_actuals ? "actuals" : "probability")
-      ));
+      results.push_back(
+        async(launch::async, &ProbabilityMap::saveTotal, this, make_string("probability"))
+      );
     }
     if (Settings::saveOccurrence())
     {
@@ -233,7 +217,7 @@ ProbabilityMap::saveAll(
   {
     if (Settings::saveProbability())
     {
-      saveTotal(make_string(for_actuals ? "actuals" : "probability"));
+      saveTotal(make_string("probability"));
     }
     if (Settings::saveOccurrence())
     {

@@ -84,7 +84,6 @@ Model::Model(
 void
 Model::readWeather(
   const string& filename,
-  const bool for_actuals,
   const wx::FwiWeather& yesterday,
   const double latitude
 )
@@ -120,23 +119,19 @@ Model::readWeather(
         // HACK: ignore date and just worry about relative order??
         // Scenario
         logging::verbose("Scenario is %s", str.c_str());
-        auto cur = ACTUALS;
-        if (!(str == "actual"))
+        auto cur = 0;
+        try
         {
-          try
-          {
-            cur = static_cast<size_t>(-stoi(str));
-          }
-          catch (std::exception&)
-          {
-            // HACK: somehow stoi() is still getting empty strings
-            logging::fatal("Error reading weather file %s", filename.c_str());
-          }
+          cur = static_cast<size_t>(-stoi(str));
         }
-        if (for_actuals && cur != ACTUALS)
+        catch (std::exception&)
         {
-          // HACK: rely on actuals always being first
-          break;
+          // HACK: somehow stoi() is still getting empty strings
+          logging::fatal(
+            "Error reading weather file %s: %s is not a valid integer",
+            filename.c_str(),
+            str.c_str()
+          );
         }
         if (wx.find(cur) == wx.end())
         {
@@ -165,15 +160,6 @@ Model::readWeather(
       }
     }
     in.close();
-  }
-  if (!for_actuals)
-  {
-    // HACK: it's added for everything right now, but alone if just doing actuals
-    const auto seek = wx.find(ACTUALS);
-    if (seek != wx.end())
-    {
-      wx.erase(ACTUALS);
-    }
   }
   // HACK: add yesterday into everything
   for (auto& kv : wx)
@@ -369,7 +355,6 @@ Model::isOutOfTime() const noexcept
 }
 ProbabilityMap*
 Model::makeProbabilityMap(
-  const char* for_what,
   const double time,
   const double start_time,
   const int min_value,
@@ -378,15 +363,13 @@ Model::makeProbabilityMap(
   const int max_value
 ) const
 {
-  return env_
-    ->makeProbabilityMap(for_what, time, start_time, min_value, low_max, med_max, max_value);
+  return env_->makeProbabilityMap(time, start_time, min_value, low_max, med_max, max_value);
 }
 static void
 show_probabilities(
   const map<double, ProbabilityMap*>& probabilities
 )
 {
-  // do this here so actuals scenario isn't part of probability
   for (const auto& kv : probabilities)
   {
     kv.second->show();
@@ -410,7 +393,6 @@ map<double, ProbabilityMap*>
 make_prob_map(
   const Model& model,
   const vector<double>& saves,
-  const bool for_actuals,
   const double started,
   const int min_value,
   const int low_max,
@@ -423,15 +405,7 @@ make_prob_map(
   {
     result.emplace(
       time,
-      model.makeProbabilityMap(
-        for_actuals ? "Actuals" : "Fire",
-        time,
-        started,
-        min_value,
-        low_max,
-        med_max,
-        max_value
-      )
+      model.makeProbabilityMap(time, started, min_value, low_max, med_max, max_value)
     );
   }
   return result;
@@ -519,8 +493,7 @@ Model::runIterations(
   const topo::StartPoint& start_point,
   const double start,
   const Day start_day,
-  const bool save_intensity,
-  const bool for_actuals
+  const bool save_intensity
 )
 {
   auto last_date = start_day;
@@ -557,7 +530,6 @@ Model::runIterations(
   auto probabilities = make_prob_map(
     *this,
     saves,
-    for_actuals,
     started,
     0,
     Settings::intensityMaxLow(),
@@ -568,7 +540,6 @@ Model::runIterations(
   all_probabilities.push_back(make_prob_map(
     *this,
     saves,
-    for_actuals,
     started,
     0,
     Settings::intensityMaxLow(),
@@ -591,7 +562,6 @@ Model::runIterations(
       all_probabilities.push_back(make_prob_map(
         *this,
         saves,
-        for_actuals,
         started,
         0,
         Settings::intensityMaxLow(),
@@ -709,7 +679,6 @@ Model::runScenarios(
   const topo::StartPoint& start_point,
   const tm& start_time,
   const bool save_intensity,
-  const bool for_actuals,
   const string& perimeter,
   const size_t size
 )
@@ -739,7 +708,7 @@ Model::runScenarios(
   logging::note("UTM coordinates are: %d %d %d", zone, static_cast<int>(x), static_cast<int>(y));
   logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
   logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
-  model.readWeather(weather_input, for_actuals, yesterday, start_point.latitude());
+  model.readWeather(weather_input, yesterday, start_point.latitude());
   if (model.wx_.empty())
   {
     logging::fatal("No weather provided");
@@ -763,8 +732,7 @@ Model::runScenarios(
   start_hour = static_cast<double>(static_cast<int>(start_hour * 100)) / 100;
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
-  auto probabilities = model
-                         .runIterations(start_point, start, start_day, save_intensity, for_actuals);
+  auto probabilities = model.runIterations(start_point, start, start_day, save_intensity);
   logging::note("Ran %d simulations", Scenario::completed());
   show_probabilities(probabilities);
   auto final_time = numeric_limits<double>::min();
@@ -773,7 +741,7 @@ Model::runScenarios(
     const auto time = by_time.first;
     final_time = max(final_time, time);
     const auto prob = by_time.second;
-    prob->saveAll(model, start_time, for_actuals, time, start_day);
+    prob->saveAll(model, start_time, time, start_day);
   }
   for (const auto& kv : probabilities)
   {

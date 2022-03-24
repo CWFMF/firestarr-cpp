@@ -205,7 +205,6 @@ public:
   }
   /**
    * \brief Make a ProbabilityMap that covers this Environment
-   * \param for_what What type of size this represents
    * \param time Time in simulation this ProbabilityMap represents
    * \param start_time Start time of simulation
    * \param min_value Lower bound of 'low' intensity range
@@ -216,7 +215,6 @@ public:
    */
   [[nodiscard]] sim::ProbabilityMap*
   makeProbabilityMap(
-    const char* for_what,
     double time,
     double start_time,
     int min_value,

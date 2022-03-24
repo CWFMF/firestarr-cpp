@@ -36,7 +36,6 @@ show_usage_and_exit(
        << "   -h                        Show help" << endl
        << "   -v                        Increase output level" << endl
        << "   -q                        Decrease output level" << endl
-       << "   -a                        Run using actuals for weather" << endl
        << "   -i                        Save intensity maps for simulations" << endl
        << "   -s                        Run in synchronous mode" << endl
        << "   --ascii                   Save grids as .asc" << endl
@@ -126,7 +125,6 @@ main(
       size_t num_days = 0;
       string arg(argv[i++]);
       auto save_intensity = false;
-      auto actuals_only = false;
       auto have_confidence = false;
       string wx_file_name;
       string perim;
@@ -223,14 +221,6 @@ main(
           {
             // if they want to specify -v and -q then that's fine
             Log::decreaseLogLevel();
-          }
-          else if (0 == strcmp(argv[i], "-a"))
-          {
-            if (actuals_only)
-            {
-              show_usage_and_exit(name);
-            }
-            actuals_only = true;
           }
           else if (0 == strcmp(argv[i], "--wx"))
           {
@@ -379,7 +369,6 @@ main(
         start_point,
         start,
         save_intensity,
-        actuals_only,
         perim,
         size
       );

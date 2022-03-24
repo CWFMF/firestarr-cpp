@@ -52,7 +52,6 @@ Environment::load(
 }
 sim::ProbabilityMap*
 Environment::makeProbabilityMap(
-  const char* for_what,
   const double time,
   const double start_time,
   const int min_value,
@@ -61,16 +60,7 @@ Environment::makeProbabilityMap(
   const int max_value
 ) const
 {
-  return new sim::ProbabilityMap(
-    for_what,
-    time,
-    start_time,
-    min_value,
-    low_max,
-    med_max,
-    max_value,
-    *cells_
-  );
+  return new sim::ProbabilityMap(time, start_time, min_value, low_max, med_max, max_value, *cells_);
 }
 Environment
 Environment::loadEnvironment(

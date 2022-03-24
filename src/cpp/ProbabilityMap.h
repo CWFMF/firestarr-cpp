@@ -31,7 +31,6 @@ public:
   operator=(ProbabilityMap&& rhs) noexcept = delete;
   /**
    * \brief Constructor
-   * \param for_what What type of fire size is being tracked (Actuals vs Fire)
    * \param time Time in simulation this ProbabilityMap represents
    * \param start_time Start time of simulation
    * \param min_value Lower bound of 'low' intensity range
@@ -41,7 +40,6 @@ public:
    * \param grid_info GridBase to use for extent of this
    */
   ProbabilityMap(
-    const char* for_what,
     double time,
     double start_time,
     int min_value,
@@ -102,13 +100,11 @@ public:
    * \brief Save total, low, moderate, and high maps, and output information to log
    * \param model Model this was derived from
    * \param start_time Start time of simulation
-   * \param for_actuals Whether or not this is from actual indices
    * \param time Time for these maps
    * \param start_day Day that simulation started
    */
   void
-  saveAll(const Model& model, const tm& start_time, bool for_actuals, double time, double start_day)
-    const;
+  saveAll(const Model& model, const tm& start_time, double time, double start_day) const;
   /**
    * \brief Save map representing all intensities
    * \param base_name Base file name to save to
@@ -165,10 +161,6 @@ private:
    * \brief List of sizes for perimeters that have been added
    */
   vector<double> sizes_{};
-  /**
-   * \brief What type of fire size is being tracked (Actuals vs Fire)
-   */
-  const char* const for_what_;
   /**
    * \brief Time in simulation this ProbabilityMap represents
    */
