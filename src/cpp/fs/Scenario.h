@@ -48,7 +48,7 @@ public:
    * \brief Constructor
    * \param model Model running this Scenario
    * \param id Identifier
-   * \param weather Weather stream to use
+   * \param weather Wather stream to use
    * \param start_time Start time for simulation
    * \param perimeter Perimeter to initialize with
    * \param start_point StartPoint to use sunrise/sunset times from
@@ -69,7 +69,53 @@ public:
    * \brief Constructor
    * \param model Model running this Scenario
    * \param id Identifier
-   * \param weather Weather stream to use
+   * \param weather Hourly weather stream to use
+   * \param weather Weather stream to use for spread and extinction probability
+   * \param start_time Start time for simulation
+   * \param start_cell Cell to start ignition in
+   * \param start_point StartPoint to use sunrise/sunset times from
+   * \param start_day First day of simulation
+   * \param last_date Last day of simulation
+   */
+  Scenario(
+    Model* model,
+    size_t id,
+    ptr<const FireWeather> weather,
+    DurationSize start_time,
+    const shared_ptr<Cell>& start_cell,
+    const StartPoint& start_point,
+    Day start_day,
+    Day last_date
+  );
+  /**
+   * \brief Constructor
+   * \param model Model running this Scenario
+   * \param id Identifier
+   * \param weather Hourly weather stream to use
+   * \param weather Weather stream to use for spread and extinction probability
+   * \param start_time Start time for simulation
+   * \param perimeter Perimeter to initialize with
+   * \param start_point StartPoint to use sunrise/sunset times from
+   * \param start_day First day of simulation
+   * \param last_date Last day of simulation
+   */
+  Scenario(
+    Model* model,
+    size_t id,
+    ptr<const FireWeather> weather,
+    ptr<const FireWeather> weather_daily,
+    DurationSize start_time,
+    const shared_ptr<Perimeter>& perimeter,
+    const StartPoint& start_point,
+    Day start_day,
+    Day last_date
+  );
+  /**
+   * \brief Constructor
+   * \param model Model running this Scenario
+   * \param id Identifier
+   * \param weather Hourly weather stream to use
+   * \param weather Weather stream to use for spread and extinction probability
    * \param start_time Start time for simulation
    * \param start_cell Cell to start ignition in
    * \param start_point StartPoint to use sunrise/sunset times from
@@ -80,6 +126,7 @@ public:
     Model* model,
     size_t id,
     const ptr<const FireWeather> weather,
+    const ptr<const FireWeather> weather_daily,
     DurationSize start_time,
     const shared_ptr<Cell>& start_cell,
     const StartPoint& start_point,
@@ -213,6 +260,10 @@ public:
   [[nodiscard]] ptr<const FwiWeather> weather(const DurationSize time) const
   {
     return weather_->at(time);
+  }
+  [[nodiscard]] ptr<const FwiWeather> weather_daily(const DurationSize time) const
+  {
+    return weather_daily_->at(time);
   }
   /**
    * \brief Difference between date and the date of minimum foliar moisture content
@@ -369,7 +420,8 @@ public:
   {
     try
     {
-      const auto wx = weather_->at(time);
+      const auto fire_wx = weather_;
+      const auto wx = fire_wx->at(time);
       // use Mike's table
       const auto mc = wx->mcDmcPct();
       if (100 > mc || (109 >= mc && 5 > time_at_location) || (119 >= mc && 4 > time_at_location)
@@ -379,7 +431,7 @@ public:
         return true;
       }
       // we can look by fuel type because the entire landscape shares the weather
-      return extinctionThreshold(time) < weather_->survivalProbability(time, cell.fuelCode());
+      return extinctionThreshold(time) < fire_wx->survivalProbability(time, cell.fuelCode());
     }
     catch (const std::out_of_range& e)
     {
@@ -423,7 +475,8 @@ protected:
    * \brief Constructor
    * \param model Model running this Scenario
    * \param id Identifier
-   * \param weather Weather stream to use
+   * \param weather Hourly weather stream to use
+   * \param weather Weather stream to use for spread and extinction probability
    * \param start_time Start time for simulation
    * \param start_point StartPoint to use sunrise/sunset times from
    * \param start_day First day of simulation
@@ -433,6 +486,7 @@ protected:
     Model* model,
     size_t id,
     const ptr<const FireWeather> weather,
+    const ptr<const FireWeather> weather_daily,
     DurationSize start_time,
     const shared_ptr<Perimeter>& perimeter,
     const shared_ptr<Cell>& start_cell,
@@ -501,9 +555,13 @@ protected:
    */
   shared_ptr<Cell> start_cell_{nullptr};
   /**
-   * \brief Weather to use for this Scenario
+   * \brief Hourly weather to use for this Scenario
    */
   ptr<const FireWeather> weather_{nullptr};
+  /**
+   * \brief Weather stream to use for spread and extinction probability
+   */
+  ptr<const FireWeather> weather_daily_{nullptr};
   /**
    * \brief Model this Scenario is being run in
    */

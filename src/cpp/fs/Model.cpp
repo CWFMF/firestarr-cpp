@@ -67,7 +67,7 @@ void Model::readWeather(string filename, const FwiWeather& yesterday, const doub
     str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
-    constexpr auto expected_header = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
+    constexpr auto expected_header = "Scenario,Date,PREC,TEMP,RH,WS,WD";
     logging::check_fatal(
       expected_header != str,
       "Input CSV must have columns in this order:\n'%s'\n but got:\n'%s'",
@@ -126,7 +126,15 @@ void Model::readWeather(string filename, const FwiWeather& yesterday, const doub
     }
     in.close();
   }
-  // HACK: add yesterday into everything
+  for (auto& kv : wx)
+  {
+    kv.second.emplace(static_cast<Day>(min_date - 1), yesterday);
+  }
+  const auto file_out = output_directory_ + "/wx_out.csv";
+  FILE* out = fopen(file_out.c_str(), "w");
+  logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
+  fprintf(out, "Scenario,Day,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
+  size_t i = 1;
   for (auto& kv : wx)
   {
     auto& s = kv.second;
