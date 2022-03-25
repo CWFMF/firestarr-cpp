@@ -178,7 +178,7 @@ void Model::readWeather(const string& filename,
     in.close();
   }
   ofstream ostream;
-  ostream.open("wx_out.csv");
+  ostream.open(string(Settings::outputDirectory()) + "/wx_out.csv");
   size_t i = 1;
   for (auto& kv : wx)
   {
