@@ -224,8 +224,17 @@ public:
    * \brief Construct by reading from istringstream
    * \param iss Stream to parse
    * \param str string to read into
+   * \param prev Indices for the previous day
+   * \param month Month to use in calculations
+   * \param latitude Latitude to use in calculations
    */
-  FwiWeather(istringstream* iss, string* str);
+  FwiWeather(
+    istringstream* iss,
+    string* str,
+    const FwiWeather& prev,
+    const int month,
+    const double latitude
+  );
   /**
    * \brief Constructor
    * \param tmp Temperature (Celsius)
@@ -438,6 +447,8 @@ private:
    */
   double ffmc_effect_;
 };
+ostream&
+operator<<(ostream& os, const FwiWeather& w);
 [[nodiscard]] constexpr bool
 operator<(
   const FwiWeather& lhs,
