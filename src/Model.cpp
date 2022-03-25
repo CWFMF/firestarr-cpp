@@ -115,6 +115,7 @@ void Model::readWeather(const string& filename,
                          "Input CSV must have columns in this order:\n'%s'\n but got:\n'%s'",
                          expected_header,
                          str.c_str());
+    auto prev = yesterday;
     while (getline(in, str))
     {
       istringstream iss(str);
@@ -137,6 +138,7 @@ void Model::readWeather(const string& filename,
         {
           logging::debug("Loading scenario %d...", cur);
           wx.emplace(cur, map<Day, wx::FwiWeather>());
+          prev = yesterday;
         }
         auto& s = wx.at(cur);
         struct tm t
@@ -159,7 +161,14 @@ void Model::readWeather(const string& filename,
         min_date = min(min_date, static_cast<Day>(t.tm_yday));
         logging::check_fatal(s.find(static_cast<Day>(t.tm_yday)) != s.end(),
                              "Day already exists");
-        s.emplace(static_cast<Day>(t.tm_yday), wx::FwiWeather(&iss, &str));
+        const auto month = t.tm_mon + 1;
+        s.emplace(static_cast<Day>(t.tm_yday),
+                  wx::FwiWeather(&iss,
+                                 &str,
+                                 prev,
+                                 month,
+                                 latitude));
+        prev = s.at(static_cast<Day>(t.tm_yday));
         if (s.find(static_cast<Day>(t.tm_yday)) == s.end())
         {
           dates.emplace(static_cast<Day>(t.tm_yday), t);
@@ -168,45 +177,22 @@ void Model::readWeather(const string& filename,
     }
     in.close();
   }
-  // HACK: add yesterday into everything
+  ofstream ostream;
+  ostream.open("wx_out.csv");
+  size_t i = 1;
   for (auto& kv : wx)
   {
+    kv.second.emplace(static_cast<Day>(min_date - 1), yesterday);
     auto& s = kv.second;
-    logging::check_fatal(s.find(static_cast<Day>(min_date - 1)) != s.end(),
-                         "Day already exists");
-    // recalculate everything with startup indices
-    map<Day, wx::FwiWeather> new_wx{};
-    auto last_ffmc = yesterday.ffmc();
-    auto last_dmc = yesterday.dmc();
-    auto last_dc = yesterday.dc();
-    auto apcp = yesterday.apcp();
     for (auto& kv2 : s)
     {
       auto& day = kv2.first;
       auto& w = kv2.second;
-      const tbd::wx::Ffmc ffmc(w.tmp(), w.rh(), w.wind().speed(), apcp, last_ffmc);
-      const auto t = dates[day];
-      const auto month = t.tm_mon + 1;
-      const tbd::wx::Dmc dmc(w.tmp(), w.rh(), apcp, last_dmc, month, latitude);
-      const tbd::wx::Dc dc(w.tmp(), apcp, last_dc, month, latitude);
-      const tbd::wx::Isi isi(w.wind().speed(), ffmc);
-      const tbd::wx::Bui bui(dmc, dc);
-      const tbd::wx::Fwi fwi(isi, bui);
-      const tbd::wx::FwiWeather n(w.tmp(),
-                                        w.rh(),
-                                        w.wind(),
-                                        apcp,
-                                        ffmc,
-                                        dmc,
-                                        dc,
-                                        isi,
-                                        bui,
-                                        fwi);
-      new_wx.emplace(static_cast<Day>(day), n);
+      ostream << i << ',' << day << ',' << w << endl;
     }
-    new_wx.emplace(static_cast<Day>(min_date - 1), yesterday);
-    kv.second = new_wx;
+    ++i;
   }
+  ostream.close();
   const auto fuel_lookup = sim::Settings::fuelLookup();
   // loop through and try to find duplicates
   for (const auto& kv : wx)
