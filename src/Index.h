@@ -170,6 +170,13 @@ public:
     return *this;
   }
 };
+template <class T>
+static ostream& operator<<(ostream& os, Index<T> v)
+{
+  os << v.asDouble();
+  return os;
+}
+
 /**
  * \brief A result of calling log(x) for some value of x, pre-calculated at compile time.
  */

@@ -313,7 +313,9 @@ static double calculate_dmc(const Temperature& temperature,
     //'''/* 11  '*/
     const auto re = 0.92 * rain.asDouble() - 1.27;
     //'''/* 12  '*/
-    const auto mo = 20.0 + exp(5.6348 - previous / 43.43);
+    //    const auto mo = 20.0 + exp(5.6348 - previous / 43.43);
+    // Alteration to Eq. 12 to calculate more accurately
+    const auto mo = 20 + 280 / exp(0.023 * previous);
     const auto b = (previous <= 33.0)
                    ?   //'''/* 13a '*/
                      100.0 / (0.5 + 0.3 * previous)
@@ -325,14 +327,16 @@ static double calculate_dmc(const Temperature& temperature,
     //'''/* 14  '*/
     const auto mr = mo + 1000.0 * re / (48.77 + b * re);
     //'''/* 15  '*/
-    const auto pr = 244.72 - 43.43 * log(mr - 20.0);
+    //    const auto pr = 244.72 - 43.43 * log(mr - 20.0);
+    // Alteration to Eq. 15 to calculate more accurately
+    const auto pr = 43.43 * (5.6348 - log(mr - 20));
     previous = max(pr, 0.0);
   }
   const auto k = (temperature.asDouble() > -1.1)
-                 ? 1.894 * (temperature.asDouble() + 1.1) * (100.0 - rh.asDouble()) * day_length(latitude, month) * 0.000001
+                 ? 1.894 * (temperature.asDouble() + 1.1) * (100.0 - rh.asDouble()) * day_length(latitude, month) * 0.0001
                  : 0.0;
   //'''/* 17  '*/
-  return (previous + 100.0 * k);
+  return (previous + k);
 }
 Dmc::Dmc(const Temperature& temperature,
          const RelativeHumidity& rh,
@@ -545,7 +549,11 @@ inline double stod(const string* const str)
 {
   return stod(*str);
 }
-FwiWeather read(istringstream* iss, string* str)
+FwiWeather read(istringstream* iss,
+                string* str,
+                const FwiWeather& prev,
+                const int month,
+                const double latitude)
 {
   // APCP
   util::getline(iss, str, ',');
@@ -568,10 +576,20 @@ FwiWeather read(istringstream* iss, string* str)
   logging::extensive("WD is %s", str->c_str());
   const Direction wd(stod(str), false);
   const Wind wind(wd, ws);
-  return {tmp, rh, wind, apcp, Ffmc::Zero, Dmc::Zero, Dc::Zero, Isi::Zero, Bui::Zero, Fwi::Zero};
+  const Ffmc ffmc(tmp, rh, ws, apcp, prev.ffmc());
+  const Dmc dmc(tmp, rh, apcp, prev.dmc(), month, latitude);
+  const Dc dc(tmp, apcp, prev.dc(), month, latitude);
+  const Isi isi(ws, ffmc);
+  const Bui bui(dmc, dc);
+  const Fwi fwi(isi, bui);
+  return {tmp, rh, wind, apcp, ffmc, dmc, dc, isi, bui, fwi};
 }
-FwiWeather::FwiWeather(istringstream* iss, string* str)
-  : FwiWeather(read(iss, str))
+FwiWeather::FwiWeather(istringstream* iss,
+                       string* str,
+                       const FwiWeather& prev,
+                       const int month,
+                       const double latitude)
+  : FwiWeather(read(iss, str, prev, month, latitude))
 {
 }
 double ffmc_effect(const Ffmc& ffmc) noexcept
@@ -630,5 +648,12 @@ FwiWeather::FwiWeather(const FwiWeather& wx, const Speed& ws, const Ffmc& ffmc) 
 FwiWeather::FwiWeather() noexcept
   : FwiWeather(Zero)
 {
+}
+ostream& operator<<(ostream& os, const FwiWeather& w)
+{
+  os << w.apcp() << ',' << w.tmp() << ',' << w.rh() << ',' << w.wind().speed() << ','
+     << w.wind().direction() << ',' << w.ffmc() << ',' << w.dmc() << ',' << w.dc()
+     << ',' << w.isi() << ',' << w.bui() << ',' << w.fwi();
+  return os;
 }
 }
