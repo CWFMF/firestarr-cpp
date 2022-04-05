@@ -238,6 +238,20 @@ public:
     return output_date_offsets_;
   }
   /**
+   * \brief Set days to output probability contours for (1 is start date, 2 is day after, etc.)
+   * \return None
+   */
+  void setOutputDateOffsets(const char* value)
+  {
+    output_date_offsets_ = parse_list<int>(value,
+                                           [](const string& s)
+                                           {
+                                             return stoi(s);
+                                           });
+    max_date_offset_ = *std::max_element(output_date_offsets_.begin(),
+                                         output_date_offsets_.end());
+  }
+  /**
    * \brief Whatever the maximum value in the date offsets is
    * \return Whatever the maximum value in the date offsets is
    */
@@ -438,17 +452,11 @@ SettingsImplementation::SettingsImplementation(const char* filename) noexcept
     threshold_scenario_weight_ = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
     threshold_daily_weight_ = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
     threshold_hourly_weight_ = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
-    output_date_offsets_ = parse_list<int>(get_value(settings, "OUTPUT_DATE_OFFSETS"),
-                                           [](const string& s)
-                                           {
-                                             return stoi(s);
-                                           });
+    setOutputDateOffsets(get_value(settings, "OUTPUT_DATE_OFFSETS").c_str());
     default_percent_conifer_ = stoi(get_value(settings, "DEFAULT_PERCENT_CONIFER"));
     default_percent_dead_fir_ = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
     intensity_max_low_ = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
     intensity_max_moderate_ = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
-    max_date_offset_ = *std::max_element(output_date_offsets_.begin(),
-                                         output_date_offsets_.end());
     if (!settings.empty())
     {
       logging::warning("Unused settings in settings file %s", filename);
@@ -594,6 +602,10 @@ double Settings::thresholdHourlyWeight() noexcept
 vector<int> Settings::outputDateOffsets()
 {
   return SettingsImplementation::instance().outputDateOffsets();
+}
+void Settings::setOutputDateOffsets(const char* value)
+{
+  SettingsImplementation::instance().setOutputDateOffsets(value);
 }
 int Settings::maxDateOffset() noexcept
 {

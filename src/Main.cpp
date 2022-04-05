@@ -131,6 +131,7 @@ int main(const int argc, const char* const argv[])
       string arg(argv[i++]);
       auto save_intensity = false;
       auto have_confidence = false;
+      auto have_output_date_offsets = false;
       string wx_file_name;
       string perim;
       size_t size = 0;
@@ -252,6 +253,17 @@ int main(const int argc, const char* const argv[])
             }
             have_confidence = true;
             Settings::setConfidenceLevel(stod(get_arg("confidence", &i, argc, argv)));
+          }
+          else if (0 == strcmp(argv[i], "--output_date_offsets"))
+          {
+            if (have_output_date_offsets)
+            {
+              show_usage_and_exit(name);
+            }
+            have_output_date_offsets = true;
+            auto offsets = get_arg("output_date_offsets", &i, argc, argv);
+            tbd::logging::warning("Overriding output offsets with %s", offsets);
+            Settings::setOutputDateOffsets(offsets);
           }
           else if (0 == strcmp(argv[i], "-w"))
           {
