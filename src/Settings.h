@@ -204,6 +204,11 @@ public:
    */
   [[nodiscard]] static vector<int> outputDateOffsets();
   /**
+   * \brief Set days to output probability contours for (1 is start date, 2 is day after, etc.)
+   * \return None
+   */
+  static void setOutputDateOffsets(const char* value);
+  /**
    * \brief Whatever the maximum value in the date offsets is
    * \return Whatever the maximum value in the date offsets is
    */
