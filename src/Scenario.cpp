@@ -627,6 +627,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   //note("time is %f", time);
   current_time_ = time;
   const auto wx = weather(time);
+  logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   //  log_note("%d points", points_->size());
   const auto this_time = util::time_index(time);
   const auto next_time = static_cast<double>(this_time + 1) / DAY_HOURS;
