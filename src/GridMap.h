@@ -408,7 +408,7 @@ public:
     {
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
     }
-    int length = snprintf(NULL, 0, "%f", this->noDataInt());
+    int length = snprintf(nullptr, 0, "%f", this->noDataInt());
     char* str = static_cast<char*>(malloc(length + 1));
     snprintf(str, length + 1, "%f", this->noDataInt());
     TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
