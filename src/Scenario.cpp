@@ -177,11 +177,11 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
   extinction_thresholds_.resize(num);
   spread_thresholds_by_ros_.resize(num);
   // if these are null then all probability thresholds remain 0
-  if (NULL != mt_extinction)
+  if (nullptr != mt_extinction)
   {
     make_threshold(&extinction_thresholds_, mt_extinction, start_day_, last_date_);
   }
-  if (NULL != mt_spread)
+  if (nullptr != mt_spread)
   {
     make_threshold(&spread_thresholds_by_ros_,
                    mt_spread,
