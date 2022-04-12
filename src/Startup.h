@@ -40,7 +40,7 @@ public:
    * \brief Time the Startup value is for
    * \return Time the Startup value is for
    */
-  [[nodiscard]] constexpr const TIMESTAMP_STRUCT& generated() const noexcept
+  [[nodiscard]] constexpr const tm& generated() const noexcept
   {
     return generated_;
   }
@@ -113,7 +113,7 @@ public:
  * \param overridden whether or not any Startup values were overridden
  */
   Startup(string station,
-          const TIMESTAMP_STRUCT& generated,
+          const tm& generated,
           const topo::Point& point,
           double distance_from,
           const Ffmc& ffmc,
@@ -155,7 +155,7 @@ private:
   /**
    * \brief When these indices were observed
    */
-  TIMESTAMP_STRUCT generated_;
+  tm generated_;
   /**
    * \brief Point this represents
    */

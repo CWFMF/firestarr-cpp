@@ -120,10 +120,10 @@ int main(const int argc, const char* const argv[])
       tbd::logging::note("Output directory is %s", Settings::outputDirectory());
       tbd::logging::note("Output log is %s", log_file.c_str());
       string date(argv[i++]);
-      TIMESTAMP_STRUCT start_date{};
-      start_date.year = static_cast<SQLSMALLINT>(stoi(date.substr(0, 4)));
-      start_date.month = static_cast<SQLUSMALLINT>(stoi(date.substr(5, 2)));
-      start_date.day = static_cast<SQLUSMALLINT>(stoi(date.substr(8, 2)));
+      tm start_date{};
+      start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
+      start_date.tm_mon = stoi(date.substr(5, 2)) - 1;
+      start_date.tm_mday = stoi(date.substr(8, 2));
       const auto latitude = stod(argv[i++]);
       const auto longitude = stod(argv[i++]);
       const tbd::topo::StartPoint start_point(latitude, longitude);
@@ -145,12 +145,11 @@ int main(const int argc, const char* const argv[])
         try
         {
           // if this is a time then we aren't just running the weather
-          start_date.hour = static_cast<SQLUSMALLINT>(stoi(arg.substr(0, 2)));
-          start_date.minute = static_cast<SQLUSMALLINT>(stoi(arg.substr(3, 2)));
+          start_date.tm_hour = stoi(arg.substr(0, 2));
+          start_date.tm_min = stoi(arg.substr(3, 2));
+          tbd::util::fix_tm(&start_date);
           // we were given a time, so number of days is until end of year
-          tbd::util::to_tm(start_date, &start);
-          // HACK: make sure we have the same start hour
-          start.tm_hour = start_date.hour;
+          start = start_date;
           const auto start_t = mktime(&start);
           auto year_end = start;
           year_end.tm_mon = 11;
@@ -368,9 +367,8 @@ int main(const int argc, const char* const argv[])
                                                        isi_fixed,
                                                        bui_fixed,
                                                        fwi_fixed);
-      tbd::util::to_tm(start_date, &start);
-      // HACK: make sure we have the same start hour
-      start.tm_hour = start_date.hour;
+      tbd::util::fix_tm(&start_date);
+      start = start_date;
       cout << "Arguments are:\n";
       for (auto j = 0; j < argc; ++j)
       {

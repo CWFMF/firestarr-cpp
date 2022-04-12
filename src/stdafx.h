@@ -36,17 +36,11 @@
 #include <iterator>
 #include <limits>
 #include <list>
-#include <postgresql/libpq-fe.h>
 #include <locale>
 #include <map>
 #include <memory>
-#include <odbcinst.h>
-#include <odbcinstext.h>
 #include <random>
 #include <set>
-#include <sql.h>
-#include <sqlext.h>
-#include <sqltypes.h>
 #include <sstream>
 #include <cstdint>
 #include <string>
