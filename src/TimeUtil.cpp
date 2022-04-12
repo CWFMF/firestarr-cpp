@@ -17,35 +17,9 @@
 #include "TimeUtil.h"
 namespace tbd::util
 {
-/**
- * \brief Convert from TIMESTAMP_STRUCT to tm
- * \param s Input value
- * \param t Output value
- */
-void to_tm_no_fix(const TIMESTAMP_STRUCT& s, tm* t) noexcept
+void fix_tm(tm* t)
 {
-  t->tm_year = s.year - 1900;
-  t->tm_mon = s.month - 1;
-  t->tm_mday = s.day;
-  t->tm_hour = s.hour;
-  t->tm_min = s.minute;
-  t->tm_sec = s.second;
-}
-void to_tm(const TIMESTAMP_STRUCT& s, tm* t) noexcept
-{
-  // this doesn't set yday or other things properly, so convert to time and back
-  to_tm_no_fix(s, t);
   const time_t t_t = mktime(t);
   t = localtime(&t_t);
-}
-void to_ts(const tm& t, TIMESTAMP_STRUCT* s) noexcept
-{
-  s->year = static_cast<SQLSMALLINT>(t.tm_year + 1900);
-  s->month = static_cast<SQLUSMALLINT>(t.tm_mon + 1);
-  s->day = static_cast<SQLUSMALLINT>(t.tm_mday);
-  s->hour = static_cast<SQLUSMALLINT>(t.tm_hour);
-  s->minute = static_cast<SQLUSMALLINT>(t.tm_min);
-  s->second = static_cast<SQLUSMALLINT>(t.tm_sec);
-  s->fraction = 0;
 }
 }

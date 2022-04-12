@@ -18,7 +18,7 @@
 namespace tbd::wx
 {
 Startup::Startup(string station,
-                 const TIMESTAMP_STRUCT& generated,
+                 const tm& generated,
                  const topo::Point& point,
                  const double distance_from,
                  const Ffmc& ffmc,

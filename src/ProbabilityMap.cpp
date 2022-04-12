@@ -18,7 +18,6 @@
 #include "FBP45.h"
 #include "IntensityMap.h"
 #include "Model.h"
-#include "TimeUtil.h"
 namespace tbd::sim
 {
 ProbabilityMap::ProbabilityMap(const double time,
@@ -171,10 +170,7 @@ void ProbabilityMap::saveAll(const Model& model,
   const auto day = static_cast<int>(round(time));
   ticks += (static_cast<size_t>(day) - t.tm_yday - 1) * DAY_SECONDS;
   t = *localtime(&ticks);
-  // t.tm_yday = day + 1;
-  TIMESTAMP_STRUCT for_time{};
-  util::to_ts(t, &for_time);
-  const auto make_string = [&for_time, &day](const char* name)
+  const auto make_string = [&t, &day](const char* name)
   {
     constexpr auto mask = "%s_%03d_%04d-%02d-%02d";
     static constexpr size_t OutLength = 100;
@@ -183,9 +179,9 @@ void ProbabilityMap::saveAll(const Model& model,
             mask,
             name,
             day,
-            for_time.year,
-            for_time.month,
-            for_time.day);
+            t.tm_year + 1900,
+            t.tm_mon + 1,
+            t.tm_mday);
     return string(tmp);
   };
   if (sim::Settings::runAsync())
