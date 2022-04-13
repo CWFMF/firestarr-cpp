@@ -264,10 +264,6 @@ int main(const int argc, const char* const argv[])
             tbd::logging::warning("Overriding output offsets with %s", offsets);
             Settings::setOutputDateOffsets(offsets);
           }
-          else if (0 == strcmp(argv[i], "-w"))
-          {
-            Settings::setWeatherFile(string(get_arg("w", &i, argc, argv)));
-          }
           else if (0 == strcmp(argv[i], "--size"))
           {
             if (0 != size)
