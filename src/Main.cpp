@@ -30,9 +30,14 @@ using tbd::sim::Settings;
 static const char* BIN_NAME = nullptr;
 static map<std::string, std::function<void()>> PARSE_FCT{};
 static vector<std::pair<std::string, std::string>> PARSE_HELP{};
+static map<std::string, bool> PARSE_REQUIRED{};
+static map<std::string, bool> PARSE_HAVE{};
+static int ARGC = 0;
+static const char* const* ARGV = nullptr;
+static int CUR_ARG = 0;
 void show_usage_and_exit()
 {
-  cout << "Usage:" << BIN_NAME << " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]" << endl
+  cout << "Usage: " << BIN_NAME << " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]" << endl
        << endl
        << " Run simulations and save output in the specified directory" << endl
        << endl
@@ -43,24 +48,27 @@ void show_usage_and_exit()
        << " Run test cases and save output in the specified directory" << endl
        << endl
        << " Input Options" << endl;
-  for (auto kv : PARSE_HELP)
+  for (auto& kv : PARSE_HELP)
   {
     printf("   %-25s %s\n", kv.first.c_str(), kv.second.c_str());
   }
   exit(-1);
 }
-const char* get_arg(const char* const name,
-                    int* i,
-                    const int argc,
-                    const char* const argv[]) noexcept
+const char* get_arg() noexcept
 {
   // check if we don't have any more arguments
-  tbd::logging::check_fatal(*i + 1 >= argc, "Missing argument to --%s", name);
+  tbd::logging::check_fatal(CUR_ARG + 1 >= ARGC, "Missing argument to --%s", ARGV[CUR_ARG]);
   // check if we have another flag right after
-  tbd::logging::check_fatal('-' == argv[*i + 1][0],
+  tbd::logging::check_fatal('-' == ARGV[CUR_ARG + 1][0],
                             "Missing argument to --%s",
-                            name);
-  return argv[++*i];
+                            ARGV[CUR_ARG]);
+  return ARGV[++CUR_ARG];
+}
+template <class T>
+T parse(std::function<T()> fct)
+{
+  PARSE_HAVE.emplace(ARGV[CUR_ARG], true);
+  return fct();
 }
 template <class T>
 T parse_once(bool have_already, std::function<T()> fct)
@@ -69,7 +77,7 @@ T parse_once(bool have_already, std::function<T()> fct)
   {
     show_usage_and_exit();
   }
-  return fct();
+  return parse(fct);
 }
 bool parse_flag(bool have_already)
 {
@@ -79,13 +87,16 @@ bool parse_flag(bool have_already)
                             return true;
                           });
 }
-void register_argument(string v, string help, std::function<void()> fct)
+void register_argument(string v, string help, bool required, std::function<void()> fct)
 {
   PARSE_FCT.emplace(v, fct);
   PARSE_HELP.emplace_back(v, help);
+  PARSE_REQUIRED.emplace(v, required);
 }
 int main(const int argc, const char* const argv[])
 {
+  ARGC = argc;
+  ARGV = argv;
 #ifndef NDEBUG
   cout << "**************************************************\n";
   cout << "******************* DEBUG MODE *******************\n";
@@ -93,12 +104,12 @@ int main(const int argc, const char* const argv[])
 #endif
   // _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
   Log::setLogLevel(tbd::logging::LOG_NOTE);
-  auto bin = string(argv[0]);
+  auto bin = string(ARGV[CUR_ARG++]);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
   bin = bin.substr(end, bin.size() - end);
   BIN_NAME = bin.c_str();
-  register_argument("-h", "Show help", &show_usage_and_exit);
+  register_argument("-h", "Show help", false, &show_usage_and_exit);
   auto save_intensity = false;
   auto have_confidence = false;
   auto have_output_date_offsets = false;
@@ -109,159 +120,169 @@ int main(const int argc, const char* const argv[])
   tbd::wx::Dmc* dmc = nullptr;
   tbd::wx::Dc* dc = nullptr;
   tbd::wx::AccumulatedPrecipitation* apcp_0800 = nullptr;
-  // HACK: use a variable and ++ in case if arg indices change
-  auto i = 1;
   // can be used multiple times
-  register_argument("-v", "Increase output level", &Log::increaseLogLevel);
+  register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
-  register_argument("-q", "Decrease output level", &Log::decreaseLogLevel);
-  if (argc > 1 && 0 == strcmp(argv[1], "test"))
+  register_argument("-q", "Decrease output level", false, &Log::decreaseLogLevel);
+  if (ARGC > 1 && 0 == strcmp(ARGV[1], "test"))
   {
-    if (argc <= 3)
+    if (ARGC <= 3)
     {
       show_usage_and_exit();
     }
-    return tbd::sim::test(argc, argv);
+    return tbd::sim::test(ARGC, ARGV);
   }
   register_argument("-i",
                     "Save intensity maps for simulations",
+                    false,
                     [&save_intensity]
                     {
                       save_intensity = parse_flag(save_intensity);
                     });
   register_argument("-s",
                     "Run in synchronous mode",
+                    false,
                     []
                     {
                       Settings::setRunAsync(!parse_flag(!Settings::runAsync()));
                     });
   register_argument("--ascii",
                     "Save grids as .asc",
+                    false,
                     []
                     {
                       Settings::setSaveAsAscii(parse_flag(Settings::saveAsAscii()));
                     });
   register_argument("--no-intensity",
                     "Do not output intensity grids",
+                    false,
                     []
                     {
                       Settings::setSaveIntensity(!parse_flag(!Settings::saveIntensity()));
                     });
   register_argument("--no-probability",
                     "Do not output probability grids",
+                    false,
                     []
                     {
                       Settings::setSaveProbability(!parse_flag(!Settings::saveProbability()));
                     });
   register_argument("--occurrence",
                     "Output occurrence grids",
+                    false,
                     []
                     {
                       Settings::setSaveOccurrence(parse_flag(Settings::saveOccurrence()));
                     });
   register_argument("--wx",
                     "Input weather file",
-                    [&wx_file_name, &i, argc, argv]
+                    true,
+                    [&wx_file_name]
                     {
-                      wx_file_name = parse_once<const char*>(!wx_file_name.empty(),
-                                                             [&i, argc, argv]
-                                                             {
-                                                               return get_arg("wx", &i, argc, argv);
-                                                             });
+                      wx_file_name = parse_once<const char*>(!wx_file_name.empty(), &get_arg);
                     });
 
   register_argument("--confidence",
                     "Use specified confidence level",
-                    [&have_confidence, &i, argc, argv]
+                    false,
+                    [&have_confidence]
                     {
                       Settings::setConfidenceLevel(parse_once<double>(have_confidence,
-                                                                      [&i, argc, argv]
+                                                                      []
                                                                       {
-                                                                        return stod(get_arg("confidence", &i, argc, argv));
+                                                                        return stod(get_arg());
                                                                       }));
+                      have_confidence = true;
                     });
   register_argument("--perim",
                     "Start from perimeter",
-                    [&perim, &i, argc, argv]
+                    false,
+                    [&perim]
                     {
                       perim = parse_once<const char*>(!perim.empty(),
-                                                      [&i, argc, argv]
+                                                      []
                                                       {
-                                                        return get_arg("perim", &i, argc, argv);
+                                                        return get_arg();
                                                       });
                     });
   register_argument("--size",
                     "Start from size",
-                    [&size, &i, argc, argv]
+                    false,
+                    [&size]
                     {
                       size = parse_once<size_t>(0 != size,
-                                                [&i, argc, argv]
+                                                []
                                                 {
-                                                  return static_cast<size_t>(stoi(get_arg("size", &i, argc, argv)));
+                                                  return static_cast<size_t>(stoi(get_arg()));
                                                 });
                     });
   register_argument("--ffmc",
                     "Startup Fine Fuel Moisture Code",
-                    [&ffmc, &i, argc, argv]
+                    true,
+                    [&ffmc]
                     {
                       ffmc = parse_once<tbd::wx::Ffmc*>(nullptr != ffmc,
-                                                        [&i, argc, argv]
+                                                        []
                                                         {
-                                                          return new tbd::wx::Ffmc(stod(get_arg("ffmc", &i, argc, argv)));
+                                                          return new tbd::wx::Ffmc(stod(get_arg()));
                                                         });
                     });
   register_argument("--dmc",
                     "Startup Duff Moisture Code",
-                    [&dmc, &i, argc, argv]
+                    true,
+                    [&dmc]
                     {
                       dmc = parse_once<tbd::wx::Dmc*>(nullptr != dmc,
-                                                      [&i, argc, argv]
+                                                      []
                                                       {
-                                                        return new tbd::wx::Dmc(stod(get_arg("dmc", &i, argc, argv)));
+                                                        return new tbd::wx::Dmc(stod(get_arg()));
                                                       });
                     });
   register_argument("--dc",
                     "Startup Drought Code",
-                    [&dc, &i, argc, argv]
+                    true,
+                    [&dc]
                     {
                       dc = parse_once<tbd::wx::Dc*>(nullptr != dc,
-                                                    [&i, argc, argv]
+                                                    []
                                                     {
-                                                      return new tbd::wx::Dc(stod(get_arg("dc", &i, argc, argv)));
+                                                      return new tbd::wx::Dc(stod(get_arg()));
                                                     });
                     });
   register_argument("--apcp_0800",
                     "Startup 0800 precipitation",
-                    [&apcp_0800, &i, argc, argv]
+                    false,
+                    [&apcp_0800]
                     {
                       apcp_0800 = parse_once<tbd::wx::AccumulatedPrecipitation*>(nullptr != apcp_0800,
-                                                                                 [&i, argc, argv]
+                                                                                 []
                                                                                  {
-                                                                                   return new tbd::wx::AccumulatedPrecipitation(stod(get_arg("apcp_0800", &i, argc, argv)));
+                                                                                   return new tbd::wx::AccumulatedPrecipitation(stod(get_arg()));
                                                                                  });
                     });
   register_argument("--output_date_offsets",
                     "Override output date offsets",
-                    [&have_output_date_offsets, &i, argc, argv]
+                    false,
+                    [&have_output_date_offsets]
                     {
                       Settings::setOutputDateOffsets(parse_once<const char*>(have_output_date_offsets,
-                                                                             [&i, argc, argv]
+                                                                             []
                                                                              {
-                                                                               auto offsets = get_arg("output_date_offsets", &i, argc, argv);
+                                                                               auto offsets = get_arg();
                                                                                tbd::logging::warning("Overriding output offsets with %s", offsets);
                                                                                return offsets;
                                                                              }));
                       have_output_date_offsets = true;
                     });
-  if (3 > argc)
+  if (3 > ARGC)
   {
     show_usage_and_exit();
   }
   try
   {
-    if (6 <= argc)
+    if (6 <= ARGC)
     {
-      string output_directory(argv[i++]);
+      string output_directory(ARGV[CUR_ARG++]);
       replace(output_directory.begin(), output_directory.end(), '\\', '/');
       if ('/' != output_directory[output_directory.length() - 1])
       {
@@ -280,16 +301,16 @@ int main(const int argc, const char* const argv[])
                                 "Can't open log file");
       tbd::logging::note("Output directory is %s", Settings::outputDirectory());
       tbd::logging::note("Output log is %s", log_file.c_str());
-      string date(argv[i++]);
+      string date(ARGV[CUR_ARG++]);
       tm start_date{};
       start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
       start_date.tm_mon = stoi(date.substr(5, 2)) - 1;
       start_date.tm_mday = stoi(date.substr(8, 2));
-      const auto latitude = stod(argv[i++]);
-      const auto longitude = stod(argv[i++]);
+      const auto latitude = stod(ARGV[CUR_ARG++]);
+      const auto longitude = stod(ARGV[CUR_ARG++]);
       const tbd::topo::StartPoint start_point(latitude, longitude);
       size_t num_days = 0;
-      string arg(argv[i++]);
+      string arg(ARGV[CUR_ARG++]);
       tm start{};
       if (5 == arg.size() && ':' == arg[2])
       {
@@ -319,42 +340,33 @@ int main(const int argc, const char* const argv[])
         {
           show_usage_and_exit();
         }
-        while (i < argc)
+        while (CUR_ARG < ARGC)
         {
-          if (PARSE_FCT.find(argv[i]) != PARSE_FCT.end())
+          if (PARSE_FCT.find(ARGV[CUR_ARG]) != PARSE_FCT.end())
           {
-            PARSE_FCT[argv[i]]();
+            PARSE_FCT[ARGV[CUR_ARG]]();
           }
           else
           {
             show_usage_and_exit();
           }
-          ++i;
+          ++CUR_ARG;
         }
       }
       else
       {
         show_usage_and_exit();
       }
-      if (wx_file_name.empty())
+      for (auto& kv : PARSE_REQUIRED)
       {
-        tbd::logging::fatal("Weather input file is required");
-      }
-      if (nullptr == ffmc)
-      {
-        tbd::logging::fatal("FFMC is required");
-      }
-      if (nullptr == dmc)
-      {
-        tbd::logging::fatal("DMC is required");
-      }
-      if (nullptr == dc)
-      {
-        tbd::logging::fatal("DC is required");
+        if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
+        {
+          tbd::logging::fatal("%s must be specified", kv.first.c_str());
+        }
       }
       if (nullptr == apcp_0800)
       {
-        tbd::logging::warning("Assuming 0 precipitation");
+        tbd::logging::warning("Assuming 0 precipitation for startup indices");
         apcp_0800 = new tbd::wx::AccumulatedPrecipitation(0);
       }
       const auto ffmc_fixed = *ffmc;
@@ -377,9 +389,9 @@ int main(const int argc, const char* const argv[])
       tbd::util::fix_tm(&start_date);
       start = start_date;
       cout << "Arguments are:\n";
-      for (auto j = 0; j < argc; ++j)
+      for (auto j = 0; j < ARGC; ++j)
       {
-        cout << " " << argv[j];
+        cout << " " << ARGV[j];
       }
       cout << "\n";
       return tbd::sim::Model::runScenarios(wx_file_name.c_str(),
