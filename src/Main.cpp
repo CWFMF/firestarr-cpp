@@ -320,19 +320,13 @@ int main(const int argc, const char* const argv[])
         apcp_0800 = tbd::wx::AccumulatedPrecipitation::Zero;
       }
       // HACK: ISI for yesterday really doesn't matter so just use any wind
-      const auto isi_fixed = tbd::wx::Isi(tbd::wx::Speed(0), ffmc);
-      const auto bui_fixed = tbd::wx::Bui(dmc, dc);
-      const auto fwi_fixed = tbd::wx::Fwi(isi_fixed, bui_fixed);
       const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
                                                  tbd::wx::RelativeHumidity(0),
                                                  tbd::wx::Wind(tbd::wx::Direction(0, false), tbd::wx::Speed(0)),
                                                  tbd::wx::AccumulatedPrecipitation(0),
                                                  ffmc,
                                                  dmc,
-                                                 dc,
-                                                 isi_fixed,
-                                                 bui_fixed,
-                                                 fwi_fixed);
+                                                 dc);
       tbd::util::fix_tm(&start_date);
       start = start_date;
       cout << "Arguments are:\n";
