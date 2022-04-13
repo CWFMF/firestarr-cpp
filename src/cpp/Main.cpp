@@ -83,6 +83,14 @@ parse_flag()
     return true;
   });
 }
+template <class T>
+T*
+parse_index()
+{
+  return parse_once<T*>([] {
+    return new T(stod(get_arg()));
+  });
+}
 void
 register_argument(
   string v,
@@ -172,24 +180,16 @@ main(
     });
   });
   register_argument("--ffmc", "Startup Fine Fuel Moisture Code", true, [&ffmc] {
-    ffmc = parse_once<fs::wx::Ffmc*>([] {
-      return new fs::wx::Ffmc(stod(get_arg()));
-    });
+    ffmc = parse_index<fs::wx::Ffmc>();
   });
   register_argument("--dmc", "Startup Duff Moisture Code", true, [&dmc] {
-    dmc = parse_once<fs::wx::Dmc*>([] {
-      return new fs::wx::Dmc(stod(get_arg()));
-    });
+    dmc = parse_index<fs::wx::Dmc>();
   });
   register_argument("--dc", "Startup Drought Code", true, [&dc] {
-    dc = parse_once<fs::wx::Dc*>([] {
-      return new fs::wx::Dc(stod(get_arg()));
-    });
+    dc = parse_index<fs::wx::Dc>();
   });
   register_argument("--apcp_0800", "Startup 0800 precipitation", false, [&apcp_0800] {
-    apcp_0800 = parse_once<fs::wx::AccumulatedPrecipitation*>([] {
-      return new fs::wx::AccumulatedPrecipitation(stod(get_arg()));
-    });
+    apcp_0800 = parse_index<fs::wx::AccumulatedPrecipitation>();
   });
   register_argument("--output_date_offsets", "Override output date offsets", false, [] {
     Settings::setOutputDateOffsets(parse_once<const char*>([] {
