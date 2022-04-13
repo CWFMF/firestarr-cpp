@@ -16,18 +16,17 @@
 #include "Log.h"
 using fs::logging::Log;
 using fs::sim::Settings;
+static const char* BIN_NAME = nullptr;
 void
-show_usage_and_exit(
-  const char* name
-)
+show_usage_and_exit()
 {
-  cout << "Usage:" << name << " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
-       << endl
+  cout << "Usage:" << BIN_NAME
+       << " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]" << endl
        << endl
        << " Run simulations and save output in the specified directory" << endl
        << endl
        << endl
-       << "Usage: " << name << " test <output_dir> <numHours>"
+       << "Usage: " << BIN_NAME << " test <output_dir> <numHours>"
        << "[slope [aspect [wind_speed [wind_direction]]]]" << endl
        << endl
        << " Run test cases and save output in the specified directory" << endl
@@ -66,6 +65,28 @@ get_arg(
   fs::logging::check_fatal('-' == argv[*i + 1][0], "Missing argument to --%s", name);
   return argv[++*i];
 }
+template <class T>
+T
+parse_once(
+  bool have_already,
+  std::function<T()> fct
+)
+{
+  if (have_already)
+  {
+    show_usage_and_exit();
+  }
+  return fct();
+}
+bool
+parse_flag(
+  bool have_already
+)
+{
+  return parse_once<bool>(have_already, [] {
+    return true;
+  });
+}
 int
 main(
   const int argc,
@@ -83,10 +104,10 @@ main(
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
   bin = bin.substr(end, bin.size() - end);
-  const auto name = bin.c_str();
+  BIN_NAME = bin.c_str();
   if (3 > argc)
   {
-    show_usage_and_exit(name);
+    show_usage_and_exit();
   }
   try
   {
@@ -160,57 +181,33 @@ main(
         }
         catch (std::exception&)
         {
-          show_usage_and_exit(name);
+          show_usage_and_exit();
         }
         while (i < argc)
         {
           if (0 == strcmp(argv[i], "-i"))
           {
-            if (save_intensity)
-            {
-              show_usage_and_exit(name);
-            }
-            save_intensity = true;
+            save_intensity = parse_flag(save_intensity);
           }
           else if (0 == strcmp(argv[i], "--ascii"))
           {
-            if (Settings::saveAsAscii())
-            {
-              show_usage_and_exit(name);
-            }
-            Settings::setSaveAsAscii(true);
+            Settings::setSaveAsAscii(parse_flag(Settings::saveAsAscii()));
           }
           else if (0 == strcmp(argv[i], "--no-intensity"))
           {
-            if (!Settings::saveIntensity())
-            {
-              show_usage_and_exit(name);
-            }
-            Settings::setSaveIntensity(false);
+            Settings::setSaveIntensity(!parse_flag(!Settings::saveIntensity()));
           }
           else if (0 == strcmp(argv[i], "--no-probability"))
           {
-            if (!Settings::saveProbability())
-            {
-              show_usage_and_exit(name);
-            }
-            Settings::setSaveProbability(false);
+            Settings::setSaveProbability(!parse_flag(!Settings::saveProbability()));
           }
           else if (0 == strcmp(argv[i], "--occurrence"))
           {
-            if (Settings::saveOccurrence())
-            {
-              show_usage_and_exit(name);
-            }
-            Settings::setSaveOccurrence(true);
+            Settings::setSaveOccurrence(parse_flag(Settings::saveOccurrence()));
           }
           else if (0 == strcmp(argv[i], "-s"))
           {
-            if (!Settings::runAsync())
-            {
-              show_usage_and_exit(name);
-            }
-            Settings::setRunAsync(false);
+            Settings::setRunAsync(!parse_flag(!Settings::runAsync()));
           }
           else if (0 == strcmp(argv[i], "-v"))
           {
@@ -224,103 +221,81 @@ main(
           }
           else if (0 == strcmp(argv[i], "--wx"))
           {
-            if (!wx_file_name.empty())
-            {
-              show_usage_and_exit(name);
-            }
-            wx_file_name = get_arg("wx", &i, argc, argv);
+            wx_file_name = parse_once<const char*>(!wx_file_name.empty(), [&i, argc, argv] {
+              return get_arg("wx", &i, argc, argv);
+            });
           }
           else if (0 == strcmp(argv[i], "--perim"))
           {
-            if (!perim.empty())
-            {
-              show_usage_and_exit(name);
-            }
-            perim = get_arg("perim", &i, argc, argv);
+            perim = parse_once<const char*>(!perim.empty(), [&i, argc, argv] {
+              return get_arg("perim", &i, argc, argv);
+            });
           }
           else if (0 == strcmp(argv[i], "--confidence"))
           {
-            if (have_confidence)
-            {
-              show_usage_and_exit(name);
-            }
-            have_confidence = true;
-            Settings::setConfidenceLevel(stod(get_arg("confidence", &i, argc, argv)));
+            Settings::setConfidenceLevel(parse_once<double>(have_confidence, [&i, argc, argv] {
+              return stod(get_arg("confidence", &i, argc, argv));
+            }));
           }
           else if (0 == strcmp(argv[i], "--output_date_offsets"))
           {
-            if (have_output_date_offsets)
-            {
-              show_usage_and_exit(name);
-            }
+            Settings::setOutputDateOffsets(parse_once<const char*>(
+              have_output_date_offsets,
+              [&i, argc, argv] {
+                auto offsets = get_arg("output_date_offsets", &i, argc, argv);
+                fs::logging::warning("Overriding output offsets with %s", offsets);
+                return offsets;
+              }
+            ));
             have_output_date_offsets = true;
-            auto offsets = get_arg("output_date_offsets", &i, argc, argv);
-            fs::logging::warning("Overriding output offsets with %s", offsets);
-            Settings::setOutputDateOffsets(offsets);
           }
           else if (0 == strcmp(argv[i], "--size"))
           {
-            if (0 != size)
-            {
-              show_usage_and_exit(name);
-            }
-            size = static_cast<size_t>(stoi(get_arg("size", &i, argc, argv)));
+            size = parse_once<size_t>(0 != size, [&i, argc, argv] {
+              return static_cast<size_t>(stoi(get_arg("size", &i, argc, argv)));
+            });
           }
           else if (0 == strcmp(argv[i], "--ffmc"))
           {
-            if (nullptr != ffmc)
-            {
-              show_usage_and_exit(name);
-            }
-            ffmc = new fs::wx::Ffmc(stod(get_arg("ffmc", &i, argc, argv)));
+            ffmc = parse_once<fs::wx::Ffmc*>(nullptr != ffmc, [&i, argc, argv] {
+              return new fs::wx::Ffmc(stod(get_arg("ffmc", &i, argc, argv)));
+            });
           }
           else if (0 == strcmp(argv[i], "--dmc"))
           {
-            if (nullptr != dmc)
-            {
-              show_usage_and_exit(name);
-            }
-            dmc = new fs::wx::Dmc(stod(get_arg("dmc", &i, argc, argv)));
+            dmc = parse_once<fs::wx::Dmc*>(nullptr != dmc, [&i, argc, argv] {
+              return new fs::wx::Dmc(stod(get_arg("dmc", &i, argc, argv)));
+            });
           }
           else if (0 == strcmp(argv[i], "--dc"))
           {
-            if (nullptr != dc)
-            {
-              show_usage_and_exit(name);
-            }
-            dc = new fs::wx::Dc(stod(get_arg("dc", &i, argc, argv)));
+            dc = parse_once<fs::wx::Dc*>(nullptr != dc, [&i, argc, argv] {
+              return new fs::wx::Dc(stod(get_arg("dc", &i, argc, argv)));
+            });
           }
           else if (0 == strcmp(argv[i], "--apcp_0800"))
           {
-            if (nullptr != apcp_0800)
-            {
-              show_usage_and_exit(name);
-            }
-            apcp_0800 = new fs::wx::AccumulatedPrecipitation(
-              stod(get_arg("apcp_0800", &i, argc, argv))
+            apcp_0800 = parse_once<fs::wx::AccumulatedPrecipitation*>(
+              nullptr != apcp_0800,
+              [&i, argc, argv] {
+                return new fs::wx::AccumulatedPrecipitation(
+                  stod(get_arg("apcp_0800", &i, argc, argv))
+                );
+              }
             );
           }
           else
           {
-            show_usage_and_exit(name);
+            show_usage_and_exit();
           }
           ++i;
         }
       }
       else
       {
-        show_usage_and_exit(name);
+        show_usage_and_exit();
       }
-      if (!wx_file_name.empty())
-      {
-        // if weather file is specified then we need startup indices
-        if (nullptr == ffmc || nullptr == dmc || nullptr == dc || nullptr == apcp_0800)
-        {
-          cout << "Must specify startup indices if specifying weather input file\n";
-          show_usage_and_exit(name);
-        }
-      }
-      else
+      if (wx_file_name.empty())
       {
         fs::logging::fatal("Weather input file is required");
       }
@@ -379,7 +354,7 @@ main(
         size
       );
     }
-    show_usage_and_exit(name);
+    show_usage_and_exit();
   }
   catch (const runtime_error& err)
   {
