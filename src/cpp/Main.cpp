@@ -77,10 +77,12 @@ parse_once(
   return parse(fct);
 }
 bool
-parse_flag()
+parse_flag(
+  bool not_inverse
+)
 {
-  return parse_once<bool>([] {
-    return true;
+  return parse_once<bool>([not_inverse] {
+    return not_inverse;
   });
 }
 template <class T>
@@ -102,6 +104,19 @@ register_argument(
   PARSE_FCT.emplace(v, fct);
   PARSE_HELP.emplace_back(v, help);
   PARSE_REQUIRED.emplace(v, required);
+}
+void
+register_flag(
+  bool not_inverse,
+  string v,
+  string help,
+  bool required,
+  std::function<void(bool)> fct
+)
+{
+  register_argument(v, help, required, [not_inverse, fct] {
+    fct(parse_flag(not_inverse));
+  });
 }
 int
 main(
@@ -145,23 +160,31 @@ main(
     return fs::sim::test(ARGC, ARGV);
   }
   register_argument("-i", "Save intensity maps for simulations", false, [&save_intensity] {
-    save_intensity = parse_flag();
+    save_intensity = parse_flag(true);
   });
-  register_argument("-s", "Run in synchronous mode", false, [] {
-    Settings::setRunAsync(!parse_flag());
-  });
-  register_argument("--ascii", "Save grids as .asc", false, [] {
-    Settings::setSaveAsAscii(parse_flag());
-  });
-  register_argument("--no-intensity", "Do not output intensity grids", false, [] {
-    Settings::setSaveIntensity(!parse_flag());
-  });
-  register_argument("--no-probability", "Do not output probability grids", false, [] {
-    Settings::setSaveProbability(!parse_flag());
-  });
-  register_argument("--occurrence", "Output occurrence grids", false, [] {
-    Settings::setSaveOccurrence(parse_flag());
-  });
+  register_flag(false, "-s", "Run in synchronous mode", false, &Settings::setRunAsync);
+  register_flag(true, "--ascii", "Save grids as .asc", false, &Settings::setSaveAsAscii);
+  register_flag(
+    false,
+    "--no-intensity",
+    "Do not output intensity grids",
+    false,
+    &Settings::setSaveIntensity
+  );
+  register_flag(
+    false,
+    "--no-probability",
+    "Do not output probability grids",
+    false,
+    &Settings::setSaveProbability
+  );
+  register_flag(
+    true,
+    "--occurrence",
+    "Output occurrence grids",
+    false,
+    &Settings::setSaveOccurrence
+  );
   register_argument("--wx", "Input weather file", true, [&wx_file_name] {
     wx_file_name = parse_once<const char*>(&get_arg);
   });
