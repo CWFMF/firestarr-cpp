@@ -28,6 +28,8 @@
 using tbd::logging::Log;
 using tbd::sim::Settings;
 static const char* BIN_NAME = nullptr;
+static map<std::string, std::function<void()>> PARSE_FCT{};
+static vector<std::pair<std::string, std::string>> PARSE_HELP{};
 void show_usage_and_exit()
 {
   cout << "Usage:" << BIN_NAME << " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]" << endl
@@ -40,24 +42,11 @@ void show_usage_and_exit()
        << endl
        << " Run test cases and save output in the specified directory" << endl
        << endl
-       << " Input Options" << endl
-       << "   -h                        Show help" << endl
-       << "   -v                        Increase output level" << endl
-       << "   -q                        Decrease output level" << endl
-       << "   -i                        Save intensity maps for simulations" << endl
-       << "   -s                        Run in synchronous mode" << endl
-       << "   --ascii                   Save grids as .asc" << endl
-       << "   --no-intensity            Do not output intensity grids" << endl
-       << "   --no-probability          Do not output probability grids" << endl
-       << "   --occurrence              Output occurrence grids" << endl
-       << "   --wx                      Use input weather file" << endl
-       << "   --confidence              Use specified confidence level" << endl
-       << "   --perim                   Start from perimeter" << endl
-       << "   --size                    Start from size" << endl
-       << "   --ffmc                    Override startup Fine Fuel Moisture Code" << endl
-       << "   --dmc                     Override startup Duff Moisture Code" << endl
-       << "   --dc                      Override startup Drought Code" << endl
-       << "   --apcp_0800               Override startup 0800 precipitation" << endl;
+       << " Input Options" << endl;
+  for (auto kv : PARSE_HELP)
+  {
+    printf("   %-25s %s\n", kv.first.c_str(), kv.second.c_str());
+  }
   exit(-1);
 }
 const char* get_arg(const char* const name,
@@ -90,6 +79,11 @@ bool parse_flag(bool have_already)
                             return true;
                           });
 }
+void register_argument(string v, string help, std::function<void()> fct)
+{
+  PARSE_FCT.emplace(v, fct);
+  PARSE_HELP.emplace_back(v, help);
+}
 int main(const int argc, const char* const argv[])
 {
 #ifndef NDEBUG
@@ -104,20 +98,169 @@ int main(const int argc, const char* const argv[])
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
   bin = bin.substr(end, bin.size() - end);
   BIN_NAME = bin.c_str();
+  register_argument("-h", "Show help", &show_usage_and_exit);
+  auto save_intensity = false;
+  auto have_confidence = false;
+  auto have_output_date_offsets = false;
+  string wx_file_name;
+  string perim;
+  size_t size = 0;
+  tbd::wx::Ffmc* ffmc = nullptr;
+  tbd::wx::Dmc* dmc = nullptr;
+  tbd::wx::Dc* dc = nullptr;
+  tbd::wx::AccumulatedPrecipitation* apcp_0800 = nullptr;
+  // HACK: use a variable and ++ in case if arg indices change
+  auto i = 1;
+  // can be used multiple times
+  register_argument("-v", "Increase output level", &Log::increaseLogLevel);
+  // if they want to specify -v and -q then that's fine
+  register_argument("-q", "Decrease output level", &Log::decreaseLogLevel);
+  if (argc > 1 && 0 == strcmp(argv[1], "test"))
+  {
+    if (argc <= 3)
+    {
+      show_usage_and_exit();
+    }
+    return tbd::sim::test(argc, argv);
+  }
+  register_argument("-i",
+                    "Save intensity maps for simulations",
+                    [&save_intensity]
+                    {
+                      save_intensity = parse_flag(save_intensity);
+                    });
+  register_argument("-s",
+                    "Run in synchronous mode",
+                    []
+                    {
+                      Settings::setRunAsync(!parse_flag(!Settings::runAsync()));
+                    });
+  register_argument("--ascii",
+                    "Save grids as .asc",
+                    []
+                    {
+                      Settings::setSaveAsAscii(parse_flag(Settings::saveAsAscii()));
+                    });
+  register_argument("--no-intensity",
+                    "Do not output intensity grids",
+                    []
+                    {
+                      Settings::setSaveIntensity(!parse_flag(!Settings::saveIntensity()));
+                    });
+  register_argument("--no-probability",
+                    "Do not output probability grids",
+                    []
+                    {
+                      Settings::setSaveProbability(!parse_flag(!Settings::saveProbability()));
+                    });
+  register_argument("--occurrence",
+                    "Output occurrence grids",
+                    []
+                    {
+                      Settings::setSaveOccurrence(parse_flag(Settings::saveOccurrence()));
+                    });
+  register_argument("--wx",
+                    "Input weather file",
+                    [&wx_file_name, &i, argc, argv]
+                    {
+                      wx_file_name = parse_once<const char*>(!wx_file_name.empty(),
+                                                             [&i, argc, argv]
+                                                             {
+                                                               return get_arg("wx", &i, argc, argv);
+                                                             });
+                    });
+
+  register_argument("--confidence",
+                    "Use specified confidence level",
+                    [&have_confidence, &i, argc, argv]
+                    {
+                      Settings::setConfidenceLevel(parse_once<double>(have_confidence,
+                                                                      [&i, argc, argv]
+                                                                      {
+                                                                        return stod(get_arg("confidence", &i, argc, argv));
+                                                                      }));
+                    });
+  register_argument("--perim",
+                    "Start from perimeter",
+                    [&perim, &i, argc, argv]
+                    {
+                      perim = parse_once<const char*>(!perim.empty(),
+                                                      [&i, argc, argv]
+                                                      {
+                                                        return get_arg("perim", &i, argc, argv);
+                                                      });
+                    });
+  register_argument("--size",
+                    "Start from size",
+                    [&size, &i, argc, argv]
+                    {
+                      size = parse_once<size_t>(0 != size,
+                                                [&i, argc, argv]
+                                                {
+                                                  return static_cast<size_t>(stoi(get_arg("size", &i, argc, argv)));
+                                                });
+                    });
+  register_argument("--ffmc",
+                    "Startup Fine Fuel Moisture Code",
+                    [&ffmc, &i, argc, argv]
+                    {
+                      ffmc = parse_once<tbd::wx::Ffmc*>(nullptr != ffmc,
+                                                        [&i, argc, argv]
+                                                        {
+                                                          return new tbd::wx::Ffmc(stod(get_arg("ffmc", &i, argc, argv)));
+                                                        });
+                    });
+  register_argument("--dmc",
+                    "Startup Duff Moisture Code",
+                    [&dmc, &i, argc, argv]
+                    {
+                      dmc = parse_once<tbd::wx::Dmc*>(nullptr != dmc,
+                                                      [&i, argc, argv]
+                                                      {
+                                                        return new tbd::wx::Dmc(stod(get_arg("dmc", &i, argc, argv)));
+                                                      });
+                    });
+  register_argument("--dc",
+                    "Startup Drought Code",
+                    [&dc, &i, argc, argv]
+                    {
+                      dc = parse_once<tbd::wx::Dc*>(nullptr != dc,
+                                                    [&i, argc, argv]
+                                                    {
+                                                      return new tbd::wx::Dc(stod(get_arg("dc", &i, argc, argv)));
+                                                    });
+                    });
+  register_argument("--apcp_0800",
+                    "Startup 0800 precipitation",
+                    [&apcp_0800, &i, argc, argv]
+                    {
+                      apcp_0800 = parse_once<tbd::wx::AccumulatedPrecipitation*>(nullptr != apcp_0800,
+                                                                                 [&i, argc, argv]
+                                                                                 {
+                                                                                   return new tbd::wx::AccumulatedPrecipitation(stod(get_arg("apcp_0800", &i, argc, argv)));
+                                                                                 });
+                    });
+  register_argument("--output_date_offsets",
+                    "Override output date offsets",
+                    [&have_output_date_offsets, &i, argc, argv]
+                    {
+                      Settings::setOutputDateOffsets(parse_once<const char*>(have_output_date_offsets,
+                                                                             [&i, argc, argv]
+                                                                             {
+                                                                               auto offsets = get_arg("output_date_offsets", &i, argc, argv);
+                                                                               tbd::logging::warning("Overriding output offsets with %s", offsets);
+                                                                               return offsets;
+                                                                             }));
+                      have_output_date_offsets = true;
+                    });
   if (3 > argc)
   {
     show_usage_and_exit();
   }
   try
   {
-    if (argc > 3 && 0 == strcmp(argv[1], "test"))
-    {
-      return tbd::sim::test(argc, argv);
-    }
     if (6 <= argc)
     {
-      // HACK: use a variable and ++ in case if arg indices change
-      auto i = 1;
       string output_directory(argv[i++]);
       replace(output_directory.begin(), output_directory.end(), '\\', '/');
       if ('/' != output_directory[output_directory.length() - 1])
@@ -147,16 +290,6 @@ int main(const int argc, const char* const argv[])
       const tbd::topo::StartPoint start_point(latitude, longitude);
       size_t num_days = 0;
       string arg(argv[i++]);
-      auto save_intensity = false;
-      auto have_confidence = false;
-      auto have_output_date_offsets = false;
-      string wx_file_name;
-      string perim;
-      size_t size = 0;
-      tbd::wx::Ffmc* ffmc = nullptr;
-      tbd::wx::Dmc* dmc = nullptr;
-      tbd::wx::Dc* dc = nullptr;
-      tbd::wx::AccumulatedPrecipitation* apcp_0800 = nullptr;
       tm start{};
       if (5 == arg.size() && ':' == arg[2])
       {
@@ -188,114 +321,9 @@ int main(const int argc, const char* const argv[])
         }
         while (i < argc)
         {
-          if (0 == strcmp(argv[i], "-i"))
+          if (PARSE_FCT.find(argv[i]) != PARSE_FCT.end())
           {
-            save_intensity = parse_flag(save_intensity);
-          }
-          else if (0 == strcmp(argv[i], "--ascii"))
-          {
-            Settings::setSaveAsAscii(parse_flag(Settings::saveAsAscii()));
-          }
-          else if (0 == strcmp(argv[i], "--no-intensity"))
-          {
-            Settings::setSaveIntensity(!parse_flag(!Settings::saveIntensity()));
-          }
-          else if (0 == strcmp(argv[i], "--no-probability"))
-          {
-            Settings::setSaveProbability(!parse_flag(!Settings::saveProbability()));
-          }
-          else if (0 == strcmp(argv[i], "--occurrence"))
-          {
-            Settings::setSaveOccurrence(parse_flag(Settings::saveOccurrence()));
-          }
-          else if (0 == strcmp(argv[i], "-s"))
-          {
-            Settings::setRunAsync(!parse_flag(!Settings::runAsync()));
-          }
-          else if (0 == strcmp(argv[i], "-v"))
-          {
-            // can be used multiple times
-            Log::increaseLogLevel();
-          }
-          else if (0 == strcmp(argv[i], "-q"))
-          {
-            // if they want to specify -v and -q then that's fine
-            Log::decreaseLogLevel();
-          }
-          else if (0 == strcmp(argv[i], "--wx"))
-          {
-            wx_file_name = parse_once<const char*>(!wx_file_name.empty(),
-                                                   [&i, argc, argv]
-                                                   {
-                                                     return get_arg("wx", &i, argc, argv);
-                                                   });
-          }
-          else if (0 == strcmp(argv[i], "--perim"))
-          {
-            perim = parse_once<const char*>(!perim.empty(),
-                                            [&i, argc, argv]
-                                            {
-                                              return get_arg("perim", &i, argc, argv);
-                                            });
-          }
-          else if (0 == strcmp(argv[i], "--confidence"))
-          {
-            Settings::setConfidenceLevel(parse_once<double>(have_confidence,
-                                                            [&i, argc, argv]
-                                                            {
-                                                              return stod(get_arg("confidence", &i, argc, argv));
-                                                            }));
-          }
-          else if (0 == strcmp(argv[i], "--output_date_offsets"))
-          {
-            Settings::setOutputDateOffsets(parse_once<const char*>(have_output_date_offsets,
-                                                                   [&i, argc, argv]
-                                                                   {
-                                                                     auto offsets = get_arg("output_date_offsets", &i, argc, argv);
-                                                                     tbd::logging::warning("Overriding output offsets with %s", offsets);
-                                                                     return offsets;
-                                                                   }));
-            have_output_date_offsets = true;
-          }
-          else if (0 == strcmp(argv[i], "--size"))
-          {
-            size = parse_once<size_t>(0 != size,
-                                      [&i, argc, argv]
-                                      {
-                                        return static_cast<size_t>(stoi(get_arg("size", &i, argc, argv)));
-                                      });
-          }
-          else if (0 == strcmp(argv[i], "--ffmc"))
-          {
-            ffmc = parse_once<tbd::wx::Ffmc*>(nullptr != ffmc,
-                                              [&i, argc, argv]
-                                              {
-                                                return new tbd::wx::Ffmc(stod(get_arg("ffmc", &i, argc, argv)));
-                                              });
-          }
-          else if (0 == strcmp(argv[i], "--dmc"))
-          {
-            dmc = parse_once<tbd::wx::Dmc*>(nullptr != dmc,
-                                            [&i, argc, argv]
-                                            {
-                                              return new tbd::wx::Dmc(stod(get_arg("dmc", &i, argc, argv)));
-                                            });
-          }
-          else if (0 == strcmp(argv[i], "--dc"))
-          {
-            dc = parse_once<tbd::wx::Dc*>(nullptr != dc,
-                                          [&i, argc, argv]
-                                          {
-                                            return new tbd::wx::Dc(stod(get_arg("dc", &i, argc, argv)));
-                                          });
-          }
-          else if (0 == strcmp(argv[i], "--apcp_0800"))
-          {
-            apcp_0800 = parse_once<tbd::wx::AccumulatedPrecipitation*>(nullptr != apcp_0800,
-                                                                       [&i, argc, argv]
-                                                                       {
-                                                                         return new tbd::wx::AccumulatedPrecipitation(stod(get_arg("apcp_0800", &i, argc, argv)));
-                                                                       });
+            PARSE_FCT[argv[i]]();
           }
           else
           {
