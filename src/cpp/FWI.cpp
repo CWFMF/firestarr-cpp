@@ -663,6 +663,33 @@ FwiWeather::FwiWeather() noexcept
   : FwiWeather(Zero)
 {
 }
+FwiWeather::FwiWeather(
+  const Temperature& tmp,
+  const RelativeHumidity& rh,
+  const Wind& wind,
+  const AccumulatedPrecipitation& apcp,
+  const Ffmc& ffmc,
+  const Dmc& dmc,
+  const Dc& dc,
+  const Isi& isi,
+  const Bui& bui
+) noexcept
+  : FwiWeather(tmp, rh, wind, apcp, ffmc, dmc, dc, isi, bui, Fwi(isi, bui))
+{
+}
+FwiWeather::FwiWeather(
+  const Temperature& tmp,
+  const RelativeHumidity& rh,
+  const Wind& wind,
+  const AccumulatedPrecipitation& apcp,
+  const Ffmc& ffmc,
+  const Dmc& dmc,
+  const Dc& dc
+) noexcept
+  : FwiWeather(tmp, rh, wind, apcp, ffmc, dmc, dc, Isi(wind.speed(), ffmc), Bui(dmc, dc))
+{
+}
+
 ostream&
 operator<<(
   ostream& os,

@@ -323,9 +323,6 @@ main(
         apcp_0800 = fs::wx::AccumulatedPrecipitation::Zero;
       }
       // HACK: ISI for yesterday really doesn't matter so just use any wind
-      const auto isi_fixed = fs::wx::Isi(fs::wx::Speed(0), ffmc);
-      const auto bui_fixed = fs::wx::Bui(dmc, dc);
-      const auto fwi_fixed = fs::wx::Fwi(isi_fixed, bui_fixed);
       const auto yesterday = fs::wx::FwiWeather(
         fs::wx::Temperature(0),
         fs::wx::RelativeHumidity(0),
@@ -333,10 +330,7 @@ main(
         fs::wx::AccumulatedPrecipitation(0),
         ffmc,
         dmc,
-        dc,
-        isi_fixed,
-        bui_fixed,
-        fwi_fixed
+        dc
       );
       fs::util::fix_tm(&start_date);
       start = start_date;
