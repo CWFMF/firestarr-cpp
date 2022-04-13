@@ -37,12 +37,6 @@ public:
    */
   [[nodiscard]] static const char* weatherFile() noexcept;
   /**
-   * \brief Set name of file to save weather to
-   * \param f Name of file to save weather to
-   * \return None
-   */
-  static void setWeatherFile(const string& f);
-  /**
    * \brief Path to directory that outputs are saved to
    * \return Name of file to save weather to
    */

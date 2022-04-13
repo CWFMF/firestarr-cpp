@@ -48,22 +48,6 @@ public:
   SettingsImplementation& operator=(SettingsImplementation&& rhs) = delete;
   static SettingsImplementation& instance() noexcept;
   /**
-   * \brief Name of file to save weather to
-   * \return Name of file to save weather to
-   */
-  [[nodiscard]] const char* weatherFile() const noexcept
-  {
-    return weather_file_.c_str();
-  }
-  /**
-   * \brief Set name of file to save weather to
-   * \param f Name of file to save weather to
-   */
-  void setWeatherFile(const string& f)
-  {
-    weather_file_ = f;
-  }
-  /**
    * \brief Path to directory that outputs are saved to
    * \return Path to directory that outputs are saved to
    */
@@ -270,10 +254,6 @@ private:
    */
   mutex mutex_;
   /**
-   * \brief Name of file to save weather to
-   */
-  string weather_file_;
-  /**
    * \brief Path to directory that outputs are saved to
    */
   string output_directory_;
@@ -470,14 +450,6 @@ SettingsImplementation::SettingsImplementation(const char* filename) noexcept
   {
     std::terminate();
   }
-}
-const char* Settings::weatherFile() noexcept
-{
-  return SettingsImplementation::instance().weatherFile();
-}
-void Settings::setWeatherFile(const string& f)
-{
-  SettingsImplementation::instance().setWeatherFile(f);
 }
 const char* Settings::outputDirectory() noexcept
 {
