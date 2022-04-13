@@ -256,6 +256,44 @@ public:
              const Bui& bui,
              const Fwi& fwi) noexcept;
   /**
+   * \brief Construct by calculating FWI
+   * \param tmp Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param wind Wind (km/h)
+   * \param apcp Accumulated Precipitation (mm)
+   * \param ffmc Fine Fuel Moisture Code
+   * \param dmc Duff Moisture Code
+   * \param dc Drought Code
+   * \param isi Initial Spread Index
+   * \param bui Build-up Index
+   */
+  FwiWeather(const Temperature& tmp,
+             const RelativeHumidity& rh,
+             const Wind& wind,
+             const AccumulatedPrecipitation& apcp,
+             const Ffmc& ffmc,
+             const Dmc& dmc,
+             const Dc& dc,
+             const Isi& isi,
+             const Bui& bui) noexcept;
+  /**
+   * \brief Construct by calculating ISI, BUI, & FWI
+   * \param tmp Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param wind Wind (km/h)
+   * \param apcp Accumulated Precipitation (mm)
+   * \param ffmc Fine Fuel Moisture Code
+   * \param dmc Duff Moisture Code
+   * \param dc Drought Code
+   */
+  FwiWeather(const Temperature& tmp,
+             const RelativeHumidity& rh,
+             const Wind& wind,
+             const AccumulatedPrecipitation& apcp,
+             const Ffmc& ffmc,
+             const Dmc& dmc,
+             const Dc& dc) noexcept;
+  /**
    * \brief Construct by recalculating with different wind Speed and Ffmc
    * \param wx Original weather values
    * \param ws Wind Speed to use
