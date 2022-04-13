@@ -87,6 +87,14 @@ bool parse_flag()
                             return true;
                           });
 }
+template <class T>
+T* parse_index()
+{
+  return parse_once<T*>([]
+                       {
+                         return new T(stod(get_arg()));
+                       });
+}
 void register_argument(string v, string help, bool required, std::function<void()> fct)
 {
   PARSE_FCT.emplace(v, fct);
@@ -212,40 +220,28 @@ int main(const int argc, const char* const argv[])
                     true,
                     [&ffmc]
                     {
-                      ffmc = parse_once<tbd::wx::Ffmc*>([]
-                                                        {
-                                                          return new tbd::wx::Ffmc(stod(get_arg()));
-                                                        });
+                      ffmc = parse_index<tbd::wx::Ffmc>();
                     });
   register_argument("--dmc",
                     "Startup Duff Moisture Code",
                     true,
                     [&dmc]
                     {
-                      dmc = parse_once<tbd::wx::Dmc*>([]
-                                                      {
-                                                        return new tbd::wx::Dmc(stod(get_arg()));
-                                                      });
+                      dmc = parse_index<tbd::wx::Dmc>();
                     });
   register_argument("--dc",
                     "Startup Drought Code",
                     true,
                     [&dc]
                     {
-                      dc = parse_once<tbd::wx::Dc*>([]
-                                                    {
-                                                      return new tbd::wx::Dc(stod(get_arg()));
-                                                    });
+                      dc = parse_index<tbd::wx::Dc>();
                     });
   register_argument("--apcp_0800",
                     "Startup 0800 precipitation",
                     false,
                     [&apcp_0800]
                     {
-                      apcp_0800 = parse_once<tbd::wx::AccumulatedPrecipitation*>([]
-                                                                                 {
-                                                                                   return new tbd::wx::AccumulatedPrecipitation(stod(get_arg()));
-                                                                                 });
+                      apcp_0800 = parse_index<tbd::wx::AccumulatedPrecipitation>();
                     });
   register_argument("--output_date_offsets",
                     "Override output date offsets",
