@@ -66,22 +66,20 @@ parse(
 template <class T>
 T
 parse_once(
-  bool have_already,
   std::function<T()> fct
 )
 {
-  if (have_already)
+  if (PARSE_HAVE.contains(ARGV[CUR_ARG]))
   {
+    cout << endl << "Argument " << ARGV[CUR_ARG] << " already specified" << endl << endl;
     show_usage_and_exit();
   }
   return parse(fct);
 }
 bool
-parse_flag(
-  bool have_already
-)
+parse_flag()
 {
-  return parse_once<bool>(have_already, [] {
+  return parse_once<bool>([] {
     return true;
   });
 }
@@ -119,8 +117,6 @@ main(
   BIN_NAME = bin.c_str();
   register_argument("-h", "Show help", false, &show_usage_and_exit);
   auto save_intensity = false;
-  auto have_confidence = false;
-  auto have_output_date_offsets = false;
   string wx_file_name;
   string perim;
   size_t size = 0;
@@ -141,76 +137,67 @@ main(
     return fs::sim::test(ARGC, ARGV);
   }
   register_argument("-i", "Save intensity maps for simulations", false, [&save_intensity] {
-    save_intensity = parse_flag(save_intensity);
+    save_intensity = parse_flag();
   });
   register_argument("-s", "Run in synchronous mode", false, [] {
-    Settings::setRunAsync(!parse_flag(!Settings::runAsync()));
+    Settings::setRunAsync(!parse_flag());
   });
   register_argument("--ascii", "Save grids as .asc", false, [] {
-    Settings::setSaveAsAscii(parse_flag(Settings::saveAsAscii()));
+    Settings::setSaveAsAscii(parse_flag());
   });
   register_argument("--no-intensity", "Do not output intensity grids", false, [] {
-    Settings::setSaveIntensity(!parse_flag(!Settings::saveIntensity()));
+    Settings::setSaveIntensity(!parse_flag());
   });
   register_argument("--no-probability", "Do not output probability grids", false, [] {
-    Settings::setSaveProbability(!parse_flag(!Settings::saveProbability()));
+    Settings::setSaveProbability(!parse_flag());
   });
   register_argument("--occurrence", "Output occurrence grids", false, [] {
-    Settings::setSaveOccurrence(parse_flag(Settings::saveOccurrence()));
+    Settings::setSaveOccurrence(parse_flag());
   });
   register_argument("--wx", "Input weather file", true, [&wx_file_name] {
-    wx_file_name = parse_once<const char*>(!wx_file_name.empty(), &get_arg);
+    wx_file_name = parse_once<const char*>(&get_arg);
   });
 
-  register_argument("--confidence", "Use specified confidence level", false, [&have_confidence] {
-    Settings::setConfidenceLevel(parse_once<double>(have_confidence, [] {
+  register_argument("--confidence", "Use specified confidence level", false, [] {
+    Settings::setConfidenceLevel(parse_once<double>([] {
       return stod(get_arg());
     }));
-    have_confidence = true;
   });
   register_argument("--perim", "Start from perimeter", false, [&perim] {
-    perim = parse_once<const char*>(!perim.empty(), [] {
-      return get_arg();
-    });
+    perim = parse_once<const char*>(&get_arg);
   });
   register_argument("--size", "Start from size", false, [&size] {
-    size = parse_once<size_t>(0 != size, [] {
+    size = parse_once<size_t>([] {
       return static_cast<size_t>(stoi(get_arg()));
     });
   });
   register_argument("--ffmc", "Startup Fine Fuel Moisture Code", true, [&ffmc] {
-    ffmc = parse_once<fs::wx::Ffmc*>(nullptr != ffmc, [] {
+    ffmc = parse_once<fs::wx::Ffmc*>([] {
       return new fs::wx::Ffmc(stod(get_arg()));
     });
   });
   register_argument("--dmc", "Startup Duff Moisture Code", true, [&dmc] {
-    dmc = parse_once<fs::wx::Dmc*>(nullptr != dmc, [] {
+    dmc = parse_once<fs::wx::Dmc*>([] {
       return new fs::wx::Dmc(stod(get_arg()));
     });
   });
   register_argument("--dc", "Startup Drought Code", true, [&dc] {
-    dc = parse_once<fs::wx::Dc*>(nullptr != dc, [] {
+    dc = parse_once<fs::wx::Dc*>([] {
       return new fs::wx::Dc(stod(get_arg()));
     });
   });
   register_argument("--apcp_0800", "Startup 0800 precipitation", false, [&apcp_0800] {
-    apcp_0800 = parse_once<fs::wx::AccumulatedPrecipitation*>(nullptr != apcp_0800, [] {
+    apcp_0800 = parse_once<fs::wx::AccumulatedPrecipitation*>([] {
       return new fs::wx::AccumulatedPrecipitation(stod(get_arg()));
     });
   });
-  register_argument(
-    "--output_date_offsets",
-    "Override output date offsets",
-    false,
-    [&have_output_date_offsets] {
-      Settings::setOutputDateOffsets(parse_once<const char*>(have_output_date_offsets, [] {
-        auto offsets = get_arg();
-        fs::logging::warning("Overriding output offsets with %s", offsets);
-        return offsets;
-      }));
-      have_output_date_offsets = true;
-    }
-  );
+  register_argument("--output_date_offsets", "Override output date offsets", false, [] {
+    Settings::setOutputDateOffsets(parse_once<const char*>([] {
+      auto offsets = get_arg();
+      fs::logging::warning("Overriding output offsets with %s", offsets);
+      return offsets;
+    }));
+  });
   if (3 > ARGC)
   {
     show_usage_and_exit();
