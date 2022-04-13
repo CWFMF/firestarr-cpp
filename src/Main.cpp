@@ -90,12 +90,12 @@ bool parse_flag(bool not_inverse)
                           });
 }
 template <class T>
-T* parse_index()
+T parse_index()
 {
-  return parse_once<T*>([]
-                        {
-                          return new T(stod(get_arg()));
-                        });
+  return parse_once<T>([]
+                       {
+                         return T(stod(get_arg()));
+                       });
 }
 void register_argument(string v, string help, bool required, std::function<void()> fct)
 {
@@ -111,6 +111,17 @@ void register_flag(bool not_inverse, string v, string help, bool required, std::
                     [not_inverse, fct]
                     {
                       fct(parse_flag(not_inverse));
+                    });
+}
+template <class T>
+void register_index(T& index, string v, string help, bool required)
+{
+  register_argument(v,
+                    help,
+                    required,
+                    [&index]
+                    {
+                      index = parse_index<T>();
                     });
 }
 int main(const int argc, const char* const argv[])
@@ -134,10 +145,10 @@ int main(const int argc, const char* const argv[])
   string wx_file_name;
   string perim;
   size_t size = 0;
-  tbd::wx::Ffmc* ffmc = nullptr;
-  tbd::wx::Dmc* dmc = nullptr;
-  tbd::wx::Dc* dc = nullptr;
-  tbd::wx::AccumulatedPrecipitation* apcp_0800 = nullptr;
+  tbd::wx::Ffmc ffmc;
+  tbd::wx::Dmc dmc;
+  tbd::wx::Dc dc;
+  tbd::wx::AccumulatedPrecipitation apcp_0800;
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
@@ -197,34 +208,10 @@ int main(const int argc, const char* const argv[])
                                                   return static_cast<size_t>(stoi(get_arg()));
                                                 });
                     });
-  register_argument("--ffmc",
-                    "Startup Fine Fuel Moisture Code",
-                    true,
-                    [&ffmc]
-                    {
-                      ffmc = parse_index<tbd::wx::Ffmc>();
-                    });
-  register_argument("--dmc",
-                    "Startup Duff Moisture Code",
-                    true,
-                    [&dmc]
-                    {
-                      dmc = parse_index<tbd::wx::Dmc>();
-                    });
-  register_argument("--dc",
-                    "Startup Drought Code",
-                    true,
-                    [&dc]
-                    {
-                      dc = parse_index<tbd::wx::Dc>();
-                    });
-  register_argument("--apcp_0800",
-                    "Startup 0800 precipitation",
-                    false,
-                    [&apcp_0800]
-                    {
-                      apcp_0800 = parse_index<tbd::wx::AccumulatedPrecipitation>();
-                    });
+  register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
+  register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
+  register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
+  register_index<tbd::wx::AccumulatedPrecipitation>(apcp_0800, "--apcp_0800", "Startup 0800 precipitation", false);
   register_argument("--output_date_offsets",
                     "Override output date offsets",
                     false,
@@ -327,25 +314,22 @@ int main(const int argc, const char* const argv[])
           tbd::logging::fatal("%s must be specified", kv.first.c_str());
         }
       }
-      if (nullptr == apcp_0800)
+      if (!PARSE_HAVE.contains("--apcp_0800"))
       {
         tbd::logging::warning("Assuming 0 precipitation for startup indices");
-        apcp_0800 = new tbd::wx::AccumulatedPrecipitation(0);
+        apcp_0800 = tbd::wx::AccumulatedPrecipitation::Zero;
       }
-      const auto ffmc_fixed = *ffmc;
-      const auto dmc_fixed = *dmc;
-      const auto dc_fixed = *dc;
       // HACK: ISI for yesterday really doesn't matter so just use any wind
-      const auto isi_fixed = tbd::wx::Isi(tbd::wx::Speed(0), ffmc_fixed);
-      const auto bui_fixed = tbd::wx::Bui(dmc_fixed, dc_fixed);
+      const auto isi_fixed = tbd::wx::Isi(tbd::wx::Speed(0), ffmc);
+      const auto bui_fixed = tbd::wx::Bui(dmc, dc);
       const auto fwi_fixed = tbd::wx::Fwi(isi_fixed, bui_fixed);
       const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
                                                  tbd::wx::RelativeHumidity(0),
                                                  tbd::wx::Wind(tbd::wx::Direction(0, false), tbd::wx::Speed(0)),
                                                  tbd::wx::AccumulatedPrecipitation(0),
-                                                 ffmc_fixed,
-                                                 dmc_fixed,
-                                                 dc_fixed,
+                                                 ffmc,
+                                                 dmc,
+                                                 dc,
                                                  isi_fixed,
                                                  bui_fixed,
                                                  fwi_fixed);
