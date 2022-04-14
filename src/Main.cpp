@@ -37,17 +37,11 @@ static const char* const* ARGV = nullptr;
 static int CUR_ARG = 0;
 void show_usage_and_exit()
 {
-  cout << "Usage: " << BIN_NAME << " <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]" << endl
-       << endl
-       << " Run simulations and save output in the specified directory" << endl
-       << endl
-       << endl
-       << "Usage: " << BIN_NAME << " test <output_dir> <numHours>"
-       << "[slope [aspect [wind_speed [wind_direction]]]]" << endl
-       << endl
-       << " Run test cases and save output in the specified directory" << endl
-       << endl
-       << " Input Options" << endl;
+  printf("Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n", BIN_NAME);
+  printf(" Run simulations and save output in the specified directory\n\n\n");
+  printf("Usage: %s test <output_dir> <numHours> [slope [aspect [wind_speed [wind_direction]]]]\n\n", BIN_NAME);
+  printf(" Run test cases and save output in the specified directory\n\n");
+  printf(" Input Options\n");
   for (auto& kv : PARSE_HELP)
   {
     printf("   %-25s %s\n", kv.first.c_str(), kv.second.c_str());
@@ -75,9 +69,7 @@ T parse_once(std::function<T()> fct)
 {
   if (PARSE_HAVE.contains(ARGV[CUR_ARG]))
   {
-    cout << endl
-         << "Argument " << ARGV[CUR_ARG] << " already specified" << endl
-         << endl;
+    printf("\nArgument %s already specified\n\n", ARGV[CUR_ARG]);
     show_usage_and_exit();
   }
   return parse(fct);
@@ -141,9 +133,9 @@ int main(const int argc, const char* const argv[])
   ARGC = argc;
   ARGV = argv;
 #ifndef NDEBUG
-  cout << "**************************************************\n";
-  cout << "******************* DEBUG MODE *******************\n";
-  cout << "**************************************************\n";
+  printf("**************************************************\n");
+  printf("******************* DEBUG MODE *******************\n");
+  printf("**************************************************\n");
 #endif
   // _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
   Log::setLogLevel(tbd::logging::LOG_NOTE);
@@ -301,12 +293,12 @@ int main(const int argc, const char* const argv[])
                                                  dc);
       tbd::util::fix_tm(&start_date);
       start = start_date;
-      cout << "Arguments are:\n";
+      printf("Arguments are:\n");
       for (auto j = 0; j < ARGC; ++j)
       {
-        cout << " " << ARGV[j];
+        printf(" %s", ARGV[j]);
       }
-      cout << "\n";
+      printf("\n");
       return tbd::sim::Model::runScenarios(wx_file_name.c_str(),
                                            Settings::rasterRoot(),
                                            yesterday,

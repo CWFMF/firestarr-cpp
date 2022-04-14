@@ -422,7 +422,6 @@ string Scenario::add_log(const char* format) const noexcept
   static char buffer[1024]{0};
   sprintf(buffer, "Scenario %4ld.%04ld (%3f): ", id(), simulation(), current_time_);
   iss << buffer << format;
-  //  cout << '"' << iss.str() << '"' << '\n';
   return iss.str();
 }
 #ifndef NDEBUG

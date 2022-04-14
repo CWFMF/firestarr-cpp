@@ -298,8 +298,7 @@ public:
   {
     const auto result = T_VALUES[std::min(T_VALUES.size(), n()) - 1]
                       * sqrt(sampleVariance() / n()) / abs(mean());
-    // HACK: use n_ instead of i in sqrt()
-    // cout << n() << " " << mean() << " " << sampleVariance() << " " << result << endl;
+    // printf("%ld %f %f %f\n", n(), mean(), sampleVariance(), result);
     return result;
   }
   /**
@@ -311,7 +310,7 @@ public:
   {
     const auto st = studentsT();
     const auto re = relative_error / (1 + relative_error);
-    // cout << st << " <= " << re << " is " << ((st <= re) ? "true" : "false") << endl;
+    // printf("%f <= %f is %s\n", st, re, ((st <= re) ? "true" : "false"));
     return st <= re;
   }
   /**
