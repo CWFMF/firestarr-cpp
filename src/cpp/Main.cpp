@@ -162,11 +162,10 @@ register_flag(
   std::function<void(bool)> fct,
   bool not_inverse,
   string v,
-  string help,
-  bool required
+  string help
 )
 {
-  register_argument(v, help, required, [not_inverse, fct] {
+  register_argument(v, help, false, [not_inverse, fct] {
     fct(parse_flag(not_inverse));
   });
 }
@@ -175,11 +174,10 @@ register_flag(
   bool& variable,
   bool not_inverse,
   string v,
-  string help,
-  bool required
+  string help
 )
 {
-  register_argument(v, help, required, [not_inverse, &variable] {
+  register_argument(v, help, false, [not_inverse, &variable] {
     variable = parse_flag(not_inverse);
   });
 }
@@ -237,30 +235,22 @@ main(
     }
     return fs::sim::test(ARGC, ARGV);
   }
-  register_flag(save_intensity, true, "-i", "Save intensity maps for simulations", false);
-  register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode", false);
-  register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc", false);
+  register_flag(save_intensity, true, "-i", "Save intensity maps for simulations");
+  register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
+  register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
   register_flag(
     &Settings::setSaveIntensity,
     false,
     "--no-intensity",
-    "Do not output intensity grids",
-    false
+    "Do not output intensity grids"
   );
   register_flag(
     &Settings::setSaveProbability,
     false,
     "--no-probability",
-    "Do not output probability grids",
-    false
+    "Do not output probability grids"
   );
-  register_flag(
-    &Settings::setSaveOccurrence,
-    true,
-    "--occurrence",
-    "Output occurrence grids",
-    false
-  );
+  register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
   register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
   register_setter<double>(
     &Settings::setConfidenceLevel,
