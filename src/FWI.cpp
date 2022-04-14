@@ -216,6 +216,32 @@ static constexpr double day_length(const double latitude, const int month) noexc
   }
   return logging::fatal<double>("Unable to calculate DayLength");
 }
+double find_m(const Temperature& temperature, const RelativeHumidity& rh, const Speed& wind, const double mo) noexcept
+{
+  //'''/* 4  '*/
+  const auto ed = 0.942 * pow(rh.asDouble(), 0.679) + 11.0 * exp((rh.asDouble() - 100.0) / 10.0) + 0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
+  if (mo > ed)
+  {
+    //'''/* 6a '*/
+    const auto ko = 0.424 * (1.0 - pow(rh.asDouble() / 100.0, 1.7)) + 0.0694 * sqrt(wind.asDouble()) * (1.0 - util::pow_int<8>(rh.asDouble() / 100.0));
+    //'''/* 6b '*/
+    const auto kd = ko * 0.581 * exp(0.0365 * temperature.asDouble());
+    //'''/* 8  '*/
+    return ed + (mo - ed) * pow(10.0, -kd);
+  }
+  //'''/* 5  '*/
+  const auto ew = 0.618 * pow(rh.asDouble(), 0.753) + 10.0 * exp((rh.asDouble() - 100.0) / 10.0) + 0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
+  if (mo < ew)
+  {
+    //'''/* 7a '*/
+    const auto kl = 0.424 * (1.0 - pow((100.0 - rh.asDouble()) / 100.0, 1.7)) + 0.0694 * sqrt(wind.asDouble()) * (1 - util::pow_int<8>((100.0 - rh.asDouble()) / 100.0));
+    //'''/* 7b '*/
+    const auto kw = kl * 0.581 * exp(0.0365 * temperature.asDouble());
+    //'''/* 9  '*/
+    return ew - (ew - mo) * pow(10.0, -kw);
+  }
+  return mo;
+}
 //******************************************************************************************
 // Function Name: FFMC
 // Description: Calculates today's Fine Fuel Moisture Code
@@ -251,33 +277,7 @@ static double calculate_ffmc(const Temperature& temperature,
     }
     mo = mr;
   }
-  //'''/* 4  '*/
-  const auto find_m = [&temperature, &rh, &wind, &mo]() noexcept
-  {
-    const auto ed = 0.942 * pow(rh.asDouble(), 0.679) + 11.0 * exp((rh.asDouble() - 100.0) / 10.0) + 0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
-    if (mo > ed)
-    {
-      //'''/* 6a '*/
-      const auto ko = 0.424 * (1.0 - pow(rh.asDouble() / 100.0, 1.7)) + 0.0694 * sqrt(wind.asDouble()) * (1.0 - util::pow_int<8>(rh.asDouble() / 100.0));
-      //'''/* 6b '*/
-      const auto kd = ko * 0.581 * exp(0.0365 * temperature.asDouble());
-      //'''/* 8  '*/
-      return ed + (mo - ed) * pow(10.0, -kd);
-    }
-    //'''/* 5  '*/
-    const auto ew = 0.618 * pow(rh.asDouble(), 0.753) + 10.0 * exp((rh.asDouble() - 100.0) / 10.0) + 0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
-    if (mo < ew)
-    {
-      //'''/* 7a '*/
-      const auto kl = 0.424 * (1.0 - pow((100.0 - rh.asDouble()) / 100.0, 1.7)) + 0.0694 * sqrt(wind.asDouble()) * (1 - util::pow_int<8>((100.0 - rh.asDouble()) / 100.0));
-      //'''/* 7b '*/
-      const auto kw = kl * 0.581 * exp(0.0365 * temperature.asDouble());
-      //'''/* 9  '*/
-      return ew - (ew - mo) * pow(10.0, -kw);
-    }
-    return mo;
-  };
-  const auto m = find_m();
+  const auto m = find_m(temperature, rh, wind, mo);
   //'''/* 10 '*/
   return (59.5 * (250.0 - m) / (147.2 + m));
 }

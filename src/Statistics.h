@@ -259,10 +259,7 @@ public:
     const auto total_sum = std::accumulate(values.begin(),
                                            values.end(),
                                            0.0,
-                                           [](const double t, const double x)
-                                           {
-                                             return t + x;
-                                           });
+                                           [](const double t, const double x) { return t + x; });
     mean_ = total_sum / n_;
     for (size_t i = 0; i < percentiles_.size(); ++i)
     {
@@ -275,10 +272,7 @@ public:
     const auto total = std::accumulate(values.begin(),
                                        values.end(),
                                        0.0,
-                                       [this](const double t, const double x)
-                                       {
-                                         return t + pow_int<2>(x - mean_);
-                                       });
+                                       [this](const double t, const double x) { return t + pow_int<2>(x - mean_); });
     standard_deviation_ = sqrt(total / n_);
     sample_variance_ = total / (n_ - 1);
 #ifndef NDEBUG
@@ -330,8 +324,7 @@ public:
                                     const double relative_error) const
   {
     const auto re = relative_error / (1 + relative_error);
-    const std::function<double(size_t)> fct = [this](const size_t i) noexcept
-    {
+    const std::function<double(size_t)> fct = [this](const size_t i) noexcept {
       return T_VALUES[std::min(T_VALUES.size(), i) - 1]
            * sqrt(sampleVariance() / i) / abs(mean());
     };

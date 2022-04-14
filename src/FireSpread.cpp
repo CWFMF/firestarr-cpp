@@ -136,12 +136,8 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   const auto b_semi = has_no_slope ? 0 : _cos(atan(percentSlope() / 100.0));
   const auto slope_radians = util::to_radians(slope_azimuth);
   // do check once and make function just return 1.0 if no slope
-  const auto no_correction = [](const double) noexcept
-  {
-    return 1.0;
-  };
-  const auto do_correction = [b_semi, slope_radians](const double theta) noexcept
-  {
+  const auto no_correction = [](const double) noexcept { return 1.0; };
+  const auto do_correction = [b_semi, slope_radians](const double theta) noexcept {
     // never gets called if isInvalid() so don't check
     // figure out how far the ground distance is in map distance horizontally
     auto angle_unrotated = theta - slope_radians;
@@ -161,8 +157,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
                                  : std::function<double(double)>(do_correction);
   const auto cell_size = scenario.cellSize();
   const auto add_offset = [this, cell_size, min_ros](const double direction,
-                                                     const double ros)
-  {
+                                                     const double ros) {
     if (ros < min_ros)
     {
       return false;
@@ -202,39 +197,34 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   const auto a_sq_sub_c_sq = a_sq - (c * c);
   const auto ac = a * c;
   const auto calculate_ros =
-    [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](const double theta) noexcept
-  {
-    const auto cos_t = _cos(theta);
-    const auto cos_t_sq = cos_t * cos_t;
-    const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
-    // 1.0 = cos^2 + sin^2
-    //    const auto sin_t_sq = 1.0 - cos_t_sq;
-    const auto sin_t = _sin(theta);
-    const auto sin_t_sq = sin_t * sin_t;
-    return abs((a * ((flank_ros * cos_t * sqrt(f_sq_cos_t_sq + a_sq_sub_c_sq * sin_t_sq) - ac * sin_t_sq) / (f_sq_cos_t_sq + a_sq * sin_t_sq)) + c) / cos_t);
-  };
+    [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](const double theta) noexcept {
+      const auto cos_t = _cos(theta);
+      const auto cos_t_sq = cos_t * cos_t;
+      const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
+      // 1.0 = cos^2 + sin^2
+      //    const auto sin_t_sq = 1.0 - cos_t_sq;
+      const auto sin_t = _sin(theta);
+      const auto sin_t_sq = sin_t * sin_t;
+      return abs((a * ((flank_ros * cos_t * sqrt(f_sq_cos_t_sq + a_sq_sub_c_sq * sin_t_sq) - ac * sin_t_sq) / (f_sq_cos_t_sq + a_sq * sin_t_sq)) + c) / cos_t);
+    };
   const auto add_offsets =
     [&correction_factor, &add_offset, raz, threshold](
       const double angle_radians,
-      const double ros_flat)
-  {
-    if (ros_flat < threshold)
-    {
-      return false;
-    }
-    auto direction = util::fix_radians(angle_radians + raz);
-    // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
-    // intentionally don't use || because we want both of these to happen all the time
-    auto added = add_offset(direction, ros_flat * correction_factor(direction));
-    direction = util::fix_radians(raz - angle_radians);
-    added |= add_offset(direction, ros_flat * correction_factor(direction));
-    return added;
-  };
+      const double ros_flat) {
+      if (ros_flat < threshold)
+      {
+        return false;
+      }
+      auto direction = util::fix_radians(angle_radians + raz);
+      // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
+      // intentionally don't use || because we want both of these to happen all the time
+      auto added = add_offset(direction, ros_flat * correction_factor(direction));
+      direction = util::fix_radians(raz - angle_radians);
+      added |= add_offset(direction, ros_flat * correction_factor(direction));
+      return added;
+    };
   const auto add_offsets_calc_ros =
-    [&add_offsets, &calculate_ros](const double angle_radians)
-  {
-    return add_offsets(angle_radians, calculate_ros(angle_radians));
-  };
+    [&add_offsets, &calculate_ros](const double angle_radians) { return add_offsets(angle_radians, calculate_ros(angle_radians)); };
   bool added = add_offset(raz, head_ros_);
   constexpr size_t STEP = 10;
   size_t i = STEP;

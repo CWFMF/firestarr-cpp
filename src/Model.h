@@ -70,10 +70,7 @@ public:
   void wait()
   {
     std::unique_lock<std::mutex> l(mutex_);
-    cv_.wait(l, [this]
-             {
-               return count_ != 0;
-             });
+    cv_.wait(l, [this] { return count_ != 0; });
     --count_;
   }
 private:

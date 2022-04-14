@@ -591,6 +591,6 @@ protected:
   /**
    * \brief Whether this has been cancelled.
    */
-   bool cancelled_ = false;
+  bool cancelled_ = false;
 };
 }

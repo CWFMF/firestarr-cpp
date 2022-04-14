@@ -70,10 +70,7 @@ void IntensityMap::applyPerimeter(const topo::Perimeter& perimeter) noexcept
     std::execution::par_unseq,
     perimeter.burned().begin(),
     perimeter.burned().end(),
-    [this](const auto& location)
-    {
-      burn(location, 1);
-    });
+    [this](const auto& location) { burn(location, 1); });
 }
 //bool IntensityMap::canBurn(const HashSize hash) const
 //{
