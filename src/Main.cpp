@@ -96,9 +96,20 @@ double parse_double()
                               return stod(get_arg());
                             });
 }
+size_t parse_size_t()
+{
+  return parse_once<size_t>([]
+                            {
+                              return static_cast<size_t>(stoi(get_arg()));
+                            });
+}
 const char* parse_raw()
 {
   return parse_once<const char*>(&get_arg);
+}
+string parse_string()
+{
+  return string(parse_raw());
 }
 template <class T>
 T parse_index()
@@ -123,6 +134,17 @@ void register_setter(std::function<void(T)> fct_set, string v, string help, bool
                     [fct_set, fct]
                     {
                       fct_set(fct());
+                    });
+}
+template <class T>
+void register_setter(T& variable, string v, string help, bool required, std::function<T()> fct)
+{
+  register_argument(v,
+                    help,
+                    required,
+                    [&variable, fct]
+                    {
+                      variable = fct();
                     });
 }
 void register_flag(bool not_inverse, string v, string help, bool required, std::function<void(bool)> fct)
@@ -195,31 +217,10 @@ int main(const int argc, const char* const argv[])
   register_flag(false, "--no-intensity", "Do not output intensity grids", false, &Settings::setSaveIntensity);
   register_flag(false, "--no-probability", "Do not output probability grids", false, &Settings::setSaveProbability);
   register_flag(true, "--occurrence", "Output occurrence grids", false, &Settings::setSaveOccurrence);
-  register_argument("--wx",
-                    "Input weather file",
-                    true,
-                    [&wx_file_name]
-                    {
-                      wx_file_name = parse_raw();
-                    });
+  register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
   register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
-  register_argument("--perim",
-                    "Start from perimeter",
-                    false,
-                    [&perim]
-                    {
-                      perim = parse_raw();
-                    });
-  register_argument("--size",
-                    "Start from size",
-                    false,
-                    [&size]
-                    {
-                      size = parse_once<size_t>([]
-                                                {
-                                                  return static_cast<size_t>(stoi(get_arg()));
-                                                });
-                    });
+  register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
+  register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
   register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
   register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
   register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
