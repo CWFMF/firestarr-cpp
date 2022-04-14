@@ -147,7 +147,7 @@ void register_setter(T& variable, string v, string help, bool required, std::fun
                       variable = fct();
                     });
 }
-void register_flag(bool not_inverse, string v, string help, bool required, std::function<void(bool)> fct)
+void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help, bool required)
 {
   register_argument(v,
                     help,
@@ -212,11 +212,11 @@ int main(const int argc, const char* const argv[])
                     {
                       save_intensity = parse_flag(true);
                     });
-  register_flag(false, "-s", "Run in synchronous mode", false, &Settings::setRunAsync);
-  register_flag(true, "--ascii", "Save grids as .asc", false, &Settings::setSaveAsAscii);
-  register_flag(false, "--no-intensity", "Do not output intensity grids", false, &Settings::setSaveIntensity);
-  register_flag(false, "--no-probability", "Do not output probability grids", false, &Settings::setSaveProbability);
-  register_flag(true, "--occurrence", "Output occurrence grids", false, &Settings::setSaveOccurrence);
+  register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode", false);
+  register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc", false);
+  register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids", false);
+  register_flag(&Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids", false);
+  register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids", false);
   register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
   register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
   register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
