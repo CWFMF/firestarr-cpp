@@ -147,21 +147,21 @@ void register_setter(T& variable, string v, string help, bool required, std::fun
                       variable = fct();
                     });
 }
-void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help, bool required)
+void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help)
 {
   register_argument(v,
                     help,
-                    required,
+                    false,
                     [not_inverse, fct]
                     {
                       fct(parse_flag(not_inverse));
                     });
 }
-void register_flag(bool& variable, bool not_inverse, string v, string help, bool required)
+void register_flag(bool& variable, bool not_inverse, string v, string help)
 {
   register_argument(v,
                     help,
-                    required,
+                    false,
                     [not_inverse, &variable]
                     {
                       variable = parse_flag(not_inverse);
@@ -215,12 +215,12 @@ int main(const int argc, const char* const argv[])
     }
     return tbd::sim::test(ARGC, ARGV);
   }
-  register_flag(save_intensity, true, "-i", "Save intensity maps for simulations", false);
-  register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode", false);
-  register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc", false);
-  register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids", false);
-  register_flag(&Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids", false);
-  register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids", false);
+  register_flag(save_intensity, true, "-i", "Save intensity maps for simulations");
+  register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
+  register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
+  register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids");
+  register_flag(&Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids");
+  register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
   register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
   register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
   register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
