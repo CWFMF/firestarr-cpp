@@ -49,16 +49,15 @@ int Log::getLogLevel() noexcept
 {
   return logging_level_;
 }
-static ofstream out_stream_;
+static FILE* out_;
 int Log::openLogFile(const char* filename) noexcept
 {
-  out_stream_.open(filename);
-  return out_stream_.is_open();
+  out_ = fopen(filename, "w");
+  return nullptr != out_;
 }
 int Log::closeLogFile() noexcept
 {
-  out_stream_.close();
-  return !out_stream_.is_open();
+  return fclose(out_);
 }
 void output(const int log_level, const char* format, va_list* args) noexcept
 {
@@ -81,11 +80,14 @@ void output(const int log_level, const char* format, va_list* args) noexcept
     iss << LOG_LABELS[log_level];
     static char buffer[1024]{0};
     vsprintf(buffer, format, *args);
-    iss << buffer << "\n";
+    iss << buffer;
     {
       lock_guard<mutex> lock(mutex_);
-      printf("%s", iss.str().c_str());
-      out_stream_ << iss.str();
+      printf("%s\n", iss.str().c_str());
+      if (nullptr != out_)
+      {
+        fprintf(out_, "%s\n", iss.str().c_str());
+      }
     }
   }
   catch (...)
