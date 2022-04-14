@@ -295,7 +295,15 @@ int main(const int argc, const char* const argv[])
         {
           if (PARSE_FCT.find(ARGV[CUR_ARG]) != PARSE_FCT.end())
           {
-            PARSE_FCT[ARGV[CUR_ARG]]();
+            try
+            {
+              PARSE_FCT[ARGV[CUR_ARG]]();
+            }
+            catch (std::exception&)
+            {
+              printf("\n'%s' is not a valid value for argument %s\n\n", ARGV[CUR_ARG], ARGV[CUR_ARG - 1]);
+              show_usage_and_exit();
+            }
           }
           else
           {
