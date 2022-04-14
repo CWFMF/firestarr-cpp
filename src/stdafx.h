@@ -81,7 +81,6 @@ using std::abs;
 using std::array;
 using std::async;
 using std::atomic;
-using std::cout;
 using std::endl;
 using std::fixed;
 using std::function;
