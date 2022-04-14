@@ -89,6 +89,17 @@ bool parse_flag(bool not_inverse)
                             return not_inverse;
                           });
 }
+double parse_double()
+{
+  return parse_once<double>([]
+                            {
+                              return stod(get_arg());
+                            });
+}
+const char* parse_raw()
+{
+  return parse_once<const char*>(&get_arg);
+}
 template <class T>
 T parse_index()
 {
@@ -102,6 +113,17 @@ void register_argument(string v, string help, bool required, std::function<void(
   PARSE_FCT.emplace(v, fct);
   PARSE_HELP.emplace_back(v, help);
   PARSE_REQUIRED.emplace(v, required);
+}
+template <class T>
+void register_setter(std::function<void(T)> fct_set, string v, string help, bool required, std::function<T()> fct)
+{
+  register_argument(v,
+                    help,
+                    required,
+                    [fct_set, fct]
+                    {
+                      fct_set(fct());
+                    });
 }
 void register_flag(bool not_inverse, string v, string help, bool required, std::function<void(bool)> fct)
 {
@@ -178,25 +200,15 @@ int main(const int argc, const char* const argv[])
                     true,
                     [&wx_file_name]
                     {
-                      wx_file_name = parse_once<const char*>(&get_arg);
+                      wx_file_name = parse_raw();
                     });
-
-  register_argument("--confidence",
-                    "Use specified confidence level",
-                    false,
-                    []
-                    {
-                      Settings::setConfidenceLevel(parse_once<double>([]
-                                                                      {
-                                                                        return stod(get_arg());
-                                                                      }));
-                    });
+  register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
   register_argument("--perim",
                     "Start from perimeter",
                     false,
                     [&perim]
                     {
-                      perim = parse_once<const char*>(&get_arg);
+                      perim = parse_raw();
                     });
   register_argument("--size",
                     "Start from size",
@@ -212,18 +224,7 @@ int main(const int argc, const char* const argv[])
   register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
   register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
   register_index<tbd::wx::AccumulatedPrecipitation>(apcp_0800, "--apcp_0800", "Startup 0800 precipitation", false);
-  register_argument("--output_date_offsets",
-                    "Override output date offsets",
-                    false,
-                    []
-                    {
-                      Settings::setOutputDateOffsets(parse_once<const char*>([]
-                                                                             {
-                                                                               auto offsets = get_arg();
-                                                                               tbd::logging::warning("Overriding output offsets with %s", offsets);
-                                                                               return offsets;
-                                                                             }));
-                    });
+  register_setter<const char*>(&Settings::setOutputDateOffsets, "--output_date_offsets", "Override output date offsets", false, &parse_raw);
   if (3 > ARGC)
   {
     show_usage_and_exit();
