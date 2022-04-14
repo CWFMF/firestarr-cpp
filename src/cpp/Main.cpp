@@ -92,10 +92,22 @@ parse_double()
     return stod(get_arg());
   });
 }
+size_t
+parse_size_t()
+{
+  return parse_once<size_t>([] {
+    return static_cast<size_t>(stoi(get_arg()));
+  });
+}
 const char*
 parse_raw()
 {
   return parse_once<const char*>(&get_arg);
+}
+string
+parse_string()
+{
+  return string(parse_raw());
 }
 template <class T>
 T
@@ -129,6 +141,20 @@ register_setter(
 {
   register_argument(v, help, required, [fct_set, fct] {
     fct_set(fct());
+  });
+}
+template <class T>
+void
+register_setter(
+  T& variable,
+  string v,
+  string help,
+  bool required,
+  std::function<T()> fct
+)
+{
+  register_argument(v, help, required, [&variable, fct] {
+    variable = fct();
   });
 }
 void
@@ -224,9 +250,7 @@ main(
     false,
     &Settings::setSaveOccurrence
   );
-  register_argument("--wx", "Input weather file", true, [&wx_file_name] {
-    wx_file_name = parse_raw();
-  });
+  register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
   register_setter<double>(
     &Settings::setConfidenceLevel,
     "--confidence",
@@ -234,14 +258,8 @@ main(
     false,
     &parse_double
   );
-  register_argument("--perim", "Start from perimeter", false, [&perim] {
-    perim = parse_raw();
-  });
-  register_argument("--size", "Start from size", false, [&size] {
-    size = parse_once<size_t>([] {
-      return static_cast<size_t>(stoi(get_arg()));
-    });
-  });
+  register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
+  register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
   register_index<fs::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
   register_index<fs::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
   register_index<fs::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
