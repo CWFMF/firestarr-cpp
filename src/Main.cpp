@@ -157,6 +157,16 @@ void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, st
                       fct(parse_flag(not_inverse));
                     });
 }
+void register_flag(bool& variable, bool not_inverse, string v, string help, bool required)
+{
+  register_argument(v,
+                    help,
+                    required,
+                    [not_inverse, &variable]
+                    {
+                      variable = parse_flag(not_inverse);
+                    });
+}
 template <class T>
 void register_index(T& index, string v, string help, bool required)
 {
@@ -205,13 +215,7 @@ int main(const int argc, const char* const argv[])
     }
     return tbd::sim::test(ARGC, ARGV);
   }
-  register_argument("-i",
-                    "Save intensity maps for simulations",
-                    false,
-                    [&save_intensity]
-                    {
-                      save_intensity = parse_flag(true);
-                    });
+  register_flag(save_intensity, true, "-i", "Save intensity maps for simulations", false);
   register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode", false);
   register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc", false);
   register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids", false);
