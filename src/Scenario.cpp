@@ -537,7 +537,7 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
 {
   for (auto pt : a)
   {
-    cout << "(" << pt.x << ", " << pt.y << "), ";
+    os << "(" << pt.x << ", " << pt.y << "), ";
   }
   return os;
 }
