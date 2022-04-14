@@ -159,11 +159,11 @@ register_setter(
 }
 void
 register_flag(
+  std::function<void(bool)> fct,
   bool not_inverse,
   string v,
   string help,
-  bool required,
-  std::function<void(bool)> fct
+  bool required
 )
 {
   register_argument(v, help, required, [not_inverse, fct] {
@@ -227,28 +227,28 @@ main(
   register_argument("-i", "Save intensity maps for simulations", false, [&save_intensity] {
     save_intensity = parse_flag(true);
   });
-  register_flag(false, "-s", "Run in synchronous mode", false, &Settings::setRunAsync);
-  register_flag(true, "--ascii", "Save grids as .asc", false, &Settings::setSaveAsAscii);
+  register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode", false);
+  register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc", false);
   register_flag(
+    &Settings::setSaveIntensity,
     false,
     "--no-intensity",
     "Do not output intensity grids",
-    false,
-    &Settings::setSaveIntensity
+    false
   );
   register_flag(
+    &Settings::setSaveProbability,
     false,
     "--no-probability",
     "Do not output probability grids",
-    false,
-    &Settings::setSaveProbability
+    false
   );
   register_flag(
+    &Settings::setSaveOccurrence,
     true,
     "--occurrence",
     "Output occurrence grids",
-    false,
-    &Settings::setSaveOccurrence
+    false
   );
   register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
   register_setter<double>(
