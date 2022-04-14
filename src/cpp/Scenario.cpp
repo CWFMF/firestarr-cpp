@@ -608,7 +608,7 @@ operator<<(
 {
   for (auto pt : a)
   {
-    cout << "(" << pt.x << ", " << pt.y << "), ";
+    os << "(" << pt.x << ", " << pt.y << "), ";
   }
   return os;
 }
