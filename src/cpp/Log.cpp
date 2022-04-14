@@ -88,7 +88,7 @@ output(
     iss << buffer << "\n";
     {
       lock_guard<mutex> lock(mutex_);
-      cout << iss.str();
+      printf("%s", iss.str().c_str());
       out_stream_ << iss.str();
     }
   }

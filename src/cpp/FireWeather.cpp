@@ -638,17 +638,6 @@ make_vector(
     add_wx(1, 4, 8);
     add_wx(1, 5, 9);
   }
-  // for (auto day = min_date; day <= max_date; ++day)
-  // {
-  //   for (auto hour = 0; hour < DAY_HOURS; ++hour)
-  //   {
-  //     const auto wx = weather_by_hour_by_day->at(time_index(day, hour));
-  //     if (nullptr != wx)
-  //     {
-  //       cout << day << "," << hour << "," << *wx << endl;
-  //     }
-  //   }
-  // }
   return r;
 }
 FireWeather::FireWeather(
@@ -657,26 +646,6 @@ FireWeather::FireWeather(
 )
   : FireWeather(used_fuels, data.begin()->first, data.rbegin()->first, make_vector(data).release())
 {
-  // for (auto d = min_date_; d < max_date_; ++ d)
-  // {
-  //   for (auto h = 12; h < 36; ++h)
-  //   {
-  //     const auto day = static_cast<Day>(h >= DAY_HOURS ? d + 1 : d);
-  //     const auto hour = h % DAY_HOURS;
-  //     const auto& wx = at(day, hour);
-  //     cout << day << "," << hour << "," << wx << endl;
-  //   }
-  //   //for (auto h = 12; h < DAY_HOURS; ++h)
-  //   //{
-  //   //  const auto& wx = at(day, h);
-  //   //  cout << day << "," << h << "," << wx << endl;
-  //   //}
-  //   //for (auto h = 0; h < 13; ++h)
-  //   //{
-  //   //  const auto& wx = at(day + 1, h);
-  //   //  cout << day << "," << h << "," << wx << endl;
-  //   //}
-  // }
 }
 static unique_ptr<SurvivalMap>
 make_survival(
