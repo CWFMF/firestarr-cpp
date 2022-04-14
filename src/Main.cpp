@@ -84,24 +84,15 @@ T parse_once(std::function<T()> fct)
 }
 bool parse_flag(bool not_inverse)
 {
-  return parse_once<bool>([not_inverse]
-                          {
-                            return not_inverse;
-                          });
+  return parse_once<bool>([not_inverse] { return not_inverse; });
 }
 double parse_double()
 {
-  return parse_once<double>([]
-                            {
-                              return stod(get_arg());
-                            });
+  return parse_once<double>([] { return stod(get_arg()); });
 }
 size_t parse_size_t()
 {
-  return parse_once<size_t>([]
-                            {
-                              return static_cast<size_t>(stoi(get_arg()));
-                            });
+  return parse_once<size_t>([] { return static_cast<size_t>(stoi(get_arg())); });
 }
 const char* parse_raw()
 {
@@ -114,10 +105,7 @@ string parse_string()
 template <class T>
 T parse_index()
 {
-  return parse_once<T>([]
-                       {
-                         return T(stod(get_arg()));
-                       });
+  return parse_once<T>([] { return T(stod(get_arg())); });
 }
 void register_argument(string v, string help, bool required, std::function<void()> fct)
 {
@@ -128,55 +116,25 @@ void register_argument(string v, string help, bool required, std::function<void(
 template <class T>
 void register_setter(std::function<void(T)> fct_set, string v, string help, bool required, std::function<T()> fct)
 {
-  register_argument(v,
-                    help,
-                    required,
-                    [fct_set, fct]
-                    {
-                      fct_set(fct());
-                    });
+  register_argument(v, help, required, [fct_set, fct] { fct_set(fct()); });
 }
 template <class T>
 void register_setter(T& variable, string v, string help, bool required, std::function<T()> fct)
 {
-  register_argument(v,
-                    help,
-                    required,
-                    [&variable, fct]
-                    {
-                      variable = fct();
-                    });
+  register_argument(v, help, required, [&variable, fct] { variable = fct(); });
 }
 void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help)
 {
-  register_argument(v,
-                    help,
-                    false,
-                    [not_inverse, fct]
-                    {
-                      fct(parse_flag(not_inverse));
-                    });
+  register_argument(v, help, false, [not_inverse, fct] { fct(parse_flag(not_inverse)); });
 }
 void register_flag(bool& variable, bool not_inverse, string v, string help)
 {
-  register_argument(v,
-                    help,
-                    false,
-                    [not_inverse, &variable]
-                    {
-                      variable = parse_flag(not_inverse);
-                    });
+  register_argument(v, help, false, [not_inverse, &variable] { variable = parse_flag(not_inverse); });
 }
 template <class T>
 void register_index(T& index, string v, string help, bool required)
 {
-  register_argument(v,
-                    help,
-                    required,
-                    [&index]
-                    {
-                      index = parse_index<T>();
-                    });
+  register_argument(v, help, required, [&index] { index = parse_index<T>(); });
 }
 int main(const int argc, const char* const argv[])
 {

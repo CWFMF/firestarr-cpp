@@ -37,18 +37,8 @@ Environment Environment::load(const Point& point,
   if (sim::Settings::runAsync())
   {
     logging::debug("Loading grids async");
-    auto fuel = async(launch::async,
-                      [&in_fuel, &point]()
-                      {
-                        logging::info("Loading %s", in_fuel.c_str());
-                        return FuelGrid::readTiff(in_fuel, point, sim::Settings::fuelLookup());
-                      });
-    auto elevation = async(launch::async,
-                           [&in_elevation, &point]()
-                           {
-                             logging::info("Loading %s", in_elevation.c_str());
-                             return ElevationGrid::readTiff(in_elevation, point);
-                           });
+    auto fuel = async(launch::async, [&in_fuel, &point]() { return FuelGrid::readTiff(in_fuel, point, sim::Settings::fuelLookup()); });
+    auto elevation = async(launch::async, [&in_elevation, &point]() { return ElevationGrid::readTiff(in_elevation, point); });
     logging::debug("Waiting for grids");
     return Environment(*unique_ptr<FuelGrid>(fuel.get()),
                        *unique_ptr<ElevationGrid>(elevation.get()),

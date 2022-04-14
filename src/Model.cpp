@@ -303,8 +303,7 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
 {
   vector<Scenario*> result{};
   auto saves = Settings::outputDateOffsets();
-  const auto setup_scenario = [&result, save_intensity, &saves](Scenario* scenario)
-  {
+  const auto setup_scenario = [&result, save_intensity, &saves](Scenario* scenario) {
     if (save_intensity)
     {
       scenario->registerObserver(new IntensityObserver(*scenario, ""));
@@ -508,12 +507,12 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                      numeric_limits<int>::max());
   vector<map<double, ProbabilityMap*>> all_probabilities{};
   all_probabilities.push_back(make_prob_map(*this,
-                                     saves,
-                                     started,
-                                     0,
-                                     Settings::intensityMaxLow(),
-                                     Settings::intensityMaxModerate(),
-                                     numeric_limits<int>::max()));
+                                            saves,
+                                            started,
+                                            0,
+                                            Settings::intensityMaxLow(),
+                                            Settings::intensityMaxModerate(),
+                                            numeric_limits<int>::max()));
   auto runs_left = 1;
   // HACK: just do this here so that we know it happened
   //iterations.reset(&mt_extinction, &mt_spread);
@@ -530,12 +529,12 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                              start_day,
                                              last_date));
       all_probabilities.push_back(make_prob_map(*this,
-                                            saves,
-                                            started,
-                                            0,
-                                            Settings::intensityMaxLow(),
-                                            Settings::intensityMaxModerate(),
-                                            numeric_limits<int>::max()));
+                                                saves,
+                                                started,
+                                                0,
+                                                Settings::intensityMaxLow(),
+                                                Settings::intensityMaxModerate(),
+                                                numeric_limits<int>::max()));
     }
     size_t cur_iter = 0;
     for (auto& iter : all_iterations)

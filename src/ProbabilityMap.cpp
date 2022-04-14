@@ -90,8 +90,7 @@ void ProbabilityMap::addProbability(const IntensityMap& for_time)
   std::for_each(
     for_time.cbegin(),
     for_time.cend(),
-    [this](auto&& kv)
-    {
+    [this](auto&& kv) {
       const auto k = kv.first;
       const auto v = kv.second;
       all_.data[k] += 1;
@@ -160,6 +159,21 @@ void ProbabilityMap::saveSizes(const string& base_name) const
   }
   out.close();
 }
+string make_string(const char* name, const tm& t, const int day)
+{
+  constexpr auto mask = "%s_%03d_%04d-%02d-%02d";
+  static constexpr size_t OutLength = 100;
+  char tmp[OutLength];
+  sprintf(tmp,
+          mask,
+          name,
+          day,
+          t.tm_year + 1900,
+          t.tm_mon + 1,
+          t.tm_mday);
+  return string(tmp);
+};
+
 void ProbabilityMap::saveAll(const Model& model,
                              const tm& start_time,
                              const double time,
@@ -170,20 +184,6 @@ void ProbabilityMap::saveAll(const Model& model,
   const auto day = static_cast<int>(round(time));
   ticks += (static_cast<size_t>(day) - t.tm_yday - 1) * DAY_SECONDS;
   t = *localtime(&ticks);
-  const auto make_string = [&t, &day](const char* name)
-  {
-    constexpr auto mask = "%s_%03d_%04d-%02d-%02d";
-    static constexpr size_t OutLength = 100;
-    char tmp[OutLength];
-    sprintf(tmp,
-            mask,
-            name,
-            day,
-            t.tm_year + 1900,
-            t.tm_mon + 1,
-            t.tm_mday);
-    return string(tmp);
-  };
   if (sim::Settings::runAsync())
   {
     vector<std::future<void>> results{};
@@ -192,34 +192,34 @@ void ProbabilityMap::saveAll(const Model& model,
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveTotal,
                               this,
-                              make_string("probability")));
+                              make_string("probability", t, day)));
     }
     if (Settings::saveOccurrence())
     {
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveTotalCount,
                               this,
-                              make_string("occurrence")));
+                              make_string("occurrence", t, day)));
     }
     if (Settings::saveIntensity())
     {
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveLow,
                               this,
-                              make_string("intensity_L")));
+                              make_string("intensity_L", t, day)));
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveModerate,
                               this,
-                              make_string("intensity_M")));
+                              make_string("intensity_M", t, day)));
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveHigh,
                               this,
-                              make_string("intensity_H")));
+                              make_string("intensity_H", t, day)));
     }
     results.push_back(async(launch::async,
                             &ProbabilityMap::saveSizes,
                             this,
-                            make_string("sizes")));
+                            make_string("sizes", t, day)));
     for (auto& result : results)
     {
       result.wait();
@@ -229,19 +229,19 @@ void ProbabilityMap::saveAll(const Model& model,
   {
     if (Settings::saveProbability())
     {
-      saveTotal(make_string("probability"));
+      saveTotal(make_string("probability", t, day));
     }
     if (Settings::saveOccurrence())
     {
-      saveTotalCount(make_string("occurrence"));
+      saveTotalCount(make_string("occurrence", t, day));
     }
     if (Settings::saveIntensity())
     {
-      saveLow(make_string("intensity_L"));
-      saveModerate(make_string("intensity_M"));
-      saveHigh(make_string("intensity_H"));
+      saveLow(make_string("intensity_L", t, day));
+      saveModerate(make_string("intensity_M", t, day));
+      saveHigh(make_string("intensity_H", t, day));
     }
-    saveSizes(make_string("sizes"));
+    saveSizes(make_string("sizes", t, day));
   }
   const auto nd = model.nd(day);
   logging::note("Fuels for day %d are %s green-up and grass has %d%% curing",

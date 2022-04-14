@@ -557,8 +557,7 @@ template <typename T>
       yllcorner,
       xurcorner,
       yurcorner,
-      string(proj4)
-    };
+      string(proj4)};
   }
   throw runtime_error("Cannot read TIFF header");
 }
@@ -576,9 +575,13 @@ template <class R>
   //  {
   R result = fct(tif, gtif);
   if (tif)
+  {
     XTIFFClose(tif);
+  }
   if (gtif)
+  {
     GTIFFree(gtif);
+  }
   GTIFDeaccessCSV();
   return result;
   //  }
@@ -590,10 +593,6 @@ template <class R>
 template <typename T>
 [[nodiscard]] GridBase read_header(const string& filename)
 {
-  return with_tiff<GridBase>(filename,
-                             [](TIFF* tif, GTIF* gtif)
-                             {
-                               return read_header<T>(tif, gtif);
-                             });
+  return with_tiff<GridBase>(filename, [](TIFF* tif, GTIF* gtif) { return read_header<T>(tif, gtif); });
 }
 }

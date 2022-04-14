@@ -227,13 +227,8 @@ public:
    */
   void setOutputDateOffsets(const char* value)
   {
-    output_date_offsets_ = parse_list<int>(value,
-                                           [](const string& s)
-                                           {
-                                             return stoi(s);
-                                           });
-    max_date_offset_ = *std::max_element(output_date_offsets_.begin(),
-                                         output_date_offsets_.end());
+    output_date_offsets_ = parse_list<int>(value, [](const string& s) { return stoi(s); });
+    max_date_offset_ = *std::max_element(output_date_offsets_.begin(), output_date_offsets_.end());
   }
   /**
    * \brief Whatever the maximum value in the date offsets is

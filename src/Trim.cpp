@@ -21,25 +21,12 @@ namespace tbd::util
 // trim from start (in place)
 void trim_left(string* s)
 {
-  s->erase(s->begin(),
-           find_if(s->begin(),
-                   s->end(),
-                   [](const int ch) noexcept
-                   {
-                     return !isspace(ch);
-                   }));
+  s->erase(s->begin(), find_if(s->begin(), s->end(), [](const int ch) noexcept { return !isspace(ch); }));
 }
 // trim from end (in place)
 void trim_right(string* s)
 {
-  s->erase(find_if(s->rbegin(),
-                   s->rend(),
-                   [](const int ch) noexcept
-                   {
-                     return !isspace(ch);
-                   })
-             .base(),
-           s->end());
+  s->erase(find_if(s->rbegin(), s->rend(), [](const int ch) noexcept { return !isspace(ch); }).base(), s->end());
 }
 // trim from both ends (in place)
 void trim(string* s)

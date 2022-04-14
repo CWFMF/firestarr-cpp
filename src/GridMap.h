@@ -219,10 +219,7 @@ public:
    */
   void saveToAsciiFile(const string& dir, const string& base_name) const
   {
-    saveToAsciiFile<V>(dir, base_name, [](V value)
-                       {
-                         return value;
-                       });
+    saveToAsciiFile<V>(dir, base_name, [](V value) { return value; });
   }
   /**
    * \brief Save GridMap contents to .asc file
@@ -305,10 +302,7 @@ public:
   void saveToTiffFile(const string& dir,
                       const string& base_name) const
   {
-    saveToTiffFile<V>(dir, base_name, [](V value)
-                      {
-                        return value;
-                      });
+    saveToTiffFile<V>(dir, base_name, [](V value) { return value; });
   }
   /**
    * \brief Save GridMap contents to .tif file
@@ -372,8 +366,8 @@ public:
     min_row = r_min;
     max_row = r_max;
     logging::extensive("(%d, %d) => (%d, %d)", min_column, min_row, max_column, max_row);
-    logging::check_fatal((max_row - min_row) % tileHeight != 0,"Invalid start and end rows");
-    logging::check_fatal((max_column - min_column) % tileHeight != 0,"Invalid start and end columns");
+    logging::check_fatal((max_row - min_row) % tileHeight != 0, "Invalid start and end rows");
+    logging::check_fatal((max_column - min_column) % tileHeight != 0, "Invalid start and end columns");
     logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
     logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
     const double xll = this->xllcorner() + min_column * this->cellSize();
@@ -469,10 +463,7 @@ public:
                              const string& base_name,
                              const R divisor) const
   {
-    auto div = [divisor](V value)
-    {
-      return static_cast<R>(value / divisor);
-    };
+    auto div = [divisor](V value) { return static_cast<R>(value / divisor); };
     if (tbd::sim::Settings::saveAsAscii())
     {
       saveToAsciiFile<R>(dir, base_name, div);
@@ -539,10 +530,7 @@ public:
     std::transform(this->data.begin(),
                    this->data.end(),
                    result.begin(),
-                   [](const pair<const Location, const T>& kv)
-                   {
-                     return kv.first;
-                   });
+                   [](const pair<const Location, const T>& kv) { return kv.first; });
     return result;
   }
 };

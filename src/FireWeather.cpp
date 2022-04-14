@@ -458,10 +458,9 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
     const auto exp_x = exp(x);
     const auto exp_neg_x = exp(-x);
     const auto add_wx =
-      [&r, &day, &wx, &min_date](const int hour, const Ffmc& ffmc)
-    {
-      r->at(util::time_index(day, hour, min_date)) = make_wx(wx, ffmc, hour);
-    };
+      [&r, &day, &wx, &min_date](const int hour, const Ffmc& ffmc) {
+        r->at(util::time_index(day, hour, min_date)) = make_wx(wx, ffmc, hour);
+      };
     add_wx(12, ffmc_1200(x, x_sq, x_cu, rt_x, exp_neg_x));
     add_wx(13, ffmc_1300(x, x_sq, x_cu, rt_x, ln_x));
     add_wx(14, ffmc_1400(x, x_sq, rt_x, ln_x, exp_x));
@@ -476,10 +475,9 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
   const auto& wx_last = data.at(max_date);
   const auto x_last = wx_last.mcFfmcPct();
   const auto add_last =
-    [&r, &max_date, &min_date, &wx_last](const int hour, const Ffmc& ffmc)
-  {
-    r->at(util::time_index(max_date + 1, hour, min_date)) = make_wx(wx_last, ffmc, hour);
-  };
+    [&r, &max_date, &min_date, &wx_last](const int hour, const Ffmc& ffmc) {
+      r->at(util::time_index(max_date + 1, hour, min_date)) = make_wx(wx_last, ffmc, hour);
+    };
   add_last(6, ffmc_0600_high(x_last));
   add_last(7, ffmc_0700_high(x_last));
   add_last(8, ffmc_0800_high(x_last));
@@ -508,10 +506,9 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
     const auto diff_med = abs(for1200 - for1100_med);
     const auto diff_low = abs(for1200 - for1100_low);
     const auto add_wx =
-      [&r, &day, &wx_wind, &wx, &min_date](const int hour, const Ffmc& ffmc)
-    {
-      r->at(util::time_index(day + 1, hour, min_date)) = make_wx(wx_wind, wx, ffmc, hour);
-    };
+      [&r, &day, &wx_wind, &wx, &min_date](const int hour, const Ffmc& ffmc) {
+        r->at(util::time_index(day + 1, hour, min_date)) = make_wx(wx_wind, wx, ffmc, hour);
+      };
     // don't want to have 1100 be higher than 1200 but maybe that can happen
     if (for1200 >= for1100_low && diff_low <= diff_med && diff_low <= diff_high)
     {
@@ -559,13 +556,12 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
       [&r, &day, &wx, &min_date, &wind_at_2000, &ffmc_at_2000, &wind_slope, &ffmc_slope](
         const Day day_offset,
         const int hour,
-        const int offset)
-    {
-      const auto i = util::time_index(day + day_offset, hour, min_date);
-      r->at(i) = make_wx(Speed(wind_at_2000 + wind_slope * offset),
-                         wx,
-                         Ffmc(ffmc_at_2000 + ffmc_slope * offset));
-    };
+        const int offset) {
+        const auto i = util::time_index(day + day_offset, hour, min_date);
+        r->at(i) = make_wx(Speed(wind_at_2000 + wind_slope * offset),
+                           wx,
+                           Ffmc(ffmc_at_2000 + ffmc_slope * offset));
+      };
     add_wx(0, 21, 1);
     add_wx(0, 22, 2);
     add_wx(0, 23, 3);

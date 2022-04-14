@@ -41,12 +41,12 @@ struct InnerPos
   {
     if (x == rhs.x)
     {
-        if (y == rhs.y)
-        {
-            // they are "identical" so this is false
-            return false;
-          }
-        return y < rhs.y;
+      if (y == rhs.y)
+      {
+        // they are "identical" so this is false
+        return false;
+      }
+      return y < rhs.y;
     }
     return x < rhs.x;
   }

@@ -415,22 +415,14 @@ protected:
     {
       fuel.saveToAsciiFile<int>(string(sim::Settings::outputDirectory()),
                                 "fuel",
-                                [&lookup](const fuel::FuelType* const value)
-                                {
-                                  return lookup.fuelToInt(value);
-                                  //return lookup.fuelToInt(value);
-                                  //return value->code();
-                                });
+                                [&lookup](const fuel::FuelType* const value) { return lookup.fuelToInt(value); });
       elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
     }
     else
     {
       fuel.saveToTiffFile<int>(string(sim::Settings::outputDirectory()),
                                "fuel",
-                               [&lookup](const fuel::FuelType* const value)
-                               {
-                                 return lookup.fuelToInt(value);
-                               });
+                               [&lookup](const fuel::FuelType* const value) { return lookup.fuelToInt(value); });
       elevation.saveToTiffFile(sim::Settings::outputDirectory(), "dem");
     }
 #endif

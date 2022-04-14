@@ -53,16 +53,8 @@ unique_ptr<EnvironmentInfo> EnvironmentInfo::loadInfo(const string& in_fuel,
 {
   if (sim::Settings::runAsync())
   {
-    auto fuel_async = async(launch::async,
-                            [in_fuel]()
-                            {
-                              return data::read_header<const fuel::FuelType*>(in_fuel);
-                            });
-    auto elevation_async = async(launch::async,
-                                 [in_elevation]()
-                                 {
-                                   return data::read_header<ElevationSize>(in_elevation);
-                                 });
+    auto fuel_async = async(launch::async, [in_fuel]() { return data::read_header<const fuel::FuelType*>(in_fuel); });
+    auto elevation_async = async(launch::async, [in_elevation]() { return data::read_header<ElevationSize>(in_elevation); });
     const auto e = new EnvironmentInfo(in_fuel,
                                        in_elevation,
                                        fuel_async.get(),

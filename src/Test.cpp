@@ -48,8 +48,7 @@ static vector<const wx::FwiWeather*>* make_weather(const wx::Dc& dc,
   auto wx = new vector<const wx::FwiWeather*>{static_cast<size_t>(YEAR_HOURS)};
   std::generate(wx->begin(),
                 wx->end(),
-                [&wind, &ffmc, &dmc, &dc, &bui]()
-                {
+                [&wind, &ffmc, &dmc, &dc, &bui]() {
                   return make_unique<wx::FwiWeather>(
                            TMP,
                            RH,

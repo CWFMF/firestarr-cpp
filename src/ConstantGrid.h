@@ -307,10 +307,7 @@ public:
   {
     return with_tiff<ConstantGrid<T, V>*>(
       filename,
-      [&filename, &convert, &point](TIFF* tif, GTIF* gtif)
-      {
-        return readTiff(filename, tif, gtif, point, convert);
-      });
+      [&filename, &convert, &point](TIFF* tif, GTIF* gtif) { return readTiff(filename, tif, gtif, point, convert); });
   }
   /**
    * \brief Read a section of a TIFF into a ConstantGrid
@@ -331,10 +328,7 @@ public:
   void saveToAsciiFile(const string& dir,
                        const string& base_name) const
   {
-    saveToAsciiFile<V>(dir, base_name, [](V value)
-                       {
-                         return value;
-                       });
+    saveToAsciiFile<V>(dir, base_name, [](V value) { return value; });
   }
   /**
    * \brief Save contents to .asc file
@@ -389,10 +383,7 @@ public:
   void saveToTiffFile(const string& dir,
                       const string& base_name) const
   {
-    saveToTiffFile<V>(dir, base_name, [](V value)
-                      {
-                        return value;
-                      });
+    saveToTiffFile<V>(dir, base_name, [](V value) { return value; });
   }
   /**
    * \brief Save contents to .tif file
