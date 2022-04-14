@@ -627,9 +627,13 @@ with_tiff(
   //  {
   R result = fct(tif, gtif);
   if (tif)
+  {
     XTIFFClose(tif);
+  }
   if (gtif)
+  {
     GTIFFree(gtif);
+  }
   GTIFDeaccessCSV();
   return result;
   //  }

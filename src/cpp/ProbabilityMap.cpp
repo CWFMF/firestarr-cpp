@@ -156,6 +156,20 @@ ProbabilityMap::saveSizes(
   }
   out.close();
 }
+string
+make_string(
+  const char* name,
+  const tm& t,
+  const int day
+)
+{
+  constexpr auto mask = "%s_%03d_%04d-%02d-%02d";
+  static constexpr size_t OutLength = 100;
+  char tmp[OutLength];
+  sprintf(tmp, mask, name, day, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
+  return string(tmp);
+};
+
 void
 ProbabilityMap::saveAll(
   const Model& model,
@@ -169,41 +183,42 @@ ProbabilityMap::saveAll(
   const auto day = static_cast<int>(round(time));
   ticks += (static_cast<size_t>(day) - t.tm_yday - 1) * DAY_SECONDS;
   t = *localtime(&ticks);
-  const auto make_string = [&t, &day](const char* name) {
-    constexpr auto mask = "%s_%03d_%04d-%02d-%02d";
-    static constexpr size_t OutLength = 100;
-    char tmp[OutLength];
-    sprintf(tmp, mask, name, day, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
-    return string(tmp);
-  };
   if (sim::Settings::runAsync())
   {
     vector<std::future<void>> results{};
     if (Settings::saveProbability())
     {
       results.push_back(
-        async(launch::async, &ProbabilityMap::saveTotal, this, make_string("probability"))
+        async(launch::async, &ProbabilityMap::saveTotal, this, make_string("probability", t, day))
       );
     }
     if (Settings::saveOccurrence())
     {
-      results.push_back(
-        async(launch::async, &ProbabilityMap::saveTotalCount, this, make_string("occurrence"))
-      );
+      results.push_back(async(
+        launch::async,
+        &ProbabilityMap::saveTotalCount,
+        this,
+        make_string("occurrence", t, day)
+      ));
     }
     if (Settings::saveIntensity())
     {
       results.push_back(
-        async(launch::async, &ProbabilityMap::saveLow, this, make_string("intensity_L"))
+        async(launch::async, &ProbabilityMap::saveLow, this, make_string("intensity_L", t, day))
       );
+      results.push_back(async(
+        launch::async,
+        &ProbabilityMap::saveModerate,
+        this,
+        make_string("intensity_M", t, day)
+      ));
       results.push_back(
-        async(launch::async, &ProbabilityMap::saveModerate, this, make_string("intensity_M"))
-      );
-      results.push_back(
-        async(launch::async, &ProbabilityMap::saveHigh, this, make_string("intensity_H"))
+        async(launch::async, &ProbabilityMap::saveHigh, this, make_string("intensity_H", t, day))
       );
     }
-    results.push_back(async(launch::async, &ProbabilityMap::saveSizes, this, make_string("sizes")));
+    results.push_back(
+      async(launch::async, &ProbabilityMap::saveSizes, this, make_string("sizes", t, day))
+    );
     for (auto& result : results)
     {
       result.wait();
@@ -213,19 +228,19 @@ ProbabilityMap::saveAll(
   {
     if (Settings::saveProbability())
     {
-      saveTotal(make_string("probability"));
+      saveTotal(make_string("probability", t, day));
     }
     if (Settings::saveOccurrence())
     {
-      saveTotalCount(make_string("occurrence"));
+      saveTotalCount(make_string("occurrence", t, day));
     }
     if (Settings::saveIntensity())
     {
-      saveLow(make_string("intensity_L"));
-      saveModerate(make_string("intensity_M"));
-      saveHigh(make_string("intensity_H"));
+      saveLow(make_string("intensity_L", t, day));
+      saveModerate(make_string("intensity_M", t, day));
+      saveHigh(make_string("intensity_H", t, day));
     }
-    saveSizes(make_string("sizes"));
+    saveSizes(make_string("sizes", t, day));
   }
   const auto nd = model.nd(day);
   logging::note(

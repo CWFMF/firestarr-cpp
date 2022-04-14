@@ -1432,10 +1432,9 @@ public:
     double bui
   ) const override
   {
-    const function<double(const FuelType&)> fct = [bui](const FuelType& fuel) {
+    return compare_by_season(*this, [bui](const FuelType& fuel) {
       return fuel.buiEffect(bui);
-    };
-    return compare_by_season(*this, fct);
+    });
   }
   /**
    * \brief Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
@@ -1447,10 +1446,9 @@ public:
     const double cfb
   ) const override
   {
-    const function<double(const FuelType&)> fct = [cfb](const FuelType& fuel) {
+    return compare_by_season(*this, [cfb](const FuelType& fuel) {
       return fuel.crownConsumption(cfb);
-    };
-    return compare_by_season(*this, fct);
+    });
   }
   /**
    * \brief Initial rate of spread (m/min) [ST-X-3 eq 26]
@@ -1504,10 +1502,9 @@ public:
     const double ws
   ) const override
   {
-    const function<double(const FuelType&)> fct = [ws](const FuelType& fuel) {
+    return compare_by_season(*this, [ws](const FuelType& fuel) {
       return fuel.lengthToBreadth(ws);
-    };
-    return compare_by_season(*this, fct);
+    });
   }
   /**
    * \brief Final rate of spread (m/min)

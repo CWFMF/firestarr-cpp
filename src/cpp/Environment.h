@@ -447,8 +447,6 @@ protected:
         "fuel",
         [&lookup](const fuel::FuelType* const value) {
           return lookup.fuelToInt(value);
-          // return lookup.fuelToInt(value);
-          // return value->code();
         }
       );
       elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
