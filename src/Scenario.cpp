@@ -532,15 +532,6 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
 #endif
   return this;
 }
-[[nodiscard]] ostream& operator<<(ostream& os, const PointSet& a)
-{
-  for (auto pt : a)
-  {
-    os << "(" << pt.x << ", " << pt.y << "), ";
-  }
-  return os;
-}
-
 // want to be able to make a bitmask of all directions it came from
 //  064  008  032
 //  001  000  002

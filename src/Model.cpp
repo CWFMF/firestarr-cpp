@@ -177,22 +177,40 @@ void Model::readWeather(const string& filename,
     }
     in.close();
   }
-  ofstream ostream;
-  ostream.open(string(Settings::outputDirectory()) + "/wx_out.csv");
-  size_t i = 1;
   for (auto& kv : wx)
   {
     kv.second.emplace(static_cast<Day>(min_date - 1), yesterday);
+  }
+  const auto file_out = string(Settings::outputDirectory()) + "/wx_out.csv";
+  FILE* out = fopen(file_out.c_str(), "w");
+  logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
+  size_t i = 1;
+  for (auto& kv : wx)
+  {
     auto& s = kv.second;
     for (auto& kv2 : s)
     {
       auto& day = kv2.first;
       auto& w = kv2.second;
-      ostream << i << ',' << day << ',' << w << endl;
+      fprintf(out,
+              "%ld,%d,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
+              i,
+              day,
+              w.apcp().asDouble(),
+              w.tmp().asDouble(),
+              w.rh().asDouble(),
+              w.wind().speed().asDouble(),
+              w.wind().direction().asDouble(),
+              w.ffmc().asDouble(),
+              w.dmc().asDouble(),
+              w.dc().asDouble(),
+              w.isi().asDouble(),
+              w.bui().asDouble(),
+              w.fwi().asDouble());
     }
     ++i;
   }
-  ostream.close();
+  logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());
   const auto fuel_lookup = sim::Settings::fuelLookup();
   // loop through and try to find duplicates
   for (const auto& kv : wx)
@@ -374,16 +392,6 @@ static void show_probabilities(const map<double, ProbabilityMap*>& probabilities
   {
     kv.second->show();
   }
-}
-template <class T>
-ostream& operator<<(ostream& os, const vector<T>& v)
-{
-  for (auto& m : v)
-  {
-    os << m << " ";
-  }
-  os << endl;
-  return os;
 }
 map<double, ProbabilityMap*> make_prob_map(const Model& model,
                                            const vector<double>& saves,
