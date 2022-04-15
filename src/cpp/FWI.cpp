@@ -696,16 +696,4 @@ FwiWeather::FwiWeather(
   : FwiWeather(tmp, rh, wind, apcp, ffmc, dmc, dc, Isi(wind.speed(), ffmc), Bui(dmc, dc))
 {
 }
-
-ostream&
-operator<<(
-  ostream& os,
-  const FwiWeather& w
-)
-{
-  os << w.apcp() << ',' << w.tmp() << ',' << w.rh() << ',' << w.wind().speed() << ','
-     << w.wind().direction() << ',' << w.ffmc() << ',' << w.dmc() << ',' << w.dc() << ',' << w.isi()
-     << ',' << w.bui() << ',' << w.fwi();
-  return os;
-}
 }

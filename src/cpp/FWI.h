@@ -489,8 +489,6 @@ private:
    */
   double ffmc_effect_;
 };
-ostream&
-operator<<(ostream& os, const FwiWeather& w);
 [[nodiscard]] constexpr bool
 operator<(
   const FwiWeather& lhs,
