@@ -38,6 +38,11 @@ namespace tbd::fuel
  * Frandsen, W.H. 1997.
  * Ignition probability of organic soils.
  * https://www.nrcresearchpress.com/doi/pdf/10.1139/x97-106
+ *
+ * Anderson, Kerry 2002.
+ * A model to predict lightning-caused fire occurrences.
+ * International Journal of Wildland Fire 11, 163-172.
+ * https://doi.org/10.1071/WF02001
  */
 template <int Ash, int Rho, int B0, int B1, int B2, int B3>
 class DuffType;
