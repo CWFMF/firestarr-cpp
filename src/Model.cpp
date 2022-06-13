@@ -184,6 +184,7 @@ void Model::readWeather(const string& filename,
   const auto file_out = string(Settings::outputDirectory()) + "/wx_out.csv";
   FILE* out = fopen(file_out.c_str(), "w");
   logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
+  fprintf(out, "Scenario,Day,APCP,TMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
   size_t i = 1;
   for (auto& kv : wx)
   {
