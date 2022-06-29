@@ -18,6 +18,11 @@
 #include "InnerPos.h"
 
 /**
+ * Maximum number of points to allow in a cell before condensing them.
+ */
+constexpr auto MAX_BEFORE_CONDENSE = 3;
+
+/**
  * Calculates distance from point a to point b (squared I think? - we only
  * care about relative values, so no need to do sqrt)
  * @param a First point
