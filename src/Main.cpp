@@ -157,162 +157,167 @@ int main(const int argc, const char* const argv[])
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
   register_argument("-q", "Decrease output level", false, &Log::decreaseLogLevel);
+  auto result = -1;
   if (ARGC > 1 && 0 == strcmp(ARGV[1], "test"))
   {
     if (ARGC <= 3)
     {
       show_usage_and_exit();
     }
-    return tbd::sim::test(ARGC, ARGV);
+    result = tbd::sim::test(ARGC, ARGV);
   }
-  register_flag(save_intensity, true, "-i", "Save intensity maps for simulations");
-  register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
-  register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
-  register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids");
-  register_flag(&Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids");
-  register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
-  register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
-  register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
-  register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
-  register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
-  register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
-  register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
-  register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
-  register_index<tbd::wx::AccumulatedPrecipitation>(apcp_0800, "--apcp_0800", "Startup 0800 precipitation", false);
-  register_setter<const char*>(&Settings::setOutputDateOffsets, "--output_date_offsets", "Override output date offsets", false, &parse_raw);
-  if (3 > ARGC)
+  else
   {
-    show_usage_and_exit();
-  }
-  try
-  {
-    if (6 <= ARGC)
+    register_flag(save_intensity, true, "-i", "Save intensity maps for simulations");
+    register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
+    register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
+    register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids");
+    register_flag(&Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids");
+    register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
+    register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
+    register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
+    register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
+    register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
+    register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
+    register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
+    register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
+    register_index<tbd::wx::AccumulatedPrecipitation>(apcp_0800, "--apcp_0800", "Startup 0800 precipitation", false);
+    register_setter<const char*>(&Settings::setOutputDateOffsets, "--output_date_offsets", "Override output date offsets", false, &parse_raw);
+    if (3 > ARGC)
     {
-      string output_directory(ARGV[CUR_ARG++]);
-      replace(output_directory.begin(), output_directory.end(), '\\', '/');
-      if ('/' != output_directory[output_directory.length() - 1])
+      show_usage_and_exit();
+    }
+    try
+    {
+      if (6 <= ARGC)
       {
-        output_directory += '/';
-      }
-      Settings::setOutputDirectory(output_directory);
-      struct stat info
-      {
-      };
-      if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
-      {
-        tbd::util::make_directory_recursive(Settings::outputDirectory());
-      }
-      const string log_file = (string(Settings::outputDirectory()) + "log.txt");
-      tbd::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
-                                "Can't open log file");
-      tbd::logging::note("Output directory is %s", Settings::outputDirectory());
-      tbd::logging::note("Output log is %s", log_file.c_str());
-      string date(ARGV[CUR_ARG++]);
-      tm start_date{};
-      start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
-      start_date.tm_mon = stoi(date.substr(5, 2)) - 1;
-      start_date.tm_mday = stoi(date.substr(8, 2));
-      const auto latitude = stod(ARGV[CUR_ARG++]);
-      const auto longitude = stod(ARGV[CUR_ARG++]);
-      const tbd::topo::StartPoint start_point(latitude, longitude);
-      size_t num_days = 0;
-      string arg(ARGV[CUR_ARG++]);
-      tm start{};
-      if (5 == arg.size() && ':' == arg[2])
-      {
-        try
+        string output_directory(ARGV[CUR_ARG++]);
+        replace(output_directory.begin(), output_directory.end(), '\\', '/');
+        if ('/' != output_directory[output_directory.length() - 1])
         {
-          // if this is a time then we aren't just running the weather
-          start_date.tm_hour = stoi(arg.substr(0, 2));
-          start_date.tm_min = stoi(arg.substr(3, 2));
-          tbd::util::fix_tm(&start_date);
-          // we were given a time, so number of days is until end of year
-          start = start_date;
-          const auto start_t = mktime(&start);
-          auto year_end = start;
-          year_end.tm_mon = 11;
-          year_end.tm_mday = 31;
-          const auto seconds = difftime(mktime(&year_end), start_t);
-          // start day counts too, so +1
-          // HACK: but we don't want to go to Jan 1 so don't add 1
-          num_days = static_cast<size_t>(seconds / tbd::DAY_SECONDS);
-          tbd::logging::debug("Calculated number of days until end of year: %d",
-                              num_days);
-          // +1 because day 1 counts too
-          // +2 so that results don't change when we change number of days
-          num_days = min(num_days, static_cast<size_t>(Settings::maxDateOffset()) + 2);
+          output_directory += '/';
         }
-        catch (std::exception&)
+        Settings::setOutputDirectory(output_directory);
+        struct stat info
         {
-          show_usage_and_exit();
+        };
+        if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
+        {
+          tbd::util::make_directory_recursive(Settings::outputDirectory());
         }
-        while (CUR_ARG < ARGC)
+        const string log_file = (string(Settings::outputDirectory()) + "log.txt");
+        tbd::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
+                                  "Can't open log file");
+        tbd::logging::note("Output directory is %s", Settings::outputDirectory());
+        tbd::logging::note("Output log is %s", log_file.c_str());
+        string date(ARGV[CUR_ARG++]);
+        tm start_date{};
+        start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
+        start_date.tm_mon = stoi(date.substr(5, 2)) - 1;
+        start_date.tm_mday = stoi(date.substr(8, 2));
+        const auto latitude = stod(ARGV[CUR_ARG++]);
+        const auto longitude = stod(ARGV[CUR_ARG++]);
+        const tbd::topo::StartPoint start_point(latitude, longitude);
+        size_t num_days = 0;
+        string arg(ARGV[CUR_ARG++]);
+        tm start{};
+        if (5 == arg.size() && ':' == arg[2])
         {
-          if (PARSE_FCT.find(ARGV[CUR_ARG]) != PARSE_FCT.end())
+          try
           {
-            try
-            {
-              PARSE_FCT[ARGV[CUR_ARG]]();
-            }
-            catch (std::exception&)
-            {
-              printf("\n'%s' is not a valid value for argument %s\n\n", ARGV[CUR_ARG], ARGV[CUR_ARG - 1]);
-              show_usage_and_exit();
-            }
+            // if this is a time then we aren't just running the weather
+            start_date.tm_hour = stoi(arg.substr(0, 2));
+            start_date.tm_min = stoi(arg.substr(3, 2));
+            tbd::util::fix_tm(&start_date);
+            // we were given a time, so number of days is until end of year
+            start = start_date;
+            const auto start_t = mktime(&start);
+            auto year_end = start;
+            year_end.tm_mon = 11;
+            year_end.tm_mday = 31;
+            const auto seconds = difftime(mktime(&year_end), start_t);
+            // start day counts too, so +1
+            // HACK: but we don't want to go to Jan 1 so don't add 1
+            num_days = static_cast<size_t>(seconds / tbd::DAY_SECONDS);
+            tbd::logging::debug("Calculated number of days until end of year: %d",
+                                num_days);
+            // +1 because day 1 counts too
+            // +2 so that results don't change when we change number of days
+            num_days = min(num_days, static_cast<size_t>(Settings::maxDateOffset()) + 2);
           }
-          else
+          catch (std::exception&)
           {
             show_usage_and_exit();
           }
-          ++CUR_ARG;
+          while (CUR_ARG < ARGC)
+          {
+            if (PARSE_FCT.find(ARGV[CUR_ARG]) != PARSE_FCT.end())
+            {
+              try
+              {
+                PARSE_FCT[ARGV[CUR_ARG]]();
+              }
+              catch (std::exception&)
+              {
+                printf("\n'%s' is not a valid value for argument %s\n\n", ARGV[CUR_ARG], ARGV[CUR_ARG - 1]);
+                show_usage_and_exit();
+              }
+            }
+            else
+            {
+              show_usage_and_exit();
+            }
+            ++CUR_ARG;
+          }
         }
-      }
-      else
-      {
-        show_usage_and_exit();
-      }
-      for (auto& kv : PARSE_REQUIRED)
-      {
-        if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
+        else
         {
-          tbd::logging::fatal("%s must be specified", kv.first.c_str());
+          show_usage_and_exit();
         }
+        for (auto& kv : PARSE_REQUIRED)
+        {
+          if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
+          {
+            tbd::logging::fatal("%s must be specified", kv.first.c_str());
+          }
+        }
+        if (!PARSE_HAVE.contains("--apcp_0800"))
+        {
+          tbd::logging::warning("Assuming 0 precipitation for startup indices");
+          apcp_0800 = tbd::wx::AccumulatedPrecipitation::Zero;
+        }
+        // HACK: ISI for yesterday really doesn't matter so just use any wind
+        const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
+                                                   tbd::wx::RelativeHumidity(0),
+                                                   tbd::wx::Wind(tbd::wx::Direction(0, false), tbd::wx::Speed(0)),
+                                                   tbd::wx::AccumulatedPrecipitation(0),
+                                                   ffmc,
+                                                   dmc,
+                                                   dc);
+        tbd::util::fix_tm(&start_date);
+        start = start_date;
+        printf("Arguments are:\n");
+        for (auto j = 0; j < ARGC; ++j)
+        {
+          printf(" %s", ARGV[j]);
+        }
+        printf("\n");
+        result = tbd::sim::Model::runScenarios(wx_file_name.c_str(),
+                                               Settings::rasterRoot(),
+                                               yesterday,
+                                               start_point,
+                                               start,
+                                               save_intensity,
+                                               perim,
+                                               size);
+        Log::closeLogFile();
       }
-      if (!PARSE_HAVE.contains("--apcp_0800"))
-      {
-        tbd::logging::warning("Assuming 0 precipitation for startup indices");
-        apcp_0800 = tbd::wx::AccumulatedPrecipitation::Zero;
-      }
-      // HACK: ISI for yesterday really doesn't matter so just use any wind
-      const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
-                                                 tbd::wx::RelativeHumidity(0),
-                                                 tbd::wx::Wind(tbd::wx::Direction(0, false), tbd::wx::Speed(0)),
-                                                 tbd::wx::AccumulatedPrecipitation(0),
-                                                 ffmc,
-                                                 dmc,
-                                                 dc);
-      tbd::util::fix_tm(&start_date);
-      start = start_date;
-      printf("Arguments are:\n");
-      for (auto j = 0; j < ARGC; ++j)
-      {
-        printf(" %s", ARGV[j]);
-      }
-      printf("\n");
-      return tbd::sim::Model::runScenarios(wx_file_name.c_str(),
-                                           Settings::rasterRoot(),
-                                           yesterday,
-                                           start_point,
-                                           start,
-                                           save_intensity,
-                                           perim,
-                                           size);
+      show_usage_and_exit();
     }
-    show_usage_and_exit();
+    catch (const runtime_error& err)
+    {
+      tbd::logging::fatal(err.what());
+    }
   }
-  catch (const runtime_error& err)
-  {
-    tbd::logging::fatal(err.what());
-  }
-  Log::closeLogFile();
+  return result;
 }
