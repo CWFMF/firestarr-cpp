@@ -375,6 +375,11 @@ public:
    */
   atomic<bool> save_as_ascii = false;
   /**
+   * \brief Whether or not to save points used for spread
+   * \return Whether or not to save points used for spread
+   */
+  atomic<bool> save_points = false;
+  /**
    * \brief Whether or not to save intensity grids
    * \return Whether or not to save intensity grids
    */
@@ -529,6 +534,18 @@ Settings::setSaveAsAscii(
 ) noexcept
 {
   SettingsImplementation::instance().save_as_ascii = value;
+}
+bool
+Settings::savePoints() noexcept
+{
+  return SettingsImplementation::instance().save_points;
+}
+void
+Settings::setSavePoints(
+  const bool value
+) noexcept
+{
+  SettingsImplementation::instance().save_points = value;
 }
 bool
 Settings::saveIntensity() noexcept
