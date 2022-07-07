@@ -22,102 +22,97 @@ inline constexpr double distPtPt(const tbd::sim::InnerPos& a, const tbd::sim::In
 {
   return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
 }
-
 void hull(vector<tbd::sim::InnerPos>& a) noexcept
 {
-  vector<tbd::sim::InnerPos> hullPoints{};
-  tbd::sim::InnerPos maxPos{MIN_X, MIN_X};
-  tbd::sim::InnerPos minPos{MAX_X, MAX_X};
-
-  for (const auto p : a)
+  if (a.size() > MAX_BEFORE_CONDENSE)
   {
-    if (p.x > maxPos.x)
+    size_t n_pos = 0;
+    auto n = numeric_limits<double>::min();
+    size_t ne_pos = 0;
+    auto ne = numeric_limits<double>::min();
+    size_t e_pos = 0;
+    auto e = numeric_limits<double>::min();
+    size_t se_pos = 0;
+    auto se = numeric_limits<double>::min();
+    size_t s_pos = 0;
+    auto s = numeric_limits<double>::min();
+    size_t sw_pos = 0;
+    auto sw = numeric_limits<double>::min();
+    size_t w_pos = 0;
+    auto w = numeric_limits<double>::min();
+    size_t nw_pos = 0;
+    auto nw = numeric_limits<double>::min();
+    // should always be in the same cell so do this once
+    const auto cell_x = static_cast<tbd::Idx>(a[0].x);
+    const auto cell_y = static_cast<tbd::Idx>(a[0].y);
+    for (size_t i = 0; i < a.size(); ++i)
     {
-      maxPos = p;
-    }
-    // don't use else if because first point should be set for both
-    if (p.x < minPos.x)
-    {
-      minPos = p;
-    }
-  }
-
-  //get rid of max & min nodes & call quickhull
-  if (maxPos != minPos)
-  {
-    a.erase(std::remove(a.begin(), a.end(), maxPos), a.end());
-    a.erase(std::remove(a.begin(), a.end(), minPos), a.end());
-    quickHull(a, hullPoints, minPos, maxPos);
-    quickHull(a, hullPoints, maxPos, minPos);
-    // make sure we have unique points
-    std::sort(hullPoints.begin(), hullPoints.end());
-    hullPoints.erase(std::unique(hullPoints.begin(), hullPoints.end()), hullPoints.end());
-    std::swap(a, hullPoints);
-  }
-}
-
-void quickHull(const vector<tbd::sim::InnerPos>& a,
-               vector<tbd::sim::InnerPos>& hullPoints,
-               const tbd::sim::InnerPos& n1,
-               const tbd::sim::InnerPos& n2) noexcept
-{
-  double maxD = -1.0;   //just make sure it's not >= 0
-  tbd::sim::InnerPos maxPos{MIN_X, MIN_X};
-  vector<tbd::sim::InnerPos> usePoints{};
-  // worst case scenario
-  usePoints.reserve(a.size());
-
-  //since we do distLinePt so often, calculate the parts that are always the same
-  const auto abX = (n2.x - n1.x);
-  const auto abY = (n2.y - n1.y);
-  /* so instead of:
-	 * return ( (b->x - a->x)*(a->y - p->y) - (a->x - p->x)*(b->y - a->y) );
-	 * we can do the equivalent of:
-	 * return ( abX*(a->y - p->y) - (a->x - p->x)*abY );
-	 * for distance from the line n1n2 to the current point
-	 */
-
-  for (const auto p : a)
-  {
-    //loop through points, looking for furthest
-    const auto d = (abX * (n1.y - p.y) - (n1.x - p.x) * abY);
-    if (d >= 0)
-    {
-      if (d > maxD)
+      const auto& p = a[i];
+      const auto x = p.x - cell_x;
+      const auto y = p.y - cell_y;
+      const auto cur_n = y * y;
+      if (cur_n > n)
       {
-        // if further away
-        if (maxD >= 0)
-        {
-          // already have one, so add old one to the list
-          // NOTE: delayed add instead of erasing maxPos later
-          usePoints.emplace_back(maxPos);
-        }
-        // update max dist
-        maxD = d;
-        maxPos = p;
+        n_pos = i;
+        n = cur_n;
       }
-      else
+      const auto cur_s = ((1 - y) * (1 - y));
+      if (cur_s > s)
       {
-        // only use in next step if on positive side of line
-        usePoints.emplace_back(p);
+        s_pos = i;
+        s = cur_s;
+      }
+      const auto cur_ne = (x * x) + (y * y);
+      if (cur_ne > ne)
+      {
+        ne_pos = i;
+        ne = cur_ne;
+      }
+      const auto cur_sw = ((1 - x) * (1 - x)) + ((1 - y) * (1 - y));
+      if (cur_sw > sw)
+      {
+        sw_pos = i;
+        sw = cur_sw;
+      }
+      const auto cur_e = (x * x);
+      if (cur_e > e)
+      {
+        e_pos = i;
+        e = cur_e;
+      }
+      const auto cur_w = ((1 - x) * (1 - x));
+      if (cur_w > w)
+      {
+        w_pos = i;
+        w = cur_w;
+      }
+      const auto cur_se = (x * x) + ((1 - y) * (1 - y));
+      if (cur_se > se)
+      {
+        se_pos = i;
+        se = cur_se;
+      }
+      const auto cur_nw = ((1 - x) * (1 - x)) + (y * y);
+      if (cur_nw > nw)
+      {
+        nw_pos = i;
+        nw = cur_nw;
       }
     }
-  }
-  if (maxD > 0
-      || (0 == maxD
-          //we have co-linear points
-          // if either of these isn't true then this must be an edge
-          && (distPtPt(n1, maxPos) < distPtPt(n1, n2))
-          && (distPtPt(maxPos, n2) < distPtPt(n1, n2))))
-  {
-    // this is not an edge, so recurse on the lines between n1, n2, & maxPos
-    quickHull(usePoints, hullPoints, n1, maxPos);
-    quickHull(usePoints, hullPoints, maxPos, n2);
+    a = {
+      a[n_pos],
+      a[ne_pos],
+      a[e_pos],
+      a[se_pos],
+      a[s_pos],
+      a[sw_pos],
+      a[w_pos],
+      a[nw_pos]
+    };
+    tbd::logging::check_fatal(a.size() > 8, "Expected <= 8 points but have %ld", a.size());
   }
   else
   {
-    // n1 -> n2 must be an edge
-    hullPoints.emplace_back(n1);
-    // Must add n2 as the first point of a different line
+    tbd::logging::note("Called when shouldn't have");
   }
 }
