@@ -240,6 +240,8 @@ int test(const int argc, const char* const argv[])
     logging::debug("Output directory is %s", output_directory.c_str());
     util::make_directory_recursive(output_directory.c_str());
     Settings::setOutputDirectory(output_directory);
+    //    // just manually set for now since only using to debug
+    //    Settings::setSavePoints(true);
     if (i == argc - 1 && 0 == strcmp(argv[i], "all"))
     {
       const auto num_hours = DEFAULT_HOURS;
