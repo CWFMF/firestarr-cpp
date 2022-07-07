@@ -63,6 +63,10 @@ size_t Scenario::count() noexcept
 Scenario::~Scenario()
 {
   clear();
+  if (NULL != log_points_)
+  {
+    fclose(log_points_);
+  }
 }
 /*!
  * \page probability Probability of events
@@ -149,6 +153,20 @@ Scenario::Scenario(Model* model,
 {
   perimeter_ = nullptr;
   start_cell_ = start_cell;
+  if (Settings::savePoints())
+  {
+    char log_name[2048];
+    sprintf(log_name, "%s/scenario_%05ld.txt", Settings::outputDirectory(), id);
+    log_points_ = fopen(log_name, "w");
+  }
+  else
+  {
+    log_points_ = NULL;
+  }
+  if (NULL != log_points_)
+  {
+    fprintf(log_points_, "scenario,time,column,row,x,y\n");
+  }
 }
 Scenario* Scenario::reset(mt19937* mt_extinction,
                           mt19937* mt_spread,
@@ -234,6 +252,12 @@ void Scenario::evaluate(const Event& event)
       saveStats(event.time());
       break;
     case Event::NEW_FIRE:
+      if (NULL != log_points_)
+      {
+        fprintf(log_points_, "%ld,%f,%d,%d,%f,%f\n",
+                id(), event.time(), p.column(), p.row(),
+                p.column() + CELL_CENTER, p.row() + CELL_CENTER);
+      }
       // HACK: don't do this in constructor because scenario creates this in its constructor
       points_[p].emplace_back(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       if (fuel::is_null_fuel(event.cell()))
@@ -704,6 +728,11 @@ void Scenario::scheduleFireSpread(const Event& event)
         for (auto& p : kv.second)
         {
           const InnerPos pos = p.add(offset);
+          if (NULL != log_points_)
+          {
+            fprintf(log_points_, "%ld,%f,%d,%d,%f,%f\n",
+                    id(), new_time, location.column(), location.row(), pos.x, pos.y);
+          }
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;

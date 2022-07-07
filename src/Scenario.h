@@ -592,5 +592,9 @@ protected:
    * \brief Whether this has been cancelled.
    */
   bool cancelled_ = false;
+  /**
+   * \brief FILE to write logging information about points to
+   */
+  FILE* log_points_;
 };
 }
