@@ -11,8 +11,7 @@
 #include "ConvexHull.h"
 namespace fs::sim
 {
-// FIX: why is this not just 0.5?
-constexpr auto CELL_CENTER = 0.5555555555555555;
+constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
 static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
