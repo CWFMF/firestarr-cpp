@@ -37,15 +37,3 @@ inline constexpr double distPtPt(const tbd::sim::InnerPos& a, const tbd::sim::In
  * @param a Points to find a convex hull for
  */
 void hull(vector<tbd::sim::InnerPos>& a) noexcept;
-
-/**
- * Implementation of the quickhull algorithm to find a convex hull.
- * @param a Points to find hull for
- * @param hullPoints Points already in the hull
- * @param n1 First point
- * @param n2 Second point
- */
-void quickHull(const vector<tbd::sim::InnerPos>& a,
-               vector<tbd::sim::InnerPos>& hullPoints,
-               const tbd::sim::InnerPos& n1,
-               const tbd::sim::InnerPos& n2) noexcept;
