@@ -4,6 +4,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_CONVEX_HULL_H
 #define FS_CONVEX_HULL_H
+#include "stdafx.h"
 #include "InnerPos.h"
 namespace fs
 {
@@ -25,18 +26,5 @@ inline constexpr double distPtPt(const InnerPos& a, const InnerPos& b) noexcept;
  * @param a Points to find a convex hull for
  */
 void hull(vector<InnerPos>& a) noexcept;
-/**
- * Implementation of the quickhull algorithm to find a convex hull.
- * @param a Points to find hull for
- * @param hullPoints Points already in the hull
- * @param n1 First point
- * @param n2 Second point
- */
-void quickHull(
-  const vector<InnerPos>& a,
-  vector<InnerPos>& hullPoints,
-  const InnerPos& n1,
-  const InnerPos& n2
-) noexcept;
 }
 #endif
