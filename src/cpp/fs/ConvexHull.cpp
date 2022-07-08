@@ -17,21 +17,21 @@ void hull(vector<InnerPos>& a) noexcept
   if (a.size() > MAX_BEFORE_CONDENSE)
   {
     size_t n_pos = 0;
-    auto n = numeric_limits<double>::min();
+    auto n = numeric_limits<double>::max();
     size_t ne_pos = 0;
-    auto ne = numeric_limits<double>::min();
+    auto ne = numeric_limits<double>::max();
     size_t e_pos = 0;
-    auto e = numeric_limits<double>::min();
+    auto e = numeric_limits<double>::max();
     size_t se_pos = 0;
-    auto se = numeric_limits<double>::min();
+    auto se = numeric_limits<double>::max();
     size_t s_pos = 0;
-    auto s = numeric_limits<double>::min();
+    auto s = numeric_limits<double>::max();
     size_t sw_pos = 0;
-    auto sw = numeric_limits<double>::min();
+    auto sw = numeric_limits<double>::max();
     size_t w_pos = 0;
-    auto w = numeric_limits<double>::min();
+    auto w = numeric_limits<double>::max();
     size_t nw_pos = 0;
-    auto nw = numeric_limits<double>::min();
+    auto nw = numeric_limits<double>::max();
     // should always be in the same cell so do this once
     const auto cell_x = static_cast<fs::Idx>(a[0].x);
     const auto cell_y = static_cast<fs::Idx>(a[0].y);
@@ -40,50 +40,58 @@ void hull(vector<InnerPos>& a) noexcept
       const auto& p = a[i];
       const auto x = p.x - cell_x;
       const auto y = p.y - cell_y;
-      const auto cur_n = y * y;
-      if (cur_n > n)
+      // north is closest to point (0.5, 1.0)
+      const auto cur_n = ((x - 0.5) * (x - 0.5)) + ((1 - y) * (1 - y));
+      if (cur_n < n)
       {
         n_pos = i;
         n = cur_n;
       }
-      const auto cur_s = ((1 - y) * (1 - y));
-      if (cur_s > s)
+      // south is closest to point (0.5, 0.0)
+      const auto cur_s = ((x - 0.5) * (x - 0.5)) + (y * y);
+      if (cur_s < s)
       {
         s_pos = i;
         s = cur_s;
       }
-      const auto cur_ne = (x * x) + (y * y);
-      if (cur_ne > ne)
+      // northeast is closest to point (1.0, 1.0)
+      const auto cur_ne = ((1 - x) * (1 - x)) + ((1 - y) * (1 - y));
+      if (cur_ne < ne)
       {
         ne_pos = i;
         ne = cur_ne;
       }
-      const auto cur_sw = ((1 - x) * (1 - x)) + ((1 - y) * (1 - y));
-      if (cur_sw > sw)
+      // southwest is closest to point (0.0, 0.0)
+      const auto cur_sw = (x * x) + (y * y);
+      if (cur_sw < sw)
       {
         sw_pos = i;
         sw = cur_sw;
       }
-      const auto cur_e = (x * x);
-      if (cur_e > e)
+      // east is closest to point (1.0, 0.5)
+      const auto cur_e = ((1 - x) * (1 - x)) + ((y - 0.5) * (y - 0.5));
+      if (cur_e < e)
       {
         e_pos = i;
         e = cur_e;
       }
-      const auto cur_w = ((1 - x) * (1 - x));
-      if (cur_w > w)
+      // west is closest to point (0.0, 0.5)
+      const auto cur_w = (x * x) + ((y - 0.5) * (y - 0.5));
+      if (cur_w < w)
       {
         w_pos = i;
         w = cur_w;
       }
-      const auto cur_se = (x * x) + ((1 - y) * (1 - y));
-      if (cur_se > se)
+      // southeast is closest to point (1.0, 0.0)
+      const auto cur_se = ((1 - x) * (1 - x)) + (y * y);
+      if (cur_se < se)
       {
         se_pos = i;
         se = cur_se;
       }
-      const auto cur_nw = ((1 - x) * (1 - x)) + (y * y);
-      if (cur_nw > nw)
+      // northwest is closest to point (0.0, 1.0)
+      const auto cur_nw = (x * x) + ((1 - y) * (1 - y));
+      if (cur_nw < nw)
       {
         nw_pos = i;
         nw = cur_nw;
