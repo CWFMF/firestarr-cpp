@@ -312,7 +312,10 @@ int main(const int argc, const char* const argv[])
                                                size);
         Log::closeLogFile();
       }
-      show_usage_and_exit();
+      else
+      {
+        show_usage_and_exit();
+      }
     }
     catch (const runtime_error& err)
     {
