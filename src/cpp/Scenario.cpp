@@ -179,7 +179,7 @@ Scenario::Scenario(
   }
   if (NULL != log_points_)
   {
-    fprintf(log_points_, "scenario,time,column,row,x,y\n");
+    fprintf(log_points_, "scenario,time,step,column,row,x,y\n");
   }
 }
 Scenario*
@@ -282,7 +282,7 @@ Scenario::evaluate(
       {
         fprintf(
           log_points_,
-          "%ld,%f,%d,%d,%f,%f\n",
+          "%ld,%f,new,%d,%d,%f,%f\n",
           id(),
           event.time(),
           p.column(),
@@ -811,7 +811,7 @@ Scenario::scheduleFireSpread(
           {
             fprintf(
               log_points_,
-              "%ld,%f,%d,%d,%f,%f\n",
+              "%ld,%f,spread,%d,%d,%f,%f\n",
               id(),
               new_time,
               location.column(),
@@ -868,6 +868,22 @@ Scenario::scheduleFireSpread(
             // no point in doing hull if only one point spread
             // 3 points should just be a triangle usually (could be co-linear, but that's fine
             hull(kv.second);
+          }
+          if (NULL != log_points_)
+          {
+            for (const auto p : kv.second)
+            {
+              fprintf(
+                log_points_,
+                "%ld,%f,condense,%d,%d,%f,%f\n",
+                id(),
+                new_time,
+                static_cast<int>(p.x),
+                static_cast<int>(p.y),
+                p.x,
+                p.y
+              );
+            }
           }
           std::swap(points_[for_cell], kv.second);
         }
