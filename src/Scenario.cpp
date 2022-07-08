@@ -164,7 +164,7 @@ Scenario::Scenario(Model* model,
   }
   if (NULL != log_points_)
   {
-    fprintf(log_points_, "scenario,time,column,row,x,y\n");
+    fprintf(log_points_, "scenario,time,step,column,row,x,y\n");
   }
 }
 Scenario* Scenario::reset(mt19937* mt_extinction,
@@ -253,9 +253,7 @@ void Scenario::evaluate(const Event& event)
     case Event::NEW_FIRE:
       if (NULL != log_points_)
       {
-        fprintf(log_points_, "%ld,%f,%d,%d,%f,%f\n",
-                id(), event.time(), p.column(), p.row(),
-                p.column() + CELL_CENTER, p.row() + CELL_CENTER);
+        fprintf(log_points_, "%ld,%f,new,%d,%d,%f,%f\n", id(), event.time(), p.column(), p.row(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       }
       // HACK: don't do this in constructor because scenario creates this in its constructor
       points_[p].emplace_back(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
@@ -729,8 +727,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           const InnerPos pos = p.add(offset);
           if (NULL != log_points_)
           {
-            fprintf(log_points_, "%ld,%f,%d,%d,%f,%f\n",
-                    id(), new_time, location.column(), location.row(), pos.x, pos.y);
+            fprintf(log_points_, "%ld,%f,spread,%d,%d,%f,%f\n", id(), new_time, location.column(), location.row(), pos.x, pos.y);
           }
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
@@ -785,6 +782,14 @@ void Scenario::scheduleFireSpread(const Event& event)
             // no point in doing hull if only one point spread
             // 3 points should just be a triangle usually (could be co-linear, but that's fine
             hull(kv.second);
+          }
+          if (NULL != log_points_)
+          {
+            for (const auto p : kv.second)
+            {
+              fprintf(log_points_, "%ld,%f,condense,%d,%d,%f,%f\n",
+                      id(), new_time, static_cast<int>(p.x), static_cast<int>(p.y), p.x, p.y);
+            }
           }
           std::swap(points_[for_cell], kv.second);
         }
