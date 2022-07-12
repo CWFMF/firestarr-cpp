@@ -777,9 +777,8 @@ void Scenario::scheduleFireSpread(const Event& event)
         // do survival check first since it should be easier
         if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
         {
-          if (count[for_cell] > 1 && kv.second.size() > MAX_BEFORE_CONDENSE)
+          if (kv.second.size() > MAX_BEFORE_CONDENSE)
           {
-            // no point in doing hull if only one point spread
             // 3 points should just be a triangle usually (could be co-linear, but that's fine
             hull(kv.second);
           }
