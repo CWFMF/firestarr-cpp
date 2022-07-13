@@ -164,7 +164,7 @@ Scenario::Scenario(Model* model,
   }
   if (NULL != log_points_)
   {
-    fprintf(log_points_, "scenario,time,step,column,row,x,y\n");
+    fprintf(log_points_, "scenario,step,time,action,column,row,x,y\n");
   }
 }
 Scenario* Scenario::reset(mt19937* mt_extinction,
@@ -244,6 +244,7 @@ void Scenario::evaluate(const Event& event)
   switch (event.type())
   {
     case Event::FIRE_SPREAD:
+      ++step_;
       scheduleFireSpread(event);
       break;
     case Event::SAVE:
@@ -253,7 +254,7 @@ void Scenario::evaluate(const Event& event)
     case Event::NEW_FIRE:
       if (NULL != log_points_)
       {
-        fprintf(log_points_, "%ld,%f,new,%d,%d,%f,%f\n", id(), event.time(), p.column(), p.row(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
+        fprintf(log_points_, "%ld,%ld,%f,new,%d,%d,%f,%f\n", id(), step_, event.time(), p.column(), p.row(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       }
       // HACK: don't do this in constructor because scenario creates this in its constructor
       points_[p].emplace_back(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
@@ -309,7 +310,8 @@ Scenario::Scenario(Model* model,
     simulation_(-1),
     start_day_(start_day),
     last_date_(last_date),
-    ran_(false)
+    ran_(false),
+    step_(0)
 {
   last_save_ = weather_->minDate();
 }
@@ -727,7 +729,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           const InnerPos pos = p.add(offset);
           if (NULL != log_points_)
           {
-            fprintf(log_points_, "%ld,%f,spread,%d,%d,%f,%f\n", id(), new_time, location.column(), location.row(), pos.x, pos.y);
+            fprintf(log_points_, "%ld,%ld,%f,spread,%d,%d,%f,%f\n", id(), step_, new_time, location.column(), location.row(), pos.x, pos.y);
           }
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
@@ -786,8 +788,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           {
             for (const auto p : kv.second)
             {
-              fprintf(log_points_, "%ld,%f,condense,%d,%d,%f,%f\n",
-                      id(), new_time, static_cast<int>(p.x), static_cast<int>(p.y), p.x, p.y);
+              fprintf(log_points_, "%ld,%ld,%f,condense,%d,%d,%f,%f\n", id(), step_, new_time, static_cast<int>(p.x), static_cast<int>(p.y), p.x, p.y);
             }
           }
           std::swap(points_[for_cell], kv.second);
