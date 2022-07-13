@@ -179,7 +179,7 @@ Scenario::Scenario(
   }
   if (NULL != log_points_)
   {
-    fprintf(log_points_, "scenario,time,step,column,row,x,y\n");
+    fprintf(log_points_, "scenario,step,time,action,column,row,x,y\n");
   }
 }
 Scenario*
@@ -271,6 +271,7 @@ Scenario::evaluate(
   switch (event.type())
   {
     case Event::FIRE_SPREAD:
+      ++step_;
       scheduleFireSpread(event);
       break;
     case Event::SAVE:
@@ -282,8 +283,9 @@ Scenario::evaluate(
       {
         fprintf(
           log_points_,
-          "%ld,%f,new,%d,%d,%f,%f\n",
+          "%ld,%ld,%f,new,%d,%d,%f,%f\n",
           id(),
+          step_,
           event.time(),
           p.column(),
           p.row(),
@@ -351,7 +353,8 @@ Scenario::Scenario(
     simulation_(-1),
     start_day_(start_day),
     last_date_(last_date),
-    ran_(false)
+    ran_(false),
+    step_(0)
 {
   last_save_ = weather_->minDate();
 }
@@ -811,8 +814,9 @@ Scenario::scheduleFireSpread(
           {
             fprintf(
               log_points_,
-              "%ld,%f,spread,%d,%d,%f,%f\n",
+              "%ld,%ld,%f,spread,%d,%d,%f,%f\n",
               id(),
+              step_,
               new_time,
               location.column(),
               location.row(),
@@ -874,8 +878,9 @@ Scenario::scheduleFireSpread(
             {
               fprintf(
                 log_points_,
-                "%ld,%f,condense,%d,%d,%f,%f\n",
+                "%ld,%ld,%f,condense,%d,%d,%f,%f\n",
                 id(),
+                step_,
                 new_time,
                 static_cast<int>(p.x),
                 static_cast<int>(p.y),
