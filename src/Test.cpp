@@ -209,11 +209,11 @@ int run_test(const char* output_directory,
 }
 const AspectSize ASPECT_INCREMENT = 90;
 const SlopeSize SLOPE_INCREMENT = 60;
-const int WS_INCREMENT = 20;
+const int WS_INCREMENT = 5;
 const int WD_INCREMENT = 45;
-const int MAX_WIND = 20;
+const int MAX_WIND = 50;
 const int DEFAULT_HOURS = 10;
-const vector<string> FUEL_NAMES{"C-2", "O-1a", "M-1/M-2 (25 PC)"};
+const vector<string> FUEL_NAMES{"C-2", "O-1a", "M-1/M-2 (25 PC)", "S-1", "C-3"};
 int test(const int argc, const char* const argv[])
 {
   const wx::Dc dc(275);
