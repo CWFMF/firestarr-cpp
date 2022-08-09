@@ -148,3 +148,30 @@ UsageCount& UsageCount::operator++() noexcept
   return *this;
 }
 }
+constexpr int DAYS_IN_MONTH[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+constexpr int DAYS_IN_MONTH_LEAP[] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+void tbd::month_and_day(const int year, const size_t day_of_year, size_t* month, size_t* day_of_month)
+{
+  auto days = (is_leap_year(year) ? DAYS_IN_MONTH_LEAP : DAYS_IN_MONTH);
+  *month = 1;
+  int days_left = day_of_year;
+  while (days[*month - 1] <= days_left)
+  {
+    days_left -= days[*month - 1];
+    ++(*month);
+  }
+  *day_of_month = days_left + 1;
+}
+bool tbd::is_leap_year(const int year)
+{
+  if (year % 400 == 0)
+  {
+    return true;
+  }
+  if (year % 100 == 0)
+  {
+    return false;
+  }
+  return (year % 4 == 0);
+}

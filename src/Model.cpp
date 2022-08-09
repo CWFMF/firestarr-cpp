@@ -145,6 +145,7 @@ void Model::readWeather(const string& filename,
         {
         };
         util::read_date(&iss, &str, &t);
+        year_ = t.tm_year + 1900;
         const auto ticks = mktime(&t);
         if (1 == cur)
         {
@@ -700,6 +701,8 @@ int Model::runScenarios(const char* const weather_input,
   {
     logging::fatal("Not enough weather to proceed - have %d days but looking for %d", numDays, needDays);
   }
+  // want to output internal representation of weather to file
+  model.outputWeather();
   model.makeStarts(*position, start_point, yesterday, perimeter, size);
   auto start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60))
                      / DAY_HOURS);
@@ -724,5 +727,65 @@ int Model::runScenarios(const char* const weather_input,
     delete kv.second;
   }
   return 0;
+}
+void Model::outputWeather()
+{
+  const auto file_out = string(Settings::outputDirectory()) + "/wx_hourly_out.csv";
+  FILE* out = fopen(file_out.c_str(), "w");
+  logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
+  fprintf(out, "Scenario,Day,Hour,APCP,TMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
+  size_t i = 1;
+  for (auto& kv : wx_)
+  {
+    auto& s = kv.second;
+    // do we need to index this by hour and day?
+    // was assuming it started at 0 for first hour and day
+    auto wx = s->getWeather();
+    size_t min_hour = s->minDate() * DAY_HOURS;
+    size_t wx_size = wx->size();
+    size_t hour = min_hour;
+    for (size_t j = 0; j < wx_size; ++j)
+    {
+      size_t day = hour / 24;
+      auto w = wx->at(hour - min_hour);
+      size_t month;
+      size_t day_of_month;
+      month_and_day(year_, day, &month, &day_of_month);
+      if (nullptr != w)
+      {
+        fprintf(out,
+                "%ld,%d-%02ld-%02ld,%ld,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
+                i,
+                year_,
+                month,
+                day_of_month,
+                hour - day * DAY_HOURS,
+                w->apcp().asDouble(),
+                w->tmp().asDouble(),
+                w->rh().asDouble(),
+                w->wind().speed().asDouble(),
+                w->wind().direction().asDouble(),
+                w->ffmc().asDouble(),
+                w->dmc().asDouble(),
+                w->dc().asDouble(),
+                w->isi().asDouble(),
+                w->bui().asDouble(),
+                w->fwi().asDouble());
+      }
+      else
+      {
+        fprintf(out,
+                "%ld,%d-%02ld-%02ld,%ld,,,,,,,,,,,\n",
+                i,
+                year_,
+                month,
+                day_of_month,
+                hour - day * DAY_HOURS);
+      }
+      ++hour;
+    }
+    ++i;
+  }
+  logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());
 }
 }
