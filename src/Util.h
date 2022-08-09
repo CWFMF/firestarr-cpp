@@ -387,4 +387,18 @@ T binary_find_checked(const T lower,
   }
   return binary_find(lower, upper, value, fct);
 }
+/**
+ * \brief Determine month and day that a day of the year represents
+ * \param year Year to determine for
+ * \param day_of_year Day of year to determine for
+ * \param month Month that was determined
+ * \param day_of_month Day of month that was determined
+ */
+void month_and_day(const int year, const size_t day_of_year, size_t* month, size_t* day_of_month);
+/**
+ * \brief Determine if year is a leap year
+ * \param year Year to determine for
+ * \return Whether or not the given year is a leap year
+ */
+[[nodiscard]] bool is_leap_year(const int year);
 }
