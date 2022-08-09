@@ -410,6 +410,15 @@ private:
    * \brief Environment to use for Model
    */
   topo::Environment* env_;
+  /**
+   * \brief Write the hourly weather that was loaded to an output file
+   */
+  void
+  outputWeather();
+  /**
+   * \brief What year the weather is for
+   */
+  int year_;
 };
 }
 }
