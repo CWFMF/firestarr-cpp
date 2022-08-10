@@ -603,7 +603,7 @@ make_vector(
       add_wx(11, at_1100_high);
     }
   }
-  for (auto day = static_cast<Day>(max_date - 1); day >= min_date; --day)
+  for (auto day = static_cast<Day>(max_date); day >= min_date; --day)
   {
     const auto& wx = data.at(day);
     const auto ffmc_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->ffmc().asDouble();
