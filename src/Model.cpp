@@ -733,7 +733,7 @@ void Model::outputWeather()
   const auto file_out = string(Settings::outputDirectory()) + "/wx_hourly_out.csv";
   FILE* out = fopen(file_out.c_str(), "w");
   logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
-  fprintf(out, "Scenario,Day,Hour,APCP,TMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
+  fprintf(out, "Scenario,Date,APCP,TMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
   size_t i = 1;
   for (auto& kv : wx_)
   {
@@ -754,7 +754,7 @@ void Model::outputWeather()
       if (nullptr != w)
       {
         fprintf(out,
-                "%ld,%d-%02ld-%02ld,%ld,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
+                "%ld,%d-%02ld-%02ld %02ld:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
                 i,
                 year_,
                 month,
@@ -775,7 +775,7 @@ void Model::outputWeather()
       else
       {
         fprintf(out,
-                "%ld,%d-%02ld-%02ld,%ld,,,,,,,,,,,\n",
+                "%ld,%d-%02ld-%02ld %02ld:00,,,,,,,,,,,\n",
                 i,
                 year_,
                 month,
