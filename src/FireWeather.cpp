@@ -449,7 +449,8 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
   for (const auto& kv : data)
   {
     const auto day = kv.first;
-    const auto& wx = data.at(day);
+    // use first day's weather for min date instead of all 0's
+    const auto& wx = (day == min_date ? data.at(day + 1) : data.at(day));
     const auto x = wx.mcFfmcPct();
     const auto x_sq = x * x;
     const auto x_cu = x * x * x;
@@ -487,7 +488,8 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
   // need to look at 1200 for tomorrow to figure out if this matches for today
   for (auto day = static_cast<Day>(max_date - 1); day >= min_date; --day)
   {
-    const auto& wx = data.at(day);
+    // use first day's weather for min date instead of all 0's
+    const auto& wx = (day == min_date ? data.at(day + 1) : data.at(day));
     // make sure we use tomorrow for the wind after midnight
     const auto& wx_wind = data.at(static_cast<size_t>(day + 1));
     const auto x = wx.mcFfmcPct();
@@ -543,7 +545,8 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
   }
   for (auto day = static_cast<Day>(max_date); day >= min_date; --day)
   {
-    const auto& wx = data.at(day);
+    // use first day's weather for min date instead of all 0's
+    const auto& wx = (day == min_date ? data.at(day + 1) : data.at(day));
     const auto ffmc_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->ffmc().asDouble();
     const auto ffmc_at_2000 = r->at(util::time_index(day, 20, min_date))->ffmc().asDouble();
     // need linear interpolation between 2000 and 0600
