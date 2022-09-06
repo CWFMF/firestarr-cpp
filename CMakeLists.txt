@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(TBD)
+project(tbd)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)

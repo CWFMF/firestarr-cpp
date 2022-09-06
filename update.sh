@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /appl/TBD
+cd /appl/tbd
 cmake --configure .
 cmake --build .
 python get_fgmj.py
