@@ -116,7 +116,6 @@ Model::readWeather(
       expected_header,
       str.c_str()
     );
-    auto prev = yesterday;
     while (getline(in, str))
     {
       istringstream iss(str);
@@ -143,7 +142,6 @@ Model::readWeather(
         {
           logging::debug("Loading scenario %d...", cur);
           wx.emplace(cur, new vector<const wx::FwiWeather*>());
-          prev = yesterday;
         }
         auto& s = wx.at(cur);
         struct tm t{};
@@ -174,7 +172,7 @@ Model::readWeather(
           }
         }
         logging::note("for_time == %d", for_time);
-        const wx::FwiWeather* w = new wx::FwiWeather(&iss, &str, prev, month, latitude);
+        const wx::FwiWeather* w = new wx::FwiWeather(&iss, &str);
         s->at(for_time) = w;
         fprintf(
           out,
@@ -196,7 +194,6 @@ Model::readWeather(
           w->bui().asDouble(),
           w->fwi().asDouble()
         );
-        prev = *s->at(for_time);
       }
     }
     logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());

@@ -549,10 +549,7 @@ stod(
 FwiWeather
 read(
   istringstream* iss,
-  string* str,
-  const FwiWeather& prev,
-  const int month,
-  const double latitude
+  string* str
 )
 {
   // APCP
@@ -599,12 +596,9 @@ read(
 }
 FwiWeather::FwiWeather(
   istringstream* iss,
-  string* str,
-  const FwiWeather& prev,
-  const int month,
-  const double latitude
+  string* str
 )
-  : FwiWeather(read(iss, str, prev, month, latitude))
+  : FwiWeather(read(iss, str))
 {
 }
 double
