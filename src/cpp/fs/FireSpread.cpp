@@ -62,7 +62,7 @@ SpreadInfo::SpreadInfo(
   const int nd,
   const ptr<const FwiWeather> weather
 )
-  : SpreadInfo(scenario, time, key, nd, weather, weather)
+  : SpreadInfo(scenario, time, key, nd, weather, scenario.weather_daily(time))
 { }
 MathSize SpreadInfo::initial(
   SpreadInfo& spread,

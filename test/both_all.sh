@@ -15,6 +15,16 @@ else
   if [ "0" -ne "${RET}" ]; then
     RESULT=$RET
   fi
+  test/slow.sh
+  RET=$?
+  if [ "0" -ne "${RET}" ]; then
+    RESULT=$RET
+  fi
+  test/10N_50561.sh
+  RET=$?
+  if [ "0" -ne "${RET}" ]; then
+    RESULT=$RET
+  fi
   test/constant_all.sh
   RET=$?
   if [ "0" -ne "${RET}" ]; then
