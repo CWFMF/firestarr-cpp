@@ -83,9 +83,7 @@ Model::Model(
 }
 void
 Model::readWeather(
-  const string& filename,
-  const wx::FwiWeather& yesterday,
-  const double latitude
+  const string& filename
 )
 {
   map<size_t, vector<const wx::FwiWeather*>*> wx{};
@@ -738,7 +736,7 @@ Model::runScenarios(
   logging::note("UTM coordinates are: %d %d %d", zone, static_cast<int>(x), static_cast<int>(y));
   logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
   logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
-  model.readWeather(weather_input, yesterday, start_point.latitude());
+  model.readWeather(weather_input);
   if (model.wx_.empty())
   {
     logging::fatal("No weather provided");
