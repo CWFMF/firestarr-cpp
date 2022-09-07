@@ -269,12 +269,8 @@ public:
   /**
    * \brief Read weather used for Scenarios
    * \param filename Weather file to read
-   * \param yesterday FwiWeather for yesterday
-   * \param latitude to use for calculating DC & DMC
    */
-  void readWeather(const string& filename,
-                   const wx::FwiWeather& yesterday,
-                   double latitude);
+  void readWeather(const string& filename);
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
