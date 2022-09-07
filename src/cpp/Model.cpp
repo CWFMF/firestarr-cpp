@@ -52,15 +52,24 @@ Model::Model(
     );
   }
 }
-void Model::readWeather(string filename, const FwiWeather& yesterday, const double latitude)
+void Model::readWeather(const FwiWeather& yesterday, const double latitude, string filename)
 {
-  map<size_t, map<Day, FwiWeather>> wx{};
+  map<size_t, vector<FwiWeather>> wx{};
+  map<size_t, map<Day, FwiWeather>> wx_daily{};
   map<Day, struct tm> dates{};
-  auto min_date = numeric_limits<Day>::max();
+  Day min_date = numeric_limits<Day>::max();
+  Day max_date = numeric_limits<Day>::min();
+  time_t prev_time = numeric_limits<time_t>::min();
   ifstream in{filename};
   logging::check_fatal(!in.is_open(), "Could not open input weather file %s", filename.c_str());
   if (in.is_open())
   {
+#ifndef NDEBUG
+    const auto file_out = outputDirectory() + "/wx_hourly_out_read.csv";
+    FILE* out = fopen(file_out.c_str(), "w");
+    logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
+    fprintf(out, "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
+#endif
     string str;
     logging::info("Reading scenarios from '%s'", filename.c_str());
     // read header line
@@ -69,13 +78,16 @@ void Model::readWeather(string filename, const FwiWeather& yesterday, const doub
     str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
-    constexpr auto expected_header = "Scenario,Date,PREC,TEMP,RH,WS,WD";
+    constexpr auto expected_header = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
     logging::check_fatal(
       expected_header != str,
       "Input CSV must have columns in this order:\n'%s'\n but got:\n'%s'",
       expected_header,
       str.c_str()
     );
+    auto prev = &yesterday;
+    // HACK: adding to original object if we don't do this?
+    auto apcp_24h = yesterday.prec().asValue();
     while (getline(in, str))
     {
       istringstream iss(str);
@@ -102,7 +114,19 @@ void Model::readWeather(string filename, const FwiWeather& yesterday, const doub
         if (wx.find(cur) == wx.end())
         {
           logging::debug("Loading scenario %d...", cur);
-          wx.emplace(cur, map<Day, FwiWeather>());
+          wx.emplace(cur, vector<FwiWeather>{});
+          prev_time = std::numeric_limits<time_t>::min();
+          logging::check_fatal(
+            wx_daily.find(cur) != wx_daily.end(),
+            "Somehow have daily weather for scenario %ld before hourly weather",
+            cur
+          );
+          wx_daily.emplace(cur, map<Day, FwiWeather>());
+          prev = &yesterday;
+          logging::extensive(
+            "Resetting new scenario precip to %f from %f", yesterday.prec().asValue(), apcp_24h
+          );
+          apcp_24h = yesterday.prec().asValue();
         }
         auto& s = wx.at(cur);
         struct tm t{};
@@ -118,63 +142,114 @@ void Model::readWeather(string filename, const FwiWeather& yesterday, const doub
           }
         }
         min_date = min(min_date, static_cast<Day>(t.tm_yday));
-        logging::check_fatal(s.find(static_cast<Day>(t.tm_yday)) != s.end(), "Day already exists");
-        s.emplace(static_cast<Day>(t.tm_yday), read_weather(&iss, &str));
-        if (s.find(static_cast<Day>(t.tm_yday)) == s.end())
+        max_date = max(max_date, static_cast<Day>(t.tm_yday));
+        time_t cur_time = mktime(&t);
+        if (prev_time != std::numeric_limits<time_t>::min())
         {
-          dates.emplace(static_cast<Day>(t.tm_yday), t);
+          logging::check_fatal(
+            (cur_time - prev_time) != (60 * 60), "Expected sequential hours in weather input"
+          );
         }
+        prev_time = cur_time;
+        const auto for_time = (t.tm_yday - min_date) * DAY_HOURS + t.tm_hour;
+        // HACK: can be up until rest of year since start date
+        const size_t new_size = (max_date - min_date + 1) * DAY_HOURS;
+        const auto old_size = s.size();
+        if (old_size != new_size)
+        {
+          s.resize(new_size);
+        }
+        logging::verbose("for_time == %d", for_time);
+        FwiWeather w{read_fwi_weather(&iss, &str)};
+        s.at(for_time) = w;
+        logging::check_fatal(
+          0 > w.prec().asValue(), "Hourly weather precip %f is negative", w.prec().asValue()
+        );
+        apcp_24h += w.prec().asValue();
+        logging::extensive(
+          "Adding %f to precip results in accumulation of %f", w.prec().asValue(), apcp_24h
+        );
+        if (12 == t.tm_hour)
+        {
+          // we just hit noon on a new day, so add the daily value
+          auto& s_daily = wx_daily.at(cur);
+          const auto day = static_cast<Day>(t.tm_yday);
+          logging::check_fatal(s_daily.find(day) != s_daily.end(), "Day already exists");
+          const auto month = t.tm_mon + 1;
+          s_daily.emplace(
+            day,
+            FwiWeather(*prev, month, latitude, w.temp(), w.rh(), w.wind(), Precipitation(apcp_24h))
+          );
+          // new 24 hour period
+          logging::extensive("Resetting daily precip to %f from %f", 0.0, apcp_24h);
+          apcp_24h = 0;
+          prev = &s_daily.at(static_cast<Day>(t.tm_yday));
+        }
+#ifndef NDEBUG
+        const auto month = t.tm_mon + 1;
+        logging::debug(
+          "%ld,%d-%02d-%02d %02d:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g",
+          cur,
+          year_,
+          month,
+          t.tm_mday,
+          t.tm_hour,
+          w->prec().asValue(),
+          w->temp().asValue(),
+          w->rh().asValue(),
+          w->wind().speed().asValue(),
+          w->wind().direction().asValue(),
+          w->ffmc().asValue(),
+          w->dmc().asValue(),
+          w->dc().asValue(),
+          w->isi().asValue(),
+          w->bui().asValue(),
+          w->fwi().asValue()
+        );
+        fprintf(
+          out,
+          "%ld,%d-%02d-%02d %02d:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
+          cur,
+          year_,
+          month,
+          t.tm_mday,
+          t.tm_hour,
+          w.prec().asValue(),
+          w.temp().asValue(),
+          w.rh().asValue(),
+          w.wind().speed().asValue(),
+          w.wind().direction().asValue(),
+          w.ffmc().asValue(),
+          w.dmc().asValue(),
+          w.dc().asValue(),
+          w.isi().asValue(),
+          w.bui().asValue(),
+          w.fwi().asValue()
+        );
+#endif
       }
     }
+#ifndef NDEBUG
+    logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());
+#endif
     in.close();
   }
-  for (auto& kv : wx)
-  {
-    kv.second.emplace(static_cast<Day>(min_date - 1), yesterday);
-  }
-  const auto file_out = output_directory_ + "/wx_out.csv";
-  FILE* out = fopen(file_out.c_str(), "w");
-  logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
-  fprintf(out, "Scenario,Day,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
-  size_t i = 1;
-  for (auto& kv : wx)
-  {
-    auto& s = kv.second;
-    logging::check_fatal(s.find(static_cast<Day>(min_date - 1)) != s.end(), "Day already exists");
-    // recalculate everything with startup indices
-    map<Day, FwiWeather> new_wx{};
-    auto last_ffmc = yesterday.ffmc();
-    auto last_dmc = yesterday.dmc();
-    auto last_dc = yesterday.dc();
-    auto prec = yesterday.prec();
-    for (auto& kv2 : s)
-    {
-      auto& day = kv2.first;
-      auto& w = kv2.second;
-      const fs::Ffmc ffmc(w.temp(), w.rh(), w.wind().speed(), prec, last_ffmc);
-      const auto t = dates[day];
-      const auto month = t.tm_mon + TM_MONTH_OFFSET;
-      const fs::Dmc dmc(w.temp(), w.rh(), prec, last_dmc, month, latitude);
-      const fs::Dc dc(w.temp(), prec, last_dc, month, latitude);
-      const fs::Isi isi(w.wind().speed(), ffmc);
-      const fs::Bui bui(dmc, dc);
-      const fs::Fwi fwi(isi, bui);
-      const fs::FwiWeather n(w.temp(), w.rh(), w.wind(), prec, ffmc, dmc, dc, isi, bui, fwi);
-      new_wx.emplace(static_cast<Day>(day), n);
-    }
-    new_wx.emplace(static_cast<Day>(min_date - 1), yesterday);
-    kv.second = new_wx;
-  }
-  const auto& fuel_lookup = Settings::fuelLookup();
+  const auto fuel_lookup = Settings::fuelLookup();
+  const auto& f = fuel_lookup.usedFuels();
   // loop through and try to find duplicates
   for (const auto& kv : wx)
   {
     const auto k = kv.first;
-    const auto s = kv.second;
+    const auto& s = kv.second;
+    // FIX: this is just looking for duplicate scenario ids, not weather?
     if (wx_.find(k) == wx_.end())
     {
-      const auto w = make_shared<FireWeather>(fuel_lookup.usedFuels(), s);
-      wx_.emplace(k, w);
+      wx_.emplace(k, FireWeather{f, min_date, max_date, s});
+      // calculate daily indices
+      auto& s_daily = wx_daily.at(k);
+      // HACK: set yesterday to match today
+      s_daily.emplace(min_date - 1, s_daily.at(min_date));
+      wx_daily_.emplace(k, FireWeather{f, s_daily});
     }
   }
 }
@@ -292,21 +367,22 @@ Iteration Model::readScenarios(
   for (const auto& kv : wx_)
   {
     const auto id = kv.first;
-    const auto cur_wx = kv.second;
+    const auto* cur_wx = &kv.second;
+    const auto* cur_daily = &wx_daily_.at(id);
     if (nullptr != perimeter_)
     {
-      setup_scenario(
-        new Scenario(this, id, cur_wx.get(), start, perimeter_, start_point, start_day, last_date)
-      );
+      setup_scenario(new Scenario(
+        this, id, cur_wx, cur_daily, start, perimeter_, start_point, start_day, last_date
+      ));
     }
     else
     {
       for (const auto& cur_start : starts_)
       {
         // should always have at least the day before the fire in the weather stream
-        setup_scenario(
-          new Scenario(this, id, cur_wx.get(), start, cur_start, start_point, start_day, last_date)
-        );
+        setup_scenario(new Scenario(
+          this, id, cur_wx, cur_daily, start, cur_start, start_point, start_day, last_date
+        ));
       }
     }
   }
@@ -801,14 +877,14 @@ int Model::runScenarios(
   Model model(start_time, output_directory, start_point, &env);
   logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
   logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
-  model.readWeather(weather_input, yesterday, start_point.latitude());
+  model.readWeather(yesterday, start_point.latitude(), weather_input);
   if (model.wx_.empty())
   {
     logging::fatal("No weather provided");
   }
   const auto& w = model.wx_.begin()->second;
-  logging::debug("Have weather from day %d to %d", w->minDate(), w->maxDate());
-  const auto numDays = (w->maxDate() - w->minDate() + 1);
+  logging::debug("Have weather from day %d to %d", w.minDate(), w.maxDate());
+  const auto numDays = (w.maxDate() - w.minDate() + 1);
   const auto needDays = Settings::maxDateOffset();
   if (numDays < needDays)
   {
@@ -837,8 +913,8 @@ int Model::runScenarios(
   );
   const auto start_day = static_cast<Day>(start);
   // want to check that start time is in the range of the weather data we have
-  logging::check_fatal(start < w->minDate(), "Start time is before weather streams start");
-  logging::check_fatal(start > w->maxDate(), "Start time is after weather streams end");
+  logging::check_fatal(start < w.minDate(), "Start time is before weather streams start");
+  logging::check_fatal(start > w.maxDate(), "Start time is after weather streams end");
   auto probabilities = model.runIterations(start_point, start, start_day);
   logging::note("Ran %d simulations", Scenario::completed());
   const auto run_time_seconds = model.runTime();
@@ -864,18 +940,23 @@ int Model::runScenarios(
 #ifndef NDEBUG
 void Model::outputWeather()
 {
-  const auto file_out = output_directory_ + "/wx_hourly_out.csv";
+  outputWeather(wx_, "wx_hourly_out.csv");
+  outputWeather(wx_daily_, "wx_daily_out.csv");
+}
+void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_name)
+{
+  const auto file_out = outputDirectory() + file_name;
   FILE* out = fopen(file_out.c_str(), "w");
   logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
   fprintf(out, "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
   size_t i = 1;
-  for (auto& kv : wx_)
+  for (auto& kv : weather)
   {
     auto& s = kv.second;
     // do we need to index this by hour and day?
     // was assuming it started at 0 for first hour and day
-    auto wx = s->getWeather();
-    size_t min_hour = s->minDate() * DAY_HOURS;
+    auto& wx = s.getWeather();
+    size_t min_hour = s.minDate() * DAY_HOURS;
     size_t wx_size = wx.size();
     size_t hour = min_hour;
     for (size_t j = 0; j < wx_size; ++j)

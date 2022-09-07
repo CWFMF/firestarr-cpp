@@ -260,11 +260,11 @@ public:
   Model& operator=(const Model& rhs) = delete;
   /**
    * \brief Read weather used for Scenarios
-   * \param filename Weather file to read
    * \param yesterday FwiWeather for yesterday
-   * \param latitude to use for calculating DC & DMC
+   * \param latitude Latitude to calculate for
+   * \param filename Weather file to read
    */
-  void readWeather(string filename, const FwiWeather& yesterday, double latitude);
+  void readWeather(const FwiWeather& yesterday, const double latitude, string filename);
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
@@ -343,7 +343,11 @@ private:
   /**
    * \brief Map of scenario number to weather stream
    */
-  map<size_t, shared_ptr<FireWeather>> wx_{};
+  map<size_t, FireWeather> wx_{};
+  /**
+   * \brief Map of scenario number to weather stream
+   */
+  map<size_t, FireWeather> wx_daily_{};
   /**
    * \brief Cell(s) that can burn closest to start Location
    */
