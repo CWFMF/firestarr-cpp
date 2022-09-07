@@ -65,7 +65,7 @@ sed -i "s/MAXIMUM_TIME = .*/MAXIMUM_TIME = 0/g" settings.ini
 
 dates="[$(seq -s, ${DAYS})]"
 
-FILE_WX="${DIR_IN}/wx_daily_in.csv"
+FILE_WX="${DIR_IN}/wx_hourly_in.csv"
 
 rm -rf "${DIR_OUT}"
 mkdir -p "${DIR_OUT}"
