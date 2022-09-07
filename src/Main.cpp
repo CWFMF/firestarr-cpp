@@ -149,10 +149,6 @@ int main(const int argc, const char* const argv[])
   string wx_file_name;
   string perim;
   size_t size = 0;
-  tbd::wx::Ffmc ffmc;
-  tbd::wx::Dmc dmc;
-  tbd::wx::Dc dc;
-  tbd::wx::AccumulatedPrecipitation apcp_0800;
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
@@ -178,10 +174,6 @@ int main(const int argc, const char* const argv[])
     register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
     register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
     register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
-    register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
-    register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
-    register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
-    register_index<tbd::wx::AccumulatedPrecipitation>(apcp_0800, "--apcp_0800", "Startup 0800 precipitation", false);
     register_setter<const char*>(&Settings::setOutputDateOffsets, "--output_date_offsets", "Override output date offsets", false, &parse_raw);
     if (3 > ARGC)
     {
@@ -281,19 +273,6 @@ int main(const int argc, const char* const argv[])
             tbd::logging::fatal("%s must be specified", kv.first.c_str());
           }
         }
-        if (!PARSE_HAVE.contains("--apcp_0800"))
-        {
-          tbd::logging::warning("Assuming 0 precipitation for startup indices");
-          apcp_0800 = tbd::wx::AccumulatedPrecipitation::Zero;
-        }
-        // HACK: ISI for yesterday really doesn't matter so just use any wind
-        const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
-                                                   tbd::wx::RelativeHumidity(0),
-                                                   tbd::wx::Wind(tbd::wx::Direction(0, false), tbd::wx::Speed(0)),
-                                                   tbd::wx::AccumulatedPrecipitation(0),
-                                                   ffmc,
-                                                   dmc,
-                                                   dc);
         tbd::util::fix_tm(&start_date);
         start = start_date;
         printf("Arguments are:\n");
@@ -304,7 +283,6 @@ int main(const int argc, const char* const argv[])
         printf("\n");
         result = tbd::sim::Model::runScenarios(wx_file_name.c_str(),
                                                Settings::rasterRoot(),
-                                               yesterday,
                                                start_point,
                                                start,
                                                save_intensity,

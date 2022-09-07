@@ -101,7 +101,6 @@ Perimeter::Perimeter(const string& perim, const Point& point, const Environment&
 }
 Perimeter::Perimeter(const Location& location,
                      const size_t size,
-                     const wx::FwiWeather&,
                      const Environment& env)
 {
   // NOTE: FwiWeather is unused but could change this to try doing length to breadth ratio
