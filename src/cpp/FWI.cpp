@@ -7,6 +7,7 @@
 #include "Log.h"
 #define CHECK_CALCULATION 1
 #undef CHECK_CALCULATION
+#define CHECK_EPSILON 0.001
 // adapted from http://www.columbia.edu/~rf2426/index_files/FWI.vba
 //******************************************************************************************
 //
@@ -392,9 +393,8 @@ Isi::Isi(
   : Isi(wind, ffmc)
 {
 #ifdef CHECK_CALCULATION
-  // check that we're not more than 10% off of the value
   logging::check_fatal(
-    abs((*this - Isi(value)).asDouble()) >= abs(value / 10),
+    abs((*this - Isi(value)).asDouble()) >= CHECK_EPSILON,
     "ISI is incorrect %f, %f => %f not %f",
     wind.asDouble(),
     ffmc.asDouble(),
@@ -446,9 +446,8 @@ Bui::Bui(
   : Bui(dmc, dc)
 {
 #ifdef CHECK_CALCULATION
-  // check that we're not more than 10% off of the value
   logging::check_fatal(
-    abs((*this - Bui(value)).asDouble()) >= abs(value / 10),
+    abs((*this - Bui(value)).asDouble()) >= CHECK_EPSILON,
     "BUI is incorrect %f, %f => %f not %f",
     dmc.asDouble(),
     dc.asDouble(),
@@ -503,9 +502,8 @@ Fwi::Fwi(
   : Fwi(isi, bui)
 {
 #ifdef CHECK_CALCULATION
-  // check that we're not more than 10% off of the value
   logging::check_fatal(
-    abs((*this - Fwi(value)).asDouble()) >= abs(value / 10),
+    abs((*this - Fwi(value)).asDouble()) >= CHECK_EPSILON,
     "FWI is incorrect %f, %f => %f not %f",
     isi.asDouble(),
     bui.asDouble(),
