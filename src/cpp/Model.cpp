@@ -284,7 +284,6 @@ void
 Model::makeStarts(
   Coordinates coordinates,
   const topo::Point& point,
-  const wx::FwiWeather& yesterday,
   const string& perim,
   const size_t size
 )
@@ -298,7 +297,7 @@ Model::makeStarts(
   else if (size > 0)
   {
     logging::note("Initializing from size %d ha", size);
-    perimeter_ = make_shared<topo::Perimeter>(cell(location), size, yesterday, *env_);
+    perimeter_ = make_shared<topo::Perimeter>(cell(location), size, *env_);
   }
   // figure out where the fire can exist
   if (nullptr != perimeter_ && !perimeter_->burned().empty())
@@ -703,7 +702,6 @@ int
 Model::runScenarios(
   const char* const weather_input,
   const char* const raster_root,
-  const wx::FwiWeather& yesterday,
   const topo::StartPoint& start_point,
   const tm& start_time,
   const bool save_intensity,
@@ -755,7 +753,7 @@ Model::runScenarios(
   }
   // want to output internal representation of weather to file
   model.outputWeather();
-  model.makeStarts(*position, start_point, yesterday, perimeter, size);
+  model.makeStarts(*position, start_point, perimeter, size);
   auto
     start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60)) / DAY_HOURS);
   // HACK: round to 2 digits so that we can keep test output the same

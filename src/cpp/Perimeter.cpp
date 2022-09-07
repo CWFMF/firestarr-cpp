@@ -103,7 +103,6 @@ Perimeter::Perimeter(
 Perimeter::Perimeter(
   const Location& location,
   const size_t size,
-  const wx::FwiWeather&,
   const Environment& env
 )
 {

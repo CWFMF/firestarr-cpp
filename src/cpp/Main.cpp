@@ -218,10 +218,6 @@ main(
   string wx_file_name;
   string perim;
   size_t size = 0;
-  fs::wx::Ffmc ffmc;
-  fs::wx::Dmc dmc;
-  fs::wx::Dc dc;
-  fs::wx::AccumulatedPrecipitation apcp_0800;
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
@@ -263,15 +259,6 @@ main(
     );
     register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
     register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
-    register_index<fs::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
-    register_index<fs::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
-    register_index<fs::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
-    register_index<fs::wx::AccumulatedPrecipitation>(
-      apcp_0800,
-      "--apcp_0800",
-      "Startup 0800 precipitation",
-      false
-    );
     register_setter<const char*>(
       &Settings::setOutputDateOffsets,
       "--output_date_offsets",
@@ -377,21 +364,6 @@ main(
             fs::logging::fatal("%s must be specified", kv.first.c_str());
           }
         }
-        if (!PARSE_HAVE.contains("--apcp_0800"))
-        {
-          fs::logging::warning("Assuming 0 precipitation for startup indices");
-          apcp_0800 = fs::wx::AccumulatedPrecipitation::Zero;
-        }
-        // HACK: ISI for yesterday really doesn't matter so just use any wind
-        const auto yesterday = fs::wx::FwiWeather(
-          fs::wx::Temperature(0),
-          fs::wx::RelativeHumidity(0),
-          fs::wx::Wind(fs::wx::Direction(0, false), fs::wx::Speed(0)),
-          fs::wx::AccumulatedPrecipitation(0),
-          ffmc,
-          dmc,
-          dc
-        );
         fs::util::fix_tm(&start_date);
         start = start_date;
         printf("Arguments are:\n");
@@ -403,7 +375,6 @@ main(
         result = fs::sim::Model::runScenarios(
           wx_file_name.c_str(),
           Settings::rasterRoot(),
-          yesterday,
           start_point,
           start,
           save_intensity,

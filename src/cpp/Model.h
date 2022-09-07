@@ -137,7 +137,6 @@ public:
    * \brief Run Scenarios initialized from given inputs
    * \param weather_input Name of file to read weather from
    * \param raster_root Directory to read raster inputs from
-   * \param yesterday FwiWeather yesterday used for startup indices
    * \param start_point StartPoint to use for sunrise/sunset
    * \param start_time Start time for simulation
    * \param save_intensity Whether or not to save all intensity files
@@ -149,7 +148,6 @@ public:
   runScenarios(
     const char* weather_input,
     const char* raster_root,
-    const wx::FwiWeather& yesterday,
     const topo::StartPoint& start_point,
     const tm& start_time,
     bool save_intensity,
@@ -305,18 +303,11 @@ public:
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
    * \param point Point Coordinates represent
-   * \param yesterday FwiWeather for yesterday
    * \param perim Perimeter to start from, if there is one
    * \param size Size of fire to create if no input Perimeter
    */
   void
-  makeStarts(
-    Coordinates coordinates,
-    const topo::Point& point,
-    const wx::FwiWeather& yesterday,
-    const string& perim,
-    size_t size
-  );
+  makeStarts(Coordinates coordinates, const topo::Point& point, const string& perim, size_t size);
   /**
    * \brief Create an Iteration by initializing Scenarios
    * \param start_point StartPoint to use for sunrise/sunset
