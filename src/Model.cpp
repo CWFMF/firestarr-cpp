@@ -120,7 +120,6 @@ void Model::readWeather(const string& filename,
                          "Input CSV must have columns in this order:\n'%s'\n but got:\n'%s'",
                          expected_header,
                          str.c_str());
-    auto prev = yesterday;
     while (getline(in, str))
     {
       istringstream iss(str);
@@ -143,7 +142,6 @@ void Model::readWeather(const string& filename,
         {
           logging::debug("Loading scenario %d...", cur);
           wx.emplace(cur, new vector<const wx::FwiWeather*>());
-          prev = yesterday;
         }
         auto& s = wx.at(cur);
         struct tm t
@@ -181,10 +179,7 @@ void Model::readWeather(const string& filename,
         }
         logging::note("for_time == %d", for_time);
         const wx::FwiWeather* w = new wx::FwiWeather(&iss,
-                                 &str,
-                                 prev,
-                                 month,
-                                 latitude);
+                                 &str);
         s->at(for_time) = w;
         fprintf(out,
                 "%d,%d-%02d-%02d %02d:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
@@ -204,7 +199,6 @@ void Model::readWeather(const string& filename,
                 w->isi().asDouble(),
                 w->bui().asDouble(),
                 w->fwi().asDouble());
-        prev = *s->at(for_time);
       }
     }
     logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());

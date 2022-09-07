@@ -548,10 +548,7 @@ inline double stod(const string* const str)
   return stod(*str);
 }
 FwiWeather read(istringstream* iss,
-                string* str,
-                const FwiWeather& prev,
-                const int month,
-                const double latitude)
+                string* str)
 {
   // APCP
   util::getline(iss, str, ',');
@@ -596,11 +593,8 @@ FwiWeather read(istringstream* iss,
   return {tmp, rh, wind, apcp, ffmc, dmc, dc, isi, bui, fwi};
 }
 FwiWeather::FwiWeather(istringstream* iss,
-                       string* str,
-                       const FwiWeather& prev,
-                       const int month,
-                       const double latitude)
-  : FwiWeather(read(iss, str, prev, month, latitude))
+                       string* str)
+  : FwiWeather(read(iss, str))
 {
 }
 double ffmc_effect(const Ffmc& ffmc) noexcept

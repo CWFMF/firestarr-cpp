@@ -223,15 +223,9 @@ public:
    * \brief Construct by reading from istringstream
    * \param iss Stream to parse
    * \param str string to read into
-   * \param prev Indices for the previous day
-   * \param month Month to use in calculations
-   * \param latitude Latitude to use in calculations
    */
   FwiWeather(istringstream* iss,
-             string* str,
-             const FwiWeather& prev,
-             const int month,
-             const double latitude);
+             string* str);
   /**
    * \brief Constructor
    * \param tmp Temperature (Celsius)
