@@ -576,12 +576,25 @@ FwiWeather read(istringstream* iss,
   logging::extensive("WD is %s", str->c_str());
   const Direction wd(stod(str), false);
   const Wind wind(wd, ws);
-  const Ffmc ffmc(tmp, rh, ws, apcp, prev.ffmc());
-  const Dmc dmc(tmp, rh, apcp, prev.dmc(), month, latitude);
-  const Dc dc(tmp, apcp, prev.dc(), month, latitude);
-  const Isi isi(ws, ffmc);
-  const Bui bui(dmc, dc);
-  const Fwi fwi(isi, bui);
+  // FIX: pretend we're checking these but the flag is unset for now
+  util::getline(iss, str, ',');
+  logging::extensive("FFMC is %s", str->c_str());
+  const Ffmc ffmc(stod(str));
+  util::getline(iss, str, ',');
+  logging::extensive("DMC is %s", str->c_str());
+  const Dmc dmc(stod(str));
+  util::getline(iss, str, ',');
+  logging::extensive("DC is %s", str->c_str());
+  const Dc dc(stod(str));
+  util::getline(iss, str, ',');
+  logging::extensive("ISI is %s", str->c_str());
+  const Isi isi(stod(str), ws, ffmc);
+  util::getline(iss, str, ',');
+  logging::extensive("BUI is %s", str->c_str());
+  const Bui bui(stod(str), dmc, dc);
+  util::getline(iss, str, ',');
+  logging::extensive("FWI is %s", str->c_str());
+  const Fwi fwi(stod(str), isi, bui);
   return {tmp, rh, wind, apcp, ffmc, dmc, dc, isi, bui, fwi};
 }
 FwiWeather::FwiWeather(istringstream* iss,
