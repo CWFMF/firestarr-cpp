@@ -133,6 +133,13 @@ void read_date(istringstream* iss, string* str, tm* t)
   t->tm_mon = stoi(ds) - 1;
   getline(dss, ds, ' ');
   t->tm_mday = stoi(ds);
+  getline(dss, ds, ':');
+  t->tm_hour = stoi(ds);
+  logging::note("Date is %4d-%02d-%02d %02d:00",
+                 t->tm_year + 1900,
+                 t->tm_mon + 1,
+                 t->tm_mday,
+                 t->tm_hour);
 }
 UsageCount::~UsageCount()
 {

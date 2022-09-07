@@ -111,7 +111,7 @@ public:
    {
      return weather_by_hour_by_day_;
    }
-protected:
+
   /**
    * \brief Constructor
    * \param used_fuels set of FuelTypes that are used in the simulation
