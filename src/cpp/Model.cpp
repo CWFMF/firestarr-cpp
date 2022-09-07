@@ -124,7 +124,7 @@ Model::readWeather(
         // HACK: ignore date and just worry about relative order??
         // Scenario
         logging::verbose("Scenario is %s", str.c_str());
-        auto cur = 0;
+        size_t cur = 0;
         try
         {
           cur = static_cast<size_t>(stoi(str));
@@ -176,7 +176,7 @@ Model::readWeather(
         s->at(for_time) = w;
         fprintf(
           out,
-          "%d,%d-%02d-%02d %02d:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
+          "%ld,%d-%02d-%02d %02d:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
           cur,
           year_,
           month,
