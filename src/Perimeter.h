@@ -44,12 +44,10 @@ public:
    * \brief Create a Perimeter of the given size at the given Location
    * \param location Location to center Perimeter on
    * \param size Size of Perimeter to create
-   * \param yesterday Weather from the day before
    * \param env Environment to apply Perimeter to
    */
   Perimeter(const Location& location,
             size_t size,
-            const wx::FwiWeather& yesterday,
             const Environment& env);
   /**
    * \brief List of all burned Locations

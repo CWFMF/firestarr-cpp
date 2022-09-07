@@ -284,7 +284,6 @@ void Model::findStarts(const Location location)
 }
 void Model::makeStarts(Coordinates coordinates,
                        const topo::Point& point,
-                       const wx::FwiWeather& yesterday,
                        const string& perim,
                        const size_t size)
 {
@@ -300,7 +299,6 @@ void Model::makeStarts(Coordinates coordinates,
     perimeter_ = make_shared<topo::Perimeter>(
       cell(location),
       size,
-      yesterday,
       *env_);
   }
   // figure out where the fire can exist
@@ -678,7 +676,6 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
 }
 int Model::runScenarios(const char* const weather_input,
                         const char* const raster_root,
-                        const wx::FwiWeather& yesterday,
                         const topo::StartPoint& start_point,
                         const tm& start_time,
                         const bool save_intensity,
@@ -727,7 +724,7 @@ int Model::runScenarios(const char* const weather_input,
   }
   // want to output internal representation of weather to file
   model.outputWeather();
-  model.makeStarts(*position, start_point, yesterday, perimeter, size);
+  model.makeStarts(*position, start_point, perimeter, size);
   auto start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60))
                      / DAY_HOURS);
   // HACK: round to 2 digits so that we can keep test output the same
