@@ -184,7 +184,7 @@ void Model::readWeather(const string& filename)
             s->at(i) = nullptr;
           }
         }
-        logging::note("for_time == %d", for_time);
+        logging::verbose("for_time == %d", for_time);
         const wx::FwiWeather* w = new wx::FwiWeather(&iss,
                                  &str);
         s->at(for_time) = w;
