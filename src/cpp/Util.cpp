@@ -163,7 +163,7 @@ read_date(
   t->tm_mday = stoi(ds);
   getline(dss, ds, ':');
   t->tm_hour = stoi(ds);
-  logging::note(
+  logging::verbose(
     "Date is %4d-%02d-%02d %02d:00",
     t->tm_year + 1900,
     t->tm_mon + 1,
