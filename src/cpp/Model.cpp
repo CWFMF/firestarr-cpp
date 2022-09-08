@@ -90,6 +90,7 @@ Model::readWeather(
   map<Day, struct tm> dates{};
   Day min_date = numeric_limits<Day>::max();
   Day max_date = numeric_limits<Day>::min();
+  time_t prev_time = numeric_limits<time_t>::min();
   ifstream in;
   in.open(filename);
   logging::check_fatal(!in.is_open(), "Could not open input weather file %s", filename.c_str());
@@ -140,6 +141,7 @@ Model::readWeather(
         {
           logging::debug("Loading scenario %d...", cur);
           wx.emplace(cur, new vector<const wx::FwiWeather*>());
+          prev_time = std::numeric_limits<time_t>::min();
         }
         auto& s = wx.at(cur);
         struct tm t{};
@@ -156,6 +158,15 @@ Model::readWeather(
         }
         min_date = min(min_date, static_cast<Day>(t.tm_yday));
         max_date = max(max_date, static_cast<Day>(t.tm_yday));
+        time_t cur_time = mktime(&t);
+        if (prev_time != std::numeric_limits<time_t>::min())
+        {
+          logging::check_fatal(
+            (cur_time - prev_time) != (60 * 60),
+            "Expected sequential hours in weather input"
+          );
+        }
+        prev_time = cur_time;
         const auto month = t.tm_mon + 1;
         const auto for_time = (t.tm_yday - min_date) * DAY_HOURS + t.tm_hour;
         // HACK: can be up until rest of year since start date
