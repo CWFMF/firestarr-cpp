@@ -740,6 +740,9 @@ int Model::runScenarios(const char* const weather_input,
   start_hour = static_cast<double>(static_cast<int>(start_hour * 100)) / 100;
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
+  // want to check that start time is in the range of the weather data we have
+  logging::check_fatal(start < w->minDate(), "Start time is before weather streams start");
+  logging::check_fatal(start > w->maxDate(), "Start time is after weather streams end");
   auto probabilities =
     model.runIterations(start_point, start, start_day, save_intensity);
   logging::note("Ran %d simulations", Scenario::completed());
