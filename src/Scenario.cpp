@@ -102,7 +102,8 @@ static void make_threshold(vector<double>* thresholds,
       // for the first days don't change
       const auto hourly = rand(*mt);
       // only save if we're going to use it
-      if (i <= last_date)
+      // HACK: +1 so if it's exactly at the end time there's something there
+      if (i <= static_cast<size_t>(last_date + 1))
       {
         // subtract from 1.0 because we want weight to make things more likely not less
         // ensure we stay between 0 and 1
@@ -189,7 +190,8 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
   //  last_date_(last_date);
   ran_ = false;
   // track this here because reset is always called before use
-  const auto num = (static_cast<size_t>(last_date_) - start_day_ + 1) * DAY_HOURS;
+  // HACK: +2 so there's something there if we land exactly on the end date
+  const auto num = (static_cast<size_t>(last_date_) - start_day_ + 2) * DAY_HOURS;
   clear();
   extinction_thresholds_.resize(num);
   spread_thresholds_by_ros_.resize(num);
