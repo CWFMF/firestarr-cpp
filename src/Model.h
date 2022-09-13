@@ -228,6 +228,14 @@ public:
    */
   [[nodiscard]] bool isOutOfTime() const noexcept;
   /**
+   * \brief What year the weather is for
+   * \return What year the weather is for
+   */
+  [[nodiscard]] int year() const noexcept
+  {
+    return year_;
+  }
+  /**
    * \brief Difference between date and the date of minimum foliar moisture content
    * \param time Date to get value for
    * \return Difference between date and the date of minimum foliar moisture content

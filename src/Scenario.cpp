@@ -317,7 +317,17 @@ Scenario::Scenario(Model* model,
 {
   last_save_ = weather_->minDate();
   const auto wx = weather_->at(start_time_);
-  logging::check_fatal(nullptr == wx, "No weather for start time %f", start_time_);
+  size_t hour = start_time_ * 24;
+  size_t day = hour / 24;
+  size_t month;
+  size_t day_of_month;
+  month_and_day(model->year(), day, &month, &day_of_month);
+  logging::check_fatal(nullptr == wx,
+                       "No weather for start time %d-%02ld-%02ld %02d:00",
+                       model->year(),
+                       month,
+                       day_of_month,
+                       hour - day * DAY_HOURS);
 }
 void Scenario::saveStats(const double time) const
 {
