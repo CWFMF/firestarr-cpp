@@ -401,4 +401,11 @@ void month_and_day(const int year, const size_t day_of_year, size_t* month, size
  * \return Whether or not the given year is a leap year
  */
 [[nodiscard]] bool is_leap_year(const int year);
+/**
+ * Make a nicely formatted timestamp string for the given simulation time
+ * @param year Year time is for
+ * @param time Simulation time (fractional day of year)
+ * @return YYYY-mm-dd HH:00 time string for given time
+ */
+[[nodiscard]] string make_timestamp(const int year, const double time);
 }

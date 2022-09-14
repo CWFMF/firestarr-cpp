@@ -182,3 +182,20 @@ bool tbd::is_leap_year(const int year)
   }
   return (year % 4 == 0);
 }
+string tbd::make_timestamp(const int year, const double time)
+{
+  size_t day = floor(time);
+  size_t hour = (time - day) * static_cast<double>(DAY_HOURS);
+  size_t month;
+  size_t day_of_month;
+  month_and_day(year, day, &month, &day_of_month);
+  // only need 24 characters but in case something weird happens
+  char buffer[128];
+  sprintf(buffer,
+          "%4d-%02ld-%02ld %02ld:00",
+          year,
+          month,
+          day_of_month,
+          hour);
+  return {buffer};
+}
