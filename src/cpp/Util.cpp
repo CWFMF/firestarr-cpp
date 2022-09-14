@@ -236,8 +236,8 @@ fs::make_timestamp(
   size_t month;
   size_t day_of_month;
   month_and_day(year, day, &month, &day_of_month);
-  // only need 24 characters but in case something weird happens
+  size_t minute = round(((time - day) * static_cast<double>(DAY_HOURS) - hour) * HOUR_MINUTES);
   char buffer[128];
-  sprintf(buffer, "%4d-%02ld-%02ld %02ld:00", year, month, day_of_month, hour);
+  sprintf(buffer, "%4d-%02ld-%02ld %02ld:%02ld", year, month, day_of_month, hour, minute);
   return {buffer};
 }
