@@ -219,7 +219,13 @@ int main(const int argc, const char* const argv[])
           {
             // if this is a time then we aren't just running the weather
             start_date.tm_hour = stoi(arg.substr(0, 2));
+            tbd::logging::check_fatal(start_date.tm_hour < 0 || start_date.tm_hour > 23,
+              "Simulation start time has an invalid hour (%d)",
+                                      start_date.tm_hour);
             start_date.tm_min = stoi(arg.substr(3, 2));
+            tbd::logging::check_fatal(start_date.tm_min < 0 || start_date.tm_min > 59,
+                                      "Simulation start time has an invalid minute (%d)",
+                                      start_date.tm_min);
             tbd::util::fix_tm(&start_date);
             // we were given a time, so number of days is until end of year
             start = start_date;
