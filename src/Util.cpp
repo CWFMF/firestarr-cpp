@@ -186,10 +186,20 @@ string tbd::make_timestamp(const int year, const double time)
 {
   size_t day = floor(time);
   size_t hour = (time - day) * static_cast<double>(DAY_HOURS);
+  size_t minute = round(((time - day) * static_cast<double>(DAY_HOURS) - hour) * HOUR_MINUTES);
+  if (60 == minute)
+  {
+    minute = 0;
+    hour += 1;
+  }
+  if (24 == hour)
+  {
+    day += 1;
+    hour = 0;
+  }
   size_t month;
   size_t day_of_month;
   month_and_day(year, day, &month, &day_of_month);
-  size_t minute = round(((time - day) * static_cast<double>(DAY_HOURS) - hour) * HOUR_MINUTES);
   char buffer[128];
   sprintf(buffer,
           "%4d-%02ld-%02ld %02ld:%02ld",
