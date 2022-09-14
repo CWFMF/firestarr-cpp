@@ -736,8 +736,6 @@ int Model::runScenarios(const char* const weather_input,
   model.makeStarts(*position, start_point, perimeter, size);
   auto start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60))
                      / DAY_HOURS);
-  // HACK: round to 2 digits so that we can keep test output the same
-  start_hour = static_cast<double>(static_cast<int>(start_hour * 100)) / 100;
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
   // want to check that start time is in the range of the weather data we have
