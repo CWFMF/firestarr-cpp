@@ -86,6 +86,8 @@ public:
   [[nodiscard]] constexpr FullIdx calculateRows() const noexcept
   {
     return static_cast<FullIdx>((yurcorner() - yllcorner()) / cellSize()) - 1;
+    // // HACK: just get rid of -1 for now because it seems weird
+    // return static_cast<FullIdx>((yurcorner() - yllcorner()) / cellSize());
   }
   /**
    * \brief Number of columns in the GridBase.
@@ -94,14 +96,8 @@ public:
   [[nodiscard]] constexpr FullIdx calculateColumns() const noexcept
   {
     return static_cast<FullIdx>((xurcorner() - xllcorner()) / cellSize()) - 1;
-  }
-  /**
-   * \brief Value used for grid locations that have no data.
-   * \return Value used for grid locations that have no data.
-   */
-  [[nodiscard]] constexpr int nodata() const noexcept
-  {
-    return nodata_;
+    // // HACK: just get rid of -1 for now because it seems weird
+    // return static_cast<FullIdx>((xurcorner() - xllcorner()) / cellSize());
   }
   /**
    * \brief Lower left corner X coordinate in meters.
@@ -160,25 +156,15 @@ public:
     return zone_;
   }
   /**
-   * \brief Value used to represent no data at a Location.
-   * \return Value used to represent no data at a Location.
-   */
-  [[nodiscard]] constexpr double noDataInt() const noexcept
-  {
-    return nodata_;
-  }
-  /**
    * \brief Constructor
    * \param cell_size Cell width and height (m)
-   * \param nodata Value that represents no data
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
    * \param xurcorner Upper right corner X coordinate (m)
    * \param yurcorner Upper right corner Y coordinate (m)
-   * \param proj4 Proj4 projection definition 
+   * \param proj4 Proj4 projection definition
    */
   GridBase(double cell_size,
-           int nodata,
            double xllcorner,
            double yllcorner,
            double xurcorner,
@@ -245,10 +231,6 @@ private:
    * \brief UTM zone of projection.
    */
   double zone_;
-  /**
-   * \brief Value used to represent no data at a Location.
-   */
-  int nodata_;
 };
 /**
  * \brief A GridBase with an associated type of data.
@@ -277,12 +259,28 @@ public:
     return columns_;
   }
   /**
+   * \brief Value used for grid locations that have no data.
+   * \return Value used for grid locations that have no data.
+   */
+  [[nodiscard]] constexpr V nodata() const noexcept
+  {
+    return nodata_;
+  }
+  /**
    * \brief Value representing no data
    * \return Value representing no data
    */
   constexpr T noData() const noexcept
   {
     return no_data_;
+  }
+  /**
+   * \brief Value used to represent no data at a Location.
+   * \return Value used to represent no data at a Location.
+   */
+  [[nodiscard]] constexpr double noDataInt() const noexcept
+  {
+    return nodata_;
   }
   // NOTE: only use this for simple types because it's returning by value
   /**
@@ -315,19 +313,19 @@ protected:
        const Idx rows,
        const Idx columns,
        T no_data,
-       const int nodata,
+       const V nodata,
        const double xllcorner,
        const double yllcorner,
        const double xurcorner,
        const double yurcorner,
        string&& proj4) noexcept
     : GridBase(cell_size,
-               nodata,
                xllcorner,
                yllcorner,
                xurcorner,
                yurcorner,
                std::forward<string>(proj4)),
+      nodata_(nodata),
       no_data_(no_data),
       rows_(rows),
       columns_(columns)
@@ -342,7 +340,7 @@ protected:
    * \param grid_info GridBase defining Grid area
    * \param no_data Value that represents no data
    */
-  Grid(const GridBase& grid_info, T no_data) noexcept
+  Grid(const GridBase& grid_info, V no_data) noexcept
     : Grid(grid_info.cellSize(),
            static_cast<Idx>(grid_info.calculateRows()),
            static_cast<Idx>(grid_info.calculateColumns()),
@@ -356,6 +354,10 @@ protected:
   {
   }
 private:
+  /**
+   * \brief Value used to represent no data at a Location.
+   */
+  V nodata_;
   /**
    * \brief Value to use for representing no data at a Location.
    */
@@ -399,7 +401,7 @@ public:
            const Idx rows,
            const Idx columns,
            const T no_data,
-           const int nodata,
+           const V nodata,
            const double xllcorner,
            const double yllcorner,
            const double xurcorner,
@@ -485,82 +487,6 @@ void write_ascii_header(ofstream& out,
                         double yll,
                         double cell_size,
                         double no_data);
-template <typename T>
-[[nodiscard]] GridBase read_header(TIFF* tif, GTIF* gtif)
-{
-  GTIFDefn definition;
-  if (GTIFGetDefn(gtif, &definition))
-  {
-    void* data;
-    uint32 count;
-    int columns;
-    int rows;
-    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &columns);
-    //    logging::check_fatal(columns > numeric_limits<Idx>::max(),
-    //                         "Cannot use grids with more than %d columns",
-    //                         numeric_limits<Idx>::max());
-    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &rows);
-    //    logging::check_fatal(rows > numeric_limits<Idx>::max(),
-    //                         "Cannot use grids with more than %d rows",
-    //                         numeric_limits<Idx>::max());
-    TIFFGetField(tif, TIFFTAG_GDAL_NODATA, &count, &data);
-    logging::check_fatal(0 == count, "NODATA value is not set in input");
-    const auto nodata = stoi(string(static_cast<char*>(data)));
-    double x = 0.0;
-    double y = rows;
-    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y),
-                         "Unable to translate image to PCS coordinates.");
-    const auto yllcorner = y;
-    const auto xllcorner = x;
-    logging::debug("Lower left for header is (%f, %f)", xllcorner, yllcorner);
-    double adf_coefficient[6] = {0};
-    x = 0.5;
-    y = 0.5;
-    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y),
-                         "Unable to translate image to PCS coordinates.");
-    adf_coefficient[4] = x;
-    adf_coefficient[5] = y;
-    x = 1.5;
-    y = 0.5;
-    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y),
-                         "Unable to translate image to PCS coordinates.");
-    const auto cell_width = x - adf_coefficient[4];
-    x = 0.5;
-    y = 1.5;
-    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y),
-                         "Unable to translate image to PCS coordinates.");
-    const auto cell_height = y - adf_coefficient[5];
-    logging::check_fatal(cell_width != -cell_height,
-                         "Can only use grids with square pixels");
-    logging::debug("Cell size is %f", cell_width);
-    const auto proj4_char = GTIFGetProj4Defn(&definition);
-    auto proj4 = string(proj4_char);
-    free(proj4_char);
-    const auto zone_pos = proj4.find("+zone=");
-    if (string::npos != zone_pos && string::npos != proj4.find("+proj=utm"))
-    {
-      // convert from utm zone to tmerc
-      const auto zone_str = proj4.substr(zone_pos + 6);
-      const auto zone = stoi(zone_str);
-      // zone 15 is -93 and other zones are 6 degrees difference
-      const auto degrees = static_cast<int>(6.0 * (zone - 15.0) - 93);
-      // HACK: assume utm zone is at start
-      proj4 = string(
-        "+proj=tmerc +lat_0=0.000000000 +lon_0=" + to_string(degrees) + ".000000000 +k=0.999600 +x_0=500000.000 +y_0=0.000");
-    }
-    const auto xurcorner = xllcorner + cell_width * columns;
-    const auto yurcorner = yllcorner + cell_width * rows;
-    return {
-      cell_width,
-      nodata,
-      xllcorner,
-      yllcorner,
-      xurcorner,
-      yurcorner,
-      string(proj4)};
-  }
-  throw runtime_error("Cannot read TIFF header");
-}
 template <class R>
 [[nodiscard]] R with_tiff(const string& filename, function<R(TIFF*, GTIF*)> fct)
 {
@@ -590,9 +516,6 @@ template <class R>
   //    return logging::fatal<R>("Unable to process file %s", filename.c_str());
   //  }
 }
-template <typename T>
-[[nodiscard]] GridBase read_header(const string& filename)
-{
-  return with_tiff<GridBase>(filename, [](TIFF* tif, GTIF* gtif) { return read_header<T>(tif, gtif); });
-}
+GridBase read_header(TIFF* tif, GTIF* gtif);
+GridBase read_header(const string& filename);
 }

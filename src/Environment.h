@@ -366,7 +366,7 @@ protected:
                                         fuel.rows(),
                                         fuel.columns(),
                                         nodata,
-                                        -1,
+                                        nodata,
                                         fuel.xllcorner(),
                                         fuel.yllcorner(),
                                         fuel.xurcorner(),

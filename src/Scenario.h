@@ -71,6 +71,7 @@ public:
    * \param id Identifier
    * \param weather Weather stream to use
    * \param start_time Start time for simulation
+  //  * \param initial_intensity Intensity grid to start from
    * \param perimeter Perimeter to initialize with
    * \param start_point StartPoint to use sunrise/sunset times from
    * \param start_day First day of simulation
@@ -80,6 +81,7 @@ public:
            size_t id,
            wx::FireWeather* weather,
            double start_time,
+          //  const shared_ptr<IntensityMap>& initial_intensity,
            const shared_ptr<topo::Perimeter>& perimeter,
            const topo::StartPoint& start_point,
            Day start_day,
@@ -134,8 +136,9 @@ public:
   void burn(const Event& event, IntensitySize burn_intensity);
   /**
    * Mark as cancelled so it stops computing on next event.
+   * \param Whether to log a warning about this being cancelled
    */
-  void cancel() noexcept;
+  void cancel(bool show_warning) noexcept;
   /**
    * \brief Get Cell for given row and column
    * \param row Row
@@ -361,8 +364,9 @@ public:
   void addEvent(Event&& event);
   /**
    * \brief Evaluate next Event in the queue
+   * \return Whether to continue simulation
    */
-  void evaluateNextEvent();
+  bool evaluateNextEvent();
   /**
    * \brief End the simulation
    */
@@ -411,22 +415,33 @@ public:
                               const topo::Cell& cell,
                               const double time_at_location) const
   {
-    const auto wx = weather_->at(time);
-    // use Mike's table
-    const auto mc = wx->mcDmcPct();
-    if (100 > mc
-        || (109 >= mc && 5 > time_at_location)
-        || (119 >= mc && 4 > time_at_location)
-        || (131 >= mc && 3 > time_at_location)
-        || (145 >= mc && 2 > time_at_location)
-        || (218 >= mc && 1 > time_at_location))
+    try
     {
-      return true;
+      const auto wx = weather_->at(time);
+      // use Mike's table
+      const auto mc = wx->mcDmcPct();
+      if (100 > mc
+          || (109 >= mc && 5 > time_at_location)
+          || (119 >= mc && 4 > time_at_location)
+          || (131 >= mc && 3 > time_at_location)
+          || (145 >= mc && 2 > time_at_location)
+          || (218 >= mc && 1 > time_at_location))
+      {
+        return true;
+      }
+      // we can look by fuel type because the entire landscape shares the weather
+      return extinctionThreshold(time) < weather_->survivalProbability(
+              time,
+              cell.fuelCode());
     }
-    // we can look by fuel type because the entire landscape shares the weather
-    return extinctionThreshold(time) < weather_->survivalProbability(
-             time,
-             cell.fuelCode());
+    catch(const std::out_of_range& e)
+    {
+      // FIX: just ignore for now
+      // std::cerr << e.what() << '\n';
+      // logging::warning("Survival is checking for weather that doesn't exist at %f", time);
+      // no weather, so don't survive
+      return false;
+    }
   }
   /**
    * \brief List of what times the simulation will save
@@ -435,7 +450,7 @@ public:
   [[nodiscard]] vector<double> savePoints() const;
   /**
    * \brief Save state of Scenario at given time
-   * \param time 
+   * \param time
    */
   void saveStats(double time) const;
   /**
@@ -473,6 +488,9 @@ protected:
            size_t id,
            wx::FireWeather* weather,
            double start_time,
+          //  const shared_ptr<IntensityMap>& initial_intensity,
+           const shared_ptr<topo::Perimeter>& perimeter,
+           const shared_ptr<topo::Cell>& start_cell,
            topo::StartPoint start_point,
            Day start_day,
            Day last_date);
@@ -512,6 +530,10 @@ protected:
    * \brief Map of what intensity each cell has burned at
    */
   unique_ptr<IntensityMap> intensity_;
+  // /**
+  //  * @brief Initial intensity map based off perimeter
+  //  */
+  // shared_ptr<IntensityMap> initial_intensity_;
   /**
    * \brief Perimeter used to start Scenario from
    */

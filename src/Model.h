@@ -137,7 +137,7 @@ public:
    * \param save_intensity Whether or not to save all intensity files
    * \param perimeter Perimeter to initialize fire from, if there is one
    * \param size Size to start fire at if no Perimeter
-   * \return 
+   * \return
    */
   [[nodiscard]] static int runScenarios(const char* weather_input,
                                         const char* raster_root,
@@ -207,7 +207,7 @@ public:
     return *env_;
   }
   /**
-   * \brief Time to use for simulation start 
+   * \brief Time to use for simulation start
    * \return Time to use for simulation start
    */
   [[nodiscard]] constexpr Clock::time_point startTime() const
@@ -355,13 +355,17 @@ private:
    */
   vector<shared_ptr<topo::Cell>> starts_{};
   /**
-   * \brief Time to use for simulation start 
+   * \brief Time to use for simulation start
    */
   Clock::time_point start_time_;
   /**
    * \brief Maximum amount of time simulation can run for before being stopped
    */
   Clock::duration time_limit_;
+  // /**
+  //  * @brief Initial intensity map based off perimeter
+  //  */
+  // shared_ptr<IntensityMap> initial_intensity_ = nullptr;
   /**
    * \brief Perimeter to use for initializing simulations
    */
@@ -378,6 +382,16 @@ private:
    * \brief What year the weather is for
    */
   int year_;
+  // /**
+  //  * @brief If simulation is out of time and should stop
+  //  *
+  //  */
+  // bool is_out_of_time_ = false;
+  // /**
+  //  * @brief Time when we last checked if simulation should end
+  //  *
+  //  */
+  // std::chrono::steady_clock::time_point last_checked_;
 };
 }
 }

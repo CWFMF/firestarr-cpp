@@ -95,7 +95,7 @@ public:
           const Idx rows,
           const Idx columns,
           T no_data,
-          const int nodata,
+          const V nodata,
           const double xllcorner,
           const double yllcorner,
           const double xurcorner,
@@ -142,7 +142,7 @@ public:
   {
   }
   /**
-   * \brief Construct empty GridMap with same extent as given Grid 
+   * \brief Construct empty GridMap with same extent as given Grid
    * \param grid_info Grid to use extent from
    * \param no_data Value to use for no data
    */
