@@ -44,8 +44,8 @@ EnvironmentInfo::EnvironmentInfo(const string& in_fuel,
                                  const string& in_elevation)
   : EnvironmentInfo(in_fuel,
                     in_elevation,
-                    data::read_header<const fuel::FuelType*>(in_fuel),
-                    data::read_header<ElevationSize>(in_elevation))
+                    data::read_header(in_fuel),
+                    data::read_header(in_elevation))
 {
 }
 unique_ptr<EnvironmentInfo> EnvironmentInfo::loadInfo(const string& in_fuel,
@@ -53,8 +53,8 @@ unique_ptr<EnvironmentInfo> EnvironmentInfo::loadInfo(const string& in_fuel,
 {
   if (sim::Settings::runAsync())
   {
-    auto fuel_async = async(launch::async, [in_fuel]() { return data::read_header<const fuel::FuelType*>(in_fuel); });
-    auto elevation_async = async(launch::async, [in_elevation]() { return data::read_header<ElevationSize>(in_elevation); });
+    auto fuel_async = async(launch::async, [in_fuel]() { return data::read_header(in_fuel); });
+    auto elevation_async = async(launch::async, [in_elevation]() { return data::read_header(in_elevation); });
     const auto e = new EnvironmentInfo(in_fuel,
                                        in_elevation,
                                        fuel_async.get(),
@@ -63,8 +63,8 @@ unique_ptr<EnvironmentInfo> EnvironmentInfo::loadInfo(const string& in_fuel,
   }
   const auto e = new EnvironmentInfo(in_fuel,
                                      in_elevation,
-                                     data::read_header<const fuel::FuelType*>(in_fuel),
-                                     data::read_header<ElevationSize>(in_elevation));
+                                     data::read_header(in_fuel),
+                                     data::read_header(in_elevation));
   return unique_ptr<EnvironmentInfo>(e);
 }
 Environment EnvironmentInfo::load(const Point& point) const

@@ -29,7 +29,7 @@ class TestEnvironment
 public:
   /**
    * \brief Environment with the same data in every cell
-   * \param cells Constant cells 
+   * \param cells Constant cells
    */
   explicit TestEnvironment(data::ConstantGrid<topo::Cell>* cells) noexcept
     : Environment(cells, 0)
@@ -178,7 +178,7 @@ int run_test(const char* output_directory,
     MAX_ROWS,
     MAX_COLUMNS,
     topo::Cell{},
-    -1,
+    topo::Cell{},
     TEST_XLLCORNER,
     TEST_YLLCORNER,
     TEST_XLLCORNER + TEST_GRID_SIZE * MAX_COLUMNS,

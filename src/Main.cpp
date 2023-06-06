@@ -226,7 +226,19 @@ int main(const int argc, const char* const argv[])
             tbd::logging::check_fatal(start_date.tm_min < 0 || start_date.tm_min > 59,
                                       "Simulation start time has an invalid minute (%d)",
                                       start_date.tm_min);
+            tbd::logging::note("Simulation start time before fix_tm() is %d-%02d-%02d %02d:%02d",
+                               start_date.tm_year + 1900,
+                               start_date.tm_mon + 1,
+                               start_date.tm_mday,
+                               start_date.tm_hour,
+                               start_date.tm_min);
             tbd::util::fix_tm(&start_date);
+            tbd::logging::note("Simulation start time after fix_tm() is %d-%02d-%02d %02d:%02d",
+                               start_date.tm_year + 1900,
+                               start_date.tm_mon + 1,
+                               start_date.tm_mday,
+                               start_date.tm_hour,
+                               start_date.tm_min);
             // we were given a time, so number of days is until end of year
             start = start_date;
             const auto start_t = mktime(&start);
@@ -280,6 +292,12 @@ int main(const int argc, const char* const argv[])
           }
         }
         tbd::util::fix_tm(&start_date);
+        tbd::logging::note("Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
+                           start_date.tm_year + 1900,
+                           start_date.tm_mon + 1,
+                           start_date.tm_mday,
+                           start_date.tm_hour,
+                           start_date.tm_min);
         start = start_date;
         printf("Arguments are:\n");
         for (auto j = 0; j < ARGC; ++j)

@@ -75,7 +75,6 @@ double find_meridian(const string& proj4) noexcept
   }
 }
 GridBase::GridBase(const double cell_size,
-                   const int nodata,
                    const double xllcorner,
                    const double yllcorner,
                    const double xurcorner,
@@ -86,8 +85,7 @@ GridBase::GridBase(const double cell_size,
     xllcorner_(xllcorner),
     yllcorner_(yllcorner),
     xurcorner_(xurcorner),
-    yurcorner_(yurcorner),
-    nodata_(nodata)
+    yurcorner_(yurcorner)
 {
   // HACK: don't know if meridian is initialized yet, so repeat calculation
   meridian_ = find_meridian(this->proj4_);
@@ -100,8 +98,7 @@ GridBase::GridBase() noexcept
     xurcorner_(-1),
     yurcorner_(-1),
     meridian_(-1),
-    zone_(-1),
-    nodata_(-1)
+    zone_(-1)
 {
 }
 void GridBase::createPrj(const string& dir, const string& base_name) const
@@ -193,5 +190,78 @@ void write_ascii_header(ofstream& out,
   out << "yllcorner     " << fixed << setprecision(6) << yll << "\n";
   out << "cellsize      " << cell_size << "\n";
   out << "NODATA_value  " << no_data << "\n";
+}
+[[nodiscard]] GridBase read_header(TIFF* tif, GTIF* gtif)
+{
+  GTIFDefn definition;
+  if (GTIFGetDefn(gtif, &definition))
+  {
+    int columns;
+    int rows;
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &columns);
+    //    logging::check_fatal(columns > numeric_limits<Idx>::max(),
+    //                         "Cannot use grids with more than %d columns",
+    //                         numeric_limits<Idx>::max());
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &rows);
+    //    logging::check_fatal(rows > numeric_limits<Idx>::max(),
+    //                         "Cannot use grids with more than %d rows",
+    //                         numeric_limits<Idx>::max());
+    double x = 0.0;
+    double y = rows;
+    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y),
+                         "Unable to translate image to PCS coordinates.");
+    const auto yllcorner = y;
+    const auto xllcorner = x;
+    logging::debug("Lower left for header is (%f, %f)", xllcorner, yllcorner);
+    double adf_coefficient[6] = {0};
+    x = 0.5;
+    y = 0.5;
+    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y),
+                         "Unable to translate image to PCS coordinates.");
+    adf_coefficient[4] = x;
+    adf_coefficient[5] = y;
+    x = 1.5;
+    y = 0.5;
+    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y),
+                         "Unable to translate image to PCS coordinates.");
+    const auto cell_width = x - adf_coefficient[4];
+    x = 0.5;
+    y = 1.5;
+    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y),
+                         "Unable to translate image to PCS coordinates.");
+    const auto cell_height = y - adf_coefficient[5];
+    logging::check_fatal(cell_width != -cell_height,
+                         "Can only use grids with square pixels");
+    logging::debug("Cell size is %f", cell_width);
+    const auto proj4_char = GTIFGetProj4Defn(&definition);
+    auto proj4 = string(proj4_char);
+    free(proj4_char);
+    const auto zone_pos = proj4.find("+zone=");
+    if (string::npos != zone_pos && string::npos != proj4.find("+proj=utm"))
+    {
+      // convert from utm zone to tmerc
+      const auto zone_str = proj4.substr(zone_pos + 6);
+      const auto zone = stoi(zone_str);
+      // zone 15 is -93 and other zones are 6 degrees difference
+      const auto degrees = static_cast<int>(6.0 * (zone - 15.0) - 93);
+      // HACK: assume utm zone is at start
+      proj4 = string(
+        "+proj=tmerc +lat_0=0.000000000 +lon_0=" + to_string(degrees) + ".000000000 +k=0.999600 +x_0=500000.000 +y_0=0.000");
+    }
+    const auto xurcorner = xllcorner + cell_width * columns;
+    const auto yurcorner = yllcorner + cell_width * rows;
+    return {
+      cell_width,
+      xllcorner,
+      yllcorner,
+      xurcorner,
+      yurcorner,
+      string(proj4)};
+  }
+  throw runtime_error("Cannot read TIFF header");
+}
+[[nodiscard]] GridBase read_header(const string& filename)
+{
+  return with_tiff<GridBase>(filename, [](TIFF* tif, GTIF* gtif) { return read_header(tif, gtif); });
 }
 }

@@ -17,6 +17,7 @@
 #include <random>
 #include <vector>
 #include "SafeVector.h"
+#include "IntensityMap.h"
 namespace tbd::sim
 {
 class ProbabilityMap;
@@ -61,7 +62,8 @@ public:
    * \param mt_spread Spread thresholds
    * \return This
    */
-  Iteration* reset(mt19937* mt_extinction, mt19937* mt_spread);
+  Iteration* reset(mt19937* mt_extinction,
+                   mt19937* mt_spread);
   /**
    * \brief List of Scenarios this Iteration contains
    * \return List of Scenarios this Iteration contains
@@ -72,8 +74,9 @@ public:
   }
   /**
    * Mark as cancelled so it stops computing on next event.
+   * \param Whether to log a warning about this being cancelled
    */
-  void cancel() noexcept;
+  void cancel(bool show_warning) noexcept;
   /**
    * \brief Points in time that ProbabilityMaps get saved for
    * \return Points in time that ProbabilityMaps get saved for
