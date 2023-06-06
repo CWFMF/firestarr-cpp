@@ -318,7 +318,23 @@ main(
               "Simulation start time has an invalid minute (%d)",
               start_date.tm_min
             );
+            fs::logging::note(
+              "Simulation start time before fix_tm() is %d-%02d-%02d %02d:%02d",
+              start_date.tm_year + 1900,
+              start_date.tm_mon + 1,
+              start_date.tm_mday,
+              start_date.tm_hour,
+              start_date.tm_min
+            );
             fs::util::fix_tm(&start_date);
+            fs::logging::note(
+              "Simulation start time after fix_tm() is %d-%02d-%02d %02d:%02d",
+              start_date.tm_year + 1900,
+              start_date.tm_mon + 1,
+              start_date.tm_mday,
+              start_date.tm_hour,
+              start_date.tm_min
+            );
             // we were given a time, so number of days is until end of year
             start = start_date;
             const auto start_t = mktime(&start);
@@ -375,6 +391,14 @@ main(
           }
         }
         fs::util::fix_tm(&start_date);
+        fs::logging::note(
+          "Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
+          start_date.tm_year + 1900,
+          start_date.tm_mon + 1,
+          start_date.tm_mday,
+          start_date.tm_hour,
+          start_date.tm_min
+        );
         start = start_date;
         printf("Arguments are:\n");
         for (auto j = 0; j < ARGC; ++j)

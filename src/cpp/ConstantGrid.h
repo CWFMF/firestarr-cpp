@@ -95,7 +95,7 @@ public:
     const Idx rows,
     const Idx columns,
     const T no_data,
-    const int nodata,
+    const V nodata,
     const double xllcorner,
     const double yllcorner,
     const double xurcorner,
@@ -135,7 +135,7 @@ public:
     const Idx rows,
     const Idx columns,
     const T& no_data,
-    const int nodata,
+    const V nodata,
     const double xllcorner,
     const double yllcorner,
     const string& proj4,
@@ -169,19 +169,30 @@ public:
     TIFF* tif,
     GTIF* gtif,
     const topo::Point& point,
-    std::function<T(int, int)> convert
+    std::function<T(V, V)> convert
   )
   {
     logging::info("Reading file %s", filename.c_str());
 #ifndef NDEBUG
-    auto min_value = std::numeric_limits<int16_t>::max();
-    auto max_value = std::numeric_limits<int16_t>::min();
+    // auto min_value = std::numeric_limits<int16_t>::max();
+    // auto max_value = std::numeric_limits<int16_t>::min();
+    auto min_value = std::numeric_limits<V>::max();
+    auto max_value = std::numeric_limits<V>::min();
 #endif
-    const GridBase grid_info = read_header<T>(tif, gtif);
+    const GridBase grid_info = read_header(tif, gtif);
     int tile_width;
     int tile_length;
     TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tile_width);
     TIFFGetField(tif, TIFFTAG_TILELENGTH, &tile_length);
+    void* data;
+    uint32_t count;
+    TIFFGetField(tif, TIFFTAG_GDAL_NODATA, &count, &data);
+    logging::check_fatal(0 == count, "NODATA value is not set in input");
+    logging::debug("NODATA value is '%s'", static_cast<char*>(data));
+    const auto nodata_orig = stoi(string(static_cast<char*>(data)));
+    logging::debug("NODATA value is originally parsed as %d", nodata_orig);
+    const auto nodata = static_cast<V>(stoi(string(static_cast<char*>(data))));
+    logging::debug("NODATA value is parsed as %d", nodata);
     auto actual_rows = grid_info.calculateRows();
     auto actual_columns = grid_info.calculateColumns();
     const auto coordinates = grid_info.findFullCoordinates(point, true);
@@ -233,18 +244,23 @@ public:
     );
     logging::check_fatal(max_row > actual_rows, "Can't have more than actual %d rows", actual_rows);
 #endif
-    T no_data = convert(grid_info.nodata(), grid_info.nodata());
+    T no_data = convert(nodata, nodata);
     vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, no_data);
     logging::verbose("%s: malloc start", filename.c_str());
+    // FIX: why is this not using the size of the values?
+    // maybe TIFFTileSize() accounts for the size of the data type too?
     const auto buf = _TIFFmalloc(TIFFTileSize(tif));
+    // const auto buf = _TIFFmalloc(TIFFTileSize(tif) * sizeof(V));
     logging::verbose("%s: read start", filename.c_str());
     const tsample_t smp{};
     logging::debug(
-      "Want to clip grid to (%d, %d) => (%d, %d)",
+      "Want to clip grid to (%d, %d) => (%d, %d) for a %dx%d raster",
       min_row,
       min_column,
       max_row,
-      max_column
+      max_column,
+      actual_rows,
+      actual_columns
     );
     for (auto h = tile_row; h <= max_row; h += tile_length)
     {
@@ -281,11 +297,22 @@ public:
               {
                 const auto cur_hash = actual_row * MAX_COLUMNS + actual_column;
                 auto cur = *(static_cast<int16_t*>(buf) + offset);
+                // auto cur = *(static_cast<V*>(buf) + offset);
 #ifndef NDEBUG
                 min_value = min(cur, min_value);
                 max_value = max(cur, max_value);
 #endif
-                values.at(cur_hash) = convert(cur, grid_info.nodata());
+                try
+                {
+                  values.at(cur_hash) = convert(cur, nodata);
+                }
+                catch (const std::out_of_range& err)
+                {
+                  logging::error("Error trying to read tiff");
+                  logging::debug("cur = %d", cur);
+                  logging::debug("nodata = %d", nodata);
+                  logging::fatal(err.what());
+                }
               }
             }
           }
@@ -317,7 +344,7 @@ public:
       num_rows,
       num_columns,
       no_data,
-      grid_info.nodata(),
+      nodata,
       new_xll,
       new_yll,
       new_xll + (static_cast<double>(num_columns) + 1) * grid_info.cellSize(),
@@ -352,7 +379,7 @@ public:
   readTiff(
     const string& filename,
     const topo::Point& point,
-    std::function<T(int, int)> convert
+    std::function<T(V, V)> convert
   )
   {
     return with_tiff<ConstantGrid<T, V>*>(
@@ -550,12 +577,13 @@ private:
   ConstantGrid(
     const GridBase& grid_info,
     const T& no_data,
+    const V& nodata,
     vector<T>&& values
   )
     : ConstantGrid(
         grid_info.cellSize(),
         no_data,
-        grid_info.nodata(),
+        nodata,
         grid_info.xllcorner(),
         grid_info.yllcorner(),
         grid_info.xurcorner(),

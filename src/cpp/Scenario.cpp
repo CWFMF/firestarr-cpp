@@ -9,6 +9,7 @@
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "ConvexHull.h"
+#include "IntensityMap.h"
 namespace fs::sim
 {
 constexpr auto CELL_CENTER = 0.5;
@@ -144,15 +145,25 @@ Scenario::Scenario(
   const size_t id,
   wx::FireWeather* weather,
   const double start_time,
+  //  const shared_ptr<IntensityMap>& initial_intensity,
   const shared_ptr<topo::Perimeter>& perimeter,
   const topo::StartPoint& start_point,
   const Day start_day,
   const Day last_date
 )
-  : Scenario(model, id, weather, start_time, start_point, start_day, last_date)
+  : Scenario(
+      model,
+      id,
+      weather,
+      start_time,
+      //  initial_intensity,
+      perimeter,
+      nullptr,
+      start_point,
+      start_day,
+      last_date
+    )
 {
-  perimeter_ = perimeter;
-  start_cell_ = nullptr;
 }
 Scenario::Scenario(
   Model* model,
@@ -164,24 +175,19 @@ Scenario::Scenario(
   const Day start_day,
   const Day last_date
 )
-  : Scenario(model, id, weather, start_time, start_point, start_day, last_date)
+  : Scenario(
+      model,
+      id,
+      weather,
+      start_time,
+      // make_unique<IntensityMap>(*model, nullptr),
+      nullptr,
+      start_cell,
+      start_point,
+      start_day,
+      last_date
+    )
 {
-  perimeter_ = nullptr;
-  start_cell_ = start_cell;
-  if (Settings::savePoints())
-  {
-    char log_name[2048];
-    sprintf(log_name, "%s/scenario_%05ld.txt", Settings::outputDirectory(), id);
-    log_points_ = fopen(log_name, "w");
-  }
-  else
-  {
-    log_points_ = NULL;
-  }
-  if (NULL != log_points_)
-  {
-    fprintf(log_points_, "scenario,step,time,action,column,row,x,y\n");
-  }
 }
 Scenario*
 Scenario::reset(
@@ -241,6 +247,11 @@ Scenario::reset(
   current_time_ = start_time_ - 1;
   points_ = {};
   // don't do this until we run so that we don't allocate memory too soon
+  // log_verbose("Applying initial intensity map");
+  // // HACK: if initial_intensity is null then perimeter must be too?
+  // intensity_ = (nullptr == initial_intensity_)
+  //   ? make_unique<IntensityMap>(model(), nullptr)
+  //   : make_unique<IntensityMap>(*initial_intensity_);
   intensity_ = make_unique<IntensityMap>(model());
   offsets_ = {};
   max_intensity_ = {};
@@ -336,6 +347,9 @@ Scenario::Scenario(
   const size_t id,
   wx::FireWeather* weather,
   const double start_time,
+  //  const shared_ptr<IntensityMap>& initial_intensity,
+  const shared_ptr<topo::Perimeter>& perimeter,
+  const shared_ptr<topo::Cell>& start_cell,
   topo::StartPoint start_point,
   const Day start_day,
   const Day last_date
@@ -343,8 +357,11 @@ Scenario::Scenario(
   : current_time_(start_time),
     unburnable_(nullptr),
     intensity_(nullptr),
+    // initial_intensity_(initial_intensity),
+    perimeter_(perimeter),
     // surrounded_(nullptr),
     max_ros_(0),
+    start_cell_(start_cell),
     weather_(weather),
     model_(model),
     probabilities_(nullptr),
@@ -372,6 +389,20 @@ Scenario::Scenario(
     "No weather for last save time %s",
     make_timestamp(model->year(), last_save).c_str()
   );
+  if (Settings::savePoints())
+  {
+    char log_name[2048];
+    sprintf(log_name, "%s/scenario_%05ld.txt", Settings::outputDirectory(), id);
+    log_points_ = fopen(log_name, "w");
+  }
+  else
+  {
+    log_points_ = NULL;
+  }
+  if (NULL != log_points_)
+  {
+    fprintf(log_points_, "scenario,step,time,action,column,row,x,y\n");
+  }
 }
 void
 Scenario::saveStats(
@@ -446,6 +477,7 @@ Scenario::Scenario(
     unburnable_(std::move(rhs.unburnable_)),
     scheduler_(std::move(rhs.scheduler_)),
     intensity_(std::move(rhs.intensity_)),
+    // initial_intensity_(std::move(rhs.initial_intensity_)),
     perimeter_(std::move(rhs.perimeter_)),
     offsets_(std::move(rhs.offsets_)),
     arrival_(std::move(rhs.arrival_)),
@@ -480,6 +512,7 @@ Scenario::operator=(
     current_time_ = rhs.current_time_;
     scheduler_ = std::move(rhs.scheduler_);
     intensity_ = std::move(rhs.intensity_);
+    // initial_intensity_ = std::move(rhs.initial_intensity_);
     perimeter_ = std::move(rhs.perimeter_);
     // surrounded_ = rhs.surrounded_;
     start_cell_ = std::move(rhs.start_cell_);
@@ -568,6 +601,7 @@ Scenario::run(
   CriticalSection _(Model::task_limiter);
   unburnable_ = model_->getBurnedVector();
   probabilities_ = probabilities;
+  log_verbose("Setting save points");
   for (auto time : save_points_)
   {
     // NOTE: these happen in this order because of the way they sort based on type
@@ -579,8 +613,11 @@ Scenario::run(
   }
   else
   {
+    log_verbose("Applying perimeter");
     intensity_->applyPerimeter(*perimeter_);
+    log_verbose("Perimeter applied");
     const auto& env = model().environment();
+    log_verbose("Igniting points");
     for (const auto& location : perimeter_->edge())
     {
       //      const auto cell = env.cell(location.hash());
@@ -588,7 +625,8 @@ Scenario::run(
 #ifndef NDEBUG
       log_check_fatal(fuel::is_null_fuel(cell), "Null fuel in perimeter");
 #endif
-      log_verbose("Adding point (%d, %d)", cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
+      // log_verbose("Adding point (%d, %d)",
+      log_verbose("Adding point (%f, %f)", cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
       points_[cell].emplace_back(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
     }
     addEvent(Event::makeFireSpread(start_time_));
@@ -615,7 +653,10 @@ Scenario::run(
   }
   while (!cancelled_ && !scheduler_.empty())
   {
-    evaluateNextEvent();
+    if (!evaluateNextEvent())
+    {
+      cancel(true);
+    }
   }
   model_->releaseBurnedVector(unburnable_);
   unburnable_ = nullptr;
@@ -925,7 +966,7 @@ Scenario::scheduleFireSpread(
   {
     points_.erase(c);
   }
-  log_verbose("Spreading %d points until %f", points_.size(), new_time);
+  log_extensive("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
 double
@@ -991,7 +1032,7 @@ Scenario::addEvent(
 {
   scheduler_.insert(std::move(event));
 }
-void
+bool
 Scenario::evaluateNextEvent()
 {
   // make sure to actually copy it before we erase it
@@ -1001,10 +1042,17 @@ Scenario::evaluateNextEvent()
   {
     scheduler_.erase(event);
   }
+  return !model_->isOutOfTime();
 }
 void
-Scenario::cancel() noexcept
+Scenario::cancel(
+  bool show_warning
+) noexcept
 {
   cancelled_ = true;
+  if (show_warning)
+  {
+    log_warning("Simulation cancelled");
+  }
 }
 }

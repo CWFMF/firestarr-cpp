@@ -62,16 +62,17 @@ public:
    * \brief List of Scenarios this Iteration contains
    * \return List of Scenarios this Iteration contains
    */
-  const vector<Scenario*>&
+  [[nodiscard]] const vector<Scenario*>&
   getScenarios() const noexcept
   {
     return scenarios_;
   }
   /**
    * Mark as cancelled so it stops computing on next event.
+   * \param Whether to log a warning about this being cancelled
    */
   void
-  cancel() noexcept;
+  cancel(bool show_warning) noexcept;
   /**
    * \brief Points in time that ProbabilityMaps get saved for
    * \return Points in time that ProbabilityMaps get saved for

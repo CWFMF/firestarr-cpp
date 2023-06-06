@@ -103,12 +103,14 @@ Iteration::finalSizes() const
   return final_sizes_;
 }
 void
-Iteration::cancel() noexcept
+Iteration::cancel(
+  bool show_warning
+) noexcept
 {
   cancelled_ = true;
   for (auto& s : scenarios_)
   {
-    s->cancel();
+    s->cancel(show_warning);
   }
 }
 }

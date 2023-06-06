@@ -400,6 +400,10 @@ private:
    * \brief Maximum amount of time simulation can run for before being stopped
    */
   Clock::duration time_limit_;
+  // /**
+  //  * @brief Initial intensity map based off perimeter
+  //  */
+  // shared_ptr<IntensityMap> initial_intensity_ = nullptr;
   /**
    * \brief Perimeter to use for initializing simulations
    */
@@ -417,6 +421,16 @@ private:
    * \brief What year the weather is for
    */
   int year_;
+  // /**
+  //  * @brief If simulation is out of time and should stop
+  //  *
+  //  */
+  // bool is_out_of_time_ = false;
+  // /**
+  //  * @brief Time when we last checked if simulation should end
+  //  *
+  //  */
+  // std::chrono::steady_clock::time_point last_checked_;
 };
 }
 }

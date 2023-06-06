@@ -96,7 +96,7 @@ public:
     const Idx rows,
     const Idx columns,
     T no_data,
-    const int nodata,
+    const V nodata,
     const double xllcorner,
     const double yllcorner,
     const double xurcorner,

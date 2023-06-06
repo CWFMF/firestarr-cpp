@@ -3,6 +3,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "stdafx.h"
+#include <chrono>
 #include "Model.h"
 #include "Scenario.h"
 #include "FBP45.h"
@@ -12,6 +13,9 @@
 #include "UTM.h"
 namespace fs::sim
 {
+// constexpr double PCT_CPU = 0.8;
+// HACK: assume using half the CPUs probably means that faster cores are being used?
+constexpr double PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 BurnedData*
 Model::getBurnedVector() const noexcept
@@ -344,6 +348,10 @@ Model::makeStarts(
       starts_.push_back(make_shared<topo::Cell>(cell(location)));
     }
   }
+  // if (nullptr != perimeter_)
+  // {
+  //   initial_intensity_ = make_shared<IntensityMap>(*this, &(*perimeter_));
+  // }
   logging::note(
     "Creating %ld streams x %ld location%s = %ld scenarios",
     wx_.size(),
@@ -377,15 +385,24 @@ Model::readScenarios(
     }
     result.push_back(scenario);
   };
+
   for (const auto& kv : wx_)
   {
     const auto id = kv.first;
     const auto cur_wx = kv.second;
     if (nullptr != perimeter_)
     {
-      setup_scenario(
-        new Scenario(this, id, cur_wx.get(), start, perimeter_, start_point, start_day, last_date)
-      );
+      setup_scenario(new Scenario(
+        this,
+        id,
+        cur_wx.get(),
+        start,
+        // initial_intensity_,
+        perimeter_,
+        start_point,
+        start_day,
+        last_date
+      ));
     }
     else
     {
@@ -403,7 +420,9 @@ Model::readScenarios(
 bool
 Model::isOutOfTime() const noexcept
 {
+  // return (is_out_of_time_ || ((last_checked_ - startTime()) > timeLimit()));
   return (Clock::now() - startTime()) > timeLimit();
+  // return is_out_of_time_;
 }
 ProbabilityMap*
 Model::makeProbabilityMap(
@@ -463,17 +482,23 @@ make_size_map(
 bool
 add_statistics(
   const size_t i,
+  // vector<double>* sizes,
   vector<double>* means,
   vector<double>* pct,
   const Model& model,
   const util::SafeVector& v
 )
 {
-  const auto sizes = v.getValues();
-  logging::check_fatal(sizes.empty(), "No sizes at end of simulation");
-  const util::Statistics s{sizes};
+  const auto cur_sizes = v.getValues();
+  logging::check_fatal(cur_sizes.empty(), "No sizes at end of simulation");
+  const util::Statistics s{cur_sizes};
   static_cast<void>(util::insert_sorted(pct, s.percentile(95)));
   static_cast<void>(util::insert_sorted(means, s.mean()));
+  // // NOTE: Used to just look at mean and percentile of each iteration, but should probably look
+  // at all the sizes together? for (const auto size : *sizes)
+  // {
+  //   static_cast<void>(util::insert_sorted(sizes, size));
+  // }
   if (model.isOutOfTime())
   {
     logging::note(
@@ -499,6 +524,7 @@ add_statistics(
 size_t
 runs_required(
   const size_t i,
+  //  const vector<double>* sizes,
   const vector<double>* means,
   const vector<double>* pct,
   const Model& model
@@ -513,16 +539,26 @@ runs_required(
     );
     return 0;
   }
+  // const auto for_sizes = util::Statistics{*sizes};
   const auto for_means = util::Statistics{*means};
   const auto for_pct = util::Statistics{*pct};
   if (!(!for_means.isConfident(Settings::confidenceLevel())
-        || !for_pct.isConfident(Settings::confidenceLevel())))
+        || !for_pct.isConfident(Settings::confidenceLevel())
+        // || !for_sizes.isConfident(Settings::confidenceLevel())
+      ))
   {
     return 0;
   }
+  // const auto left = max(
+  //   max(max(for_means.runsRequired(i, Settings::confidenceLevel()),
+  //           for_pct.runsRequired(i, Settings::confidenceLevel())),
+  //       for_sizes.runsRequired();
   const auto left = max(
-    for_means.runsRequired(i, Settings::confidenceLevel()),
-    for_pct.runsRequired(i, Settings::confidenceLevel())
+    // max(
+    for_means.runsRequired(Settings::confidenceLevel()),
+    for_pct.runsRequired(Settings::confidenceLevel())
+    // ),
+    // for_sizes.runsRequired(Settings::confidenceLevel())
   );
   return left;
 }
@@ -558,6 +594,7 @@ Model::runIterations(
   std::seed_seq seed_extinction{static_cast<size_t>(1), static_cast<size_t>(start_day), lat, lon};
   mt19937 mt_spread(seed_spread);
   mt19937 mt_extinction(seed_extinction);
+  // vector<double> sizes{};
   vector<double> means{};
   vector<double> pct{};
   size_t i = 0;
@@ -584,7 +621,27 @@ Model::runIterations(
     Settings::intensityMaxModerate(),
     numeric_limits<int>::max()
   ));
+  logging::verbose("Setting up initial intensity map with perimeter");
   auto runs_left = 1;
+  vector<Iteration> all_iterations{};
+  // // set up a timer to mark when simulation is out of time
+  // auto t = Settings::maximumTimeSeconds();
+  // set up a timer to check the clock to see when simulation is out of time
+  // logging::verbose("Starting timer for %ld seconds", t);
+  // auto timer = std::thread([t, this] (){
+  //   printf("Starting timer for %ld seconds", t);
+  //   std::this_thread::sleep_for(std::chrono::seconds(t));
+  //   printf("out of time after %ld seconds", t);
+  //   is_out_of_time_ = true;
+  // });
+  // auto timer = std::thread([this] (){
+  //   constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
+  //   do
+  //   {
+  //     this->last_checked_ = Clock::now();
+  //     std::this_thread::sleep_for(CHECK_INTERVAL);
+  //   } while (!isOutOfTime());
+  // });
   // HACK: just do this here so that we know it happened
   // iterations.reset(&mt_extinction, &mt_spread);
   if (Settings::runAsync())
@@ -592,7 +649,17 @@ Model::runIterations(
     vector<Iteration> all_iterations{};
     all_iterations.push_back(std::move(iterations));
     auto threads = list<std::thread>{};
-    for (size_t x = 1; x < std::thread::hardware_concurrency() / 4; ++x)
+    // FIX: I think we can just have 2 Iteration objects and roll through starting
+    // threads in the second one as the first one finishes?
+    // const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() * PCT_CPU);
+    const auto MAX_THREADS = std::thread::hardware_concurrency() / 4;
+    // const auto MAX_THREADS = std::thread::hardware_concurrency() - 1;
+    // const auto MAX_CONCURRENT = std::max<size_t>(MAX_THREADS, 1);
+    // const auto concurrent_iterations = std::max<size_t>(
+    //   MAX_CONCURRENT / all_iterations[0].getScenarios().size(),
+    //   1);
+    const auto concurrent_iterations = MAX_THREADS;
+    for (size_t x = 1; x < concurrent_iterations; ++x)
     {
       all_iterations.push_back(
         readScenarios(start_point, start, save_intensity, start_day, last_date)
@@ -624,6 +691,8 @@ Model::runIterations(
       // should have completed one iteration, so add it
       auto& iteration = all_iterations[cur_iter];
       // so now try to loop through and add iterations as they finish
+      // FIX: look at converting so that new threads get started as others complete
+      // - would have to have multiple Iterations so we keep the data from them separate?
       size_t k = 0;
       while (k < iteration.size())
       {
@@ -639,12 +708,14 @@ Model::runIterations(
         // clear so we don't double count
         kv.second->reset();
       }
+      // if (!add_statistics(i, &sizes, &means, &pct, *this, final_sizes))
       if (!add_statistics(i, &means, &pct, *this, final_sizes))
       {
         // ran out of time
+        logging::warning("Ran out of time - cancelling simulations");
         for (auto& iter : all_iterations)
         {
-          iter.cancel();
+          iter.cancel(true);
         }
         for (auto& t : threads)
         {
@@ -655,6 +726,7 @@ Model::runIterations(
         }
         return probabilities;
       }
+      // runs_left = runs_required(i, &sizes, &means, &pct, *this);
       runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
       if (runs_left > 0)
@@ -673,7 +745,7 @@ Model::runIterations(
       {
         for (auto& iter : all_iterations)
         {
-          iter.cancel();
+          iter.cancel(false);
         }
         for (auto& t : threads)
         {
@@ -698,15 +770,28 @@ Model::runIterations(
         s->run(&probabilities);
       }
       ++i;
+      // if (!add_statistics(i, &sizes, &means, &pct, *this, iterations.finalSizes()))
       if (!add_statistics(i, &means, &pct, *this, iterations.finalSizes()))
       {
+        // is_out_of_time_ = true;
+        // if (timer.joinable())
+        // {
+        //   timer.join();
+        // }
         // ran out of time
+        logging::warning("Ran out of time - cancelling simulations");
         return probabilities;
       }
+      // runs_left = runs_required(i, &sizes, &means, &pct, *this);
       runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
     }
   }
+  // is_out_of_time_ = true;
+  // if (timer.joinable())
+  // {
+  //   timer.join();
+  // }
   return probabilities;
 }
 int
@@ -720,6 +805,14 @@ Model::runScenarios(
   const size_t size
 )
 {
+  fs::logging::note(
+    "Simulation start time at start of runScenarios() is %d-%02d-%02d %02d:%02d",
+    start_time.tm_year + 1900,
+    start_time.tm_mon + 1,
+    start_time.tm_mday,
+    start_time.tm_hour,
+    start_time.tm_min
+  );
   auto env = topo::Environment::loadEnvironment(
     raster_root,
     start_point,
@@ -767,7 +860,20 @@ Model::runScenarios(
   model.makeStarts(*position, start_point, perimeter, size);
   auto
     start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60)) / DAY_HOURS);
+  logging::note(
+    "Simulation start time is %d-%02d-%02d %02d:%02d",
+    start_time.tm_year + 1900,
+    start_time.tm_mon + 1,
+    start_time.tm_mday,
+    start_time.tm_hour,
+    start_time.tm_min
+  );
   const auto start = start_time.tm_yday + start_hour;
+  logging::note(
+    "Simulation start time of %f is %s",
+    start,
+    make_timestamp(model.year(), start).c_str()
+  );
   const auto start_day = static_cast<Day>(start);
   // want to check that start time is in the range of the weather data we have
   logging::check_fatal(start < w->minDate(), "Start time is before weather streams start");

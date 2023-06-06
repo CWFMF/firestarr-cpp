@@ -47,6 +47,32 @@ acquire_map(
     std::terminate();
   }
 }
+// IntensityMap::IntensityMap(const Model& model, topo::Perimeter* perimeter) noexcept
+//   : model_(model),
+//     map_(acquire_map(model)),
+//     is_burned_(model.getBurnedVector())
+// {
+//   if (nullptr != perimeter)
+//   {
+//     // logging::verbose("Converting perimeter to intensity");
+//     // map_ = perimeter->burned_map();
+//     // logging::verbose("Converting perimeter to is_burned");
+//     // (*is_burned_) = perimeter->burned();
+//     // // map_->set(location, intensity);
+//     // // (*is_burned_).set(location.hash());
+//     // applyPerimeter(*perimeter);
+//     std::for_each(
+//       std::execution::par_unseq,
+//       perimeter->burned().begin(),
+//       perimeter->burned().end(),
+//       [this](const auto& location) {
+//         auto intensity = 1;
+//         //burn(location, intensity);
+//         map_->set(location, intensity);
+//         (*is_burned_).set(location.hash());
+//       });
+//   }
+// }
 IntensityMap::IntensityMap(
   const Model& model
 ) noexcept
@@ -55,6 +81,24 @@ IntensityMap::IntensityMap(
     is_burned_(model.getBurnedVector())
 {
 }
+
+IntensityMap::IntensityMap(
+  const IntensityMap& rhs
+)
+  // : IntensityMap(rhs.model_, nullptr)
+  : IntensityMap(rhs.model_)
+{
+  *map_ = *rhs.map_;
+  is_burned_ = rhs.is_burned_;
+}
+
+// IntensityMap::IntensityMap(IntensityMap&& rhs)
+//   : IntensityMap(rhs.model_)
+// {
+//   *map_ = *rhs.map_;
+//   is_burned_ = rhs.is_burned_;
+// }
+
 IntensityMap::~IntensityMap() noexcept
 {
   model_.releaseBurnedVector(is_burned_);
@@ -65,7 +109,9 @@ IntensityMap::applyPerimeter(
   const topo::Perimeter& perimeter
 ) noexcept
 {
-  lock_guard<mutex> lock(mutex_);
+  // logging::verbose("Attaining lock");
+  // lock_guard<mutex> lock(mutex_);
+  logging::verbose("Applying burned cells");
   std::for_each(
     std::execution::par_unseq,
     perimeter.burned().begin(),

@@ -184,7 +184,7 @@ run_test(
     MAX_ROWS,
     MAX_COLUMNS,
     topo::Cell{},
-    -1,
+    topo::Cell{},
     TEST_XLLCORNER,
     TEST_YLLCORNER,
     TEST_XLLCORNER + TEST_GRID_SIZE * MAX_COLUMNS,

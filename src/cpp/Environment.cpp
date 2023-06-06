@@ -77,7 +77,7 @@ Environment::loadEnvironment(
   unique_ptr<data::GridBase> for_info = nullptr;
   if (!perimeter.empty())
   {
-    for_info = make_unique<data::GridBase>(data::read_header<unsigned char>(perimeter));
+    for_info = make_unique<data::GridBase>(data::read_header(perimeter));
     logging::info("Perimeter projection is %s", for_info->proj4().c_str());
   }
   for (const auto& raster : rasters)

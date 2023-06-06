@@ -128,9 +128,16 @@ using Idx = int16_t;
  */
 using FullIdx = int64_t;
 /**
+ * \brief Type used for perimeter raster values (uses [0, 1])
+ */
+// FIX: change to use smaller type at some point
+// using PerimSize = uint8_t;
+using PerimSize = uint16_t;
+/**
  * \brief Type used for fuel values (uses [0 - 999]?)
  */
 using FuelSize = uint16_t;
+// using FuelSize = int16_t;
 /**
  * \brief Type used for aspect values (uses [0 - 359])
  */
