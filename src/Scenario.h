@@ -57,6 +57,11 @@ public:
    */
   [[nodiscard]] static size_t count() noexcept;
   /**
+   * \brief Total number of spread events for all Scenarios
+   * \return Total number of spread events for all Scenarios
+   */
+  [[nodiscard]] static size_t total_steps() noexcept;
+  /**
    * \brief Weighted Danger Severity Rating
    * \return Weighted Danger Severity Rating
    */
@@ -364,9 +369,10 @@ public:
   void addEvent(Event&& event);
   /**
    * \brief Evaluate next Event in the queue
-   * \return Whether to continue simulation
+  //  * \return Whether to continue simulation
    */
-  bool evaluateNextEvent();
+  // bool evaluateNextEvent();
+  void evaluateNextEvent();
   /**
    * \brief End the simulation
    */

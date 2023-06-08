@@ -216,7 +216,7 @@ public:
   }
   /**
    * \brief Maximum amount of time simulation can run for before being stopped
-   * \return Maximum amount of time simulation can run for before being stopped
+   * \return Maximum amount of time simulation can run for  before being stopped
    */
   [[nodiscard]] constexpr Clock::duration timeLimit() const
   {
@@ -244,6 +244,12 @@ public:
   {
     return nd_.at(static_cast<Day>(time));
   }
+  /**
+   * \brief Duration that model has run for
+   *
+   * @return std::chrono::seconds  Duration model has been running for
+   */
+  [[nodiscard]] std::chrono::seconds runTime() const;
   /**
    * \brief Create a ProbabilityMap with the same extent as this
    * \param time Time in simulation this ProbabilityMap represents
@@ -382,16 +388,16 @@ private:
    * \brief What year the weather is for
    */
   int year_;
-  // /**
-  //  * @brief If simulation is out of time and should stop
-  //  *
-  //  */
-  // bool is_out_of_time_ = false;
+  /**
+   * @brief If simulation is out of time and should stop
+   *
+   */
+  bool is_out_of_time_ = false;
   // /**
   //  * @brief Time when we last checked if simulation should end
   //  *
   //  */
-  // std::chrono::steady_clock::time_point last_checked_;
+  std::chrono::steady_clock::time_point last_checked_;
 };
 }
 }
