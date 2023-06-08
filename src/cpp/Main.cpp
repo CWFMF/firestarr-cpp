@@ -9,6 +9,7 @@
  * FireSTARR is a probabilistic fire growth model.
  */
 #include "stdafx.h"
+#include <chrono>
 #include "Model.h"
 #include "Scenario.h"
 #include "Test.h"
@@ -214,6 +215,22 @@ main(
   bin = bin.substr(end, bin.size() - end);
   BIN_NAME = bin.c_str();
   register_argument("-h", "Show help", false, &show_usage_and_exit);
+  // auto start_time = fs::Clock::now();
+  // auto time = fs::Clock::now();
+  // constexpr size_t n_test = 100000000;
+  // for (size_t i = 0; i < n_test; ++i)
+  // {
+  //     time = fs::Clock::now();
+  // }
+  // const auto run_time = time - start_time;
+  // const auto run_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(run_time);
+  // printf("Calling Clock::now() %ld times took %ld seconds",
+  //                 n_test, run_time_seconds.count());
+  // Calling Clock::now() 100000000 times took 2 seconds
+  // real    0m2.737s
+  // user    0m2.660s
+  // sys     0m0.011s
+  // return 0;
   auto save_intensity = false;
   string wx_file_name;
   string perim;
