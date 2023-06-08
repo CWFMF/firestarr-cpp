@@ -328,7 +328,7 @@ public:
       return T_VALUES[std::min(T_VALUES.size(), i) - 1]
            * sqrt(sampleVariance() / i) / abs(mean());
     };
-    const auto cur_runs = n_;
+    const auto cur_runs = n();
     return binary_find_checked(cur_runs, 10 * cur_runs, re, fct) - cur_runs;
   }
 private:

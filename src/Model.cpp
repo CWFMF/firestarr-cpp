@@ -480,7 +480,7 @@ map<double, util::SafeVector*> make_size_map(const vector<double>& saves)
   return result;
 }
 bool add_statistics(const size_t i,
-                    // vector<double>* sizes,
+                    vector<double>* all_sizes,
                     vector<double>* means,
                     vector<double>* pct,
                     const Model& model,
@@ -491,11 +491,11 @@ bool add_statistics(const size_t i,
   const util::Statistics s{cur_sizes};
   static_cast<void>(util::insert_sorted(pct, s.percentile(95)));
   static_cast<void>(util::insert_sorted(means, s.mean()));
-  // // NOTE: Used to just look at mean and percentile of each iteration, but should probably look at all the sizes together?
-  // for (const auto size : *sizes)
-  // {
-  //   static_cast<void>(util::insert_sorted(sizes, size));
-  // }
+  // NOTE: Used to just look at mean and percentile of each iteration, but should probably look at all the sizes together?
+  for (const auto size : cur_sizes)
+  {
+    static_cast<void>(util::insert_sorted(all_sizes, size));
+  }
   if (model.isOutOfTime())
   {
     logging::note(
@@ -518,7 +518,7 @@ bool add_statistics(const size_t i,
  * that is less than the confidence level defined in the settings file
  */
 size_t runs_required(const size_t i,
-                    //  const vector<double>* sizes,
+                     const vector<double>* all_sizes,
                      const vector<double>* means,
                      const vector<double>* pct,
                      const Model& model)
@@ -531,12 +531,12 @@ size_t runs_required(const size_t i,
       Settings::maximumTimeSeconds());
     return 0;
   }
-  // const auto for_sizes = util::Statistics{*sizes};
+  const auto for_sizes = util::Statistics{*all_sizes};
   const auto for_means = util::Statistics{*means};
   const auto for_pct = util::Statistics{*pct};
   if (!(!for_means.isConfident(Settings::confidenceLevel())
         || !for_pct.isConfident(Settings::confidenceLevel())
-        // || !for_sizes.isConfident(Settings::confidenceLevel())
+        || !for_sizes.isConfident(Settings::confidenceLevel())
       ))
   {
     return 0;
@@ -545,12 +545,19 @@ size_t runs_required(const size_t i,
   //   max(max(for_means.runsRequired(i, Settings::confidenceLevel()),
   //           for_pct.runsRequired(i, Settings::confidenceLevel())),
   //       for_sizes.runsRequired();
+  const auto runs_for_means = for_means.runsRequired(Settings::confidenceLevel());
+  const auto runs_for_pct = for_pct.runsRequired(Settings::confidenceLevel());
+  const auto runs_for_sizes = for_sizes.runsRequired(Settings::confidenceLevel());
+  logging::debug("Runs required based on criteria: { means: %ld, pct: %ld, sizes: %ld}",
+    runs_for_means, runs_for_pct, runs_for_sizes);
+  logging::debug("Number of values based on criteria: { means: %ld, pct: %ld, sizes: %ld}",
+    for_means.n(), for_pct.n(), for_sizes.n());
   const auto left = max(
-    // max(
-      for_means.runsRequired(Settings::confidenceLevel()),
-      for_pct.runsRequired(Settings::confidenceLevel())
-    // ),
-    // for_sizes.runsRequired(Settings::confidenceLevel())
+    max(
+      runs_for_means,
+      runs_for_pct
+    ),
+    runs_for_sizes
   );
   return left;
 }
@@ -569,7 +576,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   std::seed_seq seed_extinction{1.0, start, start_point.latitude(), start_point.longitude()};
   mt19937 mt_spread(seed_spread);
   mt19937 mt_extinction(seed_extinction);
-  // vector<double> sizes{};
+  vector<double> all_sizes{};
   vector<double> means{};
   vector<double> pct{};
   size_t i = 0;
@@ -724,14 +731,14 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         // clear so we don't double count
         kv.second->reset();
       }
-      // if (!add_statistics(i, &sizes, &means, &pct, *this, final_sizes))
-      if (!add_statistics(i, &means, &pct, *this, final_sizes))
+      if (!add_statistics(i, &all_sizes, &means, &pct, *this, final_sizes))
+      // if (!add_statistics(i, &means, &pct, *this, final_sizes))
       {
         // ran out of time but timer should cancel everything
         return finalize_probabilities();
       }
-      // runs_left = runs_required(i, &sizes, &means, &pct, *this);
-      runs_left = runs_required(i, &means, &pct, *this);
+      runs_left = runs_required(i, &all_sizes, &means, &pct, *this);
+      // runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
       if (runs_left > 0)
       {
@@ -762,14 +769,14 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         s->run(&probabilities);
       }
       ++i;
-      // if (!add_statistics(i, &sizes, &means, &pct, *this, iterations.finalSizes()))
-      if (!add_statistics(i, &means, &pct, *this, iteration.finalSizes()))
+      if (!add_statistics(i, &all_sizes, &means, &pct, *this, iteration.finalSizes()))
+      // if (!add_statistics(i, &means, &pct, *this, iteration.finalSizes()))
       {
         // ran out of time but timer should cance everything
         return finalize_probabilities();
       }
-      // runs_left = runs_required(i, &sizes, &means, &pct, *this);
-      runs_left = runs_required(i, &means, &pct, *this);
+      runs_left = runs_required(i, &all_sizes, &means, &pct, *this);
+      // runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
     }
   }
