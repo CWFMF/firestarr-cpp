@@ -27,6 +27,7 @@ constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
 static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
+static atomic<size_t> TOTAL_STEPS = 0;
 static std::mutex MUTEX_SIM_COUNTS;
 static map<size_t, size_t> SIM_COUNTS{};
 void IObserver_deleter::operator()(IObserver* ptr) const
@@ -51,6 +52,7 @@ void Scenario::clear() noexcept
 #endif
   model_->releaseBurnedVector(unburnable_);
   unburnable_ = nullptr;
+  step_ = 0;
 }
 size_t Scenario::completed() noexcept
 {
@@ -59,6 +61,10 @@ size_t Scenario::completed() noexcept
 size_t Scenario::count() noexcept
 {
   return COUNT;
+}
+size_t Scenario::total_steps() noexcept
+{
+  return TOTAL_STEPS;
 }
 Scenario::~Scenario()
 {
@@ -550,11 +556,14 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   }
   while (!cancelled_ && !scheduler_.empty())
   {
-    if (!evaluateNextEvent())
-    {
-      cancel(true);
-    }
+    evaluateNextEvent();
+    // // FIX: the timer thread can cancel these instead of having this check
+    // if (!evaluateNextEvent())
+    // {
+    //   cancel(true);
+    // }
   }
+  ++TOTAL_STEPS;
   model_->releaseBurnedVector(unburnable_);
   unburnable_ = nullptr;
   if (cancelled_)
@@ -895,7 +904,8 @@ void Scenario::addEvent(Event&& event)
 {
   scheduler_.insert(std::move(event));
 }
-bool Scenario::evaluateNextEvent()
+// bool Scenario::evaluateNextEvent()
+void Scenario::evaluateNextEvent()
 {
   // make sure to actually copy it before we erase it
   const auto& event = *scheduler_.begin();
@@ -904,14 +914,19 @@ bool Scenario::evaluateNextEvent()
   {
     scheduler_.erase(event);
   }
-  return !model_->isOutOfTime();
+  // return !model_->isOutOfTime();
+  // return cancelled_;
 }
 void Scenario::cancel(bool show_warning) noexcept
 {
-  cancelled_ = true;
-  if (show_warning)
+  // ignore if already cancelled
+  if (!cancelled_)
   {
-    log_warning("Simulation cancelled");
+    cancelled_ = true;
+    if (show_warning)
+    {
+      log_warning("Simulation cancelled");
+    }
   }
 }
 }

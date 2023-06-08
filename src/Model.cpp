@@ -412,11 +412,20 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
   }
   return Iteration(result);
 }
+[[nodiscard]] std::chrono::seconds Model::runTime() const
+{
+  const auto run_time = last_checked_ - startTime();
+  const auto run_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(run_time);
+  return run_time_seconds;
+}
 bool Model::isOutOfTime() const noexcept
 {
+  // return is_out_of_time_ || runTime() > timeLimit();
+  // return runTime() > timeLimit();
+  // return ((last_checked_ - startTime()) > timeLimit());
   // return (is_out_of_time_ || ((last_checked_ - startTime()) > timeLimit()));
-  return (Clock::now() - startTime()) > timeLimit();
-  // return is_out_of_time_;
+  // return (Clock::now() - startTime()) > timeLimit();
+  return is_out_of_time_;
 }
 ProbabilityMap* Model::makeProbabilityMap(const double time,
                                           const double start_time,
@@ -564,14 +573,17 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   vector<double> means{};
   vector<double> pct{};
   size_t i = 0;
-  auto iterations = readScenarios(start_point,
+  vector<Iteration> all_iterations{};
+  all_iterations.push_back(readScenarios(start_point,
                                   start,
                                   save_intensity,
                                   start_day,
-                                  last_date);
+                                  last_date));
+  // HACK: reference from vector so timer can cancel everything in vector
+  auto& iteration = all_iterations[0];
   // put probability maps into map
-  const auto saves = iterations.savePoints();
-  const auto started = iterations.startTime();
+  const auto saves = iteration.savePoints();
+  const auto started = iteration.startTime();
   auto probabilities = make_prob_map(*this,
                                      saves,
                                      started,
@@ -589,10 +601,9 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                             numeric_limits<int>::max()));
   logging::verbose("Setting up initial intensity map with perimeter");
   auto runs_left = 1;
-  vector<Iteration> all_iterations{};
   // // set up a timer to mark when simulation is out of time
   // auto t = Settings::maximumTimeSeconds();
-  // set up a timer to check the clock to see when simulation is out of time
+  // // set up a timer to check the clock to see when simulation is out of time
   // logging::verbose("Starting timer for %ld seconds", t);
   // auto timer = std::thread([t, this] (){
   //   printf("Starting timer for %ld seconds", t);
@@ -600,21 +611,58 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   //   printf("out of time after %ld seconds", t);
   //   is_out_of_time_ = true;
   // });
-  // auto timer = std::thread([this] (){
-  //   constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
-  //   do
-  //   {
-  //     this->last_checked_ = Clock::now();
-  //     std::this_thread::sleep_for(CHECK_INTERVAL);
-  //   } while (!isOutOfTime());
-  // });
+  // typedef std::chrono::duration<float> s;
+  auto timer = std::thread([this, &runs_left, &all_iterations] (){
+    constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
+    // const auto SLEEP_INTERVAL = std::chrono::seconds(Settings::maximumTimeSeconds());
+    do
+    {
+      this->last_checked_ = Clock::now();
+      // think we need to check regularly instead of just sleeping so that we can see
+      // if we've done enough runs and need to stop for that reason
+      std::this_thread::sleep_for(CHECK_INTERVAL);
+      // set bool so other things don't need to check clock
+      is_out_of_time_ = runTime() >= timeLimit();
+      // logging::debug("Checking clock");
+    } while (runs_left > 0 && !isOutOfTime());
+    if (isOutOfTime())
+    {
+      logging::warning("Ran out of time - cancelling simulations");
+    }
+    for (auto& iter : all_iterations)
+    {
+      // if not out of time then just did all the runs so no warning
+      iter.cancel(isOutOfTime());
+    }
+    const auto run_time_seconds = runTime().count();
+    // const auto run_time = last_checked_ - startTime();
+    // const auto run_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(run_time);
+    // const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds.count();
+    const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds;
+    logging::debug("Ending timer after %ld seconds with %ld seconds left",
+                    run_time_seconds, time_left);
+  });
+  auto threads = list<std::thread>{};
+  // const auto finalize_probabilities = [&threads, &timer, &probabilities](bool do_cancel) {
+    const auto finalize_probabilities = [&threads, &timer, &probabilities]() {
+    // assume timer is cancelling everything
+    for (auto& t : threads)
+    {
+      if (t.joinable())
+      {
+        t.join();
+      }
+    }
+    if (timer.joinable())
+    {
+      timer.join();
+    }
+    return probabilities;
+  };
   // HACK: just do this here so that we know it happened
   //iterations.reset(&mt_extinction, &mt_spread);
   if (Settings::runAsync())
   {
-    vector<Iteration> all_iterations{};
-    all_iterations.push_back(std::move(iterations));
-    auto threads = list<std::thread>{};
     // FIX: I think we can just have 2 Iteration objects and roll through starting
     // threads in the second one as the first one finishes?
     // const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() * PCT_CPU);
@@ -679,20 +727,8 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       // if (!add_statistics(i, &sizes, &means, &pct, *this, final_sizes))
       if (!add_statistics(i, &means, &pct, *this, final_sizes))
       {
-        // ran out of time
-        logging::warning("Ran out of time - cancelling simulations");
-        for (auto& iter : all_iterations)
-        {
-          iter.cancel(true);
-        }
-        for (auto& t : threads)
-        {
-          if (t.joinable())
-          {
-            t.join();
-          }
-        }
-        return probabilities;
+        // ran out of time but timer should cancel everything
+        return finalize_probabilities();
       }
       // runs_left = runs_required(i, &sizes, &means, &pct, *this);
       runs_left = runs_required(i, &means, &pct, *this);
@@ -711,20 +747,6 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         // loop around to start if required
         cur_iter %= all_iterations.size();
       }
-      else
-      {
-        for (auto& iter : all_iterations)
-        {
-          iter.cancel(false);
-        }
-        for (auto& t : threads)
-        {
-          if (t.joinable())
-          {
-            t.join();
-          }
-        }
-      }
     }
     // everything should be done when this section ends
   }
@@ -734,35 +756,24 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     while (runs_left > 0)
     {
       logging::note("Running iteration %d", i + 1);
-      iterations.reset(&mt_extinction, &mt_spread);
-      for (auto s : iterations.getScenarios())
+      iteration.reset(&mt_extinction, &mt_spread);
+      for (auto s : iteration.getScenarios())
       {
         s->run(&probabilities);
       }
       ++i;
       // if (!add_statistics(i, &sizes, &means, &pct, *this, iterations.finalSizes()))
-      if (!add_statistics(i, &means, &pct, *this, iterations.finalSizes()))
+      if (!add_statistics(i, &means, &pct, *this, iteration.finalSizes()))
       {
-        // is_out_of_time_ = true;
-        // if (timer.joinable())
-        // {
-        //   timer.join();
-        // }
-        // ran out of time
-        logging::warning("Ran out of time - cancelling simulations");
-        return probabilities;
+        // ran out of time but timer should cance everything
+        return finalize_probabilities();
       }
       // runs_left = runs_required(i, &sizes, &means, &pct, *this);
       runs_left = runs_required(i, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
     }
   }
-  // is_out_of_time_ = true;
-  // if (timer.joinable())
-  // {
-  //   timer.join();
-  // }
-  return probabilities;
+  return finalize_probabilities();
 }
 int Model::runScenarios(const char* const weather_input,
                         const char* const raster_root,
@@ -840,6 +851,11 @@ int Model::runScenarios(const char* const weather_input,
   auto probabilities =
     model.runIterations(start_point, start, start_day, save_intensity);
   logging::note("Ran %d simulations", Scenario::completed());
+  const auto run_time_seconds = model.runTime();
+  const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds.count();
+  logging::debug("Finished successfully after %ld seconds with %ld seconds left",
+                  run_time_seconds.count(), time_left);
+  logging::debug("Processed %ld spread events between all scenarios", Scenario::total_steps());
   show_probabilities(probabilities);
   auto final_time = numeric_limits<double>::min();
   for (const auto by_time : probabilities)
