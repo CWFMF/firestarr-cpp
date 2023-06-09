@@ -19,7 +19,7 @@
 #include "Util.h"
 namespace tbd::topo
 {
-using SpreadKey = uint32;
+using SpreadKey = uint32_t;
 /**
  * \brief A Location with a Slope, Aspect, and Fuel.
  */
@@ -99,7 +99,7 @@ public:
    */
   [[nodiscard]] constexpr SpreadKey key() const noexcept
   {
-    // should be able to fit this in uint32
+    // should be able to fit this in uint32_t
     //constexpr auto key_mask = AspectMask | FuelMask | SlopeMask;
     //return static_cast<SpreadKey>((topo_data_ & key_mask) >> FuelShift);
     // can just shift since these are the only bits left after
@@ -165,13 +165,13 @@ protected:
   /**
    * \brief Shift for fuel bitmask
    */
-  static constexpr uint32 FuelShift = 32;
+  static constexpr uint32_t FuelShift = 32;
   // Need to make sure that fuel, slope & aspect aren't in first 32 bits
   static_assert(32 <= FuelShift);
   /**
    * \brief Number of bits in fuel bitmask
    */
-  static constexpr uint32 FuelBits = std::bit_width<uint32>(NUMBER_OF_FUELS);
+  static constexpr uint32_t FuelBits = std::bit_width<uint32_t>(NUMBER_OF_FUELS);
   /**
    * \brief Bitmask for fuel information in Topo before shift
    */
@@ -185,11 +185,11 @@ protected:
   /**
    * \brief Shift for aspect bitmask
    */
-  static constexpr uint32 AspectShift = FuelBits + FuelShift;
+  static constexpr uint32_t AspectShift = FuelBits + FuelShift;
   /**
    * \brief Number of bits in aspect bitmask
    */
-  static constexpr uint32 AspectBits = std::bit_width<uint32>(MAX_ASPECT);
+  static constexpr uint32_t AspectBits = std::bit_width<uint32_t>(MAX_ASPECT);
   /**
    * \brief Bitmask for aspect in Topo before shift
    */
@@ -202,11 +202,11 @@ protected:
   /**
    * \brief Shift for slope bitmask
    */
-  static constexpr uint32 SlopeShift = AspectBits + AspectShift;
+  static constexpr uint32_t SlopeShift = AspectBits + AspectShift;
   /**
    * \brief Number of bits in slope bitmask
    */
-  static constexpr uint32 SlopeBits = std::bit_width<uint32>(MAX_SLOPE_FOR_DISTANCE);
+  static constexpr uint32_t SlopeBits = std::bit_width<uint32_t>(MAX_SLOPE_FOR_DISTANCE);
   static_assert(SlopeBits == 7);
   /**
    * \brief Bitmask for slope in Topo before shift
@@ -222,7 +222,7 @@ protected:
    * \brief Bitmask for Cell information in Topo
    */
   static constexpr Topo CellMask = HashMask | FuelMask | AspectMask | SlopeMask;
-  static_assert(std::bit_width(std::numeric_limits<Topo>::max()) >= SlopeBits + SlopeShift);
+  static_assert(static_cast<size_t>(std::bit_width(std::numeric_limits<Topo>::max())) >= SlopeBits + SlopeShift);
 };
 /**
  * \brief Less than operator

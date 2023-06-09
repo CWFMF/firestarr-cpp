@@ -33,7 +33,7 @@ public:
 #ifdef NDEBUG
   explicit constexpr Location(const Idx, const Idx, const HashSize hash) noexcept
 #else
-  explicit constexpr Location(const Idx row, const Idx column, const HashSize hash) noexcept
+  explicit Location(const Idx row, const Idx column, const HashSize hash) noexcept
 #endif
     : topo_data_(hash & HashMask)
   {
@@ -50,7 +50,10 @@ public:
    * \param row Row
    * \param column Column
    */
-  constexpr Location(const Idx row, const Idx column) noexcept
+#ifdef NDEBUG
+  constexpr
+#endif
+  Location(const Idx row, const Idx column) noexcept
     : Location(row, column, doHash(row, column) & HashMask)
   {
 #ifndef NDEBUG
@@ -116,13 +119,13 @@ protected:
   /**
    * \brief Number of bits to use for storing one coordinate of location data
    */
-  static constexpr uint32 XYBits = std::bit_width<uint32>(MAX_ROWS - 1);
+  static constexpr uint32_t XYBits = std::bit_width<uint32_t>(MAX_ROWS - 1);
   static_assert(util::pow_int<XYBits, size_t>(2) == MAX_ROWS);
   static_assert(util::pow_int<XYBits, size_t>(2) == MAX_COLUMNS);
   /**
    * \brief Number of bits to use for storing location data
    */
-  static constexpr uint32 LocationBits = XYBits * 2;
+  static constexpr uint32_t LocationBits = XYBits * 2;
   /**
    * \brief Hash mask for bits being used for location data
    */

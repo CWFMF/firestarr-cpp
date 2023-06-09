@@ -709,6 +709,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     max_intensity_ = {};
     max_ros_ = 0.0;
   }
+  // size_t num_reused = 0;
   auto any_spread = false;
   for (const auto& kv : points_)
   {
@@ -733,8 +734,12 @@ void Scenario::scheduleFireSpread(const Event& event)
     {
       // already did the lookup so use the result
       any_spread |= !seek_spreading->second.empty();
+      // ++num_reused;
     }
   }
+  // // seems like it's reusing SpreadInfo most of the time (so that's probably not the bottleneck?)
+  // logging::debug("Reused SpreadInfo %ld times out of %ld calculations (%0.2f%%)",
+  //   num_reused, points_.size(), num_reused / static_cast<float>(points_.size()));
   if (!any_spread || max_ros_ < Settings::minimumRos())
   {
     log_verbose("Waiting until %f", max_time);

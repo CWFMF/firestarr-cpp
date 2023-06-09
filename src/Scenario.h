@@ -150,7 +150,11 @@ public:
    * \param column Column
    * \return Cell for given row and column
    */
-  [[nodiscard]] constexpr topo::Cell cell(const Idx row, const Idx column) const
+  [[nodiscard]]
+#ifdef NDEBUG
+  constexpr
+#endif
+  topo::Cell cell(const Idx row, const Idx column) const
   {
     return model_->cell(row, column);
   }

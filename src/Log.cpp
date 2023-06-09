@@ -165,12 +165,18 @@ void error(const char* format, ...) noexcept
     va_end(args);
   }
 }
-void fatal(const char* format, va_list* args) noexcept
+void fatal(const char* format, va_list* args)
+#ifdef NDEBUG
+noexcept
+#endif
 {
   // HACK: call the other version
   fatal<int>(format, args);
 }
-void fatal(const char* format, ...) noexcept
+void fatal(const char* format, ...)
+#ifdef NDEBUG
+noexcept
+#endif
 {
   va_list args;
   va_start(args, format);
@@ -178,14 +184,20 @@ void fatal(const char* format, ...) noexcept
   // cppcheck-suppress va_end_missing
   // va_end(args);
 }
-void check_fatal(const bool condition, const char* format, va_list* args) noexcept
+void check_fatal(const bool condition, const char* format, va_list* args)
+#ifdef NDEBUG
+noexcept
+#endif
 {
   if (condition)
   {
     fatal(format, args);
   }
 }
-void check_fatal(const bool condition, const char* format, ...) noexcept
+void check_fatal(const bool condition, const char* format, ...)
+#ifdef NDEBUG
+noexcept
+#endif
 {
   if (condition)
   {
@@ -255,7 +267,10 @@ void SelfLogger::log_error(const char* format, ...) const noexcept
   logging::output(LOG_ERROR, fmt.c_str(), &args);
   va_end(args);
 }
-void SelfLogger::log_check_fatal(bool condition, const char* format, ...) const noexcept
+void SelfLogger::log_check_fatal(bool condition, const char* format, ...) const
+#ifdef NDEBUG
+noexcept
+#endif
 {
   if (condition)
   {
@@ -267,7 +282,10 @@ void SelfLogger::log_check_fatal(bool condition, const char* format, ...) const 
   }
 }
 
-void SelfLogger::log_fatal(const char* format, ...) const noexcept
+void SelfLogger::log_fatal(const char* format, ...) const
+#ifdef NDEBUG
+noexcept
+#endif
 {
   va_list args;
   va_start(args, format);

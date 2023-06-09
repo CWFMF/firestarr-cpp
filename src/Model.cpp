@@ -572,8 +572,12 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     last_date = max(static_cast<Day>(start_day + i), last_date);
   }
   // use independent seeds so that if we remove one threshold it doesn't affect the other
-  std::seed_seq seed_spread{0.0, start, start_point.latitude(), start_point.longitude()};
-  std::seed_seq seed_extinction{1.0, start, start_point.latitude(), start_point.longitude()};
+  // HACK: seed_seq takes a list of integers now, so multiply and convert to get more digits
+  const auto lat = static_cast<size_t>(start_point.latitude() * pow(10, std::numeric_limits<size_t>::digits10 - 4));
+  const auto lon = static_cast<size_t>(start_point.longitude() * pow(10, std::numeric_limits<size_t>::digits10 - 4));
+  logging::debug("lat/long (%f, %f) converted to (%ld, %ld)", start_point.latitude(), start_point.longitude(), lat, lon);
+  std::seed_seq seed_spread{static_cast<size_t>(0), static_cast<size_t>(start_day), lat, lon};
+  std::seed_seq seed_extinction{static_cast<size_t>(1), static_cast<size_t>(start_day), lat, lon};
   mt19937 mt_spread(seed_spread);
   mt19937 mt_extinction(seed_extinction);
   vector<double> all_sizes{};
@@ -651,7 +655,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   });
   auto threads = list<std::thread>{};
   // const auto finalize_probabilities = [&threads, &timer, &probabilities](bool do_cancel) {
-    const auto finalize_probabilities = [&threads, &timer, &probabilities]() {
+  const auto finalize_probabilities = [&threads, &timer, &probabilities]() {
     // assume timer is cancelling everything
     for (auto& t : threads)
     {

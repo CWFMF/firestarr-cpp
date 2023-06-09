@@ -234,7 +234,7 @@ public:
                        std::function<R(V value)> convert) const
   {
     Idx min_row = this->rows();
-    int16 max_row = 0;
+    int16_t max_row = 0;
     Idx min_column = this->columns();
     Idx max_column = 0;
     for (const auto& kv : this->data)
@@ -316,10 +316,10 @@ public:
                       const string& base_name,
                       std::function<R(V value)> convert) const
   {
-    constexpr uint32 tileWidth = 256;
-    constexpr uint32 tileHeight = 256;
+    constexpr uint32_t tileWidth = 256;
+    constexpr uint32_t tileHeight = 256;
     Idx min_row = this->rows();
-    int16 max_row = 0;
+    int16_t max_row = 0;
     Idx min_column = this->columns();
     Idx max_column = 0;
     for (const auto& kv : this->data)
@@ -396,7 +396,7 @@ public:
       this->cellSize(),
       this->cellSize(),
       0.0};
-    uint32 bps = sizeof(R) * 8;
+    uint32_t bps = sizeof(R) * 8;
     // make sure to use floating point if values are
     if (std::is_floating_point<R>::value)
     {

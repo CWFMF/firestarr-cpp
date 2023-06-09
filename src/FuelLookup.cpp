@@ -449,7 +449,8 @@ public:
           const auto by_name = fuel_by_name_.find(str);
           if (by_name != fuel_by_name_.end())
           {
-            fuel_types_->at(value) = (*by_name).second;
+            const auto fuel_obj = (*by_name).second;
+            fuel_types_->at(value) = fuel_obj;
             if (DEFAULT_TYPES.at(name) != fuel
                 || "Not Available" == name
                 || "Non-fuel" == name
@@ -458,9 +459,23 @@ public:
                 || "Unknown" == name
                 || "Vegetated Non-Fuel" == name)
             {
-              logging::note("Fuel '%s' is treated like '%s'", name.c_str(), fuel.c_str());
+              logging::note("Fuel (%d, '%s') is treated like '%s' with internal code %d",
+                             value,
+                             name.c_str(),
+                             fuel.c_str(),
+                             fuel_obj->code());
+              // logging::note("Fuel '%s' is treated like '%s'", name.c_str(), fuel.c_str());
             }
-            fuel_grid_codes_[(*by_name).second] = value;
+            else
+            {
+              logging::debug("Fuel (%d, '%s') is treated like '%s' with internal code %d",
+                             value,
+                             name.c_str(),
+                             fuel.c_str(),
+                             fuel_obj->code());
+            }
+            fuel_grid_codes_[fuel_obj] = value;
+            fuel_good_values_.emplace(value, str);
           }
           else
           {
@@ -524,8 +539,9 @@ public:
    * \param nodata Value that represents no data
    * \return FuelType based on the given code
    */
-  const FuelType* intToFuel(const int value, const int nodata) const
+  const FuelType* codeToFuel(const FuelSize value, const FuelSize nodata) const
   {
+    // NOTE: this should be looking things up based on the .lut codes
     if (nodata == value)
     {
       return nullptr;
@@ -535,27 +551,44 @@ public:
     {
       // use [] for insert or change
       used_by_name_[FuelType::safeName(result)] = true;
+      // listFuels();
+      // logging::check_fatal(1 == result->code(), "Invalid fuel being converted");
     }
     return result;
+  }
+  /**
+   * \brief List all fuels and their codes
+  */
+  void listFuels() const
+  {
+    for (const auto& kv : fuel_good_values_)
+    {
+      logging::note("%ld => %s", kv.first, kv.second.c_str());
+    }
   }
   /**
    * \brief Look up the original grid code for a FuelType
    * \param value Value to use for lookup
    * \return Original grid code for the FuelType
    */
-  int fuelToInt(const FuelType* const value) const
+  FuelSize fuelToCode(const FuelType* const value) const
   {
     if (nullptr == value)
     {
       // HACK: for now assume 0 is always the invalid fuel type
-      return 0;
+      return INVALID_FUEL_CODE;
     }
     const auto seek = fuel_grid_codes_.find(value);
     if (seek != fuel_grid_codes_.end())
     {
       return seek->second;
     }
-    logging::fatal("Invalid FuelType lookup - was never used in grid");
+    // listFuels();
+    logging::warning("Invalid FuelType lookup: (%s, %ld) was never used in grid with %ld fuel codes defined",
+                     value->name(),
+                     value->code(),
+                     fuel_grid_codes_.size());
+    throw runtime_error("Converting fuel that wasn't in input grid to code");
     return 0;
   }
   /**
@@ -580,7 +613,7 @@ private:
   /**
    * \brief Map of FuelType to (first) original grid value
    */
-  unordered_map<const FuelType*, int> fuel_grid_codes_{};
+  unordered_map<const FuelType*, FuelSize> fuel_grid_codes_{};
   /**
    * \brief Map of fuel name to FuelType
    */
@@ -590,21 +623,29 @@ private:
    */
   mutable unordered_map<string, bool> used_by_name_{};
   /**
+   * \brief Codes from input .lut that were for fuel types that are implemented
+   */
+  unordered_map<FuelSize, string> fuel_good_values_{};
+  /**
    * \brief Codes from input .lut that were for fuel types that are not implemented
    */
   unordered_map<FuelSize, string> fuel_bad_values_{};
 };
-const FuelType* FuelLookup::intToFuel(const int value, const int nodata) const
+const FuelType* FuelLookup::codeToFuel(const FuelSize value, const FuelSize nodata) const
 {
-  return impl_->intToFuel(value, nodata);
+  return impl_->codeToFuel(value, nodata);
 }
-int FuelLookup::fuelToInt(const FuelType* const value) const
+void FuelLookup::listFuels() const
 {
-  return impl_->fuelToInt(value);
+  impl_->listFuels();
 }
-const FuelType* FuelLookup::operator()(const int value, const int nodata) const
+FuelSize FuelLookup::fuelToCode(const FuelType* const value) const
 {
-  return intToFuel(value, nodata);
+  return impl_->fuelToCode(value);
+}
+const FuelType* FuelLookup::operator()(const FuelSize value, const FuelSize nodata) const
+{
+  return codeToFuel(value, nodata);
 }
 set<const FuelType*> FuelLookup::usedFuels() const
 {

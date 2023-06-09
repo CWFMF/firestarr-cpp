@@ -134,46 +134,47 @@ using HashSize = uint32_t;
 /**
  * \brief Size of the index for a Cell
  */
-using CellIndex = uint8;
+using CellIndex = uint8_t;
 /**
  * \brief A row or column index for a grid
  */
-using Idx = int16;
+using Idx = int16_t;
 /**
  * \brief A row or column index for a grid not in memory yet
  */
-using FullIdx = int64;
+using FullIdx = int64_t;
 /**
  * \brief Type used for perimeter raster values (uses [0, 1])
  */
-// FIX: change to use smaller type at some point
-// using PerimSize = uint8;
-using PerimSize = uint16;
+// FIX: could try to get really fancy and use number of bits per pixel options
+using PerimSize = uint8_t;
+// using PerimSize = uint16_t;
 /**
  * \brief Type used for fuel values (uses [0 - 999]?)
  */
-using FuelSize = uint16;
-// using FuelSize = int16;
+// FIX: seriously does not like uint for some reason
+using FuelSize = uint16_t;
+// using FuelSize = int16_t;
 /**
  * \brief Type used for aspect values (uses [0 - 359])
  */
-using AspectSize = uint16;
+using AspectSize = uint16_t;
 /**
  * \brief Type used for elevation values (uses [? - 9800?])
  */
-using ElevationSize = int16;
+using ElevationSize = int16_t;
 /**
  * \brief Type used for slope values (uses [0 - MAX_SLOPE_FOR_DISTANCE])
  */
-using SlopeSize = uint8;
+using SlopeSize = uint8_t;
 /**
  * \brief Type used for storing intensities
  */
-using IntensitySize = uint16;
+using IntensitySize = uint16_t;
 /**
  * \brief A day (0 - 366)
  */
-using Day = uint16;
+using Day = uint16_t;
 static constexpr Day MAX_DAYS = 366;
 /**
  * \brief Maximum number of columns for an Environment
@@ -247,7 +248,7 @@ using AngleTableArray = array<double, 361>;
 /**
  * \brief Size to use for representing fuel types
  */
-using FuelCodeSize = uint8;
+using FuelCodeSize = uint8_t;
 /**
  * \brief Size to use for representing the data in a Cell
  */
@@ -255,7 +256,7 @@ using Topo = uint64_t;
 /**
  * \brief Size to use for representing sub-coordinates for location within a Cell
  */
-using SubSize = uint16;
+using SubSize = uint16_t;
 /**
  * \brief Coordinates (row, column, sub-row, sub-column)
  */
