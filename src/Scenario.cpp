@@ -892,8 +892,9 @@ void Scenario::endSimulation() noexcept
 }
 void Scenario::addSaveByOffset(const int offset)
 {
-  // +1 since yesterday is in here too
-  addSave(weather_->minDate() + offset + 1);
+  // offset is from begging of the day the simulation starts
+  // e.g. 1 is midnight, 2 is tomorrow at midnight
+  addSave(static_cast<Day>(startTime()) + offset);
 }
 vector<double> Scenario::savePoints() const
 {

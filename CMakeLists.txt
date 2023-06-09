@@ -25,3 +25,7 @@ set_source_files_properties(src/unstable.cpp PROPERTIES COMPILE_FLAGS "${CMAKE_C
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PUBLIC geotiff tiff Threads::Threads)
+
+add_custom_command(TARGET ${PROJECT_NAME}
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ../)
