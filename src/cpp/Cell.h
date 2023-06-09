@@ -228,7 +228,9 @@ protected:
    * \brief Bitmask for Cell information in Topo
    */
   static constexpr Topo CellMask = HashMask | FuelMask | AspectMask | SlopeMask;
-  static_assert(std::bit_width(std::numeric_limits<Topo>::max()) >= SlopeBits + SlopeShift);
+  static_assert(
+    static_cast<size_t>(std::bit_width(std::numeric_limits<Topo>::max())) >= SlopeBits + SlopeShift
+  );
 };
 /**
  * \brief Less than operator

@@ -60,22 +60,27 @@ public:
    * \return FuelType based on the given code
    */
   [[nodiscard]] const FuelType*
-  intToFuel(int value, int nodata) const;
+  codeToFuel(FuelSize value, FuelSize nodata) const;
+  /**
+   * \brief List all fuels and their codes
+   */
+  void
+  listFuels() const;
   /**
    * \brief Look up the original code for the given FuelType
    * \param value Value to use for lookup
    * \return code for the given FuelType
    */
-  [[nodiscard]] int
-  fuelToInt(const FuelType* const fuel) const;
+  [[nodiscard]] FuelSize
+  fuelToCode(const FuelType* fuel) const;
   /**
-   * \brief Look up a FuelType based on the given code
+   * \brief Look up a FuelType ba1ed on the given code
    * \param value Value to use for lookup
    * \param nodata Value that represents no data
    * \return FuelType based on the given code
    */
   [[nodiscard]] const FuelType*
-  operator()(int value, int nodata) const;
+  operator()(FuelSize value, FuelSize nodata) const;
   /**
    * \brief Retrieve set of FuelTypes that are used in the lookup table
    * \return set of FuelTypes that are used in the lookup table

@@ -22,11 +22,20 @@ public:
    * \brief Construct using hash of row and column
    * \param hash HashSize derived form row and column
    */
+// NOTE: do this so that we don't get warnings about unused variables in release mode
+#ifdef NDEBUG
   explicit constexpr Location(
+    const Idx,
+    const Idx,
+    const HashSize hash
+  ) noexcept
+#else
+  explicit Location(
     const Idx row,
     const Idx column,
     const HashSize hash
   ) noexcept
+#endif
     : topo_data_(hash & HashMask)
   {
 #ifndef NDEBUG
@@ -43,10 +52,13 @@ public:
    * \param row Row
    * \param column Column
    */
-  constexpr Location(
-    const Idx row,
-    const Idx column
-  ) noexcept
+#ifdef NDEBUG
+  constexpr
+#endif
+    Location(
+      const Idx row,
+      const Idx column
+    ) noexcept
     : Location(row, column, doHash(row, column) & HashMask)
   {
 #ifndef NDEBUG
@@ -141,10 +153,6 @@ protected:
   /**
    * \brief Hash mask for bits being used for location data
    */
-  static constexpr Topo RowMask = ColumnMask << XYBits;
-  /**
-   * \brief Hash mask for bits being used for location data
-   */
   static constexpr Topo HashMask = util::bit_mask<LocationBits, Topo>();
   static_assert(HashMask >= static_cast<size_t>(MAX_COLUMNS) * MAX_ROWS - 1);
   static_assert(HashMask <= std::numeric_limits<HashSize>::max());
@@ -176,23 +184,22 @@ protected:
    * \brief Row from hash
    * \return Row from hash
    */
-  [[nodiscard]] constexpr Idx
+  [[nodiscard]] static constexpr Idx
   unhashRow(
     const Topo row
-  ) const noexcept
+  ) noexcept
   {
-    // return static_cast<Idx>((row & RowMask) >> XYBits);
-    //  don't need to use mask since bits just get shifted out
+    // don't need to use mask since bits just get shifted out
     return static_cast<Idx>(row >> XYBits);
   }
   /**
    * \brief Column
    * \return Column
    */
-  [[nodiscard]] constexpr Idx
+  [[nodiscard]] static constexpr Idx
   unhashColumn(
     const Topo column
-  ) const noexcept
+  ) noexcept
   {
     return static_cast<Idx>(column & ColumnMask);
   }

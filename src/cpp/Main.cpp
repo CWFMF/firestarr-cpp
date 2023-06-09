@@ -441,7 +441,12 @@ main(
     }
     catch (const runtime_error& err)
     {
-      fs::logging::fatal(err.what());
+      // // const auto trace = std::stacktrace::from_current_exception();
+      // auto addr = std::array<void*>(10);
+      // auto trace_count = backtrace(&addr, 10);
+      // back
+      // // fs::logging::fatal("%s\n\n%s", err.what(), trace);
+      fs::logging::fatal("%s", err.what());
     }
   }
   return result;

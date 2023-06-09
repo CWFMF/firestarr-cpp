@@ -201,7 +201,10 @@ void
 fatal(
   const char* format,
   va_list* args
-) noexcept
+)
+#ifdef NDEBUG
+  noexcept
+#endif
 {
   // HACK: call the other version
   fatal<int>(format, args);
@@ -210,7 +213,10 @@ void
 fatal(
   const char* format,
   ...
-) noexcept
+)
+#ifdef NDEBUG
+  noexcept
+#endif
 {
   va_list args;
   va_start(args, format);
@@ -223,7 +229,10 @@ check_fatal(
   const bool condition,
   const char* format,
   va_list* args
-) noexcept
+)
+#ifdef NDEBUG
+  noexcept
+#endif
 {
   if (condition)
   {
@@ -235,7 +244,10 @@ check_fatal(
   const bool condition,
   const char* format,
   ...
-) noexcept
+)
+#ifdef NDEBUG
+  noexcept
+#endif
 {
   if (condition)
   {
@@ -338,7 +350,10 @@ SelfLogger::log_check_fatal(
   bool condition,
   const char* format,
   ...
-) const noexcept
+) const
+#ifdef NDEBUG
+  noexcept
+#endif
 {
   if (condition)
   {
@@ -354,7 +369,10 @@ void
 SelfLogger::log_fatal(
   const char* format,
   ...
-) const noexcept
+) const
+#ifdef NDEBUG
+  noexcept
+#endif
 {
   va_list args;
   va_start(args, format);

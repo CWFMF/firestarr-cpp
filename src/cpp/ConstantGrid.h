@@ -179,6 +179,12 @@ public:
     auto min_value = std::numeric_limits<V>::max();
     auto max_value = std::numeric_limits<V>::min();
 #endif
+    logging::debug("Reading a raster where T = %s, V = %s", typeid(T).name(), typeid(V).name());
+    logging::debug(
+      "Raster type V has limits %ld, %ld",
+      std::numeric_limits<V>::min(),
+      std::numeric_limits<V>::max()
+    );
     const GridBase grid_info = read_header(tif, gtif);
     int tile_width;
     int tile_length;
@@ -247,10 +253,32 @@ public:
     T no_data = convert(nodata, nodata);
     vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, no_data);
     logging::verbose("%s: malloc start", filename.c_str());
-    // FIX: why is this not using the size of the values?
-    // maybe TIFFTileSize() accounts for the size of the data type too?
+    int bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
+    int bps_int16_t = std::numeric_limits<int16_t>::digits
+                    + (1 * std::numeric_limits<int16_t>::is_signed);
+    int bps_file;
+    TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps_file);
+    logging::debug(
+      "Raster %s calculated bps for type V is %ld; tif says bps is %ld; int16_t is %ld",
+      filename.c_str(),
+      bps,
+      bps_file,
+      bps_int16_t
+    );
+    logging::check_fatal(
+      bps != bps_file,
+      "Raster %s type is not expected type (%ld bits instead of %ld)",
+      filename.c_str(),
+      bps_file,
+      bps
+    );
+    logging::debug("Size of pointer to int is %ld vs %ld", sizeof(int16_t*), sizeof(V*));
+    // V* buf = (V*)_TIFFmalloc(tileSize * sizeof(R));
+    // V* buf = (V*)_TIFFmalloc(TIFFTileSize(tif));
+    // // FIX: why is this not using the size of the values?
+    // // maybe TIFFTileSize() accounts for the size of the data type too?
     const auto buf = _TIFFmalloc(TIFFTileSize(tif));
-    // const auto buf = _TIFFmalloc(TIFFTileSize(tif) * sizeof(V));
+    // // const auto buf = _TIFFmalloc(TIFFTileSize(tif) * sizeof(V));
     logging::verbose("%s: read start", filename.c_str());
     const tsample_t smp{};
     logging::debug(
@@ -296,23 +324,50 @@ public:
               if (actual_column >= 0 && actual_column < MAX_ROWS)
               {
                 const auto cur_hash = actual_row * MAX_COLUMNS + actual_column;
-                auto cur = *(static_cast<int16_t*>(buf) + offset);
-                // auto cur = *(static_cast<V*>(buf) + offset);
+                // logging::check_fatal((static_cast<size_t>(static_cast<int16_t*>(buf) + offset) !=
+                // static_cast<size_t>(static_cast<V*>(buf) + offset)),
+                //   "Addresses are %ld, %ld",
+                //   static_cast<int16_t*>(buf) + offset,
+                //   static_cast<V*>(buf) + offset);
+                // HACK: FIX: for some reason this works with a specific type, but not with V
+                // auto cur = *(static_cast<int16_t*>(buf) + offset);
+                //                 auto orig = *(static_cast<int16_t*>(buf) + offset);
+                //                 auto cur = static_cast<V>(orig);
+                //                 auto cur_v = *(static_cast<V*>(buf) + offset);
+                //                 // logging::debug("cur is initially %ld and becomes %ld but loads
+                //                 as V: %ld", orig, cur, cur_v); logging::check_fatal(cur != cur_v,
+                //                   "cur is initially %ld and becomes %ld but loads as V: %ld",
+                //                   orig, cur, cur_v);
+                auto cur = *(static_cast<V*>(buf) + offset);
+                // auto cur = *(buf + offset);
 #ifndef NDEBUG
                 min_value = min(cur, min_value);
                 max_value = max(cur, max_value);
 #endif
-                try
-                {
-                  values.at(cur_hash) = convert(cur, nodata);
-                }
-                catch (const std::out_of_range& err)
-                {
-                  logging::error("Error trying to read tiff");
-                  logging::debug("cur = %d", cur);
-                  logging::debug("nodata = %d", nodata);
-                  logging::fatal(err.what());
-                }
+                // try
+                // {
+                values.at(cur_hash) = convert(cur, nodata);
+                // logging::check_fatal(Settings::fuelLookup().values.at(cur_hash));
+                // }
+                // // catch (const std::out_of_range& err)
+                // catch (const std::exception& err)
+                // {
+                //   logging::error("Error trying to read tiff");
+                //   logging::debug("cur = %d", cur);
+                //   logging::debug("nodata = %d", nodata);
+                //   logging::debug("T = %s, V = %s", typeid(T).name(), typeid(V).name());
+                //   if constexpr (std::is_same_v<T, const fs::fuel::FuelType*>)
+                //   {
+                //     auto f = static_cast<const fs::fuel::FuelType*>(values.at(cur_hash));
+                //     logging::debug("fuel %s has code %d",
+                //         fs::fuel::FuelType::safeName(f),
+                //         fs::fuel::FuelType::safeCode(f));
+                //   }
+                //   logging::warning(err.what());
+                //   // logging::fatal(err.what());
+                //   fs::sim::Settings::fuelLookup().listFuels();
+                //   throw err;
+                // }
               }
             }
           }
