@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 project(tbd)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -6,14 +9,12 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
+# set(CMAKE_CXX_FLAGS "-Wall -Wextra -std=c++23")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 add_compile_options(
         "$<$<CONFIG:RELEASE>:-O3;>"
         "$<$<CONFIG:DEBUG>:-O0;-fno-omit-frame-pointer;-g;>"
 )
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Threads REQUIRED)
 add_definitions(-D_POSIX_C_SOURCE=200809L)

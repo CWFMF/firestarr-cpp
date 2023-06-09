@@ -338,7 +338,12 @@ int main(const int argc, const char* const argv[])
     }
     catch (const runtime_error& err)
     {
-      tbd::logging::fatal(err.what());
+      // // const auto trace = std::stacktrace::from_current_exception();
+      // auto addr = std::array<void*>(10);
+      // auto trace_count = backtrace(&addr, 10);
+      // back
+      // // tbd::logging::fatal("%s\n\n%s", err.what(), trace);
+      tbd::logging::fatal("%s", err.what());
     }
   }
   return result;

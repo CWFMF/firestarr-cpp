@@ -195,7 +195,7 @@ public:
    * \param i Percentile to retrieve value for
    * \return Value for given percentile
    */
-  [[nodiscard]] double percentile(const uint8 i) const noexcept
+  [[nodiscard]] double percentile(const uint8_t i) const noexcept
   {
 #ifndef NDEBUG
     logging::check_fatal(static_cast<size_t>(i) >= percentiles_.size(),

@@ -19,7 +19,10 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-const int TIFFTAG_GDAL_NODATA = 42113;
+
+#ifndef TIFFTAG_GDAL_NODATA
+#define TIFFTAG_GDAL_NODATA 42113
+#endif
 
 /**
  * Open file and register GeoTIFF tags so we can read and write properly
@@ -172,7 +175,7 @@ static constexpr double RAD_180 = to_radians(180);
  * \param stream Stream to read from
  * \param str gstring to read into
  * \param delimiter Delimiter to stop at
- * \return 
+ * \return
  */
 template <class Elem,
           class Traits,

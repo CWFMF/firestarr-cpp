@@ -255,7 +255,7 @@ void ProbabilityMap::saveTotal(const string& base_name) const
 }
 void ProbabilityMap::saveTotalCount(const string& base_name) const
 {
-  all_.saveToProbabilityFile<uint32>(Settings::outputDirectory(), base_name, 1);
+  all_.saveToProbabilityFile<uint32_t>(Settings::outputDirectory(), base_name, 1);
 }
 void ProbabilityMap::saveHigh(const string& base_name) const
 {

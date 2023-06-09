@@ -162,7 +162,11 @@ public:
    * \param column Column
    * \return Cell at given row and column
    */
-  [[nodiscard]] constexpr Cell cell(const Idx row, const Idx column) const
+  [[nodiscard]]
+  #ifdef NDEBUG
+  constexpr
+  #endif
+  Cell cell(const Idx row, const Idx column) const
   {
     return cells_->at(Location(row, column));
   }
@@ -191,7 +195,11 @@ public:
    * \param column
    * \return
    */
-  [[nodiscard]] constexpr Cell offset(const sim::Event& event,
+  [[nodiscard]]
+  #ifdef NDEBUG
+  constexpr
+  #endif
+  Cell offset(const sim::Event& event,
                                       const Idx row,
                                       const Idx column) const
   {
@@ -288,6 +296,7 @@ protected:
         //        const auto f = fuel::FuelType::safeCode(fuel.at(h));
         if (r >= 0 && r < fuel.rows() && c >= 0 && c < fuel.columns())
         {
+          // NOTE: this needs to translate to internal codes?
           const auto f = fuel::FuelType::safeCode(fuel.at(loc));
           auto s = static_cast<SlopeSize>(0);
           auto a = static_cast<AspectSize>(0);
@@ -410,21 +419,23 @@ protected:
       not_burnable_(initializeNotBurnable(fuel))
   {
 #ifndef NDEBUG
+    logging::debug("Saving fuel grid");
     const auto lookup = sim::Settings::fuelLookup();
     if (sim::Settings::saveAsAscii())
     {
-      fuel.saveToAsciiFile<int>(string(sim::Settings::outputDirectory()),
+      fuel.saveToAsciiFile<FuelSize>(string(sim::Settings::outputDirectory()),
                                 "fuel",
-                                [&lookup](const fuel::FuelType* const value) { return lookup.fuelToInt(value); });
+                                [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
       elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
     }
     else
     {
-      fuel.saveToTiffFile<int>(string(sim::Settings::outputDirectory()),
-                               "fuel",
-                               [&lookup](const fuel::FuelType* const value) { return lookup.fuelToInt(value); });
+      fuel.saveToTiffFile<FuelSize>(string(sim::Settings::outputDirectory()),
+                                    "fuel",
+                                    [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
       elevation.saveToTiffFile(sim::Settings::outputDirectory(), "dem");
     }
+    logging::debug("Done saving fuel grid");
 #endif
     const auto coord = fuel.findCoordinates(point, false);
     // take elevation at point so that if max grid size changes elevation doesn't
