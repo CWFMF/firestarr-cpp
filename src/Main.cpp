@@ -196,8 +196,10 @@ int main(const int argc, const char* const argv[])
     {
       show_usage_and_exit();
     }
+#ifdef NDEBUG
     try
     {
+#endif
       if (6 <= ARGC)
       {
         string output_directory(ARGV[CUR_ARG++]);
@@ -335,16 +337,14 @@ int main(const int argc, const char* const argv[])
       {
         show_usage_and_exit();
       }
+#ifdef NDEBUG
     }
-    catch (const runtime_error& err)
+    catch (const std::exception& ex)
     {
-      // // const auto trace = std::stacktrace::from_current_exception();
-      // auto addr = std::array<void*>(10);
-      // auto trace_count = backtrace(&addr, 10);
-      // back
-      // // tbd::logging::fatal("%s\n\n%s", err.what(), trace);
-      tbd::logging::fatal("%s", err.what());
+      tbd::logging::fatal(ex);
+      std::terminate();
     }
+#endif
   }
   return result;
 }
