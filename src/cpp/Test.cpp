@@ -357,7 +357,7 @@ test(
   }
   catch (const runtime_error& err)
   {
-    logging::fatal(err.what());
+    logging::fatal(err);
   }
   return 0;
 }

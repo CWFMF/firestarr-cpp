@@ -30,8 +30,9 @@ SafeVector::operator=(
     values_ = rhs.values_;
     return *this;
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }
@@ -46,8 +47,9 @@ SafeVector::operator=(
     values_ = std::move(rhs.values_);
     return *this;
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }

@@ -38,8 +38,9 @@ Model::getBurnedVector() const noexcept
     //    environment().resetBurnedData(result);
     return result;
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }
@@ -58,8 +59,9 @@ Model::releaseBurnedVector(
     lock_guard<mutex> lock(vector_mutex_);
     vectors_.push_back(unique_ptr<BurnedData>(has_burned));
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }
@@ -132,10 +134,11 @@ Model::readWeather(
         {
           cur = static_cast<size_t>(stoi(str));
         }
-        catch (std::exception&)
+        catch (const std::exception& ex)
         {
           // HACK: somehow stoi() is still getting empty strings
           logging::fatal(
+            ex,
             "Error reading weather file %s: %s is not a valid integer",
             filename.c_str(),
             str.c_str()

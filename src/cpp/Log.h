@@ -75,7 +75,24 @@ public:
  * \return None
  */
 void
-output(int log_level, const char* format, va_list* args) noexcept;
+output(int log_level, const char* format, va_list* args)
+#ifdef NDEBUG
+  noexcept
+#endif
+  ;
+/**
+ * \brief Output a message to the log
+ * \param log_level Log level to use for label
+ * \param format Format string for message
+ * \param ... Arguments to format message with
+ * \return None
+ */
+void
+output(int log_level, const char* format, ...)
+#ifdef NDEBUG
+  noexcept
+#endif
+  ;
 /**
  * \brief Log with EXTENSIVE level
  * \param format Format string for message
@@ -148,6 +165,20 @@ fatal(const char* format, ...)
   noexcept
 #endif
   ;
+/**
+ * \brief Log with FATAL level and exit
+ * \param ex Exception that is causing fatal error
+ */
+void
+fatal(const std::exception& ex);
+/**
+ * \brief Log with FATAL level and exit
+ * \param ex Exception that is causing fatal error
+ * \param format Format string for message
+ * \param ... Arguments to format message with
+ */
+void
+fatal(const std::exception& ex, const char* format, ...);
 // templated so we can return it from any function and not get an error
 // about not returning on all paths
 /**

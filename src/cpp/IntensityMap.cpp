@@ -21,8 +21,9 @@ release_map(
     lock_guard<mutex> lock(MUTEX_MAPS);
     MAPS.push_back(std::move(map));
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }
@@ -42,8 +43,9 @@ acquire_map(
     }
     return model.environment().makeMap<IntensitySize>(false);
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }
