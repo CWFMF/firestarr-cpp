@@ -584,18 +584,22 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
 #endif
   ran_ = true;
 #ifndef NDEBUG
-  static const size_t BufferSize = 64;
-  char buffer[BufferSize + 1] = {0};
-  sprintf(buffer,
-          "%03zu_%06ld_extinction",
-          id(),
-          simulation());
-  saveProbabilities(Settings::outputDirectory(), string(buffer), extinction_thresholds_);
-  sprintf(buffer,
-          "%03zu_%06ld_spread",
-          id(),
-          simulation());
-  saveProbabilities(Settings::outputDirectory(), string(buffer), spread_thresholds_by_ros_);
+  // nice to have this get output when debugging, but only need it in extreme cases
+  if (logging::Log::getLogLevel() <= logging::LOG_EXTENSIVE)
+  {
+    static const size_t BufferSize = 64;
+    char buffer[BufferSize + 1] = {0};
+    sprintf(buffer,
+            "%03zu_%06ld_extinction",
+            id(),
+            simulation());
+    saveProbabilities(Settings::outputDirectory(), string(buffer), extinction_thresholds_);
+    sprintf(buffer,
+            "%03zu_%06ld_spread",
+            id(),
+            simulation());
+    saveProbabilities(Settings::outputDirectory(), string(buffer), spread_thresholds_by_ros_);
+  }
 #endif
   return this;
 }

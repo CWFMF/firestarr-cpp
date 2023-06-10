@@ -59,7 +59,10 @@ int Log::closeLogFile() noexcept
 {
   return fclose(out_);
 }
-void output(const int log_level, const char* format, va_list* args) noexcept
+void output(const int log_level, const char* format, va_list* args)
+#ifdef NDEBUG
+noexcept
+#endif
 {
   if (Log::getLogLevel() > log_level)
   {
@@ -90,10 +93,21 @@ void output(const int log_level, const char* format, va_list* args) noexcept
       }
     }
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
+}
+void output(const int log_level, const char* format, ...)
+#ifdef NDEBUG
+noexcept
+#endif
+{
+  va_list args;
+  va_start(args, format);
+  output(log_level, format, &args);
+  va_end(args);
 }
 void extensive(const char* format, ...) noexcept
 {
@@ -183,6 +197,23 @@ noexcept
   fatal(format, &args);
   // cppcheck-suppress va_end_missing
   // va_end(args);
+}
+void fatal(const std::exception& ex)
+{
+  output(LOG_FATAL, "%s", ex.what());
+  Log::closeLogFile();
+#ifdef NDEBUG
+  exit(EXIT_FAILURE);
+#endif
+}
+void fatal(const std::exception& ex, const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  output(LOG_FATAL, format, &args);
+  // cppcheck-suppress va_end_missing
+  // va_end(args);
+  fatal(ex);
 }
 void check_fatal(const bool condition, const char* format, va_list* args)
 #ifdef NDEBUG

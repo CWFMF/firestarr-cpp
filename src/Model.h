@@ -116,8 +116,9 @@ public:
     {
       s_.notify();
     }
-    catch (...)
+    catch (const std::exception& ex)
     {
+      logging::fatal(ex);
       std::terminate();
     }
   }

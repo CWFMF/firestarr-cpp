@@ -70,9 +70,10 @@ vector<string> find_rasters(const string& dir, const int year)
   {
     read_directory(raster_root, &results, "fuel.*\\.tif");
   }
-  catch (const std::exception& e)
+  catch (const std::exception& ex)
   {
     logging::error("Unable to read directory %s", raster_root.c_str());
+    logging::error("%s", ex.what());
   }
   return results;
 }

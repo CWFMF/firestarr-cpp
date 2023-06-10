@@ -48,8 +48,9 @@ BurnedData* Model::getBurnedVector() const noexcept
     //    environment().resetBurnedData(result);
     return result;
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }
@@ -65,9 +66,10 @@ void Model::releaseBurnedVector(BurnedData* has_burned) const noexcept
     lock_guard<mutex> lock(vector_mutex_);
     vectors_.push_back(unique_ptr<BurnedData>(has_burned));
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
-    std::terminate();
+      logging::fatal(ex);
+      std::terminate();
   }
 }
 Model::Model(const topo::StartPoint& start_point,
@@ -136,10 +138,10 @@ void Model::readWeather(const string& filename)
         {
           cur = static_cast<size_t>(stoi(str));
         }
-        catch (std::exception&)
+        catch (const std::exception& ex)
         {
           // HACK: somehow stoi() is still getting empty strings
-          logging::fatal("Error reading weather file %s: %s is not a valid integer", filename.c_str(), str.c_str());
+          logging::fatal(ex, "Error reading weather file %s: %s is not a valid integer", filename.c_str(), str.c_str());
         }
         if (wx.find(cur) == wx.end())
         {

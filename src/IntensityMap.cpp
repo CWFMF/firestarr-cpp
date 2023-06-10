@@ -29,8 +29,9 @@ static void release_map(unique_ptr<data::GridMap<IntensitySize>> map) noexcept
     lock_guard<mutex> lock(MUTEX_MAPS);
     MAPS.push_back(std::move(map));
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }
@@ -47,8 +48,9 @@ static unique_ptr<data::GridMap<IntensitySize>> acquire_map(const Model& model) 
     }
     return model.environment().makeMap<IntensitySize>(false);
   }
-  catch (...)
+  catch (const std::exception& ex)
   {
+    logging::fatal(ex);
     std::terminate();
   }
 }
