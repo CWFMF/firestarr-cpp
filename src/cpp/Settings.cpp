@@ -487,7 +487,7 @@ SettingsImplementation::SettingsImplementation(
   catch (const std::exception& ex)
   {
     logging::fatal(ex);
-    throw;
+    std::terminate();
   }
 }
 const char*
