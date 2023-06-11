@@ -449,7 +449,7 @@ SettingsImplementation::SettingsImplementation(const char* filename) noexcept
   catch (const std::exception& ex)
   {
     logging::fatal(ex);
-    throw;
+    std::terminate();
   }
 }
 const char* Settings::outputDirectory() noexcept
