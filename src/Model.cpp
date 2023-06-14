@@ -585,7 +585,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   vector<double> all_sizes{};
   vector<double> means{};
   vector<double> pct{};
-  size_t i = 0;
+  size_t runs_done = 0;
   vector<Iteration> all_iterations{};
   all_iterations.push_back(readScenarios(start_point,
                                   start,
@@ -625,7 +625,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   //   is_out_of_time_ = true;
   // });
   // typedef std::chrono::duration<float> s;
-  auto timer = std::thread([this, &runs_left, &all_iterations] (){
+  auto timer = std::thread([this, &runs_done, &runs_left, &all_iterations] (){
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
     // const auto SLEEP_INTERVAL = std::chrono::seconds(Settings::maximumTimeSeconds());
     do
@@ -642,10 +642,20 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     {
       logging::warning("Ran out of time - cancelling simulations");
     }
+    if (0 == runs_done)
+    {
+      logging::warning("Ran out of time, but haven't finished any iterations, so cancelling all but first");
+    }
+    size_t i = 0;
     for (auto& iter : all_iterations)
     {
-      // if not out of time then just did all the runs so no warning
-      iter.cancel(isOutOfTime());
+        // don't cancel first iteration if no iterations are done
+      if (0 != runs_done || 0 != i)
+      {
+        // if not out of time then just did all the runs so no warning
+        iter.cancel(isOutOfTime());
+      }
+      ++i;
     }
     const auto run_time_seconds = runTime().count();
     // const auto run_time = last_checked_ - startTime();
@@ -679,13 +689,16 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     // FIX: I think we can just have 2 Iteration objects and roll through starting
     // threads in the second one as the first one finishes?
     // const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() * PCT_CPU);
-    const auto MAX_THREADS = std::thread::hardware_concurrency() / 4;
+    const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() / 4);
     // const auto MAX_THREADS = std::thread::hardware_concurrency() - 1;
     // const auto MAX_CONCURRENT = std::max<size_t>(MAX_THREADS, 1);
     // const auto concurrent_iterations = std::max<size_t>(
     //   MAX_CONCURRENT / all_iterations[0].getScenarios().size(),
     //   1);
-    const auto concurrent_iterations = MAX_THREADS;
+    // HACK: just set max of 4 for now
+    const auto concurrent_iterations = std::min(
+      static_cast<size_t>(4), MAX_THREADS);
+    // const auto concurrent_iterations = MAX_THREADS;
     for (size_t x = 1; x < concurrent_iterations; ++x)
     {
       all_iterations.push_back(readScenarios(start_point,
@@ -730,21 +743,21 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         ++k;
       }
       auto final_sizes = iteration.finalSizes();
-      ++i;
+      ++runs_done;
       for (auto& kv : all_probabilities[cur_iter])
       {
         probabilities[kv.first]->addProbabilities(*kv.second);
         // clear so we don't double count
         kv.second->reset();
       }
-      if (!add_statistics(i, &all_sizes, &means, &pct, *this, final_sizes))
-      // if (!add_statistics(i, &means, &pct, *this, final_sizes))
+      if (!add_statistics(runs_done, &all_sizes, &means, &pct, *this, final_sizes))
+      // if (!add_statistics(runs_done, &means, &pct, *this, final_sizes))
       {
         // ran out of time but timer should cancel everything
         return finalize_probabilities();
       }
-      runs_left = runs_required(i, &all_sizes, &means, &pct, *this);
-      // runs_left = runs_required(i, &means, &pct, *this);
+      runs_left = runs_required(runs_done, &all_sizes, &means, &pct, *this);
+      // runs_left = runs_required(runs_done, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
       if (runs_left > 0)
       {
@@ -768,21 +781,21 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     logging::note("Running in synchronous mode");
     while (runs_left > 0)
     {
-      logging::note("Running iteration %d", i + 1);
+      logging::note("Running iteration %d", runs_done + 1);
       iteration.reset(&mt_extinction, &mt_spread);
       for (auto s : iteration.getScenarios())
       {
         s->run(&probabilities);
       }
-      ++i;
-      if (!add_statistics(i, &all_sizes, &means, &pct, *this, iteration.finalSizes()))
-      // if (!add_statistics(i, &means, &pct, *this, iteration.finalSizes()))
+      ++runs_done;
+      if (!add_statistics(runs_done, &all_sizes, &means, &pct, *this, iteration.finalSizes()))
+      // if (!add_statistics(runs_done, &means, &pct, *this, iteration.finalSizes()))
       {
         // ran out of time but timer should cance everything
         return finalize_probabilities();
       }
-      runs_left = runs_required(i, &all_sizes, &means, &pct, *this);
-      // runs_left = runs_required(i, &means, &pct, *this);
+      runs_left = runs_required(runs_done, &all_sizes, &means, &pct, *this);
+      // runs_left = runs_required(runs_done, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
     }
   }
