@@ -1224,9 +1224,10 @@ template <class FuelSpring, class FuelSummer>
                                                     FuelSpring,
                                                     FuelSummer>& fuel) noexcept
 {
+  // if not green yet, then still in spring conditions
   return calculate_is_green(nd)
-         ? fuel.spring()
-         : fuel.summer();
+         ? fuel.summer()
+         : fuel.spring();
 }
 template <class FuelSpring, class FuelSummer>
 [[nodiscard]] double compare_by_season(const FuelVariable<FuelSpring, FuelSummer>& fuel,
