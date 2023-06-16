@@ -26,9 +26,9 @@ public:
   {
   }
 };
-static const wx::Temperature TMP(20.0);
+static const wx::Temperature TEMP(20.0);
 static const wx::RelativeHumidity RH(30.0);
-static const wx::AccumulatedPrecipitation APCP(0.0);
+static const wx::Precipitation PREC(0.0);
 static vector<const wx::FwiWeather*>*
 make_weather(
   const wx::Dc& dc,
@@ -41,10 +41,10 @@ make_weather(
   auto wx = new vector<const wx::FwiWeather*>{static_cast<size_t>(YEAR_HOURS)};
   std::generate(wx->begin(), wx->end(), [&wind, &ffmc, &dmc, &dc, &bui]() {
     return make_unique<wx::FwiWeather>(
-             TMP,
+             TEMP,
              RH,
              wind,
-             APCP,
+             PREC,
              ffmc,
              dmc,
              dc,
@@ -130,6 +130,7 @@ public:
     : Scenario(
         model,
         1,
+        weather,
         weather,
         start_date,
         start_cell,
