@@ -74,7 +74,8 @@ public:
    * \brief Constructor
    * \param model Model running this Scenario
    * \param id Identifier
-   * \param weather Weather stream to use
+   * \param weather Hourly weather stream to use
+   * \param weather Weather stream to use for spread and extinction probability
    * \param start_time Start time for simulation
   //  * \param initial_intensity Intensity grid to start from
    * \param perimeter Perimeter to initialize with
@@ -85,8 +86,9 @@ public:
   Scenario(Model* model,
            size_t id,
            wx::FireWeather* weather,
+           wx::FireWeather* weather_daily,
            double start_time,
-          //  const shared_ptr<IntensityMap>& initial_intensity,
+           //  const shared_ptr<IntensityMap>& initial_intensity,
            const shared_ptr<topo::Perimeter>& perimeter,
            const topo::StartPoint& start_point,
            Day start_day,
@@ -95,7 +97,8 @@ public:
    * \brief Constructor
    * \param model Model running this Scenario
    * \param id Identifier
-   * \param weather Weather stream to use
+   * \param weather Hourly weather stream to use
+   * \param weather Weather stream to use for spread and extinction probability
    * \param start_time Start time for simulation
    * \param start_cell Cell to start ignition in
    * \param start_point StartPoint to use sunrise/sunset times from
@@ -105,6 +108,7 @@ public:
   Scenario(Model* model,
            size_t id,
            wx::FireWeather* weather,
+           wx::FireWeather* weather_daily,
            double start_time,
            const shared_ptr<topo::Cell>& start_cell,
            const topo::StartPoint& start_point,
@@ -154,7 +158,8 @@ public:
 #ifdef NDEBUG
   constexpr
 #endif
-  topo::Cell cell(const Idx row, const Idx column) const
+    topo::Cell
+    cell(const Idx row, const Idx column) const
   {
     return model_->cell(row, column);
   }
@@ -266,6 +271,10 @@ public:
   [[nodiscard]] const wx::FwiWeather* weather(const double time) const
   {
     return weather_->at(time);
+  }
+  [[nodiscard]] const wx::FwiWeather* weather_daily(const double time) const
+  {
+    return weather_daily_->at(time);
   }
   /**
    * \brief Difference between date and the date of minimum foliar moisture content
@@ -427,7 +436,11 @@ public:
   {
     try
     {
-      const auto wx = weather_->at(time);
+      // const auto fire_wx = weather_;
+      // NOTE: Does using daily makes sense if we're looking at moisture?
+      // HACK: use daily with diurnal curves to be consistent with pre-hourly wx version
+      const auto fire_wx = weather_daily_;
+      const auto wx = fire_wx->at(time);
       // use Mike's table
       const auto mc = wx->mcDmcPct();
       if (100 > mc
@@ -440,11 +453,11 @@ public:
         return true;
       }
       // we can look by fuel type because the entire landscape shares the weather
-      return extinctionThreshold(time) < weather_->survivalProbability(
-              time,
-              cell.fuelCode());
+      return extinctionThreshold(time) < fire_wx->survivalProbability(
+               time,
+               cell.fuelCode());
     }
-    catch(const std::out_of_range& e)
+    catch (const std::out_of_range& e)
     {
       // FIX: just ignore for now
       // std::cerr << e.what() << '\n';
@@ -488,7 +501,8 @@ protected:
    * \brief Constructor
    * \param model Model running this Scenario
    * \param id Identifier
-   * \param weather Weather stream to use
+   * \param weather Hourly weather stream to use
+   * \param weather Weather stream to use for spread and extinction probability
    * \param start_time Start time for simulation
    * \param start_point StartPoint to use sunrise/sunset times from
    * \param start_day First day of simulation
@@ -497,8 +511,9 @@ protected:
   Scenario(Model* model,
            size_t id,
            wx::FireWeather* weather,
+           wx::FireWeather* weather_daily,
            double start_time,
-          //  const shared_ptr<IntensityMap>& initial_intensity,
+           //  const shared_ptr<IntensityMap>& initial_intensity,
            const shared_ptr<topo::Perimeter>& perimeter,
            const shared_ptr<topo::Cell>& start_cell,
            topo::StartPoint start_point,
@@ -569,9 +584,13 @@ protected:
    */
   shared_ptr<topo::Cell> start_cell_;
   /**
-   * \brief Weather to use for this Scenario
+   * \brief Hourly weather to use for this Scenario
    */
   wx::FireWeather* weather_;
+  /**
+   * \brief Weather stream to use for spread and extinction probability
+  */
+  wx::FireWeather* weather_daily_;
   /**
    * \brief Model this Scenario is being run in
    */

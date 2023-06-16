@@ -24,7 +24,7 @@ Startup::Startup(string station,
                  const Ffmc& ffmc,
                  const Dmc& dmc,
                  const Dc& dc,
-                 const AccumulatedPrecipitation& apcp_0800,
+                 const Precipitation& apcp_prev,
                  const bool overridden) noexcept
   : station_(std::move(station)),
     generated_(generated),
@@ -33,7 +33,7 @@ Startup::Startup(string station,
     ffmc_(ffmc),
     dmc_(dmc),
     dc_(dc),
-    apcp_0800_(apcp_0800),
+    apcp_prev_(apcp_prev),
     is_overridden_(overridden)
 {
 }

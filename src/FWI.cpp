@@ -61,7 +61,7 @@ const FwiWeather FwiWeather::Zero{
   Temperature(0),
   RelativeHumidity(0),
   Wind(Direction(0, false), Speed(0)),
-  AccumulatedPrecipitation(0),
+  Precipitation(0),
   Ffmc::Zero,
   Dmc::Zero,
   Dc::Zero,
@@ -256,7 +256,7 @@ double find_m(const Temperature& temperature, const RelativeHumidity& rh, const 
 static double calculate_ffmc(const Temperature& temperature,
                              const RelativeHumidity& rh,
                              const Speed& wind,
-                             const AccumulatedPrecipitation& rain,
+                             const Precipitation& rain,
                              const Ffmc& ffmc_previous) noexcept
 {
   //'''/* 1  '*/
@@ -285,7 +285,7 @@ static double calculate_ffmc(const Temperature& temperature,
 Ffmc::Ffmc(const Temperature& temperature,
            const RelativeHumidity& rh,
            const Speed& wind,
-           const AccumulatedPrecipitation& rain,
+           const Precipitation& rain,
            const Ffmc& ffmc_previous) noexcept
   : Ffmc(calculate_ffmc(temperature, rh, wind, rain, ffmc_previous))
 {
@@ -303,7 +303,7 @@ Ffmc::Ffmc(const Temperature& temperature,
 //******************************************************************************************
 static double calculate_dmc(const Temperature& temperature,
                             const RelativeHumidity& rh,
-                            const AccumulatedPrecipitation& rain,
+                            const Precipitation& rain,
                             const Dmc& dmc_previous,
                             const int month,
                             const double latitude) noexcept
@@ -341,7 +341,7 @@ static double calculate_dmc(const Temperature& temperature,
 }
 Dmc::Dmc(const Temperature& temperature,
          const RelativeHumidity& rh,
-         const AccumulatedPrecipitation& rain,
+         const Precipitation& rain,
          const Dmc& dmc_previous,
          const int month,
          const double latitude) noexcept
@@ -359,7 +359,7 @@ Dmc::Dmc(const Temperature& temperature,
 //    month is the month of Year (1..12) for the current day's calculations.
 //******************************************************************************************
 static double calculate_dc(const Temperature& temperature,
-                           const AccumulatedPrecipitation& rain,
+                           const Precipitation& rain,
                            const Dc& dc_previous,
                            const int month,
                            const double latitude) noexcept
@@ -389,7 +389,7 @@ static double calculate_dc(const Temperature& temperature,
   return max(0.0, d);
 }
 Dc::Dc(const Temperature& temperature,
-       const AccumulatedPrecipitation& rain,
+       const Precipitation& rain,
        const Dc& dc_previous,
        const int month,
        const double latitude) noexcept
@@ -550,14 +550,14 @@ inline double stod(const string* const str)
 FwiWeather read(istringstream* iss,
                 string* str)
 {
-  // APCP
+  // PREC
   util::getline(iss, str, ',');
-  logging::extensive("APCP is %s", str->c_str());
-  const AccumulatedPrecipitation apcp(stod(str));
-  // TMP
+  logging::extensive("PREC is %s", str->c_str());
+  const Precipitation prec(stod(str));
+  // TEMP
   util::getline(iss, str, ',');
-  logging::extensive("TMP is %s", str->c_str());
-  const Temperature tmp(stod(str));
+  logging::extensive("TEMP is %s", str->c_str());
+  const Temperature temp(stod(str));
   // RH
   util::getline(iss, str, ',');
   logging::extensive("RH is %s", str->c_str());
@@ -590,7 +590,7 @@ FwiWeather read(istringstream* iss,
   util::getline(iss, str, ',');
   logging::extensive("FWI is %s", str->c_str());
   const Fwi fwi(stod(str), isi, bui);
-  return {tmp, rh, wind, apcp, ffmc, dmc, dc, isi, bui, fwi};
+  return {temp, rh, wind, prec, ffmc, dmc, dc, isi, bui, fwi};
 }
 FwiWeather::FwiWeather(istringstream* iss,
                        string* str)
@@ -603,17 +603,17 @@ double ffmc_effect(const Ffmc& ffmc) noexcept
   const auto mc = 147.2 * (101.0 - v) / (59.5 + v);
   return 91.9 * exp(-0.1386 * mc) * (1 + pow(mc, 5.31) / 49300000.0);
 }
-FwiWeather::FwiWeather(const Temperature& tmp,
+FwiWeather::FwiWeather(const Temperature& temp,
                        const RelativeHumidity& rh,
                        const Wind& wind,
-                       const AccumulatedPrecipitation& apcp,
+                       const Precipitation& prec,
                        const Ffmc& ffmc,
                        const Dmc& dmc,
                        const Dc& dc,
                        const Isi& isi,
                        const Bui& bui,
                        const Fwi& fwi) noexcept
-  : Weather(tmp, rh, wind, apcp),
+  : Weather(temp, rh, wind, prec),
     ffmc_(ffmc),
     dmc_(dmc),
     dc_(dc),
@@ -626,14 +626,30 @@ FwiWeather::FwiWeather(const Temperature& tmp,
     ffmc_effect_(ffmc_effect(ffmc))
 {
 }
+FwiWeather::FwiWeather(const FwiWeather& yesterday,
+                       const int month,
+                       const double latitude,
+                       const Temperature& temp,
+                       const RelativeHumidity& rh,
+                       const Wind& wind,
+                       const Precipitation& prec)
+  : FwiWeather(temp,
+               rh,
+               wind,
+               prec,
+               Ffmc(temp, rh, wind.speed(), prec, yesterday.ffmc()),
+               Dmc(temp, rh, prec, yesterday.dmc(), month, latitude),
+               Dc(temp, prec, yesterday.dc(), month, latitude))
+{
+}
 FwiWeather::FwiWeather(const FwiWeather& wx,
                        const Wind& wind,
                        const Ffmc& ffmc,
                        const Isi& isi) noexcept
-  : FwiWeather(wx.tmp(),
+  : FwiWeather(wx.temp(),
                wx.rh(),
                wind,
-               wx.apcp(),
+               wx.prec(),
                ffmc,
                wx.dmc(),
                wx.dc(),
@@ -654,26 +670,26 @@ FwiWeather::FwiWeather() noexcept
   : FwiWeather(Zero)
 {
 }
-FwiWeather::FwiWeather(const Temperature& tmp,
+FwiWeather::FwiWeather(const Temperature& temp,
                        const RelativeHumidity& rh,
                        const Wind& wind,
-                       const AccumulatedPrecipitation& apcp,
+                       const Precipitation& prec,
                        const Ffmc& ffmc,
                        const Dmc& dmc,
                        const Dc& dc,
                        const Isi& isi,
                        const Bui& bui) noexcept
-  : FwiWeather(tmp, rh, wind, apcp, ffmc, dmc, dc, isi, bui, Fwi(isi, bui))
+  : FwiWeather(temp, rh, wind, prec, ffmc, dmc, dc, isi, bui, Fwi(isi, bui))
 {
 }
-FwiWeather::FwiWeather(const Temperature& tmp,
+FwiWeather::FwiWeather(const Temperature& temp,
                        const RelativeHumidity& rh,
                        const Wind& wind,
-                       const AccumulatedPrecipitation& apcp,
+                       const Precipitation& prec,
                        const Ffmc& ffmc,
                        const Dmc& dmc,
                        const Dc& dc) noexcept
-  : FwiWeather(tmp, rh, wind, apcp, ffmc, dmc, dc, Isi(wind.speed(), ffmc), Bui(dmc, dc))
+  : FwiWeather(temp, rh, wind, prec, ffmc, dmc, dc, Isi(wind.speed(), ffmc), Bui(dmc, dc))
 {
 }
 }

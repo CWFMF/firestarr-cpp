@@ -100,10 +100,10 @@ public:
    * \brief Weather by hour by day
    * \return Weather by hour by day
    */
-   [[nodiscard]] const vector<const FwiWeather*>* getWeather()
-   {
-     return weather_by_hour_by_day_;
-   }
+  [[nodiscard]] const vector<const FwiWeather*>* getWeather()
+  {
+    return weather_by_hour_by_day_;
+  }
 
   /**
    * \brief Constructor

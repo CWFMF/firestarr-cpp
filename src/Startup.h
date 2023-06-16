@@ -85,12 +85,12 @@ public:
     return dc_;
   }
   /**
-   * \brief Accumulated Precipitation at 0800 (mm)
-   * \return Accumulated Precipitation at 0800 (mm)
+   * \brief Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
+   * \return Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
    */
-  [[nodiscard]] constexpr const AccumulatedPrecipitation& apcp0800() const noexcept
+  [[nodiscard]] constexpr const Precipitation& apcpPrev() const noexcept
   {
-    return apcp_0800_;
+    return apcp_prev_;
   }
   /**
    * \brief Whether or not any Startup values were overridden
@@ -109,7 +109,7 @@ public:
  * \param ffmc Fine Fuel Moisture Code
  * \param dmc Duff Moisture Code
  * \param dc Drought Code
- * \param apcp_0800 Accumulated Precipitation at 0800 (mm)
+ * \param apcp_prev Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
  * \param overridden whether or not any Startup values were overridden
  */
   Startup(string station,
@@ -119,7 +119,7 @@ public:
           const Ffmc& ffmc,
           const Dmc& dmc,
           const Dc& dc,
-          const AccumulatedPrecipitation& apcp_0800,
+          const Precipitation& apcp_prev,
           bool overridden) noexcept;
   /**
    * \brief Move constructor
@@ -177,9 +177,9 @@ private:
    */
   Dc dc_;
   /**
-   * \brief Accumulated Precipitation at 0800 (mm)
+   * \brief Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
    */
-  AccumulatedPrecipitation apcp_0800_;
+  Precipitation apcp_prev_;
   /**
    * \brief Whether or not any of the indices have been overridden
    */

@@ -23,6 +23,6 @@ const RelativeHumidity RelativeHumidity::Zero = RelativeHumidity(0);
 const Direction Direction::Zero = Direction(0, false);
 const Speed Speed::Zero = Speed(0);
 const Wind Wind::Zero = Wind(Direction(0, false), Speed(0));
-const AccumulatedPrecipitation AccumulatedPrecipitation::Zero =
-  AccumulatedPrecipitation(0);
+const Precipitation Precipitation::Zero =
+  Precipitation(0);
 }

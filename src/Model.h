@@ -23,7 +23,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <vector>
 #include "Environment.h"
 #include "Iteration.h"
 namespace tbd
@@ -132,6 +131,7 @@ public:
   /**
    * \brief Run Scenarios initialized from given inputs
    * \param weather_input Name of file to read weather from
+   * \param yesterday FwiWeather yesterday used for startup indices
    * \param raster_root Directory to read raster inputs from
    * \param start_point StartPoint to use for sunrise/sunset
    * \param start_time Start time for simulation
@@ -141,6 +141,7 @@ public:
    * \return
    */
   [[nodiscard]] static int runScenarios(const char* weather_input,
+                                        const wx::FwiWeather& yesterday,
                                         const char* raster_root,
                                         const topo::StartPoint& start_point,
                                         const tm& start_time,
@@ -157,7 +158,8 @@ public:
 #ifdef NDEBUG
   constexpr
 #endif
-  topo::Cell cell(const Idx row, const Idx column) const
+    topo::Cell
+    cell(const Idx row, const Idx column) const
   {
     return env_->cell(row, column);
   }
@@ -285,9 +287,13 @@ public:
   Model& operator=(const Model& rhs) = delete;
   /**
    * \brief Read weather used for Scenarios
+   * \param yesterday FwiWeather for yesterday
+   * \param latitude Latitude to calculate for
    * \param filename Weather file to read
    */
-  void readWeather(const string& filename);
+  void readWeather(const wx::FwiWeather& yesterday,
+                   const double latitude,
+                   const string& filename);
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
@@ -362,6 +368,10 @@ private:
    */
   map<size_t, shared_ptr<wx::FireWeather>> wx_{};
   /**
+   * \brief Map of scenario number to weather stream
+   */
+  map<size_t, shared_ptr<wx::FireWeather>> wx_daily_{};
+  /**
    * \brief Cell(s) that can burn closest to start Location
    */
   vector<shared_ptr<topo::Cell>> starts_{};
@@ -386,9 +396,17 @@ private:
    */
   topo::Environment* env_;
   /**
-   * \brief Write the hourly weather that was loaded to an output file
+   * \brief Write weather that was loaded to an output file
    */
   void outputWeather();
+  /**
+   * \brief Write weather that was loaded to an output file
+   * \param weather Weather to write
+   * \param file_name Name of file to write to
+   */
+  void outputWeather(
+    map<size_t, shared_ptr<wx::FireWeather>>& weather,
+    const char* file_name);
   /**
    * \brief What year the weather is for
    */
