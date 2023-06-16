@@ -972,6 +972,7 @@ Model::runScenarios(
     );
   }
   // want to output internal representation of weather to file
+  // FIX: debug only?
   model.outputWeather();
   model.makeStarts(*position, start_point, perimeter, size);
   auto

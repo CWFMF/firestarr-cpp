@@ -452,7 +452,7 @@ protected:
     const auto lookup = sim::Settings::fuelLookup();
     if (sim::Settings::saveAsAscii())
     {
-      fuel.saveToAsciiFile<FuelSize>(
+      fuel.saveToAsciiFile(
         string(sim::Settings::outputDirectory()),
         "fuel",
         [&lookup](const fuel::FuelType* const value) {
@@ -463,7 +463,7 @@ protected:
     }
     else
     {
-      fuel.saveToTiffFile<FuelSize>(
+      fuel.saveToTiffFile(
         string(sim::Settings::outputDirectory()),
         "fuel",
         [&lookup](const fuel::FuelType* const value) {

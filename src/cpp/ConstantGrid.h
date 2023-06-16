@@ -254,10 +254,12 @@ public:
     vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, no_data);
     logging::verbose("%s: malloc start", filename.c_str());
     int bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
-    int bps_int16_t = std::numeric_limits<int16_t>::digits
-                    + (1 * std::numeric_limits<int16_t>::is_signed);
     int bps_file;
     TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps_file);
+#ifndef NDEBUG
+    int bps_int16_t = std::numeric_limits<int16_t>::digits
+                    + (1 * std::numeric_limits<int16_t>::is_signed);
+    logging::debug("Size of pointer to int is %ld vs %ld", sizeof(int16_t*), sizeof(V*));
     logging::debug(
       "Raster %s calculated bps for type V is %ld; tif says bps is %ld; int16_t is %ld",
       filename.c_str(),
@@ -265,6 +267,7 @@ public:
       bps_file,
       bps_int16_t
     );
+#endif
     logging::check_fatal(
       bps != bps_file,
       "Raster %s type is not expected type (%ld bits instead of %ld)",
@@ -272,13 +275,9 @@ public:
       bps_file,
       bps
     );
-    logging::debug("Size of pointer to int is %ld vs %ld", sizeof(int16_t*), sizeof(V*));
-    // V* buf = (V*)_TIFFmalloc(tileSize * sizeof(R));
-    // V* buf = (V*)_TIFFmalloc(TIFFTileSize(tif));
-    // // FIX: why is this not using the size of the values?
-    // // maybe TIFFTileSize() accounts for the size of the data type too?
-    const auto buf = _TIFFmalloc(TIFFTileSize(tif));
-    // // const auto buf = _TIFFmalloc(TIFFTileSize(tif) * sizeof(V));
+    const auto tile_size = TIFFTileSize(tif);
+    logging::debug("Tile size for reading %s is %ld", filename.c_str(), tile_size);
+    const auto buf = _TIFFmalloc(tile_size);
     logging::verbose("%s: read start", filename.c_str());
     const tsample_t smp{};
     logging::debug(
@@ -292,54 +291,24 @@ public:
     );
     for (auto h = tile_row; h <= max_row; h += tile_length)
     {
-      //      const auto y_min = static_cast<FullIdx>(max(static_cast<FullIdx>(0), min_row - h));
-      //      const auto y_limit = min(static_cast<FullIdx>(tile_length),
-      //                               min(static_cast<FullIdx>(actual_rows), max_row) - h);
       for (auto w = tile_column; w <= max_column; w += tile_width)
       {
         TIFFReadTile(tif, buf, static_cast<uint32_t>(w), static_cast<uint32_t>(h), 0, smp);
-        //        const auto x_min = static_cast<FullIdx>(max(static_cast<FullIdx>(0), min_column -
-        //        w)); const auto x_limit = min(static_cast<FullIdx>(tile_width),
-        //                                 min(actual_columns,
-        //                                     max_column)
-        //                                   - w);
-        //        for (auto y = y_min; y < y_limit; ++y)
         for (auto y = 0; (y < tile_length) && (y + h <= max_row); ++y)
         {
           // read in so that (0, 0) has a hash of 0
-          //          const FullIdx cur_row = (static_cast<FullIdx>(h) + y);
-          //          const FullIdx i = static_cast<FullIdx>(MAX_ROWS) - (cur_row - min_row + 1);
-          //          for (auto x = x_min; x < x_limit; ++x)
           const auto y_row = static_cast<HashSize>((h - min_row) + y);
           const auto actual_row = (max_row - min_row) - y_row;
           if (actual_row >= 0 && actual_row < MAX_ROWS)
           {
             for (auto x = 0; (x < tile_width) && (x + w <= max_column); ++x)
             {
-              //            const auto cur_hash = static_cast<HashSize>(i) * MAX_COLUMNS + (w -
-              //            min_column + 1) + x; const auto offset = (y - (static_cast<HashSize>(y /
-              //            tile_length) * tile_length)) + x;
               const auto offset = y * tile_width + x;
               const auto actual_column = ((w - min_column) + x);
               if (actual_column >= 0 && actual_column < MAX_ROWS)
               {
                 const auto cur_hash = actual_row * MAX_COLUMNS + actual_column;
-                // logging::check_fatal((static_cast<size_t>(static_cast<int16_t*>(buf) + offset) !=
-                // static_cast<size_t>(static_cast<V*>(buf) + offset)),
-                //   "Addresses are %ld, %ld",
-                //   static_cast<int16_t*>(buf) + offset,
-                //   static_cast<V*>(buf) + offset);
-                // HACK: FIX: for some reason this works with a specific type, but not with V
-                // auto cur = *(static_cast<int16_t*>(buf) + offset);
-                //                 auto orig = *(static_cast<int16_t*>(buf) + offset);
-                //                 auto cur = static_cast<V>(orig);
-                //                 auto cur_v = *(static_cast<V*>(buf) + offset);
-                //                 // logging::debug("cur is initially %ld and becomes %ld but loads
-                //                 as V: %ld", orig, cur, cur_v); logging::check_fatal(cur != cur_v,
-                //                   "cur is initially %ld and becomes %ld but loads as V: %ld",
-                //                   orig, cur, cur_v);
                 auto cur = *(static_cast<V*>(buf) + offset);
-                // auto cur = *(buf + offset);
 #ifndef NDEBUG
                 min_value = min(cur, min_value);
                 max_value = max(cur, max_value);
@@ -469,7 +438,7 @@ public:
     const string& base_name
   ) const
   {
-    saveToAsciiFile<V>(dir, base_name, [](V value) {
+    saveToAsciiFile(dir, base_name, [](V value) {
       return value;
     });
   }
@@ -480,12 +449,11 @@ public:
    * \param base_name File base name to use
    * \param convert Function to convert from V to R
    */
-  template <class R>
   void
   saveToAsciiFile(
     const string& dir,
     const string& base_name,
-    std::function<R(T)> convert
+    std::function<V(T)> convert
   ) const
   {
     Idx min_row = 0;
@@ -533,7 +501,7 @@ public:
     const string& base_name
   ) const
   {
-    saveToTiffFile<V>(dir, base_name, [](V value) {
+    saveToTiffFile(dir, base_name, [](V value) {
       return value;
     });
   }
@@ -544,12 +512,11 @@ public:
    * \param base_name File base name to use
    * \param convert Function to convert from V to R
    */
-  template <class R>
   void
   saveToTiffFile(
     const string& dir,
     const string& base_name,
-    std::function<R(T)> convert
+    std::function<V(T)> convert
   ) const
   {
     Idx min_row = 0;
@@ -575,8 +542,7 @@ public:
     const double yul = this->yllcorner() + (this->cellSize() * this->rows());
     double tiePoints[6] = {0.0, 0.0, 0.0, xul, yul, 0.0};
     double pixelScale[3] = {this->cellSize(), this->cellSize(), 0.0};
-    // HACK: why does this have to be +1?
-    uint32_t bps = std::numeric_limits<R>::digits + 1;
+    uint32_t bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
     TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);
     TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height);
     TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
@@ -589,8 +555,9 @@ public:
     GTIFSetFromProj4(gtif, this->proj4().c_str());
     TIFFSetField(tif, TIFFTAG_GEOTIEPOINTS, 6, tiePoints);
     TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
-    size_t tileSize = tileWidth * tileHeight;
-    R* buf = (R*)_TIFFmalloc(tileSize * sizeof(R));
+    const auto tile_size = TIFFTileSize(tif);
+    logging::debug("Tile size for writing %s is %ld", base_name.c_str(), tile_size);
+    auto buf = (V*)_TIFFmalloc(tile_size);
     for (size_t i = 0; i < width; i += tileWidth)
     {
       for (size_t j = 0; j < height; j += tileHeight)
