@@ -915,6 +915,7 @@ int Model::runScenarios(const char* const weather_input,
     logging::fatal("Not enough weather to proceed - have %d days but looking for %d", numDays, needDays);
   }
   // want to output internal representation of weather to file
+  // FIX: debug only?
   model.outputWeather();
   model.makeStarts(*position, start_point, perimeter, size);
   auto start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60))

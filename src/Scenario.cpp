@@ -710,7 +710,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   //note("time is %f", time);
   current_time_ = time;
   const auto wx = weather(time);
-  const auto wx_daily = weather_daily(time);
+  // const auto wx_daily = weather_daily(time);
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   //  log_note("%d points", points_->size());
   const auto this_time = util::time_index(time);
@@ -724,7 +724,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto max_time = time + max_duration / DAY_MINUTES;
   // if (wx->ffmc().asDouble() < minimumFfmcForSpread(time))
   // HACK: use the old ffmc for this check to be consistent with previous version
-  if (wx_daily->ffmc().asDouble() < minimumFfmcForSpread(time))
+  if (weather_daily(time)->ffmc().asDouble() < minimumFfmcForSpread(time))
   {
     addEvent(Event::makeFireSpread(max_time));
     log_verbose("Waiting until %f because of FFMC", max_time);
@@ -754,9 +754,9 @@ void Scenario::scheduleFireSpread(const Event& event)
       const SpreadInfo origin(*this, time, location, nd(time), wx);
       // will be empty if invalid
       offsets_.emplace(key, origin.offsets());
-      // if (!origin.isNotSpreading())
-      // HACK: check if spreading based on old daily indices
-      if (SpreadInfo::is_spreading(*this, time, location, nd(time), wx_daily))
+      if (!origin.isNotSpreading())
+      // // HACK: check if spreading based on old daily indices
+      // if (SpreadInfo::is_spreading(*this, time, location, nd(time), wx_daily))
       {
         // // HACK: only put these values in the offsets_ if daily says spreading
         // // NOTE: use spread rate from new hourly indices
