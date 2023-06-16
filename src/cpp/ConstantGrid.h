@@ -256,18 +256,6 @@ public:
     int bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
     int bps_file;
     TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps_file);
-#ifndef NDEBUG
-    int bps_int16_t = std::numeric_limits<int16_t>::digits
-                    + (1 * std::numeric_limits<int16_t>::is_signed);
-    logging::debug("Size of pointer to int is %ld vs %ld", sizeof(int16_t*), sizeof(V*));
-    logging::debug(
-      "Raster %s calculated bps for type V is %ld; tif says bps is %ld; int16_t is %ld",
-      filename.c_str(),
-      bps,
-      bps_file,
-      bps_int16_t
-    );
-#endif
     logging::check_fatal(
       bps != bps_file,
       "Raster %s type is not expected type (%ld bits instead of %ld)",
@@ -275,6 +263,18 @@ public:
       bps_file,
       bps
     );
+#ifndef NDEBUG
+    logging::debug(
+      "Raster %s calculated bps for type V is %ld; tif says bps is %ld; int16_t is %ld",
+      filename.c_str(),
+      bps,
+      bps_file,
+      bps_int16_t
+    );
+    int bps_int16_t = std::numeric_limits<int16_t>::digits
+                    + (1 * std::numeric_limits<int16_t>::is_signed);
+    logging::debug("Size of pointer to int is %ld vs %ld", sizeof(int16_t*), sizeof(V*));
+#endif
     const auto tile_size = TIFFTileSize(tif);
     logging::debug("Tile size for reading %s is %ld", filename.c_str(), tile_size);
     const auto buf = _TIFFmalloc(tile_size);
