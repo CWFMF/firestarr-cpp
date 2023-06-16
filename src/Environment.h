@@ -163,10 +163,11 @@ public:
    * \return Cell at given row and column
    */
   [[nodiscard]]
-  #ifdef NDEBUG
+#ifdef NDEBUG
   constexpr
-  #endif
-  Cell cell(const Idx row, const Idx column) const
+#endif
+    Cell
+    cell(const Idx row, const Idx column) const
   {
     return cells_->at(Location(row, column));
   }
@@ -196,12 +197,13 @@ public:
    * \return
    */
   [[nodiscard]]
-  #ifdef NDEBUG
+#ifdef NDEBUG
   constexpr
-  #endif
-  Cell offset(const sim::Event& event,
-                                      const Idx row,
-                                      const Idx column) const
+#endif
+    Cell
+    offset(const sim::Event& event,
+           const Idx row,
+           const Idx column) const
   {
     const auto& p = event.cell();
     //return cell(p.hash() + column + static_cast<HashSize>(MAX_COLUMNS) * row);
@@ -423,16 +425,16 @@ protected:
     const auto lookup = sim::Settings::fuelLookup();
     if (sim::Settings::saveAsAscii())
     {
-      fuel.saveToAsciiFile<FuelSize>(string(sim::Settings::outputDirectory()),
-                                "fuel",
-                                [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
+      fuel.saveToAsciiFile(string(sim::Settings::outputDirectory()),
+                           "fuel",
+                           [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
       elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
     }
     else
     {
-      fuel.saveToTiffFile<FuelSize>(string(sim::Settings::outputDirectory()),
-                                    "fuel",
-                                    [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
+      fuel.saveToTiffFile(string(sim::Settings::outputDirectory()),
+                          "fuel",
+                          [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
       elevation.saveToTiffFile(sim::Settings::outputDirectory(), "dem");
     }
     logging::debug("Done saving fuel grid");

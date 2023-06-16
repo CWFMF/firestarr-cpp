@@ -58,49 +58,38 @@ static double calculate_standard_wsv(const double v) noexcept
          : 12.0 * (1.0 - exp(-0.0818 * (v - 28)));
 }
 static const util::LookupTable<&calculate_standard_wsv> STANDARD_WSV{};
-bool SpreadInfo::is_spreading(
-  const Scenario& scenario,
-  double time,
-  const topo::Cell& cell,
-  int nd,
-  const wx::FwiWeather* weather)
-{
-  const auto s = SpreadInfo(scenario, time, cell, nd, weather, true);
-  // logging::info("is_spreading() is %d", !s.isNotSpreading());
-  return !s.isNotSpreading();
-}
-
 SpreadInfo::SpreadInfo(const Scenario& scenario,
                        const double time,
                        const topo::Cell& cell,
                        const int nd,
                        const wx::FwiWeather* weather)
-  : SpreadInfo(scenario, time, cell, nd, weather, false)
+  : SpreadInfo(scenario, time, cell, nd, weather, scenario.weather_daily(time))
 {
 }
-SpreadInfo::SpreadInfo(const Scenario& scenario,
-                       const double time,
-                       const topo::Cell& cell,
-                       const int nd,
-                       const wx::FwiWeather* weather,
-                       const bool check_spreadevent_only)
-  : cell_(cell),
-    weather_(weather),
-    time_(time),
-    nd_(nd)
+double SpreadInfo::initial(SpreadInfo& spread,
+                           const wx::FwiWeather& weather,
+                           double& ffmc_effect,
+                           double& wsv,
+                           bool& is_crown,
+                           double& sfc,
+                           double& rso,
+                           double& raz,
+                           const fuel::FuelType* const fuel,
+                           bool has_no_slope,
+                           double heading_sin,
+                           double heading_cos,
+                           double bui_eff,
+                           double min_ros,
+                           double critical_surface_intensity)
 {
-  max_intensity_ = -1;
-  const auto ffmc_effect = ffmcEffect();
+  ffmc_effect = spread.ffmcEffect();
   // needs to be non-const so that we can update if slopeEffect changes direction
-  auto raz = wind().heading();
+  raz = spread.wind().heading();
   const auto isz = 0.208 * ffmc_effect;
-  const auto slope_azimuth = cell_.aspect();
-  const auto fuel = fuel::check_fuel(cell);
-  const auto has_no_slope = 0 == percentSlope();
-  auto wsv = wind().speed().asDouble();
+  wsv = spread.wind().speed().asDouble();
   if (!has_no_slope)
   {
-    const auto isf1 = fuel->calculateIsf(*this, isz);
+    const auto isf1 = fuel->calculateIsf(spread, isz);
     // const auto isf = (0.0 == isf1) ? isz : isf1;
     // we know const auto isz = 0.208 * ffmc_effect;
     auto wse = 0.0 == isf1 ? 0 : log(isf1 / isz) / 0.05039;
@@ -108,11 +97,9 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     {
       wse = 28.0 - log(1.0 - min(0.999 * 2.496 * ffmc_effect, isf1) / (2.496 * ffmc_effect)) / 0.0818;
     }
-    const auto heading = util::to_heading(
-      util::to_radians(static_cast<double>(slope_azimuth)));
     // we know that at->raz is already set to be the wind heading
-    const auto wsv_x = wind().wsvX() + wse * _sin(heading);
-    const auto wsv_y = wind().wsvY() + wse * _cos(heading);
+    const auto wsv_x = spread.wind().wsvX() + wse * heading_sin;
+    const auto wsv_y = spread.wind().wsvY() + wse * heading_cos;
     wsv = sqrt(wsv_x * wsv_x + wsv_y * wsv_y);
     raz = (0 == wsv) ? 0 : acos(wsv_y / wsv);
     if (wsv_x < 0)
@@ -121,22 +108,110 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     }
   }
   const auto isi = isz * STANDARD_WSV(wsv);
-  const auto bui_eff = fuel->buiEffect(bui().asDouble());
-  head_ros_ = fuel->calculateRos(nd,
-                                 *weather,
-                                 isi)
-            * bui_eff;
-  const auto min_ros = Settings::minimumRos();
-  if (min_ros > head_ros_)
+  // FIX: make this a member function so we don't need to preface head_ros_
+  spread.head_ros_ = fuel->calculateRos(spread.nd(),
+                                        weather,
+                                        isi)
+                   * bui_eff;
+  if (min_ros > spread.head_ros_)
   {
-    head_ros_ = -1;
+    spread.head_ros_ = -1;
+  }
+  else
+  {
+    sfc = fuel->surfaceFuelConsumption(spread);
+    rso = fuel::FuelType::criticalRos(sfc, critical_surface_intensity);
+    is_crown = fuel::FuelType::isCrown(critical_surface_intensity,
+                                       fuel::fire_intensity(sfc, spread.head_ros_));
+    if (is_crown)
+    {
+      spread.head_ros_ = fuel->finalRos(spread,
+                                        isi,
+                                        fuel->crownFractionBurned(spread.head_ros_, rso),
+                                        spread.head_ros_);
+    }
+  }
+  return spread.head_ros_;
+}
+SpreadInfo::SpreadInfo(const Scenario& scenario,
+                       const double time,
+                       const topo::Cell& cell,
+                       const int nd,
+                       const wx::FwiWeather* weather,
+                       const wx::FwiWeather* weather_daily)
+  : cell_(cell),
+    weather_(weather),
+    time_(time),
+    nd_(nd)
+{
+  // HACK: use weather_daily to figure out probability of spread but hourly for ROS
+  max_intensity_ = -1;
+  const auto slope_azimuth = cell_.aspect();
+  const auto fuel = fuel::check_fuel(cell);
+  const auto has_no_slope = 0 == percentSlope();
+  double heading_sin = 0;
+  double heading_cos = 0;
+  if (!has_no_slope)
+  {
+    const auto heading = util::to_heading(
+      util::to_radians(static_cast<double>(slope_azimuth)));
+    heading_sin = _sin(heading);
+    heading_cos = _cos(heading);
+  }
+  // HACK: only use BUI from hourly weather for both calculations
+  const auto bui_eff = fuel->buiEffect(bui().asDouble());
+  const auto min_ros = std::max(scenario.spreadThresholdByRos(time_),
+                                Settings::minimumRos());
+  // FIX: gets calculated when not necessary sometimes
+  const auto critical_surface_intensity = fuel->criticalSurfaceIntensity(*this);
+  double ffmc_effect;
+  double wsv;
+  bool is_crown;
+  double sfc;
+  double rso;
+  double raz;
+  if (min_ros > SpreadInfo::initial(
+        *this,
+        *weather_daily,
+        ffmc_effect,
+        wsv,
+        is_crown,
+        sfc,
+        rso,
+        raz,
+        fuel,
+        has_no_slope,
+        heading_sin,
+        heading_cos,
+        bui_eff,
+        min_ros,
+        critical_surface_intensity)
+      || sfc < COMPARE_LIMIT)
+  {
     return;
   }
-  const auto sfc = fuel->surfaceFuelConsumption(*this);
-  const auto critical_surface_intensity = fuel->criticalSurfaceIntensity(*this);
-  const auto rso = fuel::FuelType::criticalRos(sfc, critical_surface_intensity);
-  const auto is_crown = fuel::FuelType::isCrown(critical_surface_intensity,
-                                                fuel::fire_intensity(sfc, head_ros_));
+  // Now use hourly weather for actual spread calculations
+  if (min_ros > SpreadInfo::initial(*this,
+                                    *weather,
+                                    ffmc_effect,
+                                    wsv,
+                                    is_crown,
+                                    sfc,
+                                    rso,
+                                    raz,
+                                    fuel,
+                                    has_no_slope,
+                                    heading_sin,
+                                    heading_cos,
+                                    bui_eff,
+                                    min_ros,
+                                    critical_surface_intensity)
+      || sfc < COMPARE_LIMIT)
+  {
+    // no spread with hourly weather
+    // NOTE: only would happen if FFMC hourly is lower than FFMC daily?
+    return;
+  }
   const auto back_isi = ffmc_effect * STANDARD_BACK_ISI_WSV(wsv);
   auto back_ros = fuel->calculateRos(nd,
                                      *weather,
@@ -144,10 +219,6 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
                 * bui_eff;
   if (is_crown)
   {
-    head_ros_ = fuel->finalRos(*this,
-                               isi,
-                               fuel->crownFractionBurned(head_ros_, rso),
-                               head_ros_);
     back_ros = fuel->finalRos(*this,
                               back_isi,
                               fuel->crownFractionBurned(back_ros, rso),
@@ -188,22 +259,14 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     offsets_.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction));
     return true;
   };
-  const auto threshold = scenario.spreadThresholdByRos(time_);
   // if not over spread threshold then don't spread
   // HACK: assume there is no fuel where a crown fire's sfc is < COMPARE_LIMIT and its fc is >
   double ros{};
   // HACK: set ros in boolean if we get that far so that we don't have to repeat the if body
-  if (head_ros_ < threshold
-      || sfc < COMPARE_LIMIT
-      || !add_offset(raz, ros = (head_ros_ * correction_factor(raz))))
+  if (!add_offset(raz, ros = (head_ros_ * correction_factor(raz))))
   {
     // mark as invalid
     head_ros_ = -1;
-    return;
-  }
-  // HACK: add a shortcut to stop calculating for now so we don't do all this for daily threshold check
-  if (check_spreadevent_only)
-  {
     return;
   }
   auto fc = sfc;
@@ -234,10 +297,10 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
       return abs((a * ((flank_ros * cos_t * sqrt(f_sq_cos_t_sq + a_sq_sub_c_sq * sin_t_sq) - ac * sin_t_sq) / (f_sq_cos_t_sq + a_sq * sin_t_sq)) + c) / cos_t);
     };
   const auto add_offsets =
-    [&correction_factor, &add_offset, raz, threshold](
+    [&correction_factor, &add_offset, raz, min_ros](
       const double angle_radians,
       const double ros_flat) {
-      if (ros_flat < threshold)
+      if (ros_flat < min_ros)
       {
         return false;
       }
@@ -272,7 +335,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     {
       //only use back ros if every other angle is spreading since this should be lowest
       // 180
-      if (back_ros < threshold)
+      if (back_ros < min_ros)
       {
         return;
       }

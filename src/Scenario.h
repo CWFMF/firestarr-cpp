@@ -436,10 +436,10 @@ public:
   {
     try
     {
-      // const auto fire_wx = weather_;
-      // NOTE: Does using daily makes sense if we're looking at moisture?
-      // HACK: use daily with diurnal curves to be consistent with pre-hourly wx version
-      const auto fire_wx = weather_daily_;
+      const auto fire_wx = weather_;
+      // // NOTE: Does using daily makes sense if we're looking at moisture?
+      // // HACK: use daily with diurnal curves to be consistent with pre-hourly wx version
+      // const auto fire_wx = weather_daily_;
       const auto wx = fire_wx->at(time);
       // use Mike's table
       const auto mc = wx->mcDmcPct();

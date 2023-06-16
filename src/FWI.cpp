@@ -600,6 +600,7 @@ FwiWeather::FwiWeather(istringstream* iss,
 double ffmc_effect(const Ffmc& ffmc) noexcept
 {
   const auto v = ffmc.asDouble();
+  // FIX: use higher precision constant
   const auto mc = 147.2 * (101.0 - v) / (59.5 + v);
   return 91.9 * exp(-0.1386 * mc) * (1 + pow(mc, 5.31) / 49300000.0);
 }
@@ -621,6 +622,7 @@ FwiWeather::FwiWeather(const Temperature& temp,
     isi_(Isi(isi.asDouble(), wind.speed(), ffmc)),
     bui_(Bui(bui.asDouble(), dmc, dc)),
     fwi_(Fwi(fwi.asDouble(), isi, bui)),
+    // FIX: this is duplicated in ffmc_effect
     mc_ffmc_pct_(147.2 * (101 - ffmc.asDouble()) / (59.5 + ffmc.asDouble())),
     mc_dmc_pct_(exp((dmc.asDouble() - 244.72) / -43.43) + 20),
     ffmc_effect_(ffmc_effect(ffmc))
