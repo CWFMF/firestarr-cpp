@@ -138,29 +138,46 @@ static void make_threshold(vector<double>* thresholds,
 Scenario::Scenario(Model* model,
                    const size_t id,
                    wx::FireWeather* weather,
+                   wx::FireWeather* weather_daily,
                    const double start_time,
-                  //  const shared_ptr<IntensityMap>& initial_intensity,
+                   //  const shared_ptr<IntensityMap>& initial_intensity,
                    const shared_ptr<topo::Perimeter>& perimeter,
                    const topo::StartPoint& start_point,
                    const Day start_day,
                    const Day last_date)
-  : Scenario(model, id, weather, start_time,
-            //  initial_intensity,
+  : Scenario(model,
+             id,
+             weather,
+             weather_daily,
+             start_time,
+             //  initial_intensity,
              perimeter,
-             nullptr, start_point, start_day, last_date)
+             nullptr,
+             start_point,
+             start_day,
+             last_date)
 {
 }
 Scenario::Scenario(Model* model,
                    const size_t id,
                    wx::FireWeather* weather,
+                   wx::FireWeather* weather_daily,
                    const double start_time,
                    const shared_ptr<topo::Cell>& start_cell,
                    const topo::StartPoint& start_point,
                    const Day start_day,
                    const Day last_date)
-  : Scenario(model, id, weather, start_time,
-  // make_unique<IntensityMap>(*model, nullptr),
-             nullptr, start_cell, start_point, start_day, last_date)
+  : Scenario(model,
+             id,
+             weather,
+             weather_daily,
+             start_time,
+             // make_unique<IntensityMap>(*model, nullptr),
+             nullptr,
+             start_cell,
+             start_point,
+             start_day,
+             last_date)
 {
 }
 Scenario* Scenario::reset(mt19937* mt_extinction,
@@ -271,7 +288,9 @@ void Scenario::evaluate(const Event& event)
                   event.time());
       if (!survives(event.time(), event.cell(), event.timeAtLocation()))
       {
-        const auto wx = weather(event.time());
+        // const auto wx = weather(event.time());
+        // HACK: show daily values since that's what survival uses
+        const auto wx = weather_daily(event.time());
         log_info("Didn't survive ignition in %s with weather %f, %f",
                  fuel::FuelType::safeName(fuel::check_fuel(event.cell())),
                  wx->ffmc(),
@@ -293,8 +312,9 @@ void Scenario::evaluate(const Event& event)
 Scenario::Scenario(Model* model,
                    const size_t id,
                    wx::FireWeather* weather,
+                   wx::FireWeather* weather_daily,
                    const double start_time,
-                  //  const shared_ptr<IntensityMap>& initial_intensity,
+                   //  const shared_ptr<IntensityMap>& initial_intensity,
                    const shared_ptr<topo::Perimeter>& perimeter,
                    const shared_ptr<topo::Cell>& start_cell,
                    topo::StartPoint start_point,
@@ -309,6 +329,7 @@ Scenario::Scenario(Model* model,
     max_ros_(0),
     start_cell_(start_cell),
     weather_(weather),
+    weather_daily_(weather_daily),
     model_(model),
     probabilities_(nullptr),
     final_sizes_(nullptr),
@@ -408,6 +429,7 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     max_ros_(rhs.max_ros_),
     start_cell_(std::move(rhs.start_cell_)),
     weather_(rhs.weather_),
+    weather_daily_(rhs.weather_daily_),
     model_(rhs.model_),
     probabilities_(rhs.probabilities_),
     final_sizes_(rhs.final_sizes_),
@@ -438,6 +460,7 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
     //surrounded_ = rhs.surrounded_;
     start_cell_ = std::move(rhs.start_cell_);
     weather_ = rhs.weather_;
+    weather_daily_ = rhs.weather_daily_;
     model_ = rhs.model_;
     probabilities_ = rhs.probabilities_;
     final_sizes_ = rhs.final_sizes_;
@@ -687,6 +710,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   //note("time is %f", time);
   current_time_ = time;
   const auto wx = weather(time);
+  const auto wx_daily = weather_daily(time);
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   //  log_note("%d points", points_->size());
   const auto this_time = util::time_index(time);
@@ -698,7 +722,9 @@ void Scenario::scheduleFireSpread(const Event& event)
   //     next_time,
   //     max_duration);
   const auto max_time = time + max_duration / DAY_MINUTES;
-  if (wx->ffmc().asDouble() < minimumFfmcForSpread(time))
+  // if (wx->ffmc().asDouble() < minimumFfmcForSpread(time))
+  // HACK: use the old ffmc for this check to be consistent with previous version
+  if (wx_daily->ffmc().asDouble() < minimumFfmcForSpread(time))
   {
     addEvent(Event::makeFireSpread(max_time));
     log_verbose("Waiting until %f because of FFMC", max_time);
@@ -723,16 +749,31 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto seek_spreading = offsets_.find(key);
     if (seek_spreading == offsets_.end())
     {
+      // FIX: don't calculate if no spread?
       // have not calculated spread for this cell yet
       const SpreadInfo origin(*this, time, location, nd(time), wx);
       // will be empty if invalid
       offsets_.emplace(key, origin.offsets());
-      if (!origin.isNotSpreading())
+      // if (!origin.isNotSpreading())
+      // HACK: check if spreading based on old daily indices
+      if (SpreadInfo::is_spreading(*this, time, location, nd(time), wx_daily))
       {
+        // // HACK: only put these values in the offsets_ if daily says spreading
+        // // NOTE: use spread rate from new hourly indices
+        // // have not calculated spread for this cell yet
+        // const SpreadInfo origin(*this, time, location, nd(time), wx);
+        // // will be empty if invalid
+        // offsets_.emplace(key, origin.offsets());
         any_spread = true;
+        // HACK: still use calculated spread from hourly values
         max_ros_ = max(max_ros_, origin.headRos());
         max_intensity_[key] = max(max_intensity_[key], origin.maxIntensity());
       }
+      // else
+      // {
+      //   // no spread, so no offsets
+      //   offsets_.emplace(key, OffsetSet());
+      // }
     }
     else
     {

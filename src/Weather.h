@@ -286,9 +286,9 @@ private:
   Speed speed_;
 };
 /**
- * \brief Accumulated precipitation in mm.
+ * \brief Precipitation (1hr accumulation) (mm)
  */
-class AccumulatedPrecipitation : public Index<AccumulatedPrecipitation>
+class Precipitation : public Index<Precipitation>
 {
 public:
   //! @cond Doxygen_Suppress
@@ -297,7 +297,7 @@ public:
   /**
    * \brief Accumulated Precipitation of 0 mm
    */
-  static const AccumulatedPrecipitation Zero;
+  static const Precipitation Zero;
 };
 /**
  * \brief Collection of weather indices used for calculating FwiWeather.
@@ -315,16 +315,16 @@ public:
   constexpr Weather() noexcept = default;
   /**
    * \brief Construct with given indices
-   * \param tmp Temperature (Celsius)
+   * \param temp Temperature (Celsius)
    * \param rh Relative Humidity (%)
    * \param wind Wind (km/h)
-   * \param apcp Accumulated Precipitation (mm)
+   * \param prec Precipitation (1hr accumulation) (mm)
    */
-  constexpr Weather(const Temperature& tmp,
+  constexpr Weather(const Temperature& temp,
                     const RelativeHumidity& rh,
                     const Wind& wind,
-                    const AccumulatedPrecipitation& apcp) noexcept
-    : tmp_(tmp), rh_(rh), wind_(wind), apcp_(apcp)
+                    const Precipitation& prec) noexcept
+    : temp_(temp), rh_(rh), wind_(wind), prec_(prec)
   {
   }
   /**
@@ -353,9 +353,9 @@ public:
    * \brief Temperature (Celsius)
    * \return Temperature (Celsius)
    */
-  [[nodiscard]] constexpr const Temperature& tmp() const noexcept
+  [[nodiscard]] constexpr const Temperature& temp() const noexcept
   {
-    return tmp_;
+    return temp_;
   }
   /**
    * \brief Relative Humidity (%)
@@ -374,18 +374,18 @@ public:
     return wind_;
   }
   /**
-   * \brief Accumulated Precipitation (mm)
-   * \return Accumulated Precipitation (mm)
+   * \brief Precipitation (1hr accumulation) (mm)
+   * \return Precipitation (1hr accumulation) (mm)
    */
-  [[nodiscard]] constexpr const AccumulatedPrecipitation& apcp() const noexcept
+  [[nodiscard]] constexpr const Precipitation& prec() const noexcept
   {
-    return apcp_;
+    return prec_;
   }
 private:
   /**
    * \brief Temperature (Celsius)
    */
-  Temperature tmp_;
+  Temperature temp_;
   /**
    * \brief Relative Humidity (%)
    */
@@ -395,9 +395,9 @@ private:
    */
   Wind wind_;
   /**
-   * \brief Accumulated Precipitation (mm)
+   * \brief Precipitation (1hr accumulation) (mm)
    */
-  AccumulatedPrecipitation apcp_;
+  Precipitation prec_;
 };
 }
 }

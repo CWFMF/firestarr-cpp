@@ -31,14 +31,14 @@ public:
    * \brief Calculate Fine Fuel Moisture Code
    * \param temperature Temperature (Celsius)
    * \param rh Relative Humidity (%)
-   * \param wind Wind (km/h)
-   * \param rain Accumulated Precipitation (mm)
+   * \param ws Wind Speed (km/h)
+   * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
    * \param ffmc_previous Fine Fuel Moisture Code for previous day
    */
   Ffmc(const Temperature& temperature,
        const RelativeHumidity& rh,
-       const Speed& wind,
-       const AccumulatedPrecipitation& rain,
+       const Speed& ws,
+       const Precipitation& prec,
        const Ffmc& ffmc_previous) noexcept;
   /**
    * \brief Fine Fuel Moisture Code of 0
@@ -58,14 +58,14 @@ public:
    * \brief Duff Moisture Code
    * \param temperature Temperature (Celsius)
    * \param rh Relative Humidity (%)
-   * \param rain Accumulated Precipitation (mm)
+   * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
    * \param dmc_previous Duff Moisture Code for previous day
    * \param month Month to calculate for
    * \param latitude Latitude to calculate for
    */
   Dmc(const Temperature& temperature,
       const RelativeHumidity& rh,
-      const AccumulatedPrecipitation& rain,
+      const Precipitation& prec,
       const Dmc& dmc_previous,
       int month,
       double latitude) noexcept;
@@ -86,13 +86,13 @@ public:
   /**
    * \brief Calculate Drought Code
    * \param temperature Temperature (Celsius)
-   * \param rain Accumulated Precipitation (mm)
+   * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
    * \param dc_previous Drought Code from the previous day
    * \param month Month to calculate for
    * \param latitude Latitude to calculate for
    */
   Dc(const Temperature& temperature,
-     const AccumulatedPrecipitation& rain,
+     const Precipitation& prec,
      const Dc& dc_previous,
      int month,
      double latitude) noexcept;
@@ -110,16 +110,16 @@ public:
   /**
    * \brief Calculate Initial Spread Index and verify previous value is within tolerance of calculated value
    * \param value Value to check is within tolerance of calculated value
-   * \param wind Wind Speed (km/h)
+   * \param ws Wind Speed (km/h)
    * \param ffmc Fine Fuel Moisture Code
    */
-  Isi(double value, const Speed& wind, const Ffmc& ffmc) noexcept;
+  Isi(double value, const Speed& ws, const Ffmc& ffmc) noexcept;
   /**
    * \brief Calculate Initial Spread Index
-   * \param wind Wind Speed (km/h)
+   * \param ws Wind Speed (km/h)
    * \param ffmc Fine Fuel Moisture Code
    */
-  Isi(const Speed& wind, const Ffmc& ffmc) noexcept;
+  Isi(const Speed& ws, const Ffmc& ffmc) noexcept;
   /**
    * \brief Initial Spread Index of 0
    */
@@ -227,11 +227,28 @@ public:
   FwiWeather(istringstream* iss,
              string* str);
   /**
-   * \brief Constructor
-   * \param tmp Temperature (Celsius)
+   * \brief construct by applying noon weather to yesterday's indices
+   * \param yesterday FwiWeather yesterday used for startup indices
+   * \param month Month to calculate for
+   * \param latitude Latitude to calculate for
+   * \param temp Temperature (Celsius)
    * \param rh Relative Humidity (%)
    * \param wind Wind (km/h)
-   * \param apcp Accumulated Precipitation (mm)
+   * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
+  */
+  FwiWeather(const FwiWeather& yesterday,
+             const int month,
+             const double latitude,
+             const Temperature& temp,
+             const RelativeHumidity& rh,
+             const Wind& wind,
+             const Precipitation& prec);
+  /**
+   * \brief Constructor
+   * \param temp Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param wind Wind (km/h)
+   * \param prec Precipitation (1hr accumulation) (mm)
    * \param ffmc Fine Fuel Moisture Code
    * \param dmc Duff Moisture Code
    * \param dc Drought Code
@@ -239,10 +256,10 @@ public:
    * \param bui Build-up Index
    * \param fwi Fire Weather Index
    */
-  FwiWeather(const Temperature& tmp,
+  FwiWeather(const Temperature& temp,
              const RelativeHumidity& rh,
              const Wind& wind,
-             const AccumulatedPrecipitation& apcp,
+             const Precipitation& prec,
              const Ffmc& ffmc,
              const Dmc& dmc,
              const Dc& dc,
@@ -251,20 +268,20 @@ public:
              const Fwi& fwi) noexcept;
   /**
    * \brief Construct by calculating FWI
-   * \param tmp Temperature (Celsius)
+   * \param temp Temperature (Celsius)
    * \param rh Relative Humidity (%)
    * \param wind Wind (km/h)
-   * \param apcp Accumulated Precipitation (mm)
+   * \param prec Precipitation (1hr accumulation) (mm)
    * \param ffmc Fine Fuel Moisture Code
    * \param dmc Duff Moisture Code
    * \param dc Drought Code
    * \param isi Initial Spread Index
    * \param bui Build-up Index
    */
-  FwiWeather(const Temperature& tmp,
+  FwiWeather(const Temperature& temp,
              const RelativeHumidity& rh,
              const Wind& wind,
-             const AccumulatedPrecipitation& apcp,
+             const Precipitation& prec,
              const Ffmc& ffmc,
              const Dmc& dmc,
              const Dc& dc,
@@ -272,18 +289,18 @@ public:
              const Bui& bui) noexcept;
   /**
    * \brief Construct by calculating ISI, BUI, & FWI
-   * \param tmp Temperature (Celsius)
+   * \param temp Temperature (Celsius)
    * \param rh Relative Humidity (%)
    * \param wind Wind (km/h)
-   * \param apcp Accumulated Precipitation (mm)
+   * \param prec Precipitation (1hr accumulation) (mm)
    * \param ffmc Fine Fuel Moisture Code
    * \param dmc Duff Moisture Code
    * \param dc Drought Code
    */
-  FwiWeather(const Temperature& tmp,
+  FwiWeather(const Temperature& temp,
              const RelativeHumidity& rh,
              const Wind& wind,
-             const AccumulatedPrecipitation& apcp,
+             const Precipitation& prec,
              const Ffmc& ffmc,
              const Dmc& dmc,
              const Dc& dc) noexcept;
@@ -466,13 +483,13 @@ private:
 };
 [[nodiscard]] constexpr bool operator<(const FwiWeather& lhs, const FwiWeather& rhs)
 {
-  if (lhs.tmp() == rhs.tmp())
+  if (lhs.temp() == rhs.temp())
   {
     if (lhs.rh() == rhs.rh())
     {
       if (lhs.wind() == rhs.wind())
       {
-        if (lhs.apcp() == rhs.apcp())
+        if (lhs.prec() == rhs.prec())
         {
           if (lhs.ffmc() == rhs.ffmc())
           {
@@ -490,20 +507,20 @@ private:
           }
           return lhs.ffmc() < rhs.ffmc();
         }
-        return lhs.apcp() < rhs.apcp();
+        return lhs.prec() < rhs.prec();
       }
       return lhs.wind() < rhs.wind();
     }
     return lhs.rh() < rhs.rh();
   }
-  return lhs.tmp() < rhs.tmp();
+  return lhs.temp() < rhs.temp();
 }
 [[nodiscard]] constexpr bool operator!=(const FwiWeather& lhs, const FwiWeather& rhs)
 {
-  return lhs.tmp() != rhs.tmp()
+  return lhs.temp() != rhs.temp()
       || lhs.rh() != rhs.rh()
       || lhs.wind() != rhs.wind()
-      || lhs.apcp() != rhs.apcp()
+      || lhs.prec() != rhs.prec()
       || lhs.ffmc() != rhs.ffmc()
       || lhs.dmc() != rhs.dmc()
       || lhs.dc() != rhs.dc()

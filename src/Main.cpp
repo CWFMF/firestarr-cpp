@@ -166,6 +166,11 @@ int main(const int argc, const char* const argv[])
   string wx_file_name;
   string perim;
   size_t size = 0;
+  tbd::wx::Ffmc ffmc;
+  tbd::wx::Dmc dmc;
+  tbd::wx::Dc dc;
+  // FIX: need to get rain since noon yesterday to start of this hourly weather
+  tbd::wx::Precipitation apcp_prev;
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
@@ -191,6 +196,10 @@ int main(const int argc, const char* const argv[])
     register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
     register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
     register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
+    register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
+    register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
+    register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
+    register_index<tbd::wx::Precipitation>(apcp_prev, "--apcp_prev", "Startup precipitation between 1200 yesterday and start of hourly weather", false);
     register_setter<const char*>(&Settings::setOutputDateOffsets, "--output_date_offsets", "Override output date offsets", false, &parse_raw);
     if (3 > ARGC)
     {
@@ -239,7 +248,7 @@ int main(const int argc, const char* const argv[])
             // if this is a time then we aren't just running the weather
             start_date.tm_hour = stoi(arg.substr(0, 2));
             tbd::logging::check_fatal(start_date.tm_hour < 0 || start_date.tm_hour > 23,
-              "Simulation start time has an invalid hour (%d)",
+                                      "Simulation start time has an invalid hour (%d)",
                                       start_date.tm_hour);
             start_date.tm_min = stoi(arg.substr(3, 2));
             tbd::logging::check_fatal(start_date.tm_min < 0 || start_date.tm_min > 59,
@@ -310,6 +319,21 @@ int main(const int argc, const char* const argv[])
             tbd::logging::fatal("%s must be specified", kv.first.c_str());
           }
         }
+        if (!PARSE_HAVE.contains("--apcp_prev"))
+        {
+          tbd::logging::warning("Assuming 0 precipitation between noon yesterday and weather start for startup indices");
+          apcp_prev = tbd::wx::Precipitation::Zero;
+        }
+        // HACK: ISI for yesterday really doesn't matter so just use any wind
+        // HACK: it's basically wrong to assign this precip to yesterday's object,
+        // but don't want to add another argument right now
+        const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
+                                                   tbd::wx::RelativeHumidity(0),
+                                                   tbd::wx::Wind(tbd::wx::Direction(0, false), tbd::wx::Speed(0)),
+                                                   tbd::wx::Precipitation(apcp_prev),
+                                                   ffmc,
+                                                   dmc,
+                                                   dc);
         tbd::util::fix_tm(&start_date);
         tbd::logging::note("Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
                            start_date.tm_year + 1900,
@@ -325,6 +349,7 @@ int main(const int argc, const char* const argv[])
         }
         printf("\n");
         result = tbd::sim::Model::runScenarios(wx_file_name.c_str(),
+                                               yesterday,
                                                Settings::rasterRoot(),
                                                start_point,
                                                start,

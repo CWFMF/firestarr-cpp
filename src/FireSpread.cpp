@@ -58,11 +58,32 @@ static double calculate_standard_wsv(const double v) noexcept
          : 12.0 * (1.0 - exp(-0.0818 * (v - 28)));
 }
 static const util::LookupTable<&calculate_standard_wsv> STANDARD_WSV{};
+bool SpreadInfo::is_spreading(
+  const Scenario& scenario,
+  double time,
+  const topo::Cell& cell,
+  int nd,
+  const wx::FwiWeather* weather)
+{
+  const auto s = SpreadInfo(scenario, time, cell, nd, weather, true);
+  // logging::info("is_spreading() is %d", !s.isNotSpreading());
+  return !s.isNotSpreading();
+}
+
 SpreadInfo::SpreadInfo(const Scenario& scenario,
                        const double time,
                        const topo::Cell& cell,
                        const int nd,
                        const wx::FwiWeather* weather)
+  : SpreadInfo(scenario, time, cell, nd, weather, false)
+{
+}
+SpreadInfo::SpreadInfo(const Scenario& scenario,
+                       const double time,
+                       const topo::Cell& cell,
+                       const int nd,
+                       const wx::FwiWeather* weather,
+                       const bool check_spreadevent_only)
   : cell_(cell),
     weather_(weather),
     time_(time),
@@ -178,6 +199,11 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   {
     // mark as invalid
     head_ros_ = -1;
+    return;
+  }
+  // HACK: add a shortcut to stop calculating for now so we don't do all this for daily threshold check
+  if (check_spreadevent_only)
+  {
     return;
   }
   auto fc = sfc;

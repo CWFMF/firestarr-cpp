@@ -57,6 +57,20 @@ public:
   SpreadInfo& operator=(const SpreadInfo& rhs) noexcept = delete;
   // static double calculateSpreadProbability(double ros);
   /**
+   * \brief Calculate if fire is spreading for time and place
+   * \param scenario Scenario this is spreading in
+   * \param time Time spread is occurring
+   * \param cell Cell spread is occurring in
+   * \param nd Difference between date and the date of minimum foliar moisture content
+   * \param weather FwiWeather to use for calculations
+   */
+  [[nodiscard]] static bool is_spreading(
+    const Scenario& scenario,
+    double time,
+    const topo::Cell& cell,
+    int nd,
+    const wx::FwiWeather* weather);
+  /**
    * \brief Determine rate of spread from probability of spread threshold
    * \param threshold Probability of spread threshold
    * \return Rate of spread at given threshold (m/min)
@@ -219,6 +233,23 @@ public:
     return -1 == head_ros_;
   }
 private:
+  // HACK: have private constructor so is_spreading() can short-circuit the calculation,
+  // but nothing else can get a partially constructed SpreadInfo object
+  /**
+   * \brief Calculate fire spread for time and place
+   * \param scenario Scenario this is spreading in
+   * \param time Time spread is occurring
+   * \param cell Cell spread is occurring in
+   * \param nd Difference between date and the date of minimum foliar moisture content
+   * \param weather FwiWeather to use for calculations
+   * \param check_spreadevent_only Stop calculations after determining if spreading or not
+   */
+  SpreadInfo(const Scenario& scenario,
+             double time,
+             const topo::Cell& cell,
+             int nd,
+             const wx::FwiWeather* weather,
+             const bool check_spreadevent_only);
   /**
    * \brief Offsets from origin point that represent spread under these conditions
    */
