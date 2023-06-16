@@ -746,16 +746,21 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     // FIX: I think we can just have 2 Iteration objects and roll through starting
     // threads in the second one as the first one finishes?
     // const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() * PCT_CPU);
-    const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() / 4);
+    // const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() / 4);
     // const auto MAX_THREADS = std::thread::hardware_concurrency() - 1;
+    const auto MAX_THREADS = std::thread::hardware_concurrency();
     // const auto MAX_CONCURRENT = std::max<size_t>(MAX_THREADS, 1);
     // const auto concurrent_iterations = std::max<size_t>(
     //   MAX_CONCURRENT / all_iterations[0].getScenarios().size(),
     //   1);
     // HACK: just set max of 4 for now
-    const auto concurrent_iterations = std::min(
-      static_cast<size_t>(4),
-      MAX_THREADS);
+    // constexpr auto MIN_ITERATIONS_BEFORE_CHECK = 4;
+    // const auto concurrent_iterations = std::min(
+    //   static_cast<size_t>(MIN_ITERATIONS_BEFORE_CHECK),
+    //   MAX_THREADS);
+    const auto concurrent_iterations = std::max<size_t>(
+      ceil(MAX_THREADS / iteration.size()),
+      2);
     // const auto concurrent_iterations = MAX_THREADS;
     for (size_t x = 1; x < concurrent_iterations; ++x)
     {
@@ -814,9 +819,12 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         // ran out of time but timer should cancel everything
         return finalize_probabilities();
       }
-      runs_left = runs_required(runs_done, &all_sizes, &means, &pct, *this);
-      // runs_left = runs_required(runs_done, &means, &pct, *this);
-      logging::note("Need another %d iterations", runs_left);
+      // if (runs_done >= MIN_ITERATIONS_BEFORE_CHECK)
+      {
+        runs_left = runs_required(runs_done, &all_sizes, &means, &pct, *this);
+        // runs_left = runs_required(runs_done, &means, &pct, *this);
+        logging::note("Need another %d iterations", runs_left);
+      }
       if (runs_left > 0)
       {
         iteration.reset(&mt_extinction, &mt_spread);
