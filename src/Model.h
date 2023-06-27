@@ -395,6 +395,7 @@ private:
    * \brief Environment to use for Model
    */
   topo::Environment* env_;
+#ifndef NDEBUG
   /**
    * \brief Write weather that was loaded to an output file
    */
@@ -407,6 +408,7 @@ private:
   void outputWeather(
     map<size_t, shared_ptr<wx::FireWeather>>& weather,
     const char* file_name);
+#endif
   /**
    * \brief What year the weather is for
    */
