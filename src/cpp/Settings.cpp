@@ -204,10 +204,21 @@ public:
    * \return Maximum time simulation can run before it is ended and whatever results it has are used
    * (s)
    */
-  [[nodiscard]] constexpr int64_t
+  [[nodiscard]] constexpr size_t
   maximumTimeSeconds() const noexcept
   {
     return maximum_time_seconds_;
+  }
+  /**
+   * \brief Maximum number of simulations that can run before it is ended and whatever results it
+   * has are used
+   * \return Maximum number of simulations that can run before it is ended and whatever results it
+   * has are used
+   */
+  [[nodiscard]] constexpr size_t
+  maximumCountSimulations() const noexcept
+  {
+    return maximum_count_simulations_;
   }
   /**
    * \brief Weight to give to Scenario part of thresholds
@@ -326,7 +337,12 @@ private:
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used
    * (s)
    */
-  int64_t maximum_time_seconds_;
+  size_t maximum_time_seconds_;
+  /**
+   * @brief Maximum number of simulations that can run before it is ended and whatever results it
+   * has are used
+   */
+  size_t maximum_count_simulations_;
   /**
    * \brief Weight to give to Scenario part of thresholds
    */
@@ -467,6 +483,7 @@ SettingsImplementation::SettingsImplementation(
     offset_sunset_ = stod(get_value(settings, "OFFSET_SUNSET"));
     confidence_level_ = stod(get_value(settings, "CONFIDENCE_LEVEL"));
     maximum_time_seconds_ = stol(get_value(settings, "MAXIMUM_TIME"));
+    maximum_count_simulations_ = stol(get_value(settings, "MAXIMUM_SIMULATIONS"));
     threshold_scenario_weight_ = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
     threshold_daily_weight_ = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
     threshold_hourly_weight_ = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
@@ -646,10 +663,15 @@ Settings::setConfidenceLevel(
 {
   SettingsImplementation::instance().setConfidenceLevel(value);
 }
-int64_t
+size_t
 Settings::maximumTimeSeconds() noexcept
 {
   return SettingsImplementation::instance().maximumTimeSeconds();
+}
+size_t
+Settings::maximumCountSimulations() noexcept
+{
+  return SettingsImplementation::instance().maximumCountSimulations();
 }
 double
 Settings::thresholdScenarioWeight() noexcept

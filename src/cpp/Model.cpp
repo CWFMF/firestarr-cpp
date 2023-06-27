@@ -106,10 +106,12 @@ Model::readWeather(
   logging::check_fatal(!in.is_open(), "Could not open input weather file %s", filename.c_str());
   if (in.is_open())
   {
+#ifndef NDEBUG
     const auto file_out = string(Settings::outputDirectory()) + "/wx_hourly_out_read.csv";
     FILE* out = fopen(file_out.c_str(), "w");
     logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
     fprintf(out, "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
+#endif
     string str;
     logging::info("Reading scenarios from '%s'", filename.c_str());
     // read header line
@@ -194,7 +196,6 @@ Model::readWeather(
           );
         }
         prev_time = cur_time;
-        const auto month = t.tm_mon + 1;
         const auto for_time = (t.tm_yday - min_date) * DAY_HOURS + t.tm_hour;
         // HACK: can be up until rest of year since start date
         const size_t new_size = (max_date - min_date + 1) * DAY_HOURS;
@@ -245,6 +246,7 @@ Model::readWeather(
           apcp_24h = 0;
           prev = &s_daily.at(static_cast<Day>(t.tm_yday));
         }
+#ifndef NDEBUG
         fprintf(
           out,
           "%ld,%d-%02d-%02d %02d:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
@@ -265,9 +267,12 @@ Model::readWeather(
           w->bui().asDouble(),
           w->fwi().asDouble()
         );
+#endif
       }
     }
+#ifndef NDEBUG
     logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());
+#endif
     in.close();
   }
   //  for (auto& kv : wx)
@@ -617,6 +622,15 @@ runs_required(
   const Model& model
 )
 {
+  if (i >= Settings::maximumCountSimulations())
+  {
+    logging::note(
+      "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
+      i,
+      Settings::maximumCountSimulations()
+    );
+    return 0;
+  }
   if (model.isOutOfTime())
   {
     logging::note(
@@ -980,8 +994,9 @@ Model::runScenarios(
     );
   }
   // want to output internal representation of weather to file
-  // FIX: debug only?
+#ifndef NDEBUG
   model.outputWeather();
+#endif
   model.makeStarts(*position, start_point, perimeter, size);
   auto
     start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60)) / DAY_HOURS);
@@ -1022,12 +1037,16 @@ Model::runScenarios(
     const auto prob = by_time.second;
     prob->saveAll(model, start_time, time, start_day);
   }
+  // HACK: update last checked time to use in calculation
+  model.last_checked_ = Clock::now();
+  logging::note("Total simulation time was %ld seconds", model.runTime());
   for (const auto& kv : probabilities)
   {
     delete kv.second;
   }
   return 0;
 }
+#ifndef NDEBUG
 void
 Model::outputWeather()
 {
@@ -1102,4 +1121,5 @@ Model::outputWeather(
   }
   logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());
 }
+#endif
 }

@@ -210,8 +210,16 @@ public:
    * \return Maximum time simulation can run before it is ended and whatever results it has are used
    * (s)
    */
-  [[nodiscard]] static int64_t
+  [[nodiscard]] static size_t
   maximumTimeSeconds() noexcept;
+  /**
+   * \brief Maximum number of simulations that can run before it is ended and whatever results it
+   * has are used
+   * \return Maximum number of simulations that can run before it is ended and whatever results it
+   * has are used
+   */
+  [[nodiscard]] static size_t
+  maximumCountSimulations() noexcept;
   /**
    * \brief Weight to give to Scenario part of thresholds
    * \return Weight to give to Scenario part of thresholds
