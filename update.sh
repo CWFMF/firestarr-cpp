@@ -10,4 +10,5 @@ curl -k "https://spotwx.com/products/grib_index.php?model=geps_0p5_raw&lat=48.80
 # (diff /appl/data/geps_current /appl/data/geps_latest && echo Model already matches `cat /appl/data/geps_latest) || ((python main.py 14) && (curl -k "https://spotwx.com/products/grib_index.php?model=geps_0p5_raw&lat=48.80686&lon=-87.45117&tz=-5&label=" | grep "Model date") > /appl/data/geps_current)
 # /usr/bin/flock -u /tmp/update.lockfile
 # do locking outside this script
-(diff /appl/data/geps_current /appl/data/geps_latest && echo Model already matches `cat /appl/data/geps_latest`) || ((python main.py) && (curl -k "https://spotwx.com/products/grib_index.php?model=geps_0p5_raw&lat=48.80686&lon=-87.45117&tz=-5&label=" | grep "Model date") > /appl/data/geps_current)
+# (diff /appl/data/geps_current /appl/data/geps_latest && echo Model already matches `cat /appl/data/geps_latest`) || ((python main.py) && (curl -k "https://spotwx.com/products/grib_index.php?model=geps_0p5_raw&lat=48.80686&lon=-87.45117&tz=-5&label=" | grep "Model date") > /appl/data/geps_current)
+(diff /appl/data/geps_current /appl/data/geps_latest && echo Model already matches `cat /appl/data/geps_latest`) || ((python main.py) && (cp /appl/data/geps_latest /appl/data/geps_current) && {./publish_geoserver.sh})
