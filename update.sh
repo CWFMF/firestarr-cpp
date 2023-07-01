@@ -1,14 +1,19 @@
 #!/bin/bash
+URL_TEST="https://spotwx.com/products/grib_index.php?model=geps_0p5_raw&lat=48.80686&lon=-87.45117&tz=-5&label="
+DIR=/appl/data
+PREFIX=geps
+FILE_LATEST=${DIR}/${PREFIX}_latest
+FILE_CURRENT=${DIR}/${PREFIX}_current
+FILE_TMP=${DIR}/${PREFIX}_tmp
 echo Running update at `date`
 source /appl/.venv/bin/activate
 cd /appl/tbd
-# cmake --configure .
-# cmake --build .
-# (/usr/bin/flock -n /tmp/update.lockfile -c "(python main.py 14 || echo FAILED)") && /usr/bin/flock -u /tmp/update.lockfile
-curl -k "https://spotwx.com/products/grib_index.php?model=geps_0p5_raw&lat=48.80686&lon=-87.45117&tz=-5&label=" | grep "Model date" > /appl/data/geps_latest
-# wait until we can get a lock for now
-# (diff /appl/data/geps_current /appl/data/geps_latest && echo Model already matches `cat /appl/data/geps_latest) || ((python main.py 14) && (curl -k "https://spotwx.com/products/grib_index.php?model=geps_0p5_raw&lat=48.80686&lon=-87.45117&tz=-5&label=" | grep "Model date") > /appl/data/geps_current)
-# /usr/bin/flock -u /tmp/update.lockfile
-# do locking outside this script
-# (diff /appl/data/geps_current /appl/data/geps_latest && echo Model already matches `cat /appl/data/geps_latest`) || ((python main.py) && (curl -k "https://spotwx.com/products/grib_index.php?model=geps_0p5_raw&lat=48.80686&lon=-87.45117&tz=-5&label=" | grep "Model date") > /appl/data/geps_current)
-(diff /appl/data/geps_current /appl/data/geps_latest && echo Model already matches `cat /appl/data/geps_latest`) || ((python main.py) && (cp /appl/data/geps_latest /appl/data/geps_current) && {./publish_geoserver.sh})
+# copy after trying instead of going right to ${FILE_LATEST} in case curl fails and makes an empty file
+((curl -sk "${URL_TEST}" | grep "Model date" > ${FILE_TMP}) \
+        && (mv ${FILE_TMP} ${FILE_LATEST}) \
+        && ((diff ${FILE_CURRENT} ${FILE_LATEST} \
+                && echo Model already matches `cat ${FILE_LATEST}`) \
+            || ((python main.py) \
+                && (cp ${FILE_LATEST} ${FILE_CURRENT}) \
+                && (./publish_geoserver.sh)))) \
+    || (echo Run attempt failed)
