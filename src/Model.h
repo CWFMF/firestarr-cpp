@@ -253,8 +253,7 @@ public:
   }
   /**
    * \brief Duration that model has run for
-   *
-   * @return std::chrono::seconds  Duration model has been running for
+   * \return std::chrono::seconds  Duration model has been running for
    */
   [[nodiscard]] std::chrono::seconds runTime() const;
   /**
