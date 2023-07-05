@@ -584,6 +584,14 @@ size_t runs_required(const size_t i,
                      const vector<double>* pct,
                      const Model& model)
 {
+  if (i >= Settings::maximumCountSimulations())
+  {
+    logging::note(
+      "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
+      i,
+      Settings::maximumCountSimulations());
+    return 0;
+  }
   if (model.isOutOfTime())
   {
     logging::note(
@@ -966,6 +974,9 @@ int Model::runScenarios(const char* const weather_input,
     const auto prob = by_time.second;
     prob->saveAll(model, start_time, time, start_day);
   }
+  // HACK: update last checked time to use in calculation
+  model.last_checked_ = Clock::now();
+  logging::note("Total simulation time was %ld seconds", model.runTime());
   for (const auto& kv : probabilities)
   {
     delete kv.second;
