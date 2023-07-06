@@ -281,6 +281,12 @@ main(
   {
     register_flag(save_intensity, true, "-i", "Save intensity maps for simulations");
     register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
+    register_flag(
+      &Settings::setDeterministic,
+      true,
+      "--deterministic",
+      "Run deterministically (100% chance of spread & survival)"
+    );
     register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
     register_flag(
       &Settings::setSaveIntensity,

@@ -386,6 +386,11 @@ public:
    */
   atomic<bool> run_async = true;
   /**
+   * \brief Whether or not to run deterministically (100% chance of spread & survival)
+   * \return Whether or not to run deterministically (100% chance of spread & survival)
+   */
+  atomic<bool> deterministic_ = false;
+  /**
    * \brief Whether or not to save grids as .asc
    * \return Whether or not to save grids as .asc
    */
@@ -540,6 +545,18 @@ Settings::setRunAsync(
 ) noexcept
 {
   SettingsImplementation::instance().run_async = value;
+}
+bool
+Settings::deterministic() noexcept
+{
+  return SettingsImplementation::instance().deterministic_;
+}
+void
+Settings::setDeterministic(
+  const bool value
+) noexcept
+{
+  SettingsImplementation::instance().deterministic_ = value;
 }
 bool
 Settings::saveAsAscii() noexcept
