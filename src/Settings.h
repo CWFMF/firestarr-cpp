@@ -69,6 +69,17 @@ public:
    */
   static void setRunAsync(bool value) noexcept;
   /**
+   * \brief Whether or not to run deterministically (100% chance of spread & survival)
+   * \return Whether or not to run deterministically (100% chance of spread & survival)
+   */
+  [[nodiscard]] static bool deterministic() noexcept;
+  /**
+   * \brief Set whether or not to run deterministically (100% chance of spread & survival)
+   * \param value Whether or not to run deterministically (100% chance of spread & survival)
+   * \return None
+   */
+  static void setDeterministic(bool value) noexcept;
+  /**
    * \brief Whether or not to save grids as .asc
    * \return Whether or not to save grids as .asc
    */

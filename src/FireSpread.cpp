@@ -160,8 +160,10 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
   }
   // HACK: only use BUI from hourly weather for both calculations
   const auto bui_eff = fuel->buiEffect(bui().asDouble());
-  const auto min_ros = std::max(scenario.spreadThresholdByRos(time_),
-                                Settings::minimumRos());
+  const auto min_ros = Settings::deterministic()
+                       ? Settings::minimumRos()
+                       : std::max(scenario.spreadThresholdByRos(time_),
+                                  Settings::minimumRos());
   // FIX: gets calculated when not necessary sometimes
   const auto critical_surface_intensity = fuel->criticalSurfaceIntensity(*this);
   double ffmc_effect;
