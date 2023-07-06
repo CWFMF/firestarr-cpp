@@ -584,11 +584,11 @@ size_t runs_required(const size_t i,
                      const vector<double>* pct,
                      const Model& model)
 {
-  if (i >= Settings::maximumCountSimulations())
+  if (all_sizes->size() >= Settings::maximumCountSimulations())
   {
     logging::note(
       "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
-      i,
+      all_sizes->size(),
       Settings::maximumCountSimulations());
     return 0;
   }
