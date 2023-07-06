@@ -678,12 +678,17 @@ void Scenario::scheduleFireSpread(const Event& event)
     max_intensity_ = {};
     max_ros_ = 0.0;
   }
+  auto keys = std::set<SpreadKey>();
+  std::transform(
+    points_.cbegin(),
+    points_.cend(),
+    std::inserter(keys, keys.begin()),
+    [](const pair<const Cell, const PointSet>& kv) { return kv.first.key(); }
+  );
   auto any_spread = false;
-  for (const auto& kv : points_)
+  for (const auto& key : keys)
   {
-    const auto& location = kv.first;
     // any cell that has the same fuel, slope, and aspect has the same spread
-    const auto key = location.key();
     const auto seek_spreading = offsets_.find(key);
     if (seek_spreading == offsets_.end())
     {
@@ -693,7 +698,6 @@ void Scenario::scheduleFireSpread(const Event& event)
       // will be empty if invalid
       offsets_.emplace(key, origin.offsets());
       if (!origin.isNotSpreading())
-      // // HACK: check if spreading based on old daily indices
       {
         any_spread = true;
         // HACK: still use calculated spread from hourly values
