@@ -240,6 +240,24 @@ void Model::readWeather(const wx::FwiWeather& yesterday,
           prev = &s_daily.at(static_cast<Day>(t.tm_yday));
         }
 #ifndef NDEBUG
+        const auto month = t.tm_mon + 1;
+        logging::debug("%ld,%d-%02d-%02d %02d:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g",
+                       cur,
+                       year_,
+                       month,
+                       t.tm_mday,
+                       t.tm_hour,
+                       w->prec().asDouble(),
+                       w->temp().asDouble(),
+                       w->rh().asDouble(),
+                       w->wind().speed().asDouble(),
+                       w->wind().direction().asDouble(),
+                       w->ffmc().asDouble(),
+                       w->dmc().asDouble(),
+                       w->dc().asDouble(),
+                       w->isi().asDouble(),
+                       w->bui().asDouble(),
+                       w->fwi().asDouble());
         fprintf(out,
                 "%ld,%d-%02d-%02d %02d:00,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\n",
                 cur,
