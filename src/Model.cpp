@@ -617,6 +617,11 @@ size_t runs_required(const size_t i,
                      const vector<double>* pct,
                      const Model& model)
 {
+  if (Settings::deterministic())
+  {
+    logging::note("Stopping after %i iteration because running in deterministic mode");
+    return 0;
+  }
   if (model.isOverSimulationCountLimit())
   {
     logging::note(
@@ -804,9 +809,12 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     // const auto concurrent_iterations = std::min(
     //   static_cast<size_t>(MIN_ITERATIONS_BEFORE_CHECK),
     //   MAX_THREADS);
-    const auto concurrent_iterations = std::max<size_t>(
-      ceil(MAX_THREADS / iteration.size()),
-      2);
+    // no point in running multiple iterations if deterministic
+    const auto concurrent_iterations = Settings::deterministic()
+                                       ? 1
+                                       : std::max<size_t>(
+                                         ceil(MAX_THREADS / iteration.size()),
+                                         2);
     // const auto concurrent_iterations = MAX_THREADS;
     for (size_t x = 1; x < concurrent_iterations; ++x)
     {
@@ -883,6 +891,11 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         ++cur_iter;
         // loop around to start if required
         cur_iter %= all_iterations.size();
+      }
+      else
+      {
+        // no runs required, so stop
+        return finalize_probabilities();
       }
     }
     // everything should be done when this section ends
