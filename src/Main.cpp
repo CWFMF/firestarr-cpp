@@ -36,7 +36,16 @@ static map<std::string, bool> PARSE_HAVE{};
 static int ARGC = 0;
 static const char* const* ARGV = nullptr;
 static int CUR_ARG = 0;
-void show_usage_and_exit()
+void show_args()
+{
+  printf("Arguments are:\n");
+  for (auto j = 0; j < ARGC; ++j)
+  {
+    printf(" %s", ARGV[j]);
+  }
+  printf("\n");
+}
+void show_usage_and_exit(int exit_code)
 {
   printf("Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n", BIN_NAME);
   printf(" Run simulations and save output in the specified directory\n\n\n");
@@ -47,7 +56,17 @@ void show_usage_and_exit()
   {
     printf("   %-25s %s\n", kv.first.c_str(), kv.second.c_str());
   }
-  exit(-1);
+  exit(exit_code);
+}
+void show_usage_and_exit()
+{
+  show_args();
+  show_usage_and_exit(-1);
+}
+void show_help_and_exit()
+{
+  // showing help isn't an error
+  show_usage_and_exit(0);
 }
 const char* get_arg() noexcept
 {
@@ -145,7 +164,7 @@ int main(const int argc, const char* const argv[])
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
   bin = bin.substr(end, bin.size() - end);
   BIN_NAME = bin.c_str();
-  register_argument("-h", "Show help", false, &show_usage_and_exit);
+  register_argument("-h", "Show help", false, &show_help_and_exit);
   // auto start_time = tbd::Clock::now();
   // auto time = tbd::Clock::now();
   // constexpr size_t n_test = 100000000;
@@ -201,7 +220,12 @@ int main(const int argc, const char* const argv[])
     register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
     register_index<tbd::wx::Precipitation>(apcp_prev, "--apcp_prev", "Startup precipitation between 1200 yesterday and start of hourly weather", false);
     register_setter<const char*>(&Settings::setOutputDateOffsets, "--output_date_offsets", "Override output date offsets", false, &parse_raw);
-    if (3 > ARGC)
+    if (2 == ARGC && 0 == strcmp(ARGV[CUR_ARG], "-h"))
+    {
+      // HACK: just do this for now
+      show_help_and_exit();
+    }
+    else if (3 > ARGC)
     {
       show_usage_and_exit();
     }
@@ -342,12 +366,7 @@ int main(const int argc, const char* const argv[])
                            start_date.tm_hour,
                            start_date.tm_min);
         start = start_date;
-        printf("Arguments are:\n");
-        for (auto j = 0; j < ARGC; ++j)
-        {
-          printf(" %s", ARGV[j]);
-        }
-        printf("\n");
+        show_args();
         result = tbd::sim::Model::runScenarios(wx_file_name.c_str(),
                                                yesterday,
                                                Settings::rasterRoot(),
