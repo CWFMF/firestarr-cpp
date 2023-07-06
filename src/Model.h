@@ -230,10 +230,20 @@ public:
     return time_limit_;
   }
   /**
+   * \brief Whether or not simulation has exceeded any limits that mean it should stop
+   * \return Whether or not simulation has exceeded any limits that mean it should stop
+  */
+  [[nodiscard]] bool shouldStop() const noexcept;
+  /**
    * \brief Whether or not simulation has been running longer than maximum duration
    * \return Whether or not simulation has been running longer than maximum duration
    */
   [[nodiscard]] bool isOutOfTime() const noexcept;
+  /**
+   * \brief Whether or not simulation is over max simulation count
+   * \return Whether or not simulation is over max simulation count
+  */
+  [[nodiscard]] bool isOverSimulationCountLimit() const noexcept;
   /**
    * \brief What year the weather is for
    * \return What year the weather is for
@@ -334,6 +344,17 @@ public:
   static Semaphore task_limiter;
 private:
   /**
+   * \brief Add statistics for completed iterations
+   * \param all_sizes All sizes that have simulations have produced
+   * \param means Mean sizes per iteration
+   * \param pct 95th percentile sizes per iteration
+   * \param cur_sizes Sizes to add to statistics
+  */
+  [[nodiscard]] bool add_statistics(vector<double>* all_sizes,
+                                    vector<double>* means,
+                                    vector<double>* pct,
+                                    const util::SafeVector& sizes);
+  /**
    * \brief Mutex for parallel access
    */
   mutable mutex vector_mutex_;
@@ -413,10 +434,13 @@ private:
    */
   int year_;
   /**
-   * @brief If simulation is out of time and should stop
-   *
+   * \brief If simulation is out of time and should stop
    */
   bool is_out_of_time_ = false;
+  /**
+   * \brief If simulation is over max simulation count
+  */
+  bool is_over_simulation_count_ = false;
   // /**
   //  * @brief Time when we last checked if simulation should end
   //  *
