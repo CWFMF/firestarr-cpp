@@ -31,7 +31,6 @@ cd /appl/tbd
         (echo ${CURDATE}: Running update  | tee -a ${FILE_LOG}) \
         && (python main.py) \
         && (cp ${FILE_LATEST} ${FILE_CURRENT}) \
-        && (./publish_geoserver.sh) \
         && (echo ${CURDATE}: Done update  | tee -a ${FILE_LOG}) \
     ) \
 ) \
