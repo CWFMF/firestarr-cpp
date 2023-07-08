@@ -29,7 +29,7 @@ cd /appl/tbd
     || \
     ( \
         (echo ${CURDATE}: Running update  | tee -a ${FILE_LOG}) \
-        && (python main.py) \
+        && (python main.py $*) \
         && (cp ${FILE_LATEST} ${FILE_CURRENT}) \
         && (echo ${CURDATE}: Done update  | tee -a ${FILE_LOG}) \
     ) \
