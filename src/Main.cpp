@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-/*! \mainpage TBD Documentation
+/*! \mainpage FireSTARR Documentation
  *
  * \section intro_sec Introduction
  *
- * TBD is a probabilistic fire growth model.
+ * FireSTARR is a probabilistic fire growth model.
  */
 #include "stdafx.h"
 #include <chrono>
