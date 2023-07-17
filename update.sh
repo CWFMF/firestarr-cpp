@@ -43,7 +43,7 @@ else
             (echo ${CURDATE}: Running update  | tee -a ${FILE_LOG}) \
             && (python main.py $*) \
             && (cp ${FILE_LATEST} ${FILE_CURRENT}) \
-            && (echo ${CURDATE}: Done update  | tee -a ${FILE_LOG}) \
+            && (echo $(date -u --rfc-3339=seconds): Done update  | tee -a ${FILE_LOG}) \
         ) \
     ) \
     || (echo ${CURDATE}: Run attempt failed | tee -a ${FILE_LOG})
