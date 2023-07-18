@@ -19,8 +19,8 @@ add_compile_options(
 find_package(Threads REQUIRED)
 add_definitions(-D_POSIX_C_SOURCE=200809L)
 
-file(GLOB SOURCES src/*.cpp)
-set_source_files_properties(src/unstable.cpp PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}")
+file(GLOB SOURCES src/cpp/*.cpp)
+set_source_files_properties(src/cpp/unstable.cpp PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}")
 
 
 add_executable(${PROJECT_NAME} ${SOURCES})
