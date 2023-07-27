@@ -36,7 +36,8 @@ ProbabilityMap::ProbabilityMap(const double time,
     min_value_(min_value),
     max_value_(max_value),
     low_max_(low_max),
-    med_max_(med_max)
+    med_max_(med_max),
+    perimeter_(nullptr)
 {
 }
 ProbabilityMap* ProbabilityMap::copyEmpty() const
@@ -48,6 +49,10 @@ ProbabilityMap* ProbabilityMap::copyEmpty() const
                             med_max_,
                             max_value_,
                             all_);
+}
+void ProbabilityMap::setPerimeter(const topo::Perimeter* const perimeter)
+{
+  perimeter_ = perimeter;
 }
 void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
 {
@@ -251,7 +256,16 @@ void ProbabilityMap::saveAll(const Model& model,
 }
 void ProbabilityMap::saveTotal(const string& base_name) const
 {
-  all_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
+  auto with_perim = all_;
+  if (nullptr != perimeter_)
+  {
+    for (auto loc : perimeter_->burned())
+    {
+      // make initial perimeter cells 2* so that probability ends up as 2
+      with_perim.data[loc] *= 2;
+    }
+  }
+  with_perim.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveTotalCount(const string& base_name) const
 {
