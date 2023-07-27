@@ -9,6 +9,7 @@
 #include <vector>
 #include "GridMap.h"
 #include "Statistics.h"
+#include "Perimeter.h"
 namespace fs
 {
 namespace sim
@@ -54,6 +55,12 @@ public:
    */
   ProbabilityMap*
   copyEmpty() const;
+  /**
+   * \brief Assign perimeter to use for marking cells as initial perimeter
+   * \param perimeter Ignition grid to store for marking in outputs
+   */
+  void
+  setPerimeter(const topo::Perimeter* const perimeter);
   /**
    * \brief Combine results from another ProbabilityMap into this one
    * \param rhs ProbabilityMap to combine from
@@ -189,6 +196,10 @@ private:
    * \brief Upper bound of 'moderate' intensity range
    */
   const int med_max_;
+  /**
+   * \brief Initial ignition grid to apply to outputs
+   */
+  const topo::Perimeter* perimeter_;
 };
 }
 }

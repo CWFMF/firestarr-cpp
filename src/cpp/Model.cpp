@@ -1084,6 +1084,8 @@ Model::runScenarios(
     const auto time = by_time.first;
     final_time = max(final_time, time);
     const auto prob = by_time.second;
+    logging::info("Setting perimeter");
+    prob->setPerimeter(model.perimeter_.get());
     prob->saveAll(model, start_time, time, start_day);
   }
   // HACK: update last checked time to use in calculation
