@@ -257,6 +257,7 @@ main(
   // return 0;
   auto save_intensity = false;
   string wx_file_name;
+  string log_file_name = "firestarr.log";
   string perim;
   size_t size = 0;
   fs::wx::Ffmc ffmc;
@@ -302,6 +303,7 @@ main(
     );
     register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
     register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
+    register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<double>(
       &Settings::setConfidenceLevel,
       "--confidence",
@@ -354,7 +356,10 @@ main(
         {
           fs::util::make_directory_recursive(Settings::outputDirectory());
         }
-        const string log_file = (string(Settings::outputDirectory()) + "log.txt");
+        // if name starts with "/" then it's an absolute path, otherwise append to working directory
+        const string log_file = log_file_name.starts_with("/")
+                                ? log_file_name
+                                : (string(Settings::outputDirectory()) + log_file_name);
         fs::logging::check_fatal(!Log::openLogFile(log_file.c_str()), "Can't open log file");
         fs::logging::note("Output directory is %s", Settings::outputDirectory());
         fs::logging::note("Output log is %s", log_file.c_str());
