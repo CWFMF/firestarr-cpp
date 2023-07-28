@@ -183,6 +183,7 @@ int main(const int argc, const char* const argv[])
   // return 0;
   auto save_intensity = false;
   string wx_file_name;
+  string log_file_name = "firestarr.log";
   string perim;
   size_t size = 0;
   tbd::wx::Ffmc ffmc;
@@ -213,6 +214,7 @@ int main(const int argc, const char* const argv[])
     register_flag(&Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids");
     register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
     register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
+    register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
     register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
     register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
@@ -250,7 +252,8 @@ int main(const int argc, const char* const argv[])
         {
           tbd::util::make_directory_recursive(Settings::outputDirectory());
         }
-        const string log_file = (string(Settings::outputDirectory()) + "log.txt");
+        // if name starts with "/" then it's an absolute path, otherwise append to working directory
+        const string log_file = log_file_name.starts_with("/") ? log_file_name : (string(Settings::outputDirectory()) + log_file_name);
         tbd::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
                                   "Can't open log file");
         tbd::logging::note("Output directory is %s", Settings::outputDirectory());
