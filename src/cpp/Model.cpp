@@ -70,7 +70,7 @@ Model::Model(
   const topo::StartPoint& start_point,
   topo::Environment* env
 )
-  : start_time_(Clock::now()),
+  : running_since_(Clock::now()),
     time_limit_(std::chrono::seconds(Settings::maximumTimeSeconds())),
     env_(env)
 {
@@ -521,7 +521,7 @@ Model::readScenarios(
 [[nodiscard]] std::chrono::seconds
 Model::runTime() const
 {
-  const auto run_time = last_checked_ - startTime();
+  const auto run_time = last_checked_ - runningSince();
   const auto run_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(run_time);
   return run_time_seconds;
 }
@@ -535,9 +535,9 @@ Model::isOutOfTime() const noexcept
 {
   // return is_out_of_time_ || runTime() > timeLimit();
   // return runTime() > timeLimit();
-  // return ((last_checked_ - startTime()) > timeLimit());
-  // return (is_out_of_time_ || ((last_checked_ - startTime()) > timeLimit()));
-  // return (Clock::now() - startTime()) > timeLimit();
+  // return ((last_checked_ - runningSince()) > timeLimit());
+  // return (is_out_of_time_ || ((last_checked_ - runningSince()) > timeLimit()));
+  // return (Clock::now() - runningSince()) > timeLimit();
   return is_out_of_time_;
 }
 bool
@@ -825,7 +825,7 @@ Model::runIterations(
       ++i;
     }
     const auto run_time_seconds = runTime().count();
-    // const auto run_time = last_checked_ - startTime();
+    // const auto run_time = last_checked_ - runningSince();
     // const auto run_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(run_time);
     // const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds.count();
     const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds;
