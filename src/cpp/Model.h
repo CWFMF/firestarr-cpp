@@ -214,12 +214,12 @@ public:
     return *env_;
   }
   /**
-   * \brief Time to use for simulation start
-   * \return Time to use for simulation start
+   * \brief Time that execution started
+   * \return Time that execution started
    */
-  [[nodiscard]] constexpr Clock::time_point startTime() const
+  [[nodiscard]] constexpr Clock::time_point runningSince() const
   {
-    return start_time_;
+    return running_since_;
   }
   /**
    * \brief Maximum amount of time simulation can run for before being stopped
@@ -398,7 +398,7 @@ private:
   /**
    * \brief Time to use for simulation start
    */
-  Clock::time_point start_time_;
+  Clock::time_point running_since_;
   /**
    * \brief Maximum amount of time simulation can run for before being stopped
    */
