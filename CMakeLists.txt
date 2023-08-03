@@ -16,6 +16,8 @@ add_compile_options(
         "$<$<CONFIG:DEBUG>:-O0;-fno-omit-frame-pointer;-g;>"
 )
 
+set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+
 find_package(Threads REQUIRED)
 add_definitions(-D_POSIX_C_SOURCE=200809L)
 
