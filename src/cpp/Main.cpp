@@ -252,6 +252,7 @@ int main(const int argc, const char* const argv[])
         {
           tbd::util::make_directory_recursive(Settings::outputDirectory());
         }
+        // FIX: this just doesn't work because --log isn't parsed until later
         // if name starts with "/" then it's an absolute path, otherwise append to working directory
         const string log_file = log_file_name.starts_with("/") ? log_file_name : (string(Settings::outputDirectory()) + log_file_name);
         tbd::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
