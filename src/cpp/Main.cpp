@@ -157,13 +157,16 @@ int main(const int argc, const char* const argv[])
   printf("******************* DEBUG MODE *******************\n");
   printf("**************************************************\n");
 #endif
-  // _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-  Log::setLogLevel(tbd::logging::LOG_NOTE);
   auto bin = string(ARGV[CUR_ARG++]);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
-  bin = bin.substr(end, bin.size() - end);
+  const auto bin_dir = bin.substr(0, end);
+  const auto bin_name = bin.substr(end, bin.size() - end);
+  // printf("Binary is %s in directory %s\n", bin_name.c_str(), bin_dir.c_str());
   BIN_NAME = bin.c_str();
+  Settings::setRoot(bin_dir.c_str());
+  // _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+  Log::setLogLevel(tbd::logging::LOG_NOTE);
   register_argument("-h", "Show help", false, &show_help_and_exit);
   // auto start_time = tbd::Clock::now();
   // auto time = tbd::Clock::now();
