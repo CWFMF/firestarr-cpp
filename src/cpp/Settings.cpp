@@ -3,6 +3,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "stdafx.h"
+#include <filesystem>
 #include "Settings.h"
 #include "Trim.h"
 namespace fs::sim
@@ -43,6 +44,14 @@ public:
   operator=(SettingsImplementation&& rhs) = delete;
   static SettingsImplementation&
   instance() noexcept;
+  static SettingsImplementation&
+  instance(bool check_loaded) noexcept;
+  /**
+   * \brief Set root directory and read settings from file
+   * \param dirname Directory to use for settings and relative paths
+   */
+  void
+  setRoot(const char* dirname) noexcept;
   /**
    * \brief Path to directory that outputs are saved to
    * \return Path to directory that outputs are saved to
@@ -281,10 +290,13 @@ public:
   }
 private:
   /**
-   * \brief Read settings from a file
-   * \param filename File name to read from
+   * \brief Initialize object but don't load settings from file
    */
-  explicit SettingsImplementation(const char* filename) noexcept;
+  explicit SettingsImplementation() noexcept;
+  /**
+   * \brief Directory used for settings and relative paths
+   */
+  string dir_root_;
   /**
    * \brief Mutex for parallel access
    */
@@ -418,13 +430,32 @@ public:
 };
 /**
  * \brief The singleton instance for this class
+ * \param check_loaded Whether to ensure a file has been loaded already
+ * \return The singleton instance for this class
+ */
+SettingsImplementation&
+SettingsImplementation::instance(
+  bool check_loaded
+) noexcept
+{
+  static SettingsImplementation instance_{};
+  if (check_loaded)
+  {
+    logging::check_fatal(
+      instance_.dir_root_.empty(),
+      "Expected settings to be loaded, but no root directory specified yet"
+    );
+  }
+  return instance_;
+}
+/**
+ * \brief The singleton instance for this class
  * \return The singleton instance for this class
  */
 SettingsImplementation&
 SettingsImplementation::instance() noexcept
 {
-  static SettingsImplementation instance("settings.ini");
-  return instance;
+  return instance(true);
 }
 string
 get_value(
@@ -444,19 +475,44 @@ get_value(
   static const string Invalid = "INVALID";
   return Invalid;
 }
-SettingsImplementation::SettingsImplementation(
-  const char* filename
+string
+get_path(
+  const char* const dir_root,
+  unordered_map<string, string>& settings,
+  const string& key
+)
+{
+  auto path = get_value(settings, key);
+  if (!path.starts_with("/"))
+  {
+    // not an absolute path
+    std::filesystem::path p = (dir_root + path);
+    path = std::filesystem::canonical(p).c_str();
+    logging::info("Converted relative path to absolute path %s", path.c_str());
+  }
+  return path;
+}
+SettingsImplementation::SettingsImplementation() noexcept
+{
+  dir_root_ = "";
+}
+
+void
+SettingsImplementation::setRoot(
+  const char* dirname
 ) noexcept
 {
   try
   {
+    dir_root_ = dirname;
+    const auto filename = dir_root_ + "settings.ini";
     unordered_map<string, string> settings{};
     ifstream in;
-    in.open(filename);
+    in.open(filename.c_str());
     if (in.is_open())
     {
       string str;
-      logging::info("Reading settings from '%s'", filename);
+      logging::info("Reading settings from '%s'", filename.c_str());
       while (getline(in, str))
       {
         istringstream iss(str);
@@ -474,8 +530,8 @@ SettingsImplementation::SettingsImplementation(
       }
       in.close();
     }
-    raster_root_ = get_value(settings, "RASTER_ROOT");
-    fuel_lookup_table_file_ = get_value(settings, "FUEL_LOOKUP_TABLE");
+    raster_root_ = get_path(dir_root_.c_str(), settings, "RASTER_ROOT");
+    fuel_lookup_table_file_ = get_path(dir_root_.c_str(), settings, "FUEL_LOOKUP_TABLE");
     // HACK: run into fuel consumption being too low if we don't have a minimum ros
     static const auto MinRos = 0.05;
     // HACK: make sure this is always > 0 so that we don't have to check
@@ -499,7 +555,7 @@ SettingsImplementation::SettingsImplementation(
     intensity_max_moderate_ = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
     if (!settings.empty())
     {
-      logging::warning("Unused settings in settings file %s", filename);
+      logging::warning("Unused settings in settings file %s", filename.c_str());
       for (const auto& kv : settings)
       {
         logging::warning("%s = %s", kv.first.c_str(), kv.second.c_str());
@@ -511,6 +567,13 @@ SettingsImplementation::SettingsImplementation(
     logging::fatal(ex);
     std::terminate();
   }
+}
+void
+Settings::setRoot(
+  const char* dirname
+) noexcept
+{
+  return SettingsImplementation::instance(false).setRoot(dirname);
 }
 const char*
 Settings::outputDirectory() noexcept
