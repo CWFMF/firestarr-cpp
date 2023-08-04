@@ -32,10 +32,10 @@ class Settings
 {
 public:
   /**
-   * \brief Name of file to save weather to
-   * \return Name of file to save weather to
+   * \brief Set root directory and read settings from file
+   * \param dirname Directory to use for settings and relative paths
    */
-  [[nodiscard]] static const char* weatherFile() noexcept;
+  static void setRoot(const char* dirname) noexcept;
   /**
    * \brief Path to directory that outputs are saved to
    * \return Name of file to save weather to
