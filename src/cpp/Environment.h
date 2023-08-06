@@ -437,6 +437,13 @@ protected:
                           [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
       elevation.saveToTiffFile(sim::Settings::outputDirectory(), "dem");
     }
+    if (sim::Settings::saveSimulationArea())
+    {
+      // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
+      elevation.saveToTiffFile(string(sim::Settings::outputDirectory()),
+                               "simulation_area",
+                               [](const ElevationSize) { return 3; });
+    }
     logging::debug("Done saving fuel grid");
 #endif
     const auto coord = fuel.findCoordinates(point, false);
