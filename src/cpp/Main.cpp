@@ -216,6 +216,7 @@ int main(const int argc, const char* const argv[])
     register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids");
     register_flag(&Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids");
     register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
+    register_flag(&Settings::setSaveSimulationArea, true, "--sim-area", "Output simulation area grids");
     register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
