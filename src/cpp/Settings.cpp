@@ -427,6 +427,11 @@ public:
    * \return Whether or not to save occurrence grids
    */
   atomic<bool> save_occurrence = false;
+  /**
+   * \brief Whether or not to save simulation area grids
+   * \return Whether or not to save simulation area grids
+   */
+  atomic<bool> save_simulation_area = false;
 };
 /**
  * \brief The singleton instance for this class
@@ -680,6 +685,18 @@ Settings::setSaveOccurrence(
 ) noexcept
 {
   SettingsImplementation::instance().save_occurrence = value;
+}
+bool
+Settings::saveSimulationArea() noexcept
+{
+  return SettingsImplementation::instance().save_simulation_area;
+}
+void
+Settings::setSaveSimulationArea(
+  const bool value
+) noexcept
+{
+  SettingsImplementation::instance().save_simulation_area = value;
 }
 double
 Settings::minimumRos() noexcept

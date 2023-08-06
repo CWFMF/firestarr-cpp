@@ -305,6 +305,12 @@ main(
       "Do not output probability grids"
     );
     register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
+    register_flag(
+      &Settings::setSaveSimulationArea,
+      true,
+      "--sim-area",
+      "Output simulation area grids"
+    );
     register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<double>(
