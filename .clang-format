@@ -57,7 +57,7 @@ IndentWrappedFunctionNames: true
 PenaltyBreakAssignment: 2000
 PenaltyReturnTypeOnItsOwnLine: 100000
 PointerAlignment: Left
-ReflowComments: false
+ReflowComments: true
 SortIncludes: false
 SortUsingDeclarations: false
 SpaceAfterTemplateKeyword: true
