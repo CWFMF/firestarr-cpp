@@ -135,6 +135,17 @@ public:
    */
   static void setSaveOccurrence(bool value) noexcept;
   /**
+   * \brief Whether or not to save simulation area grids
+   * \return Whether or not to save simulation area grids
+   */
+  [[nodiscard]] static bool saveSimulationArea() noexcept;
+  /**
+   * \brief Set whether or not to save simulation area grids
+   * \param value Whether or not to save simulation area grids
+   * \return None
+   */
+  static void setSaveSimulationArea(bool value) noexcept;
+  /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */
