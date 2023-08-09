@@ -3,6 +3,7 @@
 #define FS_SCENARIO_H
 #include "stdafx.h"
 #include "EventCompare.h"
+#include "FireSpread.h"
 #include "FireWeather.h"
 #include "InnerPos.h"
 #include "IntensityMap.h"

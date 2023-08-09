@@ -28,7 +28,6 @@ void Scenario::clear() noexcept
   arrival_ = {};
   points_ = {};
   spread_info_ = {};
-  offsets_ = {};
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
@@ -256,7 +255,6 @@ Scenario* Scenario::reset(mt19937* mt_extinction, mt19937* mt_spread, ptr<SafeVe
   points_ = {};
   intensity_ = make_unique<IntensityMap>(model());
   spread_info_ = {};
-  offsets_ = {};
   arrival_ = {};
   max_ros_ = 0;
   current_time_index_ = numeric_limits<size_t>::max();
@@ -421,9 +419,8 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     current_time_(rhs.current_time_), points_(std::move(rhs.points_)),
     unburnable_(std::move(rhs.unburnable_)), scheduler_(std::move(rhs.scheduler_)),
     intensity_(std::move(rhs.intensity_)), perimeter_(std::move(rhs.perimeter_)),
-    spread_info_(std::move(rhs.spread_info_)), offsets_(std::move(rhs.offsets_)),
-    arrival_(std::move(rhs.arrival_)), max_ros_(rhs.max_ros_),
-    start_cell_(std::move(rhs.start_cell_)), weather_(rhs.weather_),
+    spread_info_(std::move(rhs.spread_info_)), arrival_(std::move(rhs.arrival_)),
+    max_ros_(rhs.max_ros_), start_cell_(std::move(rhs.start_cell_)), weather_(rhs.weather_),
     weather_daily_(rhs.weather_daily_), model_(rhs.model_), probabilities_(rhs.probabilities_),
     final_sizes_(rhs.final_sizes_), start_point_(std::move(rhs.start_point_)), id_(rhs.id_),
     start_time_(rhs.start_time_), last_save_(rhs.last_save_), simulation_(rhs.simulation_),
@@ -677,7 +674,6 @@ void Scenario::scheduleFireSpread(const Event& event)
   {
     current_time_index_ = this_time;
     spread_info_ = {};
-    offsets_ = {};
     max_ros_ = 0.0;
   }
   auto keys = std::set<SpreadKey>();
@@ -693,19 +689,10 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
     // any cell that has the same fuel, slope, and aspect has the same spread
     const auto& origin = origin_inserted.first->second;
-    if (origin_inserted.second)
+    if (!origin.isNotSpreading())
     {
-      offsets_.emplace(key, origin.offsets());
-      if (!origin.isNotSpreading())
-      {
-        any_spread = true;
-        max_ros_ = max(max_ros_, origin.headRos());
-      }
-    }
-    else
-    {
-      // already did the lookup so use the result
-      any_spread |= !origin.offsets().empty();
+      any_spread = true;
+      max_ros_ = max(max_ros_, origin.headRos());
     }
   }
   if (!any_spread || max_ros_ < Settings::minimumRos())
@@ -726,7 +713,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto& location = kv.first;
     count[location] = kv.second.size();
     const auto key = location.key();
-    auto& offsets = offsets_.at(key);
+    auto& offsets = spread_info_.at(key).offsets();
     if (!offsets.empty())
     {
       for (auto& o : offsets)
