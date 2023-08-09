@@ -422,13 +422,9 @@ static const FwiWeather* make_wx(const Speed& speed,
                           ffmc,
                           wx.dmc(),
                           wx.dc());
-  const auto seek = all_weather.find(result);
-  if (seek != all_weather.end())
-  {
-    return &*seek;
-  }
-  all_weather.insert(result);
-  return &*all_weather.find(result);
+  const auto& wx_inserted = all_weather.insert(result);
+  // doesn't matter if was already there or just inserted
+  return &(*(wx_inserted.first));
 }
 static const FwiWeather* make_wx(const FwiWeather& wx_wind,
                                  const FwiWeather& wx,
