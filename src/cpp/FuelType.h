@@ -16,12 +16,9 @@
 #pragma once
 #include "Duff.h"
 #include "FireWeather.h"
+#include "FireSpread.h"
 namespace tbd
 {
-namespace sim
-{
-class SpreadInfo;
-}
 using sim::SpreadInfo;
 using data::LogValue;
 namespace fuel
