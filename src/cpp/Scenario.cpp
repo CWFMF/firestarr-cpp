@@ -222,7 +222,7 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
   }
   //  std::fill(extinction_thresholds_.begin(), extinction_thresholds_.end(), 1.0 - abs(1.0 / (10 * id_)));
   //  std::fill(spread_thresholds_by_ros_.begin(), spread_thresholds_by_ros_.end(), 1.0 - abs(1.0 / (10 * id_)));
-  //std::fill(extinction_thresholds_.begin(), extinction_thresholds_.end(), 0.5);
+  // std::fill(extinction_thresholds_.begin(), extinction_thresholds_.end(), 0.5);
   //  std::fill(spread_thresholds_by_ros_.begin(), spread_thresholds_by_ros_.end(), SpreadInfo::calculateRosFromThreshold(0.5));
   for (const auto& o : observers_)
   {
@@ -241,7 +241,7 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
   max_intensity_ = {};
   arrival_ = {};
   max_ros_ = 0;
-  //surrounded_ = POOL_BURNED_DATA.acquire();
+  // surrounded_ = POOL_BURNED_DATA.acquire();
   current_time_index_ = numeric_limits<size_t>::max();
   ++COUNT;
   {
@@ -325,7 +325,7 @@ Scenario::Scenario(Model* model,
     intensity_(nullptr),
     // initial_intensity_(initial_intensity),
     perimeter_(perimeter),
-    //surrounded_(nullptr),
+    // surrounded_(nullptr),
     max_ros_(0),
     start_cell_(start_cell),
     weather_(weather),
@@ -457,7 +457,7 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
     intensity_ = std::move(rhs.intensity_);
     // initial_intensity_ = std::move(rhs.initial_intensity_);
     perimeter_ = std::move(rhs.perimeter_);
-    //surrounded_ = rhs.surrounded_;
+    // surrounded_ = rhs.surrounded_;
     start_cell_ = std::move(rhs.start_cell_);
     weather_ = rhs.weather_;
     weather_daily_ = rhs.weather_daily_;
@@ -484,7 +484,7 @@ void Scenario::burn(const Event& event, const IntensitySize burn_intensity)
   notify(event);
   intensity_->burn(event.cell(), burn_intensity);
   arrival_[event.cell()] = event.time();
-  //scheduleFireSpread(event);
+  // scheduleFireSpread(event);
 }
 bool Scenario::isSurrounded(const Location& location) const
 {
@@ -664,7 +664,7 @@ CellIndex relativeIndex(const topo::Cell& for_cell, const topo::Cell& from_cell)
     }
     if (c < c_o)
     {
-      //center right
+      // center right
       return DIRECTION_E;
     }
     // else has to be c > c_o
@@ -707,7 +707,7 @@ CellIndex relativeIndex(const topo::Cell& for_cell, const topo::Cell& from_cell)
 void Scenario::scheduleFireSpread(const Event& event)
 {
   const auto time = event.time();
-  //note("time is %f", time);
+  // note("time is %f", time);
   current_time_ = time;
   const auto wx = weather(time);
   // const auto wx_daily = weather_daily(time);
@@ -717,10 +717,10 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto next_time = static_cast<double>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
   const auto max_duration = (next_time - time) * DAY_MINUTES;
-  //note("time is %f, next_time is %f, max_duration is %f",
-  //     time,
-  //     next_time,
-  //     max_duration);
+  // note("time is %f, next_time is %f, max_duration is %f",
+  //      time,
+  //      next_time,
+  //      max_duration);
   const auto max_time = time + max_duration / DAY_MINUTES;
   // if (wx->ffmc().asDouble() < minimumFfmcForSpread(time))
   // HACK: use the old ffmc for this check to be consistent with previous version
@@ -797,14 +797,14 @@ void Scenario::scheduleFireSpread(const Event& event)
     addEvent(Event::makeFireSpread(max_time));
     return;
   }
-  //note("Max spread is %f, max_ros is %f",
-  //     Settings::maximumSpreadDistance() * cellSize(),
-  //     max_ros_);
+  // note("Max spread is %f, max_ros is %f",
+  //      Settings::maximumSpreadDistance() * cellSize(),
+  //      max_ros_);
   const auto duration = ((max_ros_ > 0)
                            ? min(max_duration,
                                  Settings::maximumSpreadDistance() * cellSize() / max_ros_)
                            : max_duration);
-  //note("Spreading for %f minutes", duration);
+  // note("Spreading for %f minutes", duration);
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
   map<topo::Cell, PointSet> point_map_{};
@@ -823,7 +823,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         const auto offset_x = o.x() * duration;
         const auto offset_y = o.y() * duration;
         const Offset offset{offset_x, offset_y};
-        //note("%f, %f", offset_x, offset_y);
+        // note("%f, %f", offset_x, offset_y);
         for (auto& p : kv.second)
         {
           const InnerPos pos = p.add(offset);
@@ -836,7 +836,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           sources[for_cell] |= source;
           if (!(*unburnable_)[for_cell.hash()])
           {
-            //log_extensive("Adding point (%f, %f)", pos.x, pos.y);
+            // log_extensive("Adding point (%f, %f)", pos.x, pos.y);
             point_map_[for_cell].emplace_back(pos);
           }
         }
@@ -923,18 +923,18 @@ bool Scenario::canBurn(const topo::Cell& location) const
 {
   return intensity_->canBurn(location);
 }
-//bool Scenario::canBurn(const HashSize hash) const
+// bool Scenario::canBurn(const HashSize hash) const
 //{
-//  return intensity_->canBurn(hash);
-//}
+//   return intensity_->canBurn(hash);
+// }
 bool Scenario::hasBurned(const Location& location) const
 {
   return intensity_->hasBurned(location);
 }
-//bool Scenario::hasBurned(const HashSize hash) const
+// bool Scenario::hasBurned(const HashSize hash) const
 //{
-//  return intensity_->hasBurned(hash);
-//}
+//   return intensity_->hasBurned(hash);
+// }
 void Scenario::endSimulation() noexcept
 {
   log_verbose("Ending simulation");

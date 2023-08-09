@@ -206,7 +206,7 @@ public:
            const Idx column) const
   {
     const auto& p = event.cell();
-    //return cell(p.hash() + column + static_cast<HashSize>(MAX_COLUMNS) * row);
+    // return cell(p.hash() + column + static_cast<HashSize>(MAX_COLUMNS) * row);
     return cell(Location(p.row() + row, p.column() + column));
   }
   /**

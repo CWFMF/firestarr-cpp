@@ -232,7 +232,7 @@ public:
   /**
    * \brief Whether or not simulation has exceeded any limits that mean it should stop
    * \return Whether or not simulation has exceeded any limits that mean it should stop
-  */
+   */
   [[nodiscard]] bool shouldStop() const noexcept;
   /**
    * \brief Whether or not simulation has been running longer than maximum duration
@@ -242,7 +242,7 @@ public:
   /**
    * \brief Whether or not simulation is over max simulation count
    * \return Whether or not simulation is over max simulation count
-  */
+   */
   [[nodiscard]] bool isOverSimulationCountLimit() const noexcept;
   /**
    * \brief What year the weather is for
@@ -349,7 +349,7 @@ private:
    * \param means Mean sizes per iteration
    * \param pct 95th percentile sizes per iteration
    * \param cur_sizes Sizes to add to statistics
-  */
+   */
   [[nodiscard]] bool add_statistics(vector<double>* all_sizes,
                                     vector<double>* means,
                                     vector<double>* pct,
@@ -439,7 +439,7 @@ private:
   bool is_out_of_time_ = false;
   /**
    * \brief If simulation is over max simulation count
-  */
+   */
   bool is_over_simulation_count_ = false;
   // /**
   //  * @brief Time when we last checked if simulation should end

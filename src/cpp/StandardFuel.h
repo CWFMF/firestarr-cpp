@@ -95,7 +95,7 @@ public:
    * \param name Name of the fuel
    * \param can_crown Whether or not this fuel type can have a crown fire
    * \param log_q Log value of q [ST-X-3 table 7]
-   * \param duff_ffmc Type of duff near the surface 
+   * \param duff_ffmc Type of duff near the surface
    * \param duff_dmc Type of duff deeper underground
    */
   constexpr StandardFuel(const FuelCodeSize& code,
@@ -147,10 +147,10 @@ public:
     return a() * pow(1.0 - exp(negB() * isi), c());
   }
   virtual /**
-   * \brief Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
-   * \param cfb Crown Fraction Burned (CFB) [ST-X-3 eq 58]
-   * \return Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
-   */
+           * \brief Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
+           * \param cfb Crown Fraction Burned (CFB) [ST-X-3 eq 58]
+           * \return Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
+           */
     double
     crownConsumption(const double cfb) const noexcept override
   {

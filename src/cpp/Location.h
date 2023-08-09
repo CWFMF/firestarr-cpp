@@ -53,7 +53,7 @@ public:
 #ifdef NDEBUG
   constexpr
 #endif
-  Location(const Idx row, const Idx column) noexcept
+    Location(const Idx row, const Idx column) noexcept
     : Location(row, column, doHash(row, column) & HashMask)
   {
 #ifndef NDEBUG

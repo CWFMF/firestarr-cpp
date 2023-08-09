@@ -46,7 +46,7 @@ public:
 #ifndef NDEBUG
     logging::check_fatal(location.row() >= this->rows() || location.column() >= this->columns(), "Out of bounds (%d, %d)", location.row(), location.column());
 #endif
-    //return at(location.hash());
+    // return at(location.hash());
     return this->data.at(location.hash());
   }
   /**

@@ -95,7 +95,6 @@ IntensityMap::IntensityMap(const IntensityMap& rhs)
   is_burned_ = rhs.is_burned_;
 }
 
-
 // IntensityMap::IntensityMap(IntensityMap&& rhs)
 //   : IntensityMap(rhs.model_)
 // {
@@ -119,10 +118,10 @@ void IntensityMap::applyPerimeter(const topo::Perimeter& perimeter) noexcept
     perimeter.burned().end(),
     [this](const auto& location) { burn(location, 1); });
 }
-//bool IntensityMap::canBurn(const HashSize hash) const
+// bool IntensityMap::canBurn(const HashSize hash) const
 //{
-//  return !hasBurned(hash);
-//}
+//   return !hasBurned(hash);
+// }
 bool IntensityMap::canBurn(const topo::Cell& location) const
 {
   return !hasBurned(location);
@@ -133,11 +132,11 @@ bool IntensityMap::hasBurned(const Location& location) const
   return (*is_burned_)[location.hash()];
   //  return hasBurned(location.hash());
 }
-//bool IntensityMap::hasBurned(const HashSize hash) const
+// bool IntensityMap::hasBurned(const HashSize hash) const
 //{
-//  lock_guard<mutex> lock(mutex_);
-//  return (*is_burned_)[hash];
-//}
+//   lock_guard<mutex> lock(mutex_);
+//   return (*is_burned_)[hash];
+// }
 bool IntensityMap::isSurrounded(const Location& location) const
 {
   // implement here so we can just lock once

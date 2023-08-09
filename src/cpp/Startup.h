@@ -101,17 +101,17 @@ public:
     return is_overridden_;
   }
   /**
- * \brief Constructor
- * \param station Station indices are from
- * \param generated Date/Time indices are from
- * \param point Point indices were requested for
- * \param distance_from Distance from requested point the weather station is (m)
- * \param ffmc Fine Fuel Moisture Code
- * \param dmc Duff Moisture Code
- * \param dc Drought Code
- * \param apcp_prev Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
- * \param overridden whether or not any Startup values were overridden
- */
+   * \brief Constructor
+   * \param station Station indices are from
+   * \param generated Date/Time indices are from
+   * \param point Point indices were requested for
+   * \param distance_from Distance from requested point the weather station is (m)
+   * \param ffmc Fine Fuel Moisture Code
+   * \param dmc Duff Moisture Code
+   * \param dc Drought Code
+   * \param apcp_prev Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
+   * \param overridden whether or not any Startup values were overridden
+   */
   Startup(string station,
           const tm& generated,
           const topo::Point& point,

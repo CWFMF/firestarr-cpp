@@ -88,8 +88,8 @@ public:
   }
   /**
    * \brief Function that returns the value we care about regarding the Event
-   * \param event 
-   * \return 
+   * \param event
+   * \return
    */
   [[nodiscard]] virtual T getValue(const Event& event) const = 0;
   /**
