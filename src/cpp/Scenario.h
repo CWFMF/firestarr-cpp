@@ -33,8 +33,8 @@ class IObserver;
 class Event;
 using PointSet = vector<InnerPos>;
 /**
-* \brief Deleter for IObserver to get around incomplete class with unique_ptr
-*/
+ * \brief Deleter for IObserver to get around incomplete class with unique_ptr
+ */
 struct IObserver_deleter
 {
   void operator()(IObserver*) const;
@@ -589,7 +589,7 @@ protected:
   wx::FireWeather* weather_;
   /**
    * \brief Weather stream to use for spread and extinction probability
-  */
+   */
   wx::FireWeather* weather_daily_;
   /**
    * \brief Model this Scenario is being run in

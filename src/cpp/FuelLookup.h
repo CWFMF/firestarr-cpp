@@ -67,7 +67,7 @@ public:
   [[nodiscard]] const FuelType* codeToFuel(FuelSize value, FuelSize nodata) const;
   /**
    * \brief List all fuels and their codes
-  */
+   */
   void listFuels() const;
   /**
    * \brief Look up the original code for the given FuelType

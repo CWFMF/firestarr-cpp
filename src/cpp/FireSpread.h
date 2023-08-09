@@ -239,7 +239,7 @@ private:
   /**
    * Do initial spread calculations
    * \return Initial head ros calculation (-1 for none)
-  */
+   */
   static double initial(SpreadInfo& spread,
                         const wx::FwiWeather& weather,
                         double& ffmc_effect,

@@ -77,9 +77,9 @@ public:
  */
 void output(int log_level, const char* format, va_list* args)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
-;
+  ;
 /**
  * \brief Output a message to the log
  * \param log_level Log level to use for label
@@ -89,9 +89,9 @@ noexcept
  */
 void output(int log_level, const char* format, ...)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
-;
+  ;
 /**
  * \brief Log with EXTENSIVE level
  * \param format Format string for message
@@ -142,9 +142,9 @@ void error(const char* format, ...) noexcept;
  */
 void check_fatal(bool condition, const char* format, ...)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
-;
+  ;
 /**
  * \brief Log with FATAL level and exit
  * \param format Format string for message
@@ -152,9 +152,9 @@ noexcept
  */
 void fatal(const char* format, ...)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
-;
+  ;
 /**
  * \brief Log with FATAL level and exit
  * \param ex Exception that is causing fatal error
@@ -179,7 +179,7 @@ void fatal(const std::exception& ex, const char* format, ...);
 template <class T>
 T fatal(const char* format, va_list* args)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   output(LOG_FATAL, format, args);
@@ -201,7 +201,7 @@ noexcept
 template <class T>
 T fatal(const char* format, ...)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   va_list args;
@@ -223,13 +223,13 @@ protected:
   void log_error(const char* format, ...) const noexcept;
   void log_check_fatal(bool condition, const char* format, ...) const
 #ifdef NDEBUG
-noexcept
+    noexcept
 #endif
-;
+    ;
   void log_fatal(const char* format, ...) const
 #ifdef NDEBUG
-noexcept
+    noexcept
 #endif
-;
+    ;
 };
 }

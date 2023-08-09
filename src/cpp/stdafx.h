@@ -184,7 +184,7 @@ static constexpr Idx MAX_COLUMNS = 2048;
  * \brief Maximum number of rows for an Environment
  */
 static constexpr Idx MAX_ROWS = MAX_COLUMNS;
-//static_assert(static_cast<size_t>(MAX_ROWS) * (MAX_COLUMNS - 1) <= std::numeric_limits<Idx>::max());
+// static_assert(static_cast<size_t>(MAX_ROWS) * (MAX_COLUMNS - 1) <= std::numeric_limits<Idx>::max());
 /**
  * \brief Maximum aspect value (360 == 0)
  */
