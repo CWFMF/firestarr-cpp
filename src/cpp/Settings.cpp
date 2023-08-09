@@ -16,13 +16,14 @@ parse_list(
 )
 {
   vector<int> result{};
-  // static const vector<int> OUTPUT_DATE_OFFSETS = { 1, 2, 3, 7, 14, 28 };
-  logging::check_fatal(str[0] != '{', "Expected list starting with '{'");
+  // want format without spaces to work
+  // OUTPUT_DATE_OFFSETS = [1,2,3,7,14]
+  logging::check_fatal(str[0] != '[', "Expected list starting with '[");
   istringstream iss(str.substr(1));
   while (getline(iss, str, ','))
   {
     // need to make sure this isn't an empty list
-    if (0 != strcmp("}", str.c_str()))
+    if (0 != strcmp("]", str.c_str()))
     {
       result.push_back(convert(str));
     }
