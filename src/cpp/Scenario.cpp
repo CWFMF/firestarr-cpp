@@ -41,7 +41,6 @@ Scenario::clear() noexcept
   arrival_ = {};
   points_ = {};
   spread_info_ = {};
-  offsets_ = {};
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
@@ -315,7 +314,6 @@ Scenario::reset(
   points_ = {};
   intensity_ = make_unique<IntensityMap>(model());
   spread_info_ = {};
-  offsets_ = {};
   arrival_ = {};
   max_ros_ = 0;
   current_time_index_ = numeric_limits<size_t>::max();
@@ -539,7 +537,6 @@ Scenario::Scenario(
     intensity_(std::move(rhs.intensity_)),
     perimeter_(std::move(rhs.perimeter_)),
     spread_info_(std::move(rhs.spread_info_)),
-    offsets_(std::move(rhs.offsets_)),
     arrival_(std::move(rhs.arrival_)),
     max_ros_(rhs.max_ros_),
     start_cell_(std::move(rhs.start_cell_)),
@@ -849,7 +846,6 @@ Scenario::scheduleFireSpread(
   {
     current_time_index_ = this_time;
     spread_info_ = {};
-    offsets_ = {};
     max_ros_ = 0.0;
   }
   auto keys = std::set<SpreadKey>();
@@ -867,19 +863,10 @@ Scenario::scheduleFireSpread(
     const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
     // any cell that has the same fuel, slope, and aspect has the same spread
     const auto& origin = origin_inserted.first->second;
-    if (origin_inserted.second)
+    if (!origin.isNotSpreading())
     {
-      offsets_.emplace(key, origin.offsets());
-      if (!origin.isNotSpreading())
-      {
-        any_spread = true;
-        max_ros_ = max(max_ros_, origin.headRos());
-      }
-    }
-    else
-    {
-      // already did the lookup so use the result
-      any_spread |= !origin.offsets().empty();
+      any_spread = true;
+      max_ros_ = max(max_ros_, origin.headRos());
     }
   }
   if (!any_spread || max_ros_ < Settings::minimumRos())
@@ -900,7 +887,7 @@ Scenario::scheduleFireSpread(
     const auto& location = kv.first;
     count[location] = kv.second.size();
     const auto key = location.key();
-    auto& offsets = offsets_.at(key);
+    auto& offsets = spread_info_.at(key).offsets();
     if (!offsets.empty())
     {
       for (auto& o : offsets)
