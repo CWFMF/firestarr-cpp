@@ -749,18 +749,10 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
     // any cell that has the same fuel, slope, and aspect has the same spread
     const auto& origin = origin_inserted.first->second;
-    if (origin_inserted.second)
+    if (!origin.isNotSpreading())
     {
-      if (!origin.isNotSpreading())
-      {
-        any_spread = true;
-        max_ros_ = max(max_ros_, origin.headRos());
-      }
-    }
-    else
-    {
-      // already did the lookup so use the result
-      any_spread |= !origin_inserted.first->second.offsets().empty();
+      any_spread = true;
+      max_ros_ = max(max_ros_, origin.headRos());
     }
   }
   // // seems like it's reusing SpreadInfo most of the time (so that's probably not the bottleneck?)
