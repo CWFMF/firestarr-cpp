@@ -53,12 +53,12 @@ public:
     int nd,
     const wx::FwiWeather* weather
   );
-  constexpr SpreadInfo(SpreadInfo&& rhs) noexcept = delete;
-  constexpr SpreadInfo(const SpreadInfo& rhs) noexcept = delete;
+  constexpr SpreadInfo(SpreadInfo&& rhs) noexcept = default;
+  SpreadInfo(const SpreadInfo& rhs) noexcept = default;
+  constexpr SpreadInfo&
+  operator=(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo&
-  operator=(SpreadInfo&& rhs) noexcept = delete;
-  SpreadInfo&
-  operator=(const SpreadInfo& rhs) noexcept = delete;
+  operator=(const SpreadInfo& rhs) noexcept = default;
   // static double calculateSpreadProbability(double ros);
   /**
    * \brief Determine rate of spread from probability of spread threshold
@@ -240,6 +240,17 @@ public:
   {
     return -1 == head_ros_;
   }
+  // required for making a map of SpreadInfo objects
+  constexpr SpreadInfo() noexcept
+  {
+    offsets_ = {};
+    max_intensity_ = -1;
+    key_ = 0;
+    weather_ = nullptr;
+    time_ = -1;
+    head_ros_ = -1;
+    nd_ = -1;
+  };
 private:
   // HACK: have private constructor so is_spreading() can short-circuit the calculation,
   // but nothing else can get a partially constructed SpreadInfo object
@@ -297,7 +308,7 @@ private:
   /**
    * \brief FwiWeather determining spread
    */
-  const wx::FwiWeather* weather_;
+  wx::FwiWeather const* weather_;
   /**
    * \brief Time that spread is occurring
    */
