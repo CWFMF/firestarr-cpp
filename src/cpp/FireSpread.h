@@ -88,7 +88,7 @@ public:
    * \brief Offsets from origin point that represent spread under these conditions
    * \return Offsets from origin point that represent spread under these conditions
    */
-  [[nodiscard]] OffsetSet offsets() const
+  [[nodiscard]] const OffsetSet& offsets() const
   {
     return offsets_;
   }

@@ -42,7 +42,7 @@ void Scenario::clear() noexcept
   arrival_ = {};
   //  points_.clear();
   points_ = {};
-  //  offsets_.clear();
+  spread_info_ = {};
   offsets_ = {};
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
@@ -237,8 +237,8 @@ Scenario* Scenario::reset(mt19937* mt_extinction,
   //   ? make_unique<IntensityMap>(model(), nullptr)
   //   : make_unique<IntensityMap>(*initial_intensity_);
   intensity_ = make_unique<IntensityMap>(model());
+  spread_info_ = {};
   offsets_ = {};
-  max_intensity_ = {};
   arrival_ = {};
   max_ros_ = 0;
   // surrounded_ = POOL_BURNED_DATA.acquire();
@@ -424,6 +424,7 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     intensity_(std::move(rhs.intensity_)),
     // initial_intensity_(std::move(rhs.initial_intensity_)),
     perimeter_(std::move(rhs.perimeter_)),
+    spread_info_(std::move(rhs.spread_info_)),
     offsets_(std::move(rhs.offsets_)),
     arrival_(std::move(rhs.arrival_)),
     max_ros_(rhs.max_ros_),
@@ -733,10 +734,8 @@ void Scenario::scheduleFireSpread(const Event& event)
   if (current_time_index_ != this_time)
   {
     current_time_index_ = this_time;
-    //    offsets_.clear();
-    //    max_intensity_.clear();
+    spread_info_ = {};
     offsets_ = {};
-    max_intensity_ = {};
     max_ros_ = 0.0;
   }
   // auto keys = list<topo::SpreadKey>();
@@ -751,41 +750,22 @@ void Scenario::scheduleFireSpread(const Event& event)
   auto any_spread = false;
   for (const auto& key : keys)
   {
+    const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
     // any cell that has the same fuel, slope, and aspect has the same spread
-    const auto seek_spreading = offsets_.find(key);
-    if (seek_spreading == offsets_.end())
+    const auto& origin = origin_inserted.first->second;
+    if (origin_inserted.second)
     {
-      // FIX: don't calculate if no spread?
-      // have not calculated spread for this cell yet
-      const SpreadInfo origin(*this, time, key, nd(time), wx);
-      // will be empty if invalid
       offsets_.emplace(key, origin.offsets());
       if (!origin.isNotSpreading())
-      // // HACK: check if spreading based on old daily indices
-      // if (SpreadInfo::is_spreading(*this, time, location, nd(time), wx_daily))
       {
-        // // HACK: only put these values in the offsets_ if daily says spreading
-        // // NOTE: use spread rate from new hourly indices
-        // // have not calculated spread for this cell yet
-        // const SpreadInfo origin(*this, time, location, nd(time), wx);
-        // // will be empty if invalid
-        // offsets_.emplace(key, origin.offsets());
         any_spread = true;
-        // HACK: still use calculated spread from hourly values
         max_ros_ = max(max_ros_, origin.headRos());
-        max_intensity_[key] = max(max_intensity_[key], origin.maxIntensity());
       }
-      // else
-      // {
-      //   // no spread, so no offsets
-      //   offsets_.emplace(key, OffsetSet());
-      // }
     }
     else
     {
       // already did the lookup so use the result
-      any_spread |= !seek_spreading->second.empty();
-      // ++num_reused;
+      any_spread |= !origin.offsets().empty();
     }
   }
   // // seems like it's reusing SpreadInfo most of the time (so that's probably not the bottleneck?)
@@ -857,12 +837,14 @@ void Scenario::scheduleFireSpread(const Event& event)
     auto& for_cell = kv.first;
     if (!kv.second.empty())
     {
-      if (canBurn(for_cell) && max_intensity_[for_cell.key()] > 0)
+      const auto& seek_spread = spread_info_.find(for_cell.key());
+      const auto max_intensity = (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
+      if (canBurn(for_cell) && max_intensity > 0)
       {
         // HACK: make sure it can't round down to 0
         const auto intensity = static_cast<IntensitySize>(max(
           1.0,
-          max_intensity_[for_cell.key()]));
+          max_intensity));
         // HACK: just use the first cell as the source
         const auto source = sources[for_cell];
         const auto fake_event = Event::makeFireSpread(
