@@ -537,13 +537,13 @@ protected:
    */
   shared_ptr<Perimeter> perimeter_{nullptr};
   /**
+   * \brief Calculated SpreadInfo for SpreadKey for current time
+   */
+  map<SpreadKey, SpreadInfo> spread_info_{};
+  /**
    * \brief Calculated offsets from origin Point for spread given SpreadKey for current time
    */
   map<SpreadKey, OffsetSet> offsets_{};
-  /**
-   * \brief Calculated maximum intensity for spread given SpreadKey for current time
-   */
-  map<SpreadKey, double> max_intensity_{};
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
