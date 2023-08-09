@@ -564,13 +564,13 @@ protected:
    */
   shared_ptr<topo::Perimeter> perimeter_;
   /**
+   * \brief Calculated SpreadInfo for SpreadKey for current time
+   */
+  map<topo::SpreadKey, SpreadInfo> spread_info_{};
+  /**
    * \brief Calculated offsets from origin Point for spread given SpreadKey for current time
    */
   map<topo::SpreadKey, OffsetSet> offsets_{};
-  /**
-   * \brief Calculated maximum intensity for spread given SpreadKey for current time
-   */
-  map<topo::SpreadKey, double> max_intensity_{};
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
