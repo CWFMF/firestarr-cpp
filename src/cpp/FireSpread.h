@@ -42,14 +42,14 @@ public:
    * \brief Calculate fire spread for time and place
    * \param scenario Scenario this is spreading in
    * \param time Time spread is occurring
-   * \param cell Cell spread is occurring in
+   * \param key Attributes for Cell spread is occurring in
    * \param nd Difference between date and the date of minimum foliar moisture content
    * \param weather FwiWeather to use for calculations
    */
   SpreadInfo(
     const Scenario& scenario,
     double time,
-    const topo::Cell& cell,
+    const topo::SpreadKey& key,
     int nd,
     const wx::FwiWeather* weather
   );
@@ -198,7 +198,7 @@ public:
   [[nodiscard]] constexpr SlopeSize
   percentSlope() const
   {
-    return cell_.slope();
+    return topo::Cell::slope(key_);
   }
   /**
    * \brief Head fire rate of spread (m/min)
@@ -247,7 +247,7 @@ private:
    * \brief Calculate fire spread for time and place
    * \param scenario Scenario this is spreading in
    * \param time Time spread is occurring
-   * \param cell Cell spread is occurring in
+   * \param key Attributes for Cell spread is occurring in
    * \param nd Difference between date and the date of minimum foliar moisture content
    * \param weather FwiWeather to use for calculations
    * \param weather_daily FwiWeather to use for spread event probability
@@ -255,7 +255,7 @@ private:
   SpreadInfo(
     const Scenario& scenario,
     double time,
-    const topo::Cell& cell,
+    const topo::SpreadKey& key,
     int nd,
     const wx::FwiWeather* weather,
     const wx::FwiWeather* weather_daily
@@ -291,9 +291,9 @@ private:
    */
   double max_intensity_;
   /**
-   * \brief Cell in which this spread is happening
+   * \brief Attributes for Cell spread is occurring in
    */
-  topo::Cell cell_;
+  topo::SpreadKey key_;
   /**
    * \brief FwiWeather determining spread
    */

@@ -202,7 +202,7 @@ run_test(
   auto info = SpreadInfo(
     scenario,
     start_date,
-    *start_cell,
+    start_cell->key(),
     model.nd(start_date),
     weather.at(start_date)
   );
