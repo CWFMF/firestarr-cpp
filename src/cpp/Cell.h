@@ -95,15 +95,86 @@ public:
   }
   /**
    * \brief A key defining Slope, Aspect, and Fuel, used for determining Cells that spread the same
+   * \param value Topo to extract from
+   * \return A key defining Slope, Aspect, and Fuel
+   */
+  [[nodiscard]] static constexpr SpreadKey key(const Topo value) noexcept
+  {
+    // can just shift since these are the only bits left after
+    return static_cast<SpreadKey>(value >> FuelShift);
+  }
+  /**
+   * \brief Aspect (degrees)
+   * \param value SpreadKey to extract from
+   * \return Aspect (degrees)
+   */
+  [[nodiscard]] static constexpr AspectSize aspect(const SpreadKey value) noexcept
+  {
+    return static_cast<AspectSize>((value & (AspectMask >> FuelShift)) >> (AspectShift - FuelShift));
+  }
+  /**
+   * \brief Fuel
+   * \param value SpreadKey to extract from
+   * \return Fuel
+   */
+
+  [[nodiscard]] static constexpr FuelCodeSize fuelCode(const SpreadKey value) noexcept
+  {
+    return static_cast<FuelCodeSize>((value & (FuelMask >> FuelShift)) >> (FuelShift - FuelShift));
+  }
+  /**
+   * \brief Slope (degrees)
+   * \param value SpreadKey to extract from
+   * \return Slope (degrees)
+   */
+  [[nodiscard]] static constexpr SlopeSize slope(const SpreadKey value) noexcept
+  {
+    return static_cast<SlopeSize>((value & (SlopeMask >> FuelShift)) >> (SlopeShift - FuelShift));
+  }
+  /**
+   * \brief Aspect (degrees)
+   * \param value Topo to extract from
+   * \return Aspect (degrees)
+   */
+  [[nodiscard]] static constexpr AspectSize aspect(const Topo value) noexcept
+  {
+    return static_cast<AspectSize>((value & AspectMask) >> AspectShift);
+  }
+  /**
+   * \brief Fuel
+   * \param value Topo to extract from
+   * \return Fuel
+   */
+
+  [[nodiscard]] static constexpr FuelCodeSize fuelCode(const Topo value) noexcept
+  {
+    return static_cast<FuelCodeSize>((value & FuelMask) >> FuelShift);
+  }
+  /**
+   * \brief Slope (degrees)
+   * \param value Topo to extract from
+   * \return Slope (degrees)
+   */
+  [[nodiscard]] static constexpr SlopeSize slope(const Topo value) noexcept
+  {
+    return static_cast<SlopeSize>((value & SlopeMask) >> SlopeShift);
+  }
+  /**
+   * \brief Topo that contains Cell data
+   * \param value Topo to extract from
+   * \return Topo that contains Cell data
+   */
+  [[nodiscard]] static constexpr Topo topoHash(const Topo value) noexcept
+  {
+    return static_cast<Topo>(value) & CellMask;
+  }
+  /**
+   * \brief A key defining Slope, Aspect, and Fuel, used for determining Cells that spread the same
    * \return A key defining Slope, Aspect, and Fuel
    */
   [[nodiscard]] constexpr SpreadKey key() const noexcept
   {
-    // should be able to fit this in uint32_t
-    //constexpr auto key_mask = AspectMask | FuelMask | SlopeMask;
-    //return static_cast<SpreadKey>((topo_data_ & key_mask) >> FuelShift);
-    // can just shift since these are the only bits left after
-    return static_cast<SpreadKey>(topo_data_ >> FuelShift);
+    return Cell::key(topo_data_);
   }
   /**
    * \brief Aspect (degrees)
@@ -111,7 +182,7 @@ public:
    */
   [[nodiscard]] constexpr AspectSize aspect() const noexcept
   {
-    return static_cast<AspectSize>((topo_data_ & AspectMask) >> AspectShift);
+    return Cell::aspect(topo_data_);
   }
   /**
    * \brief Fuel
@@ -119,7 +190,7 @@ public:
    */
   [[nodiscard]] constexpr FuelCodeSize fuelCode() const noexcept
   {
-    return static_cast<FuelCodeSize>((topo_data_ & FuelMask) >> FuelShift);
+    return Cell::fuelCode(topo_data_);
   }
   /**
    * \brief Slope (degrees)
@@ -127,7 +198,7 @@ public:
    */
   [[nodiscard]] constexpr SlopeSize slope() const noexcept
   {
-    return static_cast<SlopeSize>((topo_data_ & SlopeMask) >> SlopeShift);
+    return Cell::slope(topo_data_);
   }
   /**
    * \brief Topo that contains Cell data
@@ -135,7 +206,7 @@ public:
    */
   [[nodiscard]] constexpr Topo topoHash() const noexcept
   {
-    return static_cast<Topo>(topo_data_) & CellMask;
+    return Cell::topoHash(topo_data_);
   }
 protected:
   /*

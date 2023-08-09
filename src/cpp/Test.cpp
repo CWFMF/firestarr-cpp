@@ -195,7 +195,7 @@ int run_test(const char* output_directory,
   TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather);
   auto info = SpreadInfo(scenario,
                          start_date,
-                         *start_cell,
+                         start_cell->key(),
                          model.nd(start_date),
                          weather.at(start_date));
   map<double, ProbabilityMap*> probabilities{};

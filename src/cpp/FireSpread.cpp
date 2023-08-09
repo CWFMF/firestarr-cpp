@@ -60,10 +60,10 @@ static double calculate_standard_wsv(const double v) noexcept
 static const util::LookupTable<&calculate_standard_wsv> STANDARD_WSV{};
 SpreadInfo::SpreadInfo(const Scenario& scenario,
                        const double time,
-                       const topo::Cell& cell,
+                       const topo::SpreadKey& key,
                        const int nd,
                        const wx::FwiWeather* weather)
-  : SpreadInfo(scenario, time, cell, nd, weather, scenario.weather_daily(time))
+  : SpreadInfo(scenario, time, key, nd, weather, scenario.weather_daily(time))
 {
 }
 double SpreadInfo::initial(SpreadInfo& spread,
@@ -135,19 +135,19 @@ double SpreadInfo::initial(SpreadInfo& spread,
 }
 SpreadInfo::SpreadInfo(const Scenario& scenario,
                        const double time,
-                       const topo::Cell& cell,
+                       const topo::SpreadKey& key,
                        const int nd,
                        const wx::FwiWeather* weather,
                        const wx::FwiWeather* weather_daily)
-  : cell_(cell),
+  : key_(key),
     weather_(weather),
     time_(time),
     nd_(nd)
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
   max_intensity_ = -1;
-  const auto slope_azimuth = cell_.aspect();
-  const auto fuel = fuel::check_fuel(cell);
+  const auto slope_azimuth = topo::Cell::aspect(key_);
+  const auto fuel = fuel::fuel_by_code(topo::Cell::fuelCode(key_));
   const auto has_no_slope = 0 == percentSlope();
   double heading_sin = 0;
   double heading_cos = 0;

@@ -739,19 +739,25 @@ void Scenario::scheduleFireSpread(const Event& event)
     max_intensity_ = {};
     max_ros_ = 0.0;
   }
+  // auto keys = list<topo::SpreadKey>();
+  // std::transform(points_.cbegin(), points_.cend(), keys.begin(), [](const pair<const topo::Cell, const PointSet>& kv) { return kv.first.key(); });
+  auto keys = std::set<topo::SpreadKey>();
+  std::transform(points_.cbegin(),
+                 points_.cend(),
+                 std::inserter(keys, keys.begin()),
+                 [](const pair<const topo::Cell, const PointSet>& kv) { return kv.first.key(); });
+  // should have a list of unique keys
   // size_t num_reused = 0;
   auto any_spread = false;
-  for (const auto& kv : points_)
+  for (const auto& key : keys)
   {
-    const auto& location = kv.first;
     // any cell that has the same fuel, slope, and aspect has the same spread
-    const auto key = location.key();
     const auto seek_spreading = offsets_.find(key);
     if (seek_spreading == offsets_.end())
     {
       // FIX: don't calculate if no spread?
       // have not calculated spread for this cell yet
-      const SpreadInfo origin(*this, time, location, nd(time), wx);
+      const SpreadInfo origin(*this, time, key, nd(time), wx);
       // will be empty if invalid
       offsets_.emplace(key, origin.offsets());
       if (!origin.isNotSpreading())
