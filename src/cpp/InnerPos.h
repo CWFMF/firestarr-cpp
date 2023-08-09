@@ -16,12 +16,27 @@ public:
   /**
    * \brief Offset in the x direction (column)
    */
-  const double x;
+  inline constexpr double x() const noexcept { return x_; }
   /**
    * \brief Offset in the y direction (row)
    */
-  const double y;
-  constexpr Offset(const double a, const double b) noexcept : x(a), y(b) { }
+  inline constexpr double y() const noexcept { return y_; }
+  constexpr Offset(const double a, const double b) noexcept : x_(a), y_(b) { }
+  constexpr Offset() noexcept : Offset(-1, -1) { }
+  constexpr Offset(Offset&& rhs) noexcept = default;
+  constexpr Offset(const Offset& rhs) noexcept = default;
+  Offset& operator=(const Offset& rhs) noexcept = default;
+  Offset& operator=(Offset&& rhs) noexcept = default;
+
+private:
+  /**
+   * \brief Offset in the x direction (column)
+   */
+  double x_;
+  /**
+   * \brief Offset in the y direction (row)
+   */
+  double y_;
 };
 /**
  * \brief Collection of Offsets
@@ -69,7 +84,7 @@ struct InnerPos
    */
   [[nodiscard]] constexpr InnerPos add(const Offset o) const noexcept
   {
-    return InnerPos(x + o.x, y + o.y);
+    return InnerPos(x + o.x(), y + o.y());
   }
   /**
    * \brief Constructor

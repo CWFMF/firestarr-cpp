@@ -737,8 +737,8 @@ void Scenario::scheduleFireSpread(const Event& event)
       for (auto& o : offsets)
       {
         // offsets in meters
-        const auto offset_x = o.x * duration;
-        const auto offset_y = o.y * duration;
+        const auto offset_x = o.x() * duration;
+        const auto offset_y = o.y() * duration;
         const Offset offset{offset_x, offset_y};
         for (auto& p : kv.second)
         {
