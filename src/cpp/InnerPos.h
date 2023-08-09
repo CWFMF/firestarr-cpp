@@ -66,7 +66,7 @@ struct InnerPos
     const Offset o
   ) const noexcept
   {
-    return InnerPos(x + o.x, y + o.y);
+    return InnerPos(x + o.x(), y + o.y());
   }
   /**
    * \brief Constructor
