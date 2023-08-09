@@ -235,7 +235,7 @@ public:
    * \param rh Relative Humidity (%)
    * \param wind Wind (km/h)
    * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
-  */
+   */
   FwiWeather(const FwiWeather& yesterday,
              const int month,
              const double latitude,

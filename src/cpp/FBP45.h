@@ -105,10 +105,10 @@ protected:
                             * spread.slopeFactor());
   }
   virtual /**
-   * \brief Initial rate of spread (m/min) [ST-X-3 eq 26]
-   * \param isi Initial Spread Index
-   * \return Initial rate of spread (m/min) [ST-X-3 eq 26]
-   */
+           * \brief Initial rate of spread (m/min) [ST-X-3 eq 26]
+           * \param isi Initial Spread Index
+           * \return Initial rate of spread (m/min) [ST-X-3 eq 26]
+           */
     double
     calculateRos(const int,
                  const wx::FwiWeather&,

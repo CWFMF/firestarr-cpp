@@ -335,8 +335,8 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     }
     if (added)
     {
-      //only use back ros if every other angle is spreading since this should be lowest
-      // 180
+      // only use back ros if every other angle is spreading since this should be lowest
+      //  180
       if (back_ros < min_ros)
       {
         return;

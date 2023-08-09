@@ -321,7 +321,7 @@ public:
    */
   [[nodiscard]] size_t runsRequired(
     // const size_t cur_runs,
-                                    const double relative_error) const
+    const double relative_error) const
   {
     const auto re = relative_error / (1 + relative_error);
     const std::function<double(size_t)> fct = [this](const size_t i) noexcept {

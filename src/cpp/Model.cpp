@@ -791,7 +791,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     return probabilities;
   };
   // HACK: just do this here so that we know it happened
-  //iterations.reset(&mt_extinction, &mt_spread);
+  // iterations.reset(&mt_extinction, &mt_spread);
   if (Settings::runAsync())
   {
     // FIX: I think we can just have 2 Iteration objects and roll through starting

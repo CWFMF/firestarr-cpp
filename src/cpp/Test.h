@@ -24,9 +24,9 @@ static const double TEST_XLLCORNER = 324203.990666;
 static const double TEST_YLLCORNER = 12646355.311160;
 /**
  * \brief Runs test cases for constant weather and fuel based on given arguments.
- * \param argc 
- * \param argv 
- * \return 
+ * \param argc
+ * \param argv
+ * \return
  */
 int test(int argc, const char* const argv[]);
 }

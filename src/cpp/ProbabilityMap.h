@@ -62,7 +62,7 @@ public:
   /**
    * \brief Assign perimeter to use for marking cells as initial perimeter
    * \param perimeter Ignition grid to store for marking in outputs
-  */
+   */
   void setPerimeter(const topo::Perimeter* const perimeter);
   /**
    * \brief Combine results from another ProbabilityMap into this one
@@ -189,7 +189,7 @@ private:
   const int med_max_;
   /**
    * \brief Initial ignition grid to apply to outputs
-  */
+   */
   const topo::Perimeter* perimeter_;
 };
 }

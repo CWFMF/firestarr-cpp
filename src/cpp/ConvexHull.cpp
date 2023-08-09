@@ -18,8 +18,8 @@
 
 constexpr double MIN_X = std::numeric_limits<double>::min();
 constexpr double MAX_X = std::numeric_limits<double>::max();
-//const double TAN_PI_8 = std::tan(std::numbers::pi / 8);
-//const double LEN_PI_8 = TAN_PI_8 / 2;
+// const double TAN_PI_8 = std::tan(std::numbers::pi / 8);
+// const double LEN_PI_8 = TAN_PI_8 / 2;
 constexpr double DIST_22_5 = 0.2071067811865475244008443621048490392848359376884740365883398689;
 constexpr double P_0_5 = 0.5 + DIST_22_5;
 constexpr double M_0_5 = 0.5 - DIST_22_5;
@@ -201,8 +201,7 @@ void hull(vector<tbd::sim::InnerPos>& a) noexcept
       a[wsw_pos],
       a[ese_pos],
       a[wnw_pos],
-      a[ene_pos]
-    };
+      a[ene_pos]};
     tbd::logging::check_fatal(a.size() > 16, "Expected <= 16 points but have %ld", a.size());
   }
   else

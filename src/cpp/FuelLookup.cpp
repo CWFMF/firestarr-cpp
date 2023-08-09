@@ -460,10 +460,10 @@ public:
                 || "Vegetated Non-Fuel" == name)
             {
               logging::note("Fuel (%d, '%s') is treated like '%s' with internal code %d",
-                             value,
-                             name.c_str(),
-                             fuel.c_str(),
-                             fuel_obj->code());
+                            value,
+                            name.c_str(),
+                            fuel.c_str(),
+                            fuel_obj->code());
               // logging::note("Fuel '%s' is treated like '%s'", name.c_str(), fuel.c_str());
             }
             else
@@ -558,7 +558,7 @@ public:
   }
   /**
    * \brief List all fuels and their codes
-  */
+   */
   void listFuels() const
   {
     for (const auto& kv : fuel_good_values_)

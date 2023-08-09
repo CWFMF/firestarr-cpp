@@ -41,7 +41,7 @@ Iteration* Iteration::reset(mt19937* mt_extinction, mt19937* mt_spread)
   return this;
 }
 //
-//Iteration* Iteration::run(map<double, ProbabilityMap*>* probabilities)
+// Iteration* Iteration::run(map<double, ProbabilityMap*>* probabilities)
 //{
 //  // sort in run so that they still get the same extinction thresholds as when unsorted
 //		std::sort(scenarios_.begin(),

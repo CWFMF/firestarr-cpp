@@ -61,7 +61,7 @@ int Log::closeLogFile() noexcept
 }
 void output(const int log_level, const char* format, va_list* args)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   if (Log::getLogLevel() > log_level)
@@ -101,7 +101,7 @@ noexcept
 }
 void output(const int log_level, const char* format, ...)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   va_list args;
@@ -181,7 +181,7 @@ void error(const char* format, ...) noexcept
 }
 void fatal(const char* format, va_list* args)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   // HACK: call the other version
@@ -189,7 +189,7 @@ noexcept
 }
 void fatal(const char* format, ...)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   va_list args;
@@ -217,7 +217,7 @@ void fatal(const std::exception& ex, const char* format, ...)
 }
 void check_fatal(const bool condition, const char* format, va_list* args)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   if (condition)
@@ -227,7 +227,7 @@ noexcept
 }
 void check_fatal(const bool condition, const char* format, ...)
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   if (condition)
@@ -300,7 +300,7 @@ void SelfLogger::log_error(const char* format, ...) const noexcept
 }
 void SelfLogger::log_check_fatal(bool condition, const char* format, ...) const
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   if (condition)
@@ -315,7 +315,7 @@ noexcept
 
 void SelfLogger::log_fatal(const char* format, ...) const
 #ifdef NDEBUG
-noexcept
+  noexcept
 #endif
 {
   va_list args;
