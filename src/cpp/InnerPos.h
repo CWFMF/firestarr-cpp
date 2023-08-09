@@ -65,7 +65,7 @@ struct InnerPos
    */
   [[nodiscard]] constexpr InnerPos add(const Offset o) const noexcept
   {
-    return InnerPos(x + o.x, y + o.y);
+    return InnerPos(x + o.x(), y + o.y());
   }
   /**
    * \brief Constructor
