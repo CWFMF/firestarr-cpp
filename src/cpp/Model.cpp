@@ -28,6 +28,7 @@ namespace tbd::sim
 // constexpr double PCT_CPU = 0.8;
 // HACK: assume using half the CPUs probably means that faster cores are being used?
 constexpr double PCT_CPU = 0.5;
+constexpr auto SECONDS_BETWEEN_INTERIM_SAVES = 0;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 BurnedData* Model::getBurnedVector() const noexcept
 {
@@ -75,7 +76,8 @@ void Model::releaseBurnedVector(BurnedData* has_burned) const noexcept
 }
 Model::Model(const topo::StartPoint& start_point,
              topo::Environment* env)
-  : running_since_(Clock::now()),
+  : start_time_(tm()),
+    running_since_(Clock::now()),
     time_limit_(std::chrono::seconds(Settings::maximumTimeSeconds())),
     env_(env)
 {
@@ -669,6 +671,20 @@ size_t runs_required(const size_t i,
     runs_for_sizes);
   return left;
 }
+double Model::saveProbabilities(map<double, ProbabilityMap*>& probabilities, const Day start_day, const bool is_interim)
+{
+  auto final_time = numeric_limits<double>::min();
+  for (const auto by_time : probabilities)
+  {
+    const auto time = by_time.first;
+    final_time = max(final_time, time);
+    const auto prob = by_time.second;
+    logging::debug("Setting perimeter");
+    prob->setPerimeter(this->perimeter_.get());
+    prob->saveAll(*this, this->start_time_, time, start_day, is_interim);
+  }
+  return final_time;
+}
 map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_point,
                                                   const double start,
                                                   const Day start_day,
@@ -691,7 +707,8 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   vector<double> all_sizes{};
   vector<double> means{};
   vector<double> pct{};
-  size_t runs_done = 0;
+  size_t iterations_done = 0;
+  size_t scenarios_done = 0;
   vector<Iteration> all_iterations{};
   all_iterations.push_back(readScenarios(start_point,
                                          start,
@@ -731,7 +748,10 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   //   is_out_of_time_ = true;
   // });
   // typedef std::chrono::duration<float> s;
-  auto timer = std::thread([this, &runs_done, &runs_left, &all_iterations]() {
+  bool is_being_cancelled = false;
+  // HACK: use initial value for type
+  auto time_interim_saved = Clock::now();
+  auto timer = std::thread([this, &scenarios_done, &all_probabilities, &time_interim_saved, &iterations_done, &runs_left, &all_sizes, &all_iterations, &is_being_cancelled, &probabilities, &start_day]() {
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
     // const auto SLEEP_INTERVAL = std::chrono::seconds(Settings::maximumTimeSeconds());
     do
@@ -749,7 +769,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     {
       logging::warning("Ran out of time - cancelling simulations");
     }
-    if (0 == runs_done)
+    if (0 == iterations_done)
     {
       logging::warning("Ran out of time, but haven't finished any iterations, so cancelling all but first");
     }
@@ -757,12 +777,23 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     for (auto& iter : all_iterations)
     {
       // don't cancel first iteration if no iterations are done
-      if (0 != runs_done || 0 != i)
+      if (0 != iterations_done || 0 != i)
       {
         // if not over limit then just did all the runs so no warning
         iter.cancel(shouldStop());
       }
       ++i;
+    }
+    // is_being_cancelled = (0 == iterations_done);
+    if (0 == iterations_done)
+    {
+      is_being_cancelled = true;
+      if (scenarios_done > 0)
+      {
+        time_interim_saved = Clock::now();
+        logging::info("Saving interim perimeters in timer thread");
+        saveProbabilities(all_probabilities[0], start_day, true);
+      }
     }
     const auto run_time_seconds = runTime().count();
     // const auto run_time = last_checked_ - runningSince();
@@ -775,7 +806,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   });
   auto threads = list<std::thread>{};
   // const auto finalize_probabilities = [&threads, &timer, &probabilities](bool do_cancel) {
-  const auto finalize_probabilities = [&threads, &timer, &probabilities]() {
+  const auto finalize_probabilities = [this, &time_interim_saved, &start_day, &all_sizes, &is_being_cancelled, &threads, &timer, &probabilities]() {
     // assume timer is cancelling everything
     for (auto& t : threads)
     {
@@ -858,9 +889,23 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         threads.front().join();
         threads.pop_front();
         ++k;
+        ++scenarios_done;
+        if (is_being_cancelled && scenarios_done > 0)
+        {
+          auto now = Clock::now();
+          const auto time_since_saved = std::chrono::duration_cast<std::chrono::seconds>(now - time_interim_saved).count();
+          if (SECONDS_BETWEEN_INTERIM_SAVES < time_since_saved)
+          {
+            time_interim_saved = now;
+            logging::info("Saving interim perimeters");
+            // save what's there for now
+            saveProbabilities(all_probabilities[cur_iter], start_day, true);
+            logging::info("Done saving interim perimeters");
+          }
+        }
       }
       auto final_sizes = iteration.finalSizes();
-      ++runs_done;
+      ++iterations_done;
       for (auto& kv : all_probabilities[cur_iter])
       {
         probabilities[kv.first]->addProbabilities(*kv.second);
@@ -872,10 +917,10 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         // ran out of time but timer should cancel everything
         return finalize_probabilities();
       }
-      // if (runs_done >= MIN_ITERATIONS_BEFORE_CHECK)
+      // if (iterations_done >= MIN_ITERATIONS_BEFORE_CHECK)
       {
-        runs_left = runs_required(runs_done, &all_sizes, &means, &pct, *this);
-        // runs_left = runs_required(runs_done, &means, &pct, *this);
+        runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
+        // runs_left = runs_required(iterations_done, &means, &pct, *this);
         logging::note("Need another %d iterations", runs_left);
       }
       if (runs_left > 0)
@@ -905,20 +950,20 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     logging::note("Running in synchronous mode");
     while (runs_left > 0)
     {
-      logging::note("Running iteration %d", runs_done + 1);
+      logging::note("Running iteration %d", iterations_done + 1);
       iteration.reset(&mt_extinction, &mt_spread);
       for (auto s : iteration.getScenarios())
       {
         s->run(&probabilities);
       }
-      ++runs_done;
+      ++iterations_done;
       if (!add_statistics(&all_sizes, &means, &pct, iteration.finalSizes()))
       {
         // ran out of time but timer should cance everything
         return finalize_probabilities();
       }
-      runs_left = runs_required(runs_done, &all_sizes, &means, &pct, *this);
-      // runs_left = runs_required(runs_done, &means, &pct, *this);
+      runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
+      // runs_left = runs_required(iterations_done, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
     }
   }
@@ -1002,6 +1047,7 @@ int Model::runScenarios(const char* const weather_input,
   logging::check_fatal(start > w->maxDate(), "Start time is after weather streams end");
   auto probabilities =
     model.runIterations(start_point, start, start_day, save_intensity);
+  model.start_time_ = start_time;
   logging::note("Ran %d simulations", Scenario::completed());
   const auto run_time_seconds = model.runTime();
   const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds.count();
@@ -1010,16 +1056,8 @@ int Model::runScenarios(const char* const weather_input,
                  time_left);
   logging::debug("Processed %ld spread events between all scenarios", Scenario::total_steps());
   show_probabilities(probabilities);
-  auto final_time = numeric_limits<double>::min();
-  for (const auto by_time : probabilities)
-  {
-    const auto time = by_time.first;
-    final_time = max(final_time, time);
-    const auto prob = by_time.second;
-    logging::info("Setting perimeter");
-    prob->setPerimeter(model.perimeter_.get());
-    prob->saveAll(model, start_time, time, start_day);
-  }
+  // auto final_time =
+  model.saveProbabilities(probabilities, start_day, false);
   // HACK: update last checked time to use in calculation
   model.last_checked_ = Clock::now();
   logging::note("Total simulation time was %ld seconds", model.runTime());
