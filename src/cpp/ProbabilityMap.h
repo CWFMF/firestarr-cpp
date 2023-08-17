@@ -108,7 +108,8 @@ public:
   void saveAll(const Model& model,
                const tm& start_time,
                double time,
-               double start_day) const;
+               double start_day,
+               const bool is_interim) const;
   /**
    * \brief Save map representing all intensities
    * \param base_name Base file name to save to

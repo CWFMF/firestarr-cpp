@@ -182,13 +182,19 @@ string make_string(const char* name, const tm& t, const int day)
 void ProbabilityMap::saveAll(const Model& model,
                              const tm& start_time,
                              const double time,
-                             const double start_day) const
+                             const double start_day,
+                             const bool is_interim) const
 {
+  lock_guard<mutex> lock(mutex_);
   auto t = start_time;
   auto ticks = mktime(&t);
   const auto day = static_cast<int>(round(time));
   ticks += (static_cast<size_t>(day) - t.tm_yday - 1) * DAY_SECONDS;
   t = *localtime(&ticks);
+  auto fix_string = [&t, &day, &is_interim](string prefix) {
+    auto text = (is_interim ? "interim_" : "") + prefix;
+    return make_string(text.c_str(), t, day);
+  };
   if (sim::Settings::runAsync())
   {
     vector<std::future<void>> results{};
@@ -197,34 +203,34 @@ void ProbabilityMap::saveAll(const Model& model,
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveTotal,
                               this,
-                              make_string("probability", t, day)));
+                              fix_string("probability")));
     }
     if (Settings::saveOccurrence())
     {
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveTotalCount,
                               this,
-                              make_string("occurrence", t, day)));
+                              fix_string("occurrence")));
     }
     if (Settings::saveIntensity())
     {
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveLow,
                               this,
-                              make_string("intensity_L", t, day)));
+                              fix_string("intensity_L")));
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveModerate,
                               this,
-                              make_string("intensity_M", t, day)));
+                              fix_string("intensity_M")));
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveHigh,
                               this,
-                              make_string("intensity_H", t, day)));
+                              fix_string("intensity_H")));
     }
     results.push_back(async(launch::async,
                             &ProbabilityMap::saveSizes,
                             this,
-                            make_string("sizes", t, day)));
+                            fix_string("sizes")));
     for (auto& result : results)
     {
       result.wait();
@@ -234,19 +240,19 @@ void ProbabilityMap::saveAll(const Model& model,
   {
     if (Settings::saveProbability())
     {
-      saveTotal(make_string("probability", t, day));
+      saveTotal(fix_string("probability"));
     }
     if (Settings::saveOccurrence())
     {
-      saveTotalCount(make_string("occurrence", t, day));
+      saveTotalCount(fix_string("occurrence"));
     }
     if (Settings::saveIntensity())
     {
-      saveLow(make_string("intensity_L", t, day));
-      saveModerate(make_string("intensity_M", t, day));
-      saveHigh(make_string("intensity_H", t, day));
+      saveLow(fix_string("intensity_L"));
+      saveModerate(fix_string("intensity_M"));
+      saveHigh(fix_string("intensity_H"));
     }
-    saveSizes(make_string("sizes", t, day));
+    saveSizes(fix_string("sizes"));
   }
   const auto nd = model.nd(day);
   logging::note("Fuels for day %d are %s green-up and grass has %d%% curing",
