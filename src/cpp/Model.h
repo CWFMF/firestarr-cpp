@@ -396,6 +396,10 @@ private:
    */
   mutable mutex vector_mutex_;
   /**
+   * \brief Start time of simulation
+   */
+  tm start_time_;
+  /**
    * \brief Pool of BurnedData that can be reused
    */
   mutable vector<unique_ptr<BurnedData>> vectors_{};
@@ -413,6 +417,15 @@ private:
     double start,
     Day start_day,
     bool save_intensity
+  );
+  /**
+   * Save probability rasters
+   */
+  double
+  saveProbabilities(
+    map<double, ProbabilityMap*>& probabilities,
+    const Day start_day,
+    const bool is_interim
   );
   /**
    * \brief Find Cell(s) that can burn closest to Location
