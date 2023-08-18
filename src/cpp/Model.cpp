@@ -772,10 +772,12 @@ Model::runIterations(
   vector<double> pct{};
   size_t iterations_done = 0;
   size_t scenarios_done = 0;
+  size_t scenarios_required_done = 0;
   vector<Iteration> all_iterations{};
   all_iterations.push_back(readScenarios(start_point, start, save_intensity, start_day, last_date));
   // HACK: reference from vector so timer can cancel everything in vector
   auto& iteration = all_iterations[0];
+  const auto scenarios_per_iteration = iteration.size();
   // put probability maps into map
   const auto saves = iteration.savePoints();
   const auto started = iteration.startTime();
@@ -815,6 +817,8 @@ Model::runIterations(
   // HACK: use initial value for type
   auto time_interim_saved = Clock::now();
   auto timer = std::thread([this,
+                            &scenarios_per_iteration,
+                            &scenarios_required_done,
                             &scenarios_done,
                             &all_probabilities,
                             &time_interim_saved,
@@ -864,9 +868,12 @@ Model::runIterations(
       if (scenarios_done > 0)
       {
         time_interim_saved = Clock::now();
-        logging::info("Saving interim results in timer thread");
+        logging::info(
+          "Saving interim results for (%ld of %ld) scenarios in timer thread",
+          scenarios_required_done,
+          scenarios_per_iteration
+        );
         saveProbabilities(all_probabilities[0], start_day, true);
-        logging::info("Done saving interim results");
       }
     }
     const auto run_time_seconds = runTime().count();
@@ -923,7 +930,10 @@ Model::runIterations(
     // no point in running multiple iterations if deterministic
     const auto concurrent_iterations = Settings::deterministic()
                                        ? 1
-                                       : std::max<size_t>(ceil(MAX_THREADS / iteration.size()), 2);
+                                       : std::max<size_t>(
+                                           ceil(MAX_THREADS / scenarios_per_iteration),
+                                           2
+                                         );
     // const auto concurrent_iterations = MAX_THREADS;
     for (size_t x = 1; x < concurrent_iterations; ++x)
     {
@@ -942,24 +952,35 @@ Model::runIterations(
     }
     auto run_scenario = [this,
                          &is_being_cancelled,
+                         &scenarios_per_iteration,
+                         &scenarios_required_done,
                          &scenarios_done,
                          &all_probabilities,
                          &time_interim_saved,
                          &start_day](Scenario* s, size_t i) {
       auto result = s->run(&all_probabilities[i]);
-      if (i == 0 && is_being_cancelled && scenarios_done > 0)
+      if (i == 0)
       {
-        auto now = Clock::now();
-        const auto time_since_saved = std::chrono::duration_cast<std::chrono::seconds>(
-                                        now - time_interim_saved
-        )
-                                        .count();
-        if (SECONDS_BETWEEN_INTERIM_SAVES < time_since_saved)
+        ++scenarios_required_done;
+        if (is_being_cancelled && scenarios_done > 0)
         {
-          time_interim_saved = now;
-          logging::info("Saving interim results");
-          saveProbabilities(all_probabilities[0], start_day, true);
-          logging::info("Done saving interim results");
+          auto now = Clock::now();
+          const auto time_since_saved = std::chrono::duration_cast<std::chrono::seconds>(
+                                          now - time_interim_saved
+          )
+                                          .count();
+          // no point in saving interim if final is done
+          if (scenarios_per_iteration != scenarios_required_done
+              && SECONDS_BETWEEN_INTERIM_SAVES < time_since_saved)
+          {
+            time_interim_saved = now;
+            logging::info(
+              "Saving interim results for (%ld of %ld) scenarios in timer thread",
+              scenarios_required_done,
+              scenarios_per_iteration
+            );
+            saveProbabilities(all_probabilities[0], start_day, true);
+          }
         }
       }
       return result;
@@ -984,7 +1005,7 @@ Model::runIterations(
       // FIX: look at converting so that new threads get started as others complete
       // - would have to have multiple Iterations so we keep the data from them separate?
       size_t k = 0;
-      while (k < iteration.size())
+      while (k < scenarios_per_iteration)
       {
         threads.front().join();
         threads.pop_front();
