@@ -791,8 +791,9 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       if (scenarios_done > 0)
       {
         time_interim_saved = Clock::now();
-        logging::info("Saving interim perimeters in timer thread");
+        logging::info("Saving interim results in timer thread");
         saveProbabilities(all_probabilities[0], start_day, true);
+        logging::info("Done saving interim results");
       }
     }
     const auto run_time_seconds = runTime().count();
@@ -862,6 +863,22 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                                 Settings::intensityMaxModerate(),
                                                 numeric_limits<int>::max()));
     }
+    auto run_scenario = [this, &is_being_cancelled, &scenarios_done, &all_probabilities, &time_interim_saved, &start_day](Scenario* s, size_t i) {
+      auto result = s->run(&all_probabilities[i]);
+      if (i == 0 && is_being_cancelled && scenarios_done > 0)
+      {
+        auto now = Clock::now();
+        const auto time_since_saved = std::chrono::duration_cast<std::chrono::seconds>(now - time_interim_saved).count();
+        if (SECONDS_BETWEEN_INTERIM_SAVES < time_since_saved)
+        {
+          time_interim_saved = now;
+          logging::info("Saving interim results");
+          saveProbabilities(all_probabilities[0], start_day, true);
+          logging::info("Done saving interim results");
+        }
+      }
+      return result;
+    };
     size_t cur_iter = 0;
     for (auto& iter : all_iterations)
     {
@@ -869,9 +886,9 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       auto& scenarios = iter.getScenarios();
       for (auto s : scenarios)
       {
-        threads.emplace_back(&Scenario::run,
+        threads.emplace_back(run_scenario,
                              s,
-                             &all_probabilities[cur_iter]);
+                             cur_iter);
       }
       ++cur_iter;
     }
@@ -890,19 +907,6 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         threads.pop_front();
         ++k;
         ++scenarios_done;
-        if (is_being_cancelled && scenarios_done > 0)
-        {
-          auto now = Clock::now();
-          const auto time_since_saved = std::chrono::duration_cast<std::chrono::seconds>(now - time_interim_saved).count();
-          if (SECONDS_BETWEEN_INTERIM_SAVES < time_since_saved)
-          {
-            time_interim_saved = now;
-            logging::info("Saving interim perimeters");
-            // save what's there for now
-            saveProbabilities(all_probabilities[cur_iter], start_day, true);
-            logging::info("Done saving interim perimeters");
-          }
-        }
       }
       auto final_sizes = iteration.finalSizes();
       ++iterations_done;
@@ -1000,6 +1004,8 @@ int Model::runScenarios(const char* const weather_input,
   logging::info("Position is (%d, %d)", std::get<0>(*position), std::get<1>(*position));
   const Location location{std::get<0>(*position), std::get<1>(*position)};
   Model model(start_point, &env);
+  // HACK: set after constructor so Test doesn't need to set
+  model.start_time_ = start_time;
   auto x = 0.0;
   auto y = 0.0;
   const auto zone = lat_lon_to_utm(start_point, &x, &y);
@@ -1047,7 +1053,6 @@ int Model::runScenarios(const char* const weather_input,
   logging::check_fatal(start > w->maxDate(), "Start time is after weather streams end");
   auto probabilities =
     model.runIterations(start_point, start, start_day, save_intensity);
-  model.start_time_ = start_time;
   logging::note("Ran %d simulations", Scenario::completed());
   const auto run_time_seconds = model.runTime();
   const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds.count();
