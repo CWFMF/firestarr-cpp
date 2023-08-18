@@ -644,10 +644,6 @@ protected:
    */
   bool cancelled_ = false;
   /**
-   * \brief FILE to write logging information about points to
-   */
-  FILE* log_points_;
-  /**
    * \brief How many times point spread event has happened
    */
   size_t step_;
