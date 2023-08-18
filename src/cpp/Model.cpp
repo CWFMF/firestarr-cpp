@@ -17,7 +17,6 @@ namespace fs::sim
 // constexpr double PCT_CPU = 0.8;
 // HACK: assume using half the CPUs probably means that faster cores are being used?
 constexpr double PCT_CPU = 0.5;
-constexpr auto SECONDS_BETWEEN_INTERIM_SAVES = 0;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 BurnedData*
 Model::getBurnedVector() const noexcept
@@ -815,13 +814,10 @@ Model::runIterations(
   // typedef std::chrono::duration<float> s;
   bool is_being_cancelled = false;
   // HACK: use initial value for type
-  auto time_interim_saved = Clock::now();
   auto timer = std::thread([this,
                             &scenarios_per_iteration,
                             &scenarios_required_done,
-                            &scenarios_done,
                             &all_probabilities,
-                            &time_interim_saved,
                             &iterations_done,
                             &runs_left,
                             &all_iterations,
@@ -865,9 +861,8 @@ Model::runIterations(
     if (0 == iterations_done)
     {
       is_being_cancelled = true;
-      if (scenarios_done > 0)
+      if (scenarios_required_done > 0)
       {
-        time_interim_saved = Clock::now();
         logging::info(
           "Saving interim results for (%ld of %ld) scenarios in timer thread",
           scenarios_required_done,
@@ -889,11 +884,7 @@ Model::runIterations(
   });
   auto threads = list<std::thread>{};
   // const auto finalize_probabilities = [&threads, &timer, &probabilities](bool do_cancel) {
-  const auto finalize_probabilities = [
-
-                                        &threads,
-                                        &timer,
-                                        &probabilities]() {
+  const auto finalize_probabilities = [&threads, &timer, &probabilities]() {
     // assume timer is cancelling everything
     for (auto& t : threads)
     {
@@ -956,24 +947,17 @@ Model::runIterations(
                          &scenarios_required_done,
                          &scenarios_done,
                          &all_probabilities,
-                         &time_interim_saved,
                          &start_day](Scenario* s, size_t i) {
       auto result = s->run(&all_probabilities[i]);
+      ++scenarios_done;
       if (i == 0)
       {
         ++scenarios_required_done;
-        if (is_being_cancelled && scenarios_done > 0)
+        if (is_being_cancelled)
         {
-          auto now = Clock::now();
-          const auto time_since_saved = std::chrono::duration_cast<std::chrono::seconds>(
-                                          now - time_interim_saved
-          )
-                                          .count();
           // no point in saving interim if final is done
-          if (scenarios_per_iteration != scenarios_required_done
-              && SECONDS_BETWEEN_INTERIM_SAVES < time_since_saved)
+          if (scenarios_per_iteration != scenarios_required_done)
           {
-            time_interim_saved = now;
             logging::info(
               "Saving interim results for (%ld of %ld) scenarios in timer thread",
               scenarios_required_done,
@@ -1010,7 +994,6 @@ Model::runIterations(
         threads.front().join();
         threads.pop_front();
         ++k;
-        ++scenarios_done;
       }
       auto final_sizes = iteration.finalSizes();
       ++iterations_done;
@@ -1037,7 +1020,7 @@ Model::runIterations(
         auto& scenarios = iteration.getScenarios();
         for (auto s : scenarios)
         {
-          threads.emplace_back(&Scenario::run, s, &all_probabilities[cur_iter]);
+          threads.emplace_back(run_scenario, s, cur_iter);
         }
         ++cur_iter;
         // loop around to start if required
