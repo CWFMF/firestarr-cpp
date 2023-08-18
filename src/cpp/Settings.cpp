@@ -562,14 +562,6 @@ void Settings::setSaveAsAscii(const bool value) noexcept
 {
   SettingsImplementation::instance().save_as_ascii = value;
 }
-bool Settings::savePoints() noexcept
-{
-  return SettingsImplementation::instance().save_points;
-}
-void Settings::setSavePoints(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_points = value;
-}
 bool Settings::saveIntensity() noexcept
 {
   return SettingsImplementation::instance().save_intensity;

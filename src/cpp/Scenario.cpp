@@ -68,10 +68,6 @@ size_t Scenario::total_steps() noexcept
 Scenario::~Scenario()
 {
   clear();
-  if (NULL != log_points_)
-  {
-    fclose(log_points_);
-  }
 }
 /*!
  * \page probability Probability of events
@@ -269,10 +265,6 @@ void Scenario::evaluate(const Event& event)
       saveStats(event.time());
       break;
     case Event::NEW_FIRE:
-      if (NULL != log_points_)
-      {
-        fprintf(log_points_, "%ld,%ld,%f,new,%d,%d,%f,%f\n", id(), step_, event.time(), p.column(), p.row(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
-      }
       // HACK: don't do this in constructor because scenario creates this in its constructor
       points_[p].emplace_back(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       if (fuel::is_null_fuel(event.cell()))
@@ -350,20 +342,6 @@ Scenario::Scenario(Model* model,
   logging::check_fatal(last_save > weather_->maxDate(),
                        "No weather for last save time %s",
                        make_timestamp(model->year(), last_save).c_str());
-  if (Settings::savePoints())
-  {
-    char log_name[2048];
-    sprintf(log_name, "%s/scenario_%05ld.txt", Settings::outputDirectory(), id);
-    log_points_ = fopen(log_name, "w");
-  }
-  else
-  {
-    log_points_ = NULL;
-  }
-  if (NULL != log_points_)
-  {
-    fprintf(log_points_, "scenario,step,time,action,column,row,x,y\n");
-  }
 }
 void Scenario::saveStats(const double time) const
 {
@@ -794,10 +772,6 @@ void Scenario::scheduleFireSpread(const Event& event)
         for (auto& p : kv.second)
         {
           const InnerPos pos = p.add(offset);
-          if (NULL != log_points_)
-          {
-            fprintf(log_points_, "%ld,%ld,%f,spread,%d,%d,%f,%f\n", id(), step_, new_time, location.column(), location.row(), pos.x, pos.y);
-          }
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;
@@ -852,13 +826,6 @@ void Scenario::scheduleFireSpread(const Event& event)
           {
             // 3 points should just be a triangle usually (could be co-linear, but that's fine
             hull(kv.second);
-          }
-          if (NULL != log_points_)
-          {
-            for (const auto p : kv.second)
-            {
-              fprintf(log_points_, "%ld,%ld,%f,condense,%d,%d,%f,%f\n", id(), step_, new_time, static_cast<int>(p.x), static_cast<int>(p.y), p.x, p.y);
-            }
           }
           std::swap(points_[for_cell], kv.second);
         }
