@@ -42,7 +42,7 @@ Model::Model(
 )
   : start_time_(start_time),
     running_since_(Clock::now()),
-    time_limit_(std::chrono::seconds(Settings::maximumTimeSeconds())),
+    time_limit_(Settings::maximumTimeSeconds()),
     env_(env),
     output_directory_(output_directory)
 {
@@ -740,7 +740,8 @@ Model::runIterations(
       // if we've done enough runs and need to stop for that reason
       std::this_thread::sleep_for(CHECK_INTERVAL);
       // set bool so other things don't need to check clock
-      is_out_of_time_ = runTime() >= timeLimit();
+      is_out_of_time_ = runTime().count() >= timeLimit().count();
+      logging::verbose("Checking clock [%ld of %ld]", runTime(), timeLimit());
     }
     while (runs_left > 0 && !shouldStop());
     if (isOutOfTime())
@@ -824,19 +825,37 @@ Model::runIterations(
                          &scenarios_required_done,
                          &scenarios_done,
                          &all_probabilities,
-                         &start_day](Scenario* s, size_t i) {
+                         &start_day](Scenario* s, size_t i, bool is_required) {
       auto result = s->run(&all_probabilities[i]);
       ++scenarios_done;
-      if (i == 0)
+      logging::extensive(
+        "Done %ld scenarios in iteration %ld which %s required",
+        scenarios_done,
+        i,
+        (is_required ? "is" : "is not")
+      );
+      if (is_required)
       {
+        logging::verbose(
+          "Done %ld scenarios in iteration %ld which %s required",
+          scenarios_done,
+          i,
+          (is_required ? "is" : "is not")
+        );
         ++scenarios_required_done;
+        logging::debug(
+          "Have (%ld of %ld) scenarios and %s being cancelled",
+          scenarios_required_done,
+          scenarios_per_iteration,
+          (is_being_cancelled ? "is" : "not")
+        );
         if (is_being_cancelled)
         {
           // no point in saving interim if final is done
           if (scenarios_per_iteration != scenarios_required_done)
           {
             logging::info(
-              "Saving interim results for (%ld of %ld) scenarios in timer thread",
+              "Saving interim results for (%ld of %ld) scenarios",
               scenarios_required_done,
               scenarios_per_iteration
             );
@@ -853,7 +872,7 @@ Model::runIterations(
       auto& scenarios = iter.getScenarios();
       for (auto s : scenarios)
       {
-        threads.emplace_back(run_scenario, s, cur_iter);
+        threads.emplace_back(run_scenario, s, cur_iter, 0 == cur_iter);
       }
       ++cur_iter;
     }
@@ -895,7 +914,7 @@ Model::runIterations(
         auto& scenarios = iteration.getScenarios();
         for (auto s : scenarios)
         {
-          threads.emplace_back(run_scenario, s, cur_iter);
+          threads.emplace_back(run_scenario, s, cur_iter, false);
         }
         ++cur_iter;
         // loop around to start if required
@@ -927,7 +946,6 @@ Model::runIterations(
         return finalize_probabilities();
       }
       runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
-      logging::note("Need another %d iterations", runs_left);
     }
   }
   return finalize_probabilities();
