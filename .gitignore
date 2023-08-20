@@ -1,5 +1,6 @@
-CMakeCache.txt
-CMakeFiles
-TBD
-Makefile
-cmake*
+.vscode
+firestarr
+**/log*.txt
+**/build
+**/src/cpp/version.cpp
+**/test
