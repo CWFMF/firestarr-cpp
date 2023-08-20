@@ -36,14 +36,25 @@ static map<std::string, bool> PARSE_HAVE{};
 static int ARGC = 0;
 static const char* const* ARGV = nullptr;
 static int CUR_ARG = 0;
+string get_args()
+{
+  std::string args(ARGV[0]);
+  for (auto i = 1; i < ARGC; ++i)
+  {
+    args.append(" ");
+    args.append(ARGV[i]);
+  }
+  return args;
+}
 void show_args()
 {
-  printf("Arguments are:\n");
-  for (auto j = 0; j < ARGC; ++j)
-  {
-    printf(" %s", ARGV[j]);
-  }
-  printf("\n");
+  auto args = get_args();
+  printf("Arguments are:\n%s\n", args.c_str());
+}
+void log_args()
+{
+  auto args = get_args();
+  tbd::logging::note("Arguments are:\n%s\n", args.c_str());
 }
 void show_usage_and_exit(int exit_code)
 {
@@ -375,7 +386,7 @@ int main(const int argc, const char* const argv[])
                            start_date.tm_hour,
                            start_date.tm_min);
         start = start_date;
-        show_args();
+        log_args();
         result = tbd::sim::Model::runScenarios(wx_file_name.c_str(),
                                                yesterday,
                                                Settings::rasterRoot(),
