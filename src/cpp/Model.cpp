@@ -861,18 +861,24 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                                 Settings::intensityMaxModerate(),
                                                 numeric_limits<int>::max()));
     }
-    auto run_scenario = [this, &is_being_cancelled, &scenarios_per_iteration, &scenarios_required_done, &scenarios_done, &all_probabilities, &all_iterations, &start_day](Scenario* s, size_t i) {
+    auto run_scenario = [this, &is_being_cancelled, &scenarios_per_iteration, &scenarios_required_done, &scenarios_done, &all_probabilities, &all_iterations, &start_day](Scenario* s, size_t i, bool is_required) {
       auto result = s->run(&all_probabilities[i]);
       ++scenarios_done;
-      if (i == 0)
+      logging::extensive("Done %ld scenarios in iteration %ld which %s required", scenarios_done, i, (is_required ? "is" : "is not"));
+      if (is_required)
       {
+        logging::verbose("Done %ld scenarios in iteration %ld which %s required", scenarios_done, i, (is_required ? "is" : "is not"));
         ++scenarios_required_done;
+        logging::debug("Have (%ld of %ld) scenarios and %s being cancelled",
+                       scenarios_required_done,
+                       scenarios_per_iteration,
+                       (is_being_cancelled ? "is" : "not"));
         if (is_being_cancelled)
         {
           // no point in saving interim if final is done
           if (scenarios_per_iteration != scenarios_required_done)
           {
-            logging::info("Saving interim results for (%ld of %ld) scenarios in timer thread", scenarios_required_done, scenarios_per_iteration);
+            logging::info("Saving interim results for (%ld of %ld) scenarios", scenarios_required_done, scenarios_per_iteration);
             saveProbabilities(all_probabilities[0], start_day, true);
           }
         }
@@ -888,7 +894,8 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       {
         threads.emplace_back(run_scenario,
                              s,
-                             cur_iter);
+                             cur_iter,
+                             0 == cur_iter);
       }
       ++cur_iter;
     }
@@ -934,7 +941,8 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
         {
           threads.emplace_back(run_scenario,
                                s,
-                               cur_iter);
+                               cur_iter,
+                               false);
         }
         ++cur_iter;
         // loop around to start if required
