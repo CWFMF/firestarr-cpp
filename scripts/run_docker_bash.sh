@@ -1,5 +1,7 @@
 #!/bin/bash
 IMAGE=tbd_prod_stable
+# REGISTRY=registrycwfisdev.azurecr.io/firestarr
+REGISTRY=ghcr.io/jordan-evens
 DIR_DATA=/mnt/batch/tasks/fsmounts/firestarr_data
 CONTAINER=`docker ps | grep ${IMAGE} | sed "s/.* \([^ ]*$\)/\1/g"`
 DIR_CONTAINER=${DIR_DATA}/container
@@ -12,7 +14,7 @@ if [ -z "${CONTAINER}" ]; then
   CONTAINER=`docker ps -a | grep ${IMAGE} | head -n 1 | sed "s/.* \([^ ]*$\)/\1/g"`
     if [ -z "${CONTAINER}" ]; then
         echo No existing container so making new one
-        USE_IMAGE=registrycwfisdev.azurecr.io/firestarr/${IMAGE}:latest
+        USE_IMAGE=${REGISTRY}/${IMAGE}:latest
     else
         echo Restarting based on ${CONTAINER}
         # not running so need to save and start
