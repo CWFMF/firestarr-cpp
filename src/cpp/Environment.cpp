@@ -76,9 +76,13 @@ Environment Environment::loadEnvironment(const string& path,
   logging::info("Running using inputs directory '%s'", path.c_str());
   auto rasters = util::find_rasters(path, year);
   auto best_x = numeric_limits<double>::max();
-  auto best_y = numeric_limits<FullIdx>::max();
+
   unique_ptr<const EnvironmentInfo> env_info = nullptr;
   unique_ptr<data::GridBase> for_info = nullptr;
+  string best_fuel = "";
+  string best_elevation = "";
+  double best_meridian = numeric_limits<double>::max();
+  auto found_best = false;
   if (!perimeter.empty())
   {
     for_info = make_unique<data::GridBase>(data::read_header(perimeter));
@@ -94,49 +98,62 @@ Environment Environment::loadEnvironment(const string& path,
     const auto find_len = find_what.length();
     const auto find_start = fuel.find(find_what, fuel.find_last_of('/'));
     const auto elevation = string(fuel).replace(find_start, find_len, "dem");
-    unique_ptr<const EnvironmentInfo> cur_info = EnvironmentInfo::loadInfo(
-      fuel,
-      elevation);
-    const auto cur_x = abs(point.longitude() - cur_info->meridian());
+    // figure out best raster based on meridian by filename first
+    const auto find_zone_start = find_start + find_len + 1;
+    const auto find_suffix = fuel.find_last_of(".");
+    auto zone_guess = fuel.substr(find_zone_start, find_suffix - find_zone_start);
+    std::replace(zone_guess.begin(), zone_guess.end(), '_', '.');
+    logging::debug("Assuming file %s is for zone %s", fuel.c_str(), zone_guess.c_str());
+    double zone;
+    double meridian;
+    unique_ptr<const EnvironmentInfo> cur_info;
+    if (sscanf(zone_guess.c_str(), "%lf", &zone))
+    {
+      meridian = (zone - 15.0) * 6.0 - 93.0;
+    }
+    else
+    {
+      cur_info = EnvironmentInfo::loadInfo(
+        fuel,
+        elevation);
+      zone = cur_info->zone();
+      meridian = cur_info->meridian();
+    }
+    const auto cur_x = abs(point.longitude() - meridian);
     logging::verbose("Zone %0.1f meridian is %0.2f degrees from point",
-                     cur_info->zone(),
+                     zone,
                      cur_x);
     // HACK: assume floating point is going to always be exactly the same result
-    if ((nullptr == for_info || cur_info->meridian() == for_info->meridian())
-        && cur_x <= best_x)
+    if (cur_x < best_x)
     {
       logging::verbose("SWITCH X");
-      if (cur_x != best_x)
-      {
-        // if we're switching zones then we need to reset this
-        best_y = numeric_limits<FullIdx>::max();
-      }
       best_x = cur_x;
-      // overwrite should delete current pointer
-      const auto coordinates = cur_info->findFullCoordinates(point, false);
-      if (nullptr != coordinates)
+      best_fuel = fuel;
+      best_elevation = elevation;
+      best_meridian = meridian;
+      found_best = true;
+      // if already loaded then keep
+      if (nullptr != cur_info)
       {
-        logging::verbose("CHECK Y");
-        const auto cur_y = static_cast<FullIdx>(abs(
-          std::get<0>(*coordinates) - cur_info->calculateRows() / static_cast<FullIdx>(2)));
-        logging::verbose(("Current y value is " + std::to_string(cur_y)).c_str());
-        if (cur_y < best_y)
-        {
-          logging::verbose("SWITCH Y");
-          env_info = std::move(cur_info);
-          best_y = cur_y;
-        }
-      }
-      else
-      {
-        logging::verbose("NULLPTR");
+        env_info = std::move(cur_info);
+        cur_info = nullptr;
       }
     }
+  }
+  if (nullptr == env_info && found_best)
+  {
+    env_info = EnvironmentInfo::loadInfo(
+      best_fuel,
+      best_elevation);
   }
   logging::check_fatal(nullptr == env_info,
                        "Could not find an environment to use for (%f, %f)",
                        point.latitude(),
                        point.longitude());
+  logging::check_fatal(best_meridian != env_info->meridian(),
+                       "Thought file with best match was for meridian %ld but is actually %ld",
+                       best_meridian,
+                       env_info->meridian());
   logging::debug("Best match for (%f, %f) is zone %0.2f with a meridian of %0.2f",
                  point.latitude(),
                  point.longitude(),
