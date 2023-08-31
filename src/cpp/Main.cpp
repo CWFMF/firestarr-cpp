@@ -383,7 +383,11 @@ main(
         const string log_file = log_file_name.starts_with("/")
                                 ? log_file_name
                                 : (string(Settings::outputDirectory()) + log_file_name);
-        fs::logging::check_fatal(!Log::openLogFile(log_file.c_str()), "Can't open log file");
+        fs::logging::check_fatal(
+          !Log::openLogFile(log_file.c_str()),
+          "Can't open log file %s",
+          log_file.c_str()
+        );
         fs::logging::note("Output directory is %s", Settings::outputDirectory());
         fs::logging::note("Output log is %s", log_file.c_str());
         string date(ARGV[CUR_ARG++]);
