@@ -271,7 +271,8 @@ int main(const int argc, const char* const argv[])
         // if name starts with "/" then it's an absolute path, otherwise append to working directory
         const string log_file = log_file_name.starts_with("/") ? log_file_name : (string(Settings::outputDirectory()) + log_file_name);
         tbd::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
-                                  "Can't open log file");
+                                  "Can't open log file %s",
+                                  log_file.c_str());
         tbd::logging::note("Output directory is %s", Settings::outputDirectory());
         tbd::logging::note("Output log is %s", log_file.c_str());
         string date(ARGV[CUR_ARG++]);
