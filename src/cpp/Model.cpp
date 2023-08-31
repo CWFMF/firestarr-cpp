@@ -77,7 +77,7 @@ Model::Model(const topo::StartPoint& start_point,
              topo::Environment* env)
   : start_time_(tm()),
     running_since_(Clock::now()),
-    time_limit_(std::chrono::seconds(Settings::maximumTimeSeconds())),
+    time_limit_(Settings::maximumTimeSeconds()),
     env_(env)
 {
   logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
@@ -761,8 +761,8 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       // if we've done enough runs and need to stop for that reason
       std::this_thread::sleep_for(CHECK_INTERVAL);
       // set bool so other things don't need to check clock
-      is_out_of_time_ = runTime() >= timeLimit();
-      // logging::debug("Checking clock");
+      is_out_of_time_ = runTime().count() >= timeLimit().count();
+      logging::verbose("Checking clock [%ld of %ld]", runTime(), timeLimit());
     }
     while (runs_left > 0 && !shouldStop());
     if (isOutOfTime())
