@@ -476,6 +476,7 @@ void SettingsImplementation::setRoot(const char* dirname) noexcept
           getline(iss, str, '\n');
           const auto value = util::trim_copy(str);
           settings.emplace(key, value);
+          logging::debug("%s: %s", key.c_str(), value.c_str());
         }
       }
       in.close();
