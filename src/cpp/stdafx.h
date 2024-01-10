@@ -41,12 +41,19 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#ifdef _WIN32
+#include <geo_normalize.h>
+#include <geotiff.h>
+#include <geovalues.h>
+#include <xtiffio.h>
+#else
 #include <geotiff/geo_normalize.h>
 #include <geotiff/geotiff.h>
 #include <geotiff/geovalues.h>
+#include <geotiff/xtiffio.h>
+#endif
 #include "tiff.h"
 #include <tiffio.h>
-#include <geotiff/xtiffio.h>
 #include <sys/stat.h>
 // unreferenced inline function has been removed
 // Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
