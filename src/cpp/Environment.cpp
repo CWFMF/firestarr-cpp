@@ -71,7 +71,7 @@ Environment Environment::loadEnvironment(const string dir_out,
   logging::info("Running using inputs directory '%s'", path.c_str());
   auto rasters = util::find_rasters(path, year);
   auto best_x = numeric_limits<double>::max();
-
+  auto best_y = numeric_limits<double>::max();
   unique_ptr<const EnvironmentInfo> env_info = nullptr;
   unique_ptr<data::GridBase> for_info = nullptr;
   string best_fuel = "";
@@ -114,6 +114,12 @@ Environment Environment::loadEnvironment(const string dir_out,
       zone = cur_info->zone();
       meridian = cur_info->meridian();
     }
+    if (sim::Settings::forceFuel())
+    {
+      logging::verbose("FORCING ENV");
+      env_info = std::move(cur_info);
+      break;
+    }
     const auto cur_x = abs(point.longitude() - meridian);
     logging::verbose("Zone %0.1f meridian is %0.2f degrees from point",
                      zone,
@@ -130,8 +136,21 @@ Environment Environment::loadEnvironment(const string dir_out,
       // if already loaded then keep
       if (nullptr != cur_info)
       {
-        env_info = std::move(cur_info);
-        cur_info = nullptr;
+        logging::verbose("CHECK Y");
+        const auto coordinates = cur_info->findFullCoordinates(point, false);
+        const auto cur_y = static_cast<FullIdx>(abs(
+          std::get<0>(*coordinates) - cur_info->calculateRows() / static_cast<FullIdx>(2)));
+        logging::verbose(("Current y value is " + std::to_string(cur_y)).c_str());
+        if (cur_y < best_y)
+        {
+          logging::verbose("SWITCH Y");
+          env_info = std::move(cur_info);
+          best_y = cur_y;
+        }
+      }
+      else
+      {
+        logging::verbose("NULLPTR");
       }
     }
   }
