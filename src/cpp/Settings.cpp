@@ -168,6 +168,38 @@ public:
     confidence_level_ = value;
   }
   /**
+   * \brief Ignition position row
+   * \return Ignition position row
+   */
+  [[nodiscard]] int ignRow() const noexcept
+  {
+    return ign_row_;
+  }
+  /**
+   * \brief Ignition position row
+   * \return Ignition position row
+   */
+  void setIgnRow(const int value) noexcept
+  {
+    ign_row_ = value;
+  }
+  /**
+   * \brief Ignition position col
+   * \return Ignition position col
+   */
+  [[nodiscard]] int ignCol() const noexcept
+  {
+    return ign_col_;
+  }
+  /**
+   * \brief Ignition position col
+   * \return Ignition position col
+   */
+  void setIgnCol(const int value) noexcept
+  {
+    ign_col_ = value;
+  }
+  /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used (s)
    * \return Maximum time simulation can run before it is ended and whatever results it has are used (s)
    */
@@ -294,6 +326,14 @@ private:
    */
   atomic<double> confidence_level_;
   /**
+   * \brief Ignition position row
+   */
+  atomic<int> ign_row_ = 1;
+  /**
+   * \brief Ignition position col
+   */
+  atomic<int> ign_col_ = 1;
+  /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used (s)
    */
   atomic<size_t> maximum_time_seconds_;
@@ -378,6 +418,16 @@ public:
    * \return Whether or not to save simulation area grids
    */
   atomic<bool> save_simulation_area = false;
+  /**
+   * \brief Whether or not to use first default fuel grid without checking coordinates
+   * \return Whether or not to use first default fuel grid without checking coordinates
+   */
+  atomic<bool> force_fuel = false;
+  /**
+   * \brief Whether or not the start point is specified by row and column id of a forced fuel grid
+   * \return Whether or not the start point is specified by row and column id of a forced fuel grid
+   */
+  atomic<bool> rowcol_ignition = false;
 };
 /**
  * \brief The singleton instance for this class
@@ -580,6 +630,38 @@ bool Settings::saveSimulationArea() noexcept
 void Settings::setSaveSimulationArea(const bool value) noexcept
 {
   SettingsImplementation::instance().save_simulation_area = value;
+}
+bool Settings::forceFuel() noexcept
+{
+  return SettingsImplementation::instance().force_fuel;
+}
+void Settings::setForceFuel(const bool value) noexcept
+{
+  SettingsImplementation::instance().force_fuel = value;
+}
+bool Settings::rowColIgnition() noexcept
+{
+  return SettingsImplementation::instance().rowcol_ignition;
+}
+void Settings::setRowColIgnition(const bool value) noexcept
+{
+  SettingsImplementation::instance().rowcol_ignition = value;
+}
+int Settings::ignRow() noexcept
+{
+  return SettingsImplementation::instance().ignRow();
+}
+void Settings::setIgnRow(const int value) noexcept
+{
+  SettingsImplementation::instance().setIgnRow(value);
+}
+int Settings::ignCol() noexcept
+{
+  return SettingsImplementation::instance().ignCol();
+}
+void Settings::setIgnCol(const int value) noexcept
+{
+  SettingsImplementation::instance().setIgnCol(value);
 }
 double Settings::minimumRos() noexcept
 {
