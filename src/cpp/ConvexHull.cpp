@@ -16,7 +16,11 @@ distPtPt(
   InnerPos& b
 ) noexcept
 {
+#ifdef _WIN32
+  return (((b.x - a.x) * (b.x - a.x)) + ((b.y - a.y) * (b.y - a.y)));
+#else
   return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
+#endif
 }
 
 void
