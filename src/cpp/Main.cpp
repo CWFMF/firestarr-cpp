@@ -322,6 +322,32 @@ main(
       "--sim-area",
       "Output simulation area grids"
     );
+    register_flag(
+      &Settings::setForceFuel,
+      true,
+      "--force-fuel",
+      "Use first default fuel raster without checking coordinates"
+    );
+    register_flag(
+      &Settings::setRowColIgnition,
+      true,
+      "--rowcol-ignition",
+      "Use row and col to specific start point. Assumes force-fuel is set."
+    );
+    register_setter<size_t>(
+      &Settings::setIgnRow,
+      "--ign-row",
+      "Specify ignition row",
+      false,
+      &parse_size_t
+    );
+    register_setter<size_t>(
+      &Settings::setIgnCol,
+      "--ign-col",
+      "Specify ignition column",
+      false,
+      &parse_size_t
+    );
     register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<double>(
