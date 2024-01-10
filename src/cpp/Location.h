@@ -50,6 +50,10 @@ public:
     logging::check_fatal(row >= MAX_ROWS || column >= MAX_COLUMNS, "Location out of bounds (%d, %d)", row, column);
 #endif
   }
+  Location(const Coordinates& coord)
+    : Location(std::get<0>(coord), std::get<1>(coord))
+  {
+  }
   /**
    * \brief Row
    * \return Row

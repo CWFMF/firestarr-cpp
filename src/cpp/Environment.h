@@ -92,12 +92,12 @@ public:
    * \brief Move constructor
    * \param rhs Environment to move from
    */
-  constexpr Environment(Environment&& rhs) noexcept = default;
+  Environment(Environment&& rhs) noexcept = default;
   /**
    * \brief Copy constructor
    * \param rhs Environment to copy from
    */
-  constexpr Environment(const Environment& rhs) noexcept = default;
+  Environment(const Environment& rhs) noexcept = default;
   /**
    * \brief Move assignment
    * \param rhs Environment to move from
@@ -236,7 +236,7 @@ public:
    */
   [[nodiscard]] unique_ptr<sim::BurnedData> makeBurnedData() const
   {
-    auto result = make_unique<sim::BurnedData>(not_burnable_);
+    auto result = make_unique<sim::BurnedData>(*not_burnable_);
     return result;
   }
   /**
@@ -246,7 +246,7 @@ public:
   void resetBurnedData(sim::BurnedData* data) const noexcept
   {
     *data = {};
-    *data = not_burnable_;
+    *data = *not_burnable_;
   }
 protected:
   /**
@@ -382,17 +382,18 @@ protected:
   /**
    * \brief Creates a map of areas that are not burnable either because of fuel or the initial perimeter.
    */
-  sim::BurnedData initializeNotBurnable(const FuelGrid& fuel) const
+  shared_ptr<sim::BurnedData> initializeNotBurnable(const data::ConstantGrid<Cell>& cells) const
   {
-    sim::BurnedData result{};
-    //    std::fill(not_burnable_.begin(), not_burnable_.end(), false);
-    // make a template we can copy to reset things
+    // shared_ptr<sim::BurnedData> result{};
+    //     std::fill(not_burnable_.begin(), not_burnable_.end(), false);
+    //  make a template we can copy to reset things
+    auto result = make_shared<sim::BurnedData>();
     for (Idx r = 0; r < rows(); ++r)
     {
       for (Idx c = 0; c < columns(); ++c)
       {
         const Location location(r, c);
-        result[location.hash()] = (nullptr == fuel.at(location));
+        (*result)[location.hash()] = (nullptr == fuel::fuel_by_code(cells.at(location).fuelCode()));
         //        if (fuel::is_null_fuel(cell(location)))
         //        {
         //          not_burnable_[location.hash()] = true;
@@ -400,56 +401,6 @@ protected:
       }
     }
     return result;
-  }
-  /**
-   * \brief Load from rasters
-   * \param fuel Fuel raster
-   * \param elevation Elevation raster
-   */
-  Environment(
-    const string dir_out,
-    const FuelGrid& fuel,
-    const ElevationGrid& elevation,
-    const Point& point)
-    : dir_out_(dir_out),
-      cells_(makeCells(fuel,
-                       elevation)),
-      not_burnable_(initializeNotBurnable(fuel))
-  {
-    if (sim::Settings::saveSimulationArea())
-    {
-      logging::debug("Saving fuel grid");
-      const auto lookup = sim::Settings::fuelLookup();
-      if (sim::Settings::saveAsAscii())
-      {
-        fuel.saveToAsciiFile(dir_out,
-                             "fuel",
-                             [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
-        elevation.saveToAsciiFile(dir_out, "dem");
-        // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
-        elevation.saveToAsciiFile(dir_out,
-                                  "simulation_area",
-                                  [](const ElevationSize) { return 3; });
-      }
-      else
-      {
-        fuel.saveToTiffFile(dir_out,
-                            "fuel",
-                            [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
-        elevation.saveToTiffFile(dir_out, "dem");
-        // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
-        elevation.saveToTiffFile(dir_out,
-                                 "simulation_area",
-                                 [](const ElevationSize) { return 3; });
-      }
-    }
-    logging::debug("Done saving fuel grid");
-    const auto coord = fuel.findCoordinates(point, false);
-    // take elevation at point so that if max grid size changes elevation doesn't
-    const auto loc = Location(std::get<0>(*coord), std::get<1>(*coord));
-    elevation_ = elevation.at(loc);
-    logging::note("Start elevation is %d", elevation_);
-    //    initializeNotBurnable();
   }
   /**
    * \brief Construct from cells and elevation
@@ -461,7 +412,7 @@ protected:
               const ElevationSize elevation) noexcept
     : dir_out_(dir_out),
       cells_(cells),
-      not_burnable_(false),
+      not_burnable_(initializeNotBurnable(*cells)),
       elevation_(elevation)
   {
     //    try
@@ -473,6 +424,52 @@ protected:
     //      std::terminate();
     //    }
   }
+  /**
+   * \brief Load from rasters
+   * \param fuel Fuel raster
+   * \param elevation Elevation raster
+   */
+  Environment(
+    const string dir_out,
+    const FuelGrid& fuel,
+    const ElevationGrid& elevation,
+    const Point& point)
+    : Environment(dir_out,
+                  makeCells(fuel,
+                            elevation),
+                  elevation.at(Location(*elevation.findCoordinates(point, false).get())))
+  {
+    // take elevation at point so that if max grid size changes elevation doesn't
+    logging::note("Start elevation is %d", elevation_);
+    if (sim::Settings::saveSimulationArea())
+    {
+      logging::debug("Saving fuel grid");
+      const auto lookup = sim::Settings::fuelLookup();
+      if (sim::Settings::saveAsAscii())
+      {
+        fuel.saveToAsciiFile(dir_out_,
+                             "fuel",
+                             [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
+        elevation.saveToAsciiFile(dir_out_, "dem");
+        // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
+        elevation.saveToAsciiFile(dir_out_,
+                                  "simulation_area",
+                                  [](const ElevationSize) { return 3; });
+      }
+      else
+      {
+        fuel.saveToTiffFile(dir_out_,
+                            "fuel",
+                            [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
+        elevation.saveToTiffFile(dir_out_, "dem");
+        // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
+        elevation.saveToTiffFile(dir_out_,
+                                 "simulation_area",
+                                 [](const ElevationSize) { return 3; });
+      }
+      logging::debug("Done saving fuel grid");
+    }
+  }
 private:
   const string dir_out_;
   /**
@@ -482,7 +479,7 @@ private:
   /**
    * \brief BurnedData of cells that are not burnable
    */
-  const sim::BurnedData not_burnable_;
+  shared_ptr<const sim::BurnedData> not_burnable_;
   /**
    * \brief Elevation at StartPoint
    */
