@@ -301,8 +301,8 @@ public:
                       const string& base_name,
                       std::function<R(V value)> convert) const
   {
-    constexpr uint32_t tileWidth = 256;
-    constexpr uint32_t tileHeight = 256;
+    uint32_t tileWidth = min((int)(this->columns()), 256);
+    uint32_t tileHeight = min((int)(this->rows()), 256);
     Idx min_row = this->rows();
     int16_t max_row = 0;
     Idx min_column = this->columns();
