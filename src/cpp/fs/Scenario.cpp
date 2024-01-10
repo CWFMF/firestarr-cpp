@@ -35,6 +35,7 @@ void Scenario::clear() noexcept
   log_check_fatal(!scheduler_.empty(), "Scheduler isn't empty after clear()");
 #endif
   step_ = 0;
+  oob_spread_ = 0;
 }
 size_t Scenario::completed() noexcept { return COMPLETED; }
 size_t Scenario::count() noexcept { return COUNT; }
@@ -540,6 +541,10 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
     saveProbabilities(model_->outputDirectory(), string(buffer), spread_thresholds_by_ros_);
   }
 #endif
+  if (oob_spread_ > 0)
+  {
+    log_warning("Tried to spread out of bounds %ld times", oob_spread_);
+  }
   return this;
 }
 inline void Scenario::checkCondense(PointSet& a) { hull(a); }
@@ -688,6 +693,13 @@ void Scenario::scheduleFireSpread(const Event& event)
         {
           const InnerPos pos = p.add(offset);
           points_log_.log(step_, STAGE_SPREAD, new_time, pos.x, pos.y);
+          // was doing this check after getting for_cell, so it didn't help when out of bounds
+          if (pos.x < 0 || pos.y < 0 || pos.x >= this->columns() || pos.y >= this->rows())
+          {
+            ++oob_spread_;
+            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x, pos.y);
+            continue;
+          }
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;

@@ -571,6 +571,10 @@ protected:
    */
   LogPoints points_log_{};
 #endif
+  /**
+   * \brief How many times this scenario tried to spread out of bounds
+   */
+  size_t oob_spread_{};
 };
 }
 #endif
