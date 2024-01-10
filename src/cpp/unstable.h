@@ -5,6 +5,10 @@
 // Provides wrappers around functions that have different results when using
 // different optimization flags, so they can be compiled with the same
 // flags in release and debug mode to avoid changing the outputs.
+
+#ifdef _WIN32
+#endif
+
 #include <cmath>
 double
 _cos(double angle) noexcept;
