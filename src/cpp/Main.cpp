@@ -215,6 +215,10 @@ int main(const int argc, const char* const argv[])
     register_flag(&Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids");
     register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
     register_flag(&Settings::setSaveSimulationArea, true, "--sim-area", "Output simulation area grids");
+    register_flag(&Settings::setForceFuel, true, "--force-fuel", "Use first default fuel raster without checking coordinates");
+    register_flag(&Settings::setRowColIgnition, true, "--rowcol-ignition", "Use row and col to specific start point. Assumes force-fuel is set.");
+    register_setter<size_t>(&Settings::setIgnRow, "--ign-row", "Specify ignition row", false, &parse_size_t);
+    register_setter<size_t>(&Settings::setIgnCol, "--ign-col", "Specify ignition column", false, &parse_size_t);
     register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);

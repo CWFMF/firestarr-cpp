@@ -125,6 +125,50 @@ public:
    */
   static void setSaveSimulationArea(bool value) noexcept;
   /**
+   * \brief Whether or not to use first default fuel grid without checking coordinates
+   * \return Whether or not to use first default fuel grid without checking coordinates
+   * \return None
+   */
+  [[nodiscard]] static bool forceFuel() noexcept;
+  /**
+   * \brief Whether or not to use first default fuel grid without checking coordinates
+   * \return Whether or not to use first default fuel grid without checking coordinates
+   * \return None
+   */
+  static void setForceFuel(bool value) noexcept;
+  /**
+   * \brief Whether or not the start point is specified by row and column id of a forced fuel grid
+   * \return Whether or not the start point is specified by row and column id of a forced fuel grid
+   * \return None
+   */
+  [[nodiscard]] static bool rowColIgnition() noexcept;
+  /**
+   * \brief Whether or not the start point is specified by row and column id of a forced fuel grid
+   * \return Whether or not the start point is specified by row and column id of a forced fuel grid
+   * \return None
+   */
+  static void setRowColIgnition(bool value) noexcept;
+  /**
+   * \brief Ignition position row
+   * \return Ignition position row
+   */
+  [[nodiscard]] static int ignRow() noexcept;
+  /**
+   * \brief Set ignition position row
+   * \return Set ignition position row
+   */
+  static void setIgnRow(const int value) noexcept;
+  /**
+   * \brief Ignition position col
+   * \return Ignition position col
+   */
+  [[nodiscard]] static int ignCol() noexcept;
+  /**
+   * \brief Set ignition position col
+   * \return Set ignition position col
+   */
+  static void setIgnCol(const int value) noexcept;
+  /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */
