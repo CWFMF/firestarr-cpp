@@ -70,6 +70,12 @@ public:
     );
 #endif
   }
+  Location(
+    const Coordinates& coord
+  )
+    : Location(std::get<0>(coord), std::get<1>(coord))
+  {
+  }
   /**
    * \brief Row
    * \return Row
