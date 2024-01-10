@@ -1,10 +1,12 @@
 /* Copyright (c) Queen's Printer for Ontario, 2020. */
+/* Copyright (c) His Majesty the King in Right of Canada as represented by the Minister of Natural Resources, 2024. */
 
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "stdafx.h"
 #include "Grid.h"
 #include "UTM.h"
+#include "Settings.h"
 using tbd::Idx;
 namespace tbd::data
 {
@@ -147,8 +149,9 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& poi
   auto actual_y = (!flipped)
                   ? (y - this->yllcorner_) / this->cell_size_
                   : (yurcorner_ - y) / cell_size_;
-  const auto column = static_cast<FullIdx>(actual_x);
-  const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
+  const auto column = (sim::Settings::rowColIgnition() ? static_cast<FullIdx>(sim::Settings::ignCol()) : static_cast<FullIdx>(actual_x));
+  const auto row = (sim::Settings::rowColIgnition() ? static_cast<FullIdx>(sim::Settings::ignRow()) : static_cast<FullIdx>(round(actual_y - 0.5)));
+
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
     logging::verbose("Returning nullptr from findFullCoordinates() for (%f, %f) => (%d, %d)",
