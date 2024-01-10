@@ -422,7 +422,11 @@ string get_path(const char* const dir_root, unordered_map<string, string>& setti
   {
     // not an absolute path
     std::filesystem::path p = (dir_root + path);
+#ifdef _WIN32
+    path = std::filesystem::canonical(p).generic_string();
+#else
     path = std::filesystem::canonical(p).c_str();
+#endif
     logging::info("Converted relative path to absolute path %s", path.c_str());
   }
   return path;

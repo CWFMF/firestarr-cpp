@@ -36,7 +36,11 @@ constexpr double M_0_5 = 0.5 - DIST_22_5;
 
 inline constexpr double distPtPt(const tbd::sim::InnerPos& a, const tbd::sim::InnerPos& b) noexcept
 {
+#ifdef _WIN32
+  return (((b.x - a.x) * (b.x - a.x)) + ((b.y - a.y) * (b.y - a.y)));
+#else
   return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
+#endif
 }
 
 #ifndef DO_HULL

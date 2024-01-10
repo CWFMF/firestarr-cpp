@@ -8,6 +8,9 @@
 #include "Log.h"
 #include <regex>
 #include <filesystem>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 namespace fs = std::filesystem;
 
 TIFF* GeoTiffOpen(const char* const filename, const char* const mode)
@@ -73,7 +76,11 @@ void read_directory(const bool for_files, const string& name, vector<string>* v,
       logging::extensive(("Checking regex match: " + entry.path().string()).c_str());
       if (std::regex_match(entry.path().string(), re))
       {
+#ifdef _WIN32
+        v->push_back(entry.path().generic_string());
+#else
         v->push_back(entry.path());
+#endif
       }
     }
   }
@@ -117,7 +124,11 @@ bool directory_exists(const char* dir) noexcept
 }
 void make_directory(const char* dir) noexcept
 {
+#ifdef _WIN32
+  if (-1 == _mkdir(dir) && errno != EEXIST)
+#else
   if (-1 == mkdir(dir, 0777) && errno != EEXIST)
+#endif
   {
     struct stat dir_info
     {
