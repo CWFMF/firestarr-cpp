@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "Grid.h"
 #include "UTM.h"
+#include "Settings.h"
 using fs::Idx;
 namespace fs::data
 {
@@ -177,8 +178,13 @@ GridBase::findFullCoordinates(
   // these are already flipped across the y-axis on reading, so it's the same as for x now
   auto actual_y = (!flipped) ? (y - this->yllcorner_) / this->cell_size_
                              : (yurcorner_ - y) / cell_size_;
-  const auto column = static_cast<FullIdx>(actual_x);
-  const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
+  const auto column =
+    (sim::Settings::rowColIgnition() ? static_cast<FullIdx>(sim::Settings::ignCol())
+                                     : static_cast<FullIdx>(actual_x));
+  const auto row =
+    (sim::Settings::rowColIgnition() ? static_cast<FullIdx>(sim::Settings::ignRow())
+                                     : static_cast<FullIdx>(round(actual_y - 0.5)));
+
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
     logging::verbose(
