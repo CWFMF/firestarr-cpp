@@ -1050,6 +1050,10 @@ Scenario::scheduleFireSpread(
           const InnerPos pos = p.add(offset);
           log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x, pos.y);
           const auto for_cell = cell(pos);
+          if (pos.x < 0 || pos.y < 0 || pos.x > this->columns() || pos.y > this->rows())
+          {
+            continue;
+          }
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;
           if (!(*unburnable_)[for_cell.hash()])
