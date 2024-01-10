@@ -9,7 +9,11 @@ constexpr double MIN_X = std::numeric_limits<double>::min();
 constexpr double MAX_X = std::numeric_limits<double>::max();
 inline double distPtPt(InnerPos& a, InnerPos& b) noexcept
 {
+#ifdef _WIN32
+  return (((b.x - a.x) * (b.x - a.x)) + ((b.y - a.y) * (b.y - a.y)));
+#else
   return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
+#endif
 }
 void hull(vector<InnerPos>& a) noexcept
 {
