@@ -149,8 +149,16 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& poi
   auto actual_y = (!flipped)
                   ? (y - this->yllcorner_) / this->cell_size_
                   : (yurcorner_ - y) / cell_size_;
-  const auto column = (sim::Settings::rowColIgnition() ? static_cast<FullIdx>(sim::Settings::ignCol()) : static_cast<FullIdx>(actual_x));
-  const auto row = (sim::Settings::rowColIgnition() ? static_cast<FullIdx>(sim::Settings::ignRow()) : static_cast<FullIdx>(round(actual_y - 0.5)));
+  // Override coordinates if provided
+  if (sim::Settings::rowColIgnition())
+  {
+    return make_unique<FullCoordinates>(static_cast<FullIdx>(sim::Settings::ignRow()),
+                                        static_cast<FullIdx>(sim::Settings::ignCol()),
+                                        static_cast<SubSize>(0),
+                                        static_cast<SubSize>(0));
+  }
+  const auto column = static_cast<FullIdx>(actual_x);
+  const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
 
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
