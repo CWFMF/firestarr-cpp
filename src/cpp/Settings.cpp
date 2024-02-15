@@ -379,6 +379,11 @@ private:
   int intensity_max_moderate_;
 public:
   /**
+   * \brief Whether or not to save individual grids
+   * \return Whether or not to save individual grids
+   */
+  atomic<bool> save_individual = false;
+  /**
    * \brief Whether or not to run things asynchronously where possible
    * \return Whether or not to run things asynchronously where possible
    */
@@ -387,7 +392,12 @@ public:
    * \brief Whether or not to run deterministically (100% chance of spread & survival)
    * \return Whether or not to run deterministically (100% chance of spread & survival)
    */
-  atomic<bool> deterministic_ = false;
+  atomic<bool> deterministic = false;
+  /**
+   * \brief Whether or not to create a probability surface
+   * \return Whether or not to create a probability surface
+   */
+  atomic<bool> surface = false;
   /**
    * \brief Whether or not to save grids as .asc
    * \return Whether or not to save grids as .asc
@@ -571,6 +581,14 @@ const fuel::FuelLookup& Settings::fuelLookup() noexcept
 {
   return SettingsImplementation::instance().fuelLookup();
 }
+bool Settings::saveIndividual() noexcept
+{
+  return SettingsImplementation::instance().save_individual;
+}
+void Settings::setSaveIndividual(const bool value) noexcept
+{
+  SettingsImplementation::instance().save_intensity = value;
+}
 bool Settings::runAsync() noexcept
 {
   return SettingsImplementation::instance().run_async;
@@ -581,11 +599,19 @@ void Settings::setRunAsync(const bool value) noexcept
 }
 bool Settings::deterministic() noexcept
 {
-  return SettingsImplementation::instance().deterministic_;
+  return SettingsImplementation::instance().deterministic;
 }
+bool Settings::surface() noexcept
+{
+  return SettingsImplementation::instance().surface;
+}
+void Settings::setSurface(const bool value) noexcept
+{
+  SettingsImplementation::instance().surface = value;
+ }
 void Settings::setDeterministic(const bool value) noexcept
 {
-  SettingsImplementation::instance().deterministic_ = value;
+  SettingsImplementation::instance().deterministic = value;
 }
 bool Settings::saveAsAscii() noexcept
 {

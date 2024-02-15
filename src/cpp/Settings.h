@@ -37,6 +37,17 @@ public:
    */
   [[nodiscard]] static const fuel::FuelLookup& fuelLookup() noexcept;
   /**
+   * \brief Whether or not to save individual grids
+   * \return Whether or not to save individual grids
+   */
+  [[nodiscard]] static bool saveIndividual() noexcept;
+  /**
+   * \brief Set whether or not to save individual grids
+   * \param value Whether or not to save individual grids
+   * \return None
+   */
+  static void setSaveIndividual(bool value) noexcept;
+  /**
    * \brief Whether or not to run things asynchronously where possible
    * \return Whether or not to run things asynchronously where possible
    */
@@ -58,6 +69,17 @@ public:
    * \return None
    */
   static void setDeterministic(bool value) noexcept;
+  /**
+   * \brief Whether or not to run all Cell(s) that can burn in entire Environment
+   * \return Whether or not to run all Cell(s) that can burn in entire Environment
+   */
+  [[nodiscard]] static bool surface() noexcept;
+  /**
+   * \brief Set whether or not to run all Cell(s) that can burn in entire Environment
+   * \param value Whether or not to run all Cell(s) that can burn in entire Environment
+   * \return None
+   */
+  static void setSurface(bool value) noexcept;
   /**
    * \brief Whether or not to save grids as .asc
    * \return Whether or not to save grids as .asc

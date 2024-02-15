@@ -127,7 +127,6 @@ public:
    * \param raster_root Directory to read raster inputs from
    * \param start_point StartPoint to use for sunrise/sunset
    * \param start_time Start time for simulation
-   * \param save_intensity Whether or not to save all intensity files
    * \param perimeter Perimeter to initialize fire from, if there is one
    * \param size Size to start fire at if no Perimeter
    * \return
@@ -138,7 +137,6 @@ public:
                                         const char* raster_root,
                                         const topo::StartPoint& start_point,
                                         const tm& start_time,
-                                        bool save_intensity,
                                         const string& perimeter,
                                         size_t size);
   /**
@@ -246,6 +244,22 @@ public:
     return year_;
   }
   /**
+   * \brief How many ignition scenarios are being used
+  * \return How many ignition scenarios are being used
+   */
+  [[nodiscard]] int ignitionScenarios() const noexcept
+  {
+    return starts_.size();
+  }
+  /**
+   * \brief How many Scenarios are in each Iteration
+   * \return How many Scenarios are in each Iteration
+   */
+  [[nodiscard]] int scenarioCount() const noexcept
+  {
+    return wx_.size() * ignitionScenarios();
+  }
+  /**
    * \brief Difference between date and the date of minimum foliar moisture content
    * \param time Date to get value for
    * \return Difference between date and the date of minimum foliar moisture content
@@ -316,14 +330,12 @@ public:
    * \brief Create an Iteration by initializing Scenarios
    * \param start_point StartPoint to use for sunrise/sunset
    * \param start Start time for simulation
-   * \param save_intensity Whether or not to save all intensity files too
    * \param start_day Start date for simulation
    * \param last_date End date for simulation
    * \return Iteration containing initialized Scenarios
    */
   [[nodiscard]] Iteration readScenarios(const topo::StartPoint& start_point,
                                         double start,
-                                        bool save_intensity,
                                         Day start_day,
                                         Day last_date);
   /**
@@ -370,13 +382,15 @@ private:
    * \param start_point StartPoint to use for sunrise/sunset
    * \param start Start time for simulation
    * \param start_day Start day for simulation
-   * \param save_intensity Whether or not to save all intensity files
    * \return Map of times to ProbabilityMap for that time
    */
   map<double, ProbabilityMap*> runIterations(const topo::StartPoint& start_point,
                                              double start,
-                                             Day start_day,
-                                             bool save_intensity);
+                                             Day start_day);
+  /**
+   * \brief Find all Cell(s) that can burn in entire Environment
+   */
+  void findAllStarts();
   /**
    * Save probability rasters
    */
