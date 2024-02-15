@@ -332,6 +332,16 @@ Scenario::Scenario(Model* model,
              last_date)
 {
 }
+// HACK: just set next start point here for surface right now
+Scenario* Scenario::reset_with_new_start(const shared_ptr<topo::Cell>& start_cell,
+                                         mt19937* mt_extinction,
+                                         mt19937* mt_spread,
+                                         util::SafeVector* final_sizes)
+{
+  start_cell_ = start_cell;
+  logging::extensive("Set cell; resetting");
+  return reset(mt_extinction, mt_spread, final_sizes);
+}
 Scenario* Scenario::reset(mt19937* mt_extinction,
                           mt19937* mt_spread,
                           util::SafeVector* final_sizes)
@@ -739,18 +749,38 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   {
     return nullptr;
   }
-  ++COMPLETED;
+  const auto completed = ++COMPLETED;
+  // const auto count = Settings::surface() ? model_->ignitionScenarios() : (+COUNT);
   // HACK: use + to pull value out of atomic
-#ifdef NDEBUG
-  log_info("[% d of % d] Completed with final size % 0.1f ha",
-           +COMPLETED,
-           +COUNT,
-           currentFireSize());
+  const auto count = Settings::surface() ? model_->scenarioCount() : (+COUNT);
+  const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
+  if (Settings::surface())
+  {
+    const auto ratio_done = static_cast<double>(completed) / count;
+   const auto s = model_->runTime().count();
+    const auto r = static_cast<size_t>(s / ratio_done) - s;
+    log_output(log_level,
+               "[% d of % d] (%0.2f%%) <%lds : %lds remaining> Completed with final size % 0.1f ha",
+               completed,
+               count,
+               100 * ratio_done,
+               s,
+               r,
+               currentFireSize());
+  }
+  else
+  {
+  #ifdef NDEBUG
+    log_output(log_level,
+               "[% d of % d] Completed with final size % 0.1f ha",
+               completed,
+               count,
+               currentFireSize());
 #else
   // try to make output consistent if in debug mode
-  log_info("Completed with final size %0.1f ha",
-           currentFireSize());
+  log_output(log_level, "Completed with final size %0.1f ha", currentFireSize());
 #endif
+  }
   ran_ = true;
 #ifdef DEBUG_PROBABILITY
   // nice to have this get output when debugging, but only need it in extreme cases

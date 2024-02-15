@@ -181,7 +181,6 @@ int main(const int argc, const char* const argv[])
   // user    0m2.660s
   // sys     0m0.011s
   // return 0;
-  auto save_intensity = false;
   string wx_file_name;
   string log_file_name = "firestarr.log";
   string perim;
@@ -206,9 +205,10 @@ int main(const int argc, const char* const argv[])
   }
   else
   {
-    register_flag(save_intensity, true, "-i", "Save intensity maps for simulations");
+    register_flag(&Settings::setSaveIndividual, true, "-i", "Save individual maps for simulations");
     register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
     register_flag(&Settings::setDeterministic, true, "--deterministic", "Run deterministically (100% chance of spread & survival)");
+    register_flag(&Settings::setSurface, true, "--surface", "Create a probability surface based on igniting every possible location in grid");
     register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
     register_flag(&Settings::setSavePoints, true, "--points", "Save simulation points to file");
     register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids");
@@ -385,7 +385,6 @@ int main(const int argc, const char* const argv[])
                                                Settings::rasterRoot(),
                                                start_point,
                                                start,
-                                               save_intensity,
                                                perim,
                                                size);
         Log::closeLogFile();

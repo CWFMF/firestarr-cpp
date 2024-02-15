@@ -370,11 +370,31 @@ void Model::findStarts(const Location location)
     ++range;
   }
   logging::check_fatal(starts_.empty(), "Fuel grid is empty");
-  logging::info("Using %d start locations:", starts_.size());
+  logging::info("Using %d start locations:", ignitionScenarios());
   for (const auto& s : starts_)
   {
     logging::info("\t%d, %d", s->row(), s->column());
   }
+}
+void Model::findAllStarts()
+{
+  logging::note("Running scenarios for every possible start location");
+  for (Idx x = 0; x < env_->columns(); ++x)
+  {
+    for (Idx y = 0; y < env_->rows(); ++y)
+    {
+      const auto loc = env_->cell(Location(y, x));
+      if (!fuel::is_null_fuel(loc))
+      {
+        starts_.push_back(make_shared<topo::Cell>(cell(loc)));
+      }
+    }
+  }
+  logging::info("Using %d start locations:", ignitionScenarios());
+  // for (const auto& s : starts_)
+  // {
+  //   logging::debug("\t%d, %d", s->row(), s->column());
+  // }
 }
 void Model::makeStarts(Coordinates coordinates,
                        const topo::Point& point,
@@ -414,15 +434,22 @@ void Model::makeStarts(Coordinates coordinates,
       logging::note("Using fire perimeter results in empty fire - changing to use point");
       perimeter_ = nullptr;
     }
-    logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
-    //    if (0 == size && fuel::is_null_fuel(cell(location.hash())))
-    if (0 == size && fuel::is_null_fuel(cell(location)))
+    if (Settings::surface())
     {
-      findStarts(location);
+      findAllStarts();
     }
     else
     {
-      starts_.push_back(make_shared<topo::Cell>(cell(location)));
+      logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
+      //    if (0 == size && fuel::is_null_fuel(cell(location.hash())))
+      if (0 == size && fuel::is_null_fuel(cell(location)))
+      {
+        findStarts(location);
+      }
+      else
+      {
+        starts_.push_back(make_shared<topo::Cell>(cell(location)));
+      }
     }
   }
   // if (nullptr != perimeter_)
@@ -431,20 +458,21 @@ void Model::makeStarts(Coordinates coordinates,
   // }
   logging::note("Creating %ld streams x %ld location%s = %ld scenarios",
                 wx_.size(),
-                starts_.size(),
-                starts_.size() > 1 ? "s" : "",
-                wx_.size() * starts_.size());
+                ignitionScenarios(),
+                ignitionScenarios() > 1 ? "s" : "",
+                wx_.size() * ignitionScenarios());
 }
 Iteration Model::readScenarios(const topo::StartPoint& start_point,
                                const double start,
-                               const bool save_intensity,
                                const Day start_day,
                                const Day last_date)
 {
+  // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
   auto saves = Settings::outputDateOffsets();
-  const auto setup_scenario = [&result, save_intensity, &saves](Scenario* scenario) {
-    if (save_intensity)
+  auto save_individual = Settings::saveIndividual();
+  const auto setup_scenario = [&result, save_individual, &saves](Scenario* scenario) {
+    if (save_individual)
     {
       scenario->registerObserver(new IntensityObserver(*scenario, ""));
       scenario->registerObserver(new ArrivalObserver(*scenario));
@@ -490,6 +518,11 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
                                     start_point,
                                     start_day,
                                     last_date));
+        // HACK: only do one if surface
+        if (Settings::surface())
+        {
+          break;
+        }
       }
     }
   }
@@ -503,7 +536,7 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
 }
 bool Model::shouldStop() const noexcept
 {
-  return isOutOfTime() || isOverSimulationCountLimit();
+  return !Settings::surface() && (isOutOfTime() || isOverSimulationCountLimit());
 }
 bool Model::isOutOfTime() const noexcept
 {
@@ -584,6 +617,10 @@ bool Model::add_statistics(vector<double>* all_sizes,
   for (const auto size : cur_sizes)
   {
     static_cast<void>(util::insert_sorted(all_sizes, size));
+  }
+  if (Settings::surface())
+  {
+    return true;
   }
   is_over_simulation_count_ = all_sizes->size() >= Settings::maximumCountSimulations();
   if (isOverSimulationCountLimit())
@@ -695,8 +732,7 @@ double Model::saveProbabilities(map<double, ProbabilityMap*>& probabilities, con
 }
 map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_point,
                                                   const double start,
-                                                  const Day start_day,
-                                                  const bool save_intensity)
+                                                  const Day start_day)
 {
   auto last_date = start_day;
   for (const auto i : Settings::outputDateOffsets())
@@ -719,15 +755,16 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   size_t scenarios_done = 0;
   size_t scenarios_required_done = 0;
   vector<Iteration> all_iterations{};
+  logging::verbose("Reading scenarios");
   all_iterations.push_back(readScenarios(start_point,
                                          start,
-                                         save_intensity,
                                          start_day,
                                          last_date));
   // HACK: reference from vector so timer can cancel everything in vector
   auto& iteration = all_iterations[0];
   const auto scenarios_per_iteration = iteration.size();
   // put probability maps into map
+  logging::verbose("Setting save points");
   const auto saves = iteration.savePoints();
   const auto started = iteration.startTime();
   auto probabilities = make_prob_map(*this,
@@ -829,8 +866,26 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     }
     return probabilities;
   };
+  // if using surface just run each start through in a loop here
+  size_t cur_start = 0;
   // HACK: just do this here so that we know it happened
   // iterations.reset(&mt_extinction, &mt_spread);
+  auto reset_iter = [&cur_start, this](Iteration& iter, mt19937* mt_extinction, mt19937* mt_spread) {
+    if (Settings::surface())
+    {
+      auto n = ignitionScenarios();
+      logging::debug("Applying start location %d/%d (%0.2f)%%", cur_start, n, (100.0 * cur_start) / n);
+      auto start_cell = starts_[cur_start];
+      logging::extensive("Applying start #%d (%d, %d)", cur_start, start_cell->row(), start_cell->column());
+      iter.reset_with_new_start(start_cell, mt_extinction, mt_spread);
+      logging::extensive("Applied");
+      ++cur_start;
+    }
+    else
+    {
+      iter.reset(mt_extinction, mt_spread);
+    }
+  };
   if (Settings::runAsync())
   {
     // FIX: I think we can just have 2 Iteration objects and roll through starting
@@ -849,7 +904,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     //   static_cast<size_t>(MIN_ITERATIONS_BEFORE_CHECK),
     //   MAX_THREADS);
     // no point in running multiple iterations if deterministic
-    const auto concurrent_iterations = Settings::deterministic()
+    const auto concurrent_iterations = (Settings::deterministic() && !Settings::surface())
                                        ? 1
                                        : std::max<size_t>(
                                          ceil(MAX_THREADS / scenarios_per_iteration),
@@ -859,7 +914,6 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     {
       all_iterations.push_back(readScenarios(start_point,
                                              start,
-                                             save_intensity,
                                              start_day,
                                              last_date));
       all_probabilities.push_back(make_prob_map(*this,
@@ -894,10 +948,11 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       }
       return result;
     };
+    logging::debug("Created %d iterations to run concurrently", all_iterations.size());
     size_t cur_iter = 0;
     for (auto& iter : all_iterations)
     {
-      iter.reset(&mt_extinction, &mt_spread);
+      reset_iter(iter, &mt_extinction, &mt_spread);
       auto& scenarios = iter.getScenarios();
       for (auto s : scenarios)
       {
@@ -938,13 +993,20 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       }
       // if (iterations_done >= MIN_ITERATIONS_BEFORE_CHECK)
       {
-        runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
-        // runs_left = runs_required(iterations_done, &means, &pct, *this);
-        logging::note("Need another %d iterations", runs_left);
+        if (Settings::surface())
+        {
+          runs_left = ignitionScenarios() - iterations_done;
+        }
+        else
+        {
+          runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
+          // runs_left = runs_required(iterations_done, &means, &pct, *this);
+          logging::note("Need another %d iterations", runs_left);
+        }
       }
       if (runs_left > 0)
       {
-        iteration.reset(&mt_extinction, &mt_spread);
+        reset_iter(iteration, &mt_extinction, &mt_spread);
         auto& scenarios = iteration.getScenarios();
         for (auto s : scenarios)
         {
@@ -995,7 +1057,6 @@ int Model::runScenarios(const string dir_out,
                         const char* const raster_root,
                         const topo::StartPoint& start_point,
                         const tm& start_time,
-                        const bool save_intensity,
                         const string& perimeter,
                         const size_t size)
 {
@@ -1070,7 +1131,7 @@ int Model::runScenarios(const string dir_out,
   logging::check_fatal(start < w->minDate(), "Start time is before weather streams start");
   logging::check_fatal(start > w->maxDate(), "Start time is after weather streams end");
   auto probabilities =
-    model.runIterations(start_point, start, start_day, save_intensity);
+    model.runIterations(start_point, start, start_day);
   logging::note("Ran %d simulations", Scenario::completed());
   const auto run_time_seconds = model.runTime();
   const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds.count();
