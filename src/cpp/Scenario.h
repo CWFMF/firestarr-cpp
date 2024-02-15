@@ -114,6 +114,19 @@ public:
    */
   Scenario& operator=(Scenario&& rhs) noexcept;
   Scenario& operator=(const Scenario& rhs) const = delete;
+  // HACK: use for surface right now
+  /**
+   * \brief Assign start Cell, reset thresholds and set SafeVector to output results to
+   * \param start_cell Cell to start ignition in
+   * \param mt_extinction Used for extinction random numbers
+   * \param mt_spread Used for spread random numbers
+   * \param final_sizes SafeVector to output results to
+   * \return This
+   */
+  [[nodiscard]] Scenario* reset_with_new_start(const shared_ptr<topo::Cell>& start_cell,
+                                               mt19937* mt_extinction,
+                                               mt19937* mt_spread,
+                                               util::SafeVector* final_sizes);
   /**
    * \brief Reset thresholds and set SafeVector to output results to
    * \param mt_extinction Used for extinction random numbers
