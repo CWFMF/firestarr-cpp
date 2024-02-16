@@ -397,10 +397,8 @@ Scenario::reset_with_new_start(
   // if (!Settings::surface())
   {
     // these are reset in clear()
-    // offsets_ = {};
+    // spread_info_ = {};
     // max_ros_ = 0;
-    origin_max_intensity_ = {};
-    origin_head_ros_ = {};
     // surrounded_ = POOL_BURNED_DATA.acquire();
     current_time_index_ = numeric_limits<size_t>::max();
   }
@@ -1056,7 +1054,7 @@ Scenario::scheduleFireSpread(
     log_extensive("Waiting until %f because of FFMC", max_time);
     return;
   }
-  log_extensive("There are %ld spread offsets calculated", offsets_.size());
+  // log_note("There are %ld spread offsets calculated", spread_info_.size());
   if (current_time_index_ != this_time)
   {
     // logging::check_fatal(Settings::surface() && current_time_index_ !=
@@ -1068,8 +1066,6 @@ Scenario::scheduleFireSpread(
     if (!Settings::surface())
     {
       spread_info_ = {};
-      origin_max_intensity_ = {};
-      origin_head_ros_ = {};
     }
     max_ros_ = 0.0;
   }
@@ -1097,18 +1093,6 @@ Scenario::scheduleFireSpread(
     {
       any_spread = true;
       max_ros_ = max(max_ros_, origin.headRos());
-      if (origin_inserted.second)
-      {
-        // set to current value if none yet
-        origin_head_ros_[key] = origin.headRos();
-        origin_max_intensity_[key] = origin.maxIntensity();
-      }
-      else
-      {
-        // FIX: for now keep highest FI and ROS independently but should be related
-        origin_head_ros_[key] = max(origin_head_ros_.at(key), origin.headRos());
-        origin_max_intensity_[key] = max(origin_max_intensity_.at(key), origin.maxIntensity());
-      }
     }
   }
   // // seems like it's reusing SpreadInfo most of the time (so that's probably not the bottleneck?)
