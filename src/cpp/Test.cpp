@@ -9,6 +9,7 @@
 #include "Model.h"
 #include "Observer.h"
 #include "Util.h"
+#include "ConstantWeather.h"
 
 namespace tbd::sim
 {
@@ -27,70 +28,6 @@ public:
   explicit TestEnvironment(const string dir_out,
                            data::ConstantGrid<topo::Cell>* cells) noexcept
     : Environment(dir_out, cells, 0)
-  {
-  }
-};
-static const wx::Temperature TEMP(20.0);
-static const wx::RelativeHumidity RH(30.0);
-static const wx::Precipitation PREC(0.0);
-static vector<const wx::FwiWeather*>* make_weather(const wx::Dc& dc,
-                                                   const wx::Bui& bui,
-                                                   const wx::Dmc& dmc,
-                                                   const wx::Ffmc& ffmc,
-                                                   const wx::Wind& wind)
-{
-  auto wx = new vector<const wx::FwiWeather*>{static_cast<size_t>(YEAR_HOURS)};
-  std::generate(wx->begin(),
-                wx->end(),
-                [&wind, &ffmc, &dmc, &dc, &bui]() {
-                  return make_unique<wx::FwiWeather>(
-                           TEMP,
-                           RH,
-                           wind,
-                           PREC,
-                           ffmc,
-                           dmc,
-                           dc,
-                           wx::Isi(wind.speed(), ffmc),
-                           bui,
-                           wx::Fwi(wx::Isi(wind.speed(), ffmc), bui))
-                    .release();
-                });
-  return wx;
-}
-/**
- * \brief A FireWeather stream with the same value for every date and time.
- */
-class TestWeather final
-  : public wx::FireWeather
-{
-public:
-  ~TestWeather() override = default;
-  TestWeather(const TestWeather& rhs) = delete;
-  TestWeather(TestWeather&& rhs) = delete;
-  TestWeather& operator=(const TestWeather& rhs) = delete;
-  TestWeather& operator=(TestWeather&& rhs) = delete;
-  /**
-   * \brief A Constant weather stream with only one possible fuel
-   * \param fuel Fuel to use
-   * \param start_date Start date for stream
-   * \param dc Drought Code
-   * \param bui Build-up Index
-   * \param dmc Duff Moisture Code
-   * \param ffmc Fine Fuel Moisture Code
-   * \param wind Wind
-   */
-  TestWeather(const fuel::FuelType* fuel,
-              const Day start_date,
-              const wx::Dc& dc,
-              const wx::Bui& bui,
-              const wx::Dmc& dmc,
-              const wx::Ffmc& ffmc,
-              const wx::Wind& wind)
-    : FireWeather(set<const fuel::FuelType*>{fuel},
-                  start_date,
-                  MAX_DAYS - 1,
-                  make_weather(dc, bui, dmc, ffmc, wind))
   {
   }
 };
@@ -181,7 +118,6 @@ string run_test(const string output_directory,
                 const AspectSize aspect,
                 const double num_hours,
                 const wx::Dc& dc,
-                const wx::Bui& bui,
                 const wx::Dmc& dmc,
                 const wx::Ffmc& ffmc,
                 const wx::Wind& wind)
@@ -234,7 +170,7 @@ string run_test(const string output_directory,
                                 static_cast<Idx>(MAX_COLUMNS / 2));
   Model model(output_directory, ForPoint, &env);
   const auto start_cell = make_shared<topo::Cell>(model.cell(start_location));
-  TestWeather weather(fuel, start_date, dc, bui, dmc, ffmc, wind);
+  ConstantWeather weather(fuel, start_date, dc, dmc, ffmc, wind);
   TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather);
   const auto w = weather.at(start_date);
   auto info = SpreadInfo(scenario,
@@ -245,7 +181,7 @@ string run_test(const string output_directory,
   showSpread(info, w, fuel);
   map<double, ProbabilityMap*> probabilities{};
   logging::debug("Starting simulation");
-  // NOTE: don't want to reset first because TestScenario handles what that does
+  // NOTE: don't want to reset first because TestScenabuirio handles what that does
   scenario.run(&probabilities);
   scenario.saveObservers("");
   logging::note("Final Size: %0.0f, ROS: %0.2f",
@@ -307,7 +243,6 @@ int test(const int argc, const char* const argv[])
   Settings::setMaximumTimeSeconds(numeric_limits<size_t>::max());
   const wx::Dc dc(275);
   const wx::Dmc dmc(35.5);
-  const wx::Bui bui(dmc, dc);
   const wx::Ffmc ffmc(90);
   static const wx::Temperature TEMP(20.0);
   static const wx::RelativeHumidity RH(30.0);
@@ -422,7 +357,6 @@ int test(const int argc, const char* const argv[])
                                         aspect,
                                         num_hours,
                                         dc,
-                                        bui,
                                         dmc,
                                         ffmc,
                                         wind));
@@ -474,7 +408,6 @@ int test(const int argc, const char* const argv[])
                               aspect,
                               num_hours,
                               dc,
-                              bui,
                               dmc,
                               ffmc,
                               wind);

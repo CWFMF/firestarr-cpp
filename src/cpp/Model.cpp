@@ -13,6 +13,7 @@
 #include "ProbabilityMap.h"
 #include "UTM.h"
 #include "FireWeatherDaily.h"
+#include "ConstantWeather.h"
 namespace tbd::sim
 {
 #ifdef DEBUG_WEATHER
@@ -91,6 +92,15 @@ Model::Model(const string dir_out,
                        : " not",
                      fuel::calculate_grass_curing(nd_.at(static_cast<size_t>(day))));
   }
+}
+void Model::setWeather(const wx::FwiWeather& weather, const Day start_day)
+{
+  yesterday_ = weather;
+  const auto fuel_lookup = sim::Settings::fuelLookup();
+  const auto& f = fuel_lookup.usedFuels();
+  auto wx_const = make_shared<ConstantWeather>(f, start_day - 1, weather.dc(), weather.dmc(), weather.ffmc(), weather.wind());
+  wx_.emplace(0, wx_const);
+  wx_daily_.emplace(0, wx_const);
 }
 void Model::readWeather(const wx::FwiWeather& yesterday,
                         const double latitude,
@@ -470,6 +480,7 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
   // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
   auto saves = Settings::outputDateOffsets();
+  // logging::note("Should be setting up %ld offsets", saves.size());
   auto save_individual = Settings::saveIndividual();
   const auto setup_scenario = [&result, save_individual, &saves](Scenario* scenario) {
     if (save_individual)
@@ -483,45 +494,56 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
     {
       scenario->addSaveByOffset(i);
     }
+    // logging::note("Ended up with %ld save points initially", scenario->savePoints().size());
     result.push_back(scenario);
   };
-
-  for (const auto& kv : wx_)
+  if (Settings::surface())
   {
-    const auto id = kv.first;
-    const auto cur_wx = kv.second.get();
-    const auto cur_daily = wx_daily_.at(id).get();
-    if (nullptr != perimeter_)
+    // logging::note("Setting up scenario for surface where wx_.size() is %ld", wx_.size());
+    setup_scenario(new Scenario(this,
+                                0,
+                                wx_.at(0).get(),
+                                wx_daily_.at(0).get(),
+                                start,
+                                starts_.at(0),
+                                start_point,
+                                start_day,
+                                last_date));
+  }
+  else
+  {
+    for (const auto& kv : wx_)
     {
-      setup_scenario(new Scenario(this,
-                                  id,
-                                  cur_wx,
-                                  cur_daily,
-                                  start,
-                                  // initial_intensity_,
-                                  perimeter_,
-                                  start_point,
-                                  start_day,
-                                  last_date));
-    }
-    else
-    {
-      for (const auto& cur_start : starts_)
+      const auto id = kv.first;
+      const auto cur_wx = kv.second.get();
+      const auto cur_daily = wx_daily_.at(id).get();
+      if (nullptr != perimeter_)
       {
-        // should always have at least the day before the fire in the weather stream
         setup_scenario(new Scenario(this,
                                     id,
                                     cur_wx,
                                     cur_daily,
                                     start,
-                                    cur_start,
+                                    // initial_intensity_,
+                                    perimeter_,
                                     start_point,
                                     start_day,
                                     last_date));
-        // HACK: only do one if surface
-        if (Settings::surface())
+      }
+      else
+      {
+        for (const auto& cur_start : starts_)
         {
-          break;
+          // should always have at least the day before the fire in the weather stream
+          setup_scenario(new Scenario(this,
+                                      id,
+                                      cur_wx,
+                                      cur_daily,
+                                      start,
+                                      cur_start,
+                                      start_point,
+                                      start_day,
+                                      last_date));
         }
       }
     }
@@ -870,21 +892,28 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   size_t cur_start = 0;
   // HACK: just do this here so that we know it happened
   // iterations.reset(&mt_extinction, &mt_spread);
-  auto reset_iter = [&cur_start, this](Iteration& iter, mt19937* mt_extinction, mt19937* mt_spread) {
+  auto reset_iter = [&cur_start, this, &mt_extinction, &mt_spread](Iteration& iter) {
     if (Settings::surface())
     {
-      auto n = ignitionScenarios();
-      logging::debug("Applying start location %d/%d (%0.2f)%%", cur_start, n, (100.0 * cur_start) / n);
+      if (cur_start >= starts_.size())
+      {
+        return false;
+      }
+      // auto n = ignitionScenarios();
+      // logging::debug("Applying start location %d/%d (%0.2f)%%", cur_start, n, (100.0 * cur_start) / n);
       auto start_cell = starts_[cur_start];
-      logging::extensive("Applying start #%d (%d, %d)", cur_start, start_cell->row(), start_cell->column());
-      iter.reset_with_new_start(start_cell, mt_extinction, mt_spread);
-      logging::extensive("Applied");
+      // logging::extensive("Applying start #%d (%d, %d)", cur_start, start_cell->row(), start_cell->column());
+      // logging::note("Have %ld save points before reset", iter.getScenarios().at(0)->savePoints().size());
+      iter.reset_with_new_start(start_cell);
+      // logging::note("Ended up with %ld save points after reset", iter.getScenarios().at(0)->savePoints().size());
+      // logging::extensive("Applied");
       ++cur_start;
     }
     else
     {
-      iter.reset(mt_extinction, mt_spread);
+      iter.reset(&mt_extinction, &mt_spread);
     }
+    return true;
   };
   if (Settings::runAsync())
   {
@@ -952,16 +981,18 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     size_t cur_iter = 0;
     for (auto& iter : all_iterations)
     {
-      reset_iter(iter, &mt_extinction, &mt_spread);
-      auto& scenarios = iter.getScenarios();
-      for (auto s : scenarios)
+      if (reset_iter(iter))
       {
-        threads.emplace_back(run_scenario,
-                             s,
-                             cur_iter,
-                             0 == cur_iter);
+        auto& scenarios = iter.getScenarios();
+        for (auto s : scenarios)
+        {
+          threads.emplace_back(run_scenario,
+                               s,
+                               cur_iter,
+                               0 == cur_iter);
+        }
+        ++cur_iter;
       }
-      ++cur_iter;
     }
     cur_iter = 0;
     while (runs_left > 0)
@@ -1006,18 +1037,20 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
       }
       if (runs_left > 0)
       {
-        reset_iter(iteration, &mt_extinction, &mt_spread);
-        auto& scenarios = iteration.getScenarios();
-        for (auto s : scenarios)
+        if (reset_iter(iteration))
         {
-          threads.emplace_back(run_scenario,
-                               s,
-                               cur_iter,
-                               false);
+          auto& scenarios = iteration.getScenarios();
+          for (auto s : scenarios)
+          {
+            threads.emplace_back(run_scenario,
+                                 s,
+                                 cur_iter,
+                                 false);
+          }
+          ++cur_iter;
+          // loop around to start if required
+          cur_iter %= all_iterations.size();
         }
-        ++cur_iter;
-        // loop around to start if required
-        cur_iter %= all_iterations.size();
       }
       else
       {
@@ -1033,20 +1066,29 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     while (runs_left > 0)
     {
       logging::note("Running iteration %d", iterations_done + 1);
-      iteration.reset(&mt_extinction, &mt_spread);
-      for (auto s : iteration.getScenarios())
+      if (reset_iter(iteration))
       {
-        s->run(&probabilities);
+        for (auto s : iteration.getScenarios())
+        {
+          s->run(&probabilities);
+        }
+        ++iterations_done;
+        if (!add_statistics(&all_sizes, &means, &pct, iteration.finalSizes()))
+        {
+          // ran out of time but timer should cance everything
+          return finalize_probabilities();
+        }
+        if (Settings::surface())
+        {
+          runs_left = ignitionScenarios() - iterations_done;
+        }
+        else
+        {
+          runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
+          // runs_left = runs_required(iterations_done, &means, &pct, *this);
+          logging::note("Need another %d iterations", runs_left);
+        }
       }
-      ++iterations_done;
-      if (!add_statistics(&all_sizes, &means, &pct, iteration.finalSizes()))
-      {
-        // ran out of time but timer should cance everything
-        return finalize_probabilities();
-      }
-      runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
-      // runs_left = runs_required(iterations_done, &means, &pct, *this);
-      logging::note("Need another %d iterations", runs_left);
     }
   }
   return finalize_probabilities();
@@ -1096,24 +1138,6 @@ int Model::runScenarios(const string dir_out,
   logging::note("Fire start position is cell (%d, %d)",
                 location.row(),
                 location.column());
-  model.readWeather(yesterday, start_point.latitude(), weather_input);
-  if (model.wx_.empty())
-  {
-    logging::fatal("No weather provided");
-  }
-  const auto w = model.wx_.begin()->second;
-  logging::debug("Have weather from day %d to %d", w->minDate(), w->maxDate());
-  const auto numDays = (w->maxDate() - w->minDate() + 1);
-  const auto needDays = Settings::maxDateOffset();
-  if (numDays < needDays)
-  {
-    logging::fatal("Not enough weather to proceed - have %d days but looking for %d", numDays, needDays);
-  }
-  // want to output internal representation of weather to file
-#ifndef NDEBUG
-  model.outputWeather();
-#endif
-  model.makeStarts(*position, start_point, perimeter, size);
   auto start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60))
                      / DAY_HOURS);
   logging::note("Simulation start time is %d-%02d-%02d %02d:%02d",
@@ -1123,13 +1147,44 @@ int Model::runScenarios(const string dir_out,
                 start_time.tm_hour,
                 start_time.tm_min);
   const auto start = start_time.tm_yday + start_hour;
+  const auto start_day = static_cast<Day>(start);
+  if (Settings::surface())
+  {
+    // yesterday should have constants to use
+    model.setWeather(yesterday, start_day);
+    model.year_ = start_time.tm_year + 1900;
+    // model.yesterday_ = yesterday;
+  }
+  else
+  {
+    model.readWeather(yesterday, start_point.latitude(), weather_input);
+    if (model.wx_.empty())
+    {
+      logging::fatal("No weather provided");
+    }
+    const auto w = model.wx_.begin()->second;
+    logging::debug("Have weather from day %d to %d", w->minDate(), w->maxDate());
+    const auto numDays = (w->maxDate() - w->minDate() + 1);
+    const auto needDays = Settings::maxDateOffset();
+    if (numDays < needDays)
+    {
+      logging::fatal("Not enough weather to proceed - have %d days but looking for %d", numDays, needDays);
+    }
+    // want to output internal representation of weather to file
+#ifndef NDEBUG
+    if (!Settings::surface())
+    {
+      model.outputWeather();
+    }
+#endif
+    // want to check that start time is in the range of the weather data we have
+    logging::check_fatal(start < w->minDate(), "Start time is before weather streams start");
+    logging::check_fatal(start > w->maxDate(), "Start time is after weather streams end");
+  }
   logging::note("Simulation start time of %f is %s",
                 start,
                 make_timestamp(model.year(), start).c_str());
-  const auto start_day = static_cast<Day>(start);
-  // want to check that start time is in the range of the weather data we have
-  logging::check_fatal(start < w->minDate(), "Start time is before weather streams start");
-  logging::check_fatal(start > w->maxDate(), "Start time is after weather streams end");
+  model.makeStarts(*position, start_point, perimeter, size);
   auto probabilities =
     model.runIterations(start_point, start, start_day);
   logging::note("Ran %d simulations", Scenario::completed());
