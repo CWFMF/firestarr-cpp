@@ -569,18 +569,6 @@ protected:
    */
   map<topo::SpreadKey, SpreadInfo> spread_info_{};
   /**
-   * \brief Calculated ROS, intensity & offsets from origin Point for spread given SpreadKey for current time
-   */
-  map<topo::SpreadKey, OffsetSet> offsets_{};
-  /**
-   * \brief Calculated rate of spread given SpreadKey for current time
-   */
-  map<topo::SpreadKey, double> origin_head_ros_{};
-  /**
-   * \brief Calculated maximum intensity for spread given SpreadKey for current time
-   */
-  map<topo::SpreadKey, double> origin_max_intensity_{};
-  /**
    * \brief Map of when Cell had first Point arrive in it
    */
   map<topo::Cell, double> arrival_{};
