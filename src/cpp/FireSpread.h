@@ -29,6 +29,11 @@ public:
    */
   static const SlopeTableArray SlopeTable;
   ~SpreadInfo() = default;
+  SpreadInfo(const Scenario& scenario,
+             double time,
+             const topo::SpreadKey& key,
+             int nd,
+             const wx::FwiWeather* weather);
   /**
    * \brief Calculate fire spread for time and place
    * \param scenario Scenario this is spreading in
@@ -41,7 +46,8 @@ public:
              double time,
              const topo::SpreadKey& key,
              int nd,
-             const wx::FwiWeather* weather);
+             const wx::FwiWeather* weather,
+             const wx::FwiWeather* weather_daily);
   constexpr SpreadInfo(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo(const SpreadInfo& rhs) noexcept = default;
   constexpr SpreadInfo& operator=(SpreadInfo&& rhs) noexcept = default;
@@ -272,23 +278,6 @@ public:
     return tfc_;
   }
 private:
-  // HACK: have private constructor so is_spreading() can short-circuit the calculation,
-  // but nothing else can get a partially constructed SpreadInfo object
-  /**
-   * \brief Calculate fire spread for time and place
-   * \param scenario Scenario this is spreading in
-   * \param time Time spread is occurring
-   * \param key Attributes for Cell spread is occurring in
-   * \param nd Difference between date and the date of minimum foliar moisture content
-   * \param weather FwiWeather to use for calculations
-   * \param weather_daily FwiWeather to use for spread event probability
-   */
-  SpreadInfo(const Scenario& scenario,
-             double time,
-             const topo::SpreadKey& key,
-             int nd,
-             const wx::FwiWeather* weather,
-             const wx::FwiWeather* weather_daily);
   /**
    * Actual fire spread calculation without needing to worry about settings or scenarios
    */

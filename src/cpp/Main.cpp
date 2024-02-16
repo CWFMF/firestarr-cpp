@@ -49,7 +49,9 @@ void log_args()
 void show_usage_and_exit(int exit_code)
 {
   printf("Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n", BIN_NAME);
-  printf(" Run simulations and save output in the specified directory\n\n\n");
+  printf("Run simulations and save output in the specified directory\n\n\n");
+  printf("Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n", BIN_NAME);
+  printf("Calculate probability surface and save output in the specified directory\n\n\n");
   printf("Usage: %s test <output_dir> <numHours> [slope [aspect [wind_speed [wind_direction]]]]\n\n", BIN_NAME);
   printf(" Run test cases and save output in the specified directory\n\n");
   printf(" Input Options\n");
@@ -118,8 +120,15 @@ string parse_string()
 template <class T>
 T parse_index()
 {
+  // return T(parse_double());
   return parse_once<T>([] { return T(stod(get_arg())); });
 }
+// template <class T>
+// T parse_int_index()
+// {
+//   return T(static_cast<int>(parse_size_t()));
+//   // return parse_once<T>([] { return T(stoi(get_arg())); });
+// }
 void register_argument(string v, string help, bool required, std::function<void()> fct)
 {
   PARSE_FCT.emplace(v, fct);
@@ -149,6 +158,11 @@ void register_index(T& index, string v, string help, bool required)
 {
   register_argument(v, help, required, [&index] { index = parse_index<T>(); });
 }
+// template <class T>
+// void register_int_index(T& index, string v, string help, bool required)
+// {
+//   register_argument(v, help, required, [&index] { index = parse_int_index<T>(); });
+// }
 int main(const int argc, const char* const argv[])
 {
   tbd::debug::show_debug_settings();
@@ -188,6 +202,9 @@ int main(const int argc, const char* const argv[])
   tbd::wx::Ffmc ffmc;
   tbd::wx::Dmc dmc;
   tbd::wx::Dc dc;
+  size_t wind_direction = 0;
+  size_t wind_speed = 0;
+
   // FIX: need to get rain since noon yesterday to start of this hourly weather
   tbd::wx::Precipitation apcp_prev;
   // can be used multiple times
@@ -207,8 +224,8 @@ int main(const int argc, const char* const argv[])
   {
     register_flag(&Settings::setSaveIndividual, true, "-i", "Save individual maps for simulations");
     register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
-    register_flag(&Settings::setDeterministic, true, "--deterministic", "Run deterministically (100% chance of spread & survival)");
-    register_flag(&Settings::setSurface, true, "--surface", "Create a probability surface based on igniting every possible location in grid");
+    // register_flag(&Settings::setDeterministic, true, "--deterministic", "Run deterministically (100% chance of spread & survival)");
+    // register_flag(&Settings::setSurface, true, "--surface", "Create a probability surface based on igniting every possible location in grid");
     register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
     register_flag(&Settings::setSavePoints, true, "--points", "Save simulation points to file");
     register_flag(&Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids");
@@ -216,25 +233,50 @@ int main(const int argc, const char* const argv[])
     register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
     register_flag(&Settings::setSaveSimulationArea, true, "--sim-area", "Output simulation area grids");
     register_flag(&Settings::setForceFuel, true, "--force-fuel", "Use first default fuel raster without checking coordinates");
-    register_flag(&Settings::setRowColIgnition, true, "--rowcol-ignition", "Use row and col to specific start point. Assumes force-fuel is set.");
-    register_setter<size_t>(&Settings::setIgnRow, "--ign-row", "Specify ignition row", false, &parse_size_t);
-    register_setter<size_t>(&Settings::setIgnCol, "--ign-col", "Specify ignition column", false, &parse_size_t);
-    register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
-    register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
-    register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
-    register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
-    register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
-    register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
-    register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
-    register_index<tbd::wx::Precipitation>(apcp_prev, "--apcp_prev", "Startup precipitation between 1200 yesterday and start of hourly weather", false);
+    size_t SKIPPED_ARGS = 0;
+    if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
+    {
+      tbd::logging::note("Running in probability surface mode");
+      // skip 'surface' argument if present
+      CUR_ARG += 1;
+      SKIPPED_ARGS = 1;
+      // probabalistic surface is computationally impossible at this point
+      Settings::setDeterministic(true);
+      Settings::setSurface(true);
+      register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
+      register_index<tbd::wx::Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
+      register_index<tbd::wx::Dc>(dc, "--dc", "Constant Drought Code", true);
+      // register_int_index<tbd::wx::Direction>(wind_direction, "--wd", "Constant wind direction", true);
+      // register_setter<tbd::wx::Direction>(wind_direction, "--wd", "Constant wind direction", true, []() {
+      //   return parse_once<tbd::wx::Direction>([] { return tbd::wx::Direction(stoi(get_arg()), false); });
+      // });
+      register_setter<size_t>(wind_direction, "--wd", "Constant wind direction", true, &parse_size_t);
+      register_setter<size_t>(wind_speed, "--ws", "Constant wind speed", true, &parse_size_t);
+    }
+    else
+    {
+      register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
+      register_flag(&Settings::setDeterministic, true, "--deterministic", "Run deterministically (100% chance of spread & survival)");
+      register_flag(&Settings::setRowColIgnition, true, "--rowcol-ignition", "Use row and col to specific start point. Assumes force-fuel is set.");
+      register_setter<size_t>(&Settings::setIgnRow, "--ign-row", "Specify ignition row", false, &parse_size_t);
+      register_setter<size_t>(&Settings::setIgnCol, "--ign-col", "Specify ignition column", false, &parse_size_t);
+      register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
+      register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
+      register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
+      // HACK: want different text for same flag so define here too
+      register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
+      register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
+      register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
+      register_index<tbd::wx::Precipitation>(apcp_prev, "--apcp_prev", "Startup precipitation between 1200 yesterday and start of hourly weather", false);
+    }
     register_setter<const char*>(&Settings::setOutputDateOffsets, "--output_date_offsets", "Override output date offsets", false, &parse_raw);
     if (2 == ARGC && 0 == strcmp(ARGV[CUR_ARG], "-h"))
     {
       // HACK: just do this for now
       show_help_and_exit();
     }
-    else if (3 > ARGC)
+    else if (3 > (ARGC - SKIPPED_ARGS))
     {
       show_usage_and_exit();
     }
@@ -242,7 +284,7 @@ int main(const int argc, const char* const argv[])
     try
     {
 #endif
-      if (6 <= ARGC)
+      if (6 <= (ARGC - SKIPPED_ARGS))
       {
         string output_directory(ARGV[CUR_ARG++]);
         replace(output_directory.begin(), output_directory.end(), '\\', '/');
@@ -365,7 +407,7 @@ int main(const int argc, const char* const argv[])
         // but don't want to add another argument right now
         const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
                                                    tbd::wx::RelativeHumidity(0),
-                                                   tbd::wx::Wind(tbd::wx::Direction(0, false), tbd::wx::Speed(0)),
+                                                   tbd::wx::Wind(tbd::wx::Direction(wind_direction, false), tbd::wx::Speed(wind_speed)),
                                                    tbd::wx::Precipitation(apcp_prev),
                                                    ffmc,
                                                    dmc,

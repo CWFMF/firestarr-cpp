@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="Cell.h" />
     <ClInclude Include="ConstantGrid.h" />
+    <ClInclude Include="ConstantWeather.h" />
     <ClInclude Include="ConvexHull.h" />
     <ClInclude Include="debug_settings.h" />
     <ClInclude Include="Duff.h" />
