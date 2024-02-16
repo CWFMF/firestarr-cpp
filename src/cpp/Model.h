@@ -307,6 +307,11 @@ public:
   Model& operator=(Model&& rhs) noexcept = delete;
   Model& operator=(const Model& rhs) = delete;
   /**
+   * \brief Set constant weather
+   * \param weather FwiWeather to use as constant weather
+   */
+  void setWeather(const wx::FwiWeather& weather, const Day start_day);
+  /**
    * \brief Read weather used for Scenarios
    * \param yesterday FwiWeather for yesterday
    * \param latitude Latitude to calculate for
@@ -352,6 +357,13 @@ public:
    * \brief Semaphore used to limit how many things run at once
    */
   static Semaphore task_limiter;
+  /**
+   * Conditions for yesterday (or constant weather)
+   */
+  const wx::FwiWeather* yesterday() const noexcept
+  {
+    return &yesterday_;
+  }
 private:
   const string dir_out_;
   /**
@@ -462,6 +474,10 @@ private:
    * \brief If simulation is over max simulation count
    */
   bool is_over_simulation_count_ = false;
+  /**
+   * Conditions for yesterday (or constant weather)
+   */
+  wx::FwiWeather yesterday_;
   // /**
   //  * @brief Time when we last checked if simulation should end
   //  *

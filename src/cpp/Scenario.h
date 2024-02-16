@@ -118,14 +118,10 @@ public:
   /**
    * \brief Assign start Cell, reset thresholds and set SafeVector to output results to
    * \param start_cell Cell to start ignition in
-   * \param mt_extinction Used for extinction random numbers
-   * \param mt_spread Used for spread random numbers
    * \param final_sizes SafeVector to output results to
    * \return This
    */
   [[nodiscard]] Scenario* reset_with_new_start(const shared_ptr<topo::Cell>& start_cell,
-                                               mt19937* mt_extinction,
-                                               mt19937* mt_spread,
                                                util::SafeVector* final_sizes);
   /**
    * \brief Reset thresholds and set SafeVector to output results to
@@ -434,6 +430,11 @@ public:
                               const topo::Cell& cell,
                               const double time_at_location) const
   {
+    if (Settings::deterministic())
+    {
+      // always survive if deterministic
+      return true;
+    }
     try
     {
       const auto fire_wx = weather_;
@@ -568,9 +569,17 @@ protected:
    */
   map<topo::SpreadKey, SpreadInfo> spread_info_{};
   /**
-   * \brief Calculated offsets from origin Point for spread given SpreadKey for current time
+   * \brief Calculated ROS, intensity & offsets from origin Point for spread given SpreadKey for current time
    */
   map<topo::SpreadKey, OffsetSet> offsets_{};
+  /**
+   * \brief Calculated rate of spread given SpreadKey for current time
+   */
+  map<topo::SpreadKey, double> origin_head_ros_{};
+  /**
+   * \brief Calculated maximum intensity for spread given SpreadKey for current time
+   */
+  map<topo::SpreadKey, double> origin_max_intensity_{};
   /**
    * \brief Map of when Cell had first Point arrive in it
    */

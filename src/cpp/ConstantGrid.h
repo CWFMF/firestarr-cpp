@@ -450,8 +450,8 @@ public:
     // offset is different for y since it's flipped
     const double yll = this->yllcorner() + (min_row) * this->cellSize();
     logging::extensive("Lower left corner is (%f, %f)", xll, yll);
-    constexpr uint32_t tileWidth = 256;
-    constexpr uint32_t tileHeight = 256;
+    constexpr uint32_t tileWidth = TILE_WIDTH;
+    constexpr uint32_t tileHeight = TILE_WIDTH;
     // ensure this is always divisible by tile size
     static_assert(0 == MAX_ROWS % tileWidth);
     static_assert(0 == MAX_COLUMNS % tileHeight);

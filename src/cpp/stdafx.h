@@ -184,6 +184,8 @@ static constexpr Idx MAX_COLUMNS = 2048;
  */
 static constexpr Idx MAX_ROWS = MAX_COLUMNS;
 // static_assert(static_cast<size_t>(MAX_ROWS) * (MAX_COLUMNS - 1) <= std::numeric_limits<Idx>::max());
+static constexpr Idx PREFERRED_TILE_WIDTH = 256;
+static constexpr Idx TILE_WIDTH = min(MAX_COLUMNS, static_cast<Idx>(PREFERRED_TILE_WIDTH));
 /**
  * \brief Maximum aspect value (360 == 0)
  */

@@ -20,9 +20,7 @@ Iteration::Iteration(vector<Scenario*> scenarios) noexcept
   : scenarios_(std::move(scenarios))
 {
 }
-Iteration* Iteration::reset_with_new_start(const shared_ptr<topo::Cell>& start_cell,
-                                           mt19937* mt_extinction,
-                                           mt19937* mt_spread)
+Iteration* Iteration::reset_with_new_start(const shared_ptr<topo::Cell>& start_cell)
 {
   // HACK: ensure only called with surface
   logging::check_fatal(!Settings::surface(), "Called reset_with_new_start() when not calculating surface");
@@ -35,7 +33,7 @@ Iteration* Iteration::reset_with_new_start(const shared_ptr<topo::Cell>& start_c
   for (auto& scenario : scenarios_)
   {
     logging::extensive("Resetting scenario %d", i);
-    static_cast<void>(scenario->reset_with_new_start(start_cell, mt_extinction, mt_spread, &final_sizes_));
+    static_cast<void>(scenario->reset_with_new_start(start_cell, &final_sizes_));
     ++i;
   }
   return this;
