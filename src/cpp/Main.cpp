@@ -58,7 +58,12 @@ show_usage_and_exit(
     "Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n",
     BIN_NAME
   );
-  printf(" Run simulations and save output in the specified directory\n\n\n");
+  printf("Run simulations and save output in the specified directory\n\n\n");
+  printf(
+    "Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n",
+    BIN_NAME
+  );
+  printf("Calculate probability surface and save output in the specified directory\n\n\n");
   printf(
     "Usage: %s test <output_dir> <numHours> [slope [aspect [wind_speed [wind_direction]]]]\n\n",
     BIN_NAME
@@ -151,10 +156,17 @@ template <class T>
 T
 parse_index()
 {
+  // return T(parse_double());
   return parse_once<T>([] {
     return T(stod(get_arg()));
   });
 }
+// template <class T>
+// T parse_int_index()
+// {
+//   return T(static_cast<int>(parse_size_t()));
+//   // return parse_once<T>([] { return T(stoi(get_arg())); });
+// }
 void
 register_argument(
   string v,
@@ -232,6 +244,11 @@ register_index(
     index = parse_index<T>();
   });
 }
+// template <class T>
+// void register_int_index(T& index, string v, string help, bool required)
+// {
+//   register_argument(v, help, required, [&index] { index = parse_int_index<T>(); });
+// }
 int
 main(
   const int argc,
@@ -275,6 +292,9 @@ main(
   fs::wx::Ffmc ffmc;
   fs::wx::Dmc dmc;
   fs::wx::Dc dc;
+  size_t wind_direction = 0;
+  size_t wind_speed = 0;
+
   // FIX: need to get rain since noon yesterday to start of this hourly weather
   fs::wx::Precipitation apcp_prev;
   // can be used multiple times
@@ -294,18 +314,9 @@ main(
   {
     register_flag(&Settings::setSaveIndividual, true, "-i", "Save individual maps for simulations");
     register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
-    register_flag(
-      &Settings::setDeterministic,
-      true,
-      "--deterministic",
-      "Run deterministically (100% chance of spread & survival)"
-    );
-    register_flag(
-      &Settings::setSurface,
-      true,
-      "--surface",
-      "Create a probability surface based on igniting every possible location in grid"
-    );
+    // register_flag(&Settings::setDeterministic, true, "--deterministic", "Run deterministically
+    // (100% chance of spread & survival)"); register_flag(&Settings::setSurface, true, "--surface",
+    // "Create a probability surface based on igniting every possible location in grid");
     register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
     register_flag(&Settings::setSavePoints, true, "--points", "Save simulation points to file");
     register_flag(
@@ -333,46 +344,84 @@ main(
       "--force-fuel",
       "Use first default fuel raster without checking coordinates"
     );
-    register_flag(
-      &Settings::setRowColIgnition,
-      true,
-      "--rowcol-ignition",
-      "Use row and col to specific start point. Assumes force-fuel is set."
-    );
-    register_setter<size_t>(
-      &Settings::setIgnRow,
-      "--ign-row",
-      "Specify ignition row",
-      false,
-      &parse_size_t
-    );
-    register_setter<size_t>(
-      &Settings::setIgnCol,
-      "--ign-col",
-      "Specify ignition column",
-      false,
-      &parse_size_t
-    );
-    register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
-    register_setter<double>(
-      &Settings::setConfidenceLevel,
-      "--confidence",
-      "Use specified confidence level",
-      false,
-      &parse_double
-    );
-    register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
-    register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
-    register_index<fs::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
-    register_index<fs::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
-    register_index<fs::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
-    register_index<fs::wx::Precipitation>(
-      apcp_prev,
-      "--apcp_prev",
-      "Startup precipitation between 1200 yesterday and start of hourly weather",
-      false
-    );
+    size_t SKIPPED_ARGS = 0;
+    if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
+    {
+      fs::logging::note("Running in probability surface mode");
+      // skip 'surface' argument if present
+      CUR_ARG += 1;
+      SKIPPED_ARGS = 1;
+      // probabalistic surface is computationally impossible at this point
+      Settings::setDeterministic(true);
+      Settings::setSurface(true);
+      register_index<fs::wx::Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
+      register_index<fs::wx::Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
+      register_index<fs::wx::Dc>(dc, "--dc", "Constant Drought Code", true);
+      // register_int_index<fs::wx::Direction>(wind_direction, "--wd", "Constant wind direction",
+      // true); register_setter<fs::wx::Direction>(wind_direction, "--wd", "Constant wind
+      // direction", true, []() {
+      //   return parse_once<fs::wx::Direction>([] { return fs::wx::Direction(stoi(get_arg()),
+      //   false); });
+      // });
+      register_setter<size_t>(
+        wind_direction,
+        "--wd",
+        "Constant wind direction",
+        true,
+        &parse_size_t
+      );
+      register_setter<size_t>(wind_speed, "--ws", "Constant wind speed", true, &parse_size_t);
+    }
+    else
+    {
+      register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
+      register_flag(
+        &Settings::setDeterministic,
+        true,
+        "--deterministic",
+        "Run deterministically (100% chance of spread & survival)"
+      );
+      register_flag(
+        &Settings::setRowColIgnition,
+        true,
+        "--rowcol-ignition",
+        "Use row and col to specific start point. Assumes force-fuel is set."
+      );
+      register_setter<size_t>(
+        &Settings::setIgnRow,
+        "--ign-row",
+        "Specify ignition row",
+        false,
+        &parse_size_t
+      );
+      register_setter<size_t>(
+        &Settings::setIgnCol,
+        "--ign-col",
+        "Specify ignition column",
+        false,
+        &parse_size_t
+      );
+      register_setter<double>(
+        &Settings::setConfidenceLevel,
+        "--confidence",
+        "Use specified confidence level",
+        false,
+        &parse_double
+      );
+      register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
+      register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
+      // HACK: want different text for same flag so define here too
+      register_index<fs::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
+      register_index<fs::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
+      register_index<fs::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
+      register_index<fs::wx::Precipitation>(
+        apcp_prev,
+        "--apcp_prev",
+        "Startup precipitation between 1200 yesterday and start of hourly weather",
+        false
+      );
+    }
     register_setter<const char*>(
       &Settings::setOutputDateOffsets,
       "--output_date_offsets",
@@ -385,7 +434,7 @@ main(
       // HACK: just do this for now
       show_help_and_exit();
     }
-    else if (3 > ARGC)
+    else if (3 > (ARGC - SKIPPED_ARGS))
     {
       show_usage_and_exit();
     }
@@ -393,7 +442,7 @@ main(
     try
     {
 #endif
-      if (6 <= ARGC)
+      if (6 <= (ARGC - SKIPPED_ARGS))
       {
         string output_directory(ARGV[CUR_ARG++]);
         replace(output_directory.begin(), output_directory.end(), '\\', '/');
@@ -531,7 +580,7 @@ main(
         const auto yesterday = fs::wx::FwiWeather(
           fs::wx::Temperature(0),
           fs::wx::RelativeHumidity(0),
-          fs::wx::Wind(fs::wx::Direction(0, false), fs::wx::Speed(0)),
+          fs::wx::Wind(fs::wx::Direction(wind_direction, false), fs::wx::Speed(wind_speed)),
           fs::wx::Precipitation(apcp_prev),
           ffmc,
           dmc,

@@ -203,7 +203,10 @@ Scenario::clear() noexcept
   arrival_ = {};
   //  points_.clear();
   points_ = {};
-  spread_info_ = {};
+  if (!Settings::surface())
+  {
+    spread_info_ = {};
+  }
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
@@ -367,14 +370,47 @@ Scenario::Scenario(
 Scenario*
 Scenario::reset_with_new_start(
   const shared_ptr<topo::Cell>& start_cell,
-  mt19937* mt_extinction,
-  mt19937* mt_spread,
   util::SafeVector* final_sizes
 )
 {
   start_cell_ = start_cell;
-  logging::extensive("Set cell; resetting");
-  return reset(mt_extinction, mt_spread, final_sizes);
+  // FIX: remove duplicated code
+  // logging::extensive("Set cell; resetting");
+  // return reset(nullptr, nullptr, final_sizes);
+  cancelled_ = false;
+  model_->releaseBurnedVector(unburnable_);
+  unburnable_ = nullptr;
+  current_time_ = start_time_;
+  intensity_ = nullptr;
+  probabilities_ = nullptr;
+  final_sizes_ = final_sizes;
+  ran_ = false;
+  clear();
+  for (const auto& o : observers_)
+  {
+    o->reset();
+  }
+  current_time_ = start_time_ - 1;
+  points_ = {};
+  intensity_ = make_unique<IntensityMap>(model());
+  // HACK: never reset these if using a surface
+  // if (!Settings::surface())
+  {
+    // these are reset in clear()
+    // offsets_ = {};
+    // max_ros_ = 0;
+    origin_max_intensity_ = {};
+    origin_head_ros_ = {};
+    // surrounded_ = POOL_BURNED_DATA.acquire();
+    current_time_index_ = numeric_limits<size_t>::max();
+  }
+  ++COUNT;
+  {
+    // want a global count of how many times this scenario ran
+    std::lock_guard<std::mutex> lk(MUTEX_SIM_COUNTS);
+    simulation_ = ++SIM_COUNTS[id_];
+  }
+  return this;
 }
 Scenario*
 Scenario::reset(
@@ -388,7 +424,6 @@ Scenario::reset(
   unburnable_ = nullptr;
   current_time_ = start_time_;
   intensity_ = nullptr;
-  max_ros_ = 0;
   //  weather_(weather);
   //  model_(model);
   probabilities_ = nullptr;
@@ -991,33 +1026,51 @@ Scenario::scheduleFireSpread(
 )
 {
   const auto time = event.time();
+  // HACK: if a surface then always use 1600 weather
+  // keeps a bunch of things we don't need in it if we don't reset?
+  // const auto this_time = Settings::surface() ? util::time_index(static_cast<Day>(time), 16) :
+  // util::time_index(time);
+  const auto this_time = util::time_index(time);
+  // const auto wx_time = Settings::surface() ?
+  // util::to_time(util::time_index(static_cast<Day>(time), 16)) : util::to_time(this_time); const
+  // auto wx_time = util::to_time(this_time);
+  const auto wx = Settings::surface() ? model_->yesterday() : weather(time);
+  const auto wx_daily = Settings::surface() ? model_->yesterday() : weather_daily(time);
   // note("time is %f", time);
   current_time_ = time;
-  const auto wx = weather(time);
-  // const auto wx_daily = weather_daily(time);
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   //  log_note("%d points", points_->size());
-  const auto this_time = util::time_index(time);
   const auto next_time = static_cast<double>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
   const auto max_duration = (next_time - time) * DAY_MINUTES;
-  // note("time is %f, next_time is %f, max_duration is %f",
-  //      time,
-  //      next_time,
-  //      max_duration);
+  // log_verbose("time is %f, next_time is %f, max_duration is %f",
+  //     time,
+  //     next_time,
+  //     max_duration);
   const auto max_time = time + max_duration / DAY_MINUTES;
   // if (wx->ffmc().asDouble() < minimumFfmcForSpread(time))
   // HACK: use the old ffmc for this check to be consistent with previous version
-  if (weather_daily(time)->ffmc().asDouble() < minimumFfmcForSpread(time))
+  if (wx_daily->ffmc().asDouble() < minimumFfmcForSpread(time))
   {
     addEvent(Event::makeFireSpread(max_time));
-    log_verbose("Waiting until %f because of FFMC", max_time);
+    log_extensive("Waiting until %f because of FFMC", max_time);
     return;
   }
+  log_extensive("There are %ld spread offsets calculated", offsets_.size());
   if (current_time_index_ != this_time)
   {
+    // logging::check_fatal(Settings::surface() && current_time_index_ !=
+    // numeric_limits<size_t>::max(),
+    //                      "Expected to only pick weather time once");
     current_time_index_ = this_time;
-    spread_info_ = {};
+    // seemed like it would be good to keep offsets but max_ros_ needs to reset or things slow to a
+    // crawl?
+    if (!Settings::surface())
+    {
+      spread_info_ = {};
+      origin_max_intensity_ = {};
+      origin_head_ros_ = {};
+    }
     max_ros_ = 0.0;
   }
   // auto keys = list<topo::SpreadKey>();
@@ -1044,6 +1097,18 @@ Scenario::scheduleFireSpread(
     {
       any_spread = true;
       max_ros_ = max(max_ros_, origin.headRos());
+      if (origin_inserted.second)
+      {
+        // set to current value if none yet
+        origin_head_ros_[key] = origin.headRos();
+        origin_max_intensity_[key] = origin.maxIntensity();
+      }
+      else
+      {
+        // FIX: for now keep highest FI and ROS independently but should be related
+        origin_head_ros_[key] = max(origin_head_ros_.at(key), origin.headRos());
+        origin_max_intensity_[key] = max(origin_max_intensity_.at(key), origin.maxIntensity());
+      }
     }
   }
   // // seems like it's reusing SpreadInfo most of the time (so that's probably not the bottleneck?)

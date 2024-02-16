@@ -24,9 +24,7 @@ Iteration::Iteration(
 }
 Iteration*
 Iteration::reset_with_new_start(
-  const shared_ptr<topo::Cell>& start_cell,
-  mt19937* mt_extinction,
-  mt19937* mt_spread
+  const shared_ptr<topo::Cell>& start_cell
 )
 {
   // HACK: ensure only called with surface
@@ -43,9 +41,7 @@ Iteration::reset_with_new_start(
   for (auto& scenario : scenarios_)
   {
     logging::extensive("Resetting scenario %d", i);
-    static_cast<void>(
-      scenario->reset_with_new_start(start_cell, mt_extinction, mt_spread, &final_sizes_)
-    );
+    static_cast<void>(scenario->reset_with_new_start(start_cell, &final_sizes_));
     ++i;
   }
   return this;
