@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+if(WIN32)
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+  CACHE STRING "Vcpkg toolchain file")
+endif()
+
 project(tbd)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -10,14 +15,18 @@ endif()
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra -std=c++23")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-# set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wfatal-errors")
-add_compile_options(
+if (WIN32)
+    # don't set -Wextra
+    set(CMAKE_CXX_FLAGS "-Wall")
+else()
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+    # set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wfatal-errors")
+    set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+    add_compile_options(
         "$<$<CONFIG:RELEASE>:-O3;>"
         "$<$<CONFIG:DEBUG>:-O0;-fno-omit-frame-pointer;-g;>"
 )
-
-set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+endif()
 
 find_package(Threads REQUIRED)
 add_definitions(-D_POSIX_C_SOURCE=200809L)
