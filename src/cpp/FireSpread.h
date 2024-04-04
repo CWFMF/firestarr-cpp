@@ -210,6 +210,15 @@ public:
     return head_ros_;
   }
   /**
+   * \brief Head fire spread direction
+   * \return Head fire spread direction
+   */
+  [[nodiscard]] constexpr fs::wx::Direction
+  headDirection() const
+  {
+    return raz_;
+  }
+  /**
    * \brief Slope factor calculated from percent slope
    * \return Slope factor calculated from percent slope
    */
@@ -317,6 +326,10 @@ private:
    * \brief Head fire rate of spread (m/min)
    */
   double head_ros_;
+  /**
+   * \brief Head fire spread direction
+   */
+  fs::wx::Direction raz_;
   /**
    * \brief Difference between date and the date of minimum foliar moisture content (from ST-X-3)
    */
