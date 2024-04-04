@@ -372,6 +372,7 @@ private:
    * \brief Directory to output results to
    */
   string output_directory_;
+#ifdef DEBUG_WEATHER
   /*
    * \brief Write the hourly weather that was loaded to an output file
    */
@@ -381,7 +382,8 @@ private:
    * \param weather Weather to write
    * \param file_name Name of file to write to
    */
-  void outputWeather(map<size_t, FireWeather>& weather, const char* file_name);
+  void outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const char* file_name);
+#endif
   /**
    * \brief What year the weather is for
    */
@@ -399,6 +401,14 @@ private:
   //  *
   //  */
   std::chrono::steady_clock::time_point last_checked_;
+  /**
+   * \brief Latitude to use for any calcualtions
+   */
+  double latitude_;
+  /**
+   * \brief Longitude to use for any calcualtions
+   */
+  double longitude_;
 };
 }
 #endif

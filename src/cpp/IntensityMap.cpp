@@ -1,21 +1,28 @@
 /* SPDX-FileCopyrightText: 2020 Queen's Printer for Ontario */
 /* SPDX-FileCopyrightText: 2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+#include "stdafx.h"
 #include "IntensityMap.h"
 #include "Model.h"
 #include "Perimeter.h"
 #include "Settings.h"
+#include "unstable.h"
+#include "Weather.h"
 namespace fs
 {
 IntensityMap::IntensityMap(const Model& model) noexcept
-  : model_(model), map_(model.environment().makeMap<IntensitySize>(false)),
+  : model_(model), intensity_max_(model.environment().makeMap<IntensitySize>(false)),
+    rate_of_spread_at_max_(model.environment().makeMap<MathSize>(false)),
+    direction_of_spread_at_max_(model.environment().makeMap<DegreesSize>(false)),
     is_burned_{model.environment().unburnable()}
 { }
 IntensityMap::IntensityMap(const IntensityMap& rhs)
   // : IntensityMap(rhs.model_, nullptr)
   : IntensityMap(rhs.model_)
 {
-  map_ = rhs.map_;
+  intensity_max_ = rhs.intensity_max_;
+  rate_of_spread_at_max_ = rhs.rate_of_spread_at_max_;
+  direction_of_spread_at_max_ = rhs.direction_of_spread_at_max_;
   is_burned_ = rhs.is_burned_;
 }
 void IntensityMap::applyPerimeter(const Perimeter& perimeter) noexcept
@@ -25,7 +32,7 @@ void IntensityMap::applyPerimeter(const Perimeter& perimeter) noexcept
     std::execution::par_unseq,
     perimeter.burned().begin(),
     perimeter.burned().end(),
-    [this](const auto& location) { burn(location, 1); }
+    [this](const auto& location) { ignite(location); }
   );
 }
 bool IntensityMap::canBurn(const Cell& location) const { return !hasBurned(location); }
@@ -57,30 +64,59 @@ bool IntensityMap::isSurrounded(const Location& location) const
   }
   return true;
 }
-void IntensityMap::burn(const Location& location, const IntensitySize intensity)
+void IntensityMap::ignite(const Location& location) { burn(location, 1, 0, fs::Direction::Zero); }
+void IntensityMap::burn(
+  const Location& location,
+  IntensitySize intensity,
+  MathSize ros,
+  fs::Direction raz
+)
 {
   lock_guard<mutex> lock(mutex_);
-  map_.set(location, intensity);
-  is_burned_.set(location.hash());
+  if (!is_burned_.at(location.hash()))
+  {
+    intensity_max_.set(location, intensity);
+    rate_of_spread_at_max_.set(location, ros);
+    direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees()));
+    is_burned_.set(location.hash());
+  }
+  else
+  {
+    if (intensity_max_.at(location) < intensity)
+    {
+      intensity_max_.set(location, intensity);
+    }
+    // update ros and direction if higher ros
+    if (rate_of_spread_at_max_.at(location) < ros)
+    {
+      rate_of_spread_at_max_.set(location, ros);
+      direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees()));
+    }
+  }
 }
 FileList IntensityMap::save(const string_view dir, const string_view base_name) const
 {
   lock_guard<mutex> lock(mutex_);
   const auto name_intensity = string(base_name) + "_intensity";
+  const auto name_ros = string(base_name) + "_ros";
+  const auto name_raz = string(base_name) + "_raz";
   // FIX: already done in IntensityObserver?
-  return map_.saveToFile(dir, name_intensity);
+  auto files = intensity_max_.saveToFile(dir, name_intensity);
+  files.append_range(rate_of_spread_at_max_.saveToFile(dir, name_ros));
+  files.append_range(direction_of_spread_at_max_.saveToFile(dir, name_raz));
+  return files;
 }
 MathSize IntensityMap::fireSize() const
 {
   lock_guard<mutex> lock(mutex_);
-  return map_.fireSize();
+  return intensity_max_.fireSize();
 }
 map<Location, IntensitySize>::const_iterator IntensityMap::cend() const noexcept
 {
-  return map_.data.cend();
+  return intensity_max_.data.cend();
 }
 map<Location, IntensitySize>::const_iterator IntensityMap::cbegin() const noexcept
 {
-  return map_.data.cbegin();
+  return intensity_max_.data.cbegin();
 }
 }

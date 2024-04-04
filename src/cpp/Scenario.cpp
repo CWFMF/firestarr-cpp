@@ -458,14 +458,15 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
   }
   return *this;
 }
-void Scenario::burn(const Event& event, const IntensitySize burn_intensity)
+void Scenario::burn(const Event& event, const IntensitySize)
 {
 #ifdef DEBUG_SIMULATION
   log_check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
 #endif
   //  Observers only care about cells burning so do it here
   notify(event);
-  intensity_->burn(event.cell(), burn_intensity);
+  // WIP: call burn without proper information for now so we can commit IntensityMap changes
+  intensity_->burn(event.cell(), event.intensity(), 0, fs::Direction::Zero);
   arrival_[event.cell()] = event.time();
 }
 bool Scenario::isSurrounded(const Location& location) const
