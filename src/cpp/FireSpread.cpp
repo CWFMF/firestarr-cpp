@@ -107,6 +107,7 @@ double SpreadInfo::initial(SpreadInfo& spread,
       raz = util::RAD_360 - raz;
     }
   }
+  spread.raz_ = tbd::wx::Direction(raz, true);
   const auto isi = isz * STANDARD_WSV(wsv);
   // FIX: make this a member function so we don't need to preface head_ros_
   spread.head_ros_ = fuel->calculateRos(spread.nd(),
