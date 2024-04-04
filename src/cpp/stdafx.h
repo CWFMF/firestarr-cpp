@@ -179,7 +179,7 @@ static constexpr Day MAX_DAYS = 366;
 /**
  * \brief Maximum number of columns for an Environment
  */
-static constexpr Idx MAX_COLUMNS = 4096;
+static constexpr Idx MAX_COLUMNS = 2048;
 /**
  * \brief Maximum number of rows for an Environment
  */
