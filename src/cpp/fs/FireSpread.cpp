@@ -4,6 +4,7 @@
 #include "FuelType.h"
 #include "Scenario.h"
 #include "Settings.h"
+#include "SpreadAlgorithm.h"
 #include "unstable.h"
 namespace fs
 {
@@ -70,7 +71,6 @@ MathSize SpreadInfo::initial(
   MathSize& ffmc_effect,
   MathSize& wsv,
   MathSize& rso,
-  MathSize& raz,
   const FuelType* const fuel,
   bool has_no_slope,
   MathSize heading_sin,
@@ -82,7 +82,7 @@ MathSize SpreadInfo::initial(
 {
   ffmc_effect = spread.ffmcEffect();
   // needs to be non-const so that we can update if slopeEffect changes direction
-  raz = spread.wind().heading();
+  MathSize raz = spread.wind().heading();
   const auto isz = 0.208 * ffmc_effect;
   wsv = spread.wind().speed().asValue();
   if (!has_no_slope)
@@ -269,14 +269,12 @@ SpreadInfo::SpreadInfo(
   MathSize ffmc_effect;
   MathSize wsv;
   MathSize rso;
-  MathSize raz;
   if (min_ros > SpreadInfo::initial(
         *this,
         *weather_daily,
         ffmc_effect,
         wsv,
         rso,
-        raz,
         fuel,
         has_no_slope,
         heading_sin,
@@ -299,7 +297,6 @@ SpreadInfo::SpreadInfo(
            ffmc_effect,
            wsv,
            rso,
-           raz,
            fuel,
            has_no_slope,
            heading_sin,
@@ -315,57 +312,12 @@ SpreadInfo::SpreadInfo(
       return;
     }
   }
+  logging::verbose("initial ros is %f", head_ros_);
   const auto back_isi = ffmc_effect * STANDARD_BACK_ISI_WSV(wsv);
   auto back_ros = fuel->calculateRos(nd, *weather, back_isi) * bui_eff;
   if (is_crown_)
   {
     back_ros = fuel->finalRos(*this, back_isi, fuel->crownFractionBurned(back_ros, rso), back_ros);
-  }
-  // do everything we can to avoid calling trig functions unnecessarily
-  const auto b_semi = has_no_slope ? 0 : cos(atan(percentSlope() / 100.0));
-  const auto slope_radians = to_radians(slope_azimuth);
-  // do check once and make function just return 1.0 if no slope
-  const auto no_correction = [](const MathSize) noexcept { return 1.0; };
-  const auto do_correction = [b_semi, slope_radians](const MathSize theta) noexcept {
-    // never gets called if isInvalid() so don't check
-    // figure out how far the ground distance is in map distance horizontally
-    auto angle_unrotated = theta - slope_radians;
-    // if (to_degrees(angle_unrotated) == 270 || to_degrees(angle_unrotated) == 90)
-    // {
-    //   // CHECK: if we're going directly across the slope then horizontal distance is same as
-    //   spread
-    //   // distance
-    //   return 1.0;
-    // }
-    const auto tan_u = tan(angle_unrotated);
-    const auto y = b_semi / sqrt(b_semi * tan_u * (b_semi * tan_u) + 1.0);
-    const auto x = y * tan_u;
-    // CHECK: Pretty sure you can't spread farther horizontally than the spread distance, regardless
-    // of angle?
-    return min(1.0, sqrt(x * x + y * y));
-    // return sqrt(x * x + y * y);
-  };
-  const auto correction_factor = has_no_slope ? std::function<MathSize(MathSize)>(no_correction)
-                                              : std::function<MathSize(MathSize)>(do_correction);
-  const auto add_offset = [this, cell_size, min_ros](const MathSize direction, const MathSize ros) {
-    if (ros < min_ros)
-    {
-      return false;
-    }
-    // spreading, so figure out offset from current point
-    const auto ros_cell = ros / cell_size;
-    offsets_.emplace_back(ros_cell * sin(direction), ros_cell * cos(direction));
-    return true;
-  };
-  // if not over spread threshold then don't spread
-  // HACK: assume there is no fuel where a crown fire's sfc is < COMPARE_LIMIT and its fc is greater
-  MathSize ros{};
-  // HACK: set ros in boolean if we get that far so that we don't have to repeat the if body
-  if (!add_offset(raz, ros = (head_ros_ * correction_factor(raz))))
-  {
-    // mark as invalid
-    head_ros_ = -1;
-    return;
   }
   tfc_ = sfc_;
   // don't need to re-evaluate if crown with new head_ros_ because it would only go up if is_crown_
@@ -377,78 +329,19 @@ SpreadInfo::SpreadInfo(
     tfc_ += cfc_;
   }
   // max intensity should always be at the head
-  max_intensity_ = fire_intensity(tfc_, ros);
-  const auto a = (head_ros_ + back_ros) / 2.0;
-  const auto c = a - back_ros;
+  max_intensity_ = fire_intensity(tfc_, head_ros_);
   const auto l_b = fuel->lengthToBreadth(wsv);
-  const auto flank_ros = a / l_b;
-  const auto a_sq = a * a;
-  const auto flank_ros_sq = flank_ros * flank_ros;
-  const auto a_sq_sub_c_sq = a_sq - (c * c);
-  const auto ac = a * c;
-  const auto calculate_ros = [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](
-                               const DirectionSize theta
-                             ) noexcept {
-    const auto cos_t = cos(theta);
-    const auto cos_t_sq = cos_t * cos_t;
-    const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
-    // 1.0 = cos^2 + sin^2
-    const auto sin_t_sq = 1.0 - cos_t_sq;
-    // // or could be: 1.0 = cos^2 + sin^2
-    // const auto sin_t = sin(theta);
-    // const auto sin_t_sq = sin_t * sin_t;
-    return abs(
-      (a * ((flank_ros * cos_t * sqrt(f_sq_cos_t_sq + a_sq_sub_c_sq * sin_t_sq) - ac * sin_t_sq) / (f_sq_cos_t_sq + a_sq * sin_t_sq))
-       + c)
-      / cos_t
-    );
-  };
-  const auto add_offsets = [&correction_factor, &add_offset, raz, min_ros](
-                             const MathSize angle_radians, const MathSize ros_flat
-                           ) {
-    if (ros_flat < min_ros)
-    {
-      return false;
-    }
-    auto direction = fix_radians(angle_radians + raz);
-    // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
-    // intentionally don't use || because we want both of these to happen all the time
-    auto added = add_offset(direction, ros_flat * correction_factor(direction));
-    direction = fix_radians(raz - angle_radians);
-    added |= add_offset(direction, ros_flat * correction_factor(direction));
-    return added;
-  };
-  const auto add_offsets_calc_ros = [&add_offsets, &calculate_ros](const MathSize angle_radians) {
-    return add_offsets(angle_radians, calculate_ros(angle_radians));
-  };
-  bool added = true;
-  constexpr size_t STEP = 10;
-  size_t i = STEP;
-  while (added && i < 90)
+  const HorizontalAdjustment correction_factor =
+    horizontal_adjustment(slope_azimuth, percentSlope());
+  const auto spread_algorithm = WidestEllipseAlgorithm(5.0, cell_size, min_ros);
+  offsets_ = spread_algorithm.calculate_offsets(
+    correction_factor, raz_.asRadians(), head_ros_, back_ros, l_b
+  );
+  // #endif
+  // if no offsets then not spreading so invalidate head_ros_
+  if (0 == offsets_.size())
   {
-    added = add_offsets_calc_ros(to_radians(i));
-    i += STEP;
-  }
-  if (added)
-  {
-    added = add_offsets(to_radians(90), flank_ros * sqrt(a_sq_sub_c_sq) / a);
-    i = 90 + STEP;
-    while (added && i < 180)
-    {
-      added = add_offsets_calc_ros(to_radians(i));
-      i += STEP;
-    }
-    if (added)
-    {
-      // only use back ros if every other angle is spreading since this should be lowest
-      //  180
-      if (back_ros < min_ros)
-      {
-        return;
-      }
-      const auto direction = fix_radians(RAD_180 + raz);
-      static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
-    }
+    head_ros_ = INVALID_ROS;
   }
 }
 }

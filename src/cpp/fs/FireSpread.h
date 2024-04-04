@@ -34,15 +34,8 @@ public:
    * \brief Lookup table for Slope Factor calculated from Percent Slope
    */
   static const SlopeTableArray SlopeTable;
+  SpreadInfo() = default;
   ~SpreadInfo() = default;
-  /**
-   * \brief Calculate fire spread for time and place
-   * \param scenario Scenario this is spreading in
-   * \param time Time spread is occurring
-   * \param key Attributes for Cell spread is occurring in
-   * \param nd Difference between date and the date of minimum foliar moisture content
-   * \param weather FwiWeather to use for calculations
-   */
   SpreadInfo(
     const Scenario& scenario,
     DurationSize time,
@@ -274,7 +267,6 @@ private:
     MathSize& ffmc_effect,
     MathSize& wsv,
     MathSize& rso,
-    MathSize& raz,
     const FuelType* const fuel,
     bool has_no_slope,
     MathSize heading_sin,
