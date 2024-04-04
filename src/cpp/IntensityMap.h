@@ -58,7 +58,7 @@ public:
    */
   [[nodiscard]] Idx rows() const
   {
-    return map_->rows();
+    return intensity_max_->rows();
   }
   /**
    * \brief Number of columns in this extent
@@ -66,7 +66,7 @@ public:
    */
   [[nodiscard]] Idx columns() const
   {
-    return map_->columns();
+    return intensity_max_->columns();
   }
   /**
    * \brief Set cells in the map to be burned based on Perimeter
@@ -103,12 +103,26 @@ public:
    * \return Whether or not all Locations surrounding the given Location are burned
    */
   [[nodiscard]] bool isSurrounded(const Location& location) const;
+
   /**
-   * \brief Burn Location with given intensity
+   * \brief Update Location with specified values
    * \param location Location to burn
    * \param intensity Intensity to burn with (kW/m)
+   * \param ros Rate of spread to check against maximu (m/min)
+   * \param raz Spread azimuth for ros
    */
-  void burn(const Location& location, IntensitySize intensity);
+  void ignite(const Location& location);
+  /**
+   * \brief Mark given location as burned
+   * \param location Location to burn
+   */
+  void burn(const Location& location);
+  void update(const Location& location,
+              IntensitySize intensity,
+              double ros,
+              tbd::wx::Direction raz);
+  // void update(const Location& location,
+  //             const SpreadInfo& spread_info);
   /**
    * \brief Save contents to an ASCII file
    * \param dir Directory to save to
@@ -140,7 +154,13 @@ private:
   /**
    * \brief Map of intensity that cells have burned  at
    */
-  unique_ptr<data::GridMap<IntensitySize>> map_;
+  unique_ptr<data::GridMap<IntensitySize>> intensity_max_;
+  // HACK: just add ROS/RAZ into this object for now
+  /**
+   * \brief Map of rate of spread/direction that cells have burned with at max ros
+   */
+  unique_ptr<data::GridMap<double>> rate_of_spread_at_max_;
+  unique_ptr<data::GridMap<DegreesSize>> direction_of_spread_at_max_;
   /**
    * \brief bitset denoting cells that can no longer burn
    */

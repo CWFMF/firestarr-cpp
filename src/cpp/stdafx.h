@@ -242,6 +242,10 @@ static constexpr int YEAR_HOURS = MAX_DAYS * DAY_HOURS;
  */
 using SlopeTableArray = array<double, MAX_SLOPE_FOR_DISTANCE + 1>;
 /**
+ * \brief Size of an angle in degrees
+ */
+using DegreesSize = uint16_t;
+/**
  * \brief Array of results of a function for all possible integer angles in degrees
  */
 using AngleTableArray = array<double, 361>;
