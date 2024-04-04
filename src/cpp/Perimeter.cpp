@@ -25,8 +25,8 @@ public:
     const Grid<unsigned char, unsigned char>& perim_grid,
     const Environment& env
   )
-    : GridMap<unsigned char, unsigned char>(env.makeMap<unsigned char>(static_cast<unsigned char>(0)
-      ))
+    : GridMap<unsigned char, unsigned char>{env.makeMap<unsigned char>(static_cast<unsigned char>(0)
+      )}
   {
     // HACK: fix offset if the perimeter raster is different from this one
     logging::check_fatal(
@@ -141,7 +141,7 @@ Perimeter::Perimeter(
     }
     max_distance += 0.1;
   }
-  auto burned = BurnedMap(perim_grid, env);
+  BurnedMap burned{perim_grid, env};
   burned_ = burned.makeList();
   edge_ = burned.makeEdge();
 }

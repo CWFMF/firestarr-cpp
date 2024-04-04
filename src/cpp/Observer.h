@@ -144,7 +144,7 @@ protected:
   /**
    * \brief Map of observations
    */
-  GridMap<T> map_;
+  GridMap<T> map_{};
 
 protected:
   /**

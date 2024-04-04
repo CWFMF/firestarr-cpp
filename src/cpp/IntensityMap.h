@@ -9,6 +9,7 @@
 
 #include "BurnedData.h"
 #include "GridMap.h"
+#include "Location.h"
 
 namespace fs
 {
@@ -28,6 +29,10 @@ class IntensityMap
   mutable mutex mutex_{};
 
 public:
+  /**
+   * \brief Constructor
+   * \param model Model to use extent from
+   */
   explicit IntensityMap(const Model& model) noexcept;
   ~IntensityMap() noexcept = default;
   IntensityMap(const IntensityMap& rhs);
@@ -44,7 +49,7 @@ public:
   [[nodiscard]] Idx
   rows() const
   {
-    return map_.rows();
+    return intensity_max_.rows();
   }
 
   /**
@@ -54,7 +59,7 @@ public:
   [[nodiscard]] Idx
   columns() const
   {
-    return map_.columns();
+    return intensity_max_.columns();
   }
 
   /**
@@ -71,9 +76,9 @@ public:
   [[nodiscard]] bool
   canBurn(const Cell& location) const;
   /**
-   * \brief Whether or not the Location can burn
-   * \param location Location to check
-   * \return Whether or not the Location can burn
+   * \brief Whether or not the Location with the given hash can burn
+   * \param hash Hash for Location to check
+   * \return Whether or not the Location with the given hash can burn
    */
   [[nodiscard]] bool
   hasBurned(const Location& location) const;
@@ -84,13 +89,22 @@ public:
    */
   [[nodiscard]] bool
   isSurrounded(const Location& location) const;
+
   /**
-   * \brief Burn Location with given intensity
+   * \brief Update Location with specified values
    * \param location Location to burn
    * \param intensity Intensity to burn with (kW/m)
+   * \param ros Rate of spread to check against maximu (m/min)
+   * \param raz Spread azimuth for ros
    */
   void
-  burn(const Location& location, IntensitySize intensity);
+  burn(const Location& location, IntensitySize intensity, double ros, fs::Direction raz);
+  /**
+   * \brief Mark given location as burned
+   * \param location Location to burn
+   */
+  void
+  ignite(const Location& location);
   /**
    * \brief Save contents to an ASCII file
    * \param dir Directory to save to
@@ -103,7 +117,7 @@ public:
    * \brief Size of the fire represented by this
    * \return Size of the fire represented by this
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   fireSize() const;
   /**
    * \brief Iterator for underlying GridMap
@@ -126,7 +140,13 @@ private:
   /**
    * \brief Map of intensity that cells have burned  at
    */
-  GridMap<IntensitySize> map_;
+  GridMap<IntensitySize> intensity_max_{};
+  // HACK: just add ROS/RAZ into this object for now
+  /**
+   * \brief Map of rate of spread/direction that cells have burned with at max ros
+   */
+  GridMap<MathSize> rate_of_spread_at_max_{};
+  GridMap<DegreesSize> direction_of_spread_at_max_{};
   /**
    * \brief bitset denoting cells that can no longer burn
    */

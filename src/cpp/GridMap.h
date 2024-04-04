@@ -68,6 +68,7 @@ public:
     assert(at(location) == value);
   }
 
+  GridMap() noexcept = default;
   ~GridMap() override = default;
 
   /**
