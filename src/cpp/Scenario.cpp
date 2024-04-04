@@ -458,7 +458,9 @@ void Scenario::burn(const Event& event, const IntensitySize burn_intensity)
 #endif
   // Observers only care about cells burning so do it here
   notify(event);
-  intensity_->burn(event.cell(), burn_intensity);
+  intensity_->burn(event.cell());
+  // WIP: call update without proper information for now so we can commit IntensityMap changes
+  intensity_->update(event.cell(), event.intensity(), 0, tbd::wx::Direction::Zero);
   arrival_[event.cell()] = event.time();
   // scheduleFireSpread(event);
 }
