@@ -49,6 +49,7 @@ public:
     this->data[location] = value;
     assert(at(location) == value);
   }
+  GridMap() noexcept = default;
   ~GridMap() override = default;
   /**
    * \brief Constructor

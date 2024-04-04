@@ -7,7 +7,7 @@ set -e
 # #     | sed "s/.*conflict in \([^\t\n\r]*\)/\1/g" \
 # #     | xargs -tI {} git restore --source=$REV {}
 
-git status > git.log
+git status src > git.log
 REV=$(sed -n "/Next commands/q;p;" git.log | grep -E "^   " | sed "s/^[ \t]*//g" | tail -n1 | cut -d' ' -f2)
 # cat git.log \
 #     | grep "modified:" \
