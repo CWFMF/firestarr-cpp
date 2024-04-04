@@ -211,15 +211,15 @@ public:
 protected:
   /*
    * Field                    Natural Range     Used Range      Bits    Bit Range
-   * Row                      0 - 4095          0 - 4095        12      0 - 4095
-   * Column                   0 - 4095          0 - 4095        12      0 - 4095
+   * Row                      0 - 2047          0 - 2047        12      0 - 2047
+   * Column                   0 - 2047          0 - 2047        12      0 - 2047
    * PADDING                                                    10
    * Fuel                     0 - 56            0 - 56          6       0 - 63
    * Aspect                   0 - 359           0 - 359         9       0 - 511
    * Slope                    0 - infinity      0 - 127         7       0 - 127
    * Extra                                                      10
    *
-   * Rows and Columns are restricted to 4096 since that's what gets clipped out of
+   * Rows and Columns are restricted to 2048 since that's what gets clipped out of
    * the GIS outputs.
    *
    * Fuel is tied to how many variations of percent conifer/dead fir we want to use, and
