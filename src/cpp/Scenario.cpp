@@ -16,11 +16,11 @@
 #include "stdafx.h"
 #include "Scenario.h"
 #include "Observer.h"
-#include "FireSpread.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "ConvexHull.h"
 #include "IntensityMap.h"
+#include "FuelType.h"
 namespace tbd::sim
 {
 constexpr auto CELL_CENTER = 0.5;

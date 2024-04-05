@@ -14,8 +14,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
-#include "FuelType.h"
 #include "FireSpread.h"
+#include "FuelType.h"
+#include "FireWeather.h"
 #include "Log.h"
 namespace tbd::fuel
 {

@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
+#include "FuelType.h"
 #include "FuelLookup.h"
 #include "FBP45.h"
 #include "Log.h"
