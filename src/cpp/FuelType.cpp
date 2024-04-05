@@ -3,8 +3,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "stdafx.h"
-#include "FuelType.h"
 #include "FireSpread.h"
+#include "FuelType.h"
+#include "FireWeather.h"
 #include "Log.h"
 namespace fs::fuel
 {

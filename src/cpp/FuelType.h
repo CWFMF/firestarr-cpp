@@ -6,14 +6,22 @@
 #define FS_FUELTYPE_H
 
 #include "Duff.h"
-#include "FireWeather.h"
-#include "FireSpread.h"
+#include "FWI.h"
 namespace fs
 {
+namespace sim
+{
+class SpreadInfo;
+}
+namespace data
+{
+class LogValue;
+}
 using sim::SpreadInfo;
 using data::LogValue;
 namespace fuel
 {
+constexpr FuelCodeSize INVALID_FUEL_CODE = 0;
 // References
 // Forestry Canada
 // Development and Structure of the Canadian Forest Fire Behaviour Prediction System (ST-X-3)
@@ -61,7 +69,7 @@ public:
     const FuelType* fuel
   )
   {
-    return nullptr == fuel ? static_cast<FuelCodeSize>(0) : fuel->code();
+    return nullptr == fuel ? static_cast<FuelCodeSize>(INVALID_FUEL_CODE) : fuel->code();
   }
   /**
    * \brief Convert FuelType to its name, or 0 if nullptr

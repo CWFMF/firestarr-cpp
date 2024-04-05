@@ -18,9 +18,8 @@
 #include "Settings.h"
 #include "StartPoint.h"
 #include "InnerPos.h"
-namespace fs
-{
-namespace sim
+#include "FireSpread.h"
+namespace fs::sim
 {
 class IObserver;
 class Event;
@@ -562,7 +561,7 @@ public:
   clear() noexcept;
 protected:
   string
-  add_log(const char* format) const noexcept;
+  add_log(const char* format) const noexcept override;
   /**
    * \brief Constructor
    * \param model Model running this Scenario
@@ -716,6 +715,5 @@ protected:
    */
   size_t step_;
 };
-}
 }
 #endif
