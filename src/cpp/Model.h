@@ -25,6 +25,7 @@
 #include <vector>
 #include "Environment.h"
 #include "Iteration.h"
+#include "FireWeather.h"
 namespace tbd
 {
 namespace topo

@@ -17,13 +17,12 @@
 #include <memory>
 #include <set>
 #include <string>
+#include "FuelType.h"
 #include "Cell.h"
 #include "Util.h"
 namespace tbd::fuel
 {
 class FuelLookupImpl;
-class FuelType;
-constexpr FuelCodeSize INVALID_FUEL_CODE = 0;
 /**
  * \brief Provides ability to look up a fuel type based on name or code.
  */
@@ -126,8 +125,17 @@ private:
  * \param cell Cell to check
  * \return Whether or not there is no fuel in the Cell
  */
+[[nodiscard]] constexpr bool is_null_fuel(const FuelType* fuel)
+{
+  return INVALID_FUEL_CODE == FuelType::safeCode(fuel);
+}
+/**
+ * \brief Whether or not there is no fuel in the Cell
+ * \param cell Cell to check
+ * \return Whether or not there is no fuel in the Cell
+ */
 [[nodiscard]] constexpr bool is_null_fuel(const topo::Cell& cell)
 {
-  return INVALID_FUEL_CODE == cell.fuelCode();
+  return is_null_fuel(fuel_by_code(cell.fuelCode()));
 }
 }

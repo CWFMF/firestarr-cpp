@@ -22,7 +22,13 @@
 #ifndef NDEBUG
 #include "Log.h"
 #endif
-namespace tbd::wx
+namespace tbd
+{
+namespace fuel
+{
+class FuelType;
+}
+namespace wx
 {
 // use an array instead of a map since number of values is so small and access should be faster
 using SurvivalMap = array<vector<float>, NUMBER_OF_FUELS>;
@@ -173,5 +179,6 @@ private:
 [[nodiscard]] constexpr bool operator!=(const FireWeather& lhs, const FireWeather& rhs)
 {
   return !(lhs == rhs);
+}
 }
 }

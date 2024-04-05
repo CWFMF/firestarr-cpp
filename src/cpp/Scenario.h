@@ -27,6 +27,7 @@
 #include "Settings.h"
 #include "StartPoint.h"
 #include "InnerPos.h"
+#include "FireSpread.h"
 namespace tbd::sim
 {
 class IObserver;
