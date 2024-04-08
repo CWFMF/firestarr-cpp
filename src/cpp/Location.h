@@ -30,14 +30,14 @@ public:
    * \param hash HashSize derived form row and column
    */
 // NOTE: do this so that we don't get warnings about unused variables in release mode
-#ifdef NDEBUG
+#ifndef DEBUG_GRIDS
   explicit constexpr Location(const Idx, const Idx, const HashSize hash) noexcept
 #else
   explicit Location(const Idx row, const Idx column, const HashSize hash) noexcept
 #endif
     : topo_data_(hash & HashMask)
   {
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::check_fatal((row != unhashRow(topo_data_))
                            || column != unhashColumn(topo_data_),
                          "Hash is incorrect (%d, %d)",
@@ -56,7 +56,7 @@ public:
     Location(const Idx row, const Idx column) noexcept
     : Location(row, column, doHash(row, column) & HashMask)
   {
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::check_fatal(row >= MAX_ROWS || column >= MAX_COLUMNS, "Location out of bounds (%d, %d)", row, column);
 #endif
   }
