@@ -10,6 +10,7 @@
 #ifndef DEBUG_FWI_WEATHER
 #undef CHECK_CALCULATION
 #endif
+#define USE_GIVEN
 #define CHECK_EPSILON 0.1
 // adapted from http://www.columbia.edu/~rf2426/index_files/FWI.vba
 //******************************************************************************************
@@ -411,21 +412,40 @@ Isi::Isi(const Speed& wind, const Ffmc& ffmc) noexcept
 {
 }
 Isi::Isi(double
-#ifdef CHECK_CALCULATION
+#if defined(CHECK_CALCULATION) | defined(USE_GIVEN)
            value
 #endif
          ,
-         const Speed& wind,
-         const Ffmc& ffmc) noexcept
+         const Speed&
+#if defined(CHECK_CALCULATION) | !defined(USE_GIVEN)
+           wind
+#endif
+         ,
+         const Ffmc&
+#if defined(CHECK_CALCULATION) | !defined(USE_GIVEN)
+           ffmc
+#endif
+         ) noexcept
+#ifdef USE_GIVEN
+  : Isi(value)
+{
+#ifdef CHECK_CALCULATION
+  const auto cmp = Isi(wind, ffmc).asDouble();
+#endif
+#else
   : Isi(wind, ffmc)
 {
 #ifdef CHECK_CALCULATION
-  logging::check_fatal(abs((*this - Isi(value)).asDouble()) >= CHECK_EPSILON,
+  const auto cmp = value;
+#endif
+#endif
+#ifdef CHECK_CALCULATION
+  logging::check_fatal(abs(asDouble() - cmp) >= CHECK_EPSILON,
                        "ISI is incorrect %f, %f => %f not %f",
                        wind.asDouble(),
                        ffmc.asDouble(),
                        asDouble(),
-                       Isi(value).asDouble());
+                       cmp);
 #endif
 }
 //******************************************************************************************
@@ -453,21 +473,40 @@ static double calculate_bui(const Dmc& dmc, const Dc& dc) noexcept
              dmc.asDouble() - (1.0 - 0.8 * dc.asDouble() / (dmc.asDouble() + 0.4 * dc.asDouble())) * (0.92 + pow(0.0114 * dmc.asDouble(), 1.7)));
 }
 Bui::Bui(double
-#ifdef CHECK_CALCULATION
+#if defined(CHECK_CALCULATION) | defined(USE_GIVEN)
            value
 #endif
          ,
-         const Dmc& dmc,
-         const Dc& dc) noexcept
+         const Dmc&
+#if defined(CHECK_CALCULATION) | !defined(USE_GIVEN)
+           dmc
+#endif
+         ,
+         const Dc&
+#if defined(CHECK_CALCULATION) | !defined(USE_GIVEN)
+           dc
+#endif
+         ) noexcept
+#ifdef USE_GIVEN
+  : Bui(value)
+{
+#ifdef CHECK_CALCULATION
+  const auto cmp = Bui(dmc, dc).asDouble();
+#endif
+#else
   : Bui(dmc, dc)
 {
 #ifdef CHECK_CALCULATION
-  logging::check_fatal(abs((*this - Bui(value)).asDouble()) >= CHECK_EPSILON,
+  const auto cmp = value;
+#endif
+#endif
+#ifdef CHECK_CALCULATION
+  logging::check_fatal(abs(asDouble() - cmp) >= CHECK_EPSILON,
                        "BUI is incorrect %f, %f => %f not %f",
                        dmc.asDouble(),
                        dc.asDouble(),
                        asDouble(),
-                       Bui(value).asDouble());
+                       cmp);
 #endif
 }
 Bui::Bui(const Dmc& dmc, const Dc& dc) noexcept
@@ -499,21 +538,40 @@ static double calculate_fwi(const Isi& isi, const Bui& bui) noexcept
   return b;
 }
 Fwi::Fwi(double
-#ifdef CHECK_CALCULATION
+#if defined(CHECK_CALCULATION) | defined(USE_GIVEN)
            value
 #endif
          ,
-         const Isi& isi,
-         const Bui& bui) noexcept
+         const Isi&
+#if defined(CHECK_CALCULATION) | !defined(USE_GIVEN)
+           isi
+#endif
+         ,
+         const Bui&
+#if defined(CHECK_CALCULATION) | !defined(USE_GIVEN)
+           bui
+#endif
+         ) noexcept
+#ifdef USE_GIVEN
+  : Fwi(value)
+{
+#ifdef CHECK_CALCULATION
+  const auto cmp = Fwi(isi, bui).asDouble();
+#endif
+#else
   : Fwi(isi, bui)
 {
 #ifdef CHECK_CALCULATION
-  logging::check_fatal(abs((*this - Fwi(value)).asDouble()) >= CHECK_EPSILON,
+  const auto cmp = value;
+#endif
+#endif
+#ifdef CHECK_CALCULATION
+  logging::check_fatal(abs(asDouble() - cmp) >= CHECK_EPSILON,
                        "FWI is incorrect %f, %f => %f not %f",
                        isi.asDouble(),
                        bui.asDouble(),
                        asDouble(),
-                       Fwi(value).asDouble());
+                       cmp);
 #endif
 }
 Fwi::Fwi(const Isi& isi, const Bui& bui) noexcept
