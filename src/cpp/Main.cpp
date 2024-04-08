@@ -10,6 +10,7 @@
  */
 #include "stdafx.h"
 #include <chrono>
+#include "debug_settings.h"
 #include "Model.h"
 #include "Scenario.h"
 #include "Test.h"
@@ -237,13 +238,9 @@ main(
   const char* const argv[]
 )
 {
+  fs::debug::show_debug_settings();
   ARGC = argc;
   ARGV = argv;
-#ifndef NDEBUG
-  printf("**************************************************\n");
-  printf("******************* DEBUG MODE *******************\n");
-  printf("**************************************************\n");
-#endif
   auto bin = string(ARGV[CUR_ARG++]);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);

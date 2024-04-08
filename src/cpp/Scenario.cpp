@@ -39,7 +39,7 @@ Scenario::clear() noexcept
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
-#ifndef NDEBUG
+#ifdef DEBUG_SIMULATION
   log_check_fatal(!scheduler_.empty(), "Scheduler isn't empty after clear()");
 #endif
   model_->releaseBurnedVector(unburnable_);
@@ -277,7 +277,7 @@ Scenario::evaluate(
   const Event& event
 )
 {
-#ifndef NDEBUG
+#ifdef DEBUG_SIMULATION
   log_check_fatal(
     event.time() < current_time_,
     "Expected time to be > %f but got %f",
@@ -520,7 +520,7 @@ Scenario::burn(
   const IntensitySize
 )
 {
-#ifndef NDEBUG
+#ifdef DEBUG_SIMULATION
   log_check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
 #endif
   // Observers only care about cells burning so do it here
@@ -557,7 +557,7 @@ Scenario::add_log(
   iss << buffer << format;
   return iss.str();
 }
-#ifndef NDEBUG
+#ifdef DEBUG_PROBABILITY
 void
 saveProbabilities(
   const string& dir,
@@ -579,7 +579,7 @@ Scenario::run(
   map<double, ProbabilityMap*>* probabilities
 )
 {
-#ifndef NDEBUG
+#ifdef DEBUG_SIMULATION
   log_check_fatal(ran(), "Scenario has already run");
 #endif
   log_verbose("Starting");
@@ -607,7 +607,7 @@ Scenario::run(
     {
       //      const auto cell = env.cell(location.hash());
       const auto cell = env.cell(location);
-#ifndef NDEBUG
+#ifdef DEBUG_SIMULATION
       log_check_fatal(fuel::is_null_fuel(cell), "Null fuel in perimeter");
 #endif
       // log_verbose("Adding point (%d, %d)",
@@ -666,7 +666,7 @@ Scenario::run(
   log_info("Completed with final size %0.1f ha", currentFireSize());
 #endif
   ran_ = true;
-#ifndef NDEBUG
+#ifdef DEBUG_PROBABILITY
   // nice to have this get output when debugging, but only need it in extreme cases
   if (logging::Log::getLogLevel() <= logging::LOG_EXTENSIVE)
   {

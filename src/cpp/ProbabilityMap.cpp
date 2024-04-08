@@ -48,7 +48,7 @@ ProbabilityMap::addProbabilities(
   const ProbabilityMap& rhs
 )
 {
-#ifndef NDEBUG
+#ifndef DEBUG_PROBABILITY
   logging::check_fatal(rhs.time_ != time_, "Wrong time");
   logging::check_fatal(rhs.start_time_ != start_time_, "Wrong start time");
   logging::check_fatal(rhs.min_value_ != min_value_, "Wrong min value");

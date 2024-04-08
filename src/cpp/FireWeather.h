@@ -10,7 +10,7 @@
 #include <vector>
 #include "FuelLookup.h"
 #include "FWI.h"
-#ifndef NDEBUG
+#ifdef DEBUG_FWI_WEATHER
 #include "Log.h"
 #endif
 namespace fs::wx
@@ -52,7 +52,7 @@ public:
     const double time
   ) const
   {
-#ifndef NDEBUG
+#ifdef DEBUG_FWI_WEATHER
     logging::check_fatal(time < 0 || time >= MAX_DAYS, "Invalid weather time %f", time);
 #endif
     return weather_by_hour_by_day_->at(util::time_index(time, min_date_));

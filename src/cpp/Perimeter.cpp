@@ -70,7 +70,7 @@ public:
         }
       }
     }
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     for (auto& kv : data)
     {
       logging::check_fatal(fuel::is_null_fuel(env.cell(kv.first)), "Null fuel in BurnedData");
@@ -94,7 +94,7 @@ Perimeter::Perimeter(
   const BurnedMap burned(*perim_grid, env);
   burned_ = burned.makeList();
   edge_ = burned.makeEdge();
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
   for (auto c : edge_)
   {
     logging::check_fatal(fuel::is_null_fuel(env.cell(c)), "Null fuel in perimeter edge");

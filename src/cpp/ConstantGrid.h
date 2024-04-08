@@ -36,7 +36,7 @@ public:
     const Location& location
   ) const noexcept override
   {
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::check_fatal(
       location.row() >= this->rows() || location.column() >= this->columns(),
       "Out of bounds (%d, %d)",
@@ -173,7 +173,7 @@ public:
   )
   {
     logging::info("Reading file %s", filename.c_str());
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     // auto min_value = std::numeric_limits<int16_t>::max();
     // auto max_value = std::numeric_limits<int16_t>::min();
     auto min_value = std::numeric_limits<V>::max();
@@ -215,7 +215,7 @@ public:
     // make sure we're at the start of a tile
     const auto tile_column = tile_width * static_cast<FullIdx>(min_column / tile_width);
     const auto max_column = static_cast<FullIdx>(min(min_column + MAX_COLUMNS - 1, actual_columns));
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::check_fatal(min_column < 0, "Column can't be less than 0");
     logging::check_fatal(
       max_column - min_column > MAX_COLUMNS,
@@ -240,7 +240,7 @@ public:
     }
     const auto tile_row = tile_width * static_cast<FullIdx>(min_row / tile_width);
     const auto max_row = static_cast<FullIdx>(min(min_row + MAX_ROWS - 1, actual_rows));
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::check_fatal(min_row < 0, "Row can't be less than 0 but is %d", min_row);
     logging::check_fatal(
       max_row - min_row > MAX_ROWS,
@@ -263,7 +263,7 @@ public:
       bps_file,
       bps
     );
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     int bps_int16_t = std::numeric_limits<int16_t>::digits
                     + (1 * std::numeric_limits<int16_t>::is_signed);
     logging::debug("Size of pointer to int is %ld vs %ld", sizeof(int16_t*), sizeof(V*));
@@ -309,7 +309,7 @@ public:
               {
                 const auto cur_hash = actual_row * MAX_COLUMNS + actual_column;
                 auto cur = *(static_cast<V*>(buf) + offset);
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
                 min_value = min(cur, min_value);
                 max_value = max(cur, max_value);
 #endif
@@ -351,7 +351,7 @@ public:
     const auto new_yll = grid_info.yllcorner()
                        + (static_cast<double>(actual_rows) - static_cast<double>(max_row))
                            * grid_info.cellSize();
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::check_fatal(new_yll < grid_info.yllcorner(), "New yllcorner is outside original grid");
 #endif
     logging::verbose(
@@ -377,7 +377,7 @@ public:
       std::move(values)
     );
     auto new_location = result->findCoordinates(point, true);
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::check_fatal(nullptr == new_location, "Invalid location after reading");
 #endif
     logging::note(
@@ -387,7 +387,7 @@ public:
       std::get<0>(*new_location) + std::get<2>(*new_location) / 1000.0,
       std::get<1>(*new_location) + std::get<3>(*new_location) / 1000.0
     );
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::note("Values for %s range from %d to %d", filename.c_str(), min_value, max_value);
 #endif
     return result;
@@ -614,7 +614,7 @@ private:
         std::move(values)
       )
   {
-#ifndef NDEBUG
+#ifdef DEBUG_GRIDS
     logging::check_fatal(
       this->data.size() != static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS,
       "Invalid grid size"
