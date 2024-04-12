@@ -317,7 +317,20 @@ check_fatal(
     // va_end(args);
   }
 }
-
+void
+SelfLogger::log_output(
+  const int level,
+  const char* format,
+  ...
+) const noexcept
+{
+  // FIX: better/any way to call this from other level-specific functions?
+  va_list args;
+  va_start(args, format);
+  const auto fmt = add_log(format);
+  logging::output(level, fmt.c_str(), &args);
+  va_end(args);
+}
 void
 SelfLogger::log_extensive(
   const char* format,

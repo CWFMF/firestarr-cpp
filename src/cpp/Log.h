@@ -240,6 +240,8 @@ protected:
   virtual string
   add_log(const char* format) const noexcept = 0;
   void
+  log_output(const int level, const char* format, ...) const noexcept;
+  void
   log_extensive(const char* format, ...) const noexcept;
   void
   log_verbose(const char* format, ...) const noexcept;

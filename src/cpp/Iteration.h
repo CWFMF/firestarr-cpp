@@ -51,6 +51,19 @@ public:
   Iteration&
   operator=(Iteration&& rhs) = default;
   /**
+   * \brief Assign start Cell and create new thresholds for use in each Scenario
+   * \param start_cell Cell to start ignition in
+   * \param mt_extinction Extinction thresholds
+   * \param mt_spread Spread thresholds
+   * \return This
+   */
+  Iteration*
+  reset_with_new_start(
+    const shared_ptr<topo::Cell>& start_cell,
+    mt19937* mt_extinction,
+    mt19937* mt_spread
+  );
+  /**
    * \brief Create new thresholds for use in each Scenario
    * \param mt_extinction Extinction thresholds
    * \param mt_spread Spread thresholds
