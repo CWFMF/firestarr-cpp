@@ -943,7 +943,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           const InnerPos pos = p.add(offset);
           log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x, pos.y);
           const auto for_cell = cell(pos);
-          if (pos.x < 0 || pos.y < 0 || pos.x > this->columns() || pos.y > this->rows())
+          if (pos.x < 0 || pos.y < 0 || pos.x >= this->columns() || pos.y >= this->rows())
           {
             continue;
           }
