@@ -322,7 +322,6 @@ private:
                         double& ffmc_effect,
                         double& wsv,
                         double& rso,
-                        double& raz,
                         const fuel::FuelType* const fuel,
                         bool has_no_slope,
                         double heading_sin,
