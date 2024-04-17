@@ -131,6 +131,7 @@ class Model
 public:
   /**
    * \brief Run Scenarios initialized from given inputs
+   * \param dir_out Folder to save outputs to
    * \param weather_input Name of file to read weather from
    * \param yesterday FwiWeather yesterday used for startup indices
    * \param raster_root Directory to read raster inputs from
@@ -141,7 +142,8 @@ public:
    * \param size Size to start fire at if no Perimeter
    * \return
    */
-  [[nodiscard]] static int runScenarios(const char* weather_input,
+  [[nodiscard]] static int runScenarios(const string dir_out,
+                                        const char* weather_input,
                                         const wx::FwiWeather& yesterday,
                                         const char* raster_root,
                                         const topo::StartPoint& start_point,
@@ -262,6 +264,10 @@ public:
   {
     return nd_.at(static_cast<Day>(time));
   }
+  [[nodiscard]] const char* outputDirectory() const
+  {
+    return dir_out_.c_str();
+  }
   /**
    * \brief Duration that model has run for
    * \return std::chrono::seconds  Duration model has been running for
@@ -289,7 +295,8 @@ public:
    * \param start_point StartPoint to use for sunrise/sunset times
    * \param env Environment to run simulations in
    */
-  Model(const topo::StartPoint& start_point,
+  Model(const string dir_out,
+        const topo::StartPoint& start_point,
         topo::Environment* env);
   Model(Model&& rhs) noexcept = delete;
   Model(const Model& rhs) = delete;
@@ -344,6 +351,7 @@ public:
    */
   static Semaphore task_limiter;
 private:
+  const string dir_out_;
   /**
    * \brief Add statistics for completed iterations
    * \param all_sizes All sizes that have simulations have produced

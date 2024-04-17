@@ -366,7 +366,7 @@ void Scenario::saveObservers(const string& base_name) const
 {
   for (const auto& o : observers_)
   {
-    o->save(Settings::outputDirectory(), base_name);
+    o->save(model_->outputDirectory(), base_name);
   }
 }
 void Scenario::saveObservers(const double time) const
@@ -594,12 +594,12 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
             "%03zu_%06ld_extinction",
             id(),
             simulation());
-    saveProbabilities(Settings::outputDirectory(), string(buffer), extinction_thresholds_);
+    saveProbabilities(model().outputDirectory(), string(buffer), extinction_thresholds_);
     sprintf(buffer,
             "%03zu_%06ld_spread",
             id(),
             simulation());
-    saveProbabilities(Settings::outputDirectory(), string(buffer), spread_thresholds_by_ros_);
+    saveProbabilities(model().outputDirectory(), string(buffer), spread_thresholds_by_ros_);
   }
 #endif
   return this;

@@ -20,14 +20,16 @@
 #include "Model.h"
 namespace tbd::sim
 {
-ProbabilityMap::ProbabilityMap(const double time,
+ProbabilityMap::ProbabilityMap(const string dir_out,
+                               const double time,
                                const double start_time,
                                const int min_value,
                                const int low_max,
                                const int med_max,
                                const int max_value,
                                const data::GridBase& grid_info)
-  : all_(data::GridMap<size_t>(grid_info, 0)),
+  : dir_out_(dir_out),
+    all_(data::GridMap<size_t>(grid_info, 0)),
     high_(data::GridMap<size_t>(grid_info, 0)),
     med_(data::GridMap<size_t>(grid_info, 0)),
     low_(data::GridMap<size_t>(grid_info, 0)),
@@ -42,7 +44,8 @@ ProbabilityMap::ProbabilityMap(const double time,
 }
 ProbabilityMap* ProbabilityMap::copyEmpty() const
 {
-  return new ProbabilityMap(time_,
+  return new ProbabilityMap(dir_out_,
+                            time_,
                             start_time_,
                             min_value_,
                             low_max_,
@@ -151,7 +154,7 @@ void ProbabilityMap::show() const
 void ProbabilityMap::saveSizes(const string& base_name) const
 {
   ofstream out;
-  out.open(Settings::outputDirectory() + base_name + ".csv");
+  out.open(dir_out_ + base_name + ".csv");
   auto sizes = getSizes();
   if (!sizes.empty())
   {
@@ -179,10 +182,8 @@ string make_string(const char* name, const tm& t, const int day)
   return string(tmp);
 };
 
-void ProbabilityMap::saveAll(const Model& model,
-                             const tm& start_time,
+void ProbabilityMap::saveAll(const tm& start_time,
                              const double time,
-                             const double start_day,
                              const bool is_interim) const
 {
   lock_guard<mutex> lock(mutex_);
@@ -254,11 +255,6 @@ void ProbabilityMap::saveAll(const Model& model,
     }
     saveSizes(fix_string("sizes"));
   }
-  const auto nd = model.nd(day);
-  logging::note("Fuels for day %d are %s green-up and grass has %d%% curing",
-                day - static_cast<int>(start_day),
-                fuel::calculate_is_green(nd) ? "after" : "before",
-                fuel::calculate_grass_curing(nd));
 }
 void ProbabilityMap::saveTotal(const string& base_name) const
 {
@@ -271,23 +267,23 @@ void ProbabilityMap::saveTotal(const string& base_name) const
       with_perim.data[loc] *= 2;
     }
   }
-  with_perim.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
+  with_perim.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveTotalCount(const string& base_name) const
 {
-  all_.saveToProbabilityFile<uint32_t>(Settings::outputDirectory(), base_name, 1);
+  all_.saveToProbabilityFile<uint32_t>(dir_out_, base_name, 1);
 }
 void ProbabilityMap::saveHigh(const string& base_name) const
 {
-  high_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
+  high_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveModerate(const string& base_name) const
 {
-  med_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
+  med_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveLow(const string& base_name) const
 {
-  low_.saveToProbabilityFile<float>(Settings::outputDirectory(), base_name, static_cast<float>(numSizes()));
+  low_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::reset()
 {
