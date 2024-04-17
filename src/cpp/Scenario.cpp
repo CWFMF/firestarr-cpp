@@ -420,7 +420,7 @@ Scenario::saveObservers(
 {
   for (const auto& o : observers_)
   {
-    o->save(Settings::outputDirectory(), base_name);
+    o->save(model_->outputDirectory(), base_name);
   }
 }
 void
@@ -673,9 +673,9 @@ Scenario::run(
     static const size_t BufferSize = 64;
     char buffer[BufferSize + 1] = {0};
     sprintf(buffer, "%03zu_%06ld_extinction", id(), simulation());
-    saveProbabilities(Settings::outputDirectory(), string(buffer), extinction_thresholds_);
+    saveProbabilities(model().outputDirectory(), string(buffer), extinction_thresholds_);
     sprintf(buffer, "%03zu_%06ld_spread", id(), simulation());
-    saveProbabilities(Settings::outputDirectory(), string(buffer), spread_thresholds_by_ros_);
+    saveProbabilities(model().outputDirectory(), string(buffer), spread_thresholds_by_ros_);
   }
 #endif
   return this;

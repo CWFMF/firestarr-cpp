@@ -10,6 +10,7 @@
 namespace fs::sim
 {
 ProbabilityMap::ProbabilityMap(
+  const string dir_out,
   const double time,
   const double start_time,
   const int min_value,
@@ -18,7 +19,8 @@ ProbabilityMap::ProbabilityMap(
   const int max_value,
   const data::GridBase& grid_info
 )
-  : all_(data::GridMap<size_t>(grid_info, 0)),
+  : dir_out_(dir_out),
+    all_(data::GridMap<size_t>(grid_info, 0)),
     high_(data::GridMap<size_t>(grid_info, 0)),
     med_(data::GridMap<size_t>(grid_info, 0)),
     low_(data::GridMap<size_t>(grid_info, 0)),
@@ -34,7 +36,16 @@ ProbabilityMap::ProbabilityMap(
 ProbabilityMap*
 ProbabilityMap::copyEmpty() const
 {
-  return new ProbabilityMap(time_, start_time_, min_value_, low_max_, med_max_, max_value_, all_);
+  return new ProbabilityMap(
+    dir_out_,
+    time_,
+    start_time_,
+    min_value_,
+    low_max_,
+    med_max_,
+    max_value_,
+    all_
+  );
 }
 void
 ProbabilityMap::setPerimeter(
@@ -151,7 +162,7 @@ ProbabilityMap::saveSizes(
 ) const
 {
   ofstream out;
-  out.open(Settings::outputDirectory() + base_name + ".csv");
+  out.open(dir_out_ + base_name + ".csv");
   auto sizes = getSizes();
   if (!sizes.empty())
   {
@@ -180,10 +191,8 @@ make_string(
 
 void
 ProbabilityMap::saveAll(
-  const Model& model,
   const tm& start_time,
   const double time,
-  const double start_day,
   const bool is_interim
 ) const
 {
@@ -248,13 +257,6 @@ ProbabilityMap::saveAll(
     }
     saveSizes(fix_string("sizes"));
   }
-  const auto nd = model.nd(day);
-  logging::note(
-    "Fuels for day %d are %s green-up and grass has %d%% curing",
-    day - static_cast<int>(start_day),
-    fuel::calculate_is_green(nd) ? "after" : "before",
-    fuel::calculate_grass_curing(nd)
-  );
 }
 void
 ProbabilityMap::saveTotal(
@@ -270,51 +272,35 @@ ProbabilityMap::saveTotal(
       with_perim.data[loc] *= 2;
     }
   }
-  with_perim.saveToProbabilityFile<float>(
-    Settings::outputDirectory(),
-    base_name,
-    static_cast<float>(numSizes())
-  );
+  with_perim.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void
 ProbabilityMap::saveTotalCount(
   const string& base_name
 ) const
 {
-  all_.saveToProbabilityFile<uint32_t>(Settings::outputDirectory(), base_name, 1);
+  all_.saveToProbabilityFile<uint32_t>(dir_out_, base_name, 1);
 }
 void
 ProbabilityMap::saveHigh(
   const string& base_name
 ) const
 {
-  high_.saveToProbabilityFile<float>(
-    Settings::outputDirectory(),
-    base_name,
-    static_cast<float>(numSizes())
-  );
+  high_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void
 ProbabilityMap::saveModerate(
   const string& base_name
 ) const
 {
-  med_.saveToProbabilityFile<float>(
-    Settings::outputDirectory(),
-    base_name,
-    static_cast<float>(numSizes())
-  );
+  med_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void
 ProbabilityMap::saveLow(
   const string& base_name
 ) const
 {
-  low_.saveToProbabilityFile<float>(
-    Settings::outputDirectory(),
-    base_name,
-    static_cast<float>(numSizes())
-  );
+  low_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void
 ProbabilityMap::reset()

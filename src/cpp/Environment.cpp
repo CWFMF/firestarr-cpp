@@ -18,6 +18,7 @@ Environment::~Environment()
 }
 Environment
 Environment::load(
+  const string dir_out,
   const Point& point,
   const string& in_fuel,
   const string& in_elevation
@@ -35,6 +36,7 @@ Environment::load(
     });
     logging::debug("Waiting for grids");
     return Environment(
+      dir_out,
       *unique_ptr<FuelGrid>(fuel.get()),
       *unique_ptr<ElevationGrid>(elevation.get()),
       point
@@ -43,6 +45,7 @@ Environment::load(
   logging::warning("Loading grids synchronously");
   // HACK: need to copy strings since closures do that above
   return Environment(
+    dir_out,
     *unique_ptr<FuelGrid>(FuelGrid::readTiff(string(in_fuel), point, sim::Settings::fuelLookup())),
     *unique_ptr<ElevationGrid>(ElevationGrid::readTiff(string(in_elevation), point)),
     point
@@ -58,10 +61,20 @@ Environment::makeProbabilityMap(
   const int max_value
 ) const
 {
-  return new sim::ProbabilityMap(time, start_time, min_value, low_max, med_max, max_value, *cells_);
+  return new sim::ProbabilityMap(
+    dir_out_,
+    time,
+    start_time,
+    min_value,
+    low_max,
+    med_max,
+    max_value,
+    *cells_
+  );
 }
 Environment
 Environment::loadEnvironment(
+  const string dir_out,
   const string& path,
   const Point& point,
   const string& perimeter,
@@ -157,7 +170,7 @@ Environment::loadEnvironment(
   );
   logging::note("Projection is %s", env_info->proj4().c_str());
   // envInfo should get deleted automatically because it uses unique_ptr
-  return env_info->load(point);
+  return env_info->load(dir_out, point);
 }
 unique_ptr<Coordinates>
 Environment::findCoordinates(

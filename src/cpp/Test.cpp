@@ -17,12 +17,14 @@ class TestEnvironment : public topo::Environment
 public:
   /**
    * \brief Environment with the same data in every cell
+   * \param dir_out Folder to save outputs to
    * \param cells Constant cells
    */
   explicit TestEnvironment(
+    const string dir_out,
     data::ConstantGrid<topo::Cell>* cells
   ) noexcept
-    : Environment(cells, 0)
+    : Environment(dir_out, cells, 0)
   {
   }
 };
@@ -149,9 +151,10 @@ public:
     static_cast<void*>(reset(nullptr, nullptr, reinterpret_cast<util::SafeVector*>(&final_sizes_)));
   }
 };
+static Semaphore num_concurrent{static_cast<int>(std::thread::hardware_concurrency())};
 int
 run_test(
-  const char* output_directory,
+  const string output_directory,
   const string& fuel_name,
   const SlopeSize slope,
   const AspectSize aspect,
@@ -163,13 +166,14 @@ run_test(
   const wx::Wind& wind
 )
 {
+  // delay instantiation so things only get made when executed
+  CriticalSection _(num_concurrent);
   static const auto Latitude = 49.3911;
   static const auto Longitude = -84.7395;
   static const topo::StartPoint ForPoint(Latitude, Longitude);
   const auto start_date = 123;
   const auto end_date = start_date + static_cast<double>(num_hours) / DAY_HOURS;
-  util::make_directory_recursive(output_directory);
-  Settings::setOutputDirectory(output_directory);
+  util::make_directory_recursive(output_directory.c_str());
   const auto fuel = Settings::fuelLookup().byName(fuel_name);
   auto values = vector<topo::Cell>();
   //  values.reserve(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS);
@@ -193,9 +197,9 @@ run_test(
     TEST_PROJ4,
     std::move(values)
   };
-  TestEnvironment env(cells);
+  TestEnvironment env(output_directory, cells);
   const Location start_location(static_cast<Idx>(MAX_ROWS / 2), static_cast<Idx>(MAX_COLUMNS / 2));
-  Model model(ForPoint, &env);
+  Model model(output_directory, ForPoint, &env);
   const auto start_cell = make_shared<topo::Cell>(model.cell(start_location));
   TestWeather weather(fuel, start_date, dc, bui, dmc, ffmc, wind);
   TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather);
@@ -250,7 +254,6 @@ test(
     }
     logging::debug("Output directory is %s", output_directory.c_str());
     util::make_directory_recursive(output_directory.c_str());
-    Settings::setOutputDirectory(output_directory);
     if (i == argc - 1 && 0 == strcmp(argv[i], "all"))
     {
       const auto num_hours = DEFAULT_HOURS;
@@ -280,6 +283,9 @@ test(
         );
         const auto out_length = output_directory.length() + 28 + simple_fuel_name.length();
         const auto out = new char[out_length];
+        // do everything in parallel but not all at once because it uses too much memory for most
+        // computers
+        vector<std::future<int>> results{};
         for (SlopeSize slope = 0; slope <= 100; slope += SLOPE_INCREMENT)
         {
           for (AspectSize aspect = 0; aspect < 360; aspect += ASPECT_INCREMENT)
@@ -290,15 +296,6 @@ test(
               for (auto wind_speed = 0; wind_speed <= MAX_WIND; wind_speed += WS_INCREMENT)
               {
                 const wx::Wind wind(direction, wx::Speed(wind_speed));
-                logging::note(
-                  mask,
-                  output_directory.c_str(),
-                  simple_fuel_name.c_str(),
-                  slope,
-                  aspect,
-                  wind_direction,
-                  wind_speed
-                );
                 sprintf(
                   out,
                   mask,
@@ -309,11 +306,29 @@ test(
                   wind_direction,
                   wind_speed
                 );
-                Settings::setOutputDirectory(out);
-                result += run_test(out, fuel, slope, aspect, num_hours, dc, bui, dmc, ffmc, wind);
+                logging::note("Queueing test for %s", out);
+                results.push_back(async(
+                  launch::async,
+                  run_test,
+                  out,
+                  fuel,
+                  slope,
+                  aspect,
+                  num_hours,
+                  dc,
+                  bui,
+                  dmc,
+                  ffmc,
+                  wind
+                ));
               }
             }
           }
+        }
+        for (auto& r : results)
+        {
+          r.wait();
+          result += r.get();
         }
         delete[] out;
       }

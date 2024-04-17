@@ -54,26 +54,6 @@ public:
   void
   setRoot(const char* dirname) noexcept;
   /**
-   * \brief Path to directory that outputs are saved to
-   * \return Path to directory that outputs are saved to
-   */
-  [[nodiscard]] const char*
-  outputDirectory() const noexcept
-  {
-    return output_directory_.c_str();
-  }
-  /**
-   * \brief Set path to directory that outputs are saved to
-   * \param d Path to directory that outputs are saved to
-   */
-  void
-  setOutputDirectory(
-    const string& d
-  )
-  {
-    output_directory_ = d;
-  }
-  /**
    * \brief Root directory that raster inputs are stored in
    * \return Root directory that raster inputs are stored in
    */
@@ -309,10 +289,6 @@ private:
    * \brief Mutex for parallel access
    */
   mutex mutex_;
-  /**
-   * \brief Path to directory that outputs are saved to
-   */
-  string output_directory_;
   /**
    * \brief Root directory that raster inputs are stored in
    */
@@ -588,18 +564,6 @@ Settings::setRoot(
 ) noexcept
 {
   return SettingsImplementation::instance(false).setRoot(dirname);
-}
-const char*
-Settings::outputDirectory() noexcept
-{
-  return SettingsImplementation::instance().outputDirectory();
-}
-void
-Settings::setOutputDirectory(
-  const string& d
-)
-{
-  SettingsImplementation::instance().setOutputDirectory(d);
 }
 const char*
 Settings::rasterRoot() noexcept
