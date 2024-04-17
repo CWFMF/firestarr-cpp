@@ -393,7 +393,8 @@ protected:
       for (Idx c = 0; c < columns(); ++c)
       {
         const Location location(r, c);
-        (*result)[location.hash()] = (nullptr == fuel::fuel_by_code(cells.at(location).fuelCode()));
+        // (*result)[location.hash()] = (nullptr == fuel::fuel_by_code(cells.at(location).fuelCode()));
+        (*result)[location.hash()] = fuel::is_null_fuel(cells.at(location));
         //        if (fuel::is_null_fuel(cell(location)))
         //        {
         //          not_burnable_[location.hash()] = true;
