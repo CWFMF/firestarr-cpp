@@ -471,7 +471,11 @@ string get_path(const char* const dir_root, unordered_map<string, string>& setti
   if (!path.starts_with("/"))
   {
     // not an absolute path
-    std::filesystem::path p = (dir_root + path);
+    // if binary path starts with ./ then ignore it
+    std::filesystem::path p = (0 == strcmp("./", dir_root)
+                               || 0 == strcmp(".\\", dir_root))
+                              ? path
+                              : (dir_root + path);
 #ifdef _WIN32
     path = std::filesystem::canonical(p).generic_string();
 #else
