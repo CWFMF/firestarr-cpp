@@ -255,21 +255,21 @@ int main(const int argc, const char* const argv[])
         {
           output_directory += '/';
         }
-        Settings::setOutputDirectory(output_directory);
+        const char* dir_out = output_directory.c_str();
         struct stat info
         {
         };
-        if (stat(Settings::outputDirectory(), &info) != 0 || !(info.st_mode & S_IFDIR))
+        if (stat(dir_out, &info) != 0 || !(info.st_mode & S_IFDIR))
         {
-          tbd::util::make_directory_recursive(Settings::outputDirectory());
+          tbd::util::make_directory_recursive(dir_out);
         }
         // FIX: this just doesn't work because --log isn't parsed until later
         // if name starts with "/" then it's an absolute path, otherwise append to working directory
-        const string log_file = log_file_name.starts_with("/") ? log_file_name : (string(Settings::outputDirectory()) + log_file_name);
+        const string log_file = log_file_name.starts_with("/") ? log_file_name : (output_directory + log_file_name);
         tbd::logging::check_fatal(!Log::openLogFile(log_file.c_str()),
                                   "Can't open log file %s",
                                   log_file.c_str());
-        tbd::logging::note("Output directory is %s", Settings::outputDirectory());
+        tbd::logging::note("Output directory is %s", dir_out);
         tbd::logging::note("Output log is %s", log_file.c_str());
         string date(ARGV[CUR_ARG++]);
         tm start_date{};
@@ -384,7 +384,8 @@ int main(const int argc, const char* const argv[])
                            start_date.tm_min);
         start = start_date;
         log_args();
-        result = tbd::sim::Model::runScenarios(wx_file_name.c_str(),
+        result = tbd::sim::Model::runScenarios(output_directory,
+                                               wx_file_name.c_str(),
                                                yesterday,
                                                Settings::rasterRoot(),
                                                start_point,

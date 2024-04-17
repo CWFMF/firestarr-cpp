@@ -73,9 +73,11 @@ void Model::releaseBurnedVector(BurnedData* has_burned) const noexcept
     std::terminate();
   }
 }
-Model::Model(const topo::StartPoint& start_point,
+Model::Model(const string dir_out,
+             const topo::StartPoint& start_point,
              topo::Environment* env)
-  : start_time_(tm()),
+  : dir_out_(dir_out),
+    start_time_(tm()),
     running_since_(Clock::now()),
     time_limit_(Settings::maximumTimeSeconds()),
     env_(env),
@@ -115,7 +117,7 @@ void Model::readWeather(const wx::FwiWeather& yesterday,
   if (in.is_open())
   {
 #ifndef NDEBUG
-    const auto file_out = string(Settings::outputDirectory()) + "/wx_hourly_out_read.csv";
+    const auto file_out = string(dir_out_) + "/wx_hourly_out_read.csv";
     FILE* out = fopen(file_out.c_str(), "w");
     logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
     fprintf(out, "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
@@ -291,7 +293,7 @@ void Model::readWeather(const wx::FwiWeather& yesterday,
   //  {
   //    kv.second.emplace(static_cast<Day>(min_date - 1), yesterday);
   //  }
-  //  const auto file_out = string(Settings::outputDirectory()) + "/wx_out.csv";
+  //  const auto file_out = string(dir_out_) + "/wx_out.csv";
   //  FILE* out = fopen(file_out.c_str(), "w");
   //  logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
   //  fprintf(out, "Scenario,Day,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
@@ -682,7 +684,13 @@ double Model::saveProbabilities(map<double, ProbabilityMap*>& probabilities, con
     const auto prob = by_time.second;
     logging::debug("Setting perimeter");
     prob->setPerimeter(this->perimeter_.get());
-    prob->saveAll(*this, this->start_time_, time, start_day, is_interim);
+    prob->saveAll(this->start_time_, time, is_interim);
+    const auto day = static_cast<int>(round(time));
+    const auto n = nd(day);
+    logging::note("Fuels for day %d are %s green-up and grass has %d%% curing",
+                  day - static_cast<int>(start_day),
+                  fuel::calculate_is_green(n) ? "after" : "before",
+                  fuel::calculate_grass_curing(n));
   }
   return final_time;
 }
@@ -982,7 +990,8 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
   }
   return finalize_probabilities();
 }
-int Model::runScenarios(const char* const weather_input,
+int Model::runScenarios(const string dir_out,
+                        const char* const weather_input,
                         const wx::FwiWeather& yesterday,
                         const char* const raster_root,
                         const topo::StartPoint& start_point,
@@ -997,7 +1006,8 @@ int Model::runScenarios(const char* const weather_input,
                      start_time.tm_mday,
                      start_time.tm_hour,
                      start_time.tm_min);
-  auto env = topo::Environment::loadEnvironment(raster_root,
+  auto env = topo::Environment::loadEnvironment(dir_out,
+                                                raster_root,
                                                 start_point,
                                                 perimeter,
                                                 start_time.tm_year);
@@ -1012,7 +1022,7 @@ int Model::runScenarios(const char* const weather_input,
 #endif
   logging::info("Position is (%d, %d)", std::get<0>(*position), std::get<1>(*position));
   const Location location{std::get<0>(*position), std::get<1>(*position)};
-  Model model(start_point, &env);
+  Model model(dir_out, start_point, &env);
   // HACK: set after constructor so Test doesn't need to set
   model.start_time_ = start_time;
   auto x = 0.0;
@@ -1091,7 +1101,8 @@ void Model::outputWeather(
   map<size_t, shared_ptr<wx::FireWeather>>& weather,
   const char* file_name)
 {
-  const auto file_out = string(Settings::outputDirectory()) + file_name;
+  const auto file_out = string(dir_out_) + file_name;
+  const auto file_out_fbp = string(dir_out_) + string("fbp_") + file_name;
   FILE* out = fopen(file_out.c_str(), "w");
   logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
   fprintf(out, "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\n");
