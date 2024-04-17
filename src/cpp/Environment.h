@@ -64,16 +64,19 @@ class Environment
 public:
   /**
    * \brief Load from rasters in folder that have same projection as Perimeter
+   * \param dir_out Folder to save outputs to
    * \param path Folder to read rasters from
    * \param point Origin point
    * \param perimeter Perimeter to use projection from
    * \param year Year to look for rasters for if available
    * \return Environment
    */
-  [[nodiscard]] static Environment loadEnvironment(const string& path,
-                                                   const Point& point,
-                                                   const string& perimeter,
-                                                   int year);
+  [[nodiscard]] static Environment loadEnvironment(
+    const string dir_out,
+    const string& path,
+    const Point& point,
+    const string& perimeter,
+    int year);
   /**
    * \brief Load from rasters
    * \param point Origin point
@@ -81,7 +84,8 @@ public:
    * \param in_elevation Elevation raster
    * \return Environment
    */
-  [[nodiscard]] static Environment load(const Point& point,
+  [[nodiscard]] static Environment load(const string dir_out,
+                                        const Point& point,
                                         const string& in_fuel,
                                         const string& in_elevation);
   ~Environment();
@@ -413,10 +417,12 @@ protected:
    * \param elevation Elevation raster
    */
   Environment(
+    const string dir_out,
     const FuelGrid& fuel,
     const ElevationGrid& elevation,
     const Point& point)
-    : cells_(makeCells(fuel,
+    : dir_out_(dir_out),
+      cells_(makeCells(fuel,
                        elevation)),
       not_burnable_(initializeNotBurnable(fuel))
   {
@@ -426,25 +432,25 @@ protected:
       const auto lookup = sim::Settings::fuelLookup();
       if (sim::Settings::saveAsAscii())
       {
-        fuel.saveToAsciiFile(string(sim::Settings::outputDirectory()),
-                            "fuel",
-                            [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
-        elevation.saveToAsciiFile(sim::Settings::outputDirectory(), "dem");
+        fuel.saveToAsciiFile(dir_out,
+                             "fuel",
+                             [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
+        elevation.saveToAsciiFile(dir_out, "dem");
         // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
-        elevation.saveToAsciiFile(string(sim::Settings::outputDirectory()),
-                                "simulation_area",
-                                [](const ElevationSize) { return 3; });
+        elevation.saveToAsciiFile(dir_out,
+                                  "simulation_area",
+                                  [](const ElevationSize) { return 3; });
       }
       else
       {
-        fuel.saveToTiffFile(string(sim::Settings::outputDirectory()),
+        fuel.saveToTiffFile(dir_out,
                             "fuel",
                             [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
-        elevation.saveToTiffFile(sim::Settings::outputDirectory(), "dem");
+        elevation.saveToTiffFile(dir_out, "dem");
         // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
-        elevation.saveToTiffFile(string(sim::Settings::outputDirectory()),
-                                "simulation_area",
-                                [](const ElevationSize) { return 3; });
+        elevation.saveToTiffFile(dir_out,
+                                 "simulation_area",
+                                 [](const ElevationSize) { return 3; });
       }
     }
     logging::debug("Done saving fuel grid");
@@ -460,9 +466,11 @@ protected:
    * \param cells Cells representing Environment
    * \param elevation Elevation at origin Point
    */
-  Environment(data::ConstantGrid<Cell>* cells,
+  Environment(const string dir_out,
+              data::ConstantGrid<Cell>* cells,
               const ElevationSize elevation) noexcept
-    : cells_(cells),
+    : dir_out_(dir_out),
+      cells_(cells),
       not_burnable_(false),
       elevation_(elevation)
   {
@@ -476,6 +484,7 @@ protected:
     //    }
   }
 private:
+  const string dir_out_;
   /**
    * \brief Cells representing Environment
    */

@@ -75,10 +75,12 @@ public:
     bool flipped) const;
   /**
    * \brief Load the full Environment using the given FuelLookup to determine fuels
+   * \param dir_out Folder to save outputs to
    * \param point Origin Point
    * \return
    */
-  [[nodiscard]] Environment load(const Point& point) const;
+  [[nodiscard]] Environment load(const string dir_out,
+                                 const Point& point) const;
   /**
    * \brief Number of rows in grid
    * \return Number of rows in grid

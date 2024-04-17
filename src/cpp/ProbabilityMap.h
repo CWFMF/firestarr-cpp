@@ -39,6 +39,7 @@ public:
   ProbabilityMap& operator=(ProbabilityMap&& rhs) noexcept = delete;
   /**
    * \brief Constructor
+   * \param dir_out Directory to save outputs to
    * \param time Time in simulation this ProbabilityMap represents
    * \param start_time Start time of simulation
    * \param min_value Lower bound of 'low' intensity range
@@ -47,7 +48,8 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \param grid_info GridBase to use for extent of this
    */
-  ProbabilityMap(double time,
+  ProbabilityMap(const string dir_out,
+                 double time,
                  double start_time,
                  int min_value,
                  int low_max,
@@ -100,15 +102,11 @@ public:
   void saveSizes(const string& base_name) const;
   /**
    * \brief Save total, low, moderate, and high maps, and output information to log
-   * \param model Model this was derived from
    * \param start_time Start time of simulation
    * \param time Time for these maps
-   * \param start_day Day that simulation started
    */
-  void saveAll(const Model& model,
-               const tm& start_time,
+  void saveAll(const tm& start_time,
                double time,
-               double start_day,
                const bool is_interim) const;
   /**
    * \brief Save map representing all intensities
@@ -140,6 +138,10 @@ public:
    */
   void reset();
 private:
+  /**
+   * \brief Directory to write outputs to
+   */
+  const string dir_out_;
   /**
    * \brief Map representing all intensities
    */
