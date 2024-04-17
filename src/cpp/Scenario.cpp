@@ -419,7 +419,7 @@ void Scenario::evaluate(const Event& event)
       // if (tbd::logging::Log::getLogLevel() >= tbd::logging::LOG_VERBOSE)
       {
         const auto ymd = tbd::make_timestamp(model().year(), event.time());
-        log_note("Handling spread event for time %f representing %s with %ld points", event.time(), ymd.c_str(), points_.size());
+        // log_note("Handling spread event for time %f representing %s with %ld points", event.time(), ymd.c_str(), points_.size());
       }
 #endif
       scheduleFireSpread(event);

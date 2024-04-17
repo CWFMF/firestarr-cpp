@@ -201,15 +201,15 @@ HorizontalAdjustment horizontal_adjustment(
   double angle = 0;
   double last_theta = 0;
   double cur_x = 1.0;
-  double last_angle = 0;
+  // double last_angle = 0;
   // widest point should be at origin, which is 'c' away from origin
   double widest = atan2(flank_ros, c);
-  printf("head_ros = %f, back_ros = %f, flank_ros = %f, c = %f, widest = %f\n",
-         head_ros,
-         back_ros,
-         flank_ros,
-         c,
-         util::to_degrees(widest));
+  // printf("head_ros = %f, back_ros = %f, flank_ros = %f, c = %f, widest = %f\n",
+  //        head_ros,
+  //        back_ros,
+  //        flank_ros,
+  //        c,
+  //        util::to_degrees(widest));
   // double step = 1;
   // double last_step = 0;
   size_t num_angles = 0;
@@ -222,14 +222,14 @@ HorizontalAdjustment horizontal_adjustment(
     angle = ellipse_angle(length_to_breadth, theta);
     added = add_offsets_calc_ros(angle);
     cur_x = cos(theta);
-    printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
-           cur_x,
-           util::to_degrees(theta),
-           util::to_degrees(angle),
-           util::to_degrees(last_theta),
-           util::to_degrees(last_angle));
+    // printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
+    //        cur_x,
+    //        util::to_degrees(theta),
+    //        util::to_degrees(angle),
+    //        util::to_degrees(last_theta),
+    //        util::to_degrees(last_angle));
     last_theta = theta;
-    last_angle = angle;
+    // last_angle = angle;
     if (theta > (STEP_MAX / 2.0))
     {
       step_max = STEP_MAX;
@@ -250,14 +250,14 @@ HorizontalAdjustment horizontal_adjustment(
     angle = ellipse_angle(length_to_breadth, theta);
     added = add_offsets(util::RAD_090, flank_ros * sqrt(a_sq_sub_c_sq) / a);
     cur_x = cos(theta);
-    printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
-           cur_x,
-           util::to_degrees(theta),
-           util::to_degrees(angle),
-           util::to_degrees(last_theta),
-           util::to_degrees(last_angle));
+    // printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
+    //        cur_x,
+    //        util::to_degrees(theta),
+    //        util::to_degrees(angle),
+    //        util::to_degrees(last_theta),
+    //        util::to_degrees(last_angle));
     last_theta = theta;
-    last_angle = angle;
+    // last_angle = angle;
   }
   // just because 5 seems good for the front and 10 for the back
   step_max = 2.0 * STEP_MAX;
@@ -283,14 +283,14 @@ HorizontalAdjustment horizontal_adjustment(
     }
     added = add_offsets_calc_ros(angle);
     cur_x = cos(theta);
-    printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
-           cur_x,
-           util::to_degrees(theta),
-           util::to_degrees(angle),
-           util::to_degrees(last_theta),
-           util::to_degrees(last_angle));
+    // printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
+    //        cur_x,
+    //        util::to_degrees(theta),
+    //        util::to_degrees(angle),
+    //        util::to_degrees(last_theta),
+    //        util::to_degrees(last_angle));
     last_theta = theta;
-    last_angle = angle;
+    // last_angle = angle;
     cur_x -= step_x;
   }
   if (added)
