@@ -517,7 +517,7 @@ Scenario::operator=(
 void
 Scenario::burn(
   const Event& event,
-  const IntensitySize burn_intensity
+  const IntensitySize
 )
 {
 #ifndef NDEBUG
