@@ -323,7 +323,7 @@ SpreadInfo::SpreadInfo(const Scenario& scenario,
     };
   const auto add_offsets_calc_ros =
     [&add_offsets, &calculate_ros](const double angle_radians) { return add_offsets(angle_radians, calculate_ros(angle_radians)); };
-  bool added = add_offset(raz, head_ros_);
+  bool added = true;
   constexpr size_t STEP = 10;
   size_t i = STEP;
   while (added && i < 90)
