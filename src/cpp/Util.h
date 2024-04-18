@@ -168,9 +168,17 @@ to_radians(
  */
 static constexpr double RAD_360 = to_radians(360);
 /**
+ * \brief 270 degrees in radians
+ */
+static constexpr double RAD_270 = to_radians(270);
+/**
  * \brief 180 degrees in radians
  */
 static constexpr double RAD_180 = to_radians(180);
+/**
+ * \brief 90 degrees in radians
+ */
+static constexpr double RAD_090 = to_radians(90);
 /**
  * \brief Convert radians to degrees
  * \param radians Value in radians
