@@ -270,6 +270,41 @@ template <unsigned int N>
   return round(value * b) / b;
 }
 /**
+ * \brief Convert date and time into tm struct
+ * \param year year
+ * \param month month
+ * \param day day of month
+ * \param hour hour
+ * \param minute minute
+ * \return tm representing date and time
+ */
+tm to_tm(const int year,
+         const int month,
+         const int day,
+         const int hour,
+         const int minute);
+/**
+ * \brief Convert tm struct into internal represenation
+ * \param t tm struct to convert
+ * \return internal time representation
+ */
+
+double to_time(const tm& t);
+/**
+ * \brief Convert date and time into internal represenation
+ * \param year year
+ * \param month month
+ * \param day day of month
+ * \param hour hour
+ * \param minute minute
+ * \return internal time representation
+ */
+double to_time(const int year,
+               const int month,
+               const int day,
+               const int hour,
+               const int minute);
+/**
  * \brief Read a date from the given stream
  * \param iss Stream to read from
  * \param str string to read date into
