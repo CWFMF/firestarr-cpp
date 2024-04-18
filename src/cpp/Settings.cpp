@@ -101,10 +101,17 @@ public:
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] double
   minimumRos() const noexcept
   {
     return minimum_ros_;
+  }
+  void
+  setMinimumRos(
+    const double value
+  ) noexcept
+  {
+    minimum_ros_ = value;
   }
   /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
@@ -321,7 +328,7 @@ private:
   /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    */
-  double minimum_ros_;
+  atomic<double> minimum_ros_;
   /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    */
@@ -692,6 +699,13 @@ double
 Settings::minimumRos() noexcept
 {
   return SettingsImplementation::instance().minimumRos();
+}
+void
+Settings::setMinimumRos(
+  const double value
+) noexcept
+{
+  SettingsImplementation::instance().setMinimumRos(value);
 }
 double
 Settings::maximumSpreadDistance() noexcept
