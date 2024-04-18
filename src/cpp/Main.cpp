@@ -302,6 +302,7 @@ main(
       "Run deterministically (100% chance of spread & survival)"
     );
     register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
+    register_flag(&Settings::setSavePoints, true, "--points", "Save simulation points to file");
     register_flag(
       &Settings::setSaveIntensity,
       false,

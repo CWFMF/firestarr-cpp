@@ -21,6 +21,7 @@
 #include "FireSpread.h"
 namespace fs::sim
 {
+class LogPoints;
 class IObserver;
 class Event;
 using PointSet = vector<InnerPos>;
@@ -710,6 +711,7 @@ protected:
    * \brief Whether this has been cancelled.
    */
   bool cancelled_ = false;
+  shared_ptr<LogPoints> log_points_;
   /**
    * \brief How many times point spread event has happened
    */
