@@ -26,7 +26,9 @@ enum SpreadResult
   SPREAD_SCHEDULED
 };
 int
-calculate_nd_for_point(int elevation, const topo::Point& point) noexcept;
+calculate_nd_ref_for_point(const int elevation, const topo::Point& point) noexcept;
+int
+calculate_nd_for_point(const Day day, const int elevation, const topo::Point& point);
 /**
  * \brief Information regarding spread within a Cell for a specific Scenario and time.
  */
@@ -236,9 +238,10 @@ public:
   [[nodiscard]] constexpr double
   foliarMoisture() const
   {
-    return nd_ >= 50             ? 120.0
-         : nd_ >= 30 && nd_ < 50 ? 32.9 + 3.17 * nd_ - 0.0288 * nd_ * nd_
-                                 : 85.0 + 0.0189 * nd_ * nd_;
+    // don't need to check  `&& nd_ < 50` in second part because of reordering
+    return nd_ >= 50 ? 120.0
+         : nd_ >= 30 ? 32.9 + 3.17 * nd_ - 0.0288 * nd_ * nd_
+                     : 85.0 + 0.0189 * nd_ * nd_;
   }
   /**
    * \brief Whether or not there is no spread for given conditions
