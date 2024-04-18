@@ -78,7 +78,9 @@ Model::Model(const topo::StartPoint& start_point,
   : start_time_(tm()),
     running_since_(Clock::now()),
     time_limit_(Settings::maximumTimeSeconds()),
-    env_(env)
+    env_(env),
+    latitude_(start_point.latitude()),
+    longitude_(start_point.longitude())
 {
   logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
   const auto nd_for_point =
