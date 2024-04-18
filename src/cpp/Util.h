@@ -490,4 +490,17 @@ void month_and_day(const int year, const size_t day_of_year, size_t* month, size
  * @return YYYY-mm-dd HH:00 time string for given time
  */
 [[nodiscard]] string make_timestamp(const int year, const double time);
+/**
+ * Convert circle angle to the angle that would be on an ellipse with
+ * given length-to-breadth ratio
+ * @param length_to_breadth length-to-breadth ratio
+ * @param theta direction to convert to ellipse direction (radians)
+ */
+[[nodiscard]] inline double ellipse_angle(const double length_to_breadth,
+                                          const double theta)
+{
+  return (util::fix_radians(
+    atan2(sin(theta) / length_to_breadth,
+          cos(theta))));
+}
 }
