@@ -455,6 +455,14 @@ private:
   //  *
   //  */
   std::chrono::steady_clock::time_point last_checked_;
+  /**
+   * \brief Latitude to use for any calcualtions
+   */
+  double latitude_;
+  /**
+   * \brief Longitude to use for any calcualtions
+   */
+  double longitude_;
 };
 }
 }
