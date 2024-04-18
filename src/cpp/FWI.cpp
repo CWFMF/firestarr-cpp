@@ -205,7 +205,7 @@ calculate_ffmc(
 ) noexcept
 {
   //'''/* 1  '*/
-  auto mo = 147.2 * (101.0 - ffmc_previous.asDouble()) / (59.5 + ffmc_previous.asDouble());
+  auto mo = ffmc_to_moisture(ffmc_previous);
   if (rain.asDouble() > 0.5)
   {
     //'''/* 2  '*/
@@ -225,7 +225,7 @@ calculate_ffmc(
   }
   const auto m = find_m(temperature, rh, wind, mo);
   //'''/* 10 '*/
-  return (59.5 * (250.0 - m) / (147.2 + m));
+  return moisture_to_ffmc(m);
 }
 Ffmc::Ffmc(
   const Temperature& temperature,
@@ -368,7 +368,7 @@ calculate_isi(
   //'''/* 24  '*/
   const auto f_wind = exp(0.05039 * wind.asDouble());
   //'''/* 1   '*/
-  const auto m = 147.2 * (101 - ffmc.asDouble()) / (59.5 + ffmc.asDouble());
+  const auto m = ffmc_to_moisture(ffmc);
   //'''/* 25  '*/
   const auto f_f = 91.9 * exp(-0.1386 * m) * (1.0 + pow(m, 5.31) / 49300000.0);
   //'''/* 26  '*/
@@ -606,9 +606,7 @@ ffmc_effect(
   const Ffmc& ffmc
 ) noexcept
 {
-  const auto v = ffmc.asDouble();
-  // FIX: use higher precision constant
-  const auto mc = 147.2 * (101.0 - v) / (59.5 + v);
+  const auto mc = ffmc_to_moisture(ffmc);
   return 91.9 * exp(-0.1386 * mc) * (1 + pow(mc, 5.31) / 49300000.0);
 }
 FwiWeather::FwiWeather(
@@ -632,7 +630,7 @@ FwiWeather::FwiWeather(
     bui_(Bui(bui.asDouble(), dmc, dc)),
     fwi_(Fwi(fwi.asDouble(), isi, bui)),
     // FIX: this is duplicated in ffmc_effect
-    mc_ffmc_pct_(147.2 * (101 - ffmc.asDouble()) / (59.5 + ffmc.asDouble())),
+    mc_ffmc_pct_(ffmc_to_moisture(ffmc)),
     mc_dmc_pct_(exp((dmc.asDouble() - 244.72) / -43.43) + 20),
     ffmc_effect_(ffmc_effect(ffmc))
 {
