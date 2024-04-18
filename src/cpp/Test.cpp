@@ -149,12 +149,45 @@ public:
     static_cast<void*>(reset(nullptr, nullptr, reinterpret_cast<util::SafeVector*>(&final_sizes_)));
   }
 };
+void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::FuelType* fuel)
+{
+  constexpr auto FMT_FBP_OUT = "%8.2f%8.1f%8g%8.1f%8g%8.1f%8.1f%8g%8.1f%8.1f%8.1f%8s%8.3f%8.3f%8c%8ld%8g%8.4g%8.4g%8.4g%s";
+  static const vector<const char*> HEADERS{"PREC", "TEMP", "RH", "WS", "WD", "FFMC", "DMC", "DC", "ISI", "BUI", "FWI", "FUEL", "CFB", "CFC", "FD", "HFI", "RAZ", "ROS", "SFC", "TFC"};
+  printf("Calculated spread is:\n");
+  for (auto h : HEADERS)
+  {
+    printf("%8s", h);
+  }
+  printf("\n");
+  printf(FMT_FBP_OUT,
+         w->prec().asDouble(),
+         w->temp().asDouble(),
+         w->rh().asDouble(),
+         w->wind().speed().asDouble(),
+         w->wind().direction().asDouble(),
+         w->ffmc().asDouble(),
+         w->dmc().asDouble(),
+         w->dc().asDouble(),
+         w->isi().asDouble(),
+         w->bui().asDouble(),
+         w->fwi().asDouble(),
+         fuel->name(),
+         spread.crownFractionBurned(),
+         spread.crownFuelConsumption(),
+         spread.fireDescription(),
+         static_cast<size_t>(spread.maxIntensity()),
+         spread.headDirection().asDegrees(),
+         spread.headRos(),
+         spread.surfaceFuelConsumption(),
+         spread.totalFuelConsumption(),
+         "\r\n");
+}
 static Semaphore num_concurrent{static_cast<int>(std::thread::hardware_concurrency())};
 int run_test(const string output_directory,
              const string& fuel_name,
              const SlopeSize slope,
              const AspectSize aspect,
-             const int num_hours,
+             const double num_hours,
              const wx::Dc& dc,
              const wx::Bui& bui,
              const wx::Dmc& dmc,
@@ -163,10 +196,17 @@ int run_test(const string output_directory,
 {
   // delay instantiation so things only get made when executed
   CriticalSection _(num_concurrent);
+  const auto year = 2020;
+  const auto month = 6;
+  const auto day = 15;
+  const auto hour = 12;
+  const auto minute = 0;
+  const auto t = util::to_tm(year, month, day, hour, minute);
+  printf("DJ = %d\n", t.tm_yday);
   static const auto Latitude = 49.3911;
   static const auto Longitude = -84.7395;
   static const topo::StartPoint ForPoint(Latitude, Longitude);
-  const auto start_date = 123;
+  const auto start_date = t.tm_yday;
   const auto end_date = start_date + static_cast<double>(num_hours) / DAY_HOURS;
   util::make_directory_recursive(output_directory.c_str());
   const auto fuel = Settings::fuelLookup().byName(fuel_name);
@@ -198,11 +238,13 @@ int run_test(const string output_directory,
   const auto start_cell = make_shared<topo::Cell>(model.cell(start_location));
   TestWeather weather(fuel, start_date, dc, bui, dmc, ffmc, wind);
   TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather);
+  const auto w = weather.at(start_date);
   auto info = SpreadInfo(scenario,
                          start_date,
                          start_cell->key(),
                          model.nd(start_date),
-                         weather.at(start_date));
+                         w);
+  showSpread(info, w, fuel);
   map<double, ProbabilityMap*> probabilities{};
   logging::debug("Starting simulation");
   // NOTE: don't want to reset first because TestScenario handles what that does
@@ -218,20 +260,29 @@ const SlopeSize SLOPE_INCREMENT = 60;
 const int WS_INCREMENT = 5;
 const int WD_INCREMENT = 45;
 const int MAX_WIND = 50;
-const int DEFAULT_HOURS = 10;
+const double DEFAULT_HOURS = 10.0;
 const vector<string> FUEL_NAMES{"C-2", "O-1a", "M-1/M-2 (25 PC)", "S-1", "C-3"};
 int test(const int argc, const char* const argv[])
 {
+  // FIX: I think this does a lot of the same things as the test code is doing because it was
+  // derived from this code
+  Settings::setDeterministic(true);
+  Settings::setMinimumRos(0.0);
+  Settings::setSavePoints(false);
   const wx::Dc dc(275);
   const wx::Dmc dmc(35.5);
-  const wx::Bui bui(54, dmc, dc);
+  const wx::Bui bui(dmc, dc);
   const wx::Ffmc ffmc(90);
+  static const wx::Temperature TEMP(20.0);
+  static const wx::RelativeHumidity RH(30.0);
+  static const wx::Precipitation PREC(0.0);
   assert(argc > 1 && 0 == strcmp(argv[1], "test"));
   try
   {
     // increase logging level because there's no way to on command line right now
     logging::Log::increaseLogLevel();
-    logging::Log::increaseLogLevel();
+    // logging::Log::increaseLogLevel();
+    // logging::Log::increaseLogLevel();
     auto result = 0;
     // HACK: use a variable and ++ so in case arg indices change
     auto i = 1;
@@ -317,7 +368,7 @@ int test(const int argc, const char* const argv[])
     }
     else
     {
-      const auto num_hours = argc > i ? stoi(argv[i++]) : DEFAULT_HOURS;
+      const auto num_hours = argc > i ? stod(argv[i++]) : DEFAULT_HOURS;
       const auto slope = static_cast<SlopeSize>(argc > i ? stoi(argv[i++]) : 0);
       const auto aspect = static_cast<AspectSize>(argc > i ? stoi(argv[i++]) : 0);
       const wx::Speed wind_speed(argc > i ? stoi(argv[i++]) : 20);
