@@ -229,6 +229,48 @@ public:
     head_ros_ = -1;
     nd_ = -1;
   };
+  SpreadInfo(
+    const int year,
+    const int month,
+    const int day,
+    const int hour,
+    const int minute,
+    const double latitude,
+    const double longitude,
+    const ElevationSize elevation,
+    const SlopeSize slope,
+    const AspectSize aspect,
+    const char* fuel_name,
+    const wx::FwiWeather* weather);
+  SpreadInfo(
+    const tm& start_date,
+    const double latitude,
+    const double longitude,
+    const ElevationSize elevation,
+    const SlopeSize slope,
+    const AspectSize aspect,
+    const char* fuel_name,
+    const wx::FwiWeather* weather);
+  double crownFractionBurned() const
+  {
+    return cfb_;
+  }
+  double crownFuelConsumption() const
+  {
+    return cfc_;
+  }
+  char fireDescription() const
+  {
+    return cfb_ >= 0.9 ? 'C' : (cfb_ < 0.1 ? 'S' : 'I');
+  }
+  double surfaceFuelConsumption() const
+  {
+    return sfc_;
+  }
+  double totalFuelConsumption() const
+  {
+    return tfc_;
+  }
 private:
   // HACK: have private constructor so is_spreading() can short-circuit the calculation,
   // but nothing else can get a partially constructed SpreadInfo object
@@ -248,6 +290,30 @@ private:
              const wx::FwiWeather* weather,
              const wx::FwiWeather* weather_daily);
   /**
+   * Actual fire spread calculation without needing to worry about settings or scenarios
+   */
+  SpreadInfo(double time,
+             double min_ros,
+             double cell_size,
+             const SlopeSize slope,
+             const AspectSize aspect,
+             const char* fuel_name,
+             int nd,
+             const wx::FwiWeather* weather);
+  SpreadInfo(double time,
+             double min_ros,
+             double cell_size,
+             const topo::SpreadKey& key,
+             int nd,
+             const wx::FwiWeather* weather);
+  SpreadInfo(double time,
+             double min_ros,
+             double cell_size,
+             const topo::SpreadKey& key,
+             int nd,
+             const wx::FwiWeather* weather,
+             const wx::FwiWeather* weather_daily);
+  /**
    * Do initial spread calculations
    * \return Initial head ros calculation (-1 for none)
    */
@@ -255,8 +321,6 @@ private:
                         const wx::FwiWeather& weather,
                         double& ffmc_effect,
                         double& wsv,
-                        bool& is_crown,
-                        double& sfc,
                         double& rso,
                         double& raz,
                         const fuel::FuelType* const fuel,
@@ -290,6 +354,11 @@ private:
    * \brief Head fire rate of spread (m/min)
    */
   double head_ros_;
+  double cfb_;
+  double cfc_;
+  double tfc_;
+  double sfc_;
+  bool is_crown_;
   /**
    * \brief Head fire spread direction
    */
