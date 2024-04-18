@@ -1,4 +1,5 @@
 /* Copyright (c) Queen's Printer for Ontario, 2020. */
+/* Copyright (c) His Majesty the King in Right of Canada as represented by the Minister of Natural Resources, 2024. */
 
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
@@ -40,6 +41,9 @@ void show_debug_settings()
 #endif
 #ifdef DEBUG_GRIDS
   printf_centered("DEBUG_GRIDS");
+#endif
+#ifdef DEBUG_POINTS
+  printf_centered("DEBUG_POINTS");
 #endif
 #ifdef DEBUG_PROBABILITY
   printf_centered("DEBUG_PROBABILITY");
