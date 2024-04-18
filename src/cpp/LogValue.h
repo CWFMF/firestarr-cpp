@@ -17,11 +17,28 @@ public:
   using Index::Index;
   //! @endcond
 };
-static constexpr LogValue LOG_0_70{-0.15490195998574316928778374140736};
-static constexpr LogValue LOG_0_75{-0.12493873660829995313244988619387};
-static constexpr LogValue LOG_0_80{-0.09691001300805641435878331582652};
-static constexpr LogValue LOG_0_85{-0.07058107428570726667356900039616};
-static constexpr LogValue LOG_0_90{-0.04575749056067512540994419348977};
-static constexpr LogValue LOG_1_00{0};
+static constexpr LogValue LOG_0_70{-0.35667494393873245};
+static constexpr LogValue LOG_0_75{-0.2876820724517809};
+static constexpr LogValue LOG_0_80{-0.2231435513142097};
+static constexpr LogValue LOG_0_85{-0.16251892949777494};
+static constexpr LogValue LOG_0_90{-0.10536051565782628};
+static constexpr LogValue LOG_1_00{0.0};
+#ifndef _WIN32
+#if __cpp_lib_constexpr_cmath >= 202202L   // C++23
+// windows won't use constexpr with log but we can double check numbers are right when compiling
+// elsewhere
+static constexpr LogValue LOG_0_70_CALC{log(0.7)};
+static constexpr LogValue LOG_0_75_CALC{log(0.75)};
+static constexpr LogValue LOG_0_80_CALC{log(0.8)};
+static constexpr LogValue LOG_0_85_CALC{log(0.85)};
+static constexpr LogValue LOG_0_90_CALC{log(0.9)};
+static constexpr LogValue LOG_1_00_CALC{log(1.0)};
+static_assert(abs((LOG_0_70 - LOG_0_70_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_75 - LOG_0_75_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_80 - LOG_0_80_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_90 - LOG_0_90_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_1_00 - LOG_1_00_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+#endif
+#endif
 }
 #endif
