@@ -208,7 +208,7 @@ public:
     const SpreadInfo& spread
   ) const noexcept override
   {
-    return 0.001 * pow(cbh() * (460.0 + 25.9 * spread.foliarMoisture()), 1.5);
+    return 0.001 * pow(cbh(), 1.5) * pow(460.0 + 25.9 * spread.foliarMoisture(), 1.5);
   }
 
   /**
