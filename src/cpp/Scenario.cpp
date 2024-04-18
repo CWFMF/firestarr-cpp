@@ -451,7 +451,7 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
   }
   return *this;
 }
-void Scenario::burn(const Event& event, const IntensitySize burn_intensity)
+void Scenario::burn(const Event& event, const IntensitySize)
 {
 #ifndef NDEBUG
   log_check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
