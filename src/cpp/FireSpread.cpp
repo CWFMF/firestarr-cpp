@@ -38,13 +38,19 @@ SlopeTableArray make_slope_table() noexcept
   return result;
 }
 const SlopeTableArray SpreadInfo::SlopeTable = make_slope_table();
-int calculate_nd_for_point(const int elevation, const topo::Point& point) noexcept
+int calculate_nd_ref_for_point(const int elevation, const topo::Point& point) noexcept
 {
+  // NOTE: cffdrs R package stores longitude West as a positive, so this would be `- long`
+  const auto latn = elevation <= 0
+                    ? (46.0 + 23.4 * exp(-0.0360 * (150 + point.longitude())))
+                    : (43.0 + 33.7 * exp(-0.0351 * (150 + point.longitude())));
+  // add 0.5 to round by truncating
   return static_cast<int>(truncl(
-    elevation < 0
-      ? 0.5 + 151.0 * point.latitude() / (23.4 * exp(-0.0360 * (150 - point.longitude())) + 46.0)
-      : 0.5 + 142.1 * point.latitude() / (33.7 * exp(-0.0351 * (150 - point.longitude())) + 43.0)
-          + 0.0172 * elevation));
+    0.5 + (elevation <= 0 ? 151.0 * (point.latitude() / latn) : 142.1 * (point.latitude() / latn) + 0.0172 * elevation)));
+}
+int calculate_nd_for_point(const Day day, const int elevation, const topo::Point& point)
+{
+  return static_cast<int>(abs(day - calculate_nd_ref_for_point(elevation, point)));
 }
 static double calculate_standard_back_isi_wsv(const double v) noexcept
 {
