@@ -82,10 +82,10 @@ Model::Model(const topo::StartPoint& start_point,
 {
   logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
   const auto nd_for_point =
-    calculate_nd_for_point(env->elevation(), start_point);
+    calculate_nd_ref_for_point(env->elevation(), start_point);
   for (auto day = 0; day < MAX_DAYS; ++day)
   {
-    nd_.at(static_cast<size_t>(day)) = static_cast<int>(day - nd_for_point);
+    nd_.at(static_cast<size_t>(day)) = static_cast<int>(abs(day - nd_for_point));
     logging::verbose("Day %d has nd %d, is%s green, %d%% curing",
                      day,
                      nd_.at(static_cast<size_t>(day)),
