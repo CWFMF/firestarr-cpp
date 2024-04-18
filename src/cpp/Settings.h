@@ -139,6 +139,7 @@ public:
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */
   [[nodiscard]] static double minimumRos() noexcept;
+  static void setMinimumRos(double value) noexcept;
   /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    * \return Maximum distance that the fire is allowed to spread in one step (# of cells)
