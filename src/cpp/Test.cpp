@@ -334,9 +334,10 @@ int test(const int argc, const char* const argv[])
                         wind_direction,
                         wind_speed);
                 logging::note("Queueing test for %s", out);
+                // need to make string now because it'll be another value if we wait
                 results.push_back(async(launch::async,
                                         run_test,
-                                        out,
+                                        string(out),
                                         fuel,
                                         slope,
                                         aspect,
