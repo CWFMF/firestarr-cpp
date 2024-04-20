@@ -7,6 +7,7 @@
 #include "Log.h"
 #include <regex>
 #include <filesystem>
+
 TIFF*
 GeoTiffOpen(
   const char* const filename,
@@ -89,6 +90,7 @@ namespace fs::util
 {
 void
 read_directory(
+  const bool for_files,
   const string& name,
   vector<string>* v,
   const string& match
@@ -100,7 +102,8 @@ read_directory(
   for (const auto& entry : std::filesystem::directory_iterator(name))
   {
     logging::verbose(("Checking if file: " + entry.path().string()).c_str());
-    if (std::filesystem::is_regular_file(entry))
+    if ((for_files && std::filesystem::is_regular_file(entry))
+        || (!for_files && std::filesystem::is_directory(entry)))
     {
       logging::extensive(("Checking regex match: " + entry.path().string()).c_str());
       if (std::regex_match(entry.path().string(), re))
@@ -113,10 +116,28 @@ read_directory(
 void
 read_directory(
   const string& name,
+  vector<string>* v,
+  const string& match
+)
+{
+  read_directory(true, name, v, match);
+}
+void
+read_directory(
+  bool for_files,
+  const string& name,
   vector<string>* v
 )
 {
-  read_directory(name, v, "/*");
+  read_directory(for_files, name, v, "*");
+}
+void
+read_directory(
+  const string& name,
+  vector<string>* v
+)
+{
+  read_directory(name, v, "*");
 }
 vector<string>
 find_rasters(
