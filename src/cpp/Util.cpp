@@ -58,7 +58,7 @@ int sxprintf(char* buffer, size_t N, const char* format, ...)
 }
 namespace tbd::util
 {
-void read_directory(const string& name, vector<string>* v, const string& match)
+void read_directory(const bool for_files, const string& name, vector<string>* v, const string& match)
 {
   string full_match = ".*/" + match;
   logging::verbose(("Matching '" + full_match + "'").c_str());
@@ -66,7 +66,9 @@ void read_directory(const string& name, vector<string>* v, const string& match)
   for (const auto& entry : fs::directory_iterator(name))
   {
     logging::verbose(("Checking if file: " + entry.path().string()).c_str());
-    if (fs::is_regular_file(entry))
+    if (
+      (for_files && fs::is_regular_file(entry))
+      || (!for_files && fs::is_directory(entry)))
     {
       logging::extensive(("Checking regex match: " + entry.path().string()).c_str());
       if (std::regex_match(entry.path().string(), re))
@@ -76,9 +78,17 @@ void read_directory(const string& name, vector<string>* v, const string& match)
     }
   }
 }
+void read_directory(const string& name, vector<string>* v, const string& match)
+{
+  read_directory(true, name, v, match);
+}
+void read_directory(bool for_files, const string& name, vector<string>* v)
+{
+  read_directory(for_files, name, v, "*");
+}
 void read_directory(const string& name, vector<string>* v)
 {
-  read_directory(name, v, "/*");
+  read_directory(name, v, "*");
 }
 vector<string> find_rasters(const string& dir, const int year)
 {
