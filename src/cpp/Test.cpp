@@ -363,6 +363,8 @@ int test(const int argc, const char* const argv[])
       show_options("aspects", aspects);
       show_options("wind directions", wind_directions);
       show_options("wind speeds", wind_speeds);
+      // do everything in parallel but not all at once because it uses too much memory for most computers
+      vector<std::future<int>> results{};
       for (const auto& fuel : FUEL_NAMES)
       {
         auto simple_fuel_name{fuel};
@@ -385,7 +387,6 @@ int test(const int argc, const char* const argv[])
         vector<char> out{};
         out.resize(out_length);
         // do everything in parallel but not all at once because it uses too much memory for most computers
-        vector<std::future<int>> results{};
         for (auto slope : slopes)
         {
           for (auto aspect : aspects)
@@ -423,11 +424,11 @@ int test(const int argc, const char* const argv[])
             }
           }
         }
-        for (auto& r : results)
-        {
-          r.wait();
-          result += r.get();
-        }
+      }
+      for (auto& r : results)
+      {
+        r.wait();
+        result += r.get();
       }
     }
     else
