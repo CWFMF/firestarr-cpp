@@ -268,7 +268,7 @@ public:
    * \brief Value used to represent no data at a Location.
    * \return Value used to represent no data at a Location.
    */
-  [[nodiscard]] constexpr double noDataInt() const noexcept
+  [[nodiscard]] constexpr V noDataInt() const noexcept
   {
     return nodata_;
   }

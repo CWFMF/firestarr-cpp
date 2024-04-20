@@ -22,6 +22,32 @@
  */
 TIFF* GeoTiffOpen(const char* const filename, const char* const mode);
 
+/**
+ * Call snprintf() but show where and throw exception when anything gets cut off.
+ */
+int sxprintf(char* buffer, size_t N, const char* format, va_list* args);
+int sxprintf(char* buffer, size_t N, const char* format, ...);
+/**
+ * Call snprintf() but don't need to determine size of array when calling
+ * and complain when anything gets cut off.
+ */
+template <std::size_t N>
+int sxprintf(char (&buffer)[N], const char* format, va_list* args)
+{
+  // printf("int sxprintf(char (&buffer)[N], const char* format, va_list* args)\n");
+  return sxprintf(&buffer[0], N, format, args);
+}
+template <std::size_t N>
+int sxprintf(char (&buffer)[N], const char* format, ...)
+{
+  // printf("int sxprintf(char (&buffer)[N], const char* format, ...)\n");
+  va_list args;
+  va_start(args, format);
+  auto r = sxprintf(buffer, format, &args);
+  va_end(args);
+  return r;
+}
+
 namespace tbd
 {
 namespace util
