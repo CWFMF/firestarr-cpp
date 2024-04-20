@@ -7,6 +7,8 @@
 #include "FireSpread.h"
 #include "Model.h"
 #include "Observer.h"
+#include "Util.h"
+
 namespace fs::sim
 {
 /**
@@ -264,6 +266,49 @@ run_test(
   logging::note("Final Size: %0.0f, ROS: %0.2f", scenario.currentFireSize(), info.headRos());
   return 0;
 }
+template <class V, class T = V>
+void
+show_options(
+  const char* name,
+  const vector<V>& values,
+  const char* fmt,
+  std::function<T(V&)> convert
+)
+{
+  printf("\t%ld %s: ", values.size(), name);
+  // HACK: always print something before but avoid extra comma
+  const char* prefix_open = "[";
+  const char* prefix_comma = ", ";
+  const char** p = &prefix_open;
+  for (auto v : values)
+  {
+    printf(*p);
+    printf(fmt, convert(v));
+    p = &prefix_comma;
+  }
+  printf("]\n");
+};
+template <class V>
+void
+show_options(
+  const char* name,
+  const vector<V>& values
+)
+{
+  return show_options<V, V>(name, values, "%d", [](V& value) {
+    return value;
+  });
+};
+void
+show_options(
+  const char* name,
+  const vector<string>& values
+)
+{
+  return show_options<string, const char*>(name, values, "%s", [](string& value) {
+    return value.c_str();
+  });
+};
 const AspectSize ASPECT_INCREMENT = 90;
 const SlopeSize SLOPE_INCREMENT = 60;
 const int WS_INCREMENT = 5;
@@ -315,6 +360,39 @@ test(
     {
       const auto num_hours = DEFAULT_HOURS;
       constexpr auto mask = "%s%s_S%03d_A%03d_WD%03d_WS%03d/";
+      // generate all options first so we can say how many there are at start
+      auto slopes = vector<SlopeSize>();
+      for (SlopeSize slope = 0; slope <= 100; slope += SLOPE_INCREMENT)
+      {
+        slopes.emplace_back(slope);
+      }
+      auto aspects = vector<AspectSize>();
+      for (AspectSize aspect = 0; aspect < 360; aspect += ASPECT_INCREMENT)
+      {
+        aspects.emplace_back(aspect);
+      }
+      auto wind_directions = vector<int>();
+      for (auto wind_direction = 0; wind_direction < 360; wind_direction += WD_INCREMENT)
+      {
+        wind_directions.emplace_back(wind_direction);
+      }
+      auto wind_speeds = vector<int>();
+      for (auto wind_speed = 0; wind_speed <= MAX_WIND; wind_speed += WS_INCREMENT)
+      {
+        wind_speeds.emplace_back(wind_speed);
+      }
+      size_t values = 1;
+      values *= FUEL_NAMES.size();
+      values *= slopes.size();
+      values *= aspects.size();
+      values *= wind_directions.size();
+      values *= wind_speeds.size();
+      printf("There are %ld options to try based on:\n", values);
+      show_options("fuels", FUEL_NAMES);
+      show_options("slopes", slopes);
+      show_options("aspects", aspects);
+      show_options("wind directions", wind_directions);
+      show_options("wind speeds", wind_speeds);
       for (const auto& fuel : FUEL_NAMES)
       {
         auto simple_fuel_name{fuel};
@@ -338,23 +416,25 @@ test(
           std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '/'),
           simple_fuel_name.end()
         );
-        const auto out_length = output_directory.length() + 28 + simple_fuel_name.length();
-        const auto out = new char[out_length];
+        const size_t out_length = output_directory.length() + 28 + simple_fuel_name.length() + 1;
+        vector<char> out{};
+        out.resize(out_length);
         // do everything in parallel but not all at once because it uses too much memory for most
         // computers
         vector<std::future<int>> results{};
-        for (SlopeSize slope = 0; slope <= 100; slope += SLOPE_INCREMENT)
+        for (auto slope : slopes)
         {
-          for (AspectSize aspect = 0; aspect < 360; aspect += ASPECT_INCREMENT)
+          for (auto aspect : aspects)
           {
-            for (auto wind_direction = 0; wind_direction < 360; wind_direction += WD_INCREMENT)
+            for (auto wind_direction : wind_directions)
             {
               const wx::Direction direction(wind_direction, false);
-              for (auto wind_speed = 0; wind_speed <= MAX_WIND; wind_speed += WS_INCREMENT)
+              for (auto wind_speed : wind_speeds)
               {
                 const wx::Wind wind(direction, wx::Speed(wind_speed));
-                sprintf(
-                  out,
+                sxprintf(
+                  &(out[0]),
+                  out_length,
                   mask,
                   output_directory.c_str(),
                   simple_fuel_name.c_str(),
@@ -368,7 +448,7 @@ test(
                 results.push_back(async(
                   launch::async,
                   run_test,
-                  string(out),
+                  string(&(out[0])),
                   fuel,
                   slope,
                   aspect,
@@ -388,7 +468,6 @@ test(
           r.wait();
           result += r.get();
         }
-        delete[] out;
       }
     }
     else

@@ -444,11 +444,13 @@ public:
     {
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
     }
-    int length = snprintf(nullptr, 0, "%f", this->noDataInt());
-    char* str = static_cast<char*>(malloc(length + 1));
-    snprintf(str, length + 1, "%f", this->noDataInt());
+    // FIX: was using double, and that usually doesn't make sense, but sometime it might?
+    // use buffer big enought to fit any (V  + '.000\0') + 1
+    constexpr auto n = std::numeric_limits<V>::digits10;
+    static_assert(n > 0);
+    char str[n + 6]{0};
+    sxprintf(str, "%d.000", this->noDataInt());
     TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
-    free(str);
     logging::extensive("%s takes %d bits", base_name.c_str(), bps);
     TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);
     TIFFSetField(tif, TIFFTAG_IMAGELENGTH, num_rows);

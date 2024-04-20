@@ -183,9 +183,8 @@ make_string(
 )
 {
   constexpr auto mask = "%s_%03d_%04d-%02d-%02d";
-  static constexpr size_t OutLength = 100;
-  char tmp[OutLength];
-  sprintf(tmp, mask, name, day, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
+  char tmp[100];
+  sxprintf(tmp, mask, name, day, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
   return string(tmp);
 };
 
