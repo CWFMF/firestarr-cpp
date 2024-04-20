@@ -67,6 +67,8 @@ public:
   static int
   closeLogFile() noexcept;
 };
+string
+format_log_message(const char* prefix, const char* format, va_list* args);
 /**
  * \brief Output a message to the log
  * \param log_level Log level to use for label
@@ -198,13 +200,15 @@ fatal(
   noexcept
 #endif
 {
-  output(LOG_FATAL, format, args);
+  // format message and then output so we don't parse args twice and can use for error
+  auto msg = format_log_message("", format, args);
+  output(LOG_FATAL, msg.c_str());
   Log::closeLogFile();
 #ifdef NDEBUG
   exit(EXIT_FAILURE);
 #else
   // HACK: just throw the format for a start - just want to see stack traces when debugging
-  throw std::runtime_error(format);
+  throw std::runtime_error(msg);
 #endif
 }
 /**
