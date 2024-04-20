@@ -171,9 +171,17 @@ public:
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used (s)
    * \return Maximum time simulation can run before it is ended and whatever results it has are used (s)
    */
-  [[nodiscard]] constexpr size_t maximumTimeSeconds() const noexcept
+  [[nodiscard]] size_t maximumTimeSeconds() const noexcept
   {
     return maximum_time_seconds_;
+  }
+  /**
+   * \brief Set maximum time simulation can run before it is ended and whatever results it has are used (s)
+   * \return Set maximum time simulation can run before it is ended and whatever results it has are used (s)
+   */
+  void setMaximumTimeSeconds(const size_t value) noexcept
+  {
+    maximum_time_seconds_ = value;
   }
   /**
    * \brief Maximum number of simulations that can run before it is ended and whatever results it has are used
@@ -288,7 +296,7 @@ private:
   /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used (s)
    */
-  size_t maximum_time_seconds_;
+  atomic<size_t> maximum_time_seconds_;
   /**
    * @brief Maximum number of simulations that can run before it is ended and whatever results it has are used
    */
@@ -624,6 +632,10 @@ void Settings::setConfidenceLevel(const double value) noexcept
 size_t Settings::maximumTimeSeconds() noexcept
 {
   return SettingsImplementation::instance().maximumTimeSeconds();
+}
+void Settings::setMaximumTimeSeconds(const size_t value) noexcept
+{
+  return SettingsImplementation::instance().setMaximumTimeSeconds(value);
 }
 size_t Settings::maximumCountSimulations() noexcept
 {
