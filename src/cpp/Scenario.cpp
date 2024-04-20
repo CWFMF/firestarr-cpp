@@ -102,9 +102,9 @@ LogPoints::LogPoints(
     constexpr auto HEADER_POINTS = "step_id,x,y\n";
 #endif
     char log_name[2048];
-    sprintf(log_name, "%s/scenario_%05ld_points.txt", dir_out.c_str(), id);
+    sxprintf(log_name, "%s/scenario_%05ld_points.txt", dir_out.c_str(), id);
     log_points_ = fopen(log_name, "w");
-    sprintf(log_name, "%s/scenario_%05ld_stages.txt", dir_out.c_str(), id);
+    sxprintf(log_name, "%s/scenario_%05ld_stages.txt", dir_out.c_str(), id);
     log_stages_ = fopen(log_name, "w");
     fprintf(log_points_, HEADER_POINTS);
     fprintf(log_stages_, HEADER_STAGES);
@@ -147,7 +147,7 @@ void LogPoints::log_point(size_t step,
   // time should always be the same for each step, regardless of stage
   if (last_step_ != step || last_stage_ != stage)
   {
-    sprintf(stage_id_, "%ld%c%ld", id_, stage, step);
+    sxprintf(stage_id_, "%ld%c%ld", id_, stage, step);
     last_stage_ = stage;
     last_step_ = step;
 #ifdef DEBUG_POINTS
@@ -540,13 +540,12 @@ void Scenario::saveObservers(const string& base_name) const
 }
 void Scenario::saveObservers(const double time) const
 {
-  static const size_t BufferSize = 64;
-  char buffer[BufferSize + 1] = {0};
-  sprintf(buffer,
-          "%03zu_%06ld_%03d",
-          id(),
-          simulation(),
-          static_cast<int>(time));
+  char buffer[64]{0};
+  sxprintf(buffer,
+           "%03zu_%06ld_%03d",
+           id(),
+           simulation(),
+           static_cast<int>(time));
   saveObservers(string(buffer));
 }
 void Scenario::saveIntensity(const string& dir, const string& base_name) const
@@ -646,7 +645,7 @@ string Scenario::add_log(const char* format) const noexcept
   const string tmp;
   stringstream iss(tmp);
   static char buffer[1024]{0};
-  sprintf(buffer, "Scenario %4ld.%04ld (%3f): ", id(), simulation(), current_time_);
+  sxprintf(buffer, "Scenario %4ld.%04ld (%3f): ", id(), simulation(), current_time_);
   iss << buffer << format;
   return iss.str();
 }
@@ -757,17 +756,16 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   // nice to have this get output when debugging, but only need it in extreme cases
   if (logging::Log::getLogLevel() <= logging::LOG_EXTENSIVE)
   {
-    static const size_t BufferSize = 64;
-    char buffer[BufferSize + 1] = {0};
-    sprintf(buffer,
-            "%03zu_%06ld_extinction",
-            id(),
-            simulation());
+    char buffer[64]{0};
+    sxprintf(buffer,
+             "%03zu_%06ld_extinction",
+             id(),
+             simulation());
     saveProbabilities(model().outputDirectory(), string(buffer), extinction_thresholds_);
-    sprintf(buffer,
-            "%03zu_%06ld_spread",
-            id(),
-            simulation());
+    sxprintf(buffer,
+             "%03zu_%06ld_spread",
+             id(),
+             simulation());
     saveProbabilities(model().outputDirectory(), string(buffer), spread_thresholds_by_ros_);
   }
 #endif

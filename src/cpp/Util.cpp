@@ -24,7 +24,38 @@ TIFF* GeoTiffOpen(const char* const filename, const char* const mode)
   TIFFMergeFieldInfo(tif, xtiffFieldInfo, sizeof(xtiffFieldInfo) / sizeof(xtiffFieldInfo[0]));
   return tif;
 }
-
+int sxprintf(char* buffer, size_t N, const char* format, va_list* args)
+{
+  // printf("int sxprintf(char* buffer, size_t N, const char* format, va_list* args)\n");
+  auto r = vsnprintf(buffer, N, format, *args);
+  if (!(r < static_cast<int>(N)))
+  {
+    printf("**************** ERROR ****************\n");
+    printf("\tTrying to write to buffer resulted in string being cut off at %ld characters\n", N);
+    printf("Should have written:\n\t\"");
+    vprintf(format, *args);
+    printf("\"\n\t\"%s\"", buffer);
+    // HACK: just loop
+    printf("\n\t");
+    for (size_t i = 0; i < (N - 1); ++i)
+    {
+      printf(" ");
+    }
+    printf("^-- cut off here at character %ld\n", N);
+    printf("**************** ERROR ****************\n");
+    throw std::runtime_error("String buffer overflow avoided");
+  }
+  return r;
+}
+int sxprintf(char* buffer, size_t N, const char* format, ...)
+{
+  // printf("int sxprintf(char* buffer, size_t N, const char* format, ...)\n");
+  va_list args;
+  va_start(args, format);
+  auto r = sxprintf(buffer, N, format, &args);
+  va_end(args);
+  return r;
+}
 namespace tbd::util
 {
 void read_directory(const string& name, vector<string>* v, const string& match)
@@ -98,7 +129,7 @@ void make_directory(const char* dir) noexcept
 void make_directory_recursive(const char* dir) noexcept
 {
   char tmp[256];
-  snprintf(tmp, sizeof tmp, "%s", dir);
+  sxprintf(tmp, "%s", dir);
   const auto len = strlen(tmp);
   if (tmp[len - 1] == '/')
     tmp[len - 1] = 0;
@@ -221,12 +252,12 @@ string tbd::make_timestamp(const int year, const double time)
   size_t day_of_month;
   month_and_day(year, day, &month, &day_of_month);
   char buffer[128];
-  sprintf(buffer,
-          "%4d-%02ld-%02ld %02ld:%02ld",
-          year,
-          month,
-          day_of_month,
-          hour,
-          minute);
+  sxprintf(buffer,
+           "%4d-%02ld-%02ld %02ld:%02ld",
+           year,
+           month,
+           day_of_month,
+           hour,
+           minute);
   return {buffer};
 }
