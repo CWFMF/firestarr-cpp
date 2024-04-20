@@ -219,20 +219,40 @@ std::basic_istream<Elem, Traits>& getline(
  */
 [[nodiscard]] bool directory_exists(const char* dir) noexcept;
 /**
+ * \brief Get a list of items in the given directory matching the given regex
+ * \param for_files Match files and not directories
+ * \param name Directory to search
+ * \param v vector to put found paths into
+ * \param match regular expression to match in names
+ */
+void read_directory(const bool for_files,
+                    const string& name,
+                    vector<string>* v,
+                    const string& match);
+/**
  * \brief Get a list of files in the given directory matching the given regex
  * \param name Directory to search for files
  * \param v vector to put found file names into
  * \param match regular expression to match in file names
  */
-void read_directory(const wstring& name,
+void read_directory(const string& name,
                     vector<string>* v,
-                    const wstring& match);
+                    const string& match);
+/**
+ * \brief Get a list of items in the given directory matching the given regex
+ * \param for_files Match files and not directories
+ * \param name Directory to search
+ * \param v vector to put found paths into
+ */
+void read_directory(const bool for_files,
+                    const string& name,
+                    vector<string>* v);
 /**
  * \brief Get a list of files in the given directory
  * \param name Directory to search for files
  * \param v vector to put found file names into
  */
-void read_directory(const wstring& name, vector<string>* v);
+void read_directory(const string& name, vector<string>* v);
 /**
  * \brief Get a list of rasters in the given directory for the specified year
  * \param dir Root directory to look for rasters in

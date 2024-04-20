@@ -175,19 +175,25 @@ void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::F
          "\r\n");
 }
 static Semaphore num_concurrent{static_cast<int>(std::thread::hardware_concurrency())};
-int run_test(const string output_directory,
-             const string& fuel_name,
-             const SlopeSize slope,
-             const AspectSize aspect,
-             const double num_hours,
-             const wx::Dc& dc,
-             const wx::Bui& bui,
-             const wx::Dmc& dmc,
-             const wx::Ffmc& ffmc,
-             const wx::Wind& wind)
+string run_test(const string output_directory,
+                const string& fuel_name,
+                const SlopeSize slope,
+                const AspectSize aspect,
+                const double num_hours,
+                const wx::Dc& dc,
+                const wx::Bui& bui,
+                const wx::Dmc& dmc,
+                const wx::Ffmc& ffmc,
+                const wx::Wind& wind)
 {
+  if (util::directory_exists(output_directory.c_str()))
+  {
+    // skip if directory exists
+    return output_directory;
+  }
   // delay instantiation so things only get made when executed
   CriticalSection _(num_concurrent);
+  logging::note("Running test for %s", output_directory.c_str());
   const auto year = 2020;
   const auto month = 6;
   const auto day = 15;
@@ -245,7 +251,7 @@ int run_test(const string output_directory,
   logging::note("Final Size: %0.0f, ROS: %0.2f",
                 scenario.currentFireSize(),
                 info.headRos());
-  return 0;
+  return output_directory;
 }
 template <class V, class T = V>
 void show_options(const char* name,
@@ -313,7 +319,6 @@ int test(const int argc, const char* const argv[])
     logging::Log::increaseLogLevel();
     // logging::Log::increaseLogLevel();
     // logging::Log::increaseLogLevel();
-    auto result = 0;
     // HACK: use a variable and ++ so in case arg indices change
     auto i = 1;
     // start at 2 because first arg is "test"
@@ -328,6 +333,7 @@ int test(const int argc, const char* const argv[])
     util::make_directory_recursive(output_directory.c_str());
     if (i == argc - 1 && 0 == strcmp(argv[i], "all"))
     {
+      size_t result = 0;
       const auto num_hours = DEFAULT_HOURS;
       constexpr auto mask = "%s%s_S%03d_A%03d_WD%03d_WS%03d/";
       // generate all options first so we can say how many there are at start
@@ -364,7 +370,7 @@ int test(const int argc, const char* const argv[])
       show_options("wind directions", wind_directions);
       show_options("wind speeds", wind_speeds);
       // do everything in parallel but not all at once because it uses too much memory for most computers
-      vector<std::future<int>> results{};
+      vector<std::future<string>> results{};
       for (const auto& fuel : FUEL_NAMES)
       {
         auto simple_fuel_name{fuel};
@@ -406,7 +412,7 @@ int test(const int argc, const char* const argv[])
                          aspect,
                          wind_direction,
                          wind_speed);
-                logging::note("Queueing test for %s", out);
+                logging::verbose("Queueing test for %s", out);
                 // need to make string now because it'll be another value if we wait
                 results.push_back(async(launch::async,
                                         run_test,
@@ -428,8 +434,19 @@ int test(const int argc, const char* const argv[])
       for (auto& r : results)
       {
         r.wait();
-        result += r.get();
+        auto dir_out = r.get();
+        logging::check_fatal(!util::directory_exists(dir_out.c_str()),
+                             "Directory for test is missing: %s\n",
+                             dir_out.c_str());
+        ++result;
       }
+      vector<string> directories{};
+      util::read_directory(false, output_directory, &directories);
+      logging::check_fatal(directories.size() != result,
+                           "Expected %ld directories but have %ld",
+                           result,
+                           directories.size());
+      logging::note("Successfully ran %ld tests", result);
     }
     else
     {
@@ -451,18 +468,20 @@ int test(const int argc, const char* const argv[])
         aspect,
         wind_speed,
         wind_direction);
-      result = run_test(output_directory.c_str(),
-                        "C-2",
-                        slope,
-                        aspect,
-                        num_hours,
-                        dc,
-                        bui,
-                        dmc,
-                        ffmc,
-                        wind);
+      auto dir_out = run_test(output_directory.c_str(),
+                              "C-2",
+                              slope,
+                              aspect,
+                              num_hours,
+                              dc,
+                              bui,
+                              dmc,
+                              ffmc,
+                              wind);
+      logging::check_fatal(!util::directory_exists(dir_out.c_str()),
+                           "Directory for test is missing: %s\n",
+                           dir_out.c_str());
     }
-    return result;
   }
   catch (const runtime_error& err)
   {
