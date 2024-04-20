@@ -191,6 +191,11 @@ public:
    */
   [[nodiscard]] static size_t maximumTimeSeconds() noexcept;
   /**
+   * \brief Set maximum time simulation can run before it is ended and whatever results it has are used (s)
+   * \return Set maximum time simulation can run before it is ended and whatever results it has are used (s)
+   */
+  static void setMaximumTimeSeconds(const size_t value) noexcept;
+  /**
    * \brief Maximum number of simulations that can run before it is ended and whatever results it has are used
    * \return Maximum number of simulations that can run before it is ended and whatever results it has are used
    */
