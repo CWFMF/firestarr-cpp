@@ -1,4 +1,5 @@
 /* Copyright (c) Queen's Printer for Ontario, 2020. */
+/* Copyright (c) His Majesty the King in Right of Canada as represented by the Minister of Natural Resources, 2024. */
 
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
@@ -57,6 +58,7 @@ public:
    */
   static int closeLogFile() noexcept;
 };
+string format_log_message(const char* prefix, const char* format, va_list* args);
 /**
  * \brief Output a message to the log
  * \param log_level Log level to use for label
@@ -171,13 +173,15 @@ T fatal(const char* format, va_list* args)
   noexcept
 #endif
 {
-  output(LOG_FATAL, format, args);
+  // format message and then output so we don't parse args twice and can use for error
+  auto msg = format_log_message("", format, args);
+  output(LOG_FATAL, msg.c_str());
   Log::closeLogFile();
 #ifdef NDEBUG
   exit(EXIT_FAILURE);
 #else
   // HACK: just throw the format for a start - just want to see stack traces when debugging
-  throw std::runtime_error(format);
+  throw std::runtime_error(msg);
 #endif
 }
 /**

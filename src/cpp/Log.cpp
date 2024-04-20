@@ -1,4 +1,5 @@
 /* Copyright (c) Queen's Printer for Ontario, 2020. */
+/* Copyright (c) His Majesty the King in Right of Canada as represented by the Minister of Natural Resources, 2024. */
 
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
@@ -46,7 +47,33 @@ int Log::openLogFile(const char* filename) noexcept
 }
 int Log::closeLogFile() noexcept
 {
-  return fclose(out_);
+  if (nullptr != out_)
+  {
+    return fclose(out_);
+  }
+  return 0;
+}
+string format_log_message(const char* prefix, const char* format, va_list* args)
+{
+  // do this separately from output() so we can redo it for fatal errors
+  // NOTE: create string first so that entire line writes
+  // (otherwise threads might mix lines)
+  const string tmp;
+  stringstream iss(tmp);
+#ifdef NDEBUG
+  const time_t now = time(nullptr);
+  auto buf = localtime(&now);
+  iss << put_time(buf, "[%F %T] ");
+#endif
+  // try to make output consistent if in debug mode
+  iss << prefix;
+  {
+    lock_guard<mutex> lock(mutex_);
+    static char buffer[1024]{0};
+    vsnprintf(buffer, std::size(buffer), format, *args);
+    iss << buffer;
+    return iss.str();
+  }
 }
 void output(const int log_level, const char* format, va_list* args)
 #ifdef NDEBUG
@@ -59,27 +86,11 @@ void output(const int log_level, const char* format, va_list* args)
   }
   try
   {
-    // NOTE: create string first so that entire line writes
-    // (otherwise threads might mix lines)
-    const string tmp;
-    stringstream iss(tmp);
-#ifdef NDEBUG
-    const time_t now = time(nullptr);
-    auto buf = localtime(&now);
-    iss << put_time(buf, "[%F %T] ");
-#endif
-    // try to make output consistent if in debug mode
-    iss << LOG_LABELS[log_level];
-    static char buffer[1024]{0};
-    vsprintf(buffer, format, *args);
-    iss << buffer;
+    auto msg = format_log_message(LOG_LABELS[log_level], format, args);
+    printf("%s\n", msg.c_str());
+    if (nullptr != out_)
     {
-      lock_guard<mutex> lock(mutex_);
-      printf("%s\n", iss.str().c_str());
-      if (nullptr != out_)
-      {
-        fprintf(out_, "%s\n", iss.str().c_str());
-      }
+      fprintf(out_, "%s\n", msg.c_str());
     }
   }
   catch (const std::exception& ex)
