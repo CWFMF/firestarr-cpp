@@ -282,6 +282,8 @@ test(
   Settings::setDeterministic(true);
   Settings::setMinimumRos(0.0);
   Settings::setSavePoints(false);
+  // make sure all tests run regardless of how long it takes
+  Settings::setMaximumTimeSeconds(numeric_limits<size_t>::max());
   const wx::Dc dc(275);
   const wx::Dmc dmc(35.5);
   const wx::Bui bui(dmc, dc);
