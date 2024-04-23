@@ -293,7 +293,7 @@ public:
     : FuelNonMixed(code,
                    "D-1",
                    false,
-                   data::LOG_0_9,
+                   data::LOG_0_90,
                    &Duff::Peat)
   {
   }
@@ -500,7 +500,7 @@ public:
                           const char* name)
     : FuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>(code,
                                                                            name,
-                                                                           data::LOG_0_8)
+                                                                           data::LOG_0_80)
   {
   }
   /**
@@ -670,7 +670,7 @@ public:
   explicit constexpr FuelC1(const FuelCodeSize& code) noexcept
     : FuelConifer(code,
                   "C-1",
-                  data::LOG_0_9,
+                  data::LOG_0_90,
                   &Duff::Reindeer,
                   &Duff::Peat)
   {
@@ -702,7 +702,7 @@ public:
   explicit constexpr FuelC2(const FuelCodeSize& code) noexcept
     : FuelConifer(code,
                   "C-2",
-                  data::LOG_0_7,
+                  data::LOG_0_70,
                   &Duff::SphagnumUpper)
   {
   }
@@ -758,7 +758,7 @@ public:
   explicit constexpr FuelC4(const FuelCodeSize& code) noexcept
     : FuelJackpine(code,
                    "C-4",
-                   data::LOG_0_8,
+                   data::LOG_0_80,
                    &Duff::PineSeney)
   {
   }
@@ -782,7 +782,7 @@ public:
   explicit constexpr FuelC5(const FuelCodeSize& code) noexcept
     : FuelPine(code,
                "C-5",
-               data::LOG_0_8,
+               data::LOG_0_80,
                &Duff::PineSeney)
   {
   }
@@ -806,7 +806,7 @@ public:
   explicit constexpr FuelC6(const FuelCodeSize& code) noexcept
     : FuelPine(code,
                "C-6",
-               data::LOG_0_8,
+               data::LOG_0_80,
                &Duff::PineSeney)
   {
   }
@@ -876,7 +876,7 @@ public:
     : FuelNonMixed(code,
                    "D-2",
                    false,
-                   data::LOG_0_9,
+                   data::LOG_0_90,
                    &Duff::Peat)
   {
   }
@@ -968,7 +968,7 @@ public:
   constexpr FuelM3(const FuelCodeSize& code, const char* name)
     : FuelMixedDead<120, 572, 140, 50, 10, PercentDeadFir>(code,
                                                            name,
-                                                           data::LOG_0_8)
+                                                           data::LOG_0_80)
   {
   }
 };
@@ -994,7 +994,7 @@ public:
   constexpr FuelM4(const FuelCodeSize& code, const char* name)
     : FuelMixedDead<100, 404, 148, 50, 2, PercentDeadFir>(code,
                                                           name,
-                                                          data::LOG_0_8)
+                                                          data::LOG_0_80)
   {
   }
 };
@@ -1015,7 +1015,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelO1A(const FuelCodeSize& code) noexcept
-    : FuelGrass(code, "O-1a", data::LOG_1_0)
+    : FuelGrass(code, "O-1a", data::LOG_1_00)
   {
   }
 };
@@ -1036,7 +1036,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelO1B(const FuelCodeSize& code) noexcept
-    : FuelGrass(code, "O-1b", data::LOG_1_0)
+    : FuelGrass(code, "O-1b", data::LOG_1_00)
   {
   }
 };
