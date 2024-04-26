@@ -100,7 +100,7 @@ Environment::loadEnvironment(
   for (const auto& raster : rasters)
   {
     auto fuel = raster;
-    printf("Replacing directory separators in path for: %s", fuel.c_str());
+    printf("Replacing directory separators in path for: %s\n", fuel.c_str());
     // make sure we're using a consistent directory separator
     std::replace(fuel.begin(), fuel.end(), '\\', '/');
     // HACK: assume there's only one instance of 'fuel' in the file name we want to change
