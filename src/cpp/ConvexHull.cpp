@@ -10,7 +10,7 @@
 // hull to condense points
 #define DO_HULL
 // use quick hull instead of regular if hulling
-#define QUICK_HULL
+// #define QUICK_HULL
 
 #ifdef QUICK_HULL
 /**
