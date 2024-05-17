@@ -1046,12 +1046,7 @@ Model::runIterations(
     //   static_cast<size_t>(MIN_ITERATIONS_BEFORE_CHECK),
     //   MAX_THREADS);
     // no point in running multiple iterations if deterministic
-    const auto concurrent_iterations = (Settings::deterministic() && !Settings::surface())
-                                       ? 1
-                                       : std::max<size_t>(
-                                           ceil(MAX_THREADS / scenarios_per_iteration),
-                                           2
-                                         );
+    const auto concurrent_iterations = 1;
     // const auto concurrent_iterations = MAX_THREADS;
     for (size_t x = 1; x < concurrent_iterations; ++x)
     {
