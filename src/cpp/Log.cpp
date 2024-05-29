@@ -43,7 +43,12 @@ static FILE* out_;
 int Log::openLogFile(const char* filename) noexcept
 {
   out_ = fopen(filename, "w");
-  return nullptr != out_;
+  if (nullptr != out_) {
+    // turn off buffering so lines write to file immediately
+    setbuf(out_, nullptr);
+    return true;
+  }
+  return false;
 }
 int Log::closeLogFile() noexcept
 {
@@ -91,6 +96,7 @@ void output(const int log_level, const char* format, va_list* args)
     if (nullptr != out_)
     {
       fprintf(out_, "%s\n", msg.c_str());
+      fflush(out_);
     }
   }
   catch (const std::exception& ex)
