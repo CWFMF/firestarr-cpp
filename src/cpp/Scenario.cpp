@@ -832,6 +832,10 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
     saveProbabilities(model().outputDirectory(), string(buffer), spread_thresholds_by_ros_);
   }
 #endif
+  if (oob_spread_ > 0)
+  {
+    log_warning("Tried to spread out of bounds %ld times", oob_spread_);
+  }
   return this;
 }
 // want to be able to make a bitmask of all directions it came from
@@ -1017,11 +1021,14 @@ void Scenario::scheduleFireSpread(const Event& event)
         {
           const InnerPos pos = p.add(offset);
           log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x, pos.y);
-          const auto for_cell = cell(pos);
+          // was doing this check after getting for_cell, so it didn't help when out of bounds
           if (pos.x < 0 || pos.y < 0 || pos.x >= this->columns() || pos.y >= this->rows())
           {
+            ++oob_spread_;
+            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x, pos.y);
             continue;
           }
+          const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;
           if (!(*unburnable_)[for_cell.hash()])
