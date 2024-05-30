@@ -8,6 +8,46 @@
 #include "Log.h"
 namespace tbd::topo
 {
+// have static versions of these outside Location so we can test with static_assert
+/**
+ * \brief Create a hash from given values
+ * \param XYBits Number of bits to use for storing one coordinate of location data
+ * \param row Row
+ * \param column Column
+ * \return Hash
+ */
+[[nodiscard]] static inline constexpr HashSize do_hash(
+  const uint32_t XYBits,
+  const Idx row,
+  const Idx column) noexcept
+{
+  return (static_cast<HashSize>(row) << XYBits) + static_cast<HashSize>(column);
+}
+/**
+ * \brief Row from hash
+ * \param XYBits Number of bits to use for storing one coordinate of location data
+ * \param hash hash to extract row from
+ * \return Row from hash
+ */
+[[nodiscard]] static inline constexpr Idx unhash_row(
+  const uint32_t XYBits,
+  const Topo hash) noexcept
+{
+  // don't need to use mask since bits just get shifted out
+  return static_cast<Idx>(hash >> XYBits);
+}
+/**
+ * \brief Column
+ * \param ColumnMask Hash mask for bits being used for location data
+ * \param hash hash to extract column from
+ * \return Column
+ */
+[[nodiscard]] static inline constexpr Idx unhash_column(
+  const Topo ColumnMask,
+  const Topo hash) noexcept
+{
+  return static_cast<Idx>(hash & ColumnMask);
+}
 /**
  * \brief A location with a row and column.
  */
@@ -148,24 +188,42 @@ protected:
     const Idx row,
     const Idx column) noexcept
   {
-    return (static_cast<HashSize>(row) << XYBits) + static_cast<HashSize>(column);
+    return do_hash(XYBits, row, column);
+// make sure hashing/unhashing works
+#define ROW_MIN 0
+#define ROW_MAX (MAX_ROWS - 1)
+#define COL_MIN 0
+#define COL_MAX (MAX_COLUMNS - 1)
+    static_assert(ROW_MIN == unhash_row(XYBits, do_hash(XYBits, ROW_MIN, COL_MIN)));
+    static_assert(COL_MIN == unhash_column(ColumnMask, do_hash(XYBits, ROW_MIN, COL_MIN)));
+    static_assert(ROW_MIN == unhash_row(XYBits, do_hash(XYBits, ROW_MIN, COL_MAX)));
+    static_assert(COL_MAX == unhash_column(ColumnMask, do_hash(XYBits, ROW_MIN, COL_MAX)));
+    static_assert(ROW_MAX == unhash_row(XYBits, do_hash(XYBits, ROW_MAX, COL_MIN)));
+    static_assert(COL_MIN == unhash_column(ColumnMask, do_hash(XYBits, ROW_MAX, COL_MIN)));
+    static_assert(ROW_MAX == unhash_row(XYBits, do_hash(XYBits, ROW_MAX, COL_MAX)));
+    static_assert(COL_MAX == unhash_column(ColumnMask, do_hash(XYBits, ROW_MAX, COL_MAX)));
+#undef ROW_MIN
+#undef ROW_MAX
+#undef COL_MIN
+#undef COL_MAX
   }
   /**
    * \brief Row from hash
+   * \param hash hash to extract row from
    * \return Row from hash
    */
-  [[nodiscard]] static constexpr Idx unhashRow(const Topo row) noexcept
+  [[nodiscard]] static constexpr Idx unhashRow(const Topo hash) noexcept
   {
-    // don't need to use mask since bits just get shifted out
-    return static_cast<Idx>(row >> XYBits);
+    return unhash_row(XYBits, hash);
   }
   /**
    * \brief Column
+   * \param hash hash to extract column from
    * \return Column
    */
-  [[nodiscard]] static constexpr Idx unhashColumn(const Topo column) noexcept
+  [[nodiscard]] static constexpr Idx unhashColumn(const Topo hash) noexcept
   {
-    return static_cast<Idx>(column & ColumnMask);
+    return unhash_column(ColumnMask, hash);
   }
 };
 inline bool operator<(const Location& lhs, const Location& rhs)
