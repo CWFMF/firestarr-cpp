@@ -645,5 +645,9 @@ protected:
    * \brief How many times point spread event has happened
    */
   size_t step_;
+  /**
+   * \brief How many times this scenario tried to spread out of bounds
+   */
+  size_t oob_spread_;
 };
 }
