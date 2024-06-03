@@ -5,7 +5,7 @@
 
 #include "ConvexHull.h"
 
-#include <numbers>
+#include "Log.h"
 
 namespace fs
 {
@@ -44,9 +44,9 @@ distPtPt(
 ) noexcept
 {
 #ifdef _WIN32
-  return (((b.x - a.x) * (b.x - a.x)) + ((b.y - a.y) * (b.y - a.y)));
+  return (((b.x() - a.x()) * (b.x() - a.x())) + ((b.y() - a.y()) * (b.y() - a.y())));
 #else
-  return (std::pow((b.x - a.x), 2) + std::pow((b.y - a.y), 2));
+  return (std::pow((b.x() - a.x()), 2) + std::pow((b.y() - a.y()), 2));
 #endif
 }
 
@@ -97,13 +97,13 @@ hull(
     size_t ene_pos = 0;
     auto ene = numeric_limits<double>::max();
     // should always be in the same cell so do this once
-    const auto cell_x = static_cast<fs::Idx>(a[0].x);
-    const auto cell_y = static_cast<fs::Idx>(a[0].y);
+    const auto cell_x = static_cast<fs::Idx>(a[0].x());
+    const auto cell_y = static_cast<fs::Idx>(a[0].y());
     for (size_t i = 0; i < a.size(); ++i)
     {
       const auto& p = a[i];
-      const auto x = p.x - cell_x;
-      const auto y = p.y - cell_y;
+      const auto x = p.x() - cell_x;
+      const auto y = p.y() - cell_y;
       // north is closest to point (0.5, 1.0)
       const auto cur_n = ((x - 0.5) * (x - 0.5)) + ((1 - y) * (1 - y));
       if (cur_n < n)
@@ -254,12 +254,12 @@ hull(
 
   for (const auto p : a)
   {
-    if (p.x > maxPos.x)
+    if (p.x() > maxPos.x())
     {
       maxPos = p;
     }
     // don't use else if because first point should be set for both
-    if (p.x < minPos.x)
+    if (p.x() < minPos.x())
     {
       minPos = p;
     }
@@ -294,8 +294,8 @@ quickHull(
   usePoints.reserve(a.size());
 
   // since we do distLinePt so often, calculate the parts that are always the same
-  const auto abX = (n2.x - n1.x);
-  const auto abY = (n2.y - n1.y);
+  const auto abX = (n2.x() - n1.x());
+  const auto abY = (n2.y() - n1.y());
   /* so instead of:
    * return ( (b->x - a->x)*(a->y - p->y) - (a->x - p->x)*(b->y - a->y) );
    * we can do the equivalent of:
@@ -306,7 +306,7 @@ quickHull(
   for (const auto p : a)
   {
     // loop through points, looking for furthest
-    const auto d = (abX * (n1.y - p.y) - (n1.x - p.x) * abY);
+    const auto d = (abX * (n1.y() - p.y()) - (n1.x() - p.x()) * abY);
     if (d >= 0)
     {
       if (d > maxD)
