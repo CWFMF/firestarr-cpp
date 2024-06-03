@@ -52,7 +52,7 @@ public:
     {
       for (const auto p : points)
       {
-        log_point(step, stage, time, p.x, p.y);
+        log_point(step, stage, time, p.x(), p.y());
       }
     }
   };
@@ -778,7 +778,7 @@ Scenario::cell(
   const InnerPos& p
 ) const noexcept
 {
-  return cell(p.y, p.x);
+  return cell(p.y(), p.x());
 }
 string
 Scenario::add_log(
@@ -1138,12 +1138,12 @@ Scenario::scheduleFireSpread(
         for (auto& p : kv.second)
         {
           const InnerPos pos = p.add(offset);
-          log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x, pos.y);
+          log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
           // was doing this check after getting for_cell, so it didn't help when out of bounds
-          if (pos.x < 0 || pos.y < 0 || pos.x >= this->columns() || pos.y >= this->rows())
+          if (pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows())
           {
             ++oob_spread_;
-            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x, pos.y);
+            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x(), pos.y());
             continue;
           }
           const auto for_cell = cell(pos);
