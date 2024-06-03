@@ -307,6 +307,42 @@ public:
   constexpr Offset(const Offset& rhs) noexcept = default;
   Offset& operator=(const Offset& rhs) noexcept = default;
   Offset& operator=(Offset&& rhs) noexcept = default;
+
+  /**
+   * \brief Less than operator
+   * \param rhs Offset to compare to
+   * \return Whether or not this is less than the other
+   */
+  bool operator<(const Offset& rhs) const noexcept
+  {
+    if (x() == rhs.x())
+    {
+      if (y() == rhs.y())
+      {
+        // they are "identical" so this is false
+        return false;
+      }
+      return y() < rhs.y();
+    }
+    return x() < rhs.x();
+  }
+  /**
+   * \brief Equality operator
+   * \param rhs Offset to compare to
+   * \return Whether or not this is equivalent to the other
+   */
+  bool operator==(const Offset& rhs) const noexcept
+  {
+    return (x() == rhs.x())
+        && (y() == rhs.y());
+  }
+  /**
+   * \brief Add offset to position and return result
+   */
+  [[nodiscard]] constexpr Offset add(const Offset o) const noexcept
+  {
+    return Offset(x() + o.x(), y() + o.y());
+  }
 private:
   /**
    * \brief Offset in the x direction (column)
