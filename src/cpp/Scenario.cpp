@@ -212,6 +212,7 @@ void Scenario::clear() noexcept
   model_->releaseBurnedVector(unburnable_);
   unburnable_ = nullptr;
   step_ = 0;
+  oob_spread_ = 0;
 }
 size_t Scenario::completed() noexcept
 {
@@ -538,7 +539,8 @@ Scenario::Scenario(Model* model,
     start_day_(start_day),
     last_date_(last_date),
     ran_(false),
-    step_(0)
+    step_(0),
+    oob_spread_(0)
 {
   last_save_ = weather_->minDate();
   const auto wx = weather_->at(start_time_);
