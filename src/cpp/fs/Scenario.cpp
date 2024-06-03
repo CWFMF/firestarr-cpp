@@ -471,7 +471,7 @@ bool Scenario::isSurrounded(const Location& location) const
 {
   return intensity_->isSurrounded(location);
 }
-Cell Scenario::cell(const InnerPos& p) const noexcept { return cell(p.y, p.x); }
+Cell Scenario::cell(const InnerPos& p) const noexcept { return cell(p.y(), p.x()); }
 string Scenario::add_log(const char* format) const noexcept
 {
   const string tmp;
@@ -707,12 +707,10 @@ void Scenario::scheduleFireSpread(const Event& event)
                     : max_duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  map<Cell, PointSet> point_map_{};
-  map<Cell, size_t> count{};
+  map<Cell, PointSet> point_map{};
   for (auto& kv : points_)
   {
     const auto& location = kv.first;
-    count[location] = kv.second.size();
     const auto key = location.key();
     auto& offsets = spread_info_.at(key).offsets();
     if (!offsets.empty())
@@ -726,12 +724,12 @@ void Scenario::scheduleFireSpread(const Event& event)
         for (auto& p : kv.second)
         {
           const InnerPos pos = p.add(offset);
-          points_log_.log(step_, STAGE_SPREAD, new_time, pos.x, pos.y);
+          points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
           // was doing this check after getting for_cell, so it didn't help when out of bounds
-          if (pos.x < 0 || pos.y < 0 || pos.x >= this->columns() || pos.y >= this->rows())
+          if (pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows())
           {
             ++oob_spread_;
-            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x, pos.y);
+            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x(), pos.y());
             continue;
           }
           const auto for_cell = cell(pos);
@@ -739,7 +737,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           sources[for_cell] |= source;
           if (!(is_null_fuel(for_cell) || unburnable_.at(for_cell.hash())))
           {
-            point_map_[for_cell].emplace_back(pos);
+            point_map[for_cell].emplace_back(pos);
           }
         }
       }
@@ -748,13 +746,13 @@ void Scenario::scheduleFireSpread(const Event& event)
     {
       // can't just keep existing points by swapping because something may have spread into this
       // cell
-      auto& pts = point_map_[location];
+      auto& pts = point_map[location];
       pts.insert(pts.end(), kv.second.begin(), kv.second.end());
     }
     kv.second = {};
   }
   vector<Cell> erase_what{};
-  for (auto& kv : point_map_)
+  for (auto& kv : point_map)
   {
     auto& for_cell = kv.first;
     if (!kv.second.empty())
