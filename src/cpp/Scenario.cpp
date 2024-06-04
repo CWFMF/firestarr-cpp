@@ -1118,12 +1118,10 @@ Scenario::scheduleFireSpread(
   // note("Spreading for %f minutes", duration);
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  map<topo::Cell, PointSet> point_map_{};
-  map<topo::Cell, size_t> count{};
+  map<topo::Cell, PointSet> point_map{};
   for (auto& kv : points_)
   {
     const auto& location = kv.first;
-    count[location] = kv.second.size();
     const auto key = location.key();
     auto& offsets = spread_info_.at(key).offsets();
     if (!offsets.empty())
@@ -1152,7 +1150,7 @@ Scenario::scheduleFireSpread(
           if (!(*unburnable_)[for_cell.hash()])
           {
             // log_extensive("Adding point (%f, %f)", pos.x, pos.y);
-            point_map_[for_cell].emplace_back(pos);
+            point_map[for_cell].emplace_back(pos);
           }
         }
       }
@@ -1161,14 +1159,14 @@ Scenario::scheduleFireSpread(
     {
       // can't just keep existing points by swapping because something may have spread into this
       // cell
-      auto& pts = point_map_[location];
+      auto& pts = point_map[location];
       pts.insert(pts.end(), kv.second.begin(), kv.second.end());
     }
     //    kv.second.clear();
     kv.second = {};
   }
   vector<topo::Cell> erase_what{};
-  for (auto& kv : point_map_)
+  for (auto& kv : point_map)
   {
     auto& for_cell = kv.first;
     if (!kv.second.empty())
