@@ -1004,12 +1004,13 @@ void Scenario::scheduleFireSpread(const Event& event)
   map<topo::Cell, PointSet> points_old{};
   std::swap(points_old, points_);
   // copy keys so we can modify points_old while looping
+  vector<tuple<topo::Cell, const PointSet*, const OffsetSet*>> to_spread{};
   const auto cells_old = std::views::keys(points_old);
   for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
   {
-    auto& pts_old = points_old[location];
     const auto key = location.key();
     auto& offsets = spread_info_.at(key).offsets();
+    auto& pts_old = points_old[location];
     if (offsets.empty())
     {
       // since this is happening before any spread we can just swap
@@ -1017,12 +1018,23 @@ void Scenario::scheduleFireSpread(const Event& event)
       std::swap(pts, pts_old);
       points_old.erase(location);
     }
+    else
+    {
+      to_spread.emplace_back(location, &pts_old, &offsets);
+      logging::check_fatal(offsets.empty(),
+                           "Shouldn't add empty offsets");
+      logging::check_fatal(std::get<2>(to_spread.at(to_spread.size() - 1))->empty(),
+                           "Added offsets shouldn't be empty");
+    }
   }
-  for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
+  // for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
+  for (auto& t : to_spread)
   {
-    auto& pts_old = points_old[location];
-    const auto key = location.key();
-    auto& offsets = spread_info_.at(key).offsets();
+    auto location = std::get<0>(t);
+    auto& pts_old = *std::get<1>(t);
+    auto& offsets = *std::get<2>(t);
+    // const auto key = location.key();
+    // auto& offsets = spread_info_.at(key).offsets();
     logging::check_fatal(offsets.empty(),
                          "Shouldn't have any empty offsets in this loop");
     for (auto& o : offsets)
