@@ -1024,13 +1024,13 @@ void Scenario::scheduleFireSpread(const Event& event)
         {
           const InnerPos pos = p.add(offset);
           log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+#ifdef DEBUG_POINTS
           // was doing this check after getting for_cell, so it didn't help when out of bounds
-          if (pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows())
-          {
-            ++oob_spread_;
-            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x(), pos.y());
-            continue;
-          }
+          log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+                          "Tried to spread out of bounds to (%f, %f)",
+                          pos.x(),
+                          pos.y());
+#endif
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;
