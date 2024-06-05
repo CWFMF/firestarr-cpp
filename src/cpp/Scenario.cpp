@@ -679,27 +679,42 @@ void Scenario::scheduleFireSpread(const Event& event)
     spread_info_ = {};
     max_ros_ = 0.0;
   }
+  // get once and keep
+  const auto ros_min = Settings::minimumRos();
   auto keys = std::set<SpreadKey>();
-  std::transform(
-    points_.cbegin(),
-    points_.cend(),
-    std::inserter(keys, keys.begin()),
-    [](const pair<const Cell, const PointSet>& kv) { return kv.first.key(); }
-  );
-  auto any_spread = false;
-  for (const auto& key : keys)
+  map<Cell, PointSet> points_old{};
+  std::swap(points_old, points_);
+  // copy keys so we can modify points_old while looping
+  vector<tuple<Cell, const PointSet*, const OffsetSet*>> to_spread{};
+  const auto cells_old = std::views::keys(points_old);
+  for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
   {
+    const auto key = location.key();
     const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
+    auto& pts_old = points_old[location];
     // any cell that has the same fuel, slope, and aspect has the same spread
     const auto& origin = origin_inserted.first->second;
-    if (!origin.isNotSpreading())
+    // filter out things not spreading fast enough here so they get copied if they aren't
+    // isNotSpreading() had better be true if ros is lower than minimum
+    const auto ros = origin.headRos();
+    if (ros < ros_min)
     {
-      any_spread = true;
-      max_ros_ = max(max_ros_, origin.headRos());
+      // if no spread then move into points_ as-is
+      // since this is happening before any spread we can just swap
+      auto& pts = points_[location];
+      std::swap(pts, pts_old);
+      points_old.erase(location);
+    }
+    else
+    {
+      max_ros_ = max(max_ros_, ros);
+      to_spread.emplace_back(location, &pts_old, &origin.offsets());
     }
   }
-  if (!any_spread || max_ros_ < Settings::minimumRos())
+  // if nothing left in points_old then nothing is spreading
+  if (points_old.empty())
   {
+    // if no spread then we swapped everything back into points_ already
     log_verbose("Waiting until %f", max_time);
     addEvent(Event::makeFireSpread(max_time));
     return;
@@ -709,39 +724,12 @@ void Scenario::scheduleFireSpread(const Event& event)
                     : max_duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  map<Cell, PointSet> points_old{};
-  std::swap(points_old, points_);
-  // copy keys so we can modify points_old while looping
-  vector<tuple<Cell, const PointSet*, const OffsetSet*>> to_spread{};
-  const auto cells_old = std::views::keys(points_old);
-  for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
-  {
-    const auto key = location.key();
-    auto& offsets = spread_info_.at(key).offsets();
-    auto& pts_old = points_old[location];
-    if (offsets.empty())
-    {
-      // since this is happening before any spread we can just swap
-      auto& pts = points_[location];
-      std::swap(pts, pts_old);
-      points_old.erase(location);
-    }
-    else
-    {
-      to_spread.emplace_back(location, &pts_old, &offsets);
-      logging::check_fatal(offsets.empty(), "Shouldn't add empty offsets");
-      logging::check_fatal(
-        std::get<2>(to_spread.at(to_spread.size() - 1))->empty(), "Added offsets shouldn't be empty"
-      );
-    }
-  }
   // for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
   for (auto& t : to_spread)
   {
     auto location = std::get<0>(t);
     auto& pts_old = *std::get<1>(t);
     auto& offsets = *std::get<2>(t);
-    logging::check_fatal(offsets.empty(), "Shouldn't have any empty offsets in this loop");
     for (auto& o : offsets)
     {
       // offsets in meters
