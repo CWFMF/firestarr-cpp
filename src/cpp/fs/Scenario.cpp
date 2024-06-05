@@ -751,7 +751,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     }
     kv.second = {};
   }
-  vector<Cell> erase_what{};
+  set<Cell> erase_what{};
   for (auto& kv : point_map)
   {
     auto& for_cell = kv.first;
@@ -788,14 +788,23 @@ void Scenario::scheduleFireSpread(const Event& event)
         {
           // whether it went out or is surrounded just mark it as unburnable
           unburnable_.set(for_cell.hash());
-          erase_what.emplace_back(for_cell);
+          erase_what.emplace(for_cell);
         }
       }
       kv.second = {};
     }
     else
     {
-      erase_what.emplace_back(for_cell);
+      erase_what.emplace(for_cell);
+    }
+  }
+  // was leaving cells with no points in list and that would mean including
+  // them in determining max ros which would be wrong
+  for (auto& kv : points_)
+  {
+    if (kv.second.empty())
+    {
+      erase_what.emplace(kv.first);
     }
   }
   for (auto& c : erase_what)
