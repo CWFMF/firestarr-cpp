@@ -395,8 +395,13 @@ protected:
       for (Idx c = 0; c < columns(); ++c)
       {
         const Location location(r, c);
+        // HACK: just mark outside edge as unburnable so we never need to check
+        bool is_outer = 0 == r
+                     || 0 == c
+                     || (rows() - 1) == r
+                     || (columns() - 1) == c;
         // (*result)[location.hash()] = (nullptr == fuel::fuel_by_code(cells.at(location).fuelCode()));
-        (*result)[location.hash()] = fuel::is_null_fuel(cells.at(location));
+        (*result)[location.hash()] = is_outer || fuel::is_null_fuel(cells.at(location));
         //        if (fuel::is_null_fuel(cell(location)))
         //        {
         //          not_burnable_[location.hash()] = true;
