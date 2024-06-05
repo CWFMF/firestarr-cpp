@@ -1121,18 +1121,16 @@ Scenario::scheduleFireSpread(
   auto for_duration = [duration](const Offset o) {
     return Offset(o.x() * duration, o.y() * duration);
   };
-  for (auto& kv0 : to_spread)
-  {
-    auto& key = kv0.first;
-    auto& offsets = spread_info_[key].offsets();
-    for (auto& pts_for_cell : kv0.second)
-    {
-      auto location = std::get<0>(pts_for_cell);
+  auto apply_offsets =
+    [this,
+     &new_time,
+     &for_duration,
+     &sources](const OffsetSet offsets, const topo::Cell location, const PointSet pts) {
       for (auto& o : offsets)
       {
         auto offset = for_duration(o);
         // note("%f, %f", offset_x, offset_y);
-        for (auto& p : std::get<1>(pts_for_cell))
+        for (auto& p : pts)
         {
           const InnerPos pos = p.add(offset);
           log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
@@ -1155,6 +1153,14 @@ Scenario::scheduleFireSpread(
           }
         }
       }
+    };
+  for (auto& kv0 : to_spread)
+  {
+    auto& key = kv0.first;
+    auto& offsets = spread_info_[key].offsets();
+    for (auto& pts_for_cell : kv0.second)
+    {
+      apply_offsets(offsets, std::get<0>(pts_for_cell), std::get<1>(pts_for_cell));
     }
   }
   const auto cells = std::views::keys(points_);
