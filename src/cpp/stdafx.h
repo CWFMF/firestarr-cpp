@@ -32,6 +32,7 @@
 #include <map>
 #include <memory>
 #include <random>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <cstdint>
