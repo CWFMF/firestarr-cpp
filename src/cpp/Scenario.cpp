@@ -30,26 +30,39 @@ constexpr auto STAGE_NEW = 'N';
 constexpr auto STAGE_SPREAD = 'S';
 constexpr auto STAGE_INVALID = 'X';
 
-// HACK: would love to use std::views::cartesian_product but can't figure out
-// why it's not there if we're supposed to be compiling with C++23
-template <typename A, typename B, typename A_, typename B_>
-vector<pair<A, B>>
-make_cross(
-  const A_& a_,
-  const B_& b_
-)
-{
-  vector<pair<A, B>> results{};
-  results.reserve(a_.size() * b_.size());
-  for (auto& a : a_)
-  {
-    for (auto& b : b_)
-    {
-      results.emplace_back(a, b);
-    }
-  }
-  return results;
-}
+// // HACK: would love to use std::views::cartesian_product but can't figure out
+// // why it's not there if we're supposed to be compiling with C++23
+// template <typename A, typename B, typename A_, typename B_>
+// vector<pair<const A, const B>> make_cross(const A_& a_, const B_& b_)
+// {
+//   vector<pair<const A, const B>> results{};
+//   results.reserve(a_.size() * b_.size());
+//   for (auto& a : a_)
+//   {
+//     for (auto& b : b_)
+//     {
+//       results.emplace_back(a, b);
+//     }
+//   }
+//   return results;
+// }
+
+// vector<pair<const Offset, const InnerPos>> make_spread(
+//   const double duration,
+//   const OffsetSet& offsets,
+//   const PointSet& points)
+// {
+//   vector<pair<const Offset, const InnerPos>> results{};
+//   results.reserve(offsets.size() * points.size());
+//   for (auto& o : offsets)
+//   {
+//     for (auto& p : points)
+//     {
+//       results.emplace_back(Offset(o.x() * duration, o.y() * duration), p);
+//     }
+//   }
+//   return results;
+// }
 
 template <typename T, typename F>
 void
@@ -60,6 +73,23 @@ do_each(
 {
   std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
 }
+
+// vector<InnerPos> make_spread(
+//   const double duration,
+//   const OffsetSet& offsets,
+//   const PointSet& points)
+// {
+//   vector<InnerPos> results{};
+//   results.reserve(offsets.size() * points.size());
+//   for (auto& o : offsets)
+//   {
+//     for (auto& p : points)
+//     {
+//       results.emplace_back(p.add(Offset(o.x() * duration, o.y() * duration)));
+//     }
+//   }
+//   return results;
+// }
 
 class LogPoints
 {
@@ -1154,19 +1184,29 @@ Scenario::scheduleFireSpread(
   auto for_duration = [duration](const Offset o) {
     return Offset(o.x() * duration, o.y() * duration);
   };
-  auto apply_offsets = [this, &new_time, &for_duration, &sources](
-                         const OffsetSet offsets,
-                         const topo::Cell location,
-                         const PointSet pts
-                       ) {
-    // for (auto& o : offsets)
-    do_each(offsets, [this, &new_time, &for_duration, &location, &sources, &pts](const Offset& o) {
-      auto offset = for_duration(o);
-      // note("%f, %f", offset_x, offset_y);
-      do_each(
-        pts,
-        [this, &new_time, &for_duration, &location, &sources, &offset](const InnerPos& p) {
-          const InnerPos pos = p.add(offset);
+  auto apply_offsets =
+    [this,
+     &new_time,
+     &for_duration,
+     &sources](const OffsetSet offsets, const topo::Cell location, const PointSet pts) {
+      // auto x = std::views::join(std::views::view(offsets) | std::views::view());
+      auto num_pts = pts.size() * offsets.size();
+      auto p_o = std::views::zip(
+        std::views::repeat(location, num_pts),
+        std::views::cartesian_product(offsets, pts)
+      );
+      // using product_type = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
+      using product_type = decltype(*p_o.cbegin());
+      // for (auto& o : offsets)
+      std::for_each(
+        // std::execution::par_unseq,
+        p_o.cbegin(),
+        p_o.cend(),
+        [this, &new_time, &for_duration, &location, &sources, &pts](const product_type& c0) {
+          auto& c = std::get<1>(c0);
+          auto offset = for_duration(std::get<0>(c));
+          // note("%f, %f", offset_x, offset_y);
+          const InnerPos pos = std::get<1>(c).add(offset);
           log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
 #ifdef DEBUG_POINTS
           // was doing this check after getting for_cell, so it didn't help when out of bounds
@@ -1187,8 +1227,7 @@ Scenario::scheduleFireSpread(
           }
         }
       );
-    });
-  };
+    };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
   // for (auto& kv0 : to_spread)
   // {
