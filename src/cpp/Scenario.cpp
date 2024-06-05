@@ -1070,9 +1070,13 @@ void Scenario::scheduleFireSpread(const Event& event)
   // for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
   auto for_duration = [duration](const Offset o) { return Offset(o.x() * duration, o.y() * duration); };
   auto apply_offsets = [this, &new_time, &for_duration, &sources](
-                         const OffsetSet offsets,
-                         const topo::Cell location,
-                         const PointSet pts) {
+                         //  const OffsetSet offsets,
+                         //  const topo::Cell location,
+                         //  const PointSet pts
+                         const tuple<topo::Cell, PointSet, const OffsetSet*>& t) {
+    const auto& location = std::get<0>(t);
+    const auto& pts = std::get<1>(t);
+    const auto& offsets = *std::get<2>(t);
     // auto x = std::views::join(std::views::view(offsets) | std::views::view());
     auto num_pts = pts.size() * offsets.size();
     auto p_o = std::views::zip(std::views::repeat(location, num_pts), std::views::cartesian_product(offsets, pts));
@@ -1120,7 +1124,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     auto& offsets = spread_info_[key].offsets();
     do_each(kv0.second,
             [&apply_offsets, &offsets](const tuple<topo::Cell, PointSet> pts_for_cell) {
-              apply_offsets(offsets, std::get<0>(pts_for_cell), std::get<1>(pts_for_cell));
+              apply_offsets(std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets));
             });
   };
   do_each(to_spread, apply_spread);
