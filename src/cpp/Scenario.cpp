@@ -18,6 +18,11 @@ static atomic<size_t> COMPLETED = 0;
 static atomic<size_t> TOTAL_STEPS = 0;
 static std::mutex MUTEX_SIM_COUNTS;
 static map<size_t, size_t> SIM_COUNTS{};
+template <typename T, typename F>
+void do_each(const T& for_list, F fct)
+{
+  std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
+}
 void IObserver_deleter::operator()(IObserver* ptr) const
 {
   // printf("Deleting\n");
@@ -681,7 +686,8 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  map<SpreadKey, vector<tuple<Cell, const PointSet>>> to_spread{};
+  using CellPts = tuple<Cell, const PointSet>;
+  map<SpreadKey, vector<CellPts>> to_spread{};
   // if we use an iterator this way we don't need to copy keys to erase things
   auto it = points_.begin();
   while (it != points_.end())
@@ -722,40 +728,58 @@ void Scenario::scheduleFireSpread(const Event& event)
   auto for_duration = [duration](const Offset o) {
     return Offset(o.x() * duration, o.y() * duration);
   };
-  for (auto& kv0 : to_spread)
-  {
-    auto& key = kv0.first;
-    auto& offsets = spread_info_[key].offsets();
-    for (auto& pts_for_cell : kv0.second)
-    {
-      auto location = std::get<0>(pts_for_cell);
-      for (auto& o : offsets)
-      {
-        auto offset = for_duration(o);
-        for (auto& p : std::get<1>(pts_for_cell))
-        {
-          const InnerPos pos = p.add(offset);
-          points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+  auto apply_offsets = [this, &new_time, &for_duration, &sources](
+                         //  const OffsetSet offsets,
+                         //  const Cell location,
+                         //  const PointSet pts
+                         const tuple<Cell, PointSet, const OffsetSet*>& t
+                       ) {
+    const auto& location = std::get<0>(t);
+    const auto& pts = std::get<1>(t);
+    const auto& offsets = *std::get<2>(t);
+    auto num_pts = pts.size() * offsets.size();
+    auto p_o = std::views::zip(
+      std::views::repeat(location, num_pts), std::views::cartesian_product(offsets, pts)
+    );
+    using product_type = decltype(*p_o.cbegin());
+    // for (auto& o : offsets)
+    std::for_each(
+      // std::execution::par_unseq,
+      p_o.cbegin(),
+      p_o.cend(),
+      [this, &new_time, &for_duration, &location, &sources, &pts](const product_type& c0) {
+        auto& c = std::get<1>(c0);
+        auto offset = for_duration(std::get<0>(c));
+        const InnerPos pos = std::get<1>(c).add(offset);
+        points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
 #ifdef DEBUG_POINTS
-          // was doing this check after getting for_cell, so it didn't help when out of bounds
-          log_check_fatal(
-            pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
-            "Tried to spread out of bounds to (%f, %f)",
-            pos.x(),
-            pos.y()
-          );
+        // was doing this check after getting for_cell, so it didn't help when out of bounds
+        log_check_fatal(
+          pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+          "Tried to spread out of bounds to (%f, %f)",
+          pos.x(),
+          pos.y()
+        );
 #endif
-          const auto for_cell = cell(pos);
-          const auto source = relativeIndex(for_cell, location);
-          sources[for_cell] |= source;
-          if (!unburnable_.at(for_cell.hash()))
-          {
-            points_[for_cell].emplace_back(pos);
-          }
+        const auto for_cell = cell(pos);
+        const auto source = relativeIndex(for_cell, location);
+        sources[for_cell] |= source;
+        if (!unburnable_.at(for_cell.hash()))
+        {
+          points_[for_cell].emplace_back(pos);
         }
       }
-    }
-  }
+    );
+  };
+  using CellPair = pair<const SpreadKey, vector<CellPts>>;
+  auto apply_spread = [this, &apply_offsets](const CellPair& kv0) {
+    auto& key = kv0.first;
+    auto& offsets = spread_info_[key].offsets();
+    do_each(kv0.second, [&apply_offsets, &offsets](const tuple<Cell, PointSet> pts_for_cell) {
+      apply_offsets(std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets));
+    });
+  };
+  do_each(to_spread, apply_spread);
   const auto cells = std::views::keys(points_);
   // copy keys so we can modify points_ while looping
   for (auto& for_cell : std::vector<Cell>(cells.begin(), cells.end()))
