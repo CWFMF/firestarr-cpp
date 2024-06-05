@@ -718,41 +718,45 @@ void Scenario::scheduleFireSpread(const Event& event)
     auto& pts_old = points_old[location];
     const auto key = location.key();
     auto& offsets = spread_info_.at(key).offsets();
-    if (!offsets.empty())
+    if (offsets.empty())
     {
-      for (auto& o : offsets)
+      // since this is happening before any spread we can just swap
+      auto& pts = points_[location];
+      std::swap(pts, pts_old);
+      points_old.erase(location);
+    }
+  }
+  for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
+  {
+    auto& pts_old = points_old[location];
+    const auto key = location.key();
+    auto& offsets = spread_info_.at(key).offsets();
+    logging::check_fatal(offsets.empty(), "Shouldn't have any empty offsets in this loop");
+    for (auto& o : offsets)
+    {
+      // offsets in meters
+      const auto offset_x = o.x() * duration;
+      const auto offset_y = o.y() * duration;
+      const Offset offset{offset_x, offset_y};
+      for (auto& p : pts_old)
       {
-        // offsets in meters
-        const auto offset_x = o.x() * duration;
-        const auto offset_y = o.y() * duration;
-        const Offset offset{offset_x, offset_y};
-        for (auto& p : pts_old)
+        const InnerPos pos = p.add(offset);
+        points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+        // was doing this check after getting for_cell, so it didn't help when out of bounds
+        if (pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows())
         {
-          const InnerPos pos = p.add(offset);
-          points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
-          // was doing this check after getting for_cell, so it didn't help when out of bounds
-          if (pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows())
-          {
-            ++oob_spread_;
-            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x(), pos.y());
-            continue;
-          }
-          const auto for_cell = cell(pos);
-          const auto source = relativeIndex(for_cell, location);
-          sources[for_cell] |= source;
-          if (!(is_null_fuel(for_cell) || unburnable_.at(for_cell.hash())))
-          {
-            points_[for_cell].emplace_back(pos);
-          }
+          ++oob_spread_;
+          log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x(), pos.y());
+          continue;
+        }
+        const auto for_cell = cell(pos);
+        const auto source = relativeIndex(for_cell, location);
+        sources[for_cell] |= source;
+        if (!unburnable_.at(for_cell.hash()))
+        {
+          points_[for_cell].emplace_back(pos);
         }
       }
-    }
-    else
-    {
-      // can't just keep existing points by swapping because something may have spread into this
-      // cell
-      auto& pts = points_[location];
-      pts.insert(pts.end(), pts_old.begin(), pts_old.end());
     }
   }
   const auto cells = std::views::keys(points_);
