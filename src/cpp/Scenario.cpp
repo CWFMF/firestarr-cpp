@@ -681,15 +681,14 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  auto keys = std::set<SpreadKey>();
-  map<SpreadKey, map<Cell, const PointSet>> to_spread{};
-  // if we're moving things into to_spread then we don't need a second map
-  const auto cells_old = std::views::keys(points_);
-  for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
+  map<SpreadKey, vector<tuple<Cell, const PointSet>>> to_spread{};
+  // if we use an iterator this way we don't need to copy keys to erase things
+  auto it = points_.begin();
+  while (it != points_.end())
   {
+    const auto location = it->first;
     const auto key = location.key();
     const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
-    auto& pts_old = points_[location];
     // any cell that has the same fuel, slope, and aspect has the same spread
     const auto& origin = origin_inserted.first->second;
     // filter out things not spreading fast enough here so they get copied if they aren't
@@ -698,9 +697,12 @@ void Scenario::scheduleFireSpread(const Event& event)
     if (ros >= ros_min)
     {
       max_ros_ = max(max_ros_, ros);
-      auto& pts_by_cell = to_spread[key];
-      pts_by_cell.emplace(location, std::move(pts_old));
-      points_.erase(location);
+      to_spread[key].emplace_back(location, std::move(it->second));
+      it = points_.erase(it);
+    }
+    else
+    {
+      ++it;
     }
   }
   // if nothing in to_spread then nothing is spreading
@@ -720,10 +722,10 @@ void Scenario::scheduleFireSpread(const Event& event)
   for (auto& kv0 : to_spread)
   {
     auto& key = kv0.first;
-    for (auto& kv : kv0.second)
+    for (auto& c : kv0.second)
     {
-      auto location = kv.first;
-      auto& pts_old = kv.second;
+      auto location = std::get<0>(c);
+      auto& pts_old = std::get<1>(c);
       for (auto& o : spread_info_[key].offsets())
       {
         // offsets in meters
@@ -734,13 +736,15 @@ void Scenario::scheduleFireSpread(const Event& event)
         {
           const InnerPos pos = p.add(offset);
           points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+#ifdef DEBUG_POINTS
           // was doing this check after getting for_cell, so it didn't help when out of bounds
-          if (pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows())
-          {
-            ++oob_spread_;
-            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x(), pos.y());
-            continue;
-          }
+          log_check_fatal(
+            pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+            "Tried to spread out of bounds to (%f, %f)",
+            pos.x(),
+            pos.y()
+          );
+#endif
           const auto for_cell = cell(pos);
           const auto source = relativeIndex(for_cell, location);
           sources[for_cell] |= source;
