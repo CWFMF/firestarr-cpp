@@ -680,8 +680,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   // get once and keep
   const auto ros_min = Settings::minimumRos();
   auto keys = std::set<SpreadKey>();
-  // copy keys so we can modify points_old while looping
-  vector<tuple<Cell, const PointSet, const OffsetSet*>> to_spread{};
+  map<SpreadKey, map<Cell, const PointSet>> to_spread{};
   // if we're moving things into to_spread then we don't need a second map
   const auto cells_old = std::views::keys(points_);
   for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
@@ -697,7 +696,8 @@ void Scenario::scheduleFireSpread(const Event& event)
     if (ros >= ros_min)
     {
       max_ros_ = max(max_ros_, ros);
-      to_spread.emplace_back(location, std::move(pts_old), &origin.offsets());
+      auto& pts_by_cell = to_spread[key];
+      pts_by_cell.emplace(location, std::move(pts_old));
       points_.erase(location);
     }
   }
@@ -715,34 +715,37 @@ void Scenario::scheduleFireSpread(const Event& event)
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
   // for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
-  for (auto& t : to_spread)
+  for (auto& kv0 : to_spread)
   {
-    auto location = std::get<0>(t);
-    auto& pts_old = std::get<1>(t);
-    auto& offsets = *std::get<2>(t);
-    for (auto& o : offsets)
+    auto& key = kv0.first;
+    for (auto& kv : kv0.second)
     {
-      // offsets in meters
-      const auto offset_x = o.x() * duration;
-      const auto offset_y = o.y() * duration;
-      const Offset offset{offset_x, offset_y};
-      for (auto& p : pts_old)
+      auto location = kv.first;
+      auto& pts_old = kv.second;
+      for (auto& o : spread_info_[key].offsets())
       {
-        const InnerPos pos = p.add(offset);
-        points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
-        // was doing this check after getting for_cell, so it didn't help when out of bounds
-        if (pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows())
+        // offsets in meters
+        const auto offset_x = o.x() * duration;
+        const auto offset_y = o.y() * duration;
+        const Offset offset{offset_x, offset_y};
+        for (auto& p : pts_old)
         {
-          ++oob_spread_;
-          log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x(), pos.y());
-          continue;
-        }
-        const auto for_cell = cell(pos);
-        const auto source = relativeIndex(for_cell, location);
-        sources[for_cell] |= source;
-        if (!unburnable_.at(for_cell.hash()))
-        {
-          points_[for_cell].emplace_back(pos);
+          const InnerPos pos = p.add(offset);
+          points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+          // was doing this check after getting for_cell, so it didn't help when out of bounds
+          if (pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows())
+          {
+            ++oob_spread_;
+            log_extensive("Tried to spread out of bounds to (%f, %f)", pos.x(), pos.y());
+            continue;
+          }
+          const auto for_cell = cell(pos);
+          const auto source = relativeIndex(for_cell, location);
+          sources[for_cell] |= source;
+          if (!unburnable_.at(for_cell.hash()))
+          {
+            points_[for_cell].emplace_back(pos);
+          }
         }
       }
     }
