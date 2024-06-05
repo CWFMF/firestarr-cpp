@@ -963,23 +963,14 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  // auto keys = list<topo::SpreadKey>();
-  // std::transform(points_.cbegin(), points_.cend(), keys.begin(), [](const pair<const topo::Cell, const PointSet>& kv) { return kv.first.key(); });
-  auto keys = std::set<topo::SpreadKey>();
-  // map<topo::Cell, PointSet> points_old{};
-  // std::swap(points_old, points_);
-  // copy keys so we can modify points_old while looping
-  // vector<tuple<topo::Cell, const PointSet, const OffsetSet*>> to_spread{};
-  // map<topo::SpreadKey, map<topo::Cell, const PointSet>> to_spread{};
   map<topo::SpreadKey, vector<tuple<topo::Cell, const PointSet>>> to_spread{};
-  // map<topo::SpreadKey, const OffsetSet*> offsets{};
-  // if we're moving things into to_spread then we don't need a second map
-  const auto cells_old = std::views::keys(points_);
-  for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
+  // if we use an iterator this way we don't need to copy keys to erase things
+  auto it = points_.begin();
+  while (it != points_.end())
   {
+    const auto location = it->first;
     const auto key = location.key();
     const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
-    auto& pts_old = points_[location];
     // any cell that has the same fuel, slope, and aspect has the same spread
     const auto& origin = origin_inserted.first->second;
     // filter out things not spreading fast enough here so they get copied if they aren't
@@ -988,8 +979,12 @@ void Scenario::scheduleFireSpread(const Event& event)
     if (ros >= ros_min)
     {
       max_ros_ = max(max_ros_, ros);
-      to_spread[key].emplace_back(location, std::move(pts_old));
-      points_.erase(location);
+      to_spread[key].emplace_back(location, std::move(it->second));
+      it = points_.erase(it);
+    }
+    else
+    {
+      ++it;
     }
   }
   // if nothing in to_spread then nothing is spreading
