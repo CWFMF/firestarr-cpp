@@ -1001,10 +1001,13 @@ void Scenario::scheduleFireSpread(const Event& event)
   // note("Spreading for %f minutes", duration);
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  map<topo::Cell, PointSet> point_map{};
-  for (auto& kv : points_)
+  map<topo::Cell, PointSet> points_old{};
+  std::swap(points_old, points_);
+  // copy keys so we can modify points_old while looping
+  const auto cells_old = std::views::keys(points_old);
+  for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
   {
-    const auto& location = kv.first;
+    auto& pts_old = points_old[location];
     const auto key = location.key();
     auto& offsets = spread_info_.at(key).offsets();
     if (!offsets.empty())
@@ -1016,7 +1019,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         const auto offset_y = o.y() * duration;
         const Offset offset{offset_x, offset_y};
         // note("%f, %f", offset_x, offset_y);
-        for (auto& p : kv.second)
+        for (auto& p : pts_old)
         {
           const InnerPos pos = p.add(offset);
           log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
@@ -1033,7 +1036,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           if (!(*unburnable_)[for_cell.hash()])
           {
             // log_extensive("Adding point (%f, %f)", pos.x, pos.y);
-            point_map[for_cell].emplace_back(pos);
+            points_[for_cell].emplace_back(pos);
           }
         }
       }
@@ -1041,17 +1044,16 @@ void Scenario::scheduleFireSpread(const Event& event)
     else
     {
       // can't just keep existing points by swapping because something may have spread into this cell
-      auto& pts = point_map[location];
-      pts.insert(pts.end(), kv.second.begin(), kv.second.end());
+      auto& pts = points_[location];
+      pts.insert(pts.end(), pts_old.begin(), pts_old.end());
     }
-    //    kv.second.clear();
-    kv.second = {};
   }
-  set<topo::Cell> erase_what{};
-  for (auto& kv : point_map)
+  const auto cells = std::views::keys(points_);
+  // copy keys so we can modify points_ while looping
+  for (auto& for_cell : std::vector<topo::Cell>(cells.begin(), cells.end()))
   {
-    auto& for_cell = kv.first;
-    if (!kv.second.empty())
+    auto& pts = points_[for_cell];
+    if (!pts.empty())
     {
       const auto& seek_spread = spread_info_.find(for_cell.key());
       const auto max_intensity = (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
@@ -1077,41 +1079,21 @@ void Scenario::scheduleFireSpread(const Event& event)
         // do survival check first since it should be easier
         if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
         {
-          if (kv.second.size() > MAX_BEFORE_CONDENSE)
+          if (pts.size() > MAX_BEFORE_CONDENSE)
           {
             // 3 points should just be a triangle usually (could be co-linear, but that's fine
-            hull(kv.second);
+            hull(pts);
           }
-          log_points_->log_points(step_, STAGE_CONDENSE, new_time, kv.second);
-          std::swap(points_[for_cell], kv.second);
+          log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
         }
         else
         {
           // whether it went out or is surrounded just mark it as unburnable
           (*unburnable_)[for_cell.hash()] = true;
-          erase_what.emplace(for_cell);
+          points_.erase(for_cell);
         }
       }
-      //      kv.second.clear();
-      kv.second = {};
     }
-    else
-    {
-      erase_what.emplace(for_cell);
-    }
-  }
-  // was leaving cells with no points in list and that would mean including
-  // them in determining max ros which would be wrong
-  for (auto& kv : points_)
-  {
-    if (kv.second.empty())
-    {
-      erase_what.emplace(kv.first);
-    }
-  }
-  for (auto& c : erase_what)
-  {
-    points_.erase(c);
   }
   log_extensive("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
