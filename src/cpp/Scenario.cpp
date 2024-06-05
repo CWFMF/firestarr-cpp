@@ -719,20 +719,20 @@ void Scenario::scheduleFireSpread(const Event& event)
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
   // for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
+  auto for_duration = [duration](const Offset o) {
+    return Offset(o.x() * duration, o.y() * duration);
+  };
   for (auto& kv0 : to_spread)
   {
     auto& key = kv0.first;
-    for (auto& c : kv0.second)
+    auto& offsets = spread_info_[key].offsets();
+    for (auto& pts_for_cell : kv0.second)
     {
-      auto location = std::get<0>(c);
-      auto& pts_old = std::get<1>(c);
-      for (auto& o : spread_info_[key].offsets())
+      auto location = std::get<0>(pts_for_cell);
+      for (auto& o : offsets)
       {
-        // offsets in meters
-        const auto offset_x = o.x() * duration;
-        const auto offset_y = o.y() * duration;
-        const Offset offset{offset_x, offset_y};
-        for (auto& p : pts_old)
+        auto offset = for_duration(o);
+        for (auto& p : std::get<1>(pts_for_cell))
         {
           const InnerPos pos = p.add(offset);
           points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
