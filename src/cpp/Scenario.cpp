@@ -970,7 +970,8 @@ void Scenario::scheduleFireSpread(const Event& event)
   // std::swap(points_old, points_);
   // copy keys so we can modify points_old while looping
   // vector<tuple<topo::Cell, const PointSet, const OffsetSet*>> to_spread{};
-  map<topo::SpreadKey, map<topo::Cell, const PointSet>> to_spread{};
+  // map<topo::SpreadKey, map<topo::Cell, const PointSet>> to_spread{};
+  map<topo::SpreadKey, vector<tuple<topo::Cell, const PointSet>>> to_spread{};
   // map<topo::SpreadKey, const OffsetSet*> offsets{};
   // if we're moving things into to_spread then we don't need a second map
   const auto cells_old = std::views::keys(points_);
@@ -987,9 +988,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     if (ros >= ros_min)
     {
       max_ros_ = max(max_ros_, ros);
-      auto& pts_by_cell = to_spread[key];
-      pts_by_cell.emplace(location, std::move(pts_old));
-      // offsets.emplace(key, &origin.offsets());
+      to_spread[key].emplace_back(location, std::move(pts_old));
       points_.erase(location);
     }
   }
@@ -1015,10 +1014,10 @@ void Scenario::scheduleFireSpread(const Event& event)
   for (auto& kv0 : to_spread)
   {
     auto& key = kv0.first;
-    for (auto& kv : kv0.second)
+    for (auto& c : kv0.second)
     {
-      auto location = kv.first;
-      auto& pts_old = kv.second;
+      auto location = std::get<0>(c);
+      auto& pts_old = std::get<1>(c);
       for (auto& o : spread_info_[key].offsets())
       {
         // offsets in meters
