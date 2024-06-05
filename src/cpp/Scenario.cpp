@@ -31,6 +31,23 @@ constexpr auto STAGE_NEW = 'N';
 constexpr auto STAGE_SPREAD = 'S';
 constexpr auto STAGE_INVALID = 'X';
 
+// HACK: would love to use std::views::cartesian_product but can't figure out
+// why it's not there if we're supposed to be compiling with C++23
+template <typename A, typename B, typename A_, typename B_>
+vector<pair<A, B>> make_cross(const A_& a_, const B_& b_)
+{
+  vector<pair<A, B>> results{};
+  results.reserve(a_.size() * b_.size());
+  for (auto& a : a_)
+  {
+    for (auto& b : b_)
+    {
+      results.emplace_back(a, b);
+    }
+  }
+  return results;
+}
+
 template <typename T, typename F>
 void do_each(const T& for_list, F fct)
 {
