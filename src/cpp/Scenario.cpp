@@ -30,6 +30,16 @@ constexpr auto STAGE_CONDENSE = 'C';
 constexpr auto STAGE_NEW = 'N';
 constexpr auto STAGE_SPREAD = 'S';
 constexpr auto STAGE_INVALID = 'X';
+
+template <typename T, typename F>
+void do_each(const T& for_list, F fct)
+{
+  std::for_each(std::execution::par_unseq,
+                for_list.begin(),
+                for_list.end(),
+                fct);
+}
+
 class LogPoints
 {
 public:
@@ -963,7 +973,8 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  map<topo::SpreadKey, vector<tuple<topo::Cell, const PointSet>>> to_spread{};
+  using CellPts = tuple<topo::Cell, const PointSet>;
+  map<topo::SpreadKey, vector<CellPts>> to_spread{};
   // if we use an iterator this way we don't need to copy keys to erase things
   auto it = points_.begin();
   while (it != points_.end())
@@ -1007,42 +1018,54 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto new_time = time + duration / DAY_MINUTES;
   // for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
   auto for_duration = [duration](const Offset o) { return Offset(o.x() * duration, o.y() * duration); };
-  auto apply_offsets = [this, &new_time, &for_duration, &sources](const OffsetSet offsets, const topo::Cell location, const PointSet pts) {
-    for (auto& o : offsets)
-    {
-      auto offset = for_duration(o);
-      // note("%f, %f", offset_x, offset_y);
-      for (auto& p : pts)
-      {
-        const InnerPos pos = p.add(offset);
-        log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+  auto apply_offsets = [this, &new_time, &for_duration, &sources](
+                         const OffsetSet offsets,
+                         const topo::Cell location,
+                         const PointSet pts) {
+    // for (auto& o : offsets)
+    do_each(offsets,
+            [this, &new_time, &for_duration, &location, &sources, &pts](const Offset& o) {
+              auto offset = for_duration(o);
+              // note("%f, %f", offset_x, offset_y);
+              do_each(pts,
+                      [this, &new_time, &for_duration, &location, &sources, &offset](const InnerPos& p) {
+                        const InnerPos pos = p.add(offset);
+                        log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
 #ifdef DEBUG_POINTS
-        // was doing this check after getting for_cell, so it didn't help when out of bounds
-        log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
-                        "Tried to spread out of bounds to (%f, %f)",
-                        pos.x(),
-                        pos.y());
+                        // was doing this check after getting for_cell, so it didn't help when out of bounds
+                        log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+                                        "Tried to spread out of bounds to (%f, %f)",
+                                        pos.x(),
+                                        pos.y());
 #endif
-        const auto for_cell = cell(pos);
-        const auto source = relativeIndex(for_cell, location);
-        sources[for_cell] |= source;
-        if (!(*unburnable_)[for_cell.hash()])
-        {
-          // log_extensive("Adding point (%f, %f)", pos.x, pos.y);
-          points_[for_cell].emplace_back(pos);
-        }
-      }
-    }
+                        const auto for_cell = cell(pos);
+                        const auto source = relativeIndex(for_cell, location);
+                        sources[for_cell] |= source;
+                        if (!(*unburnable_)[for_cell.hash()])
+                        {
+                          // log_extensive("Adding point (%f, %f)", pos.x, pos.y);
+                          points_[for_cell].emplace_back(pos);
+                        }
+                      });
+            });
   };
-  for (auto& kv0 : to_spread)
-  {
+  using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
+  // for (auto& kv0 : to_spread)
+  // {
+  //   CellPair& t = kv0;
+  //   auto x = kv0.first;
+  //   auto y = kv0.second;
+  // }
+  auto apply_spread = [this, &apply_offsets](
+                        const CellPair& kv0) {
     auto& key = kv0.first;
     auto& offsets = spread_info_[key].offsets();
-    for (auto& pts_for_cell : kv0.second)
-    {
-      apply_offsets(offsets, std::get<0>(pts_for_cell), std::get<1>(pts_for_cell));
-    }
-  }
+    do_each(kv0.second,
+            [&apply_offsets, &offsets](const tuple<topo::Cell, PointSet> pts_for_cell) {
+              apply_offsets(offsets, std::get<0>(pts_for_cell), std::get<1>(pts_for_cell));
+            });
+  };
+  do_each(to_spread, apply_spread);
   const auto cells = std::views::keys(points_);
   // copy keys so we can modify points_ while looping
   for (auto& for_cell : std::vector<topo::Cell>(cells.begin(), cells.end()))
