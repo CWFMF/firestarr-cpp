@@ -172,6 +172,10 @@ using PerimSize = uint8_t;
  */
 using FuelSize = uint16_t;
 /**
+ * \brief Size to use for representing fuel types
+ */
+using FuelCodeSize = uint8_t;
+/**
  * \brief Type used for direction values (uses [0 - 359])
  */
 using DirectionSize = uint16_t;
@@ -259,7 +263,7 @@ static constexpr SlopeSize INVALID_SLOPE = 511;
 /**
  * \brief Invalid FuelType code value
  */
-static constexpr FuelSize INVALID_FUEL_CODE = 0;
+static constexpr FuelCodeSize INVALID_FUEL_CODE = 0;
 /**
  * \brief Number of all possible fuels in simulation
  */
@@ -316,10 +320,6 @@ using DegreesSize = uint16_t;
  * \brief Array of results of a function for all possible integer angles in degrees
  */
 using AngleTableArray = array<double, 361>;
-/**
- * \brief Size to use for representing fuel types
- */
-using FuelCodeSize = uint8_t;
 /**
  * \brief Size to use for representing the data in a Cell
  */

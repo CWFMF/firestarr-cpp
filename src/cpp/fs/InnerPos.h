@@ -26,6 +26,14 @@ public:
   Offset& operator=(const Offset& rhs) noexcept = default;
   Offset& operator=(Offset&& rhs) noexcept = default;
   /**
+   * \brief Multiply by duration to get total offset over time
+   * \param duration time to multiply by
+   */
+  constexpr Offset after(const double duration) const noexcept
+  {
+    return Offset(x() * duration, y() * duration);
+  }
+  /**
    * \brief Less than operator
    * \param rhs Offset to compare to
    * \return Whether or not this is less than the other
@@ -67,6 +75,8 @@ private:
    */
   double y_;
 };
+// define multiplication in other order since equivalent
+constexpr Offset after(const double duration, const Offset& o) { return o.after(duration); }
 static constexpr MathSize x(const auto& p) { return p.x(); }
 static constexpr MathSize y(const auto& p) { return p.y(); }
 /**
