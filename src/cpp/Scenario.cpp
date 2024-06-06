@@ -736,15 +736,21 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto& offsets = *std::get<2>(t);
     auto num_pts = pts.size() * offsets.size();
     auto p_o = std::views::zip(
-      std::views::repeat(location, num_pts), std::views::cartesian_product(offsets, pts)
+      std::views::repeat(location, num_pts),
+      std::views::cartesian_product(
+        std::views::transform(offsets, [duration](const Offset& o) { return o.after(duration); }),
+        pts
+      )
     );
     using product_type = decltype(*p_o.cbegin());
+    // for (auto& o : offsets)
+    map<Cell, PointSet> points_map{};
     std::for_each(
       p_o.cbegin(),
       p_o.cend(),
-      [this, &new_time, &duration, &location, &sources, &pts](const product_type& c0) {
+      [this, &new_time, &duration, &location, &points_map, &pts](const product_type& c0) {
         auto& c = std::get<1>(c0);
-        auto offset = std::get<0>(c).after(duration);
+        auto offset = std::get<0>(c);
         const InnerPos pos = std::get<1>(c).add(offset);
         points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
 #ifdef DEBUG_POINTS
@@ -757,14 +763,20 @@ void Scenario::scheduleFireSpread(const Event& event)
         );
 #endif
         const auto for_cell = cell(pos);
-        const auto source = relativeIndex(for_cell, location);
-        sources[for_cell] |= source;
-        if (!unburnable_.at(for_cell.hash()))
-        {
-          points_[for_cell].emplace_back(pos);
-        }
+        points_map[for_cell].emplace_back(pos);
       }
     );
+    for (auto& kv : points_map)
+    {
+      const auto& for_cell = kv.first;
+      const auto source = relativeIndex(for_cell, location);
+      sources[for_cell] |= source;
+      if (!unburnable_.at(for_cell.hash()))
+      {
+        auto& pts = points_[for_cell];
+        pts.insert(pts.end(), kv.second.begin(), kv.second.end());
+      }
+    };
   };
   using CellPair = pair<const SpreadKey, vector<CellPts>>;
   auto apply_spread = [this, &apply_offsets](const CellPair& kv0) {
