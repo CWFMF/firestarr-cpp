@@ -1199,11 +1199,12 @@ Scenario::scheduleFireSpread(
     // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
     using product_type = decltype(*p_o.cbegin());
     // for (auto& o : offsets)
+    map<topo::Cell, PointSet> points_map{};
     std::for_each(
       // std::execution::par_unseq,
       p_o.cbegin(),
       p_o.cend(),
-      [this, &new_time, &duration, &location, &sources, &pts](const product_type& c0) {
+      [this, &new_time, &duration, &location, &points_map, &pts](const product_type& c0) {
         auto& c = std::get<1>(c0);
         auto offset = std::get<0>(c) * duration;
         // note("%f, %f", offset_x, offset_y);
@@ -1219,15 +1220,20 @@ Scenario::scheduleFireSpread(
         );
 #endif
         const auto for_cell = cell(pos);
-        const auto source = relativeIndex(for_cell, location);
-        sources[for_cell] |= source;
-        if (!(*unburnable_)[for_cell.hash()])
-        {
-          // log_extensive("Adding point (%f, %f)", pos.x, pos.y);
-          points_[for_cell].emplace_back(pos);
-        }
+        points_map[for_cell].emplace_back(pos);
       }
     );
+    for (auto& kv : points_map)
+    {
+      const auto& for_cell = kv.first;
+      const auto source = relativeIndex(for_cell, location);
+      sources[for_cell] |= source;
+      if (!(*unburnable_)[for_cell.hash()])
+      {
+        auto& pts = points_[for_cell];
+        pts.insert(pts.end(), kv.second.begin(), kv.second.end());
+      }
+    };
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
   // for (auto& kv0 : to_spread)
