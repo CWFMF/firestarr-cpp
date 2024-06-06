@@ -31,6 +31,43 @@ constexpr auto STAGE_NEW = 'N';
 constexpr auto STAGE_SPREAD = 'S';
 constexpr auto STAGE_INVALID = 'X';
 
+// template <class K, class V>
+// inline void merge_points_map(map<K, V>& m, K key, V value)
+// {
+//   m[key].emplace_back(value);
+// }
+
+template <class K, class V>
+class MergeMap
+  : public map<const K, vector<V>>
+{
+public:
+  inline void merge_value(const K& key, const V& value)
+  {
+    (*this)[key].emplace_back(value);
+  }
+  inline void merge_value(const pair<const K, const V>& p)
+  {
+    merge_value(p.first, p.second);
+  }
+  template <class L>
+  inline void merge_values(const L& values)
+  {
+    std::for_each(
+      // std::execution::par_unseq,
+      values.begin(),
+      values.end(),
+      [this](const pair<const K, const V>& v) {
+        merge_value(v);
+      });
+  }
+};
+// template <class K, class V>
+// inline void make_merge_points_map(map<K, V>& m)
+// {
+//   return [&m](K key, V value) { m[key].emplace_back(value); }
+// }
+
 // // HACK: would love to use std::views::cartesian_product but can't figure out
 // // why it's not there if we're supposed to be compiling with C++23
 // template <typename A, typename B, typename A_, typename B_>
@@ -1076,44 +1113,29 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto& location = std::get<0>(t);
     const auto& pts = std::get<1>(t);
     const auto& offsets = *std::get<2>(t);
-    // auto x = std::views::join(std::views::view(offsets) | std::views::view());
-    auto num_pts = pts.size() * offsets.size();
-    auto p_o = std::views::zip(
-      std::views::repeat(location, num_pts),
-      std::views::transform(std::views::cartesian_product(
-                              std::views::transform(offsets,
-                                                    [duration](const Offset& o) { return o * duration; }),
-                              pts),
-                            [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
-                              const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
-                              const auto for_cell = cell(pos);
-                              // HACK: just use side-effect to log and check bounds
-                              log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+    auto p_o = std::views::transform(std::views::cartesian_product(
+                                       std::views::transform(offsets,
+                                                             [duration](const Offset& o) { return o * duration; }),
+                                       pts),
+                                     [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
+                                       const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
+                                       const auto for_cell = cell(pos);
+                                       // HACK: just use side-effect to log and check bounds
+                                       log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
 #ifdef DEBUG_POINTS
-                              // was doing this check after getting for_cell, so it didn't help when out of bounds
-                              log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
-                                              "Tried to spread out of bounds to (%f, %f)",
-                                              pos.x(),
-                                              pos.y());
+                                       // was doing this check after getting for_cell, so it didn't help when out of bounds
+                                       log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+                                                       "Tried to spread out of bounds to (%f, %f)",
+                                                       pos.x(),
+                                                       pos.y());
 #endif
-                              return std::pair<topo::Cell, InnerPos>(for_cell, pos);
-                            }));
+                                       return std::pair<topo::Cell, InnerPos>(for_cell, pos);
+                                     });
     // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
-    using product_type = decltype(*p_o.cbegin());
+    // using product_type = decltype(*p_o.cbegin());
     // for (auto& o : offsets)
-    map<topo::Cell, PointSet> points_map{};
-    std::for_each(
-      // std::execution::par_unseq,
-      p_o.cbegin(),
-      p_o.cend(),
-      [this, &new_time, &points_map, &pts](
-        const product_type& c0) {
-        // const auto& location = std::get<0>(c0);
-        const auto& c = std::get<1>(c0);
-        const auto& for_cell = std::get<0>(c);
-        const auto& pos = std::get<1>(c);
-        points_map[for_cell].emplace_back(pos);
-      });
+    MergeMap<topo::Cell, InnerPos> points_map{};
+    points_map.merge_values(p_o);
     for (auto& kv : points_map)
     {
       const auto& for_cell = kv.first;
