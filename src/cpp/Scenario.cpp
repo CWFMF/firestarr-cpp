@@ -1145,6 +1145,12 @@ void Scenario::scheduleFireSpread(const Event& event)
       {
         auto& pts = points_[for_cell];
         pts.insert(pts.end(), kv.second.begin(), kv.second.end());
+        // works the same if we hull here
+        if (pts.size() > MAX_BEFORE_CONDENSE)
+        {
+          // 3 points should just be a triangle usually (could be co-linear, but that's fine
+          hull(pts);
+        }
       }
     };
   };
@@ -1196,11 +1202,11 @@ void Scenario::scheduleFireSpread(const Event& event)
         // do survival check first since it should be easier
         if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
         {
-          if (pts.size() > MAX_BEFORE_CONDENSE)
-          {
-            // 3 points should just be a triangle usually (could be co-linear, but that's fine
-            hull(pts);
-          }
+          // if (pts.size() > MAX_BEFORE_CONDENSE)
+          // {
+          //   // 3 points should just be a triangle usually (could be co-linear, but that's fine
+          //   hull(pts);
+          // }
           log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
         }
         else
