@@ -1084,8 +1084,19 @@ void Scenario::scheduleFireSpread(const Event& event)
                               std::views::transform(offsets,
                                                     [duration](const Offset& o) { return o * duration; }),
                               pts),
-                            [](const pair<const Offset&, const InnerPos&>& o_p) {
-                              return std::get<1>(o_p).add(std::get<0>(o_p));
+                            [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
+                              const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
+                              const auto for_cell = cell(pos);
+                              // HACK: just use side-effect to log and check bounds
+                              log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+#ifdef DEBUG_POINTS
+                              // was doing this check after getting for_cell, so it didn't help when out of bounds
+                              log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+                                              "Tried to spread out of bounds to (%f, %f)",
+                                              pos.x(),
+                                              pos.y());
+#endif
+                              return std::pair<topo::Cell, InnerPos>(for_cell, pos);
                             }));
     // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
     using product_type = decltype(*p_o.cbegin());
@@ -1098,16 +1109,9 @@ void Scenario::scheduleFireSpread(const Event& event)
       [this, &new_time, &points_map, &pts](
         const product_type& c0) {
         // const auto& location = std::get<0>(c0);
-        const auto& pos = std::get<1>(c0);
-        log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
-#ifdef DEBUG_POINTS
-        // was doing this check after getting for_cell, so it didn't help when out of bounds
-        log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
-                        "Tried to spread out of bounds to (%f, %f)",
-                        pos.x(),
-                        pos.y());
-#endif
-        const auto for_cell = cell(pos);
+        const auto& c = std::get<1>(c0);
+        const auto& for_cell = std::get<0>(c);
+        const auto& pos = std::get<1>(c);
         points_map[for_cell].emplace_back(pos);
       });
     for (auto& kv : points_map)
