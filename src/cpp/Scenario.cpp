@@ -1068,8 +1068,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
   // for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
-  auto for_duration = [duration](const Offset o) { return Offset(o.x() * duration, o.y() * duration); };
-  auto apply_offsets = [this, &new_time, &for_duration, &sources](
+  auto apply_offsets = [this, &new_time, &duration, &sources](
                          //  const OffsetSet offsets,
                          //  const topo::Cell location,
                          //  const PointSet pts
@@ -1080,17 +1079,17 @@ void Scenario::scheduleFireSpread(const Event& event)
     // auto x = std::views::join(std::views::view(offsets) | std::views::view());
     auto num_pts = pts.size() * offsets.size();
     auto p_o = std::views::zip(std::views::repeat(location, num_pts), std::views::cartesian_product(offsets, pts));
-    // using product_type = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
+    // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
     using product_type = decltype(*p_o.cbegin());
     // for (auto& o : offsets)
     std::for_each(
       // std::execution::par_unseq,
       p_o.cbegin(),
       p_o.cend(),
-      [this, &new_time, &for_duration, &location, &sources, &pts](
+      [this, &new_time, &duration, &location, &sources, &pts](
         const product_type& c0) {
         auto& c = std::get<1>(c0);
-        auto offset = for_duration(std::get<0>(c));
+        auto offset = std::get<0>(c) * duration;
         // note("%f, %f", offset_x, offset_y);
         const InnerPos pos = std::get<1>(c).add(offset);
         log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());

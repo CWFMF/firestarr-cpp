@@ -308,7 +308,14 @@ public:
   constexpr Offset(const Offset& rhs) noexcept = default;
   Offset& operator=(const Offset& rhs) noexcept = default;
   Offset& operator=(Offset&& rhs) noexcept = default;
-
+  /**
+   * \brief Multiply by duration to get total offset over time
+   * \param duration time to multiply by
+   */
+  Offset operator*(const double duration) const noexcept
+  {
+    return Offset(x() * duration, y() * duration);
+  }
   /**
    * \brief Less than operator
    * \param rhs Offset to compare to
@@ -354,6 +361,11 @@ private:
    */
   double y_;
 };
+// define multiplication in other order since equivalent
+constexpr Offset operator*(const double duration, const Offset& o)
+{
+  return o * duration;
+}
 /**
  * \brief Collection of Offsets
  */
