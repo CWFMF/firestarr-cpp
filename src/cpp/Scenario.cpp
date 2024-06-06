@@ -1194,7 +1194,15 @@ Scenario::scheduleFireSpread(
     auto num_pts = pts.size() * offsets.size();
     auto p_o = std::views::zip(
       std::views::repeat(location, num_pts),
-      std::views::cartesian_product(offsets, pts)
+      std::views::cartesian_product(
+        std::views::transform(
+          offsets,
+          [duration](const Offset& o) {
+            return o * duration;
+          }
+        ),
+        pts
+      )
     );
     // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
     using product_type = decltype(*p_o.cbegin());
@@ -1206,7 +1214,7 @@ Scenario::scheduleFireSpread(
       p_o.cend(),
       [this, &new_time, &duration, &location, &points_map, &pts](const product_type& c0) {
         auto& c = std::get<1>(c0);
-        auto offset = std::get<0>(c) * duration;
+        auto offset = std::get<0>(c);
         // note("%f, %f", offset_x, offset_y);
         const InnerPos pos = std::get<1>(c).add(offset);
         log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
