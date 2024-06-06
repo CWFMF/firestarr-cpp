@@ -16,6 +16,23 @@ static atomic<size_t> COMPLETED = 0;
 static atomic<size_t> TOTAL_STEPS = 0;
 static std::mutex MUTEX_SIM_COUNTS;
 static map<size_t, size_t> SIM_COUNTS{};
+template <class K, class V>
+class MergeMap : public map<const K, vector<V>>
+{
+public:
+  inline void merge_value(const K& key, const V& value) { (*this)[key].emplace_back(value); }
+  inline void merge_value(const pair<const K, const V>& p) { merge_value(p.first, p.second); }
+  template <class L>
+  inline void merge_values(const L& values)
+  {
+    std::for_each(
+      // std::execution::par_unseq,
+      values.begin(),
+      values.end(),
+      [this](const pair<const K, const V>& v) { merge_value(v); }
+    );
+  }
+};
 template <typename T, typename F>
 void do_each(const T& for_list, F fct)
 {
@@ -732,45 +749,30 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto& location = std::get<0>(t);
     const auto& pts = std::get<1>(t);
     const auto& offsets = *std::get<2>(t);
-    auto num_pts = pts.size() * offsets.size();
-    auto p_o = std::views::zip(
-      std::views::repeat(location, num_pts),
-      std::views::transform(
-        std::views::cartesian_product(
-          std::views::transform(offsets, [duration](const Offset& o) { return o.after(duration); }),
-          pts
-        ),
-        [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
-          const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
-          const auto for_cell = cell(pos);
-          // HACK: just use side-effect to log and check bounds
-          points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
+    auto p_o = std::views::transform(
+      std::views::cartesian_product(
+        std::views::transform(offsets, [duration](const Offset& o) { return o.after(duration); }),
+        pts
+      ),
+      [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
+        const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
+        const auto for_cell = cell(pos);
+        // HACK: just use side-effect to log and check bounds
+        points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
 #ifdef DEBUG_POINTS
-          // was doing this check after getting for_cell, so it didn't help when out of bounds
-          log_check_fatal(
-            pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
-            "Tried to spread out of bounds to (%f, %f)",
-            pos.x(),
-            pos.y()
-          );
+        // was doing this check after getting for_cell, so it didn't help when out of bounds
+        log_check_fatal(
+          pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+          "Tried to spread out of bounds to (%f, %f)",
+          pos.x(),
+          pos.y()
+        );
 #endif
-          return std::pair<Cell, InnerPos>(for_cell, pos);
-        }
-      )
-    );
-    using product_type = decltype(*p_o.cbegin());
-    // for (auto& o : offsets)
-    map<Cell, PointSet> points_map{};
-    std::for_each(
-      p_o.cbegin(),
-      p_o.cend(),
-      [this, &new_time, &points_map, &pts](const product_type& c0) {
-        const auto& c = std::get<1>(c0);
-        const auto& for_cell = std::get<0>(c);
-        const auto& pos = std::get<1>(c);
-        points_map[for_cell].emplace_back(pos);
+        return std::pair<Cell, InnerPos>(for_cell, pos);
       }
     );
+    MergeMap<Cell, InnerPos> points_map{};
+    points_map.merge_values(p_o);
     for (auto& kv : points_map)
     {
       const auto& for_cell = kv.first;
@@ -780,6 +782,12 @@ void Scenario::scheduleFireSpread(const Event& event)
       {
         auto& pts = points_[for_cell];
         pts.insert(pts.end(), kv.second.begin(), kv.second.end());
+        // works the same if we hull here
+        if (pts.size() > MAX_BEFORE_CONDENSE)
+        {
+          // 3 points should just be a triangle usually (could be co-linear, but that's fine
+          hull(pts);
+        }
       }
     };
   };
@@ -818,11 +826,6 @@ void Scenario::scheduleFireSpread(const Event& event)
         // do survival check first since it should be easier
         if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
         {
-          if (pts.size() > MAX_BEFORE_CONDENSE)
-          {
-            // 3 points should just be a triangle usually (could be co-linear, but that's fine
-            hull(pts);
-          }
           points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
         }
         else
