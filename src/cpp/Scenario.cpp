@@ -725,10 +725,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
   // for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
-  auto for_duration = [duration](const Offset o) {
-    return Offset(o.x() * duration, o.y() * duration);
-  };
-  auto apply_offsets = [this, &new_time, &for_duration, &sources](
+  auto apply_offsets = [this, &new_time, &duration, &sources](
                          //  const OffsetSet offsets,
                          //  const Cell location,
                          //  const PointSet pts
@@ -742,14 +739,12 @@ void Scenario::scheduleFireSpread(const Event& event)
       std::views::repeat(location, num_pts), std::views::cartesian_product(offsets, pts)
     );
     using product_type = decltype(*p_o.cbegin());
-    // for (auto& o : offsets)
     std::for_each(
-      // std::execution::par_unseq,
       p_o.cbegin(),
       p_o.cend(),
-      [this, &new_time, &for_duration, &location, &sources, &pts](const product_type& c0) {
+      [this, &new_time, &duration, &location, &sources, &pts](const product_type& c0) {
         auto& c = std::get<1>(c0);
-        auto offset = for_duration(std::get<0>(c));
+        auto offset = std::get<0>(c).after(duration);
         const InnerPos pos = std::get<1>(c).add(offset);
         points_log_.log(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
 #ifdef DEBUG_POINTS
