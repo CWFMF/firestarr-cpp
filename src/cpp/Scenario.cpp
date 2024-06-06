@@ -1080,10 +1080,13 @@ void Scenario::scheduleFireSpread(const Event& event)
     auto num_pts = pts.size() * offsets.size();
     auto p_o = std::views::zip(
       std::views::repeat(location, num_pts),
-      std::views::cartesian_product(
-        std::views::transform(offsets,
-                              [duration](const Offset& o) { return o * duration; }),
-        pts));
+      std::views::transform(std::views::cartesian_product(
+                              std::views::transform(offsets,
+                                                    [duration](const Offset& o) { return o * duration; }),
+                              pts),
+                            [](const pair<const Offset&, const InnerPos&>& o_p) {
+                              return std::get<1>(o_p).add(std::get<0>(o_p));
+                            }));
     // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
     using product_type = decltype(*p_o.cbegin());
     // for (auto& o : offsets)
@@ -1092,12 +1095,10 @@ void Scenario::scheduleFireSpread(const Event& event)
       // std::execution::par_unseq,
       p_o.cbegin(),
       p_o.cend(),
-      [this, &new_time, &duration, &location, &points_map, &pts](
+      [this, &new_time, &points_map, &pts](
         const product_type& c0) {
-        auto& c = std::get<1>(c0);
-        auto offset = std::get<0>(c);
-        // note("%f, %f", offset_x, offset_y);
-        const InnerPos pos = std::get<1>(c).add(offset);
+        // const auto& location = std::get<0>(c0);
+        const auto& pos = std::get<1>(c0);
         log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
 #ifdef DEBUG_POINTS
         // was doing this check after getting for_cell, so it didn't help when out of bounds
