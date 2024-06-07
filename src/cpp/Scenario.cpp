@@ -39,28 +39,85 @@ constexpr auto STAGE_INVALID = 'X';
 
 template <class K, class V>
 class MergeMap
-  : public map<const K, vector<V>>
 {
 public:
+  constexpr MergeMap()
+  {
+  }
+  MergeMap(MergeMap<K, V>& rhs)
+    : map_(std::copy(rhs.map_))
+  {
+  }
+  MergeMap(MergeMap<K, V>&& rhs)
+    : map_(std::move(rhs.map_))
+  {
+  }
+  // MergeMap&& MergeMap(MergeMap&& rhs)
+  // {
+
+  // }
   inline void merge_value(const K& key, const V& value)
   {
-    (*this)[key].emplace_back(value);
+    std::lock_guard<mutex> lock(mutex_);
+    merge_value(key, value);
   }
   inline void merge_value(const pair<const K, const V>& p)
   {
     merge_value(p.first, p.second);
   }
   template <class L>
+  inline void merge_values(const K& key, const L& values)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    merge_values_(key, values);
+  }
+  template <class L>
   inline void merge_values(const L& values)
   {
+    std::lock_guard<mutex> lock(mutex_);
     std::for_each(
       // std::execution::par_unseq,
       values.begin(),
       values.end(),
       [this](const pair<const K, const V>& v) {
-        merge_value(v);
+        merge_value_(v);
       });
   }
+  void merge(MergeMap& rhs)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    std::lock_guard<mutex> lock_rhs(rhs.mutex_);
+    std::for_each(
+      // std::execution::par_unseq,
+      rhs.map_.begin(),
+      rhs.map_.end(),
+      [this](const pair<const K, const vector<V>>& kv) {
+        merge_values_(std::get<0>(kv), std::get<1>(kv));
+      });
+  }
+private:
+  map<const K, vector<V>> map_;
+  // actual functions don't get a lock
+  inline void merge_value_(const K& key, const V& value)
+  {
+    (map_)[key].emplace_back(value);
+  }
+  inline void merge_value_(const pair<const K, const V>& p)
+  {
+    merge_value_(p.first, p.second);
+  }
+  template <class L>
+  inline void merge_values_(const K& key, const L& values)
+  {
+    std::for_each(
+      // std::execution::par_unseq,
+      values.begin(),
+      values.end(),
+      [this, &key](const V& v) {
+        merge_value_(key, v);
+      });
+  }
+  mutex mutex_;
 };
 // template <class K, class V>
 // inline void make_merge_points_map(map<K, V>& m)
@@ -105,10 +162,11 @@ public:
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
 {
-  std::for_each(std::execution::par_unseq,
-                for_list.begin(),
-                for_list.end(),
-                fct);
+  std::for_each(
+    // std::execution::par_unseq,
+    for_list.begin(),
+    for_list.end(),
+    fct);
 }
 
 // vector<InnerPos> make_spread(
