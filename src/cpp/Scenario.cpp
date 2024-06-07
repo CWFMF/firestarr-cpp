@@ -807,35 +807,33 @@ void Scenario::scheduleFireSpread(const Event& event)
   for (auto& for_cell : std::vector<Cell>(cells.begin(), cells.end()))
   {
     auto& pts = points_[for_cell];
-    if (!pts.empty())
+    logging::check_fatal(pts.empty(), "Empty points for some reason");
+    const auto& seek_spread = spread_info_.find(for_cell.key());
+    const auto max_intensity =
+      (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
+    if (canBurn(for_cell) && max_intensity > 0)
     {
-      const auto& seek_spread = spread_info_.find(for_cell.key());
-      const auto max_intensity =
-        (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
-      if (canBurn(for_cell) && max_intensity > 0)
+      // HACK: make sure it can't round down to 0
+      const auto intensity = static_cast<IntensitySize>(max(1.0, max_intensity));
+      // HACK: just use the first cell as the source
+      const auto source = sources[for_cell];
+      const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
+      burn(fake_event, intensity);
+    }
+    // check if this cell is surrounded by burned cells or non-fuels
+    // if surrounded then just drop all the points inside this cell
+    if (!unburnable_.at(for_cell.hash()))
+    {
+      // do survival check first since it should be easier
+      if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
       {
-        // HACK: make sure it can't round down to 0
-        const auto intensity = static_cast<IntensitySize>(max(1.0, max_intensity));
-        // HACK: just use the first cell as the source
-        const auto source = sources[for_cell];
-        const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
-        burn(fake_event, intensity);
+        points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
       }
-      // check if this cell is surrounded by burned cells or non-fuels
-      // if surrounded then just drop all the points inside this cell
-      if (!unburnable_.at(for_cell.hash()))
+      else
       {
-        // do survival check first since it should be easier
-        if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
-        {
-          points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
-        }
-        else
-        {
-          // whether it went out or is surrounded just mark it as unburnable
-          unburnable_.set(for_cell.hash());
-          points_.erase(for_cell);
-        }
+        // whether it went out or is surrounded just mark it as unburnable
+        unburnable_.set(for_cell.hash());
+        points_.erase(for_cell);
       }
     }
   }
