@@ -1063,7 +1063,6 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto ros_min = Settings::minimumRos();
   using CellPts = tuple<topo::Cell, const PointSet>;
   map<topo::SpreadKey, vector<CellPts>> to_spread{};
-  map<topo::Cell, bool> spreading{};
   // if we use an iterator this way we don't need to copy keys to erase things
   auto it = points_.begin();
   while (it != points_.end())
@@ -1105,8 +1104,19 @@ void Scenario::scheduleFireSpread(const Event& event)
   // note("Spreading for %f minutes", duration);
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
+  mutex mutex_spreading;
+  map<topo::Cell, bool> spreading{};
+  auto can_spread = [this, &spreading, &mutex_spreading, &new_time](
+                      const topo::Cell for_cell) {
+    lock_guard<mutex> lock(mutex_spreading);
+    return spreading.try_emplace(for_cell,
+                                 !(*unburnable_)[for_cell.hash()]
+                                   && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
+                                        && !isSurrounded(for_cell))));
+  };
+
   // for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
-  auto apply_offsets = [this, &new_time, &duration, &sources](
+  auto apply_offsets = [this, &new_time, &duration, &sources, &can_spread](
                          //  const OffsetSet offsets,
                          //  const topo::Cell location,
                          //  const PointSet pts
@@ -1137,11 +1147,14 @@ void Scenario::scheduleFireSpread(const Event& event)
     // for (auto& o : offsets)
     MergeMap<topo::Cell, InnerPos> points_map{};
     points_map.merge_values(p_o);
+
     for (auto& kv : points_map)
     {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
       sources[for_cell] |= source;
+      // auto s = can_spread(for_cell);
+      // if (s.first->second)
       if (!(*unburnable_)[for_cell.hash()])
       {
         auto& pts = points_[for_cell];
@@ -1152,6 +1165,29 @@ void Scenario::scheduleFireSpread(const Event& event)
           // 3 points should just be a triangle usually (could be co-linear, but that's fine
           hull(pts);
         }
+        // // const auto key = for_cell.key();
+        // // // since we only generated spread_info_ at the start it only exists for cells from end of last step
+        // // const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
+        // // // // any cell that has the same fuel, slope, and aspect has the same spread
+        // // const auto& origin = origin_inserted.first->second;
+        // // // const auto& seek_spread = spread_info_.find(key);
+        // // // const auto max_intensity = (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
+        // // const auto max_intensity = origin.maxIntensity();
+        // // // if we don't have empty cells anymore then intensity should always be >0?
+        // // logging::check_fatal(max_intensity <= 0,
+        // //                      "Expected max_intensity to be > 0 but got %f",
+        // //                      max_intensity);
+        // if (s.first->second)
+        // {
+        //   log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
+        // }
+        // else if (s.second)
+        // {
+        //   // just inserted false, so make sure unburnable gets updated
+        //   // whether it went out or is surrounded just mark it as unburnable
+        //   (*unburnable_)[for_cell.hash()] = true;
+        //   points_.erase(for_cell);
+        // }
       }
     };
   };
@@ -1180,6 +1216,10 @@ void Scenario::scheduleFireSpread(const Event& event)
     logging::check_fatal(pts.empty(), "Empty points for some reason");
     const auto& seek_spread = spread_info_.find(for_cell.key());
     const auto max_intensity = (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
+    // // if we don't have empty cells anymore then intensity should always be >0?
+    // logging::check_fatal(max_intensity <= 0,
+    //                      "Expected max_intensity to be > 0 but got %f",
+    //                      max_intensity);
     if (canBurn(for_cell) && max_intensity > 0)
     {
       // HACK: make sure it can't round down to 0
@@ -1195,10 +1235,11 @@ void Scenario::scheduleFireSpread(const Event& event)
         source);
       burn(fake_event, intensity);
     }
-    auto s = spreading.try_emplace(for_cell,
-                                   !(*unburnable_)[for_cell.hash()]
-                                     && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
-                                          && !isSurrounded(for_cell))));
+    // auto s = spreading.try_emplace(for_cell,
+    //                                !(*unburnable_)[for_cell.hash()]
+    //                                  && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
+    //                                       && !isSurrounded(for_cell))));
+    auto s = can_spread(for_cell);
     if (s.first->second)
     {
       log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
@@ -1210,27 +1251,6 @@ void Scenario::scheduleFireSpread(const Event& event)
       (*unburnable_)[for_cell.hash()] = true;
       points_.erase(for_cell);
     }
-    // // check if this cell is surrounded by burned cells or non-fuels
-    // // if surrounded then just drop all the points inside this cell
-    // if (!(*unburnable_)[for_cell.hash()])
-    // {
-    //   // do survival check first since it should be easier
-    //   if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
-    //   {
-    //     // if (pts.size() > MAX_BEFORE_CONDENSE)
-    //     // {
-    //     //   // 3 points should just be a triangle usually (could be co-linear, but that's fine
-    //     //   hull(pts);
-    //     // }
-    //     log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
-    //   }
-    //   else
-    //   {
-    //     // whether it went out or is surrounded just mark it as unburnable
-    //     (*unburnable_)[for_cell.hash()] = true;
-    //     points_.erase(for_cell);
-    //   }
-    // }
   }
   log_extensive("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
