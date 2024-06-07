@@ -705,7 +705,6 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto ros_min = Settings::minimumRos();
   using CellPts = tuple<Cell, const PointSet>;
   map<SpreadKey, vector<CellPts>> to_spread{};
-  map<Cell, bool> spreading{};
   // if we use an iterator this way we don't need to copy keys to erase things
   auto it = points_.begin();
   while (it != points_.end())
@@ -742,8 +741,19 @@ void Scenario::scheduleFireSpread(const Event& event)
                     : max_duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
+  mutex mutex_spreading;
+  map<Cell, bool> spreading{};
+  auto can_spread = [this, &spreading, &mutex_spreading, &new_time](const Cell for_cell) {
+    lock_guard<mutex> lock(mutex_spreading);
+    return spreading.try_emplace(
+      for_cell,
+      !unburnable_.at(for_cell.hash())
+        && ((survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
+        )
+    );
+  };
   // for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
-  auto apply_offsets = [this, &new_time, &duration, &sources](
+  auto apply_offsets = [this, &new_time, &duration, &sources, &can_spread](
                          //  const OffsetSet offsets,
                          //  const Cell location,
                          //  const PointSet pts
@@ -821,12 +831,7 @@ void Scenario::scheduleFireSpread(const Event& event)
       const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
       burn(fake_event, intensity);
     }
-    auto s = spreading.try_emplace(
-      for_cell,
-      !unburnable_.at(for_cell.hash())
-        && ((survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
-        )
-    );
+    auto s = can_spread(for_cell);
     if (s.first->second)
     {
       points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
