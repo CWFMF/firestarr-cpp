@@ -103,7 +103,7 @@ public:
 // }
 
 template <typename T, typename F>
-void do_each(const T& for_list, F fct)
+void do_each(T& for_list, F fct)
 {
   std::for_each(std::execution::par_unseq,
                 for_list.begin(),
@@ -1211,13 +1211,14 @@ void Scenario::scheduleFireSpread(const Event& event)
             });
   };
   do_each(to_spread, apply_spread);
-  // make block to prevent reusing variable from above
-  {
-    auto it = points_.begin();
-    while (it != points_.end())
-    {
-      auto& for_cell = it->first;
-      auto& pts = it->second;
+  map<topo::Cell, PointSet> points_cur{};
+  std::swap(points_, points_cur);
+  // if we move everything out of points_ we can parallelize this check?
+  do_each(
+    points_cur,
+    [this, &sources, &new_time](pair<const topo::Cell, PointSet>& kv) {
+      auto& for_cell = kv.first;
+      auto& pts = kv.second;
       logging::check_fatal(pts.empty(), "Empty points for some reason");
       const auto& seek_spread = spread_info_.find(for_cell.key());
       const auto max_intensity = (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
@@ -1240,29 +1241,21 @@ void Scenario::scheduleFireSpread(const Event& event)
           source);
         burn(fake_event, intensity);
       }
-      // auto s = spreading.try_emplace(for_cell,
-      //                                !(*unburnable_)[for_cell.hash()]
-      //                                  && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
-      //                                       && !isSurrounded(for_cell))));
-      auto s = can_spread(for_cell);
-      if (s.first->second)
+      if (!(*unburnable_)[for_cell.hash()]
+          && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
+               && !isSurrounded(for_cell))))
       {
         log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
-        ++it;
+        std::swap(points_[for_cell], pts);
       }
-      else if (s.second)
+      else
       {
         // just inserted false, so make sure unburnable gets updated
         // whether it went out or is surrounded just mark it as unburnable
         (*unburnable_)[for_cell.hash()] = true;
-        it = points_.erase(it);
+        // not swapping means these points get dropped
       }
-      else
-      {
-        ++it;
-      }
-    }
-  }
+    });
   log_extensive("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
