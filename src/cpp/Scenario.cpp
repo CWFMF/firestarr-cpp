@@ -95,6 +95,15 @@ public:
         merge_values_(std::get<0>(kv), std::get<1>(kv));
       });
   }
+  template <class F>
+  void for_each(F fct)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    std::for_each(
+      map_.begin(),
+      map_.end(),
+      fct);
+  }
 private:
   map<const K, vector<V>> map_;
   // actual functions don't get a lock
@@ -1208,49 +1217,25 @@ void Scenario::scheduleFireSpread(const Event& event)
     // for (auto& o : offsets)
     MergeMap<topo::Cell, InnerPos> points_map{};
     points_map.merge_values(p_o);
-
-    for (auto& kv : points_map)
-    {
-      const auto& for_cell = kv.first;
-      const auto source = relativeIndex(for_cell, location);
-      sources[for_cell] |= source;
-      // auto s = can_spread(for_cell);
-      // if (s.first->second)
-      if (!(*unburnable_)[for_cell.hash()])
-      {
-        auto& pts = points_[for_cell];
-        pts.insert(pts.end(), kv.second.begin(), kv.second.end());
-        // works the same if we hull here
-        if (pts.size() > MAX_BEFORE_CONDENSE)
-        {
-          // 3 points should just be a triangle usually (could be co-linear, but that's fine
-          hull(pts);
-        }
-        // // const auto key = for_cell.key();
-        // // // since we only generated spread_info_ at the start it only exists for cells from end of last step
-        // // const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
-        // // // // any cell that has the same fuel, slope, and aspect has the same spread
-        // // const auto& origin = origin_inserted.first->second;
-        // // // const auto& seek_spread = spread_info_.find(key);
-        // // // const auto max_intensity = (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
-        // // const auto max_intensity = origin.maxIntensity();
-        // // // if we don't have empty cells anymore then intensity should always be >0?
-        // // logging::check_fatal(max_intensity <= 0,
-        // //                      "Expected max_intensity to be > 0 but got %f",
-        // //                      max_intensity);
+    points_map.for_each(
+      [this, &location, &sources](const auto& kv) {
+        const auto& for_cell = kv.first;
+        const auto source = relativeIndex(for_cell, location);
+        sources[for_cell] |= source;
+        // auto s = can_spread(for_cell);
         // if (s.first->second)
-        // {
-        //   log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
-        // }
-        // else if (s.second)
-        // {
-        //   // just inserted false, so make sure unburnable gets updated
-        //   // whether it went out or is surrounded just mark it as unburnable
-        //   (*unburnable_)[for_cell.hash()] = true;
-        //   points_.erase(for_cell);
-        // }
-      }
-    };
+        if (!(*unburnable_)[for_cell.hash()])
+        {
+          auto& pts = points_[for_cell];
+          pts.insert(pts.end(), kv.second.begin(), kv.second.end());
+          // works the same if we hull here
+          if (pts.size() > MAX_BEFORE_CONDENSE)
+          {
+            // 3 points should just be a triangle usually (could be co-linear, but that's fine
+            hull(pts);
+          }
+        }
+      });
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
   // for (auto& kv0 : to_spread)
