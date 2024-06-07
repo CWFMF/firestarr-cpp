@@ -36,7 +36,7 @@ public:
   }
 };
 template <typename T, typename F>
-void do_each(const T& for_list, F fct)
+void do_each(T& for_list, F fct)
 {
   std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
 }
@@ -816,46 +816,41 @@ void Scenario::scheduleFireSpread(const Event& event)
     });
   };
   do_each(to_spread, apply_spread);
-  // make block to prevent reusing variable from above
-  {
-    auto it = points_.begin();
-    while (it != points_.end())
+  map<Cell, PointSet> points_cur{};
+  std::swap(points_, points_cur);
+  // if we move everything out of points_ we can parallelize this check?
+  do_each(points_cur, [this, &sources, &new_time](pair<const Cell, PointSet>& kv) {
+    auto& for_cell = kv.first;
+    auto& pts = kv.second;
+    logging::check_fatal(pts.empty(), "Empty points for some reason");
+    const auto& seek_spread = spread_info_.find(for_cell.key());
+    const auto max_intensity =
+      (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
+    if (canBurn(for_cell) && max_intensity > 0)
     {
-      auto& for_cell = it->first;
-      auto& pts = it->second;
-      logging::check_fatal(pts.empty(), "Empty points for some reason");
-      const auto& seek_spread = spread_info_.find(for_cell.key());
-      const auto max_intensity =
-        (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
-      if (canBurn(for_cell) && max_intensity > 0)
-      {
-        // HACK: make sure it can't round down to 0
-        const auto intensity = static_cast<IntensitySize>(max(1.0, max_intensity));
-        // HACK: just use the first cell as the source
-        const auto source = sources[for_cell];
-        const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
-        burn(fake_event, intensity);
-      }
-      auto s = can_spread(for_cell);
-      if (s.first->second)
-      {
-        points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
-        ++it;
-      }
-      else if (s.second)
-      {
-        // just inserted false, so make sure unburnable gets updated
-        // whether it went out or is surrounded just mark it as unburnable
-        unburnable_.set(for_cell.hash());
-        it = points_.erase(it);
-      }
-      else
-      {
-        ++it;
-      }
+      // HACK: make sure it can't round down to 0
+      const auto intensity = static_cast<IntensitySize>(max(1.0, max_intensity));
+      // HACK: just use the first cell as the source
+      const auto source = sources[for_cell];
+      const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
+      burn(fake_event, intensity);
     }
-  }
-  log_verbose("Spreading %d points until %f", points_.size(), new_time);
+    if (!unburnable_.at(for_cell.hash())
+        && ((survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
+        ))
+    {
+      points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
+      std::swap(points_[for_cell], pts);
+    }
+    else
+    {
+      // just inserted false, so make sure unburnable gets updated
+      // whether it went out or is surrounded just mark it as unburnable
+      unburnable_.set(for_cell.hash());
+      // not swapping means these points get dropped
+    }
+  });
+  log_extensive("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
 double Scenario::currentFireSize() const { return intensity_->fireSize(); }
