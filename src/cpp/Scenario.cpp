@@ -705,27 +705,30 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto ros_min = Settings::minimumRos();
   using CellPts = tuple<Cell, const PointSet>;
   map<SpreadKey, vector<CellPts>> to_spread{};
-  // if we use an iterator this way we don't need to copy keys to erase things
-  auto it = points_.begin();
-  while (it != points_.end())
+  // make block to prevent it being visible beyond use
   {
-    const auto location = it->first;
-    const auto key = location.key();
-    const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
-    // any cell that has the same fuel, slope, and aspect has the same spread
-    const auto& origin = origin_inserted.first->second;
-    // filter out things not spreading fast enough here so they get copied if they aren't
-    // isNotSpreading() had better be true if ros is lower than minimum
-    const auto ros = origin.headRos();
-    if (ros >= ros_min)
+    // if we use an iterator this way we don't need to copy keys to erase things
+    auto it = points_.begin();
+    while (it != points_.end())
     {
-      max_ros_ = max(max_ros_, ros);
-      to_spread[key].emplace_back(location, std::move(it->second));
-      it = points_.erase(it);
-    }
-    else
-    {
-      ++it;
+      const auto location = it->first;
+      const auto key = location.key();
+      const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
+      // any cell that has the same fuel, slope, and aspect has the same spread
+      const auto& origin = origin_inserted.first->second;
+      // filter out things not spreading fast enough here so they get copied if they aren't
+      // isNotSpreading() had better be true if ros is lower than minimum
+      const auto ros = origin.headRos();
+      if (ros >= ros_min)
+      {
+        max_ros_ = max(max_ros_, ros);
+        to_spread[key].emplace_back(location, std::move(it->second));
+        it = points_.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
     }
   }
   // if nothing in to_spread then nothing is spreading
@@ -813,35 +816,43 @@ void Scenario::scheduleFireSpread(const Event& event)
     });
   };
   do_each(to_spread, apply_spread);
-  const auto cells = std::views::keys(points_);
-  // copy keys so we can modify points_ while looping
-  for (auto& for_cell : std::vector<Cell>(cells.begin(), cells.end()))
+  // make block to prevent reusing variable from above
   {
-    auto& pts = points_[for_cell];
-    logging::check_fatal(pts.empty(), "Empty points for some reason");
-    const auto& seek_spread = spread_info_.find(for_cell.key());
-    const auto max_intensity =
-      (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
-    if (canBurn(for_cell) && max_intensity > 0)
+    auto it = points_.begin();
+    while (it != points_.end())
     {
-      // HACK: make sure it can't round down to 0
-      const auto intensity = static_cast<IntensitySize>(max(1.0, max_intensity));
-      // HACK: just use the first cell as the source
-      const auto source = sources[for_cell];
-      const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
-      burn(fake_event, intensity);
-    }
-    auto s = can_spread(for_cell);
-    if (s.first->second)
-    {
-      points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
-    }
-    else if (s.second)
-    {
-      // just inserted false, so make sure unburnable gets updated
-      // whether it went out or is surrounded just mark it as unburnable
-      unburnable_.set(for_cell.hash());
-      points_.erase(for_cell);
+      auto& for_cell = it->first;
+      auto& pts = it->second;
+      logging::check_fatal(pts.empty(), "Empty points for some reason");
+      const auto& seek_spread = spread_info_.find(for_cell.key());
+      const auto max_intensity =
+        (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
+      if (canBurn(for_cell) && max_intensity > 0)
+      {
+        // HACK: make sure it can't round down to 0
+        const auto intensity = static_cast<IntensitySize>(max(1.0, max_intensity));
+        // HACK: just use the first cell as the source
+        const auto source = sources[for_cell];
+        const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
+        burn(fake_event, intensity);
+      }
+      auto s = can_spread(for_cell);
+      if (s.first->second)
+      {
+        points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
+        ++it;
+      }
+      else if (s.second)
+      {
+        // just inserted false, so make sure unburnable gets updated
+        // whether it went out or is surrounded just mark it as unburnable
+        unburnable_.set(for_cell.hash());
+        it = points_.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
     }
   }
   log_verbose("Spreading %d points until %f", points_.size(), new_time);
