@@ -1063,6 +1063,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto ros_min = Settings::minimumRos();
   using CellPts = tuple<topo::Cell, const PointSet>;
   map<topo::SpreadKey, vector<CellPts>> to_spread{};
+  map<topo::Cell, bool> spreading{};
   // if we use an iterator this way we don't need to copy keys to erase things
   auto it = points_.begin();
   while (it != points_.end())
@@ -1194,27 +1195,42 @@ void Scenario::scheduleFireSpread(const Event& event)
         source);
       burn(fake_event, intensity);
     }
-    // check if this cell is surrounded by burned cells or non-fuels
-    // if surrounded then just drop all the points inside this cell
-    if (!(*unburnable_)[for_cell.hash()])
+    auto s = spreading.try_emplace(for_cell,
+                                   !(*unburnable_)[for_cell.hash()]
+                                     && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
+                                          && !isSurrounded(for_cell))));
+    if (s.first->second)
     {
-      // do survival check first since it should be easier
-      if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
-      {
-        // if (pts.size() > MAX_BEFORE_CONDENSE)
-        // {
-        //   // 3 points should just be a triangle usually (could be co-linear, but that's fine
-        //   hull(pts);
-        // }
-        log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
-      }
-      else
-      {
-        // whether it went out or is surrounded just mark it as unburnable
-        (*unburnable_)[for_cell.hash()] = true;
-        points_.erase(for_cell);
-      }
+      log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
     }
+    else if (s.second)
+    {
+      // just inserted false, so make sure unburnable gets updated
+      // whether it went out or is surrounded just mark it as unburnable
+      (*unburnable_)[for_cell.hash()] = true;
+      points_.erase(for_cell);
+    }
+    // // check if this cell is surrounded by burned cells or non-fuels
+    // // if surrounded then just drop all the points inside this cell
+    // if (!(*unburnable_)[for_cell.hash()])
+    // {
+    //   // do survival check first since it should be easier
+    //   if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
+    //   {
+    //     // if (pts.size() > MAX_BEFORE_CONDENSE)
+    //     // {
+    //     //   // 3 points should just be a triangle usually (could be co-linear, but that's fine
+    //     //   hull(pts);
+    //     // }
+    //     log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
+    //   }
+    //   else
+    //   {
+    //     // whether it went out or is surrounded just mark it as unburnable
+    //     (*unburnable_)[for_cell.hash()] = true;
+    //     points_.erase(for_cell);
+    //   }
+    // }
   }
   log_extensive("Spreading %d points until %f", points_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
