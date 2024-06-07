@@ -19,26 +19,84 @@ static atomic<size_t> TOTAL_STEPS = 0;
 static std::mutex MUTEX_SIM_COUNTS;
 static map<size_t, size_t> SIM_COUNTS{};
 template <class K, class V>
-class MergeMap : public map<const K, vector<V>>
+class MergeMap
 {
 public:
-  inline void merge_value(const K& key, const V& value) { (*this)[key].emplace_back(value); }
+  constexpr MergeMap() { }
+  MergeMap(MergeMap<K, V>& rhs) : map_(std::copy(rhs.map_)) { }
+  MergeMap(MergeMap<K, V>&& rhs) noexcept : map_(std::move(rhs.map_)) { }
+  // MergeMap&& MergeMap(MergeMap&& rhs)
+  // {
+  // }
+  inline void merge_value(const K& key, const V& value)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    merge_value(key, value);
+  }
   inline void merge_value(const pair<const K, const V>& p) { merge_value(p.first, p.second); }
   template <class L>
+  inline void merge_values(const K& key, const L& values)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    merge_values_(key, values);
+  }
+  template <class L>
   inline void merge_values(const L& values)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    std::for_each(
+      // std::execution::par_unseq,
+      values.begin(),
+      values.end(),
+      [this](const pair<const K, const V>& v) { merge_value_(v); }
+    );
+  }
+  void merge(MergeMap& rhs)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    std::lock_guard<mutex> lock_rhs(rhs.mutex_);
+    std::for_each(
+      // std::execution::par_unseq,
+      rhs.map_.begin(),
+      rhs.map_.end(),
+      [this](const pair<const K, const vector<V>>& kv) {
+        merge_values_(std::get<0>(kv), std::get<1>(kv));
+      }
+    );
+  }
+  template <class F>
+  void for_each(F fct)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    std::for_each(map_.begin(), map_.end(), fct);
+  }
+
+private:
+  map<const K, vector<V>> map_;
+  // actual functions don't get a lock
+  inline void merge_value_(const K& key, const V& value) { (map_)[key].emplace_back(value); }
+  inline void merge_value_(const pair<const K, const V>& p) { merge_value_(p.first, p.second); }
+  template <class L>
+  inline void merge_values_(const K& key, const L& values)
   {
     std::for_each(
       // std::execution::par_unseq,
       values.begin(),
       values.end(),
-      [this](const pair<const K, const V>& v) { merge_value(v); }
+      [this, &key](const V& v) { merge_value_(key, v); }
     );
   }
+  mutex mutex_;
 };
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
 {
-  std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
+  std::for_each(
+    // std::execution::par_unseq,
+    for_list.begin(),
+    for_list.end(),
+    fct
+  );
 }
 void IObserver_deleter::operator()(IObserver* ptr) const
 {
@@ -789,8 +847,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     );
     MergeMap<Cell, InnerPos> points_map{};
     points_map.merge_values(p_o);
-    for (auto& kv : points_map)
-    {
+    points_map.for_each([this, &location, &sources](const auto& kv) {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
       sources[for_cell] |= source;
@@ -805,7 +862,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           hull(pts);
         }
       }
-    };
+    });
   };
   using CellPair = pair<const SpreadKey, vector<CellPts>>;
   auto apply_spread = [this, &apply_offsets](const CellPair& kv0) {
