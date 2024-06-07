@@ -705,6 +705,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto ros_min = Settings::minimumRos();
   using CellPts = tuple<Cell, const PointSet>;
   map<SpreadKey, vector<CellPts>> to_spread{};
+  map<Cell, bool> spreading{};
   // if we use an iterator this way we don't need to copy keys to erase things
   auto it = points_.begin();
   while (it != points_.end())
@@ -820,21 +821,22 @@ void Scenario::scheduleFireSpread(const Event& event)
       const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
       burn(fake_event, intensity);
     }
-    // check if this cell is surrounded by burned cells or non-fuels
-    // if surrounded then just drop all the points inside this cell
-    if (!unburnable_.at(for_cell.hash()))
+    auto s = spreading.try_emplace(
+      for_cell,
+      !unburnable_.at(for_cell.hash())
+        && ((survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
+        )
+    );
+    if (s.first->second)
     {
-      // do survival check first since it should be easier
-      if (survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
-      {
-        points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
-      }
-      else
-      {
-        // whether it went out or is surrounded just mark it as unburnable
-        unburnable_.set(for_cell.hash());
-        points_.erase(for_cell);
-      }
+      points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
+    }
+    else if (s.second)
+    {
+      // just inserted false, so make sure unburnable gets updated
+      // whether it went out or is surrounded just mark it as unburnable
+      unburnable_.set(for_cell.hash());
+      points_.erase(for_cell);
     }
   }
   log_verbose("Spreading %d points until %f", points_.size(), new_time);
