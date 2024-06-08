@@ -109,6 +109,27 @@ CellIndex relativeIndex(const topo::Cell& for_cell, const topo::Cell& from_cell)
   // bottom left
   return DIRECTION_SW;
 }
+
+template <typename T, typename F>
+void do_each(T& for_list, F fct)
+{
+  std::for_each(
+    std::execution::seq,
+    for_list.begin(),
+    for_list.end(),
+    fct);
+}
+
+template <typename T, typename F>
+void do_par(T& for_list, F fct)
+{
+  std::for_each(
+    std::execution::par_unseq,
+    for_list.begin(),
+    for_list.end(),
+    fct);
+}
+
 class PointsMap
 {
   using K = topo::Cell;
@@ -164,10 +185,8 @@ public:
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    std::for_each(
-      // std::execution::par_unseq,
-      rhs.map_.begin(),
-      rhs.map_.end(),
+    do_each(
+      rhs.map_,
       [this](const pair<const K, const vector<V>>& kv) {
         merge_values_(std::get<0>(kv), std::get<1>(kv));
       });
@@ -176,10 +195,7 @@ public:
   void for_each(F fct)
   {
     std::lock_guard<mutex> lock(mutex_);
-    std::for_each(
-      map_.begin(),
-      map_.end(),
-      fct);
+    do_each(map_, fct);
   }
 private:
   map<const K, vector<V>> map_;
@@ -195,10 +211,8 @@ private:
   template <class L>
   inline void merge_values_(const K& key, const L& values)
   {
-    std::for_each(
-      // std::execution::par_unseq,
-      values.begin(),
-      values.end(),
+    do_each(
+      values,
       [this, &key](const V& v) {
         merge_value_(key, v);
       });
@@ -206,10 +220,8 @@ private:
   template <class L>
   inline void merge_values_(const L& values)
   {
-    std::for_each(
-      // std::execution::par_unseq,
-      values.begin(),
-      values.end(),
+    do_each(
+      values,
       [this](const pair<const K, const V>& v) {
         merge_value_(v);
       });
@@ -258,10 +270,8 @@ public:
   inline void merge_values(const L& values)
   {
     std::lock_guard<mutex> lock(mutex_);
-    std::for_each(
-      // std::execution::par_unseq,
-      values.begin(),
-      values.end(),
+    do_each(
+      values,
       [this](const pair<const K, const V>& v) {
         merge_value_(v);
       });
@@ -270,10 +280,8 @@ public:
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    std::for_each(
-      // std::execution::par_unseq,
-      rhs.map_.begin(),
-      rhs.map_.end(),
+    do_each(
+      rhs.map_,
       [this](const pair<const K, const V>& kv) {
         merge_value_(std::get<0>(kv), std::get<1>(kv));
       });
@@ -282,10 +290,7 @@ public:
   void for_each(F fct)
   {
     std::lock_guard<mutex> lock(mutex_);
-    std::for_each(
-      map_.begin(),
-      map_.end(),
-      fct);
+    do_each(map_, fct);
   }
 private:
   map<K, V> map_;
@@ -313,11 +318,11 @@ public:
   {
     auto& points_map = points();
     auto& sources_map = sources();
-    do_each(points_and_sources,
-            [&points_map, &sources_map](const auto& pr) {
-              points_map.merge(pr.points());
-              sources_map.merge(pr.sources());
-            });
+    do_par(points_and_sources,
+           [&points_map, &sources_map](const auto& pr) {
+             points_map.merge(pr.points());
+             sources_map.merge(pr.sources());
+           });
   }
   PointSourceMap(const topo::Cell location, auto& p_o)
     : points_(p_o),
@@ -378,16 +383,6 @@ private:
   PointsMap points_;
   SourcesMap sources_;
 };
-
-template <typename T, typename F>
-void do_each(T& for_list, F fct)
-{
-  std::for_each(
-    // std::execution::par_unseq,
-    for_list.begin(),
-    for_list.end(),
-    fct);
-}
 
 class LogPoints
 {
