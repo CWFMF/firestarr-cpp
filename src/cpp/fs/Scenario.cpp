@@ -16,13 +16,15 @@ static atomic<size_t> COMPLETED = 0;
 static atomic<size_t> TOTAL_STEPS = 0;
 static std::mutex MUTEX_SIM_COUNTS;
 static map<size_t, size_t> SIM_COUNTS{};
-template <class K, class V>
-class MergeMap
+class PointsMap
 {
+  using K = Cell;
+  using V = InnerPos;
+
 public:
-  constexpr MergeMap() { }
-  MergeMap(const MergeMap<K, V>& rhs) : map_(std::copy(rhs.map_)) { }
-  MergeMap(MergeMap<K, V>&& rhs) noexcept : map_(std::move(rhs.map_)) { }
+  constexpr PointsMap() { }
+  PointsMap(const PointsMap& rhs) : map_({}) { merge(rhs); }
+  PointsMap(PointsMap&& rhs) noexcept : map_(std::move(rhs.map_)) { }
   inline void merge_value(const K& key, const V& value)
   {
     std::lock_guard<mutex> lock(mutex_);
@@ -46,7 +48,7 @@ public:
       [this](const pair<const K, const V>& v) { merge_value_(v); }
     );
   }
-  void merge(const MergeMap& rhs)
+  void merge(const PointsMap& rhs)
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
@@ -83,7 +85,6 @@ private:
   }
   mutable mutex mutex_;
 };
-using PointsMap = MergeMap<Cell, InnerPos>;
 class SourcesMap
 {
   using K = Cell;
@@ -903,13 +904,17 @@ void Scenario::scheduleFireSpread(const Event& event)
         return std::pair<Cell, InnerPos>(for_cell, pos);
       }
     );
-    PointsMap points_map{};
-    SourcesMap sources_map{};
+    pair<PointsMap, SourcesMap> result{};
+    auto& points_map = result.first;
+    auto& sources_map = result.second;
     points_map.merge_values(p_o);
     points_map.for_each([this, &location, &sources_map](const auto& kv) {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
       sources_map.merge_value(for_cell, source);
+    });
+    points_map.for_each([this, &location, &sources_map](const auto& kv) {
+      const auto& for_cell = kv.first;
       if (!unburnable_.at(for_cell.hash()))
       {
         auto& pts = points_[for_cell];
