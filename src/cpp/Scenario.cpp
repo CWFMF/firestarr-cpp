@@ -1247,19 +1247,9 @@ void Scenario::scheduleFireSpread(const Event& event)
   // note("Spreading for %f minutes", duration);
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  mutex mutex_spreading;
-  map<topo::Cell, bool> spreading{};
-  auto can_spread = [this, &spreading, &mutex_spreading, &new_time](
-                      const topo::Cell for_cell) {
-    lock_guard<mutex> lock(mutex_spreading);
-    return spreading.try_emplace(for_cell,
-                                 !(*unburnable_)[for_cell.hash()]
-                                   && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
-                                        && !isSurrounded(for_cell))));
-  };
 
   // for (auto& location : std::vector<topo::Cell>(cells_old.begin(), cells_old.end()))
-  auto apply_offsets = [this, &new_time, &duration, &sources, &can_spread](
+  auto apply_offsets = [this, &new_time, &duration, &sources](
                          //  const OffsetSet offsets,
                          //  const topo::Cell location,
                          //  const PointSet pts
