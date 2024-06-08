@@ -915,7 +915,28 @@ void Scenario::scheduleFireSpread(const Event& event)
       const auto source = relativeIndex(for_cell, location);
       sources_map.merge_value(for_cell, source);
     });
-    points_map.for_each([this, &location, &sources_map](const auto& kv) {
+    return result;
+  };
+  using CellPair = pair<const SpreadKey, vector<CellPts>>;
+  auto apply_spread = [this, &apply_offsets, &sources](const CellPair& kv0) {
+    auto& key = kv0.first;
+    auto& offsets = spread_info_[key].offsets();
+    auto points_and_sources = std::views::transform(
+      kv0.second,
+      [&apply_offsets, &offsets](const tuple<Cell, PointSet> pts_for_cell) {
+        return apply_offsets(
+          std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
+        );
+      }
+    );
+    pair<PointsMap, SourcesMap> result{};
+    auto& points_map = result.first;
+    auto& sources_map = result.second;
+    do_each(points_and_sources, [&points_map, &sources_map](const auto& pr) {
+      points_map.merge(pr.first);
+      sources_map.merge(pr.second);
+    });
+    points_map.for_each([this](const auto& kv) {
       const auto& for_cell = kv.first;
       if (!unburnable_.at(for_cell.hash()))
       {
@@ -930,14 +951,6 @@ void Scenario::scheduleFireSpread(const Event& event)
       }
     });
     sources_map.for_each([&sources](auto& kv) { sources[kv.first] |= kv.second; });
-  };
-  using CellPair = pair<const SpreadKey, vector<CellPts>>;
-  auto apply_spread = [this, &apply_offsets](const CellPair& kv0) {
-    auto& key = kv0.first;
-    auto& offsets = spread_info_[key].offsets();
-    do_each(kv0.second, [&apply_offsets, &offsets](const tuple<Cell, PointSet> pts_for_cell) {
-      apply_offsets(std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets));
-    });
   };
   do_each(to_spread, apply_spread);
   map<Cell, PointSet> points_cur{};
