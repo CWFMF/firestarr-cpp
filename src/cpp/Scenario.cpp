@@ -185,10 +185,33 @@ public:
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    do_each(
+    using map_pair = pair<vector<V>*, const vector<V>&>;
+    auto v0 = std::views::transform(
       rhs.map_,
-      [this](const pair<const K, const vector<V>>& kv) {
-        merge_values_(std::get<0>(kv), std::get<1>(kv));
+      [this](auto& kv) {
+        // insert or lookup map for key
+        return map_pair(&map_[kv.first], kv.second);
+      });
+    // do_each(
+    //   v0,
+    //   [this](auto& p) {
+    //     vector<V>& m = *(p.first);
+    //     const vector<V>& values = p.second;
+    //     m.insert(m.end(), values.begin(), values.end());
+    //   });
+    // for (const auto& p : v0)
+    // {
+    //   vector<V>& m = *(p.first);
+    //   const vector<V>& values = p.second;
+    //   m.insert(m.end(), values.begin(), values.end());
+    // };
+    std::for_each(
+      v0.begin(),
+      v0.end(),
+      [](const auto& p) {
+        vector<V>& m = *(p.first);
+        const vector<V>& values = p.second;
+        m.insert(m.end(), values.begin(), values.end());
       });
   }
   template <class F>
@@ -200,6 +223,11 @@ public:
 private:
   map<const K, vector<V>> map_;
   // actual functions don't get a lock
+  // merge after map lookup is already done
+  inline void merge_value_(vector<V>& m, const V& value)
+  {
+    m.emplace_back(value);
+  }
   inline void merge_value_(const K& key, const V& value)
   {
     (map_)[key].emplace_back(value);
