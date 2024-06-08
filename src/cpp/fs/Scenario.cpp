@@ -16,6 +16,70 @@ static atomic<size_t> COMPLETED = 0;
 static atomic<size_t> TOTAL_STEPS = 0;
 static std::mutex MUTEX_SIM_COUNTS;
 static map<size_t, size_t> SIM_COUNTS{};
+/**
+ * Determine the direction that a given cell is in from another cell. This is the
+ * same convention as wind (i.e. the direction it is coming from, not the direction
+ * it is going towards).
+ * @param for_cell The cell to find directions relative to
+ * @param from_cell The cell to find the direction of
+ * @return Direction that you would have to go in to get to from_cell from for_cell
+ */
+CellIndex relativeIndex(const Cell& for_cell, const Cell& from_cell)
+{
+  const auto r = for_cell.row();
+  const auto r_o = from_cell.row();
+  const auto c = for_cell.column();
+  const auto c_o = from_cell.column();
+  if (r == r_o)
+  {
+    // center row
+    // same cell, so source is 0
+    if (c == c_o)
+    {
+      return DIRECTION_NONE;
+    }
+    if (c < c_o)
+    {
+      // center right
+      return DIRECTION_E;
+    }
+    // else has to be c > c_o
+    // center left
+    return DIRECTION_W;
+  }
+  if (r < r_o)
+  {
+    // came from the row to the north
+    if (c == c_o)
+    {
+      // center top
+      return DIRECTION_N;
+    }
+    if (c < c_o)
+    {
+      // top right
+      return DIRECTION_NE;
+    }
+    // else has to be c > c_o
+    // top left
+    return DIRECTION_NW;
+  }
+  // else r > r_o
+  // came from the row to the south
+  if (c == c_o)
+  {
+    // center bottom
+    return DIRECTION_S;
+  }
+  if (c < c_o)
+  {
+    // bottom right
+    return DIRECTION_SE;
+  }
+  // else has to be c > c_o
+  // bottom left
+  return DIRECTION_SW;
+}
 class PointsMap
 {
   using K = Cell;
@@ -151,13 +215,24 @@ class PointSourceMap
 {
 public:
   PointSourceMap() : maps_({}) { }
-  PointSourceMap(auto& points_and_sources) : maps_({})
+  PointSourceMap(auto& points_and_sources) : PointSourceMap()
   {
     auto& points_map = points();
     auto& sources_map = sources();
     do_each(points_and_sources, [&points_map, &sources_map](const auto& pr) {
       points_map.merge(pr.points());
       sources_map.merge(pr.sources());
+    });
+  }
+  PointSourceMap(const Cell location, auto& p_o) : PointSourceMap()
+  {
+    auto& points_map = points();
+    auto& sources_map = sources();
+    points_map.merge_values(p_o);
+    points_map.for_each([this, &location, &sources_map](const auto& kv) {
+      const auto& for_cell = kv.first;
+      const auto source = relativeIndex(for_cell, location);
+      sources_map.merge_value(for_cell, source);
     });
   }
   PointsMap& points() { return maps_.first; }
@@ -751,70 +826,6 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   }
   return this;
 }
-/**
- * Determine the direction that a given cell is in from another cell. This is the
- * same convention as wind (i.e. the direction it is coming from, not the direction
- * it is going towards).
- * @param for_cell The cell to find directions relative to
- * @param from_cell The cell to find the direction of
- * @return Direction that you would have to go in to get to from_cell from for_cell
- */
-CellIndex relativeIndex(const Cell& for_cell, const Cell& from_cell)
-{
-  const auto r = for_cell.row();
-  const auto r_o = from_cell.row();
-  const auto c = for_cell.column();
-  const auto c_o = from_cell.column();
-  if (r == r_o)
-  {
-    // center row
-    // same cell, so source is 0
-    if (c == c_o)
-    {
-      return DIRECTION_NONE;
-    }
-    if (c < c_o)
-    {
-      // center right
-      return DIRECTION_E;
-    }
-    // else has to be c > c_o
-    // center left
-    return DIRECTION_W;
-  }
-  if (r < r_o)
-  {
-    // came from the row to the north
-    if (c == c_o)
-    {
-      // center top
-      return DIRECTION_N;
-    }
-    if (c < c_o)
-    {
-      // top right
-      return DIRECTION_NE;
-    }
-    // else has to be c > c_o
-    // top left
-    return DIRECTION_NW;
-  }
-  // else r > r_o
-  // came from the row to the south
-  if (c == c_o)
-  {
-    // center bottom
-    return DIRECTION_S;
-  }
-  if (c < c_o)
-  {
-    // bottom right
-    return DIRECTION_SE;
-  }
-  // else has to be c > c_o
-  // bottom left
-  return DIRECTION_SW;
-}
 void Scenario::scheduleFireSpread(const Event& event)
 {
   const auto time = event.time();
@@ -882,19 +893,8 @@ void Scenario::scheduleFireSpread(const Event& event)
                     : max_duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  mutex mutex_spreading;
-  map<Cell, bool> spreading{};
-  auto can_spread = [this, &spreading, &mutex_spreading, &new_time](const Cell for_cell) {
-    lock_guard<mutex> lock(mutex_spreading);
-    return spreading.try_emplace(
-      for_cell,
-      !unburnable_.at(for_cell.hash())
-        && ((survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
-        )
-    );
-  };
   // for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
-  auto apply_offsets = [this, &new_time, &duration, &sources, &can_spread](
+  auto apply_offsets = [this, &new_time, &duration, &sources](
                          //  const OffsetSet offsets,
                          //  const Cell location,
                          //  const PointSet pts
@@ -925,16 +925,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         return std::pair<Cell, InnerPos>(for_cell, pos);
       }
     );
-    PointSourceMap result{};
-    auto& points_map = result.points();
-    auto& sources_map = result.sources();
-    points_map.merge_values(p_o);
-    points_map.for_each([this, &location, &sources_map](const auto& kv) {
-      const auto& for_cell = kv.first;
-      const auto source = relativeIndex(for_cell, location);
-      sources_map.merge_value(for_cell, source);
-    });
-    return result;
+    return PointSourceMap(location, p_o);
   };
   using CellPair = pair<const SpreadKey, vector<CellPts>>;
   auto final_merge_maps = [this, &sources](auto& result) {
