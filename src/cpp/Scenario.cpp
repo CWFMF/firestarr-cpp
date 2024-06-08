@@ -228,6 +228,33 @@ private:
   // }
   mutable mutex mutex_;
 };
+class PointSourceMap
+{
+public:
+  PointSourceMap()
+    : maps_({})
+  {
+  }
+  PointsMap& points()
+  {
+    return maps_.first;
+  }
+  SourcesMap& sources()
+  {
+    return maps_.second;
+  }
+  const PointsMap& points() const
+  {
+    return maps_.first;
+  }
+  const SourcesMap& sources() const
+  {
+    return maps_.second;
+  }
+private:
+  pair<PointsMap, SourcesMap> maps_;
+};
+
 // using SourcesMap = map<topo::Cell, CellIndex>;
 // template <class K, class V>
 // inline void make_merge_points_map(map<K, V>& m)
@@ -1316,11 +1343,11 @@ void Scenario::scheduleFireSpread(const Event& event)
     // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
     // using product_type = decltype(*p_o.cbegin());
     // for (auto& o : offsets)
-    pair<PointsMap, SourcesMap> result{};
+    PointSourceMap result{};
     // PointsMap points_map{};
     // SourcesMap sources_map{};
-    auto& points_map = result.first;
-    auto& sources_map = result.second;
+    auto& points_map = result.points();
+    auto& sources_map = result.sources();
     points_map.merge_values(p_o);
     points_map.for_each(
       [this, &location, &sources_map](const auto& kv) {
@@ -1338,22 +1365,22 @@ void Scenario::scheduleFireSpread(const Event& event)
   //   auto y = kv0.second;
   // }
   auto do_merge_maps = [this](auto& points_and_sources) {
-    pair<PointsMap, SourcesMap> result{};
+    PointSourceMap result{};
     // PointsMap points_map{};
     // SourcesMap sources_map{};
-    auto& points_map = result.first;
-    auto& sources_map = result.second;
+    auto& points_map = result.points();
+    auto& sources_map = result.sources();
     do_each(points_and_sources,
             [&points_map, &sources_map](const auto& pr) {
-              points_map.merge(pr.first);
-              sources_map.merge(pr.second);
+              points_map.merge(pr.points());
+              sources_map.merge(pr.sources());
             });
     return result;
   };
   // auto final_merge_maps = [this](auto& points_map, auto& sources_map) {
   auto final_merge_maps = [this, &sources](auto& result) {
-    auto& points_map = result.first;
-    auto& sources_map = result.second;
+    auto& points_map = result.points();
+    auto& sources_map = result.sources();
     points_map.for_each(
       [this](const auto& kv) {
         const auto& for_cell = kv.first;
