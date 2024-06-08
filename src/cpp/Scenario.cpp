@@ -82,6 +82,16 @@ CellIndex relativeIndex(const Cell& for_cell, const Cell& from_cell)
   // bottom left
   return DIRECTION_SW;
 }
+template <typename T, typename F>
+void do_each(T& for_list, F fct)
+{
+  std::for_each(std::execution::seq, for_list.begin(), for_list.end(), fct);
+}
+template <typename T, typename F>
+void do_par(T& for_list, F fct)
+{
+  std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
+}
 class PointsMap
 {
   using K = Cell;
@@ -118,46 +128,40 @@ public:
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    std::for_each(
-      // std::execution::par_unseq,
-      rhs.map_.begin(),
-      rhs.map_.end(),
-      [this](const pair<const K, const vector<V>>& kv) {
-        merge_values_(std::get<0>(kv), std::get<1>(kv));
-      }
-    );
+    using map_pair = pair<vector<V>*, const vector<V>&>;
+    auto v0 = std::views::transform(rhs.map_, [this](auto& kv) {
+      // insert or lookup map for key
+      return map_pair(&map_[kv.first], kv.second);
+    });
+    std::for_each(v0.begin(), v0.end(), [](const auto& p) {
+      vector<V>& m = *(p.first);
+      const vector<V>& values = p.second;
+      m.insert(m.end(), values.begin(), values.end());
+    });
   }
   template <class F>
   void for_each(F fct)
   {
     std::lock_guard<mutex> lock(mutex_);
-    std::for_each(map_.begin(), map_.end(), fct);
+    do_each(map_, fct);
   }
 
 private:
   map<const K, vector<V>> map_;
   // actual functions don't get a lock
+  // merge after map lookup is already done
+  inline void merge_value_(vector<V>& m, const V& value) { m.emplace_back(value); }
   inline void merge_value_(const K& key, const V& value) { (map_)[key].emplace_back(value); }
   inline void merge_value_(const pair<const K, const V>& p) { merge_value_(p.first, p.second); }
   template <class L>
   inline void merge_values_(const K& key, const L& values)
   {
-    std::for_each(
-      // std::execution::par_unseq,
-      values.begin(),
-      values.end(),
-      [this, &key](const V& v) { merge_value_(key, v); }
-    );
+    do_each(values, [this, &key](const V& v) { merge_value_(key, v); });
   }
   template <class L>
   inline void merge_values_(const L& values)
   {
-    std::for_each(
-      // std::execution::par_unseq,
-      values.begin(),
-      values.end(),
-      [this](const pair<const K, const V>& v) { merge_value_(v); }
-    );
+    do_each(values, [this](const pair<const K, const V>& v) { merge_value_(v); });
   }
   mutable mutex mutex_;
 };
@@ -191,29 +195,21 @@ public:
   inline void merge_values(const L& values)
   {
     std::lock_guard<mutex> lock(mutex_);
-    std::for_each(
-      // std::execution::par_unseq,
-      values.begin(),
-      values.end(),
-      [this](const pair<const K, const V>& v) { merge_value_(v); }
-    );
+    do_each(values, [this](const pair<const K, const V>& v) { merge_value_(v); });
   }
   void merge(const SourcesMap& rhs)
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    std::for_each(
-      // std::execution::par_unseq,
-      rhs.map_.begin(),
-      rhs.map_.end(),
-      [this](const pair<const K, const V>& kv) { merge_value_(std::get<0>(kv), std::get<1>(kv)); }
-    );
+    do_each(rhs.map_, [this](const pair<const K, const V>& kv) {
+      merge_value_(std::get<0>(kv), std::get<1>(kv));
+    });
   }
   template <class F>
   void for_each(F fct)
   {
     std::lock_guard<mutex> lock(mutex_);
-    std::for_each(map_.begin(), map_.end(), fct);
+    do_each(map_, fct);
   }
 
 private:
@@ -231,7 +227,7 @@ public:
   {
     auto& points_map = points();
     auto& sources_map = sources();
-    do_each(points_and_sources, [&points_map, &sources_map](const auto& pr) {
+    do_par(points_and_sources, [&points_map, &sources_map](const auto& pr) {
       points_map.merge(pr.points());
       sources_map.merge(pr.sources());
     });
@@ -279,16 +275,6 @@ private:
   PointsMap points_;
   SourcesMap sources_;
 };
-template <typename T, typename F>
-void do_each(T& for_list, F fct)
-{
-  std::for_each(
-    // std::execution::par_unseq,
-    for_list.begin(),
-    for_list.end(),
-    fct
-  );
-}
 void IObserver_deleter::operator()(IObserver* ptr) const
 {
   // printf("Deleting\n");
