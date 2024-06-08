@@ -216,7 +216,7 @@ private:
 class PointSourceMap
 {
 public:
-  PointSourceMap() : maps_({}) { }
+  PointSourceMap() : points_({}), sources_({}) { }
   PointSourceMap(auto& points_and_sources) : PointSourceMap()
   {
     auto& points_map = points();
@@ -237,10 +237,10 @@ public:
       sources_map.merge_value(for_cell, source);
     });
   }
-  PointsMap& points() { return maps_.first; }
-  SourcesMap& sources() { return maps_.second; }
-  const PointsMap& points() const { return maps_.first; }
-  const SourcesMap& sources() const { return maps_.second; }
+  inline constexpr PointsMap& points() noexcept { return points_; }
+  inline constexpr SourcesMap& sources() noexcept { return sources_; }
+  inline constexpr const PointsMap& points() const noexcept { return points_; }
+  inline constexpr const SourcesMap& sources() const noexcept { return sources_; }
   void final_merge_maps(
     map<Cell, PointSet>& points_out,
     map<Cell, CellIndex>& sources_out,
@@ -267,7 +267,8 @@ public:
   }
 
 private:
-  pair<PointsMap, SourcesMap> maps_;
+  PointsMap points_;
+  SourcesMap sources_;
 };
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
