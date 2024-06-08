@@ -23,11 +23,8 @@ class MergeMap
 {
 public:
   constexpr MergeMap() { }
-  MergeMap(MergeMap<K, V>& rhs) : map_(std::copy(rhs.map_)) { }
+  MergeMap(const MergeMap<K, V>& rhs) : map_(std::copy(rhs.map_)) { }
   MergeMap(MergeMap<K, V>&& rhs) noexcept : map_(std::move(rhs.map_)) { }
-  // MergeMap&& MergeMap(MergeMap&& rhs)
-  // {
-  // }
   inline void merge_value(const K& key, const V& value)
   {
     std::lock_guard<mutex> lock(mutex_);
@@ -51,7 +48,7 @@ public:
       [this](const pair<const K, const V>& v) { merge_value_(v); }
     );
   }
-  void merge(MergeMap& rhs)
+  void merge(const MergeMap& rhs)
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
@@ -86,8 +83,10 @@ private:
       [this, &key](const V& v) { merge_value_(key, v); }
     );
   }
-  mutex mutex_;
+  mutable mutex mutex_;
 };
+using PointsMap = MergeMap<Cell, InnerPos>;
+using SourcesMap = map<Cell, CellIndex>;
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
 {
@@ -845,7 +844,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         return std::pair<Cell, InnerPos>(for_cell, pos);
       }
     );
-    MergeMap<Cell, InnerPos> points_map{};
+    PointsMap points_map{};
     points_map.merge_values(p_o);
     points_map.for_each([this, &location, &sources](const auto& kv) {
       const auto& for_cell = kv.first;
