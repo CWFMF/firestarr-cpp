@@ -33,7 +33,7 @@ public:
   }
 
   MergeMap(
-    MergeMap<K, V>& rhs
+    const MergeMap<K, V>& rhs
   )
     : map_(std::copy(rhs.map_))
   {
@@ -46,10 +46,6 @@ public:
   {
   }
 
-  // MergeMap&& MergeMap(MergeMap&& rhs)
-  // {
-
-  // }
   inline void
   merge_value(
     const K& key,
@@ -98,7 +94,7 @@ public:
 
   void
   merge(
-    MergeMap& rhs
+    const MergeMap& rhs
   )
   {
     std::lock_guard<mutex> lock(mutex_);
@@ -161,8 +157,11 @@ private:
     );
   }
 
-  mutex mutex_;
+  mutable mutex mutex_;
 };
+
+using PointsMap = MergeMap<Cell, InnerPos>;
+using SourcesMap = map<Cell, CellIndex>;
 
 template <typename T, typename F>
 void
@@ -1096,7 +1095,7 @@ Scenario::scheduleFireSpread(
         return std::pair<Cell, InnerPos>(for_cell, pos);
       }
     );
-    MergeMap<Cell, InnerPos> points_map{};
+    PointsMap points_map{};
     points_map.merge_values(p_o);
     points_map.for_each([this, &location, &sources](const auto& kv) {
       const auto& for_cell = kv.first;
