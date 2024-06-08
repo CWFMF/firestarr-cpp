@@ -1381,10 +1381,14 @@ void Scenario::scheduleFireSpread(const Event& event)
                                                     [&apply_offsets, &offsets](const tuple<topo::Cell, PointSet> pts_for_cell) {
                                                       return apply_offsets(std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets));
                                                     });
-    auto result = do_merge_maps(points_and_sources);
-    final_merge_maps(result);
+    return do_merge_maps(points_and_sources);
   };
-  do_each(to_spread, apply_spread);
+  auto points_and_sources = std::views::transform(
+    to_spread,
+    apply_spread);
+  auto result = do_merge_maps(points_and_sources);
+  final_merge_maps(result);
+
   map<topo::Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);
   // if we move everything out of points_ we can parallelize this check?
