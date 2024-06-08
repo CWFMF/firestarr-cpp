@@ -278,6 +278,18 @@ public:
     : maps_({})
   {
   }
+  PointSourceMap(
+    auto& points_and_sources
+  )
+    : maps_({})
+  {
+    auto& points_map = points();
+    auto& sources_map = sources();
+    do_each(points_and_sources, [&points_map, &sources_map](const auto& pr) {
+      points_map.merge(pr.points());
+      sources_map.merge(pr.sources());
+    });
+  }
   PointsMap&
   points()
   {
@@ -1475,18 +1487,6 @@ Scenario::scheduleFireSpread(
     return result;
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
-  auto do_merge_maps = [this](auto& points_and_sources) {
-    PointSourceMap result{};
-    // PointsMap points_map{};
-    // SourcesMap sources_map{};
-    auto& points_map = result.points();
-    auto& sources_map = result.sources();
-    do_each(points_and_sources, [&points_map, &sources_map](const auto& pr) {
-      points_map.merge(pr.points());
-      sources_map.merge(pr.sources());
-    });
-    return result;
-  };
   auto final_merge_maps = [this, &sources](auto& result) {
     auto& points_map = result.points();
     auto& sources_map = result.sources();
@@ -1508,22 +1508,21 @@ Scenario::scheduleFireSpread(
       sources[kv.first] |= kv.second;
     });
   };
-  auto apply_spread =
-    [this, &apply_offsets, &sources, &do_merge_maps, &final_merge_maps](const CellPair& kv0) {
-      auto& key = kv0.first;
-      auto& offsets = spread_info_[key].offsets();
-      auto points_and_sources = std::views::transform(
-        kv0.second,
-        [&apply_offsets, &offsets](const tuple<topo::Cell, PointSet> pts_for_cell) {
-          return apply_offsets(
-            std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
-          );
-        }
-      );
-      return do_merge_maps(points_and_sources);
-    };
+  auto apply_spread = [this, &apply_offsets, &sources, &final_merge_maps](const CellPair& kv0) {
+    auto& key = kv0.first;
+    auto& offsets = spread_info_[key].offsets();
+    auto points_and_sources = std::views::transform(
+      kv0.second,
+      [&apply_offsets, &offsets](const tuple<topo::Cell, PointSet> pts_for_cell) {
+        return apply_offsets(
+          std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
+        );
+      }
+    );
+    return PointSourceMap(points_and_sources);
+  };
   auto points_and_sources = std::views::transform(to_spread, apply_spread);
-  auto result = do_merge_maps(points_and_sources);
+  auto result = PointSourceMap(points_and_sources);
   final_merge_maps(result);
 
   map<topo::Cell, PointSet> points_cur{};
