@@ -28,7 +28,6 @@ else()
 )
 endif()
 
-find_package(Threads REQUIRED)
 add_definitions(-D_POSIX_C_SOURCE=200809L)
 
 file(GLOB SOURCES src/cpp/*.cpp)
@@ -36,7 +35,22 @@ set_source_files_properties(src/cpp/unstable.cpp PROPERTIES COMPILE_FLAGS "${CMA
 
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} PUBLIC geotiff tiff Threads::Threads)
+# ./usr/lib/x86_64-linux-gnu/cmake/TBB/TBBConfig.cmake
+
+# list(APPEND CMAKE_MODULE_PATH "deps/tbb/cmake/")
+list(APPEND CMAKE_MODULE_PATH "/usr/lib/x86_64-linux-gnu/cmake")
+
+# find_package(Threads REQUIRED)
+# target_link_libraries(${PROJECT_NAME} PUBLIC geotiff tiff Threads::Threads)
+
+find_package(TBB REQUIRED)
+target_link_libraries(${PROJECT_NAME} PUBLIC geotiff tiff TBB::tbb)
+
+
+# find_package(TBB REQUIRED)
+# # target_link_libraries(${PROJECT_NAME} PUBLIC geotiff tiff Threads::Threads TBB:tbb)
+# target_link_libraries(${PROJECT_NAME} PUBLIC geotiff tiff Threads::Threads tbb)
+# # target_link_libraries(${PROJECT_NAME} PUBLIC pthread tbb geotiff tiff)
 
 add_custom_command(TARGET ${PROJECT_NAME}
                    POST_BUILD
