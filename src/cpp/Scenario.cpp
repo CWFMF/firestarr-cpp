@@ -31,6 +31,84 @@ constexpr auto STAGE_NEW = 'N';
 constexpr auto STAGE_SPREAD = 'S';
 constexpr auto STAGE_INVALID = 'X';
 
+// want to be able to make a bitmask of all directions it came from
+//  064  008  032
+//  001  000  002
+//  016  004  128
+static constexpr CellIndex DIRECTION_NONE = 0b00000000;
+static constexpr CellIndex DIRECTION_W = 0b00000001;
+static constexpr CellIndex DIRECTION_E = 0b00000010;
+static constexpr CellIndex DIRECTION_S = 0b00000100;
+static constexpr CellIndex DIRECTION_N = 0b00001000;
+static constexpr CellIndex DIRECTION_SW = 0b00010000;
+static constexpr CellIndex DIRECTION_NE = 0b00100000;
+static constexpr CellIndex DIRECTION_NW = 0b01000000;
+static constexpr CellIndex DIRECTION_SE = 0b10000000;
+
+/**
+ * Determine the direction that a given cell is in from another cell. This is the
+ * same convention as wind (i.e. the direction it is coming from, not the direction
+ * it is going towards).
+ * @param for_cell The cell to find directions relative to
+ * @param from_cell The cell to find the direction of
+ * @return Direction that you would have to go in to get to from_cell from for_cell
+ */
+CellIndex relativeIndex(const topo::Cell& for_cell, const topo::Cell& from_cell)
+{
+  const auto r = for_cell.row();
+  const auto r_o = from_cell.row();
+  const auto c = for_cell.column();
+  const auto c_o = from_cell.column();
+  if (r == r_o)
+  {
+    // center row
+    // same cell, so source is 0
+    if (c == c_o)
+    {
+      return DIRECTION_NONE;
+    }
+    if (c < c_o)
+    {
+      // center right
+      return DIRECTION_E;
+    }
+    // else has to be c > c_o
+    // center left
+    return DIRECTION_W;
+  }
+  if (r < r_o)
+  {
+    // came from the row to the north
+    if (c == c_o)
+    {
+      // center top
+      return DIRECTION_N;
+    }
+    if (c < c_o)
+    {
+      // top right
+      return DIRECTION_NE;
+    }
+    // else has to be c > c_o
+    // top left
+    return DIRECTION_NW;
+  }
+  // else r > r_o
+  // came from the row to the south
+  if (c == c_o)
+  {
+    // center bottom
+    return DIRECTION_S;
+  }
+  if (c < c_o)
+  {
+    // bottom right
+    return DIRECTION_SE;
+  }
+  // else has to be c > c_o
+  // bottom left
+  return DIRECTION_SW;
+}
 class PointsMap
 {
   using K = topo::Cell;
@@ -215,7 +293,7 @@ public:
   {
   }
   PointSourceMap(auto& points_and_sources)
-    : maps_({})
+    : PointSourceMap()
   {
     auto& points_map = points();
     auto& sources_map = sources();
@@ -224,6 +302,19 @@ public:
               points_map.merge(pr.points());
               sources_map.merge(pr.sources());
             });
+  }
+  PointSourceMap(const topo::Cell location, auto& p_o)
+    : PointSourceMap()
+  {
+    auto& points_map = points();
+    auto& sources_map = sources();
+    points_map.merge_values(p_o);
+    points_map.for_each(
+      [this, &location, &sources_map](const auto& kv) {
+        const auto& for_cell = kv.first;
+        const auto source = relativeIndex(for_cell, location);
+        sources_map.merge_value(for_cell, source);
+      });
   }
   PointsMap& points()
   {
@@ -1064,84 +1155,6 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   }
   return this;
 }
-// want to be able to make a bitmask of all directions it came from
-//  064  008  032
-//  001  000  002
-//  016  004  128
-static constexpr CellIndex DIRECTION_NONE = 0b00000000;
-static constexpr CellIndex DIRECTION_W = 0b00000001;
-static constexpr CellIndex DIRECTION_E = 0b00000010;
-static constexpr CellIndex DIRECTION_S = 0b00000100;
-static constexpr CellIndex DIRECTION_N = 0b00001000;
-static constexpr CellIndex DIRECTION_SW = 0b00010000;
-static constexpr CellIndex DIRECTION_NE = 0b00100000;
-static constexpr CellIndex DIRECTION_NW = 0b01000000;
-static constexpr CellIndex DIRECTION_SE = 0b10000000;
-
-/**
- * Determine the direction that a given cell is in from another cell. This is the
- * same convention as wind (i.e. the direction it is coming from, not the direction
- * it is going towards).
- * @param for_cell The cell to find directions relative to
- * @param from_cell The cell to find the direction of
- * @return Direction that you would have to go in to get to from_cell from for_cell
- */
-CellIndex relativeIndex(const topo::Cell& for_cell, const topo::Cell& from_cell)
-{
-  const auto r = for_cell.row();
-  const auto r_o = from_cell.row();
-  const auto c = for_cell.column();
-  const auto c_o = from_cell.column();
-  if (r == r_o)
-  {
-    // center row
-    // same cell, so source is 0
-    if (c == c_o)
-    {
-      return DIRECTION_NONE;
-    }
-    if (c < c_o)
-    {
-      // center right
-      return DIRECTION_E;
-    }
-    // else has to be c > c_o
-    // center left
-    return DIRECTION_W;
-  }
-  if (r < r_o)
-  {
-    // came from the row to the north
-    if (c == c_o)
-    {
-      // center top
-      return DIRECTION_N;
-    }
-    if (c < c_o)
-    {
-      // top right
-      return DIRECTION_NE;
-    }
-    // else has to be c > c_o
-    // top left
-    return DIRECTION_NW;
-  }
-  // else r > r_o
-  // came from the row to the south
-  if (c == c_o)
-  {
-    // center bottom
-    return DIRECTION_S;
-  }
-  if (c < c_o)
-  {
-    // bottom right
-    return DIRECTION_SE;
-  }
-  // else has to be c > c_o
-  // bottom left
-  return DIRECTION_SW;
-}
 void Scenario::scheduleFireSpread(const Event& event)
 {
   const auto time = event.time();
@@ -1272,22 +1285,7 @@ void Scenario::scheduleFireSpread(const Event& event)
 #endif
                                        return std::pair<topo::Cell, InnerPos>(for_cell, pos);
                                      });
-    // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
-    // using product_type = decltype(*p_o.cbegin());
-    // for (auto& o : offsets)
-    PointSourceMap result{};
-    // PointsMap points_map{};
-    // SourcesMap sources_map{};
-    auto& points_map = result.points();
-    auto& sources_map = result.sources();
-    points_map.merge_values(p_o);
-    points_map.for_each(
-      [this, &location, &sources_map](const auto& kv) {
-        const auto& for_cell = kv.first;
-        const auto source = relativeIndex(for_cell, location);
-        sources_map.merge_value(for_cell, source);
-      });
-    return result;
+    return PointSourceMap(location, p_o);
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
   auto final_merge_maps = [this, &sources](auto& result) {
