@@ -86,9 +86,14 @@ class PointsMap
   using V = InnerPos;
 
 public:
-  constexpr PointsMap() { }
-  PointsMap(const PointsMap& rhs) : map_({}) { merge(rhs); }
+  PointsMap() : map_({}) { }
+  PointsMap(const PointsMap& rhs) : PointsMap() { merge(rhs); }
   PointsMap(PointsMap&& rhs) noexcept : map_(std::move(rhs.map_)) { }
+  PointsMap(auto& p_o) : PointsMap()
+  {
+    // no need to lock since this doesn't exist yet
+    merge_values_(p_o);
+  }
   inline void merge_value(const K& key, const V& value)
   {
     std::lock_guard<mutex> lock(mutex_);
@@ -105,12 +110,7 @@ public:
   inline void merge_values(const L& values)
   {
     std::lock_guard<mutex> lock(mutex_);
-    std::for_each(
-      // std::execution::par_unseq,
-      values.begin(),
-      values.end(),
-      [this](const pair<const K, const V>& v) { merge_value_(v); }
-    );
+    merge_values_(values);
   }
   void merge(const PointsMap& rhs)
   {
@@ -145,6 +145,16 @@ private:
       values.begin(),
       values.end(),
       [this, &key](const V& v) { merge_value_(key, v); }
+    );
+  }
+  template <class L>
+  inline void merge_values_(const L& values)
+  {
+    std::for_each(
+      // std::execution::par_unseq,
+      values.begin(),
+      values.end(),
+      [this](const pair<const K, const V>& v) { merge_value_(v); }
     );
   }
   mutable mutex mutex_;
@@ -224,11 +234,10 @@ public:
       sources_map.merge(pr.sources());
     });
   }
-  PointSourceMap(const Cell location, auto& p_o) : PointSourceMap()
+  PointSourceMap(const Cell location, auto& p_o) : points_(p_o), sources_({})
   {
     auto& points_map = points();
     auto& sources_map = sources();
-    points_map.merge_values(p_o);
     points_map.for_each([this, &location, &sources_map](const auto& kv) {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
