@@ -149,6 +149,18 @@ private:
   inline void merge_value_(const pair<const K, const V>& p) { merge_value_(p.first, p.second); }
   mutable mutex mutex_;
 };
+class PointSourceMap
+{
+public:
+  PointSourceMap() : maps_({}) { }
+  PointsMap& points() { return maps_.first; }
+  SourcesMap& sources() { return maps_.second; }
+  const PointsMap& points() const { return maps_.first; }
+  const SourcesMap& sources() const { return maps_.second; }
+
+private:
+  pair<PointsMap, SourcesMap> maps_;
+};
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
 {
@@ -906,9 +918,9 @@ void Scenario::scheduleFireSpread(const Event& event)
         return std::pair<Cell, InnerPos>(for_cell, pos);
       }
     );
-    pair<PointsMap, SourcesMap> result{};
-    auto& points_map = result.first;
-    auto& sources_map = result.second;
+    PointSourceMap result{};
+    auto& points_map = result.points();
+    auto& sources_map = result.sources();
     points_map.merge_values(p_o);
     points_map.for_each([this, &location, &sources_map](const auto& kv) {
       const auto& for_cell = kv.first;
@@ -919,18 +931,18 @@ void Scenario::scheduleFireSpread(const Event& event)
   };
   using CellPair = pair<const SpreadKey, vector<CellPts>>;
   auto do_merge_maps = [this](auto& points_and_sources) {
-    pair<PointsMap, SourcesMap> result{};
-    auto& points_map = result.first;
-    auto& sources_map = result.second;
+    PointSourceMap result{};
+    auto& points_map = result.points();
+    auto& sources_map = result.sources();
     do_each(points_and_sources, [&points_map, &sources_map](const auto& pr) {
-      points_map.merge(pr.first);
-      sources_map.merge(pr.second);
+      points_map.merge(pr.points());
+      sources_map.merge(pr.sources());
     });
     return result;
   };
   auto final_merge_maps = [this, &sources](auto& result) {
-    auto& points_map = result.first;
-    auto& sources_map = result.second;
+    auto& points_map = result.points();
+    auto& sources_map = result.sources();
     points_map.for_each([this](const auto& kv) {
       const auto& for_cell = kv.first;
       if (!unburnable_.at(for_cell.hash()))
