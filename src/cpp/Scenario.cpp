@@ -129,7 +129,104 @@ private:
   mutable mutex mutex_;
 };
 using PointsMap = MergeMap<topo::Cell, InnerPos>;
-using SourcesMap = map<topo::Cell, CellIndex>;
+
+// FIX: make some kind of class that takes a merge function and applies it
+// template <class K, class V>
+class SourcesMap
+{
+  using K = topo::Cell;
+  using V = CellIndex;
+public:
+  constexpr SourcesMap()
+  {
+  }
+  SourcesMap(const SourcesMap& rhs)
+    // : map_(std::copy(rhs.map_))
+    : map_({})
+  {
+    merge(rhs);
+  }
+  SourcesMap(SourcesMap&& rhs)
+    : map_(std::move(rhs.map_))
+  {
+  }
+  // SourcesMap&& SourcesMap(SourcesMap&& rhs)
+  // {
+
+  // }
+  inline void merge_value(const K& key, const V& value)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    merge_value_(key, value);
+  }
+  inline void merge_value(const pair<const K, const V>& p)
+  {
+    merge_value(p.first, p.second);
+  }
+  template <class L>
+  inline void merge_values(const K& key, const L& values)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    merge_values_(key, values);
+  }
+  template <class L>
+  inline void merge_values(const L& values)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    std::for_each(
+      // std::execution::par_unseq,
+      values.begin(),
+      values.end(),
+      [this](const pair<const K, const V>& v) {
+        merge_value_(v);
+      });
+  }
+  void merge(const SourcesMap& rhs)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    std::lock_guard<mutex> lock_rhs(rhs.mutex_);
+    std::for_each(
+      // std::execution::par_unseq,
+      rhs.map_.begin(),
+      rhs.map_.end(),
+      [this](const pair<const K, const V>& kv) {
+        merge_value_(std::get<0>(kv), std::get<1>(kv));
+      });
+  }
+  template <class F>
+  void for_each(F fct)
+  {
+    std::lock_guard<mutex> lock(mutex_);
+    std::for_each(
+      map_.begin(),
+      map_.end(),
+      fct);
+  }
+private:
+  map<K, V> map_;
+  // actual functions don't get a lock
+  inline void merge_value_(const K& key, const V& value)
+  {
+    (map_)[key] |= value;
+  }
+  inline void merge_value_(const pair<const K, const V>& p)
+  {
+    merge_value_(p.first, p.second);
+  }
+  // template <class L>
+  // inline void merge_values_(const K& key, const L& values)
+  // {
+  //   std::for_each(
+  //     // std::execution::par_unseq,
+  //     values.begin(),
+  //     values.end(),
+  //     [this, &key](const V& v) {
+  //       merge_value_(key, v);
+  //     });
+  // }
+  mutable mutex mutex_;
+};
+// using SourcesMap = map<topo::Cell, CellIndex>;
 // template <class K, class V>
 // inline void make_merge_points_map(map<K, V>& m)
 // {
@@ -1218,12 +1315,13 @@ void Scenario::scheduleFireSpread(const Event& event)
     // using product_type = decltype(*p_o.cbegin());
     // for (auto& o : offsets)
     PointsMap points_map{};
+    SourcesMap sources_map{};
     points_map.merge_values(p_o);
     points_map.for_each(
-      [this, &location, &sources](const auto& kv) {
+      [this, &location, &sources_map](const auto& kv) {
         const auto& for_cell = kv.first;
         const auto source = relativeIndex(for_cell, location);
-        sources[for_cell] |= source;
+        sources_map.merge_value(for_cell, source);
         // auto s = can_spread(for_cell);
         // if (s.first->second)
         if (!(*unburnable_)[for_cell.hash()])
@@ -1238,6 +1336,9 @@ void Scenario::scheduleFireSpread(const Event& event)
           }
         }
       });
+    sources_map.for_each([&sources](auto& kv) {
+      sources[kv.first] |= kv.second;
+    });
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
   // for (auto& kv0 : to_spread)
