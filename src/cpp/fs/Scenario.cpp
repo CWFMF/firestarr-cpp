@@ -916,17 +916,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     return result;
   };
   using CellPair = pair<const SpreadKey, vector<CellPts>>;
-  auto apply_spread = [this, &apply_offsets, &sources](const CellPair& kv0) {
-    auto& key = kv0.first;
-    auto& offsets = spread_info_[key].offsets();
-    auto points_and_sources = std::views::transform(
-      kv0.second,
-      [&apply_offsets, &offsets](const tuple<Cell, PointSet> pts_for_cell) {
-        return apply_offsets(
-          std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
-        );
-      }
-    );
+  auto do_merge_maps = [this](auto& points_and_sources) {
     pair<PointsMap, SourcesMap> result{};
     auto& points_map = result.first;
     auto& sources_map = result.second;
@@ -934,6 +924,11 @@ void Scenario::scheduleFireSpread(const Event& event)
       points_map.merge(pr.first);
       sources_map.merge(pr.second);
     });
+    return result;
+  };
+  auto final_merge_maps = [this, &sources](auto& result) {
+    auto& points_map = result.first;
+    auto& sources_map = result.second;
     points_map.for_each([this](const auto& kv) {
       const auto& for_cell = kv.first;
       if (!unburnable_.at(for_cell.hash()))
@@ -950,7 +945,23 @@ void Scenario::scheduleFireSpread(const Event& event)
     });
     sources_map.for_each([&sources](auto& kv) { sources[kv.first] |= kv.second; });
   };
-  do_each(to_spread, apply_spread);
+  auto apply_spread =
+    [this, &apply_offsets, &sources, &do_merge_maps, &final_merge_maps](const CellPair& kv0) {
+      auto& key = kv0.first;
+      auto& offsets = spread_info_[key].offsets();
+      auto points_and_sources = std::views::transform(
+        kv0.second,
+        [&apply_offsets, &offsets](const tuple<Cell, PointSet> pts_for_cell) {
+          return apply_offsets(
+            std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
+          );
+        }
+      );
+      return do_merge_maps(points_and_sources);
+    };
+  auto points_and_sources = std::views::transform(to_spread, apply_spread);
+  auto result = do_merge_maps(points_and_sources);
+  final_merge_maps(result);
   map<Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);
   // if we move everything out of points_ we can parallelize this check?
