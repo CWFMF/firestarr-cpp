@@ -1575,10 +1575,12 @@ Scenario::scheduleFireSpread(
           );
         }
       );
-      auto result = do_merge_maps(points_and_sources);
-      final_merge_maps(result);
+      return do_merge_maps(points_and_sources);
     };
-  do_each(to_spread, apply_spread);
+  auto points_and_sources = std::views::transform(to_spread, apply_spread);
+  auto result = do_merge_maps(points_and_sources);
+  final_merge_maps(result);
+
   map<topo::Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);
   // if we move everything out of points_ we can parallelize this check?
