@@ -44,7 +44,7 @@ public:
   constexpr MergeMap()
   {
   }
-  MergeMap(MergeMap<K, V>& rhs)
+  MergeMap(const MergeMap<K, V>& rhs)
     : map_(std::copy(rhs.map_))
   {
   }
@@ -83,7 +83,7 @@ public:
         merge_value_(v);
       });
   }
-  void merge(MergeMap& rhs)
+  void merge(const MergeMap& rhs)
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
@@ -126,8 +126,10 @@ private:
         merge_value_(key, v);
       });
   }
-  mutex mutex_;
+  mutable mutex mutex_;
 };
+using PointsMap = MergeMap<topo::Cell, InnerPos>;
+using SourcesMap = map<topo::Cell, CellIndex>;
 // template <class K, class V>
 // inline void make_merge_points_map(map<K, V>& m)
 // {
@@ -1215,7 +1217,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
     // using product_type = decltype(*p_o.cbegin());
     // for (auto& o : offsets)
-    MergeMap<topo::Cell, InnerPos> points_map{};
+    PointsMap points_map{};
     points_map.merge_values(p_o);
     points_map.for_each(
       [this, &location, &sources](const auto& kv) {
