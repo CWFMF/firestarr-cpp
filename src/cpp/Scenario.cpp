@@ -357,7 +357,8 @@ class PointSourceMap
 {
 public:
   PointSourceMap()
-    : maps_({})
+    : points_({}),
+      sources_({})
   {
   }
   PointSourceMap(
@@ -387,25 +388,25 @@ public:
       sources_map.merge_value(for_cell, source);
     });
   }
-  PointsMap&
-  points()
+  inline constexpr PointsMap&
+  points() noexcept
   {
-    return maps_.first;
+    return points_;
   }
-  SourcesMap&
-  sources()
+  inline constexpr SourcesMap&
+  sources() noexcept
   {
-    return maps_.second;
+    return sources_;
   }
-  const PointsMap&
-  points() const
+  inline constexpr const PointsMap&
+  points() const noexcept
   {
-    return maps_.first;
+    return points_;
   }
-  const SourcesMap&
-  sources() const
+  inline constexpr const SourcesMap&
+  sources() const noexcept
   {
-    return maps_.second;
+    return sources_;
   }
   void
   final_merge_maps(
@@ -435,7 +436,8 @@ public:
     });
   }
 private:
-  pair<PointsMap, SourcesMap> maps_;
+  PointsMap points_;
+  SourcesMap sources_;
 };
 
 template <typename T, typename F>
