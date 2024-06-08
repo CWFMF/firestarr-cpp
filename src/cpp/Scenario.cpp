@@ -114,11 +114,13 @@ class PointsMap
   using K = topo::Cell;
   using V = InnerPos;
 public:
-  constexpr PointsMap()
+  PointsMap()
+    : map_({})
   {
   }
   PointsMap(const PointsMap& rhs)
-    : map_({})
+
+    : PointsMap()
   {
     merge(rhs);
   }
@@ -126,6 +128,13 @@ public:
     : map_(std::move(rhs.map_))
   {
   }
+  PointsMap(auto& p_o)
+    : PointsMap()
+  {
+    // no need to lock since this doesn't exist yet
+    merge_values_(p_o);
+  }
+
   // PointsMap&& PointsMap(PointsMap&& rhs)
   // {
 
@@ -149,13 +158,7 @@ public:
   inline void merge_values(const L& values)
   {
     std::lock_guard<mutex> lock(mutex_);
-    std::for_each(
-      // std::execution::par_unseq,
-      values.begin(),
-      values.end(),
-      [this](const pair<const K, const V>& v) {
-        merge_value_(v);
-      });
+    merge_values_(values);
   }
   void merge(const PointsMap& rhs)
   {
@@ -200,6 +203,18 @@ private:
         merge_value_(key, v);
       });
   }
+  template <class L>
+  inline void merge_values_(const L& values)
+  {
+    std::for_each(
+      // std::execution::par_unseq,
+      values.begin(),
+      values.end(),
+      [this](const pair<const K, const V>& v) {
+        merge_value_(v);
+      });
+  }
+
   mutable mutex mutex_;
 };
 // using PointsMap = PointsMap<topo::Cell, InnerPos>;
@@ -305,11 +320,11 @@ public:
             });
   }
   PointSourceMap(const topo::Cell location, auto& p_o)
-    : PointSourceMap()
+    : points_(p_o),
+      sources_({})
   {
     auto& points_map = points();
     auto& sources_map = sources();
-    points_map.merge_values(p_o);
     points_map.for_each(
       [this, &location, &sources_map](const auto& kv) {
         const auto& for_cell = kv.first;
