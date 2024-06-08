@@ -332,6 +332,32 @@ public:
   {
     return maps_.second;
   }
+  void final_merge_maps(
+    map<topo::Cell, PointSet>& points_out,
+    map<topo::Cell, CellIndex>& sources_out,
+    const BurnedData& unburnable)
+  {
+    auto& points_map = points();
+    auto& sources_map = sources();
+    points_map.for_each(
+      [&points_out, &unburnable](const auto& kv) {
+        const auto& for_cell = kv.first;
+        if (!(unburnable[for_cell.hash()]))
+        {
+          auto& pts = points_out[for_cell];
+          pts.insert(pts.end(), kv.second.begin(), kv.second.end());
+          // works the same if we hull here
+          if (pts.size() > MAX_BEFORE_CONDENSE)
+          {
+            // 3 points should just be a triangle usually (could be co-linear, but that's fine
+            hull(pts);
+          }
+        }
+      });
+    sources_map.for_each([&sources_out](auto& kv) {
+      sources_out[kv.first] |= kv.second;
+    });
+  }
 private:
   pair<PointsMap, SourcesMap> maps_;
 };
@@ -1278,29 +1304,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     return PointSourceMap(location, p_o);
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
-  auto final_merge_maps = [this, &sources](auto& result) {
-    auto& points_map = result.points();
-    auto& sources_map = result.sources();
-    points_map.for_each(
-      [this](const auto& kv) {
-        const auto& for_cell = kv.first;
-        if (!(*unburnable_)[for_cell.hash()])
-        {
-          auto& pts = points_[for_cell];
-          pts.insert(pts.end(), kv.second.begin(), kv.second.end());
-          // works the same if we hull here
-          if (pts.size() > MAX_BEFORE_CONDENSE)
-          {
-            // 3 points should just be a triangle usually (could be co-linear, but that's fine
-            hull(pts);
-          }
-        }
-      });
-    sources_map.for_each([&sources](auto& kv) {
-      sources[kv.first] |= kv.second;
-    });
-  };
-  auto apply_spread = [this, &apply_offsets, &sources, &final_merge_maps](
+  auto apply_spread = [this, &apply_offsets, &sources](
                         const CellPair& kv0) {
     auto& key = kv0.first;
     auto& offsets = spread_info_[key].offsets();
@@ -1314,7 +1318,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     to_spread,
     apply_spread);
   auto result = PointSourceMap(points_and_sources);
-  final_merge_maps(result);
+  result.final_merge_maps(points_, sources, *unburnable_);
 
   map<topo::Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);
