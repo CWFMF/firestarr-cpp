@@ -36,26 +36,28 @@ constexpr auto STAGE_INVALID = 'X';
 //   m[key].emplace_back(value);
 // }
 
-template <class K, class V>
-class MergeMap
+class PointsMap
 {
+  using K = topo::Cell;
+  using V = InnerPos;
 public:
-  constexpr MergeMap()
+  constexpr PointsMap()
   {
   }
-  MergeMap(
-    const MergeMap<K, V>& rhs
+  PointsMap(
+    const PointsMap& rhs
   )
-    : map_(std::copy(rhs.map_))
+    : map_({})
   {
+    merge(rhs);
   }
-  MergeMap(
-    MergeMap<K, V>&& rhs
+  PointsMap(
+    PointsMap&& rhs
   )
     : map_(std::move(rhs.map_))
   {
   }
-  // MergeMap&& MergeMap(MergeMap&& rhs)
+  // PointsMap&& PointsMap(PointsMap&& rhs)
   // {
 
   // }
@@ -103,7 +105,7 @@ public:
   }
   void
   merge(
-    const MergeMap& rhs
+    const PointsMap& rhs
   )
   {
     std::lock_guard<mutex> lock(mutex_);
@@ -162,7 +164,7 @@ private:
   }
   mutable mutex mutex_;
 };
-using PointsMap = MergeMap<topo::Cell, InnerPos>;
+// using PointsMap = PointsMap<topo::Cell, InnerPos>;
 
 // FIX: make some kind of class that takes a merge function and applies it
 // template <class K, class V>
@@ -1507,15 +1509,19 @@ Scenario::scheduleFireSpread(
     // using product_ty pe = pair<const topo::Cell, const pair<const Offset, const InnerPos>>;
     // using product_type = decltype(*p_o.cbegin());
     // for (auto& o : offsets)
-    PointsMap points_map{};
-    SourcesMap sources_map{};
+    pair<PointsMap, SourcesMap> result{};
+    // PointsMap points_map{};
+    // SourcesMap sources_map{};
+    auto& points_map = result.first;
+    auto& sources_map = result.second;
     points_map.merge_values(p_o);
     points_map.for_each([this, &location, &sources_map](const auto& kv) {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
       sources_map.merge_value(for_cell, source);
-      // auto s = can_spread(for_cell);
-      // if (s.first->second)
+    });
+    points_map.for_each([this, &location, &sources_map](const auto& kv) {
+      const auto& for_cell = kv.first;
       if (!(*unburnable_)[for_cell.hash()])
       {
         auto& pts = points_[for_cell];
@@ -1531,6 +1537,7 @@ Scenario::scheduleFireSpread(
     sources_map.for_each([&sources](auto& kv) {
       sources[kv.first] |= kv.second;
     });
+    // return result;
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
   // for (auto& kv0 : to_spread)
