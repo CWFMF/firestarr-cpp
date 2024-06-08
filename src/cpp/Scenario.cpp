@@ -31,12 +31,6 @@ constexpr auto STAGE_NEW = 'N';
 constexpr auto STAGE_SPREAD = 'S';
 constexpr auto STAGE_INVALID = 'X';
 
-// template <class K, class V>
-// inline void merge_points_map(map<K, V>& m, K key, V value)
-// {
-//   m[key].emplace_back(value);
-// }
-
 class PointsMap
 {
   using K = topo::Cell;
@@ -152,10 +146,6 @@ public:
     : map_(std::move(rhs.map_))
   {
   }
-  // SourcesMap&& SourcesMap(SourcesMap&& rhs)
-  // {
-
-  // }
   inline void merge_value(const K& key, const V& value)
   {
     std::lock_guard<mutex> lock(mutex_);
@@ -215,17 +205,6 @@ private:
   {
     merge_value_(p.first, p.second);
   }
-  // template <class L>
-  // inline void merge_values_(const K& key, const L& values)
-  // {
-  //   std::for_each(
-  //     // std::execution::par_unseq,
-  //     values.begin(),
-  //     values.end(),
-  //     [this, &key](const V& v) {
-  //       merge_value_(key, v);
-  //     });
-  // }
   mutable mutex mutex_;
 };
 class PointSourceMap
@@ -255,47 +234,6 @@ private:
   pair<PointsMap, SourcesMap> maps_;
 };
 
-// using SourcesMap = map<topo::Cell, CellIndex>;
-// template <class K, class V>
-// inline void make_merge_points_map(map<K, V>& m)
-// {
-//   return [&m](K key, V value) { m[key].emplace_back(value); }
-// }
-
-// // HACK: would love to use std::views::cartesian_product but can't figure out
-// // why it's not there if we're supposed to be compiling with C++23
-// template <typename A, typename B, typename A_, typename B_>
-// vector<pair<const A, const B>> make_cross(const A_& a_, const B_& b_)
-// {
-//   vector<pair<const A, const B>> results{};
-//   results.reserve(a_.size() * b_.size());
-//   for (auto& a : a_)
-//   {
-//     for (auto& b : b_)
-//     {
-//       results.emplace_back(a, b);
-//     }
-//   }
-//   return results;
-// }
-
-// vector<pair<const Offset, const InnerPos>> make_spread(
-//   const double duration,
-//   const OffsetSet& offsets,
-//   const PointSet& points)
-// {
-//   vector<pair<const Offset, const InnerPos>> results{};
-//   results.reserve(offsets.size() * points.size());
-//   for (auto& o : offsets)
-//   {
-//     for (auto& p : points)
-//     {
-//       results.emplace_back(Offset(o.x() * duration, o.y() * duration), p);
-//     }
-//   }
-//   return results;
-// }
-
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
 {
@@ -305,23 +243,6 @@ void do_each(T& for_list, F fct)
     for_list.end(),
     fct);
 }
-
-// vector<InnerPos> make_spread(
-//   const double duration,
-//   const OffsetSet& offsets,
-//   const PointSet& points)
-// {
-//   vector<InnerPos> results{};
-//   results.reserve(offsets.size() * points.size());
-//   for (auto& o : offsets)
-//   {
-//     for (auto& p : points)
-//     {
-//       results.emplace_back(p.add(Offset(o.x() * duration, o.y() * duration)));
-//     }
-//   }
-//   return results;
-// }
 
 class LogPoints
 {
@@ -1358,12 +1279,6 @@ void Scenario::scheduleFireSpread(const Event& event)
     return result;
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
-  // for (auto& kv0 : to_spread)
-  // {
-  //   CellPair& t = kv0;
-  //   auto x = kv0.first;
-  //   auto y = kv0.second;
-  // }
   auto do_merge_maps = [this](auto& points_and_sources) {
     PointSourceMap result{};
     // PointsMap points_map{};
@@ -1377,7 +1292,6 @@ void Scenario::scheduleFireSpread(const Event& event)
             });
     return result;
   };
-  // auto final_merge_maps = [this](auto& points_map, auto& sources_map) {
   auto final_merge_maps = [this, &sources](auto& result) {
     auto& points_map = result.points();
     auto& sources_map = result.sources();
