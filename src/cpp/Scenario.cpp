@@ -139,14 +139,6 @@ class PointSourceMap
   using merged_map_type = map<K, source_pair>;
   using merged_map_pair = pair<K, source_pair>;
   using map_type = map<K, vector<V>>;
-  using map_pair_type = pair<K, vector<V>>;
-  using map_pair = pair<vector<V>*, const vector<V>&>;
-  using pair_type = pair<K, V>;
-  using pair_type_const = const pair<const K, const V>;
-  using sources_map_type = map<K, S>;
-  using sources_map_pair = map<S*, S>;
-  using sources_pair_type = pair<K, S>;
-  using sources_pair_type_const = const pair<const K, const S>;
 public:
   PointSourceMap()
     : map_({})
@@ -155,7 +147,39 @@ public:
   PointSourceMap(auto& points_and_sources)
     : PointSourceMap()
   {
-    merge_all(points_and_sources);
+    std::lock_guard<mutex> lock(mutex_);
+    do_par(points_and_sources,
+           [this](const PointSourceMap& rhs) {
+             using maps_direct = pair<const source_pair&, source_pair*>;
+             std::lock_guard<mutex> lock_rhs(rhs.mutex_);
+             const merged_map_type& p_m = rhs.map_;
+             auto v0 = std::views::transform(
+               p_m,
+               [this, &rhs](const auto& kv) {
+                 // insert or lookup map for key
+                 // still need key for relativeIndex
+                 auto& k = kv.first;
+                 auto& v = kv.second;
+                 return maps_direct(
+                   v,
+                   &map_[k]);
+               });
+             // because we already did the map lookup we can do this all in paralell
+             std::for_each(
+               std::execution::par_unseq,
+               v0.begin(),
+               v0.end(),
+               [](const maps_direct& spsp) {
+                 const source_pair& pair1 = spsp.first;
+                 source_pair& pair0 = *(spsp.second);
+                 const vector<V>& p1 = pair1.second;
+                 vector<V>& p0 = pair0.second;
+                 const S& s1 = pair1.first;
+                 S& s0 = pair0.first;
+                 p0.insert(p0.end(), p1.begin(), p1.end());
+                 s0 |= s1;
+               });
+           });
   }
   PointSourceMap(const topo::Cell location, auto& p_o)
     : PointSourceMap()
@@ -226,53 +250,6 @@ public:
           }
         }
       });
-  }
-private:
-  void merge_all(auto& points_and_sources)
-  {
-    do_par(points_and_sources,
-           [this](const auto& pr) {
-             merge(pr);
-           });
-  }
-  void merge(const PointSourceMap& rhs)
-  {
-    using maps_direct = pair<const source_pair&, source_pair*>;
-    std::lock_guard<mutex> lock(mutex_);
-    std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    const merged_map_type& p_m = rhs.map_;
-    auto v0 = std::views::transform(
-      p_m,
-      [this, &rhs](const auto& kv) {
-        // insert or lookup map for key
-        // still need key for relativeIndex
-        auto& k = kv.first;
-        auto& v = kv.second;
-        return maps_direct(
-          v,
-          &map_[k]);
-      });
-    // because we already did the map lookup we can do this all in paralell
-    std::for_each(
-      std::execution::par_unseq,
-      v0.begin(),
-      v0.end(),
-      [](const maps_direct& spsp) {
-        const source_pair& pair1 = spsp.first;
-        source_pair& pair0 = *(spsp.second);
-        const vector<V>& p1 = pair1.second;
-        vector<V>& p0 = pair0.second;
-        const S& s1 = pair1.first;
-        S& s0 = pair0.first;
-        p0.insert(p0.end(), p1.begin(), p1.end());
-        s0 |= s1;
-      });
-  }
-  template <class F>
-  void for_each(F fct)
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    do_each(map_, fct);
   }
 private:
   merged_map_type map_;
