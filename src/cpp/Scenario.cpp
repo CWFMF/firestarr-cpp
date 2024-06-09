@@ -137,6 +137,10 @@ class PointsMap
 {
   using K = topo::Cell;
   using V = InnerPos;
+  using map_type = map<K, vector<V>>;
+  using map_pair = pair<vector<V>*, const vector<V>&>;
+  using pair_type = pair<K, V>;
+  using pair_type_const = const pair<const K, const V>;
 public:
   PointsMap()
     : map_({})
@@ -164,11 +168,6 @@ public:
     // no need to lock since this doesn't exist yet
     merge_values_(p_o);
   }
-
-  // PointsMap&& PointsMap(PointsMap&& rhs)
-  // {
-
-  // }
   inline void
   merge_value(
     const K& key,
@@ -180,7 +179,7 @@ public:
   }
   inline void
   merge_value(
-    const pair<const K, const V>& p
+    pair_type_const& p
   )
   {
     merge_value(p.first, p.second);
@@ -211,29 +210,7 @@ public:
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    using map_pair = pair<vector<V>*, const vector<V>&>;
-    auto v0 = std::views::transform(rhs.map_, [this](auto& kv) {
-      // insert or lookup map for key
-      return map_pair(&map_[kv.first], kv.second);
-    });
-    // do_each(
-    //   v0,
-    //   [this](auto& p) {
-    //     vector<V>& m = *(p.first);
-    //     const vector<V>& values = p.second;
-    //     m.insert(m.end(), values.begin(), values.end());
-    //   });
-    // for (const auto& p : v0)
-    // {
-    //   vector<V>& m = *(p.first);
-    //   const vector<V>& values = p.second;
-    //   m.insert(m.end(), values.begin(), values.end());
-    // };
-    std::for_each(v0.begin(), v0.end(), [](const auto& p) {
-      vector<V>& m = *(p.first);
-      const vector<V>& values = p.second;
-      m.insert(m.end(), values.begin(), values.end());
-    });
+    merge_map_(rhs.map_);
   }
   template <class F>
   void
@@ -245,7 +222,7 @@ public:
     do_each(map_, fct);
   }
 private:
-  map<const K, vector<V>> map_;
+  map_type map_;
   // actual functions don't get a lock
   // merge after map lookup is already done
   inline void
@@ -266,7 +243,7 @@ private:
   }
   inline void
   merge_value_(
-    const pair<const K, const V>& p
+    pair_type_const& p
   )
   {
     merge_value_(p.first, p.second);
@@ -278,9 +255,9 @@ private:
     const L& values
   )
   {
-    do_each(values, [this, &key](const V& v) {
-      merge_value_(key, v);
-    });
+    auto& m1 = to_map(values);
+    vector<V>& m0 = map_[key];
+    m0.insert(m0.end(), m1.begin(), m1.end());
   }
   template <class L>
   inline void
@@ -288,11 +265,48 @@ private:
     const L& values
   )
   {
-    do_each(values, [this](const pair<const K, const V>& v) {
-      merge_value_(v);
+    merge_map_(to_map(values));
+  }
+  template <class L>
+  inline map_type
+  to_map(
+    const L& pairs
+  )
+  {
+    // were given a list of pairs that would go in a map
+    // NOTE: could also sort and then check for key changing
+    map_type result{};
+    for (const auto& kv : pairs)
+    {
+      auto& pts = result[kv.first];
+      // pts.insert(pts.end(), kv.second);
+      pts.emplace_back(kv.second);
+    }
+    return result;
+  }
+  inline auto
+  to_map_map(
+    const map_type& rhs
+  )
+  {
+    return std::views::transform(rhs, [this](auto& kv) {
+      // insert or lookup map for key
+      return map_pair(&map_[kv.first], kv.second);
     });
   }
-
+  inline void
+  merge_map_(
+    const map_type& rhs
+  )
+  {
+    auto v0 = to_map_map(rhs);
+    // because we already did the map lookup we can do this all in paralell
+    std::for_each(std::execution::par_unseq, v0.begin(), v0.end(), [](const auto& p) {
+      vector<V>& m = *(p.first);
+      const vector<V>& values = p.second;
+      m.insert(m.end(), values.begin(), values.end());
+    });
+  }
   mutable mutex mutex_;
 };
 // using PointsMap = PointsMap<topo::Cell, InnerPos>;
@@ -303,6 +317,8 @@ class SourcesMap
 {
   using K = topo::Cell;
   using V = CellIndex;
+  using pair_type = pair<K, V>;
+  using pair_type_const = const pair<const K, const V>;
 public:
   constexpr SourcesMap()
   {
@@ -332,7 +348,7 @@ public:
   }
   inline void
   merge_value(
-    const pair<const K, const V>& p
+    pair_type_const& p
   )
   {
     merge_value(p.first, p.second);
@@ -354,7 +370,7 @@ public:
   )
   {
     std::lock_guard<mutex> lock(mutex_);
-    do_each(values, [this](const pair<const K, const V>& v) {
+    do_each(values, [this](pair_type_const& v) {
       merge_value_(v);
     });
   }
@@ -365,7 +381,7 @@ public:
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    do_each(rhs.map_, [this](const pair<const K, const V>& kv) {
+    do_each(rhs.map_, [this](pair_type_const& kv) {
       merge_value_(std::get<0>(kv), std::get<1>(kv));
     });
   }
@@ -391,7 +407,7 @@ private:
   }
   inline void
   merge_value_(
-    const pair<const K, const V>& p
+    pair_type_const& p
   )
   {
     merge_value_(p.first, p.second);
