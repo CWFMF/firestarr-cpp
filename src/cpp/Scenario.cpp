@@ -155,7 +155,7 @@ public:
     std::lock_guard<mutex> lock(lhs.mutex_);
     do_par(points_and_sources,
            [&lhs](const PointSourceMap& rhs) {
-             using maps_direct = pair<const source_pair&, source_pair*>;
+             using maps_direct = pair<source_pair*, const source_pair&>;
              std::lock_guard<mutex> lock_rhs(rhs.mutex_);
              const merged_map_type& p_m = rhs.map_;
              auto v0 = std::views::transform(
@@ -166,8 +166,8 @@ public:
                  auto& k = kv.first;
                  auto& v = kv.second;
                  return maps_direct(
-                   v,
-                   &lhs.map_[k]);
+                   &lhs.map_[k],
+                   v);
                });
              // because we already did the map lookup we can do this all in paralell
              std::for_each(
@@ -175,12 +175,12 @@ public:
                v0.begin(),
                v0.end(),
                [](const maps_direct& spsp) {
-                 const source_pair& pair1 = spsp.first;
-                 source_pair& pair0 = *(spsp.second);
-                 const vector<V>& p1 = pair1.second;
-                 vector<V>& p0 = pair0.second;
-                 const S& s1 = pair1.first;
+                 source_pair& pair0 = *(spsp.first);
                  S& s0 = pair0.first;
+                 vector<V>& p0 = pair0.second;
+                 const source_pair& pair1 = spsp.second;
+                 const S& s1 = pair1.first;
+                 const vector<V>& p1 = pair1.second;
                  p0.insert(p0.end(), p1.begin(), p1.end());
                  s0 |= s1;
                });
