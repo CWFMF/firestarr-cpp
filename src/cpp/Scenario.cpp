@@ -159,15 +159,6 @@ public:
     // no need to lock since this doesn't exist yet
     merge_values_(p_o);
   }
-  inline void merge_value(const K& key, const V& value)
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    merge_value(key, value);
-  }
-  inline void merge_value(pair_type_const& p)
-  {
-    merge_value(p.first, p.second);
-  }
   template <class L>
   inline void merge_values(const K& key, const L& values)
   {
@@ -195,19 +186,6 @@ public:
 private:
   map_type map_;
   // actual functions don't get a lock
-  // merge after map lookup is already done
-  inline void merge_value_(vector<V>& m, const V& value)
-  {
-    m.emplace_back(value);
-  }
-  inline void merge_value_(const K& key, const V& value)
-  {
-    (map_)[key].emplace_back(value);
-  }
-  inline void merge_value_(pair_type_const& p)
-  {
-    merge_value_(p.first, p.second);
-  }
   template <class L>
   inline void merge_values_(const K& key, const L& values)
   {
