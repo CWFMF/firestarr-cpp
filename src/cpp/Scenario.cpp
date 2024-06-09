@@ -226,8 +226,8 @@ private:
   }
   void merge(const PointSourceMap& pr)
   {
-    points_merge(pr.points_map_);
     std::lock_guard<mutex> lock(mutex_);
+    points_merge_map_(pr.points_map_);
     do_each(
       pr.sources_map_,
       [this](sources_pair_type_const& kv) {
@@ -235,23 +235,6 @@ private:
         auto& value = std::get<1>(kv);
         (sources_map_)[key] |= value;
       });
-  }
-  template <class L>
-  inline void points_merge_values(const K& key, const L& values)
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    points_merge_values_(key, values);
-  }
-  template <class L>
-  inline void points_merge_values(const L& values)
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    points_merge_values_(values);
-  }
-  void points_merge(const map_type& rhs)
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    points_merge_map_(rhs);
   }
   template <class F>
   void for_each(F fct)
