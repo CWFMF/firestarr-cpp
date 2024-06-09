@@ -159,12 +159,6 @@ class PointSourceMap
       merge(rhs);
     }
     PointsMap(
-      PointsMap&& rhs
-    )
-      : points_map_(std::move(rhs.points_map_))
-    {
-    }
-    PointsMap(
       auto& p_o
     )
       : PointsMap()
@@ -286,12 +280,6 @@ class PointSourceMap
       : sources_map_({})
     {
       merge(rhs);
-    }
-    SourcesMap(
-      SourcesMap&& rhs
-    )
-      : sources_map_(std::move(rhs.sources_map_))
-    {
     }
     template <class L>
     SourcesMap(
