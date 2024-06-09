@@ -139,10 +139,7 @@ public:
   )
     : PointSourceMap()
   {
-    do_par(points_and_sources, [this](const auto& pr) {
-      points_merge(pr.points_map_);
-      sources_merge(pr.sources_map_);
-    });
+    merge_all(points_and_sources);
   }
 
   PointSourceMap(
@@ -154,6 +151,7 @@ public:
   {
     // no need to lock since this doesn't exist yet
     points_merge_values_(p_o);
+    // if we do sources second we only need to find relativeIndex once per key
     do_each(points_map_, [this, &location](const auto& kv) {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
@@ -189,6 +187,25 @@ public:
   }
 
 private:
+  void
+  merge_all(
+    auto& points_and_sources
+  )
+  {
+    do_par(points_and_sources, [this](const auto& pr) {
+      merge(pr);
+    });
+  }
+
+  void
+  merge(
+    const PointSourceMap& pr
+  )
+  {
+    points_merge(pr.points_map_);
+    sources_merge(pr.sources_map_);
+  }
+
   template <class L>
   inline void
   points_merge_values(
