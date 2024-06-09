@@ -159,14 +159,14 @@ public:
       sources_map_({})
   {
     // no need to lock since this doesn't exist yet
-    points_merge_values_(p_o);
+    points_merge_map_(to_map(p_o));
     // if we do sources second we only need to find relativeIndex once per key
     do_each(
       points_map_,
       [this, &location](const auto& kv) {
         const auto& for_cell = kv.first;
         const auto source = relativeIndex(for_cell, location);
-        sources_merge_value(for_cell, source);
+        sources_merge_value_(for_cell, source);
       });
   }
   void final_merge_maps(
@@ -243,11 +243,6 @@ private:
     m0.insert(m0.end(), m1.begin(), m1.end());
   }
   template <class L>
-  inline void points_merge_values_(const L& values)
-  {
-    points_merge_map_(to_map(values));
-  }
-  template <class L>
   inline map_type to_map(const L& pairs)
   {
     // were given a list of pairs that would go in a map
@@ -283,15 +278,6 @@ private:
         const vector<V>& values = p.second;
         m.insert(m.end(), values.begin(), values.end());
       });
-  }
-  inline void sources_merge_value(const K& key, const S& value)
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    sources_merge_value_(key, value);
-  }
-  inline void sources_merge_value(sources_pair_type_const& p)
-  {
-    sources_merge_value(p.first, p.second);
   }
   template <class L>
   inline void sources_merge_values(const K& key, const L& values)
