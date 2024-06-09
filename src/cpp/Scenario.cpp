@@ -135,6 +135,7 @@ class PointSourceMap
   using K = topo::Cell;
   using V = InnerPos;
   using map_type = map<K, vector<V>>;
+  using map_pair_type = pair<K, vector<V>>;
   using map_pair = pair<vector<V>*, const vector<V>&>;
   using pair_type = pair<K, V>;
   using pair_type_const = const pair<const K, const V>;
@@ -158,15 +159,33 @@ public:
     : points_map_({}),
       sources_map_({})
   {
+    using maps_tuple = tuple<const K, const vector<V>&, vector<V>*, S*>;
     // no need to lock since this doesn't exist yet
-    points_merge_map_(to_map(p_o));
-    // if we do sources second we only need to find relativeIndex once per key
-    do_each(
-      points_map_,
-      [this, &location](const auto& kv) {
-        const auto& for_cell = kv.first;
-        const auto source = relativeIndex(for_cell, location);
-        sources_merge_value_(for_cell, source);
+    map_type p_m = to_map(p_o);
+    auto v0 = std::views::transform(
+      p_m,
+      [this](const auto& kv) {
+        // insert or lookup map for key
+        // still need key for relativeIndex
+        return maps_tuple(
+          kv.first,
+          kv.second,
+          &points_map_[kv.first],
+          &sources_map_[kv.first]);
+      });
+    // because we already did the map lookup we can do this all in paralell
+    std::for_each(
+      std::execution::par_unseq,
+      v0.begin(),
+      v0.end(),
+      [&location](const auto& kpms) {
+        const K k = std::get<0>(kpms);
+        const vector<V>& p = std::get<1>(kpms);
+        vector<V>& m = *(std::get<2>(kpms));
+        S* s = std::get<3>(kpms);
+        m.insert(m.end(), p.begin(), p.end());
+        const auto source = relativeIndex(k, location);
+        (*s) |= source;
       });
   }
   void final_merge_maps(
