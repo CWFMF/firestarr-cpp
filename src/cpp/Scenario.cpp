@@ -264,14 +264,6 @@ private:
     do_each(points_map_, fct);
   }
 private:
-  // actual functions don't get a lock
-  template <class L>
-  inline void points_merge_values_(const K& key, const L& values)
-  {
-    auto& m1 = to_map(values);
-    vector<V>& m0 = points_map_[key];
-    m0.insert(m0.end(), m1.begin(), m1.end());
-  }
   template <class L>
   inline map_type to_map(const L& pairs)
   {
@@ -285,29 +277,6 @@ private:
       pts.emplace_back(kv.second);
     }
     return result;
-  }
-  inline auto to_map_map(const map_type& rhs)
-  {
-    return std::views::transform(
-      rhs,
-      [this](auto& kv) {
-        // insert or lookup map for key
-        return map_pair(&points_map_[kv.first], kv.second);
-      });
-  }
-  inline void points_merge_map_(const map_type& rhs)
-  {
-    auto v0 = to_map_map(rhs);
-    // because we already did the map lookup we can do this all in paralell
-    std::for_each(
-      std::execution::par_unseq,
-      v0.begin(),
-      v0.end(),
-      [](const auto& p) {
-        vector<V>& m = *(p.first);
-        const vector<V>& values = p.second;
-        m.insert(m.end(), values.begin(), values.end());
-      });
   }
   map_type points_map_;
   sources_map_type sources_map_;
