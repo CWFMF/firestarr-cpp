@@ -298,19 +298,6 @@ private:
         m.insert(m.end(), values.begin(), values.end());
       });
   }
-  template <class L>
-  inline void sources_merge_values(const K& key, const L& values)
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    sources_merge_values_(key, values);
-  }
-  template <class L>
-  inline void sources_merge_values(const L& s_o)
-  {
-    sources_map_type rhs{};
-    sources_merge_values_(rhs, s_o);
-    sources_merge(rhs);
-  }
   void sources_merge(const sources_map_type& rhs)
   {
     std::lock_guard<mutex> lock(mutex_);
@@ -328,31 +315,6 @@ private:
   inline void sources_merge_value_(sources_pair_type_const& p)
   {
     sources_merge_value_(p.first, p.second);
-  }
-  template <class L>
-  static inline void sources_merge_values_(
-    sources_map_type& s,
-    const L& s_o)
-  {
-    for_each(
-      s_o,
-      [&s](sources_pair_type_const& kv) {
-        auto& k = kv.first;
-        auto& v = kv.second;
-        s[k] |= v;
-      });
-  }
-  template <class L>
-  inline void sources_merge_values_(const L& s_o)
-  {
-    sources_merge_values_(*this, s_o);
-    for_each(
-      s_o,
-      [this](sources_pair_type_const& kv) {
-        auto& k = kv.first;
-        auto& v = kv.second;
-        sources_map_[k] |= v;
-      });
   }
   map_type points_map_;
   sources_map_type sources_map_;
