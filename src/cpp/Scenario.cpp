@@ -114,7 +114,14 @@ public:
   {
     using maps_tuple = tuple<const K, const vector<V>&, vector<V>*, S*>;
     // no need to lock since this doesn't exist yet
-    map_type p_m = to_map(p_o);
+    // were given a list of pairs that would go in a map
+    // NOTE: could also sort and then check for key changing
+    map_type p_m{};
+    for (const auto& kv : p_o)
+    {
+      auto& pts = p_m[kv.first];
+      pts.emplace_back(kv.second);
+    }
     auto v0 = std::views::transform(p_m, [this](const auto& kv) {
       // insert or lookup map for key
       // still need key for relativeIndex
@@ -160,14 +167,27 @@ private:
   {
     do_par(points_and_sources, [this](const auto& pr) { merge(pr); });
   }
-  void merge(const PointSourceMap& pr)
+  void merge(const PointSourceMap& rhs)
   {
     std::lock_guard<mutex> lock(mutex_);
-    points_merge_map_(pr.points_map_);
-    do_each(pr.sources_map_, [this](sources_pair_type_const& kv) {
-      auto& key = std::get<0>(kv);
-      auto& value = std::get<1>(kv);
-      (sources_map_)[key] |= value;
+    std::lock_guard<mutex> lock_rhs(rhs.mutex_);
+    const map_type& p_m = rhs.points_map_;
+    using maps_tuple_direct = tuple<const vector<V>&, vector<V>*, S, S*>;
+    auto v0 = std::views::transform(p_m, [this, &rhs](const auto& kv) {
+      // insert or lookup map for key
+      // still need key for relativeIndex
+      auto& k = kv.first;
+      auto& v = kv.second;
+      return maps_tuple_direct(v, &points_map_[k], rhs.sources_map_.at(k), &sources_map_[k]);
+    });
+    // because we already did the map lookup we can do this all in paralell
+    std::for_each(std::execution::par_unseq, v0.begin(), v0.end(), [](const auto& ppss) {
+      const vector<V>& p1 = std::get<0>(ppss);
+      vector<V>& p0 = *(std::get<1>(ppss));
+      const S& s1 = std::get<2>(ppss);
+      S* s0 = std::get<3>(ppss);
+      p0.insert(p0.end(), p1.begin(), p1.end());
+      (*s0) |= s1;
     });
   }
   template <class F>
@@ -178,44 +198,6 @@ private:
   }
 
 private:
-  // actual functions don't get a lock
-  template <class L>
-  inline void points_merge_values_(const K& key, const L& values)
-  {
-    auto& m1 = to_map(values);
-    vector<V>& m0 = points_map_[key];
-    m0.insert(m0.end(), m1.begin(), m1.end());
-  }
-  template <class L>
-  inline map_type to_map(const L& pairs)
-  {
-    // were given a list of pairs that would go in a map
-    // NOTE: could also sort and then check for key changing
-    map_type result{};
-    for (const auto& kv : pairs)
-    {
-      auto& pts = result[kv.first];
-      pts.emplace_back(kv.second);
-    }
-    return result;
-  }
-  inline auto to_map_map(const map_type& rhs)
-  {
-    return std::views::transform(rhs, [this](auto& kv) {
-      // insert or lookup map for key
-      return map_pair(&points_map_[kv.first], kv.second);
-    });
-  }
-  inline void points_merge_map_(const map_type& rhs)
-  {
-    auto v0 = to_map_map(rhs);
-    // because we already did the map lookup we can do this all in paralell
-    std::for_each(std::execution::par_unseq, v0.begin(), v0.end(), [](const auto& p) {
-      vector<V>& m = *(p.first);
-      const vector<V>& values = p.second;
-      m.insert(m.end(), values.begin(), values.end());
-    });
-  }
   map_type points_map_;
   sources_map_type sources_map_;
   mutable mutex mutex_;
