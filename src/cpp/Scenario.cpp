@@ -393,11 +393,9 @@ public:
   )
     : PointSourceMap()
   {
-    auto& points_map = points();
-    auto& sources_map = sources();
-    do_par(points_and_sources, [&points_map, &sources_map](const auto& pr) {
-      points_map.merge(pr.points());
-      sources_map.merge(pr.sources());
+    do_par(points_and_sources, [this](const auto& pr) {
+      points_.merge(pr.points_);
+      sources_.merge(pr.sources_);
     });
   }
 
@@ -408,37 +406,11 @@ public:
     : points_(p_o),
       sources_({})
   {
-    auto& points_map = points();
-    auto& sources_map = sources();
-    points_map.for_each([this, &location, &sources_map](const auto& kv) {
+    points_.for_each([this, &location](const auto& kv) {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
-      sources_map.merge_value(for_cell, source);
+      sources_.merge_value(for_cell, source);
     });
-  }
-
-  inline constexpr PointsMap&
-  points() noexcept
-  {
-    return points_;
-  }
-
-  inline constexpr SourcesMap&
-  sources() noexcept
-  {
-    return sources_;
-  }
-
-  inline constexpr const PointsMap&
-  points() const noexcept
-  {
-    return points_;
-  }
-
-  inline constexpr const SourcesMap&
-  sources() const noexcept
-  {
-    return sources_;
   }
 
   void
@@ -448,9 +420,7 @@ public:
     const BurnedData& unburnable
   )
   {
-    auto& points_map = points();
-    auto& sources_map = sources();
-    points_map.for_each([&points_out, &unburnable](const auto& kv) {
+    points_.for_each([&points_out, &unburnable](const auto& kv) {
       const auto& for_cell = kv.first;
       if (!unburnable.at(for_cell.hash()))
       {
@@ -464,7 +434,7 @@ public:
         }
       }
     });
-    sources_map.for_each([&sources_out](auto& kv) {
+    sources_.for_each([&sources_out](auto& kv) {
       sources_out[kv.first] |= kv.second;
     });
   }
