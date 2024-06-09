@@ -138,7 +138,7 @@ class PointSourceMap
     )
       : PointsMap()
     {
-      merge(rhs);
+      points_merge(rhs);
     }
 
     PointsMap(
@@ -147,38 +147,38 @@ class PointSourceMap
       : PointsMap()
     {
       // no need to lock since this doesn't exist yet
-      merge_values_(p_o);
+      points_merge_values_(p_o);
     }
 
     template <class L>
     inline void
-    merge_values(
+    points_merge_values(
       const K& key,
       const L& values
     )
     {
       std::lock_guard<mutex> lock(mutex_);
-      merge_values_(key, values);
+      points_merge_values_(key, values);
     }
 
     template <class L>
     inline void
-    merge_values(
+    points_merge_values(
       const L& values
     )
     {
       std::lock_guard<mutex> lock(mutex_);
-      merge_values_(values);
+      points_merge_values_(values);
     }
 
     void
-    merge(
+    points_merge(
       const PointsMap& rhs
     )
     {
       std::lock_guard<mutex> lock(mutex_);
       std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-      merge_map_(rhs.points_map_);
+      points_merge_map_(rhs.points_map_);
     }
 
     template <class F>
@@ -197,7 +197,7 @@ class PointSourceMap
     // actual functions don't get a lock
     template <class L>
     inline void
-    merge_values_(
+    points_merge_values_(
       const K& key,
       const L& values
     )
@@ -209,11 +209,11 @@ class PointSourceMap
 
     template <class L>
     inline void
-    merge_values_(
+    points_merge_values_(
       const L& values
     )
     {
-      merge_map_(to_map(values));
+      points_merge_map_(to_map(values));
     }
 
     template <class L>
@@ -245,7 +245,7 @@ class PointSourceMap
     }
 
     inline void
-    merge_map_(
+    points_merge_map_(
       const map_type& rhs
     )
     {
@@ -274,7 +274,7 @@ class PointSourceMap
       // : sources_map_(std::copy(rhs.sources_map_))
       : sources_map_({})
     {
-      merge(rhs);
+      sources_merge(rhs);
     }
 
     template <class L>
@@ -282,57 +282,57 @@ class PointSourceMap
       const L& values
     )
     {
-      merge_values_(values);
+      sources_merge_values_(values);
     }
 
     inline void
-    merge_value(
+    sources_merge_value(
       const K& key,
       const S& value
     )
     {
       std::lock_guard<mutex> lock(mutex_);
-      merge_value_(key, value);
+      sources_merge_value_(key, value);
     }
 
     inline void
-    merge_value(
+    sources_merge_value(
       sources_pair_type_const& p
     )
     {
-      merge_value(p.first, p.second);
+      sources_merge_value(p.first, p.second);
     }
 
     template <class L>
     inline void
-    merge_values(
+    sources_merge_values(
       const K& key,
       const L& values
     )
     {
       std::lock_guard<mutex> lock(mutex_);
-      merge_values_(key, values);
+      sources_merge_values_(key, values);
     }
 
     template <class L>
     inline void
-    merge_values(
+    sources_merge_values(
       const L& s_o
     )
     {
       SourcesMap rhs(s_o);
-      merge(rhs);
+      sources_merge(rhs);
     }
 
     void
-    merge(
+    sources_merge(
       const SourcesMap& rhs
     )
     {
       std::lock_guard<mutex> lock(mutex_);
       std::lock_guard<mutex> lock_rhs(rhs.mutex_);
       do_each(rhs.sources_map_, [this](sources_pair_type_const& kv) {
-        merge_value_(std::get<0>(kv), std::get<1>(kv));
+        sources_merge_value_(std::get<0>(kv), std::get<1>(kv));
       });
     }
 
@@ -351,7 +351,7 @@ class PointSourceMap
 
     // actual functions don't get a lock
     inline void
-    merge_value_(
+    sources_merge_value_(
       const K& key,
       const S& value
     )
@@ -360,16 +360,16 @@ class PointSourceMap
     }
 
     inline void
-    merge_value_(
+    sources_merge_value_(
       sources_pair_type_const& p
     )
     {
-      merge_value_(p.first, p.second);
+      sources_merge_value_(p.first, p.second);
     }
 
     template <class L>
     inline void
-    merge_values_(
+    sources_merge_values_(
       const L& s_o
     )
     {
@@ -396,8 +396,8 @@ public:
     : PointSourceMap()
   {
     do_par(points_and_sources, [this](const auto& pr) {
-      points_.merge(pr.points_);
-      sources_.merge(pr.sources_);
+      points_.points_merge(pr.points_);
+      sources_.sources_merge(pr.sources_);
     });
   }
 
@@ -411,7 +411,7 @@ public:
     points_.for_each([this, &location](const auto& kv) {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
-      sources_.merge_value(for_cell, source);
+      sources_.sources_merge_value(for_cell, source);
     });
   }
 
