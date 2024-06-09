@@ -297,6 +297,17 @@ public:
     : sources_map_(std::move(rhs.sources_map_))
   {
   }
+  template <class L>
+  SourcesMap(
+    const L& values
+  )
+  {
+    for_each(values, [this](pair_type_const& kv) {
+      auto& k = kv.first;
+      auto& v = kv.second;
+      sources_map_[k] |= v;
+    });
+  }
   inline void
   merge_value(
     const K& key,
@@ -329,10 +340,8 @@ public:
     const L& values
   )
   {
-    std::lock_guard<mutex> lock(mutex_);
-    do_each(values, [this](pair_type_const& v) {
-      merge_value_(v);
-    });
+    SourcesMap rhs(values);
+    merge(rhs);
   }
   void
   merge(
