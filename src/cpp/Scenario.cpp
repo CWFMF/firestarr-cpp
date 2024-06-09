@@ -147,22 +147,27 @@ public:
   PointSourceMap(auto& points_and_sources)
     : PointSourceMap()
   {
-    std::lock_guard<mutex> lock(mutex_);
+    merge_list(*this, points_and_sources);
+  }
+
+  static inline void merge_list(PointSourceMap& lhs, auto& points_and_sources)
+  {
+    std::lock_guard<mutex> lock(lhs.mutex_);
     do_par(points_and_sources,
-           [this](const PointSourceMap& rhs) {
+           [&lhs](const PointSourceMap& rhs) {
              using maps_direct = pair<const source_pair&, source_pair*>;
              std::lock_guard<mutex> lock_rhs(rhs.mutex_);
              const merged_map_type& p_m = rhs.map_;
              auto v0 = std::views::transform(
                p_m,
-               [this, &rhs](const auto& kv) {
+               [&lhs, &rhs](const auto& kv) {
                  // insert or lookup map for key
                  // still need key for relativeIndex
                  auto& k = kv.first;
                  auto& v = kv.second;
                  return maps_direct(
                    v,
-                   &map_[k]);
+                   &lhs.map_[k]);
                });
              // because we already did the map lookup we can do this all in paralell
              std::for_each(
