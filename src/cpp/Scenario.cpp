@@ -163,7 +163,12 @@ private:
   void merge(const PointSourceMap& pr)
   {
     points_merge(pr.points_map_);
-    sources_merge(pr.sources_map_);
+    std::lock_guard<mutex> lock(mutex_);
+    do_each(pr.sources_map_, [this](sources_pair_type_const& kv) {
+      auto& key = std::get<0>(kv);
+      auto& value = std::get<1>(kv);
+      (sources_map_)[key] |= value;
+    });
   }
   template <class L>
   inline void points_merge_values(const K& key, const L& values)
@@ -227,19 +232,6 @@ private:
       const vector<V>& values = p.second;
       m.insert(m.end(), values.begin(), values.end());
     });
-  }
-  void sources_merge(const sources_map_type& rhs)
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    do_each(rhs, [this](sources_pair_type_const& kv) {
-      sources_merge_value_(std::get<0>(kv), std::get<1>(kv));
-    });
-  }
-  // actual functions don't get a lock
-  inline void sources_merge_value_(const K& key, const S& value) { (sources_map_)[key] |= value; }
-  inline void sources_merge_value_(sources_pair_type_const& p)
-  {
-    sources_merge_value_(p.first, p.second);
   }
   map_type points_map_;
   sources_map_type sources_map_;
