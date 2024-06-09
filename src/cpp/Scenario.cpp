@@ -107,29 +107,29 @@ class PointSourceMap
   {
   public:
     PointsMap() : points_map_({}) { }
-    PointsMap(const PointsMap& rhs) : PointsMap() { merge(rhs); }
+    PointsMap(const PointsMap& rhs) : PointsMap() { points_merge(rhs); }
     PointsMap(auto& p_o) : PointsMap()
     {
       // no need to lock since this doesn't exist yet
-      merge_values_(p_o);
+      points_merge_values_(p_o);
     }
     template <class L>
-    inline void merge_values(const K& key, const L& values)
+    inline void points_merge_values(const K& key, const L& values)
     {
       std::lock_guard<mutex> lock(mutex_);
-      merge_values_(key, values);
+      points_merge_values_(key, values);
     }
     template <class L>
-    inline void merge_values(const L& values)
+    inline void points_merge_values(const L& values)
     {
       std::lock_guard<mutex> lock(mutex_);
-      merge_values_(values);
+      points_merge_values_(values);
     }
-    void merge(const PointsMap& rhs)
+    void points_merge(const PointsMap& rhs)
     {
       std::lock_guard<mutex> lock(mutex_);
       std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-      merge_map_(rhs.points_map_);
+      points_merge_map_(rhs.points_map_);
     }
     template <class F>
     void for_each(F fct)
@@ -142,16 +142,16 @@ class PointSourceMap
     map_type points_map_;
     // actual functions don't get a lock
     template <class L>
-    inline void merge_values_(const K& key, const L& values)
+    inline void points_merge_values_(const K& key, const L& values)
     {
       auto& m1 = to_map(values);
       vector<V>& m0 = points_map_[key];
       m0.insert(m0.end(), m1.begin(), m1.end());
     }
     template <class L>
-    inline void merge_values_(const L& values)
+    inline void points_merge_values_(const L& values)
     {
-      merge_map_(to_map(values));
+      points_merge_map_(to_map(values));
     }
     template <class L>
     inline map_type to_map(const L& pairs)
@@ -173,7 +173,7 @@ class PointSourceMap
         return map_pair(&points_map_[kv.first], kv.second);
       });
     }
-    inline void merge_map_(const map_type& rhs)
+    inline void points_merge_map_(const map_type& rhs)
     {
       auto v0 = to_map_map(rhs);
       // because we already did the map lookup we can do this all in paralell
@@ -193,37 +193,40 @@ class PointSourceMap
       // : sources_map_(std::copy(rhs.sources_map_))
       : sources_map_({})
     {
-      merge(rhs);
+      sources_merge(rhs);
     }
     template <class L>
     SourcesMap(const L& values)
     {
-      merge_values_(values);
+      sources_merge_values_(values);
     }
-    inline void merge_value(const K& key, const S& value)
+    inline void sources_merge_value(const K& key, const S& value)
     {
       std::lock_guard<mutex> lock(mutex_);
-      merge_value_(key, value);
+      sources_merge_value_(key, value);
     }
-    inline void merge_value(sources_pair_type_const& p) { merge_value(p.first, p.second); }
+    inline void sources_merge_value(sources_pair_type_const& p)
+    {
+      sources_merge_value(p.first, p.second);
+    }
     template <class L>
-    inline void merge_values(const K& key, const L& values)
+    inline void sources_merge_values(const K& key, const L& values)
     {
       std::lock_guard<mutex> lock(mutex_);
-      merge_values_(key, values);
+      sources_merge_values_(key, values);
     }
     template <class L>
-    inline void merge_values(const L& s_o)
+    inline void sources_merge_values(const L& s_o)
     {
       SourcesMap rhs(s_o);
-      merge(rhs);
+      sources_merge(rhs);
     }
-    void merge(const SourcesMap& rhs)
+    void sources_merge(const SourcesMap& rhs)
     {
       std::lock_guard<mutex> lock(mutex_);
       std::lock_guard<mutex> lock_rhs(rhs.mutex_);
       do_each(rhs.sources_map_, [this](sources_pair_type_const& kv) {
-        merge_value_(std::get<0>(kv), std::get<1>(kv));
+        sources_merge_value_(std::get<0>(kv), std::get<1>(kv));
       });
     }
     template <class F>
@@ -236,10 +239,13 @@ class PointSourceMap
   private:
     map<K, S> sources_map_;
     // actual functions don't get a lock
-    inline void merge_value_(const K& key, const S& value) { (sources_map_)[key] |= value; }
-    inline void merge_value_(sources_pair_type_const& p) { merge_value_(p.first, p.second); }
+    inline void sources_merge_value_(const K& key, const S& value) { (sources_map_)[key] |= value; }
+    inline void sources_merge_value_(sources_pair_type_const& p)
+    {
+      sources_merge_value_(p.first, p.second);
+    }
     template <class L>
-    inline void merge_values_(const L& s_o)
+    inline void sources_merge_values_(const L& s_o)
     {
       for_each(s_o, [this](sources_pair_type_const& kv) {
         auto& k = kv.first;
@@ -255,8 +261,8 @@ public:
   PointSourceMap(auto& points_and_sources) : PointSourceMap()
   {
     do_par(points_and_sources, [this](const auto& pr) {
-      points_.merge(pr.points_);
-      sources_.merge(pr.sources_);
+      points_.points_merge(pr.points_);
+      sources_.sources_merge(pr.sources_);
     });
   }
   PointSourceMap(const Cell location, auto& p_o) : points_(p_o), sources_({})
@@ -264,7 +270,7 @@ public:
     points_.for_each([this, &location](const auto& kv) {
       const auto& for_cell = kv.first;
       const auto source = relativeIndex(for_cell, location);
-      sources_.merge_value(for_cell, source);
+      sources_.sources_merge_value(for_cell, source);
     });
   }
   void final_merge_maps(
