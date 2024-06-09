@@ -134,20 +134,22 @@ class PointSourceMap
 {
   using K = topo::Cell;
   using V = InnerPos;
+  using S = CellIndex;
+  using source_pair = pair<S, vector<V>>;
+  using merged_map_type = map<K, source_pair>;
+  using merged_map_pair = pair<K, source_pair>;
   using map_type = map<K, vector<V>>;
   using map_pair_type = pair<K, vector<V>>;
   using map_pair = pair<vector<V>*, const vector<V>&>;
   using pair_type = pair<K, V>;
   using pair_type_const = const pair<const K, const V>;
-  using S = CellIndex;
   using sources_map_type = map<K, S>;
   using sources_map_pair = map<S*, S>;
   using sources_pair_type = pair<K, S>;
   using sources_pair_type_const = const pair<const K, const S>;
 public:
   PointSourceMap()
-    : points_map_({}),
-      sources_map_({})
+    : map_({})
   {
   }
   PointSourceMap(auto& points_and_sources)
@@ -156,10 +158,8 @@ public:
     merge_all(points_and_sources);
   }
   PointSourceMap(const topo::Cell location, auto& p_o)
-    : points_map_({}),
-      sources_map_({})
+    : PointSourceMap()
   {
-    using maps_tuple = tuple<const K, const vector<V>&, vector<V>*, S*>;
     // no need to lock since this doesn't exist yet
     // were given a list of pairs that would go in a map
     // NOTE: could also sort and then check for key changing
@@ -169,30 +169,32 @@ public:
       auto& pts = p_m[kv.first];
       pts.emplace_back(kv.second);
     }
+    using tuple_temp = tuple<const K, const vector<V>&, source_pair*>;
     auto v0 = std::views::transform(
       p_m,
       [this](const auto& kv) {
         // insert or lookup map for key
         // still need key for relativeIndex
-        return maps_tuple(
+        return tuple_temp(
           kv.first,
           kv.second,
-          &points_map_[kv.first],
-          &sources_map_[kv.first]);
+          &map_[kv.first]);
       });
     // because we already did the map lookup we can do this all in paralell
     std::for_each(
       std::execution::par_unseq,
       v0.begin(),
       v0.end(),
-      [&location](const auto& kpms) {
-        const K k = std::get<0>(kpms);
-        const vector<V>& p = std::get<1>(kpms);
-        vector<V>& m = *(std::get<2>(kpms));
-        S* s = std::get<3>(kpms);
-        m.insert(m.end(), p.begin(), p.end());
+      [&location](const tuple_temp& kpsp) {
+        const K k = std::get<0>(kpsp);
+        const vector<V>& p1 = std::get<1>(kpsp);
+        // pair that is currently in map_ for the given key
+        source_pair& sp = *(std::get<2>(kpsp));
+        S& s = sp.first;
+        vector<V>& p0 = sp.second;
+        p0.insert(p0.end(), p1.begin(), p1.end());
         const auto source = relativeIndex(k, location);
-        (*s) |= source;
+        s |= source;
       });
   }
   void final_merge_maps(
@@ -200,27 +202,29 @@ public:
     map<topo::Cell, CellIndex>& sources_out,
     const BurnedData& unburnable)
   {
-    do_each(
-      points_map_,
-      [&points_out, &unburnable](const auto& kv) {
-        const auto& for_cell = kv.first;
-        if (!(unburnable[for_cell.hash()]))
-        {
-          auto& pts = points_out[for_cell];
-          pts.insert(pts.end(), kv.second.begin(), kv.second.end());
-          // works the same if we hull here
-          if (pts.size() > MAX_BEFORE_CONDENSE)
-          {
-            // 3 points should just be a triangle usually (could be co-linear, but that's fine
-            hull(pts);
-          }
-        }
-      });
     std::lock_guard<mutex> lock(mutex_);
     do_each(
-      sources_map_,
-      [&sources_out](auto& kv) {
-        sources_out[kv.first] |= kv.second;
+      map_,
+      [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
+        const K k = ksp.first;
+        const source_pair& sp = ksp.second;
+        const S& s = sp.first;
+        sources_out[k] |= s;
+        const auto h = k.hash();
+        if (!(unburnable[h]))
+        {
+          // pair that is currently in map_ for the given key
+          const auto& sp = std::get<1>(ksp);
+          const vector<V>& p1 = sp.second;
+          auto& p0 = points_out[k];
+          p0.insert(p0.end(), p1.begin(), p1.end());
+          // works the same if we hull here
+          if (p0.size() > MAX_BEFORE_CONDENSE)
+          {
+            // 3 points should just be a triangle usually (could be co-linear, but that's fine
+            hull(p0);
+          }
+        }
       });
   }
 private:
@@ -233,10 +237,10 @@ private:
   }
   void merge(const PointSourceMap& rhs)
   {
+    using maps_direct = pair<const source_pair&, source_pair*>;
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    const map_type& p_m = rhs.points_map_;
-    using maps_tuple_direct = tuple<const vector<V>&, vector<V>*, S, S*>;
+    const merged_map_type& p_m = rhs.map_;
     auto v0 = std::views::transform(
       p_m,
       [this, &rhs](const auto& kv) {
@@ -244,35 +248,34 @@ private:
         // still need key for relativeIndex
         auto& k = kv.first;
         auto& v = kv.second;
-        return maps_tuple_direct(
+        return maps_direct(
           v,
-          &points_map_[k],
-          rhs.sources_map_.at(k),
-          &sources_map_[k]);
+          &map_[k]);
       });
     // because we already did the map lookup we can do this all in paralell
     std::for_each(
       std::execution::par_unseq,
       v0.begin(),
       v0.end(),
-      [](const auto& ppss) {
-        const vector<V>& p1 = std::get<0>(ppss);
-        vector<V>& p0 = *(std::get<1>(ppss));
-        const S& s1 = std::get<2>(ppss);
-        S* s0 = std::get<3>(ppss);
+      [](const maps_direct& spsp) {
+        const source_pair& pair1 = spsp.first;
+        source_pair& pair0 = *(spsp.second);
+        const vector<V>& p1 = pair1.second;
+        vector<V>& p0 = pair0.second;
+        const S& s1 = pair1.first;
+        S& s0 = pair0.first;
         p0.insert(p0.end(), p1.begin(), p1.end());
-        (*s0) |= s1;
+        s0 |= s1;
       });
   }
   template <class F>
   void for_each(F fct)
   {
     std::lock_guard<mutex> lock(mutex_);
-    do_each(points_map_, fct);
+    do_each(map_, fct);
   }
 private:
-  map_type points_map_;
-  sources_map_type sources_map_;
+  merged_map_type map_;
   mutable mutex mutex_;
 };
 
