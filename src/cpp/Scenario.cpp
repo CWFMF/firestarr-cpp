@@ -143,7 +143,7 @@ class PointsMap
   using pair_type_const = const pair<const K, const V>;
 public:
   PointsMap()
-    : map_({})
+    : points_map_({})
   {
   }
   PointsMap(
@@ -157,7 +157,7 @@ public:
   PointsMap(
     PointsMap&& rhs
   )
-    : map_(std::move(rhs.map_))
+    : points_map_(std::move(rhs.points_map_))
   {
   }
   PointsMap(
@@ -194,7 +194,7 @@ public:
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    merge_map_(rhs.map_);
+    merge_map_(rhs.points_map_);
   }
   template <class F>
   void
@@ -203,10 +203,10 @@ public:
   )
   {
     std::lock_guard<mutex> lock(mutex_);
-    do_each(map_, fct);
+    do_each(points_map_, fct);
   }
 private:
-  map_type map_;
+  map_type points_map_;
   // actual functions don't get a lock
   template <class L>
   inline void
@@ -216,7 +216,7 @@ private:
   )
   {
     auto& m1 = to_map(values);
-    vector<V>& m0 = map_[key];
+    vector<V>& m0 = points_map_[key];
     m0.insert(m0.end(), m1.begin(), m1.end());
   }
   template <class L>
@@ -251,7 +251,7 @@ private:
   {
     return std::views::transform(rhs, [this](auto& kv) {
       // insert or lookup map for key
-      return map_pair(&map_[kv.first], kv.second);
+      return map_pair(&points_map_[kv.first], kv.second);
     });
   }
   inline void
@@ -286,15 +286,15 @@ public:
   SourcesMap(
     const SourcesMap& rhs
   )
-    // : map_(std::copy(rhs.map_))
-    : map_({})
+    // : sources_map_(std::copy(rhs.sources_map_))
+    : sources_map_({})
   {
     merge(rhs);
   }
   SourcesMap(
     SourcesMap&& rhs
   )
-    : map_(std::move(rhs.map_))
+    : sources_map_(std::move(rhs.sources_map_))
   {
   }
   inline void
@@ -341,7 +341,7 @@ public:
   {
     std::lock_guard<mutex> lock(mutex_);
     std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-    do_each(rhs.map_, [this](pair_type_const& kv) {
+    do_each(rhs.sources_map_, [this](pair_type_const& kv) {
       merge_value_(std::get<0>(kv), std::get<1>(kv));
     });
   }
@@ -352,10 +352,10 @@ public:
   )
   {
     std::lock_guard<mutex> lock(mutex_);
-    do_each(map_, fct);
+    do_each(sources_map_, fct);
   }
 private:
-  map<K, V> map_;
+  map<K, V> sources_map_;
   // actual functions don't get a lock
   inline void
   merge_value_(
@@ -363,7 +363,7 @@ private:
     const V& value
   )
   {
-    (map_)[key] |= value;
+    (sources_map_)[key] |= value;
   }
   inline void
   merge_value_(
