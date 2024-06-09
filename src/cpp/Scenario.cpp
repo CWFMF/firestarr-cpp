@@ -132,15 +132,17 @@ void do_par(T& for_list, F fct)
 
 class PointSourceMap
 {
-
+  using K = topo::Cell;
+  using V = InnerPos;
+  using map_type = map<K, vector<V>>;
+  using map_pair = pair<vector<V>*, const vector<V>&>;
+  using pair_type = pair<K, V>;
+  using pair_type_const = const pair<const K, const V>;
+  using S = CellIndex;
+  using sources_pair_type = pair<K, S>;
+  using sources_pair_type_const = const pair<const K, const S>;
   class PointsMap
   {
-    using K = topo::Cell;
-    using V = InnerPos;
-    using map_type = map<K, vector<V>>;
-    using map_pair = pair<vector<V>*, const vector<V>&>;
-    using pair_type = pair<K, V>;
-    using pair_type_const = const pair<const K, const V>;
   public:
     PointsMap()
       : points_map_({})
@@ -239,16 +241,8 @@ class PointSourceMap
     }
     mutable mutex mutex_;
   };
-  // using PointsMap = PointsMap<topo::Cell, InnerPos>;
-
-  // FIX: make some kind of class that takes a merge function and applies it
-  // template <class K, class V>
   class SourcesMap
   {
-    using K = topo::Cell;
-    using V = CellIndex;
-    using pair_type = pair<K, V>;
-    using pair_type_const = const pair<const K, const V>;
   public:
     constexpr SourcesMap()
     {
@@ -268,18 +262,18 @@ class PointSourceMap
     {
       for_each(
         values,
-        [this](pair_type_const& kv) {
+        [this](sources_pair_type_const& kv) {
           auto& k = kv.first;
           auto& v = kv.second;
           sources_map_[k] |= v;
         });
     }
-    inline void merge_value(const K& key, const V& value)
+    inline void merge_value(const K& key, const S& value)
     {
       std::lock_guard<mutex> lock(mutex_);
       merge_value_(key, value);
     }
-    inline void merge_value(pair_type_const& p)
+    inline void merge_value(sources_pair_type_const& p)
     {
       merge_value(p.first, p.second);
     }
@@ -301,7 +295,7 @@ class PointSourceMap
       std::lock_guard<mutex> lock_rhs(rhs.mutex_);
       do_each(
         rhs.sources_map_,
-        [this](pair_type_const& kv) {
+        [this](sources_pair_type_const& kv) {
           merge_value_(std::get<0>(kv), std::get<1>(kv));
         });
     }
@@ -312,13 +306,13 @@ class PointSourceMap
       do_each(sources_map_, fct);
     }
   private:
-    map<K, V> sources_map_;
+    map<K, S> sources_map_;
     // actual functions don't get a lock
-    inline void merge_value_(const K& key, const V& value)
+    inline void merge_value_(const K& key, const S& value)
     {
       (sources_map_)[key] |= value;
     }
-    inline void merge_value_(pair_type_const& p)
+    inline void merge_value_(sources_pair_type_const& p)
     {
       merge_value_(p.first, p.second);
     }
