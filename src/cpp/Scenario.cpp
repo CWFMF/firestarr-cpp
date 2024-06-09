@@ -161,7 +161,14 @@ public:
   {
     using maps_tuple = tuple<const K, const vector<V>&, vector<V>*, S*>;
     // no need to lock since this doesn't exist yet
-    map_type p_m = to_map(p_o);
+    // were given a list of pairs that would go in a map
+    // NOTE: could also sort and then check for key changing
+    map_type p_m{};
+    for (const auto& kv : p_o)
+    {
+      auto& pts = p_m[kv.first];
+      pts.emplace_back(kv.second);
+    }
     auto v0 = std::views::transform(
       p_m,
       [this](const auto& kv) {
@@ -264,20 +271,6 @@ private:
     do_each(points_map_, fct);
   }
 private:
-  template <class L>
-  inline map_type to_map(const L& pairs)
-  {
-    // were given a list of pairs that would go in a map
-    // NOTE: could also sort and then check for key changing
-    map_type result{};
-    for (const auto& kv : pairs)
-    {
-      auto& pts = result[kv.first];
-      // pts.insert(pts.end(), kv.second);
-      pts.emplace_back(kv.second);
-    }
-    return result;
-  }
   map_type points_map_;
   sources_map_type sources_map_;
   mutable mutex mutex_;
