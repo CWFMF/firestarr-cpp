@@ -135,16 +135,17 @@ public:
       });
     });
   }
-  PointSourceMap(const Cell location, auto& p_o) : PointSourceMap()
+  PointSourceMap(Scenario& scenario, const Cell location, auto& p_o) : PointSourceMap()
   {
     // no need to lock since this doesn't exist yet
     // were given a list of pairs that would go in a map
     // NOTE: could also sort and then check for key changing
     map_type p_m{};
-    for (const auto& kv : p_o)
+    for (const InnerPos& p : p_o)
     {
-      auto& pts = p_m[kv.first];
-      pts.emplace_back(kv.second);
+      Cell for_cell = scenario.cell(p);
+      auto& pts = p_m[for_cell];
+      pts.emplace_back(p);
     }
     using tuple_temp = tuple<const K, const vector<V>&, source_pair*>;
     auto v0 = std::views::transform(p_m, [this](const auto& kv) {
@@ -861,11 +862,10 @@ void Scenario::scheduleFireSpread(const Event& event)
       ),
       [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
         const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
-        const auto for_cell = cell(pos);
-        return std::pair<Cell, InnerPos>(for_cell, pos);
+        return InnerPos(pos);
       }
     );
-    return PointSourceMap(location, p_o);
+    return PointSourceMap(*this, location, p_o);
   };
   using CellPair = pair<const SpreadKey, vector<CellPts>>;
   auto apply_spread = [this, &apply_offsets, &sources](const CellPair& kv0) {
