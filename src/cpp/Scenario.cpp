@@ -1172,24 +1172,16 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto& location = std::get<0>(t);
     const auto& pts = std::get<1>(t);
     const auto& offsets = *std::get<2>(t);
-    auto p_o = std::views::transform(std::views::cartesian_product(
-                                       std::views::transform(offsets,
-                                                             [duration](const Offset& o) { return o * duration; }),
-                                       pts),
-                                     [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
-                                       const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
-                                       const auto for_cell = cell(pos);
-                                       // HACK: just use side-effect to log and check bounds
-                                       log_points_->log_point(step_, STAGE_SPREAD, new_time, pos.x(), pos.y());
-#ifdef DEBUG_POINTS
-                                       // was doing this check after getting for_cell, so it didn't help when out of bounds
-                                       log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
-                                                       "Tried to spread out of bounds to (%f, %f)",
-                                                       pos.x(),
-                                                       pos.y());
-#endif
-                                       return std::pair<topo::Cell, InnerPos>(for_cell, pos);
-                                     });
+    auto p_o = std::views::transform(
+      std::views::cartesian_product(
+        std::views::transform(offsets,
+                              [duration](const Offset& o) { return o * duration; }),
+        pts),
+      [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
+        const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
+        const auto for_cell = cell(pos);
+        return std::pair<topo::Cell, InnerPos>(for_cell, pos);
+      });
     return PointSourceMap(location, p_o);
   };
   using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
@@ -1224,6 +1216,18 @@ void Scenario::scheduleFireSpread(const Event& event)
       // logging::check_fatal(max_intensity <= 0,
       //                      "Expected max_intensity to be > 0 but got %f",
       //                      max_intensity);
+      // HACK: just use side-effect to log and check bounds
+      log_points_->log_points(step_, STAGE_SPREAD, new_time, pts);
+#ifdef DEBUG_POINTS
+      for (auto& pos : pts)
+      {
+        // was doing this check after getting for_cell, so it didn't help when out of bounds
+        log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+                        "Tried to spread out of bounds to (%f, %f)",
+                        pos.x(),
+                        pos.y());
+      }
+#endif
       if (canBurn(for_cell) && max_intensity > 0)
       {
         // HACK: make sure it can't round down to 0
