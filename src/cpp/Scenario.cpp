@@ -269,6 +269,19 @@ public:
     merge_list(*this, points_and_sources);
     // return PointSourceMap(points_and_sources);
   }
+  PointSourceMap(
+    Scenario& scenario,
+    map<topo::SpreadKey, SpreadInfo>& spread_info,
+    const double duration,
+    const auto& to_spread)
+  {
+    auto points_and_sources = std::views::transform(
+      to_spread,
+      [&scenario, &duration, &spread_info](const CellPair& kv0) {
+        return PointSourceMap(scenario, spread_info, duration, kv0);
+      });
+    merge_list(*this, points_and_sources);
+  }
   void final_merge_maps(
     map<topo::Cell, PointSet>& points_out,
     map<topo::Cell, CellIndex>& sources_out,
@@ -1204,12 +1217,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   // note("Spreading for %f minutes", duration);
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  auto points_and_sources = std::views::transform(
-    to_spread,
-    [this, &duration](const CellPair& kv0) {
-      return PointSourceMap(*this, spread_info_, duration, kv0);
-    });
-  auto result = PointSourceMap(points_and_sources);
+  auto result = PointSourceMap(*this, spread_info_, duration, to_spread);
   result.final_merge_maps(points_, sources, *unburnable_);
 
   map<topo::Cell, PointSet> points_cur{};
