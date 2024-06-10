@@ -18,6 +18,9 @@
 #include "FuelType.h"
 namespace tbd::sim
 {
+using CellPts = tuple<topo::Cell, const PointSet>;
+using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
+
 constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
 static atomic<size_t> COUNT = 0;
@@ -242,6 +245,29 @@ public:
         const auto source = relativeIndex(k, location);
         s |= source;
       });
+  }
+  PointSourceMap(
+    Scenario& scenario,
+    map<topo::SpreadKey, SpreadInfo>& spread_info,
+    const double duration,
+    const CellPair& kv0)
+  {
+    auto& key = kv0.first;
+    auto& offsets = spread_info[key].offsets();
+    auto points_and_sources = std::views::transform(
+      kv0.second,
+      [&scenario, &duration, &offsets](
+        const tuple<topo::Cell, PointSet> pts_for_cell) {
+        return PointSourceMap(
+          scenario,
+          duration,
+          std::tuple(
+            std::get<0>(pts_for_cell),
+            std::get<1>(pts_for_cell),
+            &offsets));
+      });
+    merge_list(*this, points_and_sources);
+    // return PointSourceMap(points_and_sources);
   }
   void final_merge_maps(
     map<topo::Cell, PointSet>& points_out,
@@ -1133,7 +1159,6 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  using CellPts = tuple<topo::Cell, const PointSet>;
   map<topo::SpreadKey, vector<CellPts>> to_spread{};
   // make block to prevent it being visible beyond use
   {
@@ -1179,28 +1204,11 @@ void Scenario::scheduleFireSpread(const Event& event)
   // note("Spreading for %f minutes", duration);
   map<topo::Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
-  auto apply_spread = [this, &duration](
-                        const CellPair& kv0) {
-    auto& key = kv0.first;
-    auto& offsets = spread_info_[key].offsets();
-    auto points_and_sources = std::views::transform(
-      kv0.second,
-      [this, &duration, &offsets](
-        const tuple<topo::Cell, PointSet> pts_for_cell) {
-        return PointSourceMap(
-          *this,
-          duration,
-          std::tuple(
-            std::get<0>(pts_for_cell),
-            std::get<1>(pts_for_cell),
-            &offsets));
-      });
-    return PointSourceMap(points_and_sources);
-  };
   auto points_and_sources = std::views::transform(
     to_spread,
-    apply_spread);
+    [this, &duration](const CellPair& kv0) {
+      return PointSourceMap(*this, spread_info_, duration, kv0);
+    });
   auto result = PointSourceMap(points_and_sources);
   result.final_merge_maps(points_, sources, *unburnable_);
 
