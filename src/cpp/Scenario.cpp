@@ -175,12 +175,18 @@ void merge_list(merged_map_type& lhs, auto& points_and_sources)
              });
          });
 }
+// merge into and return empty list
+merged_map_type merge_list(auto& points_and_sources)
+{
+  merged_map_type lhs{};
+  merge_list(lhs, points_and_sources);
+  return lhs;
+}
 merged_map_type merge_list(
   Scenario& scenario,
   const double duration,
   const tuple<Cell, PointSet, const OffsetSet*>& t)
 {
-  merged_map_type result{};
   const auto& location = std::get<0>(t);
   const auto& pts = std::get<1>(t);
   const auto& offsets = *std::get<2>(t);
@@ -204,6 +210,7 @@ merged_map_type merge_list(
     auto& pts = p_m[for_cell];
     pts.emplace_back(p);
   }
+  merged_map_type result{};
   auto v0 = std::views::transform(
     p_m,
     [&result](const auto& kv) {
@@ -238,7 +245,6 @@ merged_map_type merge_list(
   const double duration,
   const CellPair& kv0)
 {
-  merged_map_type result{};
   auto& key = kv0.first;
   auto& offsets = spread_info[key].offsets();
   auto points_and_sources = std::views::transform(
@@ -253,8 +259,7 @@ merged_map_type merge_list(
           std::get<1>(pts_for_cell),
           &offsets));
     });
-  merge_list(result, points_and_sources);
-  return result;
+  return merge_list(points_and_sources);
 }
 void calculate_spread(
   Scenario& scenario,
@@ -264,15 +269,13 @@ void calculate_spread(
   map<Cell, PointSet>& points_out,
   map<Cell, CellIndex>& sources_out,
   const BurnedData& unburnable)
-
 {
-  merged_map_type merge_from{};
   auto points_and_sources = std::views::transform(
     to_spread,
     [&scenario, &duration, &spread_info](const CellPair& kv0) {
       return merge_list(scenario, spread_info, duration, kv0);
     });
-  merge_list(merge_from, points_and_sources);
+  merged_map_type merge_from = merge_list(points_and_sources);
   do_each(
     merge_from,
     [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
