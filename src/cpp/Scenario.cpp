@@ -256,6 +256,18 @@ merged_map_type merge_list(
     });
   return merge_list(points_and_sources);
 }
+merged_map_type merge_list(
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const auto& to_spread)
+{
+  auto points_and_sources = std::views::transform(
+    to_spread,
+    [&duration, &spread_info](const CellPair& kv0) {
+      return merge_list(spread_info, duration, kv0);
+    });
+  return merge_list(points_and_sources);
+}
 void calculate_spread(
   Scenario& scenario,
   map<SpreadKey, SpreadInfo>& spread_info,
@@ -265,12 +277,7 @@ void calculate_spread(
   map<Cell, CellIndex>& sources_out,
   const BurnedData& unburnable)
 {
-  auto points_and_sources = std::views::transform(
-    to_spread,
-    [&duration, &spread_info](const CellPair& kv0) {
-      return merge_list(spread_info, duration, kv0);
-    });
-  merged_map_type merge_from = merge_list(points_and_sources);
+  auto merge_from = merge_list(spread_info, duration, to_spread);
   do_each(
     merge_from,
     [&scenario, &points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
