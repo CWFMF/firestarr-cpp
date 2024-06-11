@@ -25,11 +25,11 @@ using topo::StartPoint;
 using CellPts = tuple<Cell, const PointSet>;
 using CellPair = pair<const SpreadKey, vector<CellPts>>;
 using source_pair = pair<CellIndex, vector<InnerPos>>;
-using merged_map_type = map<Cell, source_pair>;
-using merged_map_pair = pair<Cell, source_pair>;
-using map_type = map<Cell, vector<InnerPos>>;
+using merged_map_type = map<Location, source_pair>;
+using merged_map_pair = pair<Location, source_pair>;
+using map_type = map<Location, vector<InnerPos>>;
 using maps_direct = pair<source_pair*, const source_pair&>;
-using tuple_temp = tuple<const Cell, const vector<InnerPos>&, source_pair*>;
+using tuple_temp = tuple<const Location, const vector<InnerPos>&, source_pair*>;
 
 constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
@@ -66,7 +66,7 @@ static constexpr CellIndex DIRECTION_SE = 0b10000000;
  * @param from_cell The cell to find the direction of
  * @return Direction that you would have to go in to get to from_cell from for_cell
  */
-CellIndex relativeIndex(const Cell& for_cell, const Cell& from_cell)
+CellIndex relativeIndex(const Location& for_cell, const Location& from_cell)
 {
   const auto r = for_cell.row();
   const auto r_o = from_cell.row();
@@ -183,9 +183,8 @@ merged_map_type merge_list(auto& points_and_sources)
   return lhs;
 }
 merged_map_type merge_list(
-  Scenario& scenario,
   const double duration,
-  const Cell& location,
+  const Location& location,
   const PointSet& pts,
   const OffsetSet& offsets)
 {
@@ -198,13 +197,14 @@ merged_map_type merge_list(
     [](const pair<const Offset&, const InnerPos&>& o_p) {
       return std::get<1>(o_p).add(std::get<0>(o_p));
     });
-  // no need to lock since this doesn't exist yet
   // were given a list of pairs that would go in a map
   // NOTE: could also sort and then check for key changing
   map_type p_m{};
   for (const InnerPos& p : p_o)
   {
-    Cell for_cell = scenario.cell(p);
+    // don't need cell attributes, just location
+    // x is column & y is row
+    Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
     auto& pts = p_m[for_cell];
     pts.emplace_back(p);
   }
@@ -225,7 +225,7 @@ merged_map_type merge_list(
     v0.begin(),
     v0.end(),
     [&location](const tuple_temp& kpsp) {
-      const Cell k = std::get<0>(kpsp);
+      const Location k = std::get<0>(kpsp);
       const vector<InnerPos>& p1 = std::get<1>(kpsp);
       // pair that is currently in result for the given key
       source_pair& sp = *(std::get<2>(kpsp));
@@ -238,7 +238,6 @@ merged_map_type merge_list(
   return result;
 }
 merged_map_type merge_list(
-  Scenario& scenario,
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
   const CellPair& kv0)
@@ -247,10 +246,9 @@ merged_map_type merge_list(
   auto& offsets = spread_info[key].offsets();
   auto points_and_sources = std::views::transform(
     kv0.second,
-    [&scenario, &duration, &offsets](
+    [&duration, &offsets](
       const tuple<Cell, PointSet> pts_for_cell) {
       return merge_list(
-        scenario,
         duration,
         std::get<0>(pts_for_cell),
         std::get<1>(pts_for_cell),
@@ -269,14 +267,15 @@ void calculate_spread(
 {
   auto points_and_sources = std::views::transform(
     to_spread,
-    [&scenario, &duration, &spread_info](const CellPair& kv0) {
-      return merge_list(scenario, spread_info, duration, kv0);
+    [&duration, &spread_info](const CellPair& kv0) {
+      return merge_list(spread_info, duration, kv0);
     });
   merged_map_type merge_from = merge_list(points_and_sources);
   do_each(
     merge_from,
-    [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
-      const Cell k = ksp.first;
+    [&scenario, &points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
+      // look up Cell from scenario here since we don't need attributes until now
+      const Cell k = scenario.cell(ksp.first);
       const source_pair& sp = ksp.second;
       const CellIndex& s = sp.first;
       sources_out[k] |= s;
