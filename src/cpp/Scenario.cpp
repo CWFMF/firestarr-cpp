@@ -176,13 +176,13 @@ void merge_list(merged_map_type& lhs, auto& points_and_sources)
          });
 }
 // merge into and return empty list
-merged_map_type merge_list(auto& points_and_sources)
+const merged_map_type merge_list(auto& points_and_sources)
 {
   merged_map_type lhs{};
   merge_list(lhs, points_and_sources);
   return lhs;
 }
-merged_map_type merge_list(
+const merged_map_type merge_list(
   const double duration,
   const Location& location,
   const PointSet& pts,
@@ -237,7 +237,7 @@ merged_map_type merge_list(
     });
   return result;
 }
-merged_map_type merge_list(
+const merged_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
   const CellPair& kv0)
@@ -256,7 +256,7 @@ merged_map_type merge_list(
     });
   return merge_list(points_and_sources);
 }
-merged_map_type merge_list(
+const merged_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
   const auto& to_spread)
@@ -277,9 +277,8 @@ void calculate_spread(
   map<Cell, CellIndex>& sources_out,
   const BurnedData& unburnable)
 {
-  auto merge_from = merge_list(spread_info, duration, to_spread);
   do_each(
-    merge_from,
+    merge_list(spread_info, duration, to_spread),
     [&scenario, &points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
       // look up Cell from scenario here since we don't need attributes until now
       const Cell k = scenario.cell(ksp.first);
