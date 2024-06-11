@@ -240,13 +240,13 @@ const merged_map_type merge_list(
 {
   auto points_and_sources = std::views::transform(
     to_spread,
-    [&duration, &spread_info](const CellPair& kv0) {
+    [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
       auto& key = kv0.first;
       auto& offsets = spread_info[key].offsets();
       auto pts_and_srcs = std::views::transform(
         kv0.second,
         [&duration, &offsets](
-          const tuple<Cell, PointSet> pts_for_cell) {
+          const tuple<Cell, PointSet> pts_for_cell) -> const merged_map_type {
           return merge_list(
             duration,
             std::get<0>(pts_for_cell),
