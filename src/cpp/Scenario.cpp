@@ -143,8 +143,10 @@ void do_par(T& for_list, F fct)
     fct);
 }
 
-void merge_list(merged_map_type& lhs, auto& points_and_sources)
+// merge into and return empty list
+const merged_map_type merge_list(auto& points_and_sources)
 {
+  merged_map_type lhs{};
   do_par(points_and_sources,
          [&lhs](const merged_map_type& rhs) {
            auto v0 = std::views::transform(
@@ -174,13 +176,7 @@ void merge_list(merged_map_type& lhs, auto& points_and_sources)
                s0 |= s1;
              });
          });
-}
-// merge into and return empty list
-const merged_map_type merge_list(auto& points_and_sources)
-{
-  merged_map_type lhs{};
-  merge_list(lhs, points_and_sources);
-  return lhs;
+  return static_cast<const merged_map_type>(lhs);
 }
 const merged_map_type merge_list(
   const double duration,
@@ -235,7 +231,7 @@ const merged_map_type merge_list(
       const auto source = relativeIndex(k, location);
       s |= source;
     });
-  return result;
+  return static_cast<const merged_map_type>(result);
 }
 const merged_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
