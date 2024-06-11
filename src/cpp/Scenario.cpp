@@ -8,6 +8,8 @@
 
 #include "ConvexHull.h"
 #include "FireSpread.h"
+#include "IntensityMap.h"
+#include "MergeIterator.h"
 #include "Observer.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
@@ -18,6 +20,8 @@ using std::cout;
 
 using CellPts = tuple<Cell, const PointSet>;
 using CellPair = pair<const SpreadKey, vector<CellPts>>;
+using tuple_temp = tuple<const Location, const vector<InnerPos>&, source_pair*>;
+using spreading_points = map<SpreadKey, vector<CellPts>>;
 
 constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
@@ -37,8 +41,8 @@ static map<size_t, size_t> SIM_COUNTS{};
  */
 CellIndex
 relativeIndex(
-  const Cell& for_cell,
-  const Cell& from_cell
+  const Location& for_cell,
+  const Location& from_cell
 )
 {
   const auto r = for_cell.row();
@@ -116,179 +120,115 @@ do_par(
   std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
 }
 
-class PointSourceMap
+const merged_map_type
+merge_list(
+  const double duration,
+  const Location& location,
+  const PointSet& pts,
+  const OffsetSet& offsets
+)
 {
-  using K = Cell;
-  using V = InnerPos;
-  using S = CellIndex;
-  using source_pair = pair<S, vector<V>>;
-  using merged_map_type = map<K, source_pair>;
-  using merged_map_pair = pair<K, source_pair>;
-  using map_type = map<K, vector<V>>;
-
-public:
-  PointSourceMap()
-    : map_({})
-  {
-  }
-
-  PointSourceMap(
-    auto& points_and_sources
-  )
-    : PointSourceMap()
-  {
-    merge_list(*this, points_and_sources);
-  }
-
-  static inline void
-  merge_list(
-    PointSourceMap& lhs,
-    auto& points_and_sources
-  )
-  {
-    std::lock_guard<mutex> lock(lhs.mutex_);
-    do_par(points_and_sources, [&lhs](const PointSourceMap& rhs) {
-      using maps_direct = pair<source_pair*, const source_pair&>;
-      std::lock_guard<mutex> lock_rhs(rhs.mutex_);
-      const merged_map_type& p_m = rhs.map_;
-      auto v0 = std::views::transform(p_m, [&lhs, &rhs](const auto& kv) {
-        // insert or lookup map for key
-        // still need key for relativeIndex
-        auto& k = kv.first;
-        auto& v = kv.second;
-        return maps_direct(&lhs.map_[k], v);
-      });
-      // because we already did the map lookup we can do this all in paralell
-      std::for_each(std::execution::par_unseq, v0.begin(), v0.end(), [](const maps_direct& spsp) {
-        source_pair& pair0 = *(spsp.first);
-        S& s0 = pair0.first;
-        vector<V>& p0 = pair0.second;
-        const source_pair& pair1 = spsp.second;
-        const S& s1 = pair1.first;
-        const vector<V>& p1 = pair1.second;
-        p0.insert(p0.end(), p1.begin(), p1.end());
-        s0 |= s1;
-      });
-    });
-  }
-
-  PointSourceMap(
-    Scenario& scenario,
-    const double duration,
-    const tuple<Cell, PointSet, const OffsetSet*>& t
-  )
-    : PointSourceMap()
-  {
-    const auto& location = std::get<0>(t);
-    const auto& pts = std::get<1>(t);
-    const auto& offsets = *std::get<2>(t);
-    auto p_o = std::views::transform(
-      std::views::cartesian_product(
-        std::views::transform(
-          offsets,
-          [duration](const Offset& o) {
-            return o.after(duration);
-          }
-        ),
-        pts
+  auto p_o = std::views::transform(
+    std::views::cartesian_product(
+      std::views::transform(
+        offsets,
+        [duration](const Offset& o) {
+          return o.after(duration);
+        }
       ),
-      [](const pair<const Offset&, const InnerPos&>& o_p) {
-        const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
-        return InnerPos(pos);
-      }
-    );
-    // no need to lock since this doesn't exist yet
-    // were given a list of pairs that would go in a map
-    // NOTE: could also sort and then check for key changing
-    map_type p_m{};
-    for (const InnerPos& p : p_o)
-    {
-      Cell for_cell = scenario.cell(p);
-      auto& pts = p_m[for_cell];
-      pts.emplace_back(p);
+      pts
+    ),
+    [](const pair<const Offset&, const InnerPos&>& o_p) {
+      return std::get<1>(o_p).add(std::get<0>(o_p));
     }
-    using tuple_temp = tuple<const K, const vector<V>&, source_pair*>;
-    auto v0 = std::views::transform(p_m, [this](const auto& kv) {
-      // insert or lookup map for key
-      // still need key for relativeIndex
-      return tuple_temp(kv.first, kv.second, &map_[kv.first]);
-    });
-    // because we already did the map lookup we can do this all in paralell
-    std::for_each(
-      std::execution::par_unseq,
-      v0.begin(),
-      v0.end(),
-      [&location](const tuple_temp& kpsp) {
-        const K k = std::get<0>(kpsp);
-        const vector<V>& p1 = std::get<1>(kpsp);
-        // pair that is currently in map_ for the given key
-        source_pair& sp = *(std::get<2>(kpsp));
-        S& s = sp.first;
-        vector<V>& p0 = sp.second;
-        p0.insert(p0.end(), p1.begin(), p1.end());
-        const auto source = relativeIndex(k, location);
-        s |= source;
-      }
-    );
-  }
-
-  PointSourceMap(
-    Scenario& scenario,
-    map<SpreadKey, SpreadInfo>& spread_info,
-    const double duration,
-    const CellPair& kv0
-  )
+  );
+  // were given a list of pairs that would go in a map
+  // NOTE: could also sort and then check for key changing
+  map_type p_m{};
+  for (const InnerPos& p : p_o)
   {
-    auto& key = kv0.first;
-    auto& offsets = spread_info[key].offsets();
-    auto points_and_sources = std::views::transform(
-      kv0.second,
-      [&scenario, &duration, &offsets](const tuple<Cell, PointSet> pts_for_cell) {
-        return PointSourceMap(
-          scenario,
-          duration,
-          std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
-        );
-      }
-    );
-    merge_list(*this, points_and_sources);
+    // don't need cell attributes, just location
+    // x is column & y is row
+    Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
+    auto& pts = p_m[for_cell];
+    pts.emplace_back(p);
   }
+  merged_map_type result{};
+  auto v0 = std::views::transform(p_m, [&result](const auto& kv) {
+    // insert or lookup map for key
+    // still need key for relativeIndex
+    return tuple_temp(kv.first, kv.second, &result[kv.first]);
+  });
+  // because we already did the map lookup we can do this all in paralell
+  std::for_each(
+    std::execution::par_unseq,
+    v0.begin(),
+    v0.end(),
+    [&location](const tuple_temp& kpsp) {
+      const Location k = std::get<0>(kpsp);
+      const vector<InnerPos>& p1 = std::get<1>(kpsp);
+      // pair that is currently in result for the given key
+      source_pair& sp = *(std::get<2>(kpsp));
+      CellIndex& s = sp.first;
+      vector<InnerPos>& p0 = sp.second;
+      p0.insert(p0.end(), p1.begin(), p1.end());
+      const auto source = relativeIndex(k, location);
+      s |= source;
+    }
+  );
+  return static_cast<const merged_map_type>(result);
+}
 
-  PointSourceMap(
-    Scenario& scenario,
-    map<SpreadKey, SpreadInfo>& spread_info,
-    const double duration,
-    const auto& to_spread
-  )
-  {
-    auto points_and_sources = std::views::transform(
-      to_spread,
-      [&scenario, &duration, &spread_info](const CellPair& kv0) {
-        return PointSourceMap(scenario, spread_info, duration, kv0);
-      }
-    );
-    merge_list(*this, points_and_sources);
-  }
+const merged_map_type
+merge_list(
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const spreading_points& to_spread
+)
+{
+  return static_cast<const merged_map_type>(merge_list_of_maps(std::views::transform(
+    to_spread,
+    [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
+      auto& key = kv0.first;
+      auto& offsets = spread_info[key].offsets();
+      return merge_list_of_maps(std::views::transform(
+        kv0.second,
+        [&duration, &offsets](const tuple<Cell, PointSet>& pts_for_cell) -> const merged_map_type {
+          const merged_map_type r1(
+            merge_list(duration, std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), offsets)
+          );
+          return r1;
+        }
+      ));
+    }
+  )));
+}
 
-  void
-  final_merge_maps(
-    map<Cell, PointSet>& points_out,
-    map<Cell, CellIndex>& sources_out,
-    const BurnedData& unburnable
-  )
-  {
-    std::lock_guard<mutex> lock(mutex_);
-    do_each(map_, [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
-      const K k = ksp.first;
+void
+calculate_spread(
+  Scenario& scenario,
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const spreading_points& to_spread,
+  map<Cell, PointSet>& points_out,
+  map<Cell, CellIndex>& sources_out,
+  const BurnedData& unburnable
+)
+{
+  do_each(
+    merge_list(spread_info, duration, to_spread),
+    [&scenario, &points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
+      // look up Cell from scenario here since we don't need attributes until now
+      const Cell k = scenario.cell(ksp.first);
       const source_pair& sp = ksp.second;
-      const S& s = sp.first;
+      const CellIndex& s = sp.first;
       sources_out[k] |= s;
       const auto h = k.hash();
       if (!unburnable.at(h))
       {
-        // pair that is currently in map_ for the given key
+        // pair that is currently in merge_from for the given key
         const auto& sp = std::get<1>(ksp);
-        const vector<V>& p1 = sp.second;
+        const vector<InnerPos>& p1 = sp.second;
         auto& p0 = points_out[k];
         p0.insert(p0.end(), p1.begin(), p1.end());
         // works the same if we hull here
@@ -298,13 +238,9 @@ public:
           hull(p0);
         }
       }
-    });
-  }
-
-private:
-  merged_map_type map_;
-  mutable mutex mutex_;
-};
+    }
+  );
+}
 
 void
 IObserver_deleter::operator()(
@@ -322,7 +258,10 @@ Scenario::clear() noexcept
   scheduler_ = set<Event, EventCompare>();
   arrival_ = {};
   points_ = {};
-  spread_info_ = {};
+  if (!Settings::surface())
+  {
+    spread_info_ = {};
+  }
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
@@ -563,7 +502,6 @@ Scenario::reset(
   cancelled_ = false;
   current_time_ = start_time_;
   intensity_ = nullptr;
-  max_ros_ = 0;
   probabilities_ = nullptr;
   final_sizes_ = final_sizes;
   ran_ = false;
@@ -629,12 +567,6 @@ Scenario::evaluate(
 #ifdef DEBUG_POINTS
       {
         const auto ymd = fs::make_timestamp(model().year(), event.time());
-        log_note(
-          "Handling spread event for time %f representing %s with %ld points",
-          event.time(),
-          ymd.c_str(),
-          points_.size()
-        );
       }
 #endif
       scheduleFireSpread(event);
@@ -784,9 +716,8 @@ Scenario::saveObservers(
   const DurationSize time
 ) const
 {
-  static const size_t BufferSize = 64;
-  char buffer[BufferSize + 1] = {0};
-  sprintf(buffer, "%03zu_%06ld_%03d", id(), simulation(), static_cast<int>(time));
+  char buffer[64]{0};
+  sxprintf(buffer, "%03zu_%06ld_%03d", id(), simulation(), static_cast<int>(time));
   return saveObservers(output_directory, string(buffer));
 }
 
@@ -912,7 +843,7 @@ Scenario::add_log(
   const string tmp;
   stringstream iss(tmp);
   static char buffer[1024]{0};
-  sprintf(buffer, "Scenario %4ld.%04ld (%3f): ", id(), simulation(), current_time_);
+  sxprintf(buffer, "Scenario %4ld.%04ld (%3f): ", id(), simulation(), current_time_);
   iss << buffer << format;
   return iss.str();
 }
@@ -1002,30 +933,51 @@ Scenario::run(
   {
     return nullptr;
   }
-  ++COMPLETED;
+  const auto completed = ++COMPLETED;
   // HACK: use + to pull value out of atomic
+  const auto count = Settings::surface() ? model_->scenarioCount() : (+COUNT);
+  const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
+  if (Settings::surface())
+  {
+    const auto ratio_done = static_cast<double>(completed) / count;
+    const auto s = model_->runTime().count();
+    const auto r = static_cast<size_t>(s / ratio_done) - s;
+    log_output(
+      log_level,
+      "[% d of % d] (%0.2f%%) <%lds : %lds remaining> Completed with final size % 0.1f ha",
+      completed,
+      count,
+      100 * ratio_done,
+      s,
+      r,
+      currentFireSize()
+    );
+  }
+  else
+  {
 #ifdef NDEBUG
-  log_info(
-    "[% d of % d] Completed with final size % 0.1f ha",
-    +COMPLETED,
-    +COUNT,
-    currentFireSize()
-  );
+    log_output(
+      log_level,
+      "[% d of % d] Completed with final size % 0.1f ha",
+      completed,
+      count,
+      currentFireSize()
+    );
 #else
-  // try to make output consistent if in debug mode
-  log_info("Completed with final size %0.1f ha", currentFireSize());
+    // try to make output consistent if in debug mode
+    log_output(log_level, "Completed with final size %0.1f ha", currentFireSize());
 #endif
+  }
   ran_ = true;
 #ifdef DEBUG_PROBABILITY
   // nice to have this get output when debugging, but only need it in extreme cases
   if (logging::Log::getLogLevel() <= logging::LOG_EXTENSIVE)
   {
-    static const size_t BufferSize = 64;
-    char buffer[BufferSize + 1] = {0};
-    sprintf(buffer, "%03zu_%06ld_extinction", id(), simulation());
-    saveProbabilities(model_->outputDirectory(), string(buffer), extinction_thresholds_);
-    sprintf(buffer, "%03zu_%06ld_spread", id(), simulation());
-    saveProbabilities(model_->outputDirectory(), string(buffer), spread_thresholds_by_ros_);
+    char buffer[64]{0};
+    sxprintf(buffer, "%03zu_%06ld_extinction", id(), simulation());
+    saveProbabilities(model().outputDirectory(), string(buffer), extinction_thresholds_);
+    sxprintf(buffer, "%03zu_%06ld_spread", id(), simulation());
+    saveProbabilities(model().outputDirectory(), string(buffer), spread_thresholds_by_ros_);
   }
 #endif
   if (oob_spread_ > 0)
@@ -1041,30 +993,36 @@ Scenario::scheduleFireSpread(
 )
 {
   const auto time = event.time();
-  current_time_ = time;
-  const auto wx = weather(time);
-  logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   const auto this_time = time_index(time);
+  const auto wx = Settings::surface() ? model_->yesterday() : weather(time);
+  const auto wx_daily = Settings::surface() ? model_->yesterday() : weather_daily(time);
+  current_time_ = time;
+  logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   const auto next_time = static_cast<double>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
   const auto max_duration = (next_time - time) * DAY_MINUTES;
   const auto max_time = time + max_duration / DAY_MINUTES;
   // HACK: use the old ffmc for this check to be consistent with previous version
-  if (weather_daily(time)->ffmc().asValue() < minimumFfmcForSpread(time))
+  if (wx_daily->ffmc().asValue() < minimumFfmcForSpread(time))
   {
     addEvent(Event::makeFireSpread(max_time));
-    log_verbose("Waiting until %f because of FFMC", max_time);
+    log_extensive("Waiting until %f because of FFMC", max_time);
     return;
   }
   if (current_time_index_ != this_time)
   {
     current_time_index_ = this_time;
-    spread_info_ = {};
+    // seemed like it would be good to keep offsets but max_ros_ needs to reset or things slow to a
+    // crawl?
+    if (!Settings::surface())
+    {
+      spread_info_ = {};
+    }
     max_ros_ = 0.0;
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  map<SpreadKey, vector<CellPts>> to_spread{};
+  spreading_points to_spread{};
   // make block to prevent it being visible beyond use
   {
     // if we use an iterator this way we don't need to copy keys to erase things
@@ -1104,8 +1062,7 @@ Scenario::scheduleFireSpread(
                     : max_duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  auto result = PointSourceMap(*this, spread_info_, duration, to_spread);
-  result.final_merge_maps(points_, sources, unburnable_);
+  calculate_spread(*this, spread_info_, duration, to_spread, points_, sources, unburnable_);
 
   map<Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);

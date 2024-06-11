@@ -532,6 +532,11 @@ public:
     const DurationSize time_at_location
   ) const
   {
+    if (Settings::deterministic())
+    {
+      // always survive if deterministic
+      return true;
+    }
     try
     {
       const auto fire_wx = weather_;
@@ -660,10 +665,6 @@ protected:
    * \brief Calculated SpreadInfo for SpreadKey for current time
    */
   map<SpreadKey, SpreadInfo> spread_info_{};
-  /**
-   * \brief Calculated offsets from origin Point for spread given SpreadKey for current time
-   */
-  map<SpreadKey, OffsetSet> offsets_{};
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
