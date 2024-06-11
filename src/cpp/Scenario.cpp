@@ -187,12 +187,11 @@ merged_map_type
 merge_list(
   Scenario& scenario,
   const double duration,
-  const tuple<Cell, PointSet, const OffsetSet*>& t
+  const Cell& location,
+  const PointSet& pts,
+  const OffsetSet& offsets
 )
 {
-  const auto& location = std::get<0>(t);
-  const auto& pts = std::get<1>(t);
-  const auto& offsets = *std::get<2>(t);
   auto p_o = std::views::transform(
     std::views::cartesian_product(
       std::views::transform(
@@ -204,8 +203,7 @@ merge_list(
       pts
     ),
     [](const pair<const Offset&, const InnerPos&>& o_p) {
-      const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
-      return InnerPos(pos);
+      return std::get<1>(o_p).add(std::get<0>(o_p));
     }
   );
   // no need to lock since this doesn't exist yet
@@ -259,7 +257,9 @@ merge_list(
       return merge_list(
         scenario,
         duration,
-        std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
+        std::get<0>(pts_for_cell),
+        std::get<1>(pts_for_cell),
+        offsets
       );
     }
   );
