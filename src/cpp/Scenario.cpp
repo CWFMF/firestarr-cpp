@@ -23,6 +23,12 @@ using topo::SpreadKey;
 using topo::StartPoint;
 using CellPts = tuple<Cell, const PointSet>;
 using CellPair = pair<const SpreadKey, vector<CellPts>>;
+using source_pair = pair<CellIndex, vector<InnerPos>>;
+using merged_map_type = map<Cell, source_pair>;
+using merged_map_pair = pair<Cell, source_pair>;
+using map_type = map<Cell, vector<InnerPos>>;
+using maps_direct = pair<source_pair*, const source_pair&>;
+using tuple_temp = tuple<const Cell, const vector<InnerPos>&, source_pair*>;
 
 constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
@@ -142,13 +148,6 @@ do_par(
 
 class PointSourceMap
 {
-  using K = Cell;
-  using V = InnerPos;
-  using S = CellIndex;
-  using source_pair = pair<S, vector<V>>;
-  using merged_map_type = map<K, source_pair>;
-  using merged_map_pair = pair<K, source_pair>;
-  using map_type = map<K, vector<V>>;
 public:
   PointSourceMap()
     : map_({})
@@ -161,7 +160,6 @@ public:
   )
   {
     do_par(points_and_sources, [&lhs](const PointSourceMap& rhs) {
-      using maps_direct = pair<source_pair*, const source_pair&>;
       const merged_map_type& p_m = rhs.map_;
       auto v0 = std::views::transform(p_m, [&lhs, &rhs](const auto& kv) {
         // insert or lookup map for key
@@ -173,11 +171,11 @@ public:
       // because we already did the map lookup we can do this all in paralell
       std::for_each(std::execution::par_unseq, v0.begin(), v0.end(), [](const maps_direct& spsp) {
         source_pair& pair0 = *(spsp.first);
-        S& s0 = pair0.first;
-        vector<V>& p0 = pair0.second;
+        CellIndex& s0 = pair0.first;
+        vector<InnerPos>& p0 = pair0.second;
         const source_pair& pair1 = spsp.second;
-        const S& s1 = pair1.first;
-        const vector<V>& p1 = pair1.second;
+        const CellIndex& s1 = pair1.first;
+        const vector<InnerPos>& p1 = pair1.second;
         p0.insert(p0.end(), p1.begin(), p1.end());
         s0 |= s1;
       });
@@ -218,7 +216,6 @@ public:
       auto& pts = p_m[for_cell];
       pts.emplace_back(p);
     }
-    using tuple_temp = tuple<const K, const vector<V>&, source_pair*>;
     auto v0 = std::views::transform(p_m, [this](const auto& kv) {
       // insert or lookup map for key
       // still need key for relativeIndex
@@ -230,12 +227,12 @@ public:
       v0.begin(),
       v0.end(),
       [&location](const tuple_temp& kpsp) {
-        const K k = std::get<0>(kpsp);
-        const vector<V>& p1 = std::get<1>(kpsp);
+        const Cell k = std::get<0>(kpsp);
+        const vector<InnerPos>& p1 = std::get<1>(kpsp);
         // pair that is currently in map_ for the given key
         source_pair& sp = *(std::get<2>(kpsp));
-        S& s = sp.first;
-        vector<V>& p0 = sp.second;
+        CellIndex& s = sp.first;
+        vector<InnerPos>& p0 = sp.second;
         p0.insert(p0.end(), p1.begin(), p1.end());
         const auto source = relativeIndex(k, location);
         s |= source;
@@ -294,16 +291,16 @@ public:
   )
   {
     do_each(map_, [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
-      const K k = ksp.first;
+      const Cell k = ksp.first;
       const source_pair& sp = ksp.second;
-      const S& s = sp.first;
+      const CellIndex& s = sp.first;
       sources_out[k] |= s;
       const auto h = k.hash();
       if (!(unburnable[h]))
       {
         // pair that is currently in map_ for the given key
         const auto& sp = std::get<1>(ksp);
-        const vector<V>& p1 = sp.second;
+        const vector<InnerPos>& p1 = sp.second;
         auto& p0 = points_out[k];
         p0.insert(p0.end(), p1.begin(), p1.end());
         // works the same if we hull here
