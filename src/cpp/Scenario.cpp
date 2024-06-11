@@ -301,6 +301,19 @@ void final_merge_maps(
       }
     });
 }
+void calculate_spread(
+  Scenario& scenario,
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const auto& to_spread,
+  map<Cell, PointSet>& points_out,
+  map<Cell, CellIndex>& sources_out,
+  const BurnedData& unburnable)
+
+{
+  auto result = merge_list(scenario, spread_info, duration, to_spread);
+  final_merge_maps(result, points_out, sources_out, unburnable);
+}
 class LogPoints
 {
 public:
@@ -1201,8 +1214,14 @@ void Scenario::scheduleFireSpread(const Event& event)
   // note("Spreading for %f minutes", duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  auto result = merge_list(*this, spread_info_, duration, to_spread);
-  final_merge_maps(result, points_, sources, *unburnable_);
+  calculate_spread(
+    *this,
+    spread_info_,
+    duration,
+    to_spread,
+    points_,
+    sources,
+    *unburnable_);
 
   map<Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);
