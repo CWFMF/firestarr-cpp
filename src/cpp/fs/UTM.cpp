@@ -20,7 +20,7 @@ PJ* normalized_context(PJ_CONTEXT* C, const string_view proj4_from, const string
   proj_destroy(P);
   return P_norm;
 }
-void from_lat_long(const string_view proj4, const Point& point, MathSize* x, MathSize* y)
+void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x, MathSize* y)
 {
   // see https://proj.org/en/stable/development/quickstart.html
   // do this in a function so we can hide and clean up intial context
@@ -51,7 +51,7 @@ void from_lat_long(const string_view proj4, const Point& point, MathSize* x, Mat
   proj_destroy(P);
   proj_context_destroy(C);
 }
-Point to_lat_long(const string_view proj4, const MathSize x, const MathSize y)
+fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize y)
 {
   // see https://proj.org/en/stable/development/quickstart.html
   // do this in a function so we can hide and clean up intial context
@@ -82,7 +82,7 @@ string try_fix_meridian(const string_view proj4)
     const string zone_str{proj4.substr(zone_pos + 6)};
     const auto zone = stoi(zone_str);
     // zone 15 is -93 and other zones are 6 degrees difference
-    const auto degrees = utm_central_meridian(zone);
+    const auto degrees = fs::utm_central_meridian(zone);
     // HACK: assume utm zone is at start
     const string proj4_fixed =
       ("+proj=tmerc +lat_0=0.000000000 +lon_0=" + to_string(degrees)

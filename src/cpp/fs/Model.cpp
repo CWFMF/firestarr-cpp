@@ -9,8 +9,6 @@
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "Scenario.h"
-#include "Util.h"
-#include "UTM.h"
 namespace fs
 {
 #ifdef DEBUG_WEATHER
@@ -18,27 +16,17 @@ constexpr auto FMT_OUT =
   "%ld,%d-%02d-%02d %02d:%02d:%02d,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f%s";
 #endif
 // HACK: assume using half the CPUs probably means that faster cores are being used?
-constexpr double PCT_CPU = 0.5;
+constexpr MathSize PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
-// FIX: just do one iteration at a time for now
-// const auto MAX_THREADS = std::thread::hardware_concurrency();
-// // no point in running multiple iterations if deterministic
-// const auto concurrent_iterations = Settings::deterministic()
-//                                    ? 1
-//                                    : std::max<size_t>(
-//                                        ceil(MAX_THREADS / scenarios_per_iteration),
-//                                        2
-//                                      );
-constexpr auto MAX_CONCURRENT = 1;
 Model::Model(
   const tm& start_time,
   const string_view output_directory,
   const StartPoint& start_point,
   Environment* env
 )
-  : start_time_(start_time), running_since_(Clock::now()),
-    time_limit_(Settings::maximumTimeSeconds()), env_(env), output_directory_(output_directory),
-    latitude_(start_point.latitude()), longitude_(start_point.longitude())
+  : output_directory_(output_directory), start_time_(start_time), running_since_(Clock::now()),
+    time_limit_(Settings::maximumTimeSeconds()), env_(env), latitude_(start_point.latitude()),
+    longitude_(start_point.longitude())
 {
   logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
   const auto nd_for_point = calculate_nd_ref_for_point(env->elevation(), start_point);
@@ -54,7 +42,39 @@ Model::Model(
     );
   }
 }
-void Model::readWeather(const FwiWeather& yesterday, const double latitude, string filename)
+void Model::setWeather(const FwiWeather& weather, const Day start_day)
+{
+  yesterday_ = weather;
+  const auto fuel_lookup = Settings::fuelLookup();
+  const auto& f = fuel_lookup.usedFuels();
+  wx_.emplace(
+    0,
+    FireWeather{
+      f,
+      static_cast<Day>(start_day - 1),
+      weather.dc(),
+      weather.dmc(),
+      weather.ffmc(),
+      weather.wind()
+    }
+  );
+  wx_daily_.emplace(
+    0,
+    FireWeather{
+      f,
+      static_cast<Day>(start_day - 1),
+      weather.dc(),
+      weather.dmc(),
+      weather.ffmc(),
+      weather.wind()
+    }
+  );
+}
+void Model::readWeather(
+  const FwiWeather& yesterday,
+  const MathSize latitude,
+  const string& filename
+)
 {
   map<size_t, vector<FwiWeather>> wx{};
   map<size_t, map<Day, FwiWeather>> wx_daily{};
@@ -67,7 +87,7 @@ void Model::readWeather(const FwiWeather& yesterday, const double latitude, stri
   if (in.is_open())
   {
 #ifndef NDEBUG
-    const auto file_out = outputDirectory() + "/wx_hourly_out_read.csv";
+    const auto file_out = string(output_directory_) + "/wx_hourly_out_read.csv";
     FILE* out = fopen(file_out.c_str(), "w");
     logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
     fprintf(out, "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\r\n");
@@ -148,8 +168,11 @@ void Model::readWeather(const FwiWeather& yesterday, const double latitude, stri
         time_t cur_time = mktime(&t);
         if (prev_time != std::numeric_limits<time_t>::min())
         {
+          auto seconds_diff = (cur_time - prev_time);
           logging::check_fatal(
-            (cur_time - prev_time) != (60 * 60), "Expected sequential hours in weather input"
+            seconds_diff != HOUR_SECONDS,
+            "Expected sequential hours in weather input but rows are %f hours away from each other",
+            seconds_diff / static_cast<MathSize>(HOUR_SECONDS)
           );
         }
         prev_time = cur_time;
@@ -198,18 +221,17 @@ void Model::readWeather(const FwiWeather& yesterday, const double latitude, stri
           t.tm_hour,
           t.tm_min,
           t.tm_sec,
-          w->prec().asValue(),
-          w->temp().asValue(),
-          w->rh().asValue(),
-          w->wind().speed().asValue(),
-          w->wind().direction().asValue(),
-          w->ffmc().asValue(),
-          w->dmc().asValue(),
-          w->dc().asValue(),
-          w->isi().asValue(),
-          w->bui().asValue(),
-          w->fwi().asValue(),
-          ""
+          w.prec().asValue(),
+          w.temp().asValue(),
+          w.rh().asValue(),
+          w.wind().speed().asValue(),
+          w.wind().direction().asValue(),
+          w.ffmc().asValue(),
+          w.dmc().asValue(),
+          w.dc().asValue(),
+          w.isi().asValue(),
+          w.bui().asValue(),
+          w.fwi().asValue() ""
         );
         fprintf(
           out,
@@ -285,26 +307,59 @@ void Model::findStarts(const Location location)
     ++range;
   }
   logging::check_fatal(starts_.empty(), "Fuel grid is empty");
-  logging::info("Using %d start locations:", starts_.size());
+  logging::info("Using %d start locations:", ignitionScenarios());
   for (const auto& s : starts_)
   {
     logging::info("\t%d, %d", s->row(), s->column());
   }
 }
+void Model::findAllStarts()
+{
+  logging::note("Running scenarios for every possible start location");
+  for (Idx x = 0; x < env_->columns(); ++x)
+  {
+    for (Idx y = 0; y < env_->rows(); ++y)
+    {
+      const auto loc = env_->cell(Location(y, x));
+      if (!is_null_fuel(loc))
+      {
+        starts_.push_back(make_shared<Cell>(cell(loc)));
+      }
+    }
+  }
+  logging::info("Using %d start locations:", ignitionScenarios());
+}
 void Model::makeStarts(
   Coordinates coordinates,
   const Point& point,
   const string_view perim,
-  const size_t size
+  size_t size
 )
 {
-  const Location location(std::get<0>(coordinates), std::get<1>(coordinates));
+  Location location(std::get<0>(coordinates), std::get<1>(coordinates));
   if (!perim.empty())
   {
     logging::note("Initializing from perimeter %s", string(perim).c_str());
     perimeter_ = make_shared<Perimeter>(perim, point, *env_);
+    // HACK: if perimeter is only one cell then use position not perimeter so it can bounce if
+    // non-fuel
+    const auto burned = perimeter_->burned();
+    const auto s = burned.size();
+    if (1 >= s)
+    {
+      logging::note("Converting perimeter into point since size is %ld", s);
+      // use whatever the one cell is instead of the lat/long
+      if (1 == s)
+      {
+        location = *(burned.begin());
+      }
+      // HACK: use 0 for 0 or 1 so it'll assign by point
+      size = 0;
+      perimeter_ = nullptr;
+    }
   }
-  else if (size > 0)
+  // use if instead of else if in case perimeter was a single point and got switched
+  if (size > 0)
   {
     logging::note("Initializing from size %d ha", size);
     perimeter_ = make_shared<Perimeter>(cell(location), size, *env_);
@@ -330,35 +385,44 @@ void Model::makeStarts(
       logging::note("Using fire perimeter results in empty fire - changing to use point");
       perimeter_ = nullptr;
     }
-    logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
-    if (0 == size && is_null_fuel(cell(location)))
+    if (Settings::surface())
     {
-      findStarts(location);
+      findAllStarts();
     }
     else
     {
-      starts_.push_back(make_shared<Cell>(cell(location)));
+      logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
+      if (0 == size && is_null_fuel(cell(location)))
+      {
+        findStarts(location);
+      }
+      else
+      {
+        starts_.push_back(make_shared<Cell>(cell(location)));
+      }
     }
   }
   logging::note(
     "Creating %ld streams x %ld location%s = %ld scenarios",
     wx_.size(),
-    starts_.size(),
-    starts_.size() > 1 ? "s" : "",
-    wx_.size() * starts_.size()
+    ignitionScenarios(),
+    ignitionScenarios() > 1 ? "s" : "",
+    wx_.size() * ignitionScenarios()
   );
 }
 Iteration Model::readScenarios(
   const StartPoint& start_point,
-  const double start,
+  const DurationSize start,
   const Day start_day,
   const Day last_date
 )
 {
+  // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
   auto saves = Settings::outputDateOffsets();
-  const auto setup_scenario = [&result, &saves](Scenario* scenario) {
-    if (Settings::saveIntensity())
+  auto save_individual = Settings::saveIndividual();
+  const auto setup_scenario = [&result, save_individual, &saves](Scenario* scenario) {
+    if (save_individual)
     {
       scenario->registerObserver(new IntensityObserver(*scenario));
       scenario->registerObserver(new ArrivalObserver(*scenario));
@@ -371,25 +435,34 @@ Iteration Model::readScenarios(
     }
     result.push_back(scenario);
   };
-  for (const auto& kv : wx_)
+  if (Settings::surface())
   {
-    const auto id = kv.first;
-    const auto* cur_wx = &kv.second;
-    const auto* cur_daily = &wx_daily_.at(id);
-    if (nullptr != perimeter_)
+    setup_scenario(new Scenario(
+      this, 0, &wx_.at(0), &wx_daily_.at(0), start, starts_.at(0), start_point, start_day, last_date
+    ));
+  }
+  else
+  {
+    for (const auto& kv : wx_)
     {
-      setup_scenario(new Scenario(
-        this, id, cur_wx, cur_daily, start, perimeter_, start_point, start_day, last_date
-      ));
-    }
-    else
-    {
-      for (const auto& cur_start : starts_)
+      const auto id = kv.first;
+      const auto* cur_wx = &kv.second;
+      const auto* cur_daily = &wx_daily_.at(id);
+      if (nullptr != perimeter_)
       {
-        // should always have at least the day before the fire in the weather stream
         setup_scenario(new Scenario(
-          this, id, cur_wx, cur_daily, start, cur_start, start_point, start_day, last_date
+          this, id, cur_wx, cur_daily, start, perimeter_, start_point, start_day, last_date
         ));
+      }
+      else
+      {
+        for (const auto& cur_start : starts_)
+        {
+          // should always have at least the day before the fire in the weather stream
+          setup_scenario(new Scenario(
+            this, id, cur_wx, cur_daily, start, cur_start, start_point, start_day, last_date
+          ));
+        }
       }
     }
   }
@@ -401,7 +474,10 @@ Iteration Model::readScenarios(
   const auto run_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(run_time);
   return run_time_seconds;
 }
-bool Model::shouldStop() const noexcept { return isOutOfTime() || isOverSimulationCountLimit(); }
+bool Model::shouldStop() const noexcept
+{
+  return !Settings::surface() && (isOutOfTime() || isOverSimulationCountLimit());
+}
 bool Model::isOutOfTime() const noexcept { return is_out_of_time_; }
 bool Model::isOverSimulationCountLimit() const noexcept { return is_over_simulation_count_; }
 ProbabilityMap* Model::makeProbabilityMap(
@@ -415,34 +491,24 @@ ProbabilityMap* Model::makeProbabilityMap(
 {
   return env_->makeProbabilityMap(time, start_time, min_value, low_max, med_max, max_value);
 }
-static void show_probabilities(const map<double, ProbabilityMap*>& probabilities)
+static void show_probabilities(const map<ThresholdSize, ProbabilityMap*>& probabilities)
 {
   for (const auto& kv : probabilities)
   {
     kv.second->show();
   }
 }
-template <class T>
-ostream& operator<<(ostream& os, const vector<T>& v)
-{
-  for (auto& m : v)
-  {
-    os << m << " ";
-  }
-  os << endl;
-  return os;
-}
-map<double, ProbabilityMap*> make_prob_map(
+map<DurationSize, ProbabilityMap*> make_prob_map(
   const Model& model,
-  const vector<double>& saves,
-  const double started,
+  const vector<DurationSize>& saves,
+  const DurationSize started,
   const int min_value,
   const int low_max,
   const int med_max,
   const int max_value
 )
 {
-  map<double, ProbabilityMap*> result{};
+  map<DurationSize, ProbabilityMap*> result{};
   for (const auto& time : saves)
   {
     result.emplace(
@@ -451,10 +517,19 @@ map<double, ProbabilityMap*> make_prob_map(
   }
   return result;
 }
+map<DurationSize, SafeVector*> make_size_map(const vector<DurationSize>& saves)
+{
+  map<DurationSize, SafeVector*> result{};
+  for (const auto& time : saves)
+  {
+    result.emplace(time, new SafeVector());
+  }
+  return result;
+}
 bool Model::add_statistics(
-  vector<double>* all_sizes,
-  vector<double>* means,
-  vector<double>* pct,
+  vector<MathSize>* all_sizes,
+  vector<MathSize>* means,
+  vector<MathSize>* pct,
   const SafeVector& sizes
 )
 {
@@ -465,9 +540,13 @@ bool Model::add_statistics(
   static_cast<void>(insert_sorted(means, s.mean()));
   // NOTE: Used to just look at mean and percentile of each iteration, but should probably look at
   // all the sizes together?
-  for (const auto size : cur_sizes)
+  for (const auto& size : cur_sizes)
   {
     static_cast<void>(insert_sorted(all_sizes, size));
+  }
+  if (Settings::surface())
+  {
+    return true;
   }
   is_over_simulation_count_ = all_sizes->size() >= Settings::maximumCountSimulations();
   if (isOverSimulationCountLimit())
@@ -503,15 +582,15 @@ bool Model::add_statistics(
  */
 size_t runs_required(
   const size_t i,
-  const vector<double>* all_sizes,
-  const vector<double>* means,
-  const vector<double>* pct,
+  const vector<MathSize>* all_sizes,
+  const vector<MathSize>* means,
+  const vector<MathSize>* pct,
   const Model& model
 )
 {
   if (Settings::deterministic())
   {
-    logging::note("Stopping after %i iteration because running in deterministic mode");
+    logging::note("Stopping after iteration %ld because running in deterministic mode", i);
     return 0;
   }
   if (model.isOverSimulationCountLimit())
@@ -559,10 +638,14 @@ size_t runs_required(
   const auto left = max(max(runs_for_means, runs_for_pct), runs_for_sizes);
   return left;
 }
-double Model::saveProbabilities(map<double, ProbabilityMap*>& probabilities, const bool is_interim)
+DurationSize Model::saveProbabilities(
+  map<DurationSize, ProbabilityMap*>& probabilities,
+  const Day start_day,
+  const bool is_interim
+)
 {
-  auto final_time = numeric_limits<double>::min();
-  for (const auto by_time : probabilities)
+  auto final_time = numeric_limits<DurationSize>::min();
+  for (const auto& by_time : probabilities)
   {
     const auto time = by_time.first;
     final_time = max(final_time, time);
@@ -570,17 +653,25 @@ double Model::saveProbabilities(map<double, ProbabilityMap*>& probabilities, con
     logging::debug("Setting perimeter");
     prob->setPerimeter(this->perimeter_.get());
     std::ignore = prob->saveAll(outputDirectory(), this->start_time_, time, is_interim);
+    const auto day = static_cast<int>(round(time));
+    const auto n = nd(day);
+    logging::note(
+      "Fuels for day %d are %s green-up and grass has %d%% curing",
+      day - static_cast<int>(start_day),
+      calculate_is_green(n) ? "after" : "before",
+      calculate_grass_curing(n)
+    );
   }
   return final_time;
 }
-map<double, ProbabilityMap*> Model::runIterations(
+map<DurationSize, ProbabilityMap*> Model::runIterations(
   const StartPoint& start_point,
-  const double start,
+  const DurationSize start,
   const Day start_day
 )
 {
   auto last_date = start_day;
-  for (const auto i : Settings::outputDateOffsets())
+  for (const auto& i : Settings::outputDateOffsets())
   {
     last_date = max(static_cast<Day>(start_day + i), last_date);
   }
@@ -603,18 +694,20 @@ map<double, ProbabilityMap*> Model::runIterations(
   std::seed_seq seed_extinction{static_cast<size_t>(1), static_cast<size_t>(start_day), lat, lon};
   mt19937 mt_spread(seed_spread);
   mt19937 mt_extinction(seed_extinction);
-  vector<double> all_sizes{};
-  vector<double> means{};
-  vector<double> pct{};
+  vector<MathSize> all_sizes{};
+  vector<MathSize> means{};
+  vector<MathSize> pct{};
   size_t iterations_done = 0;
   size_t scenarios_done = 0;
   size_t scenarios_required_done = 0;
   vector<Iteration> all_iterations{};
+  logging::verbose("Reading scenarios");
   all_iterations.push_back(readScenarios(start_point, start, start_day, last_date));
   // HACK: reference from vector so timer can cancel everything in vector
   auto& iteration = all_iterations[0];
   const auto scenarios_per_iteration = iteration.size();
   // put probability maps into map
+  logging::verbose("Setting save points");
   const auto saves = iteration.savePoints();
   const auto started = iteration.startTime();
   auto probabilities = make_prob_map(
@@ -626,7 +719,7 @@ map<double, ProbabilityMap*> Model::runIterations(
     Settings::intensityMaxModerate(),
     numeric_limits<int>::max()
   );
-  vector<map<double, ProbabilityMap*>> all_probabilities{};
+  vector<map<DurationSize, ProbabilityMap*>> all_probabilities{};
   all_probabilities.push_back(make_prob_map(
     *this,
     saves,
@@ -643,11 +736,14 @@ map<double, ProbabilityMap*> Model::runIterations(
   auto timer = std::thread([this,
                             &scenarios_per_iteration,
                             &scenarios_required_done,
+                            &scenarios_done,
                             &all_probabilities,
                             &iterations_done,
                             &runs_left,
+                            &all_sizes,
                             &all_iterations,
                             &is_being_cancelled,
+                            &probabilities,
                             &start_day]() {
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
     do
@@ -692,7 +788,7 @@ map<double, ProbabilityMap*> Model::runIterations(
           scenarios_required_done,
           scenarios_per_iteration
         );
-        saveProbabilities(all_probabilities[0], true);
+        saveProbabilities(all_probabilities[0], start_day, true);
       }
     }
     const auto run_time_seconds = runTime().count();
@@ -702,26 +798,56 @@ map<double, ProbabilityMap*> Model::runIterations(
     );
   });
   auto threads = list<std::thread>{};
-  const auto finalize_probabilities = [&threads, &timer, &probabilities]() {
-    // assume timer is cancelling everything
-    for (auto& t : threads)
-    {
-      if (t.joinable())
+  const auto finalize_probabilities =
+    [this, &start_day, &all_sizes, &is_being_cancelled, &threads, &timer, &probabilities]() {
+      // assume timer is cancelling everything
+      for (auto& t : threads)
       {
-        t.join();
+        if (t.joinable())
+        {
+          t.join();
+        }
       }
-    }
-    if (timer.joinable())
+      if (timer.joinable())
+      {
+        timer.join();
+      }
+      return probabilities;
+    };
+  // if using surface just run each start through in a loop here
+  size_t cur_start = 0;
+  auto reset_iter = [&cur_start, this, &mt_extinction, &mt_spread](Iteration& iter) {
+    if (Settings::surface())
     {
-      timer.join();
+      if (cur_start >= starts_.size())
+      {
+        return false;
+      }
+      auto start_cell = starts_[cur_start];
+      iter.reset_with_new_start(start_cell);
+      ++cur_start;
     }
-    return probabilities;
+    else
+    {
+      iter.reset(&mt_extinction, &mt_spread);
+    }
+    return true;
   };
   if (Settings::runAsync())
   {
-    // FIX: I think we can just have 2 Iteration objects and roll through starting
-    // threads in the second one as the first one finishes?
-    for (size_t x = 1; x < MAX_CONCURRENT; ++x)
+    const auto HARDWARE_THREADS = static_cast<size_t>(std::thread::hardware_concurrency());
+    // maybe a bit slower but prefer to run all scenarios at the same time
+    const auto MAX_THREADS = max(HARDWARE_THREADS, scenarios_per_iteration);
+    if (MAX_THREADS > HARDWARE_THREADS)
+    {
+      logging::note(
+        "Increasing to use at least one thread for each of %ld scenarios", scenarios_per_iteration
+      );
+      Model::task_limiter.set_limit(MAX_THREADS);
+    }
+    // no point in running multiple iterations if deterministic
+    const auto concurrent_iterations = 1;
+    for (size_t x = 1; x < concurrent_iterations; ++x)
     {
       all_iterations.push_back(readScenarios(start_point, start, start_day, last_date));
       all_probabilities.push_back(make_prob_map(
@@ -740,6 +866,7 @@ map<double, ProbabilityMap*> Model::runIterations(
                          &scenarios_required_done,
                          &scenarios_done,
                          &all_probabilities,
+                         &all_iterations,
                          &start_day](Scenario* s, size_t i, bool is_required) {
       auto result = s->run(&all_probabilities[i]);
       ++scenarios_done;
@@ -774,22 +901,25 @@ map<double, ProbabilityMap*> Model::runIterations(
               scenarios_required_done,
               scenarios_per_iteration
             );
-            saveProbabilities(all_probabilities[0], true);
+            saveProbabilities(all_probabilities[0], start_day, true);
           }
         }
       }
       return result;
     };
+    logging::debug("Created %d iterations to run concurrently", all_iterations.size());
     size_t cur_iter = 0;
     for (auto& iter : all_iterations)
     {
-      iter.reset(&mt_extinction, &mt_spread);
-      auto& scenarios = iter.getScenarios();
-      for (auto s : scenarios)
+      if (reset_iter(iter))
       {
-        threads.emplace_back(run_scenario, s, cur_iter, 0 == cur_iter);
+        auto& scenarios = iter.getScenarios();
+        for (auto s : scenarios)
+        {
+          threads.emplace_back(run_scenario, s, cur_iter, 0 == cur_iter);
+        }
+        ++cur_iter;
       }
-      ++cur_iter;
     }
     cur_iter = 0;
     while (runs_left > 0)
@@ -820,20 +950,29 @@ map<double, ProbabilityMap*> Model::runIterations(
         return finalize_probabilities();
       }
       {
-        runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
-        logging::note("Need another %d iterations", runs_left);
+        if (Settings::surface())
+        {
+          runs_left = ignitionScenarios() - iterations_done;
+        }
+        else
+        {
+          runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
+          logging::note("Need another %d iterations", runs_left);
+        }
       }
       if (runs_left > 0)
       {
-        iteration.reset(&mt_extinction, &mt_spread);
-        auto& scenarios = iteration.getScenarios();
-        for (auto s : scenarios)
+        if (reset_iter(iteration))
         {
-          threads.emplace_back(run_scenario, s, cur_iter, false);
+          auto& scenarios = iteration.getScenarios();
+          for (auto s : scenarios)
+          {
+            threads.emplace_back(run_scenario, s, cur_iter, false);
+          }
+          ++cur_iter;
+          // loop around to start if required
+          cur_iter %= all_iterations.size();
         }
-        ++cur_iter;
-        // loop around to start if required
-        cur_iter %= all_iterations.size();
       }
       else
       {
@@ -849,18 +988,28 @@ map<double, ProbabilityMap*> Model::runIterations(
     while (runs_left > 0)
     {
       logging::note("Running iteration %d", iterations_done + 1);
-      iteration.reset(&mt_extinction, &mt_spread);
-      for (auto s : iteration.getScenarios())
+      if (reset_iter(iteration))
       {
-        s->run(&probabilities);
+        for (auto s : iteration.getScenarios())
+        {
+          s->run(&probabilities);
+        }
+        ++iterations_done;
+        if (!add_statistics(&all_sizes, &means, &pct, iteration.finalSizes()))
+        {
+          // ran out of time but timer should cance everything
+          return finalize_probabilities();
+        }
+        if (Settings::surface())
+        {
+          runs_left = ignitionScenarios() - iterations_done;
+        }
+        else
+        {
+          runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
+          logging::note("Need another %d iterations", runs_left);
+        }
       }
-      ++iterations_done;
-      if (!add_statistics(&all_sizes, &means, &pct, iteration.finalSizes()))
-      {
-        // ran out of time but timer should cance everything
-        return finalize_probabilities();
-      }
-      runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
     }
   }
   return finalize_probabilities();
@@ -888,7 +1037,8 @@ int Model::runScenarios(
     raster_root, start_point, perimeter, start_time.tm_year + TM_YEAR_OFFSET
   );
   logging::debug("Environment loaded");
-  const auto position = env.findCoordinates(start_point, true);
+  // don't flip for Environment because that already happened
+  const auto position = env.findCoordinates(start_point, false);
 #ifndef NDEBUG
   logging::check_fatal(
     std::get<0>(*position) > MAX_ROWS || std::get<1>(*position) > MAX_COLUMNS,
@@ -902,28 +1052,8 @@ int Model::runScenarios(
   Model model(start_time, output_directory, start_point, &env);
   logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
   logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
-  model.readWeather(yesterday, start_point.latitude(), weather_input);
-  if (model.wx_.empty())
-  {
-    logging::fatal("No weather provided");
-  }
-  const auto& w = model.wx_.begin()->second;
-  logging::debug("Have weather from day %d to %d", w.minDate(), w.maxDate());
-  const auto numDays = (w.maxDate() - w.minDate() + 1);
-  const auto needDays = Settings::maxDateOffset();
-  if (numDays < needDays)
-  {
-    logging::fatal(
-      "Not enough weather to proceed - have %d days but looking for %d", numDays, needDays
-    );
-  }
-  // want to output internal representation of weather to file
-#ifdef DEBUG_WEATHER
-  model.outputWeather();
-#endif
-  model.makeStarts(*position, start_point, perimeter, size);
   auto start_hour =
-    ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60)) / DAY_HOURS);
+    ((start_time.tm_hour + (static_cast<DurationSize>(start_time.tm_min) / 60)) / DAY_HOURS);
   logging::note(
     "Simulation start time is %d-%02d-%02d %02d:%02d",
     start_time.tm_year + TM_YEAR_OFFSET,
@@ -933,13 +1063,45 @@ int Model::runScenarios(
     start_time.tm_min
   );
   const auto start = start_time.tm_yday + start_hour;
+  const auto start_day = static_cast<Day>(start);
+  if (Settings::surface())
+  {
+    // yesterday should have constants to use
+    model.setWeather(yesterday, start_day);
+    model.year_ = start_time.tm_year + 1900;
+  }
+  else
+  {
+    model.readWeather(yesterday, start_point.latitude(), weather_input);
+    if (model.wx_.empty())
+    {
+      logging::fatal("No weather provided");
+    }
+    const auto& w = model.wx_.begin()->second;
+    logging::debug("Have weather from day %d to %d", w.minDate(), w.maxDate());
+    const auto numDays = (w.maxDate() - w.minDate() + 1);
+    const auto needDays = Settings::maxDateOffset();
+    if (numDays < needDays)
+    {
+      logging::fatal(
+        "Not enough weather to proceed - have %d days but looking for %d", numDays, needDays
+      );
+    }
+    // want to output internal representation of weather to file
+#ifdef DEBUG_WEATHER
+    if (!Settings::surface())
+    {
+      model.outputWeather();
+    }
+#endif
+    // want to check that start time is in the range of the weather data we have
+    logging::check_fatal(start < w.minDate(), "Start time is before weather streams start");
+    logging::check_fatal(start > w.maxDate(), "Start time is after weather streams end");
+  }
   logging::note(
     "Simulation start time of %f is %s", start, make_timestamp(model.year(), start).c_str()
   );
-  const auto start_day = static_cast<Day>(start);
-  // want to check that start time is in the range of the weather data we have
-  logging::check_fatal(start < w.minDate(), "Start time is before weather streams start");
-  logging::check_fatal(start > w.maxDate(), "Start time is after weather streams end");
+  model.makeStarts(*position, start_point, perimeter, size);
   auto probabilities = model.runIterations(start_point, start, start_day);
   logging::note("Ran %d simulations", Scenario::completed());
   const auto run_time_seconds = model.runTime();
@@ -952,7 +1114,7 @@ int Model::runScenarios(
   logging::debug("Processed %ld spread events between all scenarios", Scenario::total_steps());
   show_probabilities(probabilities);
   // auto final_time =
-  model.saveProbabilities(probabilities, false);
+  model.saveProbabilities(probabilities, start_day, false);
   // HACK: update last checked time to use in calculation
   model.last_checked_ = Clock::now();
   logging::note("Total simulation time was %ld seconds", model.runTime());
@@ -970,7 +1132,8 @@ void Model::outputWeather()
 }
 void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const char* file_name)
 {
-  const auto file_out = outputDirectory() + file_name;
+  const auto file_out = string(output_directory) + file_name;
+  const auto file_out_fbp = string(output_directory) + string("fbp_") + file_name;
   FILE* out = fopen(file_out.c_str(), "w");
   FILE* out_fbp = fopen(file_out_fbp.c_str(), "w");
   logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
@@ -1007,7 +1170,7 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
           static_cast<uint8_t>(hour - day * DAY_HOURS),
           0,
           0,
-          w->prec().asValue(),
+          8prec().asValue(),
           w->temp().asValue(),
           w->rh().asValue(),
           w->wind().speed().asValue(),
@@ -1030,6 +1193,7 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
         {
           for (AspectSize aspect = 0; aspect < ASPECT_MAX; aspect += ASPECT_INCREMENT)
           {
+            // for (auto fuel_name : FUELS)
             {
               const auto fuel_name = fuel->name();
               // calculate and output fbp

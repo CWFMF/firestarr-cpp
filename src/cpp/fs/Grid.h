@@ -26,6 +26,7 @@ struct std::hash<fs::Location>
 };
 namespace fs
 {
+using fs::Location;
 using std::cout;
 using NodataIntType = int64_t;
 string create_file_name(
