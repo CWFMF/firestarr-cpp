@@ -18,8 +18,12 @@
 #include "FuelType.h"
 namespace tbd::sim
 {
-using CellPts = tuple<topo::Cell, const PointSet>;
-using CellPair = pair<const topo::SpreadKey, vector<CellPts>>;
+using topo::Cell;
+using topo::Perimeter;
+using topo::SpreadKey;
+using topo::StartPoint;
+using CellPts = tuple<Cell, const PointSet>;
+using CellPair = pair<const SpreadKey, vector<CellPts>>;
 
 constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
@@ -56,7 +60,7 @@ static constexpr CellIndex DIRECTION_SE = 0b10000000;
  * @param from_cell The cell to find the direction of
  * @return Direction that you would have to go in to get to from_cell from for_cell
  */
-CellIndex relativeIndex(const topo::Cell& for_cell, const topo::Cell& from_cell)
+CellIndex relativeIndex(const Cell& for_cell, const Cell& from_cell)
 {
   const auto r = for_cell.row();
   const auto r_o = from_cell.row();
@@ -135,7 +139,7 @@ void do_par(T& for_list, F fct)
 
 class PointSourceMap
 {
-  using K = topo::Cell;
+  using K = Cell;
   using V = InnerPos;
   using S = CellIndex;
   using source_pair = pair<S, vector<V>>;
@@ -184,7 +188,7 @@ public:
   PointSourceMap(
     Scenario& scenario,
     const double duration,
-    const tuple<topo::Cell, PointSet, const OffsetSet*>& t)
+    const tuple<Cell, PointSet, const OffsetSet*>& t)
     : PointSourceMap()
   {
     const auto& location = std::get<0>(t);
@@ -206,7 +210,7 @@ public:
     map_type p_m{};
     for (const InnerPos& p : p_o)
     {
-      topo::Cell for_cell = scenario.cell(p);
+      Cell for_cell = scenario.cell(p);
       auto& pts = p_m[for_cell];
       pts.emplace_back(p);
     }
@@ -245,7 +249,7 @@ public:
   }
   PointSourceMap(
     Scenario& scenario,
-    map<topo::SpreadKey, SpreadInfo>& spread_info,
+    map<SpreadKey, SpreadInfo>& spread_info,
     const double duration,
     const CellPair& kv0)
   {
@@ -254,7 +258,7 @@ public:
     auto points_and_sources = std::views::transform(
       kv0.second,
       [&scenario, &duration, &offsets](
-        const tuple<topo::Cell, PointSet> pts_for_cell) {
+        const tuple<Cell, PointSet> pts_for_cell) {
         return PointSourceMap(
           scenario,
           duration,
@@ -268,7 +272,7 @@ public:
   }
   PointSourceMap(
     Scenario& scenario,
-    map<topo::SpreadKey, SpreadInfo>& spread_info,
+    map<SpreadKey, SpreadInfo>& spread_info,
     const double duration,
     const auto& to_spread)
   {
@@ -280,8 +284,8 @@ public:
     merge_list(*this, points_and_sources);
   }
   void final_merge_maps(
-    map<topo::Cell, PointSet>& points_out,
-    map<topo::Cell, CellIndex>& sources_out,
+    map<Cell, PointSet>& points_out,
+    map<Cell, CellIndex>& sources_out,
     const BurnedData& unburnable)
   {
     do_each(
@@ -579,8 +583,8 @@ Scenario::Scenario(Model* model,
                    wx::FireWeather* weather_daily,
                    const double start_time,
                    //  const shared_ptr<IntensityMap>& initial_intensity,
-                   const shared_ptr<topo::Perimeter>& perimeter,
-                   const topo::StartPoint& start_point,
+                   const shared_ptr<Perimeter>& perimeter,
+                   const StartPoint& start_point,
                    const Day start_day,
                    const Day last_date)
   : Scenario(model,
@@ -601,8 +605,8 @@ Scenario::Scenario(Model* model,
                    wx::FireWeather* weather,
                    wx::FireWeather* weather_daily,
                    const double start_time,
-                   const shared_ptr<topo::Cell>& start_cell,
-                   const topo::StartPoint& start_point,
+                   const shared_ptr<Cell>& start_cell,
+                   const StartPoint& start_point,
                    const Day start_day,
                    const Day last_date)
   : Scenario(model,
@@ -619,7 +623,7 @@ Scenario::Scenario(Model* model,
 {
 }
 // HACK: just set next start point here for surface right now
-Scenario* Scenario::reset_with_new_start(const shared_ptr<topo::Cell>& start_cell,
+Scenario* Scenario::reset_with_new_start(const shared_ptr<Cell>& start_cell,
                                          util::SafeVector* final_sizes)
 {
   start_cell_ = start_cell;
@@ -796,9 +800,9 @@ Scenario::Scenario(Model* model,
                    wx::FireWeather* weather_daily,
                    const double start_time,
                    //  const shared_ptr<IntensityMap>& initial_intensity,
-                   const shared_ptr<topo::Perimeter>& perimeter,
-                   const shared_ptr<topo::Cell>& start_cell,
-                   topo::StartPoint start_point,
+                   const shared_ptr<Perimeter>& perimeter,
+                   const shared_ptr<Cell>& start_cell,
+                   StartPoint start_point,
                    const Day start_day,
                    const Day last_date)
   : current_time_(start_time),
@@ -962,7 +966,7 @@ bool Scenario::isSurrounded(const Location& location) const
 {
   return intensity_->isSurrounded(location);
 }
-topo::Cell Scenario::cell(const InnerPos& p) const noexcept
+Cell Scenario::cell(const InnerPos& p) const noexcept
 {
   return cell(p.y(), p.x());
 }
@@ -1167,7 +1171,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  map<topo::SpreadKey, vector<CellPts>> to_spread{};
+  map<SpreadKey, vector<CellPts>> to_spread{};
   // make block to prevent it being visible beyond use
   {
     // if we use an iterator this way we don't need to copy keys to erase things
@@ -1210,17 +1214,17 @@ void Scenario::scheduleFireSpread(const Event& event)
                                  Settings::maximumSpreadDistance() * cellSize() / max_ros_)
                            : max_duration);
   // note("Spreading for %f minutes", duration);
-  map<topo::Cell, CellIndex> sources{};
+  map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
   auto result = PointSourceMap(*this, spread_info_, duration, to_spread);
   result.final_merge_maps(points_, sources, *unburnable_);
 
-  map<topo::Cell, PointSet> points_cur{};
+  map<Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);
   // if we move everything out of points_ we can parallelize this check?
   do_each(
     points_cur,
-    [this, &sources, &new_time](pair<const topo::Cell, PointSet>& kv) {
+    [this, &sources, &new_time](pair<const Cell, PointSet>& kv) {
       auto& for_cell = kv.first;
       auto& pts = kv.second;
       logging::check_fatal(pts.empty(), "Empty points for some reason");
@@ -1280,7 +1284,7 @@ double
 {
   return intensity_->fireSize();
 }
-bool Scenario::canBurn(const topo::Cell& location) const
+bool Scenario::canBurn(const Cell& location) const
 {
   return intensity_->canBurn(location);
 }
