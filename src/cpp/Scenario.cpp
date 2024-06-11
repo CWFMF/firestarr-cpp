@@ -143,176 +143,164 @@ void do_par(T& for_list, F fct)
     fct);
 }
 
-class PointSourceMap
+void merge_list(merged_map_type& lhs, auto& points_and_sources)
 {
-public:
-  PointSourceMap()
-    : map_({})
+  do_par(points_and_sources,
+         [&lhs](const merged_map_type& rhs) {
+           auto v0 = std::views::transform(
+             rhs,
+             [&lhs, &rhs](const auto& kv) {
+               // insert or lookup map for key
+               // still need key for relativeIndex
+               auto& k = kv.first;
+               auto& v = kv.second;
+               return maps_direct(
+                 &lhs[k],
+                 v);
+             });
+           // because we already did the map lookup we can do this all in paralell
+           std::for_each(
+             std::execution::par_unseq,
+             v0.begin(),
+             v0.end(),
+             [](const maps_direct& spsp) {
+               source_pair& pair0 = *(spsp.first);
+               CellIndex& s0 = pair0.first;
+               vector<InnerPos>& p0 = pair0.second;
+               const source_pair& pair1 = spsp.second;
+               const CellIndex& s1 = pair1.first;
+               const vector<InnerPos>& p1 = pair1.second;
+               p0.insert(p0.end(), p1.begin(), p1.end());
+               s0 |= s1;
+             });
+         });
+}
+merged_map_type merge_list(
+  Scenario& scenario,
+  const double duration,
+  const tuple<Cell, PointSet, const OffsetSet*>& t)
+{
+  merged_map_type result{};
+  const auto& location = std::get<0>(t);
+  const auto& pts = std::get<1>(t);
+  const auto& offsets = *std::get<2>(t);
+  auto p_o = std::views::transform(
+    std::views::cartesian_product(
+      std::views::transform(
+        offsets,
+        [duration](const Offset& o) { return o * duration; }),
+      pts),
+    [](const pair<const Offset&, const InnerPos&>& o_p) {
+      const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
+      return InnerPos(pos);
+    });
+  // no need to lock since this doesn't exist yet
+  // were given a list of pairs that would go in a map
+  // NOTE: could also sort and then check for key changing
+  map_type p_m{};
+  for (const InnerPos& p : p_o)
   {
+    Cell for_cell = scenario.cell(p);
+    auto& pts = p_m[for_cell];
+    pts.emplace_back(p);
   }
-  static inline void merge_list(PointSourceMap& lhs, auto& points_and_sources)
-  {
-    do_par(points_and_sources,
-           [&lhs](const PointSourceMap& rhs) {
-             const merged_map_type& p_m = rhs.map_;
-             auto v0 = std::views::transform(
-               p_m,
-               [&lhs, &rhs](const auto& kv) {
-                 // insert or lookup map for key
-                 // still need key for relativeIndex
-                 auto& k = kv.first;
-                 auto& v = kv.second;
-                 return maps_direct(
-                   &lhs.map_[k],
-                   v);
-               });
-             // because we already did the map lookup we can do this all in paralell
-             std::for_each(
-               std::execution::par_unseq,
-               v0.begin(),
-               v0.end(),
-               [](const maps_direct& spsp) {
-                 source_pair& pair0 = *(spsp.first);
-                 CellIndex& s0 = pair0.first;
-                 vector<InnerPos>& p0 = pair0.second;
-                 const source_pair& pair1 = spsp.second;
-                 const CellIndex& s1 = pair1.first;
-                 const vector<InnerPos>& p1 = pair1.second;
-                 p0.insert(p0.end(), p1.begin(), p1.end());
-                 s0 |= s1;
-               });
-           });
-  }
-  PointSourceMap(
-    Scenario& scenario,
-    const double duration,
-    const tuple<Cell, PointSet, const OffsetSet*>& t)
-    : PointSourceMap()
-  {
-    const auto& location = std::get<0>(t);
-    const auto& pts = std::get<1>(t);
-    const auto& offsets = *std::get<2>(t);
-    auto p_o = std::views::transform(
-      std::views::cartesian_product(
-        std::views::transform(
-          offsets,
-          [duration](const Offset& o) { return o * duration; }),
-        pts),
-      [](const pair<const Offset&, const InnerPos&>& o_p) {
-        const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
-        return InnerPos(pos);
-      });
-    // no need to lock since this doesn't exist yet
-    // were given a list of pairs that would go in a map
-    // NOTE: could also sort and then check for key changing
-    map_type p_m{};
-    for (const InnerPos& p : p_o)
-    {
-      Cell for_cell = scenario.cell(p);
-      auto& pts = p_m[for_cell];
-      pts.emplace_back(p);
-    }
-    auto v0 = std::views::transform(
-      p_m,
-      [this](const auto& kv) {
-        // insert or lookup map for key
-        // still need key for relativeIndex
-        return tuple_temp(
-          kv.first,
-          kv.second,
-          &map_[kv.first]);
-      });
-    // because we already did the map lookup we can do this all in paralell
-    std::for_each(
-      std::execution::par_unseq,
-      v0.begin(),
-      v0.end(),
-      [&location](const tuple_temp& kpsp) {
-        const Cell k = std::get<0>(kpsp);
-        const vector<InnerPos>& p1 = std::get<1>(kpsp);
-        // pair that is currently in map_ for the given key
-        source_pair& sp = *(std::get<2>(kpsp));
-        CellIndex& s = sp.first;
-        vector<InnerPos>& p0 = sp.second;
+  auto v0 = std::views::transform(
+    p_m,
+    [&result](const auto& kv) {
+      // insert or lookup map for key
+      // still need key for relativeIndex
+      return tuple_temp(
+        kv.first,
+        kv.second,
+        &result[kv.first]);
+    });
+  // because we already did the map lookup we can do this all in paralell
+  std::for_each(
+    std::execution::par_unseq,
+    v0.begin(),
+    v0.end(),
+    [&location](const tuple_temp& kpsp) {
+      const Cell k = std::get<0>(kpsp);
+      const vector<InnerPos>& p1 = std::get<1>(kpsp);
+      // pair that is currently in result for the given key
+      source_pair& sp = *(std::get<2>(kpsp));
+      CellIndex& s = sp.first;
+      vector<InnerPos>& p0 = sp.second;
+      p0.insert(p0.end(), p1.begin(), p1.end());
+      const auto source = relativeIndex(k, location);
+      s |= source;
+    });
+  return result;
+}
+merged_map_type merge_list(
+  Scenario& scenario,
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const CellPair& kv0)
+{
+  merged_map_type result{};
+  auto& key = kv0.first;
+  auto& offsets = spread_info[key].offsets();
+  auto points_and_sources = std::views::transform(
+    kv0.second,
+    [&scenario, &duration, &offsets](
+      const tuple<Cell, PointSet> pts_for_cell) {
+      return merge_list(
+        scenario,
+        duration,
+        std::tuple(
+          std::get<0>(pts_for_cell),
+          std::get<1>(pts_for_cell),
+          &offsets));
+    });
+  merge_list(result, points_and_sources);
+  return result;
+}
+merged_map_type merge_list(
+  Scenario& scenario,
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const auto& to_spread)
+{
+  merged_map_type result{};
+  auto points_and_sources = std::views::transform(
+    to_spread,
+    [&scenario, &duration, &spread_info](const CellPair& kv0) {
+      return merge_list(scenario, spread_info, duration, kv0);
+    });
+  merge_list(result, points_and_sources);
+  return result;
+}
+void final_merge_maps(
+  const merged_map_type& merge_from,
+  map<Cell, PointSet>& points_out,
+  map<Cell, CellIndex>& sources_out,
+  const BurnedData& unburnable)
+{
+  do_each(
+    merge_from,
+    [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
+      const Cell k = ksp.first;
+      const source_pair& sp = ksp.second;
+      const CellIndex& s = sp.first;
+      sources_out[k] |= s;
+      const auto h = k.hash();
+      if (!(unburnable[h]))
+      {
+        // pair that is currently in merge_from for the given key
+        const auto& sp = std::get<1>(ksp);
+        const vector<InnerPos>& p1 = sp.second;
+        auto& p0 = points_out[k];
         p0.insert(p0.end(), p1.begin(), p1.end());
-        const auto source = relativeIndex(k, location);
-        s |= source;
-      });
-  }
-  PointSourceMap(auto& points_and_sources)
-    : PointSourceMap()
-  {
-    merge_list(*this, points_and_sources);
-  }
-  PointSourceMap(
-    Scenario& scenario,
-    map<SpreadKey, SpreadInfo>& spread_info,
-    const double duration,
-    const CellPair& kv0)
-  {
-    auto& key = kv0.first;
-    auto& offsets = spread_info[key].offsets();
-    auto points_and_sources = std::views::transform(
-      kv0.second,
-      [&scenario, &duration, &offsets](
-        const tuple<Cell, PointSet> pts_for_cell) {
-        return PointSourceMap(
-          scenario,
-          duration,
-          std::tuple(
-            std::get<0>(pts_for_cell),
-            std::get<1>(pts_for_cell),
-            &offsets));
-      });
-    merge_list(*this, points_and_sources);
-    // return PointSourceMap(points_and_sources);
-  }
-  PointSourceMap(
-    Scenario& scenario,
-    map<SpreadKey, SpreadInfo>& spread_info,
-    const double duration,
-    const auto& to_spread)
-  {
-    auto points_and_sources = std::views::transform(
-      to_spread,
-      [&scenario, &duration, &spread_info](const CellPair& kv0) {
-        return PointSourceMap(scenario, spread_info, duration, kv0);
-      });
-    merge_list(*this, points_and_sources);
-  }
-  void final_merge_maps(
-    map<Cell, PointSet>& points_out,
-    map<Cell, CellIndex>& sources_out,
-    const BurnedData& unburnable)
-  {
-    do_each(
-      map_,
-      [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
-        const Cell k = ksp.first;
-        const source_pair& sp = ksp.second;
-        const CellIndex& s = sp.first;
-        sources_out[k] |= s;
-        const auto h = k.hash();
-        if (!(unburnable[h]))
+        // works the same if we hull here
+        if (p0.size() > MAX_BEFORE_CONDENSE)
         {
-          // pair that is currently in map_ for the given key
-          const auto& sp = std::get<1>(ksp);
-          const vector<InnerPos>& p1 = sp.second;
-          auto& p0 = points_out[k];
-          p0.insert(p0.end(), p1.begin(), p1.end());
-          // works the same if we hull here
-          if (p0.size() > MAX_BEFORE_CONDENSE)
-          {
-            // 3 points should just be a triangle usually (could be co-linear, but that's fine
-            hull(p0);
-          }
+          // 3 points should just be a triangle usually (could be co-linear, but that's fine
+          hull(p0);
         }
-      });
-  }
-private:
-  merged_map_type map_;
-};
-
+      }
+    });
+}
 class LogPoints
 {
 public:
@@ -1213,8 +1201,8 @@ void Scenario::scheduleFireSpread(const Event& event)
   // note("Spreading for %f minutes", duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  auto result = PointSourceMap(*this, spread_info_, duration, to_spread);
-  result.final_merge_maps(points_, sources, *unburnable_);
+  auto result = merge_list(*this, spread_info_, duration, to_spread);
+  final_merge_maps(result, points_, sources, *unburnable_);
 
   map<Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);
