@@ -150,24 +150,14 @@ public:
     : map_({})
   {
   }
-  PointSourceMap(
-    auto& points_and_sources
-  )
-    : PointSourceMap()
-  {
-    merge_list(*this, points_and_sources);
-  }
-
   static inline void
   merge_list(
     PointSourceMap& lhs,
     auto& points_and_sources
   )
   {
-    std::lock_guard<mutex> lock(lhs.mutex_);
     do_par(points_and_sources, [&lhs](const PointSourceMap& rhs) {
       using maps_direct = pair<source_pair*, const source_pair&>;
-      std::lock_guard<mutex> lock_rhs(rhs.mutex_);
       const merged_map_type& p_m = rhs.map_;
       auto v0 = std::views::transform(p_m, [&lhs, &rhs](const auto& kv) {
         // insert or lookup map for key
@@ -249,6 +239,13 @@ public:
     );
   }
   PointSourceMap(
+    auto& points_and_sources
+  )
+    : PointSourceMap()
+  {
+    merge_list(*this, points_and_sources);
+  }
+  PointSourceMap(
     Scenario& scenario,
     map<topo::SpreadKey, SpreadInfo>& spread_info,
     const double duration,
@@ -292,7 +289,6 @@ public:
     const BurnedData& unburnable
   )
   {
-    std::lock_guard<mutex> lock(mutex_);
     do_each(map_, [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
       const K k = ksp.first;
       const source_pair& sp = ksp.second;
@@ -317,7 +313,6 @@ public:
   }
 private:
   merged_map_type map_;
-  mutable mutex mutex_;
 };
 
 class LogPoints
