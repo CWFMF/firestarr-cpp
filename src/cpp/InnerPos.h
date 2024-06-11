@@ -4,7 +4,7 @@
 #ifndef FS_INNERPOS_H
 #define FS_INNERPOS_H
 #include "stdafx.h"
-#include "Log.h"
+#include "Cell.h"
 namespace fs
 {
 /**
@@ -14,14 +14,22 @@ struct Offset
 {
 public:
   /**
+   * \brief Collection of Offsets
+   */
+  using OffsetSet = vector<Offset>;
+  /**
    * \brief Offset in the x direction (column)
    */
-  inline constexpr double x() const noexcept { return x_; }
+  inline constexpr double x() const noexcept { return coords_[0]; }
   /**
    * \brief Offset in the y direction (row)
    */
-  inline constexpr double y() const noexcept { return y_; }
-  constexpr Offset(const double a, const double b) noexcept : x_(a), y_(b) { }
+  inline constexpr double y() const noexcept { return coords_[1]; }
+  constexpr Offset(const double x, const double y) noexcept : coords_()
+  {
+    coords_[0] = x;
+    coords_[1] = y;
+  }
   constexpr Offset() noexcept : Offset(-1, -1) { }
   constexpr Offset(Offset&& rhs) noexcept = default;
   constexpr Offset(const Offset& rhs) noexcept = default;
@@ -68,26 +76,17 @@ public:
   }
 
 private:
-  /**
-   * \brief Offset in the x direction (column)
-   */
-  double x_;
-  /**
-   * \brief Offset in the y direction (row)
-   */
-  double y_;
+  // coordinates as an array so we can treat an array of these as an array of doubles
+  double coords_[2];
 };
+using OffsetSet = Offset::OffsetSet;
 // define multiplication in other order since equivalent
 constexpr Offset after(const double duration, const Offset& o) { return o.after(duration); }
 static constexpr MathSize x(const auto& p) { return p.x(); }
 static constexpr MathSize y(const auto& p) { return p.y(); }
 /**
- * \brief Collection of Offsets
- */
-using OffsetSet = vector<Offset>;
-/**
  * \brief The position within a Cell that a spreading point has.
  */
-using InnerPos = Offset;
+using InnerPos = fs::Offset;
 }
 #endif

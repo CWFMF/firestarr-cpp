@@ -72,6 +72,16 @@ public:
   {
 #ifdef DEBUG_GRIDS
     logging::check_fatal(
+      row < 0 || row >= MAX_ROWS, "Row %d is out of bounds (%d, %d)", row, 0, MAX_ROWS
+    );
+    logging::check_fatal(
+      column < 0 || column >= MAX_COLUMNS,
+      "Column %d is out of bounds (%d, %d)",
+      column,
+      0,
+      MAX_COLUMNS
+    );
+    logging::check_fatal(
       (row != unhashRow(topo_data_)) || column != unhashColumn(topo_data_),
       "Hash is incorrect (%d, %d)",
       row,
@@ -113,6 +123,13 @@ public:
    */
   [[nodiscard]] constexpr HashSize hash() const noexcept
   {
+#ifdef DEBUG_POINTS
+    constexpr int num_bits = std::numeric_limits<HashSize>::digits;
+    constexpr Topo m = bit_mask<num_bits, Topo>();
+    logging::check_equal(
+      static_cast<HashSize>(topo_data_), static_cast<HashSize>(m & topo_data_), "hash()"
+    );
+#endif
     // can get away with just casting because all the other bits are outside this area
     return static_cast<HashSize>(topo_data_);
   }
@@ -220,5 +237,26 @@ inline bool operator<(const Location& lhs, const Location& rhs) { return lhs.has
 inline bool operator>(const Location& lhs, const Location& rhs) { return rhs < lhs; }
 inline bool operator<=(const Location& lhs, const Location& rhs) { return !(lhs > rhs); }
 inline bool operator>=(const Location& lhs, const Location& rhs) { return !(lhs < rhs); }
+// FIX: seems like there must be something with enum type that would be better?
+static const map<CellIndex, const char*> DIRECTION_NAMES{
+  {DIRECTION_NONE, "NONE"},
+  {DIRECTION_W, "W"},
+  {DIRECTION_E, "E"},
+  {DIRECTION_S, "S"},
+  {DIRECTION_N, "N"},
+  {DIRECTION_SW, "SW"},
+  {DIRECTION_NE, "NE"},
+  {DIRECTION_NW, "NW"},
+  {DIRECTION_SE, "SE"}
+};
+/**
+ * Determine the direction that a given cell is in from another cell. This is the
+ * same convention as wind (i.e. the direction it is coming from, not the direction
+ * it is going towards).
+ * @param src The cell to find directions relative to
+ * @param dst The cell to find the direction of
+ * @return Direction that you would have to go in to get to dst from src
+ */
+CellIndex relativeIndex(const Location& src, const Location& dst) noexcept;
 }
 #endif

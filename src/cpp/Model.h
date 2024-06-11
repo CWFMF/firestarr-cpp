@@ -133,13 +133,8 @@ public:
     const StartPoint& start_point,
     const tm& start_time,
     const string_view perimeter,
-    size_t size
+    const size_t size
   );
-  /**
-   * \brief Directory to output results to
-   * \return Directory to output results to
-   */
-  [[nodiscard]] constexpr const string& outputDirectory() const { return output_directory_; }
   /**
    * \brief Cell at the given row and column
    * \param row Row
@@ -174,7 +169,7 @@ public:
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double cellSize() const { return env_->cellSize(); }
+  [[nodiscard]] constexpr MathSize cellSize() const { return env_->cellSize(); }
   /**
    * \brief Environment simulation is occurring in
    * \return Environment simulation is occurring in
@@ -211,6 +206,16 @@ public:
    */
   [[nodiscard]] int year() const noexcept { return year_; }
   /**
+   * \brief How many ignition scenarios are being used
+   * \return How many ignition scenarios are being used
+   */
+  [[nodiscard]] int ignitionScenarios() const noexcept { return starts_.size(); }
+  /**
+   * \brief How many Scenarios are in each Iteration
+   * \return How many Scenarios are in each Iteration
+   */
+  [[nodiscard]] int scenarioCount() const noexcept { return wx_.size() * ignitionScenarios(); }
+  /**
    * \brief Difference between date and the date of minimum foliar moisture content
    * \param time Date to get value for
    * \return Difference between date and the date of minimum foliar moisture content
@@ -219,6 +224,7 @@ public:
   {
     return nd_.at(static_cast<Day>(time));
   }
+  [[nodiscard]] const char* outputDirectory() const { return output_directory_.c_str(); }
   /**
    * \brief Duration that model has run for
    * \return std::chrono::seconds  Duration model has been running for
@@ -259,12 +265,17 @@ public:
   Model& operator=(Model&& rhs) noexcept = delete;
   Model& operator=(const Model& rhs) = delete;
   /**
+   * \brief Set constant weather
+   * \param weather FwiWeather to use as constant weather
+   */
+  void setWeather(const FwiWeather& weather, const Day start_day);
+  /**
    * \brief Read weather used for Scenarios
    * \param yesterday FwiWeather for yesterday
    * \param latitude Latitude to calculate for
    * \param filename Weather file to read
    */
-  void readWeather(const FwiWeather& yesterday, const double latitude, string filename);
+  void readWeather(const FwiWeather& yesterday, const MathSize latitude, const string& filename);
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
@@ -288,7 +299,7 @@ public:
    */
   [[nodiscard]] Iteration readScenarios(
     const StartPoint& start_point,
-    double start,
+    DurationSize start,
     Day start_day,
     Day last_date
   );
@@ -296,8 +307,13 @@ public:
    * \brief Semaphore used to limit how many things run at once
    */
   static Semaphore task_limiter;
+  /**
+   * Conditions for yesterday (or constant weather)
+   */
+  ptr<const FwiWeather> yesterday() const noexcept { return &yesterday_; }
 
 private:
+  const string output_directory_;
   /**
    * \brief Add statistics for completed iterations
    * \param all_sizes All sizes that have simulations have produced
@@ -306,9 +322,9 @@ private:
    * \param cur_sizes Sizes to add to statistics
    */
   [[nodiscard]] bool add_statistics(
-    vector<double>* all_sizes,
-    vector<double>* means,
-    vector<double>* pct,
+    vector<MathSize>* all_sizes,
+    vector<MathSize>* means,
+    vector<MathSize>* pct,
     const SafeVector& sizes
   );
   /**
@@ -322,15 +338,23 @@ private:
    * \param start_day Start day for simulation
    * \return Map of times to ProbabilityMap for that time
    */
-  map<double, ProbabilityMap*> runIterations(
+  map<DurationSize, ProbabilityMap*> runIterations(
     const StartPoint& start_point,
-    double start,
+    DurationSize start,
     Day start_day
   );
   /**
+   * \brief Find all Cell(s) that can burn in entire Environment
+   */
+  void findAllStarts();
+  /**
    * Save probability rasters
    */
-  double saveProbabilities(map<double, ProbabilityMap*>& probabilities, const bool is_interim);
+  DurationSize saveProbabilities(
+    map<DurationSize, ProbabilityMap*>& probabilities,
+    const Day start_day,
+    const bool is_interim
+  );
   /**
    * \brief Find Cell(s) that can burn closest to Location
    * \param location Location to look for start Cells
@@ -368,13 +392,9 @@ private:
    * \brief Environment to use for Model
    */
   Environment* env_{nullptr};
-  /**
-   * \brief Directory to output results to
-   */
-  string output_directory_;
 #ifdef DEBUG_WEATHER
-  /*
-   * \brief Write the hourly weather that was loaded to an output file
+  /**
+   * \brief Write weather that was loaded to an output file
    */
   void outputWeather();
   /**
@@ -396,6 +416,10 @@ private:
    * \brief If simulation is over max simulation count
    */
   bool is_over_simulation_count_ = false;
+  /**
+   * Conditions for yesterday (or constant weather)
+   */
+  FwiWeather yesterday_;
   // /**
   //  * @brief Time when we last checked if simulation should end
   //  *
@@ -404,11 +428,11 @@ private:
   /**
    * \brief Latitude to use for any calcualtions
    */
-  double latitude_;
+  MathSize latitude_;
   /**
    * \brief Longitude to use for any calcualtions
    */
-  double longitude_;
+  MathSize longitude_;
 };
 }
 #endif

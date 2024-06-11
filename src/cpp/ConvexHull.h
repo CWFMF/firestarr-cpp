@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2005, 2021 Jordan Evens */
 /* SPDX-FileCopyrightText: 2020 Queen's Printer for Ontario */
-/* SPDX-FileCopyrightText: 2025 Government of Canada */
+/* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_CONVEX_HULL_H
 #define FS_CONVEX_HULL_H

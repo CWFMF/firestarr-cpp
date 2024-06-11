@@ -6,6 +6,9 @@
 using fs::Idx;
 namespace fs
 {
+using fs::from_lat_long;
+using fs::to_lat_long;
+using fs::try_fix_meridian;
 string find_value(const string& key, const string& within)
 {
   const auto c = within.find(key);
