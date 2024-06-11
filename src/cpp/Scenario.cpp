@@ -146,12 +146,13 @@ do_par(
   std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
 }
 
-void
+// merge into and return empty list
+const merged_map_type
 merge_list(
-  merged_map_type& lhs,
   auto& points_and_sources
 )
 {
+  merged_map_type lhs{};
   do_par(points_and_sources, [&lhs](const merged_map_type& rhs) {
     auto v0 = std::views::transform(rhs, [&lhs, &rhs](const auto& kv) {
       // insert or lookup map for key
@@ -172,16 +173,7 @@ merge_list(
       s0 |= s1;
     });
   });
-}
-// merge into and return empty list
-const merged_map_type
-merge_list(
-  auto& points_and_sources
-)
-{
-  merged_map_type lhs{};
-  merge_list(lhs, points_and_sources);
-  return lhs;
+  return static_cast<const merged_map_type>(lhs);
 }
 const merged_map_type
 merge_list(
@@ -239,7 +231,7 @@ merge_list(
       s |= source;
     }
   );
-  return result;
+  return static_cast<const merged_map_type>(result);
 }
 const merged_map_type
 merge_list(
