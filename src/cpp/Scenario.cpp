@@ -143,9 +143,9 @@ void do_par(T& for_list, F fct)
     fct);
 }
 
-const merged_map_type merge_lists(
-  const merged_map_type& lhs,
-  const merged_map_type& rhs)
+const merged_map_type merge_iterators(
+  const auto& lhs,
+  const auto& rhs)
 {
   merged_map_type result{};
   auto it_lhs = lhs.cbegin();
@@ -230,41 +230,31 @@ const merged_map_type merge_lists(
 #undef is_done_1
   return static_cast<const merged_map_type>(result);
 }
-
+// merge into and return empty list
+const merged_map_type merge_iterator(auto& points_and_sources)
+{
+  return std::reduce(
+    std::execution::par_unseq,
+    points_and_sources.begin(),
+    points_and_sources.end(),
+    merged_map_type{},
+    merge_iterators);
+}
+const merged_map_type merge_lists(
+  const merged_map_type& lhs,
+  const merged_map_type& rhs)
+{
+  return merge_iterators(lhs, rhs);
+}
 // merge into and return empty list
 const merged_map_type merge_list(auto& points_and_sources)
 {
-  merged_map_type lhs{};
-  do_par(points_and_sources,
-         [&lhs](const merged_map_type& rhs) {
-           auto v0 = std::views::transform(
-             rhs,
-             [&lhs, &rhs](const auto& kv) {
-               // insert or lookup map for key
-               // still need key for relativeIndex
-               auto& k = kv.first;
-               auto& v = kv.second;
-               return maps_direct(
-                 &lhs[k],
-                 v);
-             });
-           // because we already did the map lookup we can do this all in paralell
-           std::for_each(
-             std::execution::par_unseq,
-             v0.begin(),
-             v0.end(),
-             [](const maps_direct& spsp) {
-               source_pair& pair0 = *(spsp.first);
-               CellIndex& s0 = pair0.first;
-               vector<InnerPos>& p0 = pair0.second;
-               const source_pair& pair1 = spsp.second;
-               const CellIndex& s1 = pair1.first;
-               const vector<InnerPos>& p1 = pair1.second;
-               p0.insert(p0.end(), p1.begin(), p1.end());
-               s0 |= s1;
-             });
-         });
-  return static_cast<const merged_map_type>(lhs);
+  return std::reduce(
+    std::execution::par_unseq,
+    points_and_sources.begin(),
+    points_and_sources.end(),
+    merged_map_type{},
+    merge_lists);
 }
 const merged_map_type merge_list(
   const double duration,
