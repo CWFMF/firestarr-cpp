@@ -236,31 +236,24 @@ const merged_map_type merge_list(
 const merged_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
-  const CellPair& kv0)
-{
-  auto& key = kv0.first;
-  auto& offsets = spread_info[key].offsets();
-  auto points_and_sources = std::views::transform(
-    kv0.second,
-    [&duration, &offsets](
-      const tuple<Cell, PointSet> pts_for_cell) {
-      return merge_list(
-        duration,
-        std::get<0>(pts_for_cell),
-        std::get<1>(pts_for_cell),
-        offsets);
-    });
-  return merge_list(points_and_sources);
-}
-const merged_map_type merge_list(
-  map<SpreadKey, SpreadInfo>& spread_info,
-  const double duration,
   const auto& to_spread)
 {
   auto points_and_sources = std::views::transform(
     to_spread,
     [&duration, &spread_info](const CellPair& kv0) {
-      return merge_list(spread_info, duration, kv0);
+      auto& key = kv0.first;
+      auto& offsets = spread_info[key].offsets();
+      auto pts_and_srcs = std::views::transform(
+        kv0.second,
+        [&duration, &offsets](
+          const tuple<Cell, PointSet> pts_for_cell) {
+          return merge_list(
+            duration,
+            std::get<0>(pts_for_cell),
+            std::get<1>(pts_for_cell),
+            offsets);
+        });
+      return merge_list(pts_and_srcs);
     });
   return merge_list(points_and_sources);
 }
