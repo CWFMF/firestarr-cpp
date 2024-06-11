@@ -271,12 +271,17 @@ merged_map_type merge_list(
   merge_list(result, points_and_sources);
   return result;
 }
-void final_merge_maps(
-  const merged_map_type& merge_from,
+void calculate_spread(
+  Scenario& scenario,
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const auto& to_spread,
   map<Cell, PointSet>& points_out,
   map<Cell, CellIndex>& sources_out,
   const BurnedData& unburnable)
+
 {
+  auto merge_from = merge_list(scenario, spread_info, duration, to_spread);
   do_each(
     merge_from,
     [&points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
@@ -300,19 +305,6 @@ void final_merge_maps(
         }
       }
     });
-}
-void calculate_spread(
-  Scenario& scenario,
-  map<SpreadKey, SpreadInfo>& spread_info,
-  const double duration,
-  const auto& to_spread,
-  map<Cell, PointSet>& points_out,
-  map<Cell, CellIndex>& sources_out,
-  const BurnedData& unburnable)
-
-{
-  auto result = merge_list(scenario, spread_info, duration, to_spread);
-  final_merge_maps(result, points_out, sources_out, unburnable);
 }
 class LogPoints
 {
