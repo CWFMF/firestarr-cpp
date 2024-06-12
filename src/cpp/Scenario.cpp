@@ -200,31 +200,26 @@ const merged_map_type merge_list(
   const double duration,
   const spreading_points& to_spread)
 {
-  vector<merged_map_type> r0{};
-  std::transform(
-    to_spread.begin(),
-    to_spread.end(),
-    r0,
-    [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
-      auto& key = kv0.first;
-      auto& offsets = spread_info[key].offsets();
-      vector<merged_map_type> r{};
-      std::transform(
-        kv0.second.begin(),
-        kv0.second.end(),
-        r,
-        [&duration, &offsets](
-          const tuple<Cell, PointSet>& pts_for_cell) -> const merged_map_type {
-          const merged_map_type r1(merge_list(
-            duration,
-            std::get<0>(pts_for_cell),
-            std::get<1>(pts_for_cell),
-            offsets));
-          return r1;
-        });
-      return merge_list_of_maps(r);
-    });
-  return static_cast<const merged_map_type>(merge_list_of_maps(r0));
+  return static_cast<const merged_map_type>(
+    merge_list_of_maps(
+      std::views::transform(
+        to_spread,
+        [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
+          auto& key = kv0.first;
+          auto& offsets = spread_info[key].offsets();
+          return merge_list_of_maps(
+            std::views::transform(
+              kv0.second,
+              [&duration, &offsets](
+                const tuple<Cell, PointSet>& pts_for_cell) -> const merged_map_type {
+                const merged_map_type r1(merge_list(
+                  duration,
+                  std::get<0>(pts_for_cell),
+                  std::get<1>(pts_for_cell),
+                  offsets));
+                return r1;
+              }));
+        })));
 }
 void calculate_spread(
   Scenario& scenario,
