@@ -4,12 +4,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #pragma once
-#include <algorithm>
-#include <execution>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
+#include "stdafx.h"
 #include "Cell.h"
 #include "ConstantGrid.h"
 #include "Event.h"
