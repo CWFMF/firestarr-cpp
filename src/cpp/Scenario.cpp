@@ -176,7 +176,7 @@ const merged_map_type merge_list(
     std::views::cartesian_product(
       std::views::transform(
         offsets,
-        [duration](const Offset& o) { return o * duration; }),
+        [duration](const Offset& o) { return o.after(duration); }),
       pts),
     [](const pair<const Offset&, const InnerPos&>& o_p) {
       return std::get<1>(o_p).add(std::get<0>(o_p));
