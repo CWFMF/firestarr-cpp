@@ -160,9 +160,18 @@ const merged_map_type merge_list(
           lhs,
           rhs,
           [](const map_type::mapped_type& a, const map_type::mapped_type& b) {
-            map_type::mapped_type pair_out{a};
-            pair_out.insert(pair_out.end(), b.begin(), b.end());
-            return pair_out;
+            map_type::mapped_type out{};
+            out.reserve(a.size() + b.size());
+            // somehow std::set_union() produces a different output
+            // (just for arrival and source on first scenario though????)
+            // std::set_union(
+            std::merge(
+              a.begin(),
+              a.end(),
+              b.begin(),
+              b.end(),
+              std::back_inserter(out));
+            return out;
           });
       },
       [](const pair<const Offset&, const InnerPos&>& o_p) -> const map_type {
