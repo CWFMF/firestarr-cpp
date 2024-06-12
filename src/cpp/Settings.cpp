@@ -587,7 +587,7 @@ bool Settings::saveIndividual() noexcept
 }
 void Settings::setSaveIndividual(const bool value) noexcept
 {
-  SettingsImplementation::instance().save_intensity = value;
+  SettingsImplementation::instance().save_individual = value;
 }
 bool Settings::runAsync() noexcept
 {
@@ -608,7 +608,7 @@ bool Settings::surface() noexcept
 void Settings::setSurface(const bool value) noexcept
 {
   SettingsImplementation::instance().surface = value;
- }
+}
 void Settings::setDeterministic(const bool value) noexcept
 {
   SettingsImplementation::instance().deterministic = value;
