@@ -165,20 +165,21 @@ const merged_map_type merge_list(
     auto& pts = p_m[for_cell];
     pts.emplace_back(p);
   }
-  const merged_map_type r0 = merge_reduce_maps(
-    p_m,
-    [&location](const map_type::value_type& kv) {
-      const Location k = kv.first;
-      const vector<InnerPos>& p1 = kv.second;
-      const auto source = relativeIndex(k, location);
-      merged_map_type r1{};
-      r1.emplace(k,
-                 merged_map_type::mapped_type(
-                   source,
-                   p1));
-      return r1;
-    });
-  return r0;
+  return static_cast<const merged_map_type>(
+    merge_reduce_maps(
+      p_m,
+      [&location](const map_type::value_type& kv) {
+        const Location k = kv.first;
+        const vector<InnerPos>& p1 = kv.second;
+        const auto source = relativeIndex(k, location);
+        return static_cast<const merged_map_type>(
+          merged_map_type{
+            merged_map_type::value_type(
+              k,
+              merged_map_type::mapped_type(
+                source,
+                p1))});
+      }));
 }
 const merged_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
