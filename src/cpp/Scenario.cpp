@@ -165,34 +165,20 @@ const merged_map_type merge_list(
     auto& pts = p_m[for_cell];
     pts.emplace_back(p);
   }
-  merged_map_type result{};
-  auto v0 = std::views::transform(
+  const merged_map_type r0 = merge_reduce_maps(
     p_m,
-    [&result](const auto& kv) {
-      // insert or lookup map for key
-      // still need key for relativeIndex
-      return tuple_temp(
-        kv.first,
-        kv.second,
-        &result[kv.first]);
-    });
-  // because we already did the map lookup we can do this all in paralell
-  std::for_each(
-    std::execution::par_unseq,
-    v0.begin(),
-    v0.end(),
-    [&location](const tuple_temp& kpsp) {
-      const Location k = std::get<0>(kpsp);
-      const vector<InnerPos>& p1 = std::get<1>(kpsp);
-      // pair that is currently in result for the given key
-      source_pair& sp = *(std::get<2>(kpsp));
-      CellIndex& s = sp.first;
-      vector<InnerPos>& p0 = sp.second;
-      p0.insert(p0.end(), p1.begin(), p1.end());
+    [&location](const map_type::value_type& kv) {
+      const Location k = kv.first;
+      const vector<InnerPos>& p1 = kv.second;
       const auto source = relativeIndex(k, location);
-      s |= source;
+      merged_map_type r1{};
+      r1.emplace(k,
+                 merged_map_type::mapped_type(
+                   source,
+                   p1));
+      return r1;
     });
-  return static_cast<const merged_map_type>(result);
+  return r0;
 }
 const merged_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
