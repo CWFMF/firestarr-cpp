@@ -156,15 +156,27 @@ const merged_map_type merge_list(
     });
   // were given a list of pairs that would go in a map
   // NOTE: could also sort and then check for key changing
-  map_type p_m{};
-  for (const InnerPos& p : p_o)
-  {
-    // don't need cell attributes, just location
-    // x is column & y is row
-    Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
-    auto& pts = p_m[for_cell];
-    pts.emplace_back(p);
-  }
+  auto p_m = std::transform_reduce(
+    std::execution::par_unseq,
+    p_o.begin(),
+    p_o.end(),
+    map_type{},
+    [](const map_type& lhs, const map_type& rhs) -> const map_type {
+      return merge_maps_generic<map_type>(
+        lhs,
+        rhs,
+        [](const map_type::mapped_type& a, const map_type::mapped_type& b) {
+          map_type::mapped_type pair_out{a};
+          pair_out.insert(pair_out.end(), b.begin(), b.end());
+          return pair_out;
+        });
+    },
+    [](const InnerPos& p) -> const map_type {
+      // don't need cell attributes, just location
+      Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
+      // a map with a single value with a single point
+      return map_type{{for_cell, map_type::mapped_type{p}}};
+    });
   return merge_reduce_maps(
     p_m,
     [&location](const map_type::value_type& kv) -> const merged_map_type {
