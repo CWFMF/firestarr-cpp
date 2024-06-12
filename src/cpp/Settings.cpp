@@ -673,7 +673,7 @@ Settings::setSaveIndividual(
   const bool value
 ) noexcept
 {
-  SettingsImplementation::instance().save_intensity = value;
+  SettingsImplementation::instance().save_individual = value;
 }
 bool
 Settings::runAsync() noexcept
