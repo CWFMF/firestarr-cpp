@@ -145,17 +145,13 @@ const merged_map_type merge_list(
   const PointSet& pts,
   const OffsetSet& offsets)
 {
-  auto p_o = std::views::transform(
-    std::views::cartesian_product(
-      std::views::transform(
-        offsets,
-        [duration](const Offset& o) { return o.after(duration); }),
-      pts),
-    [](const pair<const Offset&, const InnerPos&>& o_p) {
-      return std::get<1>(o_p).add(std::get<0>(o_p));
-    });
   // were given a list of pairs that would go in a map
   // NOTE: could also sort and then check for key changing
+  auto p_o = std::views::cartesian_product(
+    std::views::transform(
+      offsets,
+      [duration](const Offset& o) { return o.after(duration); }),
+    pts);
   auto p_m = std::transform_reduce(
     std::execution::par_unseq,
     p_o.begin(),
@@ -171,7 +167,9 @@ const merged_map_type merge_list(
           return pair_out;
         });
     },
-    [](const InnerPos& p) -> const map_type {
+    [](const pair<const Offset&, const InnerPos&>& o_p) -> const map_type {
+      // apply offset to point
+      const InnerPos& p = std::get<1>(o_p).add(std::get<0>(o_p));
       // don't need cell attributes, just location
       Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
       // a map with a single value with a single point
