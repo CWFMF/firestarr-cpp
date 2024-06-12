@@ -24,15 +24,17 @@ const merged_map_type merge_maps(
   const merged_map_type& lhs,
   const merged_map_type& rhs);
 
-const merged_map_type merge_list_of_maps(
-  //   const vector<merged_map_type>& points_and_sources)
-  const auto& points_and_sources)
+template <class F>
+const merged_map_type merge_reduce_maps(
+  const auto& points_and_sources,
+  F fct_transform)
 {
-  return std::reduce(
+  return std::transform_reduce(
     std::execution::par_unseq,
     points_and_sources.begin(),
     points_and_sources.end(),
     merged_map_type{},
-    merge_maps);
+    merge_maps,
+    fct_transform);
 }
 }
