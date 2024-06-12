@@ -27,6 +27,7 @@ using topo::StartPoint;
 using CellPts = tuple<Cell, const PointSet>;
 using CellPair = pair<const SpreadKey, vector<CellPts>>;
 using tuple_temp = tuple<const Location, const vector<InnerPos>&, source_pair*>;
+using spreading_points = map<SpreadKey, vector<CellPts>>;
 
 constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
@@ -139,33 +140,6 @@ void do_par(T& for_list, F fct)
     for_list.end(),
     fct);
 }
-
-// merge into and return empty list
-const merged_map_type merge_iterator(auto& points_and_sources)
-{
-  return std::reduce(
-    std::execution::par_unseq,
-    points_and_sources.begin(),
-    points_and_sources.end(),
-    merged_map_type{},
-    merge_iterators);
-}
-const merged_map_type merge_lists(
-  const merged_map_type& lhs,
-  const merged_map_type& rhs)
-{
-  return merge_iterators(lhs, rhs);
-}
-// merge into and return empty list
-const merged_map_type merge_list(auto& points_and_sources)
-{
-  return std::reduce(
-    std::execution::par_unseq,
-    points_and_sources.begin(),
-    points_and_sources.end(),
-    merged_map_type{},
-    merge_lists);
-}
 const merged_map_type merge_list(
   const double duration,
   const Location& location,
@@ -224,32 +198,39 @@ const merged_map_type merge_list(
 const merged_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
-  const auto& to_spread)
+  const spreading_points& to_spread)
 {
-  auto points_and_sources = std::views::transform(
-    to_spread,
+  vector<merged_map_type> r0{};
+  std::transform(
+    to_spread.begin(),
+    to_spread.end(),
+    r0,
     [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
       auto& key = kv0.first;
       auto& offsets = spread_info[key].offsets();
-      auto pts_and_srcs = std::views::transform(
-        kv0.second,
+      vector<merged_map_type> r{};
+      std::transform(
+        kv0.second.begin(),
+        kv0.second.end(),
+        r,
         [&duration, &offsets](
-          const tuple<Cell, PointSet> pts_for_cell) -> const merged_map_type {
-          return merge_list(
+          const tuple<Cell, PointSet>& pts_for_cell) -> const merged_map_type {
+          const merged_map_type r1(merge_list(
             duration,
             std::get<0>(pts_for_cell),
             std::get<1>(pts_for_cell),
-            offsets);
+            offsets));
+          return r1;
         });
-      return merge_list(pts_and_srcs);
+      return merge_list_of_maps(r);
     });
-  return merge_list(points_and_sources);
+  return static_cast<const merged_map_type>(merge_list_of_maps(r0));
 }
 void calculate_spread(
   Scenario& scenario,
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
-  const auto& to_spread,
+  const spreading_points& to_spread,
   map<Cell, PointSet>& points_out,
   map<Cell, CellIndex>& sources_out,
   const BurnedData& unburnable)
@@ -1134,7 +1115,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  map<SpreadKey, vector<CellPts>> to_spread{};
+  spreading_points to_spread{};
   // make block to prevent it being visible beyond use
   {
     // if we use an iterator this way we don't need to copy keys to erase things
