@@ -312,8 +312,8 @@ public:
    * \brief Multiply by duration to get total offset over time
    * \param duration time to multiply by
    */
-  Offset
-  operator*(
+  constexpr Offset
+  after(
     const double duration
   ) const noexcept
   {
@@ -374,12 +374,12 @@ private:
 };
 // define multiplication in other order since equivalent
 constexpr Offset
-operator*(
+after(
   const double duration,
   const Offset& o
 )
 {
-  return o * duration;
+  return o.after(duration);
 }
 /**
  * \brief Collection of Offsets

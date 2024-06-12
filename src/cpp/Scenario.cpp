@@ -192,7 +192,7 @@ merge_list(
       std::views::transform(
         offsets,
         [duration](const Offset& o) {
-          return o * duration;
+          return o.after(duration);
         }
       ),
       pts
