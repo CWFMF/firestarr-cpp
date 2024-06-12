@@ -28,12 +28,11 @@ const merged_map_type merge_list_of_maps(
   //   const vector<merged_map_type>& points_and_sources)
   const auto& points_and_sources)
 {
-  // for now just do manually, but should be able to use reduce?
-  merged_map_type out{};
-  for (const merged_map_type& m : points_and_sources)
-  {
-    out = merge_maps(out, m);
-  }
-  return out;
+  return std::reduce(
+    std::execution::par_unseq,
+    points_and_sources.begin(),
+    points_and_sources.end(),
+    merged_map_type{},
+    merge_maps);
 }
 }
