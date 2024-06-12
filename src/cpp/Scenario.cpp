@@ -8,7 +8,6 @@
 #define LOG_POINTS_CELL
 #undef LOG_POINTS_CELL
 
-#include "stdafx.h"
 #include "Scenario.h"
 #include "Observer.h"
 #include "Perimeter.h"
