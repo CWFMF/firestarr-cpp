@@ -147,36 +147,32 @@ const merged_map_type merge_list(
 {
   // were given a list of pairs that would go in a map
   // NOTE: could also sort and then check for key changing
-  auto p_o = std::views::cartesian_product(
-    std::views::transform(
-      offsets,
-      [duration](const Offset& o) { return o.after(duration); }),
-    pts);
-  auto p_m = std::transform_reduce(
-    std::execution::par_unseq,
-    p_o.begin(),
-    p_o.end(),
-    map_type{},
-    [](const map_type& lhs, const map_type& rhs) -> const map_type {
-      return merge_maps_generic<map_type>(
-        lhs,
-        rhs,
-        [](const map_type::mapped_type& a, const map_type::mapped_type& b) {
-          map_type::mapped_type pair_out{a};
-          pair_out.insert(pair_out.end(), b.begin(), b.end());
-          return pair_out;
-        });
-    },
-    [](const pair<const Offset&, const InnerPos&>& o_p) -> const map_type {
-      // apply offset to point
-      const InnerPos& p = std::get<1>(o_p).add(std::get<0>(o_p));
-      // don't need cell attributes, just location
-      Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
-      // a map with a single value with a single point
-      return map_type{{for_cell, map_type::mapped_type{p}}};
-    });
   return merge_reduce_maps(
-    p_m,
+    do_transform_reduce(
+      std::views::cartesian_product(
+        std::views::transform(
+          offsets,
+          [duration](const Offset& o) { return o.after(duration); }),
+        pts),
+      map_type{},
+      [](const map_type& lhs, const map_type& rhs) -> const map_type {
+        return merge_maps_generic<map_type>(
+          lhs,
+          rhs,
+          [](const map_type::mapped_type& a, const map_type::mapped_type& b) {
+            map_type::mapped_type pair_out{a};
+            pair_out.insert(pair_out.end(), b.begin(), b.end());
+            return pair_out;
+          });
+      },
+      [](const pair<const Offset&, const InnerPos&>& o_p) -> const map_type {
+        // apply offset to point
+        const InnerPos p = std::get<1>(o_p).add(std::get<0>(o_p));
+        // don't need cell attributes, just location
+        const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
+        // a map with a single value with a single point
+        return map_type{{for_cell, map_type::mapped_type{p}}};
+      }),
     [&location](const map_type::value_type& kv) -> const merged_map_type {
       const Location k = kv.first;
       return {

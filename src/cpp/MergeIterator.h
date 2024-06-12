@@ -16,6 +16,25 @@ using merged_map_type = map<Location, source_pair>;
 using merged_map_pair = pair<Location, source_pair>;
 using map_type = map<Location, vector<InnerPos>>;
 
+// mangled version of std::transform_reduce() that calls .begin() and .end()
+template <typename _ForwardIteratorSource, class _Tp, class _BinaryOperation, class _UnaryOperation>
+_Tp do_transform_reduce(
+  _ForwardIteratorSource&& container,
+  _Tp __init,
+  _BinaryOperation __binary_op,
+  _UnaryOperation __unary_op)
+{
+  // to help compiler determine type
+  using _ForwardIterator = decltype(container.begin());
+  return std::transform_reduce(
+    std::execution::par_unseq,
+    static_cast<_ForwardIterator>(container.begin()),
+    static_cast<_ForwardIterator>(container.end()),
+    __init,
+    __binary_op,
+    __unary_op);
+}
+
 const merged_map_type::mapped_type merge_cell_data(
   const merged_map_type::mapped_type& lhs,
   const merged_map_type::mapped_type& rhs);
@@ -94,10 +113,8 @@ const merged_map_type merge_reduce_maps(
   const auto& points_and_sources,
   F fct_transform)
 {
-  return std::transform_reduce(
-    std::execution::par_unseq,
-    points_and_sources.begin(),
-    points_and_sources.end(),
+  return do_transform_reduce(
+    points_and_sources,
     merged_map_type{},
     merge_maps,
     fct_transform);
