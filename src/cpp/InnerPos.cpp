@@ -4,6 +4,7 @@
 
 #include "Location.h"
 #include "MergeIterator.h"
+#include "Cell.h"
 namespace tbd
 {
 const merged_map_type apply_offsets_location(
@@ -48,5 +49,19 @@ const merged_map_type apply_offsets_location(
     }
   }
   return static_cast<const merged_map_type>(result);
+}
+const merged_map_type apply_offsets_spreadkey(
+  const double duration,
+  const OffsetSet& offsets,
+  const vector<CellPts>& cell_pts)
+{
+  return tbd::sim::merge_reduce_maps(
+    cell_pts,
+    [&duration, &offsets](
+      const tuple<Cell, OffsetSet>& pts_for_cell) -> const merged_map_type {
+      const Location& location = std::get<0>(pts_for_cell);
+      const OffsetSet& pts = std::get<1>(pts_for_cell);
+      return apply_offsets_location(location, duration, pts, offsets);
+    });
 }
 }
