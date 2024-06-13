@@ -86,7 +86,7 @@ const merged_map_type merge_list(
                   merged_map_type::value_type(
                     k,
                     merged_map_type::mapped_type(
-                      relativeIndex(k, location),
+                      relativeIndex(location, k),
                       kv.second))};
               });
           });
