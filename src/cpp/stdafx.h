@@ -363,6 +363,46 @@ public:
     const double duration,
     // copy when passed in
     OffsetSet offsets);
+  // constexpr inline OffsetSet apply_offsets(
+  //   // copy when passed in
+  //   OffsetSet offsets) const noexcept
+  // {
+  //   const double& x0 = coords_[0];
+  //   const double& y0 = coords_[1];
+  //   // putting results in copy of offsets and returning that
+  //   Offset* o = &(offsets[0]);
+  //   // this is an invalid point to after array we can use as a guard
+  //   Offset* e = &(offsets[offsets.size()]);
+  //   while (o != e)
+  //   {
+  //     double* x1 = &(o->coords_[0]);
+  //     double* y1 = &(o->coords_[1]);
+  //     (*x1) += x0;
+  //     (*y1) += y0;
+  //     ++o;
+  //   }
+  //   return offsets;
+  // }
+  constexpr inline OffsetSet apply_offsets(
+    // copy when passed in
+    OffsetSet offsets) const noexcept
+  {
+    const double& x0 = coords_[0];
+    const double& y0 = coords_[1];
+    // putting results in copy of offsets and returning that
+    // at the end of everything, we're just adding something to every double in the set by duration?
+    double* out = &(offsets[0].coords_[0]);
+    // this is an invalid point to after array we can use as a guard
+    double* e = &(offsets[offsets.size()].coords_[0]);
+    while (out != e)
+    {
+      (*out) += x0;
+      ++out;
+      (*out) += y0;
+      ++out;
+    }
+    return offsets;
+  }
 private:
   // coordinates as an array so we can treat an array of these as an array of doubles
   double coords_[2];
