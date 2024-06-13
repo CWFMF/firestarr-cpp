@@ -5,7 +5,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #pragma once
-
+#include "stdafx.h"
 #include "InnerPos.h"
 
 /**
