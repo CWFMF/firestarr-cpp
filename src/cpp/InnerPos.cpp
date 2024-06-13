@@ -15,6 +15,7 @@ const merged_map_type apply_offsets_spreadkey(
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   merged_map_type result{};
+  map<pair<Location, Location>, CellIndex> derived_keys{};
   // apply offsets to point
   for (const auto& out : offsets)
   {
@@ -22,7 +23,7 @@ const merged_map_type apply_offsets_spreadkey(
     const double y_o = duration * out.y();
     for (const auto& pts_for_cell : cell_pts)
     {
-      const Location& location = std::get<0>(pts_for_cell);
+      const Location& src = std::get<0>(pts_for_cell);
       const OffsetSet& pts = std::get<1>(pts_for_cell);
       for (const auto& p : pts)
       {
@@ -41,20 +42,34 @@ const merged_map_type apply_offsets_spreadkey(
             static_cast<Idx>(x)},
           tbd::topo::DIRECTION_NONE,
           NULL);
-        auto& pair = e.first->second;
+        auto& pair1 = e.first->second;
         // always add point since we're calling try_emplace with empty list
-        pair.second.emplace_back(x, y);
-        // if (e.second)
-        // {
-        //   // was inserted so calculate source
-        //   pair.first = relativeIndex(
-        //     location,
-        //     e.first->first);
-        // }
-        // FIX: since we don't know if we're using the location that inserted always apply source
-        pair.first |= relativeIndex(
-          location,
-          e.first->first);
+        pair1.second.emplace_back(x, y);
+        const Location& dst = e.first->first;
+        if (src != dst)
+        {
+          // no point in doing this if we didn't leave the cell
+          // // if (e.second)
+          // // {
+          // //   // was inserted so calculate source
+          // //   pair1.first = relativeIndex(
+          // //     src,
+          // //     dst);
+          // // }
+          auto e_s = derived_keys.try_emplace(
+            pair<Location, Location>(src, dst),
+            tbd::topo::DIRECTION_NONE);
+          if (e_s.second)
+          {
+            // we inserted a pair of (src, dst), which means we've never
+            // calculated the relativeIndex for this so add it to main map
+            pair1.first |= relativeIndex(
+              src,
+              dst);
+            // I guess you could put it in the derived_keys too, but that
+            // doesn't get used
+          }
+        }
       }
     }
   }
