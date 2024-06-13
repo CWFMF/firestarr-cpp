@@ -15,15 +15,15 @@ const merged_map_type apply_offsets_spreadkey(
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   merged_map_type result{};
-  for (const auto& pts_for_cell : cell_pts)
+  // apply offsets to point
+  for (const auto& out : offsets)
   {
-    const Location& location = std::get<0>(pts_for_cell);
-    const OffsetSet& pts = std::get<1>(pts_for_cell);
-    // apply offsets to point
-    for (const auto& out : offsets)
+    const double x_o = duration * out.x();
+    const double y_o = duration * out.y();
+    for (const auto& pts_for_cell : cell_pts)
     {
-      const double x_o = duration * out.x();
-      const double y_o = duration * out.y();
+      const Location& location = std::get<0>(pts_for_cell);
+      const OffsetSet& pts = std::get<1>(pts_for_cell);
       for (const auto& p : pts)
       {
         // putting results in copy of offsets and returning that
