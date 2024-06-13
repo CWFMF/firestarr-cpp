@@ -106,14 +106,11 @@ constexpr inline map<topo::Location, OffsetSet> apply_offsets(
 {
   // apply offsets to point
   std::map<Location, OffsetSet> r{};
-  const Offset* out = &(offsets[0]);
-  // this is an invalid point to after array we can use as a guard
-  const Offset* e = &(offsets[offsets.size()]);
-  while (out != e)
+  for (const auto& out : offsets)
   {
-    const double x_o = duration * out->x();
-    const double y_o = duration * out->y();
-    for (auto& p : pts)
+    const double x_o = duration * out.x();
+    const double y_o = duration * out.y();
+    for (const auto& p : pts)
     {
       // putting results in copy of offsets and returning that
       // at the end of everything, we're just adding something to every double in the set by duration?
@@ -125,7 +122,6 @@ constexpr inline map<topo::Location, OffsetSet> apply_offsets(
           static_cast<Idx>(x))]
         .emplace_back(x, y);
     }
-    ++out;
   }
   return r;
 }
