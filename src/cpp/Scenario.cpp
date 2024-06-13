@@ -182,16 +182,7 @@ const merged_map_type merge_list(
                 },
                 [&offsets](const Offset& pt) -> const map_type {
                   // apply offsets to point
-                  map_type r{};
-                  for (const InnerPos& p : pt.apply_offsets(offsets))
-                  {
-                    // don't need cell attributes, just location
-                    const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
-                    // a map with a single value with a single point
-                    r[for_cell].emplace_back(p);
-                  }
-                  return r;
-                  // return map_type{{for_cell, map_type::mapped_type{p}}};
+                  return pt.apply_offsets(offsets);
                 }),
               [&location](const map_type::value_type& kv) -> const merged_map_type {
                 const Location k = kv.first;
