@@ -103,20 +103,19 @@ public:
     const double& y0 = coords_[1];
     // putting results in copy of offsets and returning that
     // at the end of everything, we're just adding something to every double in the set by duration?
-    const double* out = &(offsets[0].coords_[0]);
+    const Offset* out = &(offsets[0]);
     // this is an invalid point to after array we can use as a guard
-    const double* e = &(offsets[offsets.size()].coords_[0]);
+    const Offset* e = &(offsets[offsets.size()]);
     while (out != e)
     {
-      const double x = (*out) + x0;
-      ++out;
-      const double y = (*out) + y0;
-      ++out;
+      const double x = (out->coords_[0]) + x0;
+      const double y = (out->coords_[1]) + y0;
       // don't need cell attributes, just location
       r[Location(
           static_cast<Idx>(y),
           static_cast<Idx>(x))]
         .emplace_back(x, y);
+      ++out;
     }
     return r;
   }
