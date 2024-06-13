@@ -159,9 +159,7 @@ const merged_map_type merge_list(
             const PointSet& pts = std::get<1>(pts_for_cell);
             return merge_reduce_maps(
               do_transform_reduce(
-                std::views::cartesian_product(
-                  offsets,
-                  pts),
+                pts,
                 map_type{},
                 [](const map_type& lhs, const map_type& rhs) -> const map_type {
                   return merge_maps_generic<map_type>(
@@ -182,13 +180,19 @@ const merged_map_type merge_list(
                       return out;
                     });
                 },
-                [](const pair<const Offset&, const InnerPos&>& o_p) -> const map_type {
-                  // apply offset to point
-                  const InnerPos p = std::get<1>(o_p).add(std::get<0>(o_p));
-                  // don't need cell attributes, just location
-                  const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
-                  // a map with a single value with a single point
-                  return map_type{{for_cell, map_type::mapped_type{p}}};
+                [&offsets](const Offset& pt) -> const map_type {
+                  // apply offsets to point
+                  const auto pts = pt.apply_offsets(offsets);
+                  map_type r{};
+                  for (const InnerPos& p : pts)
+                  {
+                    // don't need cell attributes, just location
+                    const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
+                    // a map with a single value with a single point
+                    r[for_cell].emplace_back(p);
+                  }
+                  return r;
+                  // return map_type{{for_cell, map_type::mapped_type{p}}};
                 }),
               [&location](const map_type::value_type& kv) -> const merged_map_type {
                 const Location k = kv.first;
