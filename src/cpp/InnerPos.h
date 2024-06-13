@@ -89,39 +89,6 @@ public:
   {
     return Offset(x() + o.x(), y() + o.y());
   }
-  friend constexpr OffsetSet apply_duration(
-    const double duration,
-    // copy when passed in
-    OffsetSet offsets);
-  static constexpr inline map<topo::Location, OffsetSet> apply_offsets(
-    const OffsetSet& pts,
-    const OffsetSet& offsets) noexcept
-  {
-    // apply offsets to point
-    std::map<Location, OffsetSet> r{};
-    const Offset* out = &(offsets[0]);
-    // this is an invalid point to after array we can use as a guard
-    const Offset* e = &(offsets[offsets.size()]);
-    while (out != e)
-    {
-      for (auto& p : pts)
-      {
-        const double& x0 = p.x();
-        const double& y0 = p.y();
-        // putting results in copy of offsets and returning that
-        // at the end of everything, we're just adding something to every double in the set by duration?
-        const double x = out->x() + x0;
-        const double y = out->y() + y0;
-        // don't need cell attributes, just location
-        r[Location(
-            static_cast<Idx>(y),
-            static_cast<Idx>(x))]
-          .emplace_back(x, y);
-      }
-      ++out;
-    }
-    return r;
-  }
 private:
   // coordinates as an array so we can treat an array of these as an array of doubles
   double coords_[2];
@@ -132,43 +99,35 @@ constexpr Offset after(const double duration, const Offset& o)
 {
   return o.after(duration);
 }
-constexpr inline OffsetSet apply_duration(
+constexpr inline map<topo::Location, OffsetSet> apply_offsets(
   const double duration,
-  // copy when passed in
-  OffsetSet offsets)
+  const OffsetSet& pts,
+  const OffsetSet& offsets) noexcept
 {
-  // OffsetSet r{};
-  // r.resize(offsets.size());
-  // std::transform(
-  //   offsets.cbegin(),
-  //   offsets.cend(),
-  //   r.begin(),
-  //   [&duration](const Offset& o) -> Offset {
-  //     return o.after(duration);
-  //   });
-  // at the end of everything, we're just mutliplying every double in the set by duration?
-  double* d = &(offsets[0].coords_[0]);
+  // apply offsets to point
+  std::map<Location, OffsetSet> r{};
+  const Offset* out = &(offsets[0]);
   // this is an invalid point to after array we can use as a guard
-  double* e = &(offsets[offsets.size()].coords_[0]);
-  // std::for_each_n(
-  //   d,
-  //   (e - d),
-  //   [&duration](const double x) {
-  //     return x * duration;
-  //   });
-  // std::for_each(
-  //   std::execution::par_unseq,
-  //   d,
-  //   e,
-  //   [&duration](double& x) {
-  //     x *= duration;
-  //   });
-  while (d != e)
+  const Offset* e = &(offsets[offsets.size()]);
+  while (out != e)
   {
-    *d *= duration;
-    ++d;
+    const double x_o = duration * out->x();
+    const double y_o = duration * out->y();
+    for (auto& p : pts)
+    {
+      // putting results in copy of offsets and returning that
+      // at the end of everything, we're just adding something to every double in the set by duration?
+      const double x = x_o + p.x();
+      const double y = y_o + p.y();
+      // don't need cell attributes, just location
+      r[Location(
+          static_cast<Idx>(y),
+          static_cast<Idx>(x))]
+        .emplace_back(x, y);
+    }
+    ++out;
   }
-  return offsets;
+  return r;
 }
 }
 namespace tbd::sim
