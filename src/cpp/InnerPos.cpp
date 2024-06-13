@@ -28,16 +28,22 @@ apply_offsets_location(
       const double x = x_o + p.x();
       const double y = y_o + p.y();
       // don't need cell attributes, just location
-      Location dst = Location(static_cast<Idx>(y), static_cast<Idx>(x));
+      //   Location dst = Location(
+      //     static_cast<Idx>(y),
+      //     static_cast<Idx>(x));
       // try to insert a pair with no direction and no points
-      auto e = result.try_emplace(dst, fs::topo::DIRECTION_NONE, NULL);
+      auto e = result.try_emplace(
+        Location{static_cast<Idx>(y), static_cast<Idx>(x)},
+        fs::topo::DIRECTION_NONE,
+        NULL
+      );
       auto& pair = e.first->second;
       // always add point since we're calling try_emplace with empty list
       pair.second.emplace_back(x, y);
       if (e.second)
       {
         // was inserted so calculate source
-        pair.first = relativeIndex(location, dst);
+        pair.first = relativeIndex(location, e.first->first);
       }
     }
   }
