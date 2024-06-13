@@ -113,11 +113,10 @@ public:
       const double y = (*out) + y0;
       ++out;
       // don't need cell attributes, just location
-      const Location for_cell(
-        static_cast<Idx>(y),
-        static_cast<Idx>(x));
-      // a map with a single value with a single point
-      r[for_cell].emplace_back(Offset(x, y));
+      r[Location(
+          static_cast<Idx>(y),
+          static_cast<Idx>(x))]
+        .emplace_back(x, y);
     }
     return r;
   }
