@@ -4,6 +4,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #pragma once
+#include "stdafx.h"
 #include "Util.h"
 #include "Log.h"
 namespace tbd::topo
@@ -242,4 +243,39 @@ inline bool operator>=(const Location& lhs, const Location& rhs)
 {
   return !(lhs < rhs);
 }
+
+// want to be able to make a bitmask of all directions it came from
+//  064  008  032
+//  001  000  002
+//  016  004  128
+static constexpr CellIndex DIRECTION_NONE = 0b00000000;
+static constexpr CellIndex DIRECTION_W = 0b00000001;
+static constexpr CellIndex DIRECTION_E = 0b00000010;
+static constexpr CellIndex DIRECTION_S = 0b00000100;
+static constexpr CellIndex DIRECTION_N = 0b00001000;
+static constexpr CellIndex DIRECTION_SW = 0b00010000;
+static constexpr CellIndex DIRECTION_NE = 0b00100000;
+static constexpr CellIndex DIRECTION_NW = 0b01000000;
+static constexpr CellIndex DIRECTION_SE = 0b10000000;
+// FIX: seems like there must be something with enum type that would be better?
+static const map<CellIndex, const char*> DIRECTION_NAMES{
+  {DIRECTION_NONE, "NONE"},
+  {DIRECTION_W, "W"},
+  {DIRECTION_E, "E"},
+  {DIRECTION_S, "S"},
+  {DIRECTION_N, "N"},
+  {DIRECTION_SW, "SW"},
+  {DIRECTION_NE, "NE"},
+  {DIRECTION_NW, "NW"},
+  {DIRECTION_SE, "SE"}};
+
+/**
+ * Determine the direction that a given cell is in from another cell. This is the
+ * same convention as wind (i.e. the direction it is coming from, not the direction
+ * it is going towards).
+ * @param for_cell The cell to find directions relative to
+ * @param from_cell The cell to find the direction of
+ * @return Direction that you would have to go in to get to from_cell from for_cell
+ */
+CellIndex relativeIndex(const Location& for_cell, const Location& from_cell);
 }

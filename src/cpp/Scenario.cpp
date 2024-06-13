@@ -41,120 +41,6 @@ constexpr auto STAGE_NEW = 'N';
 constexpr auto STAGE_SPREAD = 'S';
 constexpr auto STAGE_INVALID = 'X';
 
-// want to be able to make a bitmask of all directions it came from
-//  064  008  032
-//  001  000  002
-//  016  004  128
-static constexpr CellIndex DIRECTION_NONE = 0b00000000;
-static constexpr CellIndex DIRECTION_W = 0b00000001;
-static constexpr CellIndex DIRECTION_E = 0b00000010;
-static constexpr CellIndex DIRECTION_S = 0b00000100;
-static constexpr CellIndex DIRECTION_N = 0b00001000;
-static constexpr CellIndex DIRECTION_SW = 0b00010000;
-static constexpr CellIndex DIRECTION_NE = 0b00100000;
-static constexpr CellIndex DIRECTION_NW = 0b01000000;
-static constexpr CellIndex DIRECTION_SE = 0b10000000;
-// FIX: seems like there must be something with enum type that would be better?
-static const map<CellIndex, const char*> DIRECTION_NAMES{
-  {DIRECTION_NONE, "NONE"},
-  {DIRECTION_W, "W"},
-  {DIRECTION_E, "E"},
-  {DIRECTION_S, "S"},
-  {DIRECTION_N, "N"},
-  {DIRECTION_SW, "SW"},
-  {DIRECTION_NE, "NE"},
-  {DIRECTION_NW, "NW"},
-  {DIRECTION_SE, "SE"}};
-
-/**
- * Determine the direction that a given cell is in from another cell. This is the
- * same convention as wind (i.e. the direction it is coming from, not the direction
- * it is going towards).
- * @param for_cell The cell to find directions relative to
- * @param from_cell The cell to find the direction of
- * @return Direction that you would have to go in to get to from_cell from for_cell
- */
-CellIndex
-  relativeIndexNew(const Location& for_cell, const Location& from_cell)
-{
-  const auto r = for_cell.row();
-  const auto r_o = from_cell.row();
-  const auto c = for_cell.column();
-  const auto c_o = from_cell.column();
-  const auto r_d = r_o - r;
-  const auto c_d = c_o - c;
-  const auto h = (c_d + 1) + 3 * (r_d + 1);
-  static const CellIndex DIRECTIONS[9] =
-    {
-      DIRECTION_SW,
-      DIRECTION_S,
-      DIRECTION_SE,
-      DIRECTION_W,
-      DIRECTION_NONE,
-      DIRECTION_E,
-      DIRECTION_NW,
-      DIRECTION_N,
-      DIRECTION_NE};
-  return DIRECTIONS[h];
-}
-
-CellIndex relativeIndex(const Location& for_cell, const Location& from_cell)
-{
-  const auto r = for_cell.row();
-  const auto r_o = from_cell.row();
-  const auto c = for_cell.column();
-  const auto c_o = from_cell.column();
-  if (r == r_o)
-  {
-    // center row
-    // same cell, so source is 0
-    if (c == c_o)
-    {
-      return DIRECTION_NONE;
-    }
-    if (c < c_o)
-    {
-      // center right
-      return DIRECTION_E;
-    }
-    // else has to be c > c_o
-    // center left
-    return DIRECTION_W;
-  }
-  if (r < r_o)
-  {
-    // came from the row to the north
-    if (c == c_o)
-    {
-      // center top
-      return DIRECTION_N;
-    }
-    if (c < c_o)
-    {
-      // top right
-      return DIRECTION_NE;
-    }
-    // else has to be c > c_o
-    // top left
-    return DIRECTION_NW;
-  }
-  // else r > r_o
-  // came from the row to the south
-  if (c == c_o)
-  {
-    // center bottom
-    return DIRECTION_S;
-  }
-  if (c < c_o)
-  {
-    // bottom right
-    return DIRECTION_SE;
-  }
-  // else has to be c > c_o
-  // bottom left
-  return DIRECTION_SW;
-}
-
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
 {
@@ -196,19 +82,11 @@ const merged_map_type merge_list(
               apply_offsets(duration, pts, offsets),
               [&location](const map_type::value_type& kv) -> const merged_map_type {
                 const Location k = kv.first;
-                const auto i_old = relativeIndex(k, location);
-                const auto i_new = relativeIndexNew(k, location);
-                logging::check_fatal(i_old != i_new,
-                                     "Expected %d (%s) but got %d (%s)",
-                                     i_old,
-                                     DIRECTION_NAMES.at(i_old),
-                                     i_new,
-                                     DIRECTION_NAMES.at(i_new));
                 return {
                   merged_map_type::value_type(
                     k,
                     merged_map_type::mapped_type(
-                      i_old,
+                      relativeIndex(k, location),
                       kv.second))};
               });
           });
