@@ -99,7 +99,9 @@ constexpr Offset after(const double duration, const Offset& o)
 {
   return o.after(duration);
 }
-map<topo::Location, OffsetSet> apply_offsets(
+using merged_map_type = map<Location, pair<CellIndex, OffsetSet>>;
+const merged_map_type apply_offsets_location(
+  const Location& location,
   const double duration,
   const OffsetSet& pts,
   const OffsetSet& offsets) noexcept;
@@ -110,13 +112,4 @@ namespace tbd::sim
  * \brief The position within a Cell that a spreading point has.
  */
 using InnerPos = tbd::Offset;
-using source_pair = pair<CellIndex, vector<InnerPos>>;
-using merged_map_type = map<Location, source_pair>;
-using merged_map_pair = pair<Location, source_pair>;
-using map_type = map<Location, vector<InnerPos>>;
-const merged_map_type apply_offsets_location(
-  const Location& location,
-  const double duration,
-  const OffsetSet& pts,
-  const OffsetSet& offsets) noexcept;
 }
