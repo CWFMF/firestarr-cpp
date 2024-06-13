@@ -279,6 +279,12 @@ using Clock = std::chrono::steady_clock;
 /**
  * \brief Offset from a position
  */
+struct Offset;
+/**
+ * \brief Collection of Offsets
+ */
+using OffsetSet = vector<Offset>;
+
 struct Offset
 {
 public:
@@ -287,19 +293,20 @@ public:
    */
   inline constexpr double x() const noexcept
   {
-    return x_;
+    return coords_[0];
   }
   /**
    * \brief Offset in the y direction (row)
    */
   inline constexpr double y() const noexcept
   {
-    return y_;
+    return coords_[1];
   }
   constexpr Offset(const double a, const double b) noexcept
-    : x_(a),
-      y_(b)
+    : coords_()
   {
+    coords_[0] = a;
+    coords_[1] = b;
   }
   constexpr Offset() noexcept
     : Offset(-1, -1)
@@ -352,23 +359,55 @@ public:
   {
     return Offset(x() + o.x(), y() + o.y());
   }
+  friend constexpr OffsetSet apply_duration(
+    const double duration,
+    // copy when passed in
+    OffsetSet offsets);
 private:
-  /**
-   * \brief Offset in the x direction (column)
-   */
-  double x_;
-  /**
-   * \brief Offset in the y direction (row)
-   */
-  double y_;
+  // coordinates as an array so we can treat an array of these as an array of doubles
+  double coords_[2];
 };
 // define multiplication in other order since equivalent
 constexpr Offset after(const double duration, const Offset& o)
 {
   return o.after(duration);
 }
-/**
- * \brief Collection of Offsets
- */
-using OffsetSet = vector<Offset>;
+constexpr inline OffsetSet apply_duration(
+  const double duration,
+  // copy when passed in
+  OffsetSet offsets)
+{
+  // OffsetSet r{};
+  // r.resize(offsets.size());
+  // std::transform(
+  //   offsets.cbegin(),
+  //   offsets.cend(),
+  //   r.begin(),
+  //   [&duration](const Offset& o) -> Offset {
+  //     return o.after(duration);
+  //   });
+  // at the end of everything, we're just mutliplying every double in the set by duration?
+  double* d = &(offsets[0].coords_[0]);
+  // this is an invalid point to after array we can use as a guard
+  double* e = &(offsets[offsets.size()].coords_[0]);
+  // std::for_each_n(
+  //   d,
+  //   (e - d),
+  //   [&duration](const double x) {
+  //     return x * duration;
+  //   });
+  // std::for_each(
+  //   std::execution::par_unseq,
+  //   d,
+  //   e,
+  //   [&duration](double& x) {
+  //     x *= duration;
+  //   });
+  while (d != e)
+  {
+    *d *= duration;
+    ++d;
+  }
+  return offsets;
+}
 }
