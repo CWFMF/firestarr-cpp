@@ -93,29 +93,32 @@ public:
     const double duration,
     // copy when passed in
     OffsetSet offsets);
-  constexpr inline map<topo::Location, OffsetSet> apply_offsets(
-    // copy when passed in
-    const OffsetSet& offsets) const noexcept
+  static constexpr inline map<topo::Location, OffsetSet> apply_offsets(
+    const OffsetSet& pts,
+    const OffsetSet& offsets) noexcept
   {
     // apply offsets to point
     std::map<Location, OffsetSet> r{};
-    const double& x0 = coords_[0];
-    const double& y0 = coords_[1];
-    // putting results in copy of offsets and returning that
-    // at the end of everything, we're just adding something to every double in the set by duration?
-    const Offset* out = &(offsets[0]);
-    // this is an invalid point to after array we can use as a guard
-    const Offset* e = &(offsets[offsets.size()]);
-    while (out != e)
+    for (auto& p : pts)
     {
-      const double x = (out->coords_[0]) + x0;
-      const double y = (out->coords_[1]) + y0;
-      // don't need cell attributes, just location
-      r[Location(
-          static_cast<Idx>(y),
-          static_cast<Idx>(x))]
-        .emplace_back(x, y);
-      ++out;
+      const double& x0 = p.coords_[0];
+      const double& y0 = p.coords_[1];
+      // putting results in copy of offsets and returning that
+      // at the end of everything, we're just adding something to every double in the set by duration?
+      const Offset* out = &(offsets[0]);
+      // this is an invalid point to after array we can use as a guard
+      const Offset* e = &(offsets[offsets.size()]);
+      while (out != e)
+      {
+        const double x = (out->coords_[0]) + x0;
+        const double y = (out->coords_[1]) + y0;
+        // don't need cell attributes, just location
+        r[Location(
+            static_cast<Idx>(y),
+            static_cast<Idx>(x))]
+          .emplace_back(x, y);
+        ++out;
+      }
     }
     return r;
   }
