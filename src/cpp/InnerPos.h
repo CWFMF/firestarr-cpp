@@ -93,27 +93,7 @@ public:
     const double duration,
     // copy when passed in
     OffsetSet offsets);
-  // constexpr inline OffsetSet apply_offsets(
-  //   // copy when passed in
-  //   OffsetSet offsets) const noexcept
-  // {
-  //   const double& x0 = coords_[0];
-  //   const double& y0 = coords_[1];
-  //   // putting results in copy of offsets and returning that
-  //   Offset* o = &(offsets[0]);
-  //   // this is an invalid point to after array we can use as a guard
-  //   Offset* e = &(offsets[offsets.size()]);
-  //   while (o != e)
-  //   {
-  //     double* x1 = &(o->coords_[0]);
-  //     double* y1 = &(o->coords_[1]);
-  //     (*x1) += x0;
-  //     (*y1) += y0;
-  //     ++o;
-  //   }
-  //   return offsets;
-  // }
-  constexpr inline OffsetSet apply_offsets(
+  constexpr inline map<topo::Location, OffsetSet> apply_offsets(
     // copy when passed in
     OffsetSet offsets) const noexcept
   {
@@ -131,7 +111,16 @@ public:
       (*out) += y0;
       ++out;
     }
-    return offsets;
+    // apply offsets to point
+    std::map<Location, OffsetSet> r{};
+    for (const Offset& p : offsets)
+    {
+      // don't need cell attributes, just location
+      const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
+      // a map with a single value with a single point
+      r[for_cell].emplace_back(p);
+    }
+    return r;
   }
 private:
   // coordinates as an array so we can treat an array of these as an array of doubles
