@@ -273,9 +273,9 @@ static const map<CellIndex, const char*> DIRECTION_NAMES{
  * Determine the direction that a given cell is in from another cell. This is the
  * same convention as wind (i.e. the direction it is coming from, not the direction
  * it is going towards).
- * @param for_cell The cell to find directions relative to
- * @param from_cell The cell to find the direction of
- * @return Direction that you would have to go in to get to from_cell from for_cell
+ * @param src The cell to find directions relative to
+ * @param dst The cell to find the direction of
+ * @return Direction that you would have to go in to get to dst from src
  */
-CellIndex relativeIndex(const Location& for_cell, const Location& from_cell);
+CellIndex relativeIndex(const Location& src, const Location& dst);
 }
