@@ -182,9 +182,8 @@ const merged_map_type merge_list(
                 },
                 [&offsets](const Offset& pt) -> const map_type {
                   // apply offsets to point
-                  const auto pts = pt.apply_offsets(offsets);
                   map_type r{};
-                  for (const InnerPos& p : pts)
+                  for (const InnerPos& p : pt.apply_offsets(offsets))
                   {
                     // don't need cell attributes, just location
                     const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
