@@ -131,7 +131,7 @@ merge_list(
     to_spread,
     [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
       auto& key = kv0.first;
-      auto& offsets = spread_info[key].offsets();
+      auto offsets = apply_duration(duration, spread_info[key].offsets());
       return merge_reduce_maps(
         kv0.second,
         [&duration, &offsets](const tuple<Cell, PointSet>& pts_for_cell) -> const merged_map_type {
@@ -139,15 +139,7 @@ merge_list(
           const PointSet& pts = std::get<1>(pts_for_cell);
           return merge_reduce_maps(
             do_transform_reduce(
-              std::views::cartesian_product(
-                std::views::transform(
-                  offsets,
-                  [duration](const Offset& o) {
-                    return o.after(duration);
-                  }
-                ),
-                pts
-              ),
+              std::views::cartesian_product(offsets, pts),
               map_type{},
               [](const map_type& lhs, const map_type& rhs) -> const map_type {
                 return merge_maps_generic<map_type>(
