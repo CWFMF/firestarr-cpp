@@ -139,59 +139,7 @@ void do_par(T& for_list, F fct)
     for_list.end(),
     fct);
 }
-const merged_map_type merge_list(
-  const double duration,
-  const Location& location,
-  const PointSet& pts,
-  const OffsetSet& offsets)
-{
-  // were given a list of pairs that would go in a map
-  // NOTE: could also sort and then check for key changing
-  return merge_reduce_maps(
-    do_transform_reduce(
-      std::views::cartesian_product(
-        std::views::transform(
-          offsets,
-          [duration](const Offset& o) { return o.after(duration); }),
-        pts),
-      map_type{},
-      [](const map_type& lhs, const map_type& rhs) -> const map_type {
-        return merge_maps_generic<map_type>(
-          lhs,
-          rhs,
-          [](const map_type::mapped_type& a, const map_type::mapped_type& b) {
-            map_type::mapped_type out{};
-            out.reserve(a.size() + b.size());
-            // somehow std::set_union() produces a different output
-            // (just for arrival and source on first scenario though????)
-            // std::set_union(
-            std::merge(
-              a.begin(),
-              a.end(),
-              b.begin(),
-              b.end(),
-              std::back_inserter(out));
-            return out;
-          });
-      },
-      [](const pair<const Offset&, const InnerPos&>& o_p) -> const map_type {
-        // apply offset to point
-        const InnerPos p = std::get<1>(o_p).add(std::get<0>(o_p));
-        // don't need cell attributes, just location
-        const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
-        // a map with a single value with a single point
-        return map_type{{for_cell, map_type::mapped_type{p}}};
-      }),
-    [&location](const map_type::value_type& kv) -> const merged_map_type {
-      const Location k = kv.first;
-      return {
-        merged_map_type::value_type(
-          k,
-          merged_map_type::mapped_type(
-            relativeIndex(k, location),
-            kv.second))};
-    });
-}
+
 const merged_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
@@ -207,12 +155,52 @@ const merged_map_type merge_list(
           kv0.second,
           [&duration, &offsets](
             const tuple<Cell, PointSet>& pts_for_cell) -> const merged_map_type {
-            const merged_map_type r1(merge_list(
-              duration,
-              std::get<0>(pts_for_cell),
-              std::get<1>(pts_for_cell),
-              offsets));
-            return r1;
+            const Location& location = std::get<0>(pts_for_cell);
+            const PointSet& pts = std::get<1>(pts_for_cell);
+            return merge_reduce_maps(
+              do_transform_reduce(
+                std::views::cartesian_product(
+                  std::views::transform(
+                    offsets,
+                    [duration](const Offset& o) { return o.after(duration); }),
+                  pts),
+                map_type{},
+                [](const map_type& lhs, const map_type& rhs) -> const map_type {
+                  return merge_maps_generic<map_type>(
+                    lhs,
+                    rhs,
+                    [](const map_type::mapped_type& a, const map_type::mapped_type& b) {
+                      map_type::mapped_type out{};
+                      out.reserve(a.size() + b.size());
+                      // somehow std::set_union() produces a different output
+                      // (just for arrival and source on first scenario though????)
+                      // std::set_union(
+                      std::merge(
+                        a.begin(),
+                        a.end(),
+                        b.begin(),
+                        b.end(),
+                        std::back_inserter(out));
+                      return out;
+                    });
+                },
+                [](const pair<const Offset&, const InnerPos&>& o_p) -> const map_type {
+                  // apply offset to point
+                  const InnerPos p = std::get<1>(o_p).add(std::get<0>(o_p));
+                  // don't need cell attributes, just location
+                  const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
+                  // a map with a single value with a single point
+                  return map_type{{for_cell, map_type::mapped_type{p}}};
+                }),
+              [&location](const map_type::value_type& kv) -> const merged_map_type {
+                const Location k = kv.first;
+                return {
+                  merged_map_type::value_type(
+                    k,
+                    merged_map_type::mapped_type(
+                      relativeIndex(k, location),
+                      kv.second))};
+              });
           });
       }));
 }
