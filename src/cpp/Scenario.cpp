@@ -54,6 +54,17 @@ static constexpr CellIndex DIRECTION_SW = 0b00010000;
 static constexpr CellIndex DIRECTION_NE = 0b00100000;
 static constexpr CellIndex DIRECTION_NW = 0b01000000;
 static constexpr CellIndex DIRECTION_SE = 0b10000000;
+// FIX: seems like there must be something with enum type that would be better?
+static const map<CellIndex, const char*> DIRECTION_NAMES{
+  {DIRECTION_NONE, "NONE"},
+  {DIRECTION_W, "W"},
+  {DIRECTION_E, "E"},
+  {DIRECTION_S, "S"},
+  {DIRECTION_N, "N"},
+  {DIRECTION_SW, "SW"},
+  {DIRECTION_NE, "NE"},
+  {DIRECTION_NW, "NW"},
+  {DIRECTION_SE, "SE"}};
 
 /**
  * Determine the direction that a given cell is in from another cell. This is the
@@ -63,6 +74,30 @@ static constexpr CellIndex DIRECTION_SE = 0b10000000;
  * @param from_cell The cell to find the direction of
  * @return Direction that you would have to go in to get to from_cell from for_cell
  */
+CellIndex
+  relativeIndexNew(const Location& for_cell, const Location& from_cell)
+{
+  const auto r = for_cell.row();
+  const auto r_o = from_cell.row();
+  const auto c = for_cell.column();
+  const auto c_o = from_cell.column();
+  const auto r_d = r_o - r;
+  const auto c_d = c_o - c;
+  const auto h = (c_d + 1) + 3 * (r_d + 1);
+  static const CellIndex DIRECTIONS[9] =
+    {
+      DIRECTION_SW,
+      DIRECTION_S,
+      DIRECTION_SE,
+      DIRECTION_W,
+      DIRECTION_NONE,
+      DIRECTION_E,
+      DIRECTION_NW,
+      DIRECTION_N,
+      DIRECTION_NE};
+  return DIRECTIONS[h];
+}
+
 CellIndex relativeIndex(const Location& for_cell, const Location& from_cell)
 {
   const auto r = for_cell.row();
@@ -161,11 +196,19 @@ const merged_map_type merge_list(
               apply_offsets(duration, pts, offsets),
               [&location](const map_type::value_type& kv) -> const merged_map_type {
                 const Location k = kv.first;
+                const auto i_old = relativeIndex(k, location);
+                const auto i_new = relativeIndexNew(k, location);
+                logging::check_fatal(i_old != i_new,
+                                     "Expected %d (%s) but got %d (%s)",
+                                     i_old,
+                                     DIRECTION_NAMES.at(i_old),
+                                     i_new,
+                                     DIRECTION_NAMES.at(i_new));
                 return {
                   merged_map_type::value_type(
                     k,
                     merged_map_type::mapped_type(
-                      relativeIndex(k, location),
+                      i_old,
                       kv.second))};
               });
           });
