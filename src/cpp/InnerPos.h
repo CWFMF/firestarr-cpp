@@ -110,11 +110,6 @@ using CellPts = tuple<Cell, const OffsetSet>;
 using CellPair = pair<const SpreadKey, vector<CellPts>>;
 using tuple_temp = tuple<const Location, const OffsetSet&, source_pair*>;
 using spreading_points = map<SpreadKey, vector<CellPts>>;
-const merged_map_type apply_offsets_location(
-  const Location& location,
-  const double duration,
-  const OffsetSet& pts,
-  const OffsetSet& offsets) noexcept;
 const merged_map_type apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
