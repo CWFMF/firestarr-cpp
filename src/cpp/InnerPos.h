@@ -101,8 +101,8 @@ public:
     std::map<Location, OffsetSet> r{};
     for (auto& p : pts)
     {
-      const double& x0 = p.coords_[0];
-      const double& y0 = p.coords_[1];
+      const double& x0 = p.x();
+      const double& y0 = p.y();
       // putting results in copy of offsets and returning that
       // at the end of everything, we're just adding something to every double in the set by duration?
       const Offset* out = &(offsets[0]);
@@ -110,8 +110,8 @@ public:
       const Offset* e = &(offsets[offsets.size()]);
       while (out != e)
       {
-        const double x = (out->coords_[0]) + x0;
-        const double y = (out->coords_[1]) + y0;
+        const double x = out->x() + x0;
+        const double y = out->y() + y0;
         // don't need cell attributes, just location
         r[Location(
             static_cast<Idx>(y),
