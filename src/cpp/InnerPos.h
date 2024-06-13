@@ -32,11 +32,11 @@ public:
   {
     return coords_[1];
   }
-  constexpr Offset(const double a, const double b) noexcept
+  constexpr Offset(const double x, const double y) noexcept
     : coords_()
   {
-    coords_[0] = a;
-    coords_[1] = b;
+    coords_[0] = x;
+    coords_[1] = y;
   }
   constexpr Offset() noexcept
     : Offset(-1, -1)
@@ -95,30 +95,29 @@ public:
     OffsetSet offsets);
   constexpr inline map<topo::Location, OffsetSet> apply_offsets(
     // copy when passed in
-    OffsetSet offsets) const noexcept
+    const OffsetSet& offsets) const noexcept
   {
+    // apply offsets to point
+    std::map<Location, OffsetSet> r{};
     const double& x0 = coords_[0];
     const double& y0 = coords_[1];
     // putting results in copy of offsets and returning that
     // at the end of everything, we're just adding something to every double in the set by duration?
-    double* out = &(offsets[0].coords_[0]);
+    const double* out = &(offsets[0].coords_[0]);
     // this is an invalid point to after array we can use as a guard
-    double* e = &(offsets[offsets.size()].coords_[0]);
+    const double* e = &(offsets[offsets.size()].coords_[0]);
     while (out != e)
     {
-      (*out) += x0;
+      const double x = (*out) + x0;
       ++out;
-      (*out) += y0;
+      const double y = (*out) + y0;
       ++out;
-    }
-    // apply offsets to point
-    std::map<Location, OffsetSet> r{};
-    for (const Offset& p : offsets)
-    {
       // don't need cell attributes, just location
-      const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
+      const Location for_cell(
+        static_cast<Idx>(y),
+        static_cast<Idx>(x));
       // a map with a single value with a single point
-      r[for_cell].emplace_back(p);
+      r[for_cell].emplace_back(Offset(x, y));
     }
     return r;
   }
