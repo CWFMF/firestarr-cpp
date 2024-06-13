@@ -18,15 +18,15 @@ apply_offsets_spreadkey(
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   merged_map_type result{};
-  for (const auto& pts_for_cell : cell_pts)
+  // apply offsets to point
+  for (const auto& out : offsets)
   {
-    const Location& location = std::get<0>(pts_for_cell);
-    const OffsetSet& pts = std::get<1>(pts_for_cell);
-    // apply offsets to point
-    for (const auto& out : offsets)
+    const double x_o = duration * out.x();
+    const double y_o = duration * out.y();
+    for (const auto& pts_for_cell : cell_pts)
     {
-      const double x_o = duration * out.x();
-      const double y_o = duration * out.y();
+      const Location& src = std::get<0>(pts_for_cell);
+      const OffsetSet& pts = std::get<1>(pts_for_cell);
       for (const auto& p : pts)
       {
         // putting results in copy of offsets and returning that
@@ -37,14 +37,19 @@ apply_offsets_spreadkey(
         // try to insert a pair with no direction and no points
         auto e = result.try_emplace(
           Location{static_cast<Idx>(y), static_cast<Idx>(x)},
-          fs::DIRECTION_NONE,
+          DIRECTION_NONE,
           NULL
         );
-        auto& pair = e.first->second;
+        auto& pair1 = e.first->second;
         // always add point since we're calling try_emplace with empty list
-        pair.second.emplace_back(x, y);
-        // FIX: since we don't know if we're using the location that inserted always apply source
-        pair.first |= relativeIndex(location, e.first->first);
+        pair1.second.emplace_back(x, y);
+        const Location& dst = e.first->first;
+        if (src != dst)
+        {
+          // we inserted a pair of (src, dst), which means we've never
+          // calculated the relativeIndex for this so add it to main map
+          pair1.first |= relativeIndex(src, dst);
+        }
       }
     }
   }
