@@ -15,7 +15,6 @@ const merged_map_type apply_offsets_spreadkey(
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   merged_map_type result{};
-  map<pair<Location, Location>, CellIndex> derived_keys{};
   // apply offsets to point
   for (const auto& out : offsets)
   {
@@ -48,27 +47,11 @@ const merged_map_type apply_offsets_spreadkey(
         const Location& dst = e.first->first;
         if (src != dst)
         {
-          // no point in doing this if we didn't leave the cell
-          // // if (e.second)
-          // // {
-          // //   // was inserted so calculate source
-          // //   pair1.first = relativeIndex(
-          // //     src,
-          // //     dst);
-          // // }
-          auto e_s = derived_keys.try_emplace(
-            pair<Location, Location>(src, dst),
-            tbd::topo::DIRECTION_NONE);
-          if (e_s.second)
-          {
-            // we inserted a pair of (src, dst), which means we've never
-            // calculated the relativeIndex for this so add it to main map
-            pair1.first |= relativeIndex(
-              src,
-              dst);
-            // I guess you could put it in the derived_keys too, but that
-            // doesn't get used
-          }
+          // we inserted a pair of (src, dst), which means we've never
+          // calculated the relativeIndex for this so add it to main map
+          pair1.first |= relativeIndex(
+            src,
+            dst);
         }
       }
     }
