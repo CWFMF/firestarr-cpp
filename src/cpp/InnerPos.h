@@ -7,22 +7,22 @@
 
 #include "stdafx.h"
 
-#include "Log.h"
+#include "Location.h"
 
 namespace fs
 {
+
 /**
  * \brief Offset from a position
  */
-struct Offset;
-/**
- * \brief Collection of Offsets
- */
-using OffsetSet = vector<Offset>;
-
 struct Offset
 {
 public:
+  /**
+   * \brief Collection of Offsets
+   */
+  using OffsetSet = vector<Offset>;
+
   /**
    * \brief Offset in the x direction (column)
    */
@@ -128,10 +128,35 @@ public:
     OffsetSet offsets
   );
 
+  constexpr inline OffsetSet
+  apply_offsets(
+    // copy when passed in
+    OffsetSet offsets
+  ) const noexcept
+  {
+    const double& x0 = coords_[0];
+    const double& y0 = coords_[1];
+    // putting results in copy of offsets and returning that
+    // at the end of everything, we're just adding something to every double in the set by duration?
+    double* out = &(offsets[0].coords_[0]);
+    // this is an invalid point to after array we can use as a guard
+    double* e = &(offsets[offsets.size()].coords_[0]);
+    while (out != e)
+    {
+      (*out) += x0;
+      ++out;
+      (*out) += y0;
+      ++out;
+    }
+    return offsets;
+  }
+
 private:
   // coordinates as an array so we can treat an array of these as an array of doubles
   double coords_[2];
 };
+
+using OffsetSet = Offset::OffsetSet;
 
 // define multiplication in other order since equivalent
 constexpr Offset
@@ -141,22 +166,6 @@ after(
 )
 {
   return o.after(duration);
-}
-
-static constexpr MathSize
-x(
-  const auto& p
-)
-{
-  return p.x();
-}
-
-static constexpr MathSize
-y(
-  const auto& p
-)
-{
-  return p.y();
 }
 
 constexpr inline OffsetSet
@@ -178,10 +187,25 @@ apply_duration(
   return offsets;
 }
 
+static constexpr MathSize
+x(
+  const auto& p
+)
+{
+  return p.x();
+}
+
+static constexpr MathSize
+y(
+  const auto& p
+)
+{
+  return p.y();
+}
+
 /**
  * \brief The position within a Cell that a spreading point has.
  */
-using InnerPos = Offset;
+using InnerPos = fs::Offset;
 }
-
 #endif
