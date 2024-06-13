@@ -150,7 +150,7 @@ const merged_map_type merge_list(
       to_spread,
       [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
         auto& key = kv0.first;
-        auto offsets = apply_duration(duration, spread_info[key].offsets());
+        auto offsets = spread_info[key].offsets();
         return merge_reduce_maps(
           kv0.second,
           [&duration, &offsets](
@@ -158,7 +158,7 @@ const merged_map_type merge_list(
             const Location& location = std::get<0>(pts_for_cell);
             const PointSet& pts = std::get<1>(pts_for_cell);
             return merge_reduce_maps(
-              Offset::apply_offsets(pts, offsets),
+              apply_offsets(duration, pts, offsets),
               [&location](const map_type::value_type& kv) -> const merged_map_type {
                 const Location k = kv.first;
                 return {
