@@ -18,11 +18,6 @@ namespace fs
 {
 using std::cout;
 
-using CellPts = tuple<Cell, const PointSet>;
-using CellPair = pair<const SpreadKey, vector<CellPts>>;
-using tuple_temp = tuple<const Location, const vector<InnerPos>&, source_pair*>;
-using spreading_points = map<SpreadKey, vector<CellPts>>;
-
 constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
 static atomic<size_t> COUNT = 0;
@@ -62,15 +57,9 @@ merge_list(
     to_spread,
     [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
       auto& key = kv0.first;
-      auto offsets = spread_info[key].offsets();
-      return merge_reduce_maps(
-        kv0.second,
-        [&duration, &offsets](const tuple<Cell, PointSet>& pts_for_cell) -> const merged_map_type {
-          const Location& location = std::get<0>(pts_for_cell);
-          const PointSet& pts = std::get<1>(pts_for_cell);
-          return apply_offsets_location(location, duration, pts, offsets);
-        }
-      );
+      const auto& offsets = spread_info[key].offsets();
+      const vector<CellPts>& cell_pts = kv0.second;
+      return apply_offsets_spreadkey(duration, offsets, cell_pts);
     }
   ));
 }
