@@ -7,15 +7,16 @@
 
 namespace fs
 {
-map<Location, OffsetSet>
-apply_offsets(
+const merged_map_type
+apply_offsets_location(
+  const Location& location,
   const double duration,
   const OffsetSet& pts,
   const OffsetSet& offsets
 ) noexcept
 {
+  merged_map_type result{};
   // apply offsets to point
-  std::map<Location, OffsetSet> r{};
   for (const auto& out : offsets)
   {
     const double x_o = duration * out.x();
@@ -27,33 +28,22 @@ apply_offsets(
       // duration?
       const double x = x_o + p.x();
       const double y = y_o + p.y();
-      // don't need cell attributes, just location
-      r[Location(static_cast<Idx>(y), static_cast<Idx>(x))].emplace_back(x, y);
+      // try to insert a pair with no direction and no points
+      auto e = result.try_emplace(
+        Location{static_cast<Idx>(y), static_cast<Idx>(x)},
+        fs::DIRECTION_NONE,
+        NULL
+      );
+      auto& pair = e.first->second;
+      // always add point since we're calling try_emplace with empty list
+      pair.second.emplace_back(x, y);
+      if (e.second)
+      {
+        // was inserted so calculate source
+        pair.first = relativeIndex(location, e.first->first);
+      }
     }
   }
-  return r;
-}
-}
-
-namespace fs
-{
-const merged_map_type
-apply_offsets_location(
-  const Location& location,
-  const double duration,
-  const OffsetSet& pts,
-  const OffsetSet& offsets
-) noexcept
-{
-  return merge_reduce_maps(
-    apply_offsets(duration, pts, offsets),
-    [&location](const map_type::value_type& kv) -> const merged_map_type {
-      const Location k = kv.first;
-      return {merged_map_type::value_type(
-        k,
-        merged_map_type::mapped_type(relativeIndex(location, k), kv.second)
-      )};
-    }
-  );
+  return static_cast<const merged_map_type>(result);
 }
 }
