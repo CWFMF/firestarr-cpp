@@ -99,17 +99,17 @@ public:
   {
     // apply offsets to point
     std::map<Location, OffsetSet> r{};
-    for (auto& p : pts)
+    const Offset* out = &(offsets[0]);
+    // this is an invalid point to after array we can use as a guard
+    const Offset* e = &(offsets[offsets.size()]);
+    while (out != e)
     {
-      const double& x0 = p.x();
-      const double& y0 = p.y();
-      // putting results in copy of offsets and returning that
-      // at the end of everything, we're just adding something to every double in the set by duration?
-      const Offset* out = &(offsets[0]);
-      // this is an invalid point to after array we can use as a guard
-      const Offset* e = &(offsets[offsets.size()]);
-      while (out != e)
+      for (auto& p : pts)
       {
+        const double& x0 = p.x();
+        const double& y0 = p.y();
+        // putting results in copy of offsets and returning that
+        // at the end of everything, we're just adding something to every double in the set by duration?
         const double x = out->x() + x0;
         const double y = out->y() + y0;
         // don't need cell attributes, just location
@@ -117,8 +117,8 @@ public:
             static_cast<Idx>(y),
             static_cast<Idx>(x))]
           .emplace_back(x, y);
-        ++out;
       }
+      ++out;
     }
     return r;
   }
