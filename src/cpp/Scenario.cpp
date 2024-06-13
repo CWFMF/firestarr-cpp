@@ -83,7 +83,7 @@ merge_list(
               const Location k = kv.first;
               return {merged_map_type::value_type(
                 k,
-                merged_map_type::mapped_type(relativeIndex(k, location), kv.second)
+                merged_map_type::mapped_type(relativeIndex(location, k), kv.second)
               )};
             }
           );

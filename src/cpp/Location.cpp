@@ -7,18 +7,11 @@ namespace fs::topo
 {
 CellIndex
 relativeIndex(
-  const Location& for_cell,
-  const Location& from_cell
+  const Location& src,
+  const Location& dst
 )
 {
-  const auto r = for_cell.row();
-  const auto r_o = from_cell.row();
-  const auto c = for_cell.column();
-  const auto c_o = from_cell.column();
-  const auto r_d = r_o - r;
-  const auto c_d = c_o - c;
-  const auto h = (c_d + 1) + 3 * (r_d + 1);
-  static const CellIndex DIRECTIONS[9] = {
+  static constexpr CellIndex DIRECTIONS[9] = {
     DIRECTION_SW,
     DIRECTION_S,
     DIRECTION_SE,
@@ -29,6 +22,6 @@ relativeIndex(
     DIRECTION_N,
     DIRECTION_NE
   };
-  return DIRECTIONS[h];
+  return DIRECTIONS[((src.column() - dst.column()) + 1) + 3 * ((src.row() - dst.row()) + 1)];
 }
 }
