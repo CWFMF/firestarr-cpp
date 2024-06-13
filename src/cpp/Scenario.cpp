@@ -158,32 +158,7 @@ const merged_map_type merge_list(
             const Location& location = std::get<0>(pts_for_cell);
             const PointSet& pts = std::get<1>(pts_for_cell);
             return merge_reduce_maps(
-              do_transform_reduce(
-                pts,
-                map_type{},
-                [](const map_type& lhs, const map_type& rhs) -> const map_type {
-                  return merge_maps_generic<map_type>(
-                    lhs,
-                    rhs,
-                    [](const map_type::mapped_type& a, const map_type::mapped_type& b) {
-                      map_type::mapped_type out{};
-                      out.reserve(a.size() + b.size());
-                      // somehow std::set_union() produces a different output
-                      // (just for arrival and source on first scenario though????)
-                      // std::set_union(
-                      std::merge(
-                        a.begin(),
-                        a.end(),
-                        b.begin(),
-                        b.end(),
-                        std::back_inserter(out));
-                      return out;
-                    });
-                },
-                [&offsets](const Offset& pt) -> const map_type {
-                  // apply offsets to point
-                  return pt.apply_offsets(offsets);
-                }),
+              Offset::apply_offsets(pts, offsets),
               [&location](const map_type::value_type& kv) -> const merged_map_type {
                 const Location k = kv.first;
                 return {
