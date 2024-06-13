@@ -128,7 +128,7 @@ public:
     OffsetSet offsets
   );
 
-  constexpr inline OffsetSet
+  constexpr inline map<Location, OffsetSet>
   apply_offsets(
     // copy when passed in
     OffsetSet offsets
@@ -148,7 +148,16 @@ public:
       (*out) += y0;
       ++out;
     }
-    return offsets;
+    // apply offsets to point
+    std::map<Location, OffsetSet> r{};
+    for (const Offset& p : offsets)
+    {
+      // don't need cell attributes, just location
+      const Location for_cell(static_cast<Idx>(p.y()), static_cast<Idx>(p.x()));
+      // a map with a single value with a single point
+      r[for_cell].emplace_back(p);
+    }
+    return r;
   }
 
 private:
