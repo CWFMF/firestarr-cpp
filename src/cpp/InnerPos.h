@@ -5,8 +5,8 @@
 #ifndef FS_INNERPOS_H
 #define FS_INNERPOS_H
 
-#include "Settings.h"
-
+#include "stdafx.h"
+#include "Location.h"
 namespace fs
 {
 using topo::Location;
@@ -123,19 +123,7 @@ after(
 {
   return o.after(duration);
 }
-map<topo::Location, OffsetSet>
-apply_offsets(const double duration, const OffsetSet& pts, const OffsetSet& offsets) noexcept;
-}
-namespace fs::sim
-{
-/**
- * \brief The position within a Cell that a spreading point has.
- */
-using InnerPos = fs::Offset;
-using source_pair = pair<CellIndex, vector<InnerPos>>;
-using merged_map_type = map<Location, source_pair>;
-using merged_map_pair = pair<Location, source_pair>;
-using map_type = map<Location, vector<InnerPos>>;
+using merged_map_type = map<Location, pair<CellIndex, OffsetSet>>;
 const merged_map_type
 apply_offsets_location(
   const Location& location,
@@ -143,5 +131,12 @@ apply_offsets_location(
   const OffsetSet& pts,
   const OffsetSet& offsets
 ) noexcept;
+}
+namespace fs::sim
+{
+/**
+ * \brief The position within a Cell that a spreading point has.
+ */
+using InnerPos = fs::Offset;
 }
 #endif
