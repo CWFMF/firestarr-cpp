@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2005, 2021 Jordan Evens */
 /* SPDX-FileCopyrightText: 2020 Queen's Printer for Ontario */
-/* SPDX-FileCopyrightText: 2025 Government of Canada */
+/* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "ConvexHull.h"
@@ -62,7 +62,6 @@ hull(
   vector<InnerPos>& a
 ) noexcept
 {
-  if (a.size() > MAX_BEFORE_CONDENSE)
   {
     size_t n_pos = 0;
     auto n = numeric_limits<double>::max();
@@ -237,10 +236,6 @@ hull(
     };
     fs::logging::check_fatal(a.size() > 16, "Expected <= 16 points but have %ld", a.size());
   }
-  else
-  {
-    fs::logging::note("Called when shouldn't have");
-  }
 }
 #else
 void
@@ -252,7 +247,7 @@ hull(
   InnerPos maxPos{MIN_X, MIN_X};
   InnerPos minPos{MAX_X, MAX_X};
 
-  for (const auto p : a)
+  for (const auto& p : a)
   {
     if (p.x() > maxPos.x())
     {
@@ -303,7 +298,7 @@ quickHull(
    * for distance from the line n1n2 to the current point
    */
 
-  for (const auto p : a)
+  for (const auto& p : a)
   {
     // loop through points, looking for furthest
     const auto d = (abX * (n1.y() - p.y()) - (n1.x() - p.x()) * abY);

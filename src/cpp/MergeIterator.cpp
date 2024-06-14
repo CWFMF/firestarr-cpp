@@ -11,11 +11,12 @@ merge_cell_data(
   const merged_map_type::mapped_type& rhs
 )
 {
+  using list_type = merged_map_type::mapped_type::second_type;
   merged_map_type::mapped_type pair_out{lhs};
   CellIndex& s_out = pair_out.first;
-  vector<InnerPos>& pts_out = pair_out.second;
+  list_type& pts_out = pair_out.second;
   const CellIndex& s_from = rhs.first;
-  const vector<InnerPos>& pts_from = rhs.second;
+  const list_type& pts_from = rhs.second;
   s_out |= s_from;
   pts_out.insert(pts_out.end(), pts_from.begin(), pts_from.end());
   return pair_out;

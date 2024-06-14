@@ -12,6 +12,12 @@
 
 namespace fs
 {
+
+using points_list_type = OffsetSet;
+using merged_map_type = map<Location, pair<CellIndex, points_list_type>>;
+using spreading_points = map<SpreadKey, vector<pair<Cell, const points_list_type>>>;
+using points_type = spreading_points::value_type::second_type;
+
 static constexpr size_t FURTHEST_N = 0;
 static constexpr size_t FURTHEST_NNE = 1;
 static constexpr size_t FURTHEST_NE = 2;
@@ -36,28 +42,31 @@ static constexpr size_t NUM_DIRECTIONS = 16;
 class CellPoints
 {
 public:
+  using cellpoints_map_type = map<Location, pair<CellIndex, CellPoints>>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
+  static constexpr double INVALID_DISTANCE = std::numeric_limits<double>::max();
   CellPoints() noexcept;
-
-  // HACK: so we can emplace with NULL
-  CellPoints(
-    size_t
-  ) noexcept
-    : CellPoints()
-  {
-  }
-
+  //   // HACK: so we can emplace with NULL
+  //   CellPoints(size_t) noexcept;
+  // HACK: so we can emplace with nullptr
+  CellPoints(const CellPoints* rhs) noexcept;
   CellPoints(const vector<InnerPos>& pts) noexcept;
   CellPoints(const double x, const double y) noexcept;
   CellPoints(const InnerPos& p) noexcept;
-  void
+  CellPoints(CellPoints&& rhs) noexcept = default;
+  CellPoints(const CellPoints& rhs) noexcept = default;
+  CellPoints&
+  operator=(CellPoints&& rhs) noexcept = default;
+  CellPoints&
+  operator=(const CellPoints& rhs) noexcept = default;
+  CellPoints&
   insert(const double x, const double y) noexcept;
-  void
+  CellPoints&
   insert(const InnerPos& p) noexcept;
 
   template <class _ForwardIterator>
-  void
+  CellPoints&
   insert(
     _ForwardIterator begin,
     _ForwardIterator end
@@ -72,15 +81,24 @@ public:
       insert(cell_x, cell_y, *it);
       ++it;
     }
+    return *this;
   }
 
-  void
+  CellPoints&
   insert(const CellPoints& rhs);
 
   set<InnerPos>
   unique() const noexcept
   {
-    return set<InnerPos>{pts_.begin(), pts_.end()};
+    set<InnerPos> result{};
+    for (size_t i = 0; i < pts_.size(); ++i)
+    {
+      if (INVALID_DISTANCE != dists_[i])
+      {
+        result.emplace(pts_[i]);
+      }
+    }
+    return result;
   }
 
   const array_pts
@@ -89,23 +107,30 @@ public:
     return pts_;
   }
 
+  friend const cellpoints_map_type
+  apply_offsets_spreadkey(
+    const double duration,
+    const OffsetSet& offsets,
+    const points_type& cell_pts
+  );
+
 private:
-  void
+  CellPoints&
   insert(const double cell_x, const double cell_y, const InnerPos& p) noexcept;
   array_pts pts_;
   array_dists dists_;
 };
 
-using points_list_type = OffsetSet;
-using merged_map_type = map<Location, pair<CellIndex, points_list_type>>;
-using spreading_points = map<SpreadKey, vector<pair<Cell, const points_list_type>>>;
-using points_type = spreading_points::value_type::second_type;
+using cellpoints_map_type = CellPoints::cellpoints_map_type;
 
-const merged_map_type
+const cellpoints_map_type
 apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
   const points_type& cell_pts
 );
+
+const merged_map_type
+convert_map(const cellpoints_map_type& m);
 }
 #endif

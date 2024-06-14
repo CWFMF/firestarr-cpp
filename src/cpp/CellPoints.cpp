@@ -5,6 +5,7 @@
 
 #include "CellPoints.h"
 
+#include "ConvexHull.h"
 #include "Log.h"
 
 namespace fs
@@ -32,7 +33,18 @@ CellPoints::CellPoints() noexcept
   : pts_(),
     dists_()
 {
-  std::fill_n(dists_.begin(), NUM_DIRECTIONS, numeric_limits<double>::max());
+  std::fill(dists_.begin(), dists_.end(), INVALID_DISTANCE);
+}
+
+CellPoints::CellPoints(
+  const CellPoints* rhs
+) noexcept
+  : CellPoints()
+{
+  if (nullptr != rhs)
+  {
+    insert(*rhs);
+  }
 }
 
 CellPoints::CellPoints(
@@ -44,13 +56,23 @@ CellPoints::CellPoints(
   insert(x, y);
 }
 
-void
+CellPoints&
 CellPoints::insert(
   const double x,
   const double y
 ) noexcept
 {
-  insert(InnerPos{x, y});
+  InnerPos p{x, y};
+  insert(p);
+  logging::check_fatal(
+    p.x() != x || p.y() != y,
+    "Inserting (%0.4f, %0.4f) gives (%0.4f, %0.4f)\n",
+    x,
+    y,
+    p.x(),
+    p.y()
+  );
+  return *this;
 }
 
 CellPoints::CellPoints(
@@ -61,7 +83,7 @@ CellPoints::CellPoints(
   insert(p);
 }
 
-void
+CellPoints&
 CellPoints::insert(
   const InnerPos& p
 ) noexcept
@@ -70,9 +92,10 @@ CellPoints::insert(
   const auto cell_x = static_cast<fs::Idx>(p.x());
   const auto cell_y = static_cast<fs::Idx>(p.y());
   insert(cell_x, cell_y, p);
+  return *this;
 }
 
-void
+CellPoints&
 CellPoints::insert(
   const double cell_x,
   const double cell_y,
@@ -225,6 +248,7 @@ CellPoints::insert(
     ene_pos = p;
     ene = cur_ene;
   }
+  return *this;
 }
 
 CellPoints::CellPoints(
@@ -235,7 +259,7 @@ CellPoints::CellPoints(
   insert(pts.begin(), pts.end());
 }
 
-void
+CellPoints&
 CellPoints::insert(
   const CellPoints& rhs
 )
@@ -250,12 +274,10 @@ CellPoints::insert(
       pts_[i] = rhs.pts_[i];
     }
   }
-}
+  return *this;
 }
 
-namespace fs
-{
-const merged_map_type
+const cellpoints_map_type
 apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
@@ -265,6 +287,7 @@ apply_offsets_spreadkey(
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   merged_map_type result{};
+  cellpoints_map_type r1{};
   // apply offsets to point
   for (const auto& out : offsets)
   {
@@ -287,19 +310,71 @@ apply_offsets_spreadkey(
           fs::DIRECTION_NONE,
           NULL
         );
-        auto& pair1 = e.first->second;
-        // always add point since we're calling try_emplace with empty list
-        pair1.second.emplace_back(x, y);
-        const Location& dst = e.first->first;
-        if (src != dst)
         {
-          // we inserted a pair of (src, dst), which means we've never
-          // calculated the relativeIndex for this so add it to main map
-          pair1.first |= relativeIndex(src, dst);
+          auto& pair1 = e.first->second;
+          // always add point since we're calling try_emplace with empty list
+          pair1.second.emplace_back(x, y);
+          const Location& dst = e.first->first;
+          if (src != dst)
+          {
+            // we inserted a pair of (src, dFst), which means we've never
+            // calculated the relativeIndex for this so add it to main map
+            pair1.first |= relativeIndex(src, dst);
+          }
+        }
+        {
+          auto e1 = r1.try_emplace(
+            Location{static_cast<Idx>(y), static_cast<Idx>(x)},
+            fs::DIRECTION_NONE,
+            nullptr
+          );
+          logging::check_fatal(e.second != e1.second, "Inserted into one but not other");
+          // FIX: nested so we can use same variable names
+          auto& pair1 = e1.first->second;
+          // always add point since we're calling try_emplace with empty list
+          pair1.second.insert(x, y);
+          const Location& dst = e.first->first;
+          if (src != dst)
+          {
+            // we inserted a pair of (src, dst), which means we've never
+            // calculated the relativeIndex for this so add it to main map
+            pair1.first |= relativeIndex(src, dst);
+          }
+          auto& pair0 = e.first->second;
+          const auto& pts_old = pair0.second;
+          auto c1 = CellPoints(pts_old);
+          auto& c0 = pair1.second;
+          // make sure CellPoints created by insertion match construction from list version
+          for (size_t i = 0; i < c0.pts_.size(); ++i)
+          {
+            const double d0 = c0.dists_[i];
+            const double d1 = c1.dists_[i];
+            // FIX: HOW DOES THIS NOT WORK IF WE DON'T CHECK DISTANCE?
+            logging::check_equal(d0, d1, "distance");
+          }
         }
       }
     }
   }
-  return static_cast<const merged_map_type>(result);
+  return static_cast<const cellpoints_map_type>(r1);
+}
+
+const merged_map_type
+convert_map(
+  const cellpoints_map_type& m
+)
+{
+  merged_map_type merged{};
+  for (const auto& kv : m)
+  {
+    const Location dst = kv.first;
+    auto& for_dst = merged[dst];
+    const CellIndex src = kv.second.first;
+    const CellPoints& pts = kv.second.second;
+    const auto u = pts.unique();
+    for_dst.first |= src;
+    for_dst.second.insert(for_dst.second.end(), u.begin(), u.end());
+  }
+  return merged;
 }
 }
