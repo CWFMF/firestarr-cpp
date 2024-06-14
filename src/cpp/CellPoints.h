@@ -10,6 +10,14 @@
 
 namespace tbd::sim
 {
+// using sim::CellPoints;
+using topo::Cell;
+using topo::SpreadKey;
+using points_list_type = OffsetSet;
+using merged_map_type = map<Location, pair<CellIndex, points_list_type>>;
+using spreading_points = map<SpreadKey, vector<pair<Cell, const points_list_type>>>;
+using points_type = spreading_points::value_type::second_type;
+
 static constexpr size_t FURTHEST_N = 0;
 static constexpr size_t FURTHEST_NNE = 1;
 static constexpr size_t FURTHEST_NE = 2;
@@ -36,15 +44,35 @@ class CellPoints
 public:
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
+  static constexpr auto INVALID_DISTANCE = std::numeric_limits<double>::max();
   CellPoints() noexcept;
   // HACK: so we can emplace with NULL
-  CellPoints(size_t) noexcept
-    : CellPoints()
-  {
-  }
+  CellPoints(size_t) noexcept;
   CellPoints(const vector<InnerPos>& pts) noexcept;
   CellPoints(const double x, const double y) noexcept;
   CellPoints(const InnerPos& p) noexcept;
+  /**
+   * \brief Move constructor
+   * \param rhs CellPoints to move from
+   */
+  CellPoints(CellPoints&& rhs) noexcept = default;
+  /**
+   * \brief Copy constructor
+   * \param rhs CellPoints to copy from
+   */
+  CellPoints(const CellPoints& rhs) noexcept = default;
+  /**
+   * \brief Move assignment
+   * \param rhs CellPoints to move from
+   * \return This, after assignment
+   */
+  CellPoints& operator=(CellPoints&& rhs) noexcept = default;
+  /**
+   * \brief Copy assignment
+   * \param rhs CellPoints to copy from
+   * \return This, after assignment
+   */
+  CellPoints& operator=(const CellPoints& rhs) noexcept = default;
   void insert(const double x, const double y) noexcept;
   void insert(const InnerPos& p) noexcept;
   template <class _ForwardIterator>
@@ -63,27 +91,29 @@ public:
   void insert(const CellPoints& rhs);
   set<InnerPos> unique() const noexcept
   {
-    return set<InnerPos>{pts_.begin(), pts_.end()};
+    set<InnerPos> result{};
+    for (size_t i = 0; i < pts_.size(); ++i)
+    {
+      if (INVALID_DISTANCE != dists_[i])
+      {
+        result.emplace(pts_[i]);
+      }
+    }
+    return result;
   }
   const array_pts points() const
   {
     return pts_;
   }
+  friend const merged_map_type apply_offsets_spreadkey(
+    const double duration,
+    const OffsetSet& offsets,
+    const points_type& cell_pts);
 private:
   void insert(const double cell_x, const double cell_y, const InnerPos& p) noexcept;
   array_pts pts_;
   array_dists dists_;
 };
-}
-namespace tbd
-{
-using sim::CellPoints;
-using topo::Cell;
-using topo::SpreadKey;
-using points_list_type = OffsetSet;
-using merged_map_type = map<Location, pair<CellIndex, points_list_type>>;
-using spreading_points = map<SpreadKey, vector<pair<Cell, const points_list_type>>>;
-using points_type = spreading_points::value_type::second_type;
 
 const merged_map_type apply_offsets_spreadkey(
   const double duration,
