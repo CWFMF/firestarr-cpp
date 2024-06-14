@@ -101,12 +101,12 @@ void calculate_spread(
   const BurnedData& unburnable)
 {
   do_each(
-    convert_map(merge_list(spread_info, duration, to_spread)),
+    merge_list(spread_info, duration, to_spread),
     [&scenario, &points_out, &sources_out, &unburnable](
-      const merged_map_type::value_type& ksp) {
+      const cellpoints_map_type::value_type& ksp) {
       // look up Cell from scenario here since we don't need attributes until now
       const Cell k = scenario.cell(ksp.first);
-      const merged_map_type::mapped_type& sp = ksp.second;
+      const cellpoints_map_type::mapped_type& sp = ksp.second;
       const CellIndex& s = sp.first;
       sources_out[k] |= s;
       const auto h = k.hash();
