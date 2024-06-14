@@ -10,7 +10,7 @@ namespace tbd
 const merged_map_type apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
-  const vector<CellPts>& cell_pts)
+  const points_type& cell_pts)
 {
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
