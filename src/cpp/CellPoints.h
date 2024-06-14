@@ -121,4 +121,6 @@ const cellpoints_map_type apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
   const points_type& cell_pts);
+
+const merged_map_type convert_map(const cellpoints_map_type& m);
 }
