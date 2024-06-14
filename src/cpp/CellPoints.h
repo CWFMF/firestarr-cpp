@@ -6,6 +6,9 @@
 #include "stdafx.h"
 #include "InnerPos.h"
 
+#ifndef FS_CELLPOINTS_H
+#define FS_CELLPOINTS_H
+
 namespace fs::sim
 {
 static constexpr size_t FURTHEST_N = 0;
@@ -35,11 +38,39 @@ public:
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
   CellPoints() noexcept;
+  // HACK: so we can emplace with NULL
+  CellPoints(
+    size_t
+  ) noexcept
+    : CellPoints()
+  {
+  }
   CellPoints(const vector<InnerPos>& pts) noexcept;
   CellPoints(const double x, const double y) noexcept;
   CellPoints(const InnerPos& p) noexcept;
   void
+  insert(const double x, const double y) noexcept;
+  void
   insert(const InnerPos& p) noexcept;
+  template <class _ForwardIterator>
+  void
+  insert(
+    _ForwardIterator begin,
+    _ForwardIterator end
+  )
+  {
+    auto it = begin;
+    // should always be in the same cell so do this once
+    const auto cell_x = static_cast<fs::Idx>((*it).x());
+    const auto cell_y = static_cast<fs::Idx>((*it).y());
+    while (end != it)
+    {
+      insert(cell_x, cell_y, *it);
+      ++it;
+    }
+  }
+  void
+  insert(const CellPoints& rhs);
   set<InnerPos>
   unique() const noexcept
   {
@@ -57,3 +88,21 @@ private:
   array_dists dists_;
 };
 }
+namespace fs
+{
+using sim::CellPoints;
+using topo::Cell;
+using topo::SpreadKey;
+using points_list_type = OffsetSet;
+using merged_map_type = map<Location, pair<CellIndex, points_list_type>>;
+using spreading_points = map<SpreadKey, vector<pair<Cell, const points_list_type>>>;
+using points_type = spreading_points::value_type::second_type;
+
+const merged_map_type
+apply_offsets_spreadkey(
+  const double duration,
+  const OffsetSet& offsets,
+  const points_type& cell_pts
+);
+}
+#endif
