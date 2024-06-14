@@ -19,6 +19,8 @@
 #include "StartPoint.h"
 #include "InnerPos.h"
 #include "FireSpread.h"
+#include "CellPoints.h"
+
 namespace fs::sim
 {
 class LogPoints;
@@ -624,7 +626,7 @@ protected:
   /**
    * \brief Map of Cells to the PointSets within them
    */
-  map<topo::Cell, PointSet> points_{};
+  map<topo::Cell, CellPoints> points_{};
   /**
    * \brief Contains information on cells that are not burnable
    */
