@@ -287,7 +287,6 @@ const cellpoints_map_type apply_offsets_spreadkey(
 {
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
-  merged_map_type result{};
   cellpoints_map_type r1{};
   // apply offsets to point
   for (const auto& out : offsets)
@@ -364,23 +363,22 @@ const cellpoints_map_type apply_offsets_spreadkey(
       }
     }
   }
-  //   return static_cast<const merged_map_type>(result);
   return static_cast<const cellpoints_map_type>(r1);
 }
 
-const merged_map_type convert_map(const cellpoints_map_type& m)
-{
-  merged_map_type merged{};
-  for (const auto& kv : m)
-  {
-    const Location dst = kv.first;
-    auto& for_dst = merged[dst];
-    const CellIndex src = kv.second.first;
-    const CellPoints& pts = kv.second.second;
-    const auto u = pts.unique();
-    for_dst.first |= src;
-    for_dst.second.insert(for_dst.second.end(), u.begin(), u.end());
-  }
-  return merged;
-}
+// const merged_map_type convert_map(const cellpoints_map_type& m)
+// {
+//   merged_map_type merged{};
+//   for (const auto& kv : m)
+//   {
+//     const Location dst = kv.first;
+//     auto& for_dst = merged[dst];
+//     const CellIndex src = kv.second.first;
+//     const CellPoints& pts = kv.second.second;
+//     const auto u = pts.unique();
+//     for_dst.first |= src;
+//     for_dst.second.insert(for_dst.second.end(), u.begin(), u.end());
+//   }
+//   return merged;
+// }
 }
