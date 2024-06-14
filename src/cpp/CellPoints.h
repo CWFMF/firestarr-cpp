@@ -42,7 +42,7 @@ static constexpr size_t NUM_DIRECTIONS = 16;
 class CellPoints
 {
 public:
-  using cellpoints_map_type = map<Location, pair<CellIndex, CellPoints>>;
+  using cellpoints_map_type = map<Location, CellPoints>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
   CellPoints() noexcept;
@@ -96,7 +96,12 @@ public:
     }
     return *this;
   }
-  CellPoints& insert(const CellPoints& rhs);
+  void add_source(const CellIndex src);
+  CellIndex sources() const
+  {
+    return src_;
+  }
+  CellPoints& merge(const CellPoints& rhs);
   set<InnerPos> unique() const noexcept;
   const array_pts points() const;
   friend const cellpoints_map_type apply_offsets_spreadkey(
@@ -107,6 +112,7 @@ private:
   CellPoints& insert(const double cell_x, const double cell_y, const double x, const double y) noexcept;
   array_pts pts_;
   array_dists dists_;
+  CellIndex src_;
   bool is_empty_;
 };
 using cellpoints_map_type = CellPoints::cellpoints_map_type;

@@ -70,17 +70,11 @@ const cellpoints_map_type merge_list(
         return merge_maps_generic<cellpoints_map_type>(
           lhs,
           rhs,
-          [](const auto& lhs,
-             const auto& rhs) -> const cellpoints_map_type::mapped_type {
-            cellpoints_map_type::mapped_type pair_out{lhs};
-            CellIndex& s_out = pair_out.first;
-            auto& pts_out = pair_out.second;
-            const CellIndex& s_from = rhs.first;
-            const auto& pts_from = rhs.second;
-            s_out |= s_from;
-            // pts_out.insert(pts_out.end(), pts_from.begin(), pts_from.end());
-            pts_out.insert(pts_from);
-            return pair_out;
+          [](const CellPoints& lhs,
+             const CellPoints& rhs) -> const CellPoints {
+            CellPoints cell_pts{lhs};
+            cell_pts.merge(rhs);
+            return cell_pts;
           });
       },
       [&duration, &spread_info](
@@ -106,24 +100,15 @@ void calculate_spread(
       const cellpoints_map_type::value_type& ksp) {
       // look up Cell from scenario here since we don't need attributes until now
       const Cell k = scenario.cell(ksp.first);
-      const cellpoints_map_type::mapped_type& sp = ksp.second;
-      const CellIndex& s = sp.first;
-      sources_out[k] |= s;
+      const CellPoints& cell_pts = ksp.second;
+      sources_out[k] |= cell_pts.sources();
       const auto h = k.hash();
       if (!(unburnable[h]))
       {
         // pair that is currently in merge_from for the given key
-        const auto& sp = std::get<1>(ksp);
-        auto p1 = CellPoints(sp.second).unique();
-        // const auto p1 = CellPoints(sp.second).points();
+        auto p1 = cell_pts.unique();
         auto& p0 = points_out[k];
         p0.insert(p0.end(), p1.begin(), p1.end());
-        // // works the same if we hull here
-        // if (p0.size() > MAX_BEFORE_CONDENSE)
-        // {
-        //   // 3 points should just be a triangle usually (could be co-linear, but that's fine
-        //   hull(p0);
-        // }
       }
     });
 }
