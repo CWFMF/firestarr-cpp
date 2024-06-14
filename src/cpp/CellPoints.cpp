@@ -349,35 +349,36 @@ const cellpoints_map_type apply_offsets_spreadkey(
             src,
             dst);
         }
-        // try to insert a pair with no direction and no points
-        auto e_old = result.try_emplace(
-          Location{
-            static_cast<Idx>(y),
-            static_cast<Idx>(x)},
-          tbd::topo::DIRECTION_NONE,
-          NULL);
-        auto& pair_old = e_old.first->second;
-        auto& pts_old = pair_old.second;
-        // always add point since we're calling try_emplace with empty list
-        pts_old.emplace_back(x, y);
-
-        logging::check_fatal(e_old.second != e.second,
-                             "Inserted into one but not other");
         const auto u = cell_pts.unique();
-        const vector<Offset> pts_old_c{u.begin(), u.end()};
-        const CellPoints c1{pts_old_c};
-        // // auto& c0 = pair1.second;
-        // // make sure CellPoints created by insertion match construction from list version
-        // // FIX: somehow this is required?
-        // double d = 0;
-        // for (size_t i = 0; i < c1.pts_.size(); ++i)
-        // {
-        //   d += c1.dists_[i];
-        // }
-        // if (d == 0)
-        // {
-        //   printf("%f\n", d);
-        // }
+        // // try to insert a pair with no direction and no points
+        // auto e_old = result.try_emplace(
+        //   Location{
+        //     static_cast<Idx>(y),
+        //     static_cast<Idx>(x)},
+        //   tbd::topo::DIRECTION_NONE,
+        //   NULL);
+        // auto& pair_old = e_old.first->second;
+        // auto& pts_old = pair_old.second;
+        // // always add point since we're calling try_emplace with empty list
+        // pts_old.emplace_back(x, y);
+
+        // logging::check_fatal(e_old.second != e.second,
+        //                      "Inserted into one but not other");
+        // const auto u = cell_pts.unique();
+        // // const vector<Offset> pts_old_c{u.begin(), u.end()};
+        // // const CellPoints c1{pts_old_c};
+        // // // auto& c0 = pair1.second;
+        // // // make sure CellPoints created by insertion match construction from list version
+        // // // FIX: somehow this is required?
+        // // double d = 0;
+        // // for (size_t i = 0; i < c1.pts_.size(); ++i)
+        // // {
+        // //   d += c1.dists_[i];
+        // // }
+        // // if (d == 0)
+        // // {
+        // //   printf("%f\n", d);
+        // // }
       }
     }
   }
