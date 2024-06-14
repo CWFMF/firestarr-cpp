@@ -90,17 +90,11 @@ CellPoints::insert(
   const double y
 ) noexcept
 {
-  InnerPos p{x, y};
-  insert(p);
-  logging::check_fatal(
-    p.x() != x || p.y() != y,
-    "Inserting (%0.4f, %0.4f) gives (%0.4f, %0.4f)\n",
-    x,
-    y,
-    p.x(),
-    p.y()
-  );
-  //   insert(InnerPos{x, y});
+  const auto cell_x = static_cast<fs::Idx>(x);
+  const auto cell_y = static_cast<fs::Idx>(y);
+  insert(cell_x, cell_y, x, y);
+  // HACK: somehow this makes it produce the same results as it was
+  const auto u = unique();
   return *this;
 }
 
@@ -117,17 +111,15 @@ CellPoints::insert(
   const InnerPos& p
 ) noexcept
 {
-  // should always be in the same cell so do this once
-  const auto cell_x = static_cast<fs::Idx>(p.x());
-  const auto cell_y = static_cast<fs::Idx>(p.y());
-  insert(cell_x, cell_y, p);
+  insert(p.x(), p.y());
   return *this;
 }
 CellPoints&
 CellPoints::insert(
   const double cell_x,
   const double cell_y,
-  const InnerPos& p
+  const double p_x,
+  const double p_y
 ) noexcept
 {
   auto& n = dists_[FURTHEST_N];
@@ -162,6 +154,7 @@ CellPoints::insert(
   auto& wnw_pos = pts_[FURTHEST_WNW];
   auto& nw_pos = pts_[FURTHEST_NW];
   auto& nnw_pos = pts_[FURTHEST_NNW];
+  const InnerPos p{p_x, p_y};
   const auto x = p.x() - cell_x;
   const auto y = p.y() - cell_y;
   // north is closest to point (0.5, 1.0)
@@ -343,10 +336,11 @@ apply_offsets_spreadkey(
         // FIX: nested so we can use same variable names
         auto& pair1 = e.first->second;
         auto& cell_pts = pair1.second;
-        auto& pts = cell_pts.pts_;
-        auto& dists = cell_pts.dists_;
+#ifdef DEBUG_POINTS
         if (e.second)
         {
+          auto& pts = cell_pts.pts_;
+          auto& dists = cell_pts.dists_;
           // was just inserted, so except all distances to be max and points invalid
           for (size_t i = 0; i < pts.size(); ++i)
           {
@@ -366,9 +360,12 @@ apply_offsets_spreadkey(
         }
         else
         {
+#endif
           // always add point since we're calling try_emplace with empty list
           cell_pts.insert(x, y);
+#ifdef DEBUG_POINTS
         }
+#endif
         // pair1.second.insert(x, y);
         const Location& dst = e.first->first;
         if (src != dst)
@@ -377,36 +374,6 @@ apply_offsets_spreadkey(
           // calculated the relativeIndex for this so add it to main map
           pair1.first |= relativeIndex(src, dst);
         }
-        const auto u = cell_pts.unique();
-        // // try to insert a pair with no direction and no points
-        // auto e_old = result.try_emplace(
-        //   Location{
-        //     static_cast<Idx>(y),
-        //     static_cast<Idx>(x)},
-        //   fs::topo::DIRECTION_NONE,
-        //   NULL);
-        // auto& pair_old = e_old.first->second;
-        // auto& pts_old = pair_old.second;
-        // // always add point since we're calling try_emplace with empty list
-        // pts_old.emplace_back(x, y);
-
-        // logging::check_fatal(e_old.second != e.second,
-        //                      "Inserted into one but not other");
-        // const auto u = cell_pts.unique();
-        // // const vector<Offset> pts_old_c{u.begin(), u.end()};
-        // // const CellPoints c1{pts_old_c};
-        // // // auto& c0 = pair1.second;
-        // // // make sure CellPoints created by insertion match construction from list version
-        // // // FIX: somehow this is required?
-        // // double d = 0;
-        // // for (size_t i = 0; i < c1.pts_.size(); ++i)
-        // // {
-        // //   d += c1.dists_[i];
-        // // }
-        // // if (d == 0)
-        // // {
-        // //   printf("%f\n", d);
-        // // }
       }
     }
   }
