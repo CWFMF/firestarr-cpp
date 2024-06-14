@@ -22,7 +22,7 @@
     <ClInclude Include="Cell.h" />
     <ClInclude Include="ConstantGrid.h" />
     <ClInclude Include="ConstantWeather.h" />
-    <ClInclude Include="ConvexHull.h" />
+    <ClInclude Include="CellPoints.h" />
     <ClInclude Include="debug_settings.h" />
     <ClInclude Include="Duff.h" />
     <ClInclude Include="Environment.h" />
@@ -68,7 +68,7 @@
     <ClInclude Include="Weather.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConvexHull.cpp" />
+    <ClCompile Include="CellPoints.cpp" />
     <ClCompile Include="debug_settings.cpp" />
     <ClCompile Include="Duff.cpp" />
     <ClCompile Include="Environment.cpp" />

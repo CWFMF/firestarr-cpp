@@ -12,10 +12,10 @@
 #include "Observer.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
-#include "ConvexHull.h"
 #include "IntensityMap.h"
 #include "FuelType.h"
 #include "MergeIterator.h"
+#include "CellPoints.h"
 
 namespace tbd::sim
 {
@@ -94,15 +94,16 @@ void calculate_spread(
       {
         // pair that is currently in merge_from for the given key
         const auto& sp = std::get<1>(ksp);
-        const vector<InnerPos>& p1 = sp.second;
+        auto p1 = CellPoints(sp.second).unique();
+        // const auto p1 = CellPoints(sp.second).points();
         auto& p0 = points_out[k];
         p0.insert(p0.end(), p1.begin(), p1.end());
-        // works the same if we hull here
-        if (p0.size() > MAX_BEFORE_CONDENSE)
-        {
-          // 3 points should just be a triangle usually (could be co-linear, but that's fine
-          hull(p0);
-        }
+        // // works the same if we hull here
+        // if (p0.size() > MAX_BEFORE_CONDENSE)
+        // {
+        //   // 3 points should just be a triangle usually (could be co-linear, but that's fine
+        //   hull(p0);
+        // }
       }
     });
 }
