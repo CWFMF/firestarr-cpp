@@ -46,10 +46,12 @@ public:
   using cellpoints_map_type = map<Location, pair<CellIndex, CellPoints>>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
-  static constexpr auto INVALID_DISTANCE = std::numeric_limits<double>::max();
+  static constexpr double INVALID_DISTANCE = std::numeric_limits<double>::max();
   CellPoints() noexcept;
-  // HACK: so we can emplace with NULL
-  CellPoints(size_t) noexcept;
+  //   // HACK: so we can emplace with NULL
+  //   CellPoints(size_t) noexcept;
+  // HACK: so we can emplace with nullptr
+  CellPoints(const CellPoints* rhs) noexcept;
   CellPoints(const vector<InnerPos>& pts) noexcept;
   CellPoints(const double x, const double y) noexcept;
   CellPoints(const InnerPos& p) noexcept;
@@ -77,12 +79,12 @@ public:
    */
   CellPoints&
   operator=(const CellPoints& rhs) noexcept = default;
-  void
+  CellPoints&
   insert(const double x, const double y) noexcept;
-  void
+  CellPoints&
   insert(const InnerPos& p) noexcept;
   template <class _ForwardIterator>
-  void
+  CellPoints&
   insert(
     _ForwardIterator begin,
     _ForwardIterator end
@@ -97,8 +99,9 @@ public:
       insert(cell_x, cell_y, *it);
       ++it;
     }
+    return *this;
   }
-  void
+  CellPoints&
   insert(const CellPoints& rhs);
   set<InnerPos>
   unique() const noexcept
@@ -125,7 +128,7 @@ public:
     const points_type& cell_pts
   );
 private:
-  void
+  CellPoints&
   insert(const double cell_x, const double cell_y, const InnerPos& p) noexcept;
   array_pts pts_;
   array_dists dists_;
