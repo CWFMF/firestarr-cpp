@@ -71,7 +71,7 @@ merge_list(
      &spread_info](const spreading_points::value_type& kv0) -> const cellpoints_map_type {
       auto& key = kv0.first;
       const auto& offsets = spread_info[key].offsets();
-      const points_type& cell_pts = kv0.second;
+      const spreading_points::mapped_type& cell_pts = kv0.second;
       return apply_offsets_spreadkey(duration, offsets, cell_pts);
     }
   ));
@@ -83,26 +83,23 @@ calculate_spread(
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
   const spreading_points& to_spread,
-  map<Cell, PointSet>& points_out,
-  map<Cell, CellIndex>& sources_out,
+  map<Cell, CellPoints>& points_out,
   const BurnedData& unburnable
 )
 {
   do_each(
     merge_list(spread_info, duration, to_spread),
-    [&scenario, &points_out, &sources_out, &unburnable](const cellpoints_map_type::value_type& ksp
-    ) {
+    [&scenario, &points_out, &unburnable](const cellpoints_map_type::value_type& ksp) {
       // look up Cell from scenario here since we don't need attributes until now
       const Cell k = scenario.cell(ksp.first);
       const CellPoints& cell_pts = ksp.second;
-      sources_out[k] |= cell_pts.sources();
+      // HACK: keep old behaviour of applying source even if unburnable
+      CellPoints& out = points_out[k];
+      out.add_source(cell_pts.sources());
       const auto h = k.hash();
       if (!unburnable.at(h))
       {
-        // pair that is currently in merge_from for the given key
-        auto p1 = cell_pts.unique();
-        auto& p0 = points_out[k];
-        p0.insert(p0.end(), p1.begin(), p1.end());
+        out.merge(cell_pts);
       }
     }
   );
@@ -445,7 +442,7 @@ Scenario::evaluate(
       points_log_
         .log(step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       // HACK: don't do this in constructor because scenario creates this in its constructor
-      points_[p].emplace_back(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
+      points_[p].insert(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       if (is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -764,8 +761,9 @@ Scenario::run(
 #ifdef DEBUG_SIMULATION
       log_check_fatal(is_null_fuel(cell), "Null fuel in perimeter");
 #endif
-      log_verbose("Adding point (%d, %d)", cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
-      points_[cell].emplace_back(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
+      // log_verbose("Adding point (%d, %d)",
+      log_verbose("Adding point (%f, %f)", cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
+      points_[cell].insert(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
@@ -926,17 +924,15 @@ Scenario::scheduleFireSpread(
   const auto duration =
     ((max_ros_ > 0) ? min(max_duration, Settings::maximumSpreadDistance() * cellSize() / max_ros_)
                     : max_duration);
-  map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  calculate_spread(*this, spread_info_, duration, to_spread, points_, sources, unburnable_);
+  calculate_spread(*this, spread_info_, duration, to_spread, points_, unburnable_);
 
-  map<Cell, PointSet> points_cur{};
+  map<Cell, CellPoints> points_cur{};
   std::swap(points_, points_cur);
   // if we move everything out of points_ we can parallelize this check?
-  do_each(points_cur, [this, &sources, &new_time](pair<const Cell, PointSet>& kv) {
+  do_each(points_cur, [this, &new_time](pair<const Cell, CellPoints>& kv) {
     auto& for_cell = kv.first;
-    auto& pts = kv.second;
-    logging::check_fatal(pts.empty(), "Empty points for some reason");
+    CellPoints& pts = kv.second;
     const auto& seek_spread = spread_info_.find(for_cell.key());
     const auto max_intensity = (spread_info_.end() == seek_spread)
                                ? 0
@@ -944,7 +940,7 @@ Scenario::scheduleFireSpread(
     // HACK: just use side-effect to log and check bounds
     points_log_.log(step_, STAGE_SPREAD, new_time, pts);
 #ifdef DEBUG_POINTS
-    for (auto& pos : pts)
+    for (auto& pos : pts.unique())
     {
       // was doing this check after getting for_cell, so it didn't help when out of bounds
       log_check_fatal(
@@ -960,8 +956,7 @@ Scenario::scheduleFireSpread(
       // HACK: make sure it can't round down to 0
       const auto intensity = static_cast<IntensitySize>(max(1.0, max_intensity));
       // HACK: just use the first cell as the source
-      const auto source = sources[for_cell];
-      const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, source);
+      const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, pts.sources());
       burn(fake_event, intensity);
     }
     if (!unburnable_.at(for_cell.hash())

@@ -13,11 +13,6 @@
 namespace fs
 {
 
-using points_list_type = OffsetSet;
-using merged_map_type = map<Location, pair<CellIndex, points_list_type>>;
-using spreading_points = map<SpreadKey, vector<pair<Cell, const points_list_type>>>;
-using points_type = spreading_points::value_type::second_type;
-
 static constexpr size_t FURTHEST_N = 0;
 static constexpr size_t FURTHEST_NNE = 1;
 static constexpr size_t FURTHEST_NE = 2;
@@ -43,6 +38,7 @@ class CellPoints
 {
 public:
   using cellpoints_map_type = map<Location, CellPoints>;
+  using spreading_points = map<SpreadKey, vector<pair<Cell, CellPoints>>>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
   CellPoints() noexcept;
@@ -51,12 +47,12 @@ public:
   CellPoints(const vector<InnerPos>& pts) noexcept;
   CellPoints(const double x, const double y) noexcept;
   CellPoints(const InnerPos& p) noexcept;
-  CellPoints(CellPoints&& rhs) noexcept = default;
-  CellPoints(const CellPoints& rhs) noexcept = default;
+  CellPoints(CellPoints&& rhs) noexcept;
+  CellPoints(const CellPoints& rhs) noexcept;
   CellPoints&
-  operator=(CellPoints&& rhs) noexcept = default;
+  operator=(CellPoints&& rhs) noexcept;
   CellPoints&
-  operator=(const CellPoints& rhs) noexcept = default;
+  operator=(const CellPoints& rhs) noexcept;
   CellPoints&
   insert(const double x, const double y) noexcept;
   CellPoints&
@@ -95,6 +91,12 @@ public:
     return src_;
   }
 
+  bool
+  empty() const
+  {
+    return is_empty_;
+  }
+
   CellPoints&
   merge(const CellPoints& rhs);
   set<InnerPos>
@@ -105,7 +107,7 @@ public:
   apply_offsets_spreadkey(
     const double duration,
     const OffsetSet& offsets,
-    const points_type& cell_pts
+    const spreading_points::mapped_type& cell_pts
   );
 
 private:
@@ -118,12 +120,13 @@ private:
 };
 
 using cellpoints_map_type = CellPoints::cellpoints_map_type;
+using spreading_points = CellPoints::spreading_points;
 
 const cellpoints_map_type
 apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
-  const points_type& cell_pts
+  const spreading_points::mapped_type& cell_pts
 );
 
 }

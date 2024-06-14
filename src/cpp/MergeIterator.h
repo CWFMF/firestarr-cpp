@@ -36,9 +36,6 @@ do_transform_reduce(
   );
 }
 
-const merged_map_type::mapped_type
-merge_cell_data(const merged_map_type::mapped_type& lhs, const merged_map_type::mapped_type& rhs);
-
 template <typename M, class F>
 const M
 merge_maps_generic(

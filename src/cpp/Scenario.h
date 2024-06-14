@@ -7,6 +7,7 @@
 
 #include "stdafx.h"
 
+#include "CellPoints.h"
 #include "EventCompare.h"
 #include "FireSpread.h"
 #include "FireWeather.h"
@@ -644,7 +645,7 @@ protected:
   /**
    * \brief Map of Cells to the PointSets within them
    */
-  map<Cell, PointSet> points_{};
+  map<Cell, CellPoints> points_{};
   /**
    * \brief Contains information on cells that are not burnable
    */

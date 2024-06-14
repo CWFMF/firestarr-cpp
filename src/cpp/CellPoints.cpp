@@ -74,6 +74,12 @@ CellPoints::CellPoints() noexcept
 {
   std::fill(pts_.begin(), pts_.end(), INVALID_POINT);
   std::fill(dists_.begin(), dists_.end(), INVALID_DISTANCE);
+  for (size_t i = 0; i < pts_.size(); ++i)
+  {
+    logging::check_equal(INVALID_DISTANCE, dists_[i], "distances");
+    logging::check_equal(pts_[i].x(), INVALID_POINT.x(), "point x");
+    logging::check_equal(pts_[i].y(), INVALID_POINT.y(), "point y");
+  }
 }
 
 CellPoints::CellPoints(
@@ -84,6 +90,12 @@ CellPoints::CellPoints(
   if (nullptr != rhs)
   {
     merge(*rhs);
+  }
+  for (size_t i = 0; i < pts_.size(); ++i)
+  {
+    logging::check_equal(INVALID_DISTANCE, dists_[i], "distances");
+    logging::check_equal(pts_[i].x(), INVALID_POINT.x(), "point x");
+    logging::check_equal(pts_[i].y(), INVALID_POINT.y(), "point y");
   }
 }
 
@@ -106,9 +118,8 @@ CellPoints::insert(
   const auto cell_y = static_cast<fs::Idx>(y);
   const bool was_empty = is_empty_;
   insert(cell_x, cell_y, x, y);
-  // HACK: somehow this makes it produce the same results as it was
-  const auto u = unique();
-  set<InnerPos> result{};
+  //   // HACK: somehow this makes it produce the same results as it was
+  logging::check_fatal(empty(), "Empty after insert of (%f, %f)", x, y);
   for (size_t i = 0; i < pts_.size(); ++i)
   {
     if (was_empty)
@@ -118,6 +129,7 @@ CellPoints::insert(
     }
     logging::check_fatal(INVALID_DISTANCE == dists_[i], "Invalid distance at position %ld", i);
   }
+  const auto u = unique();
 
   return *this;
 }
@@ -316,7 +328,7 @@ CellPoints::merge(
         pts_[i] = rhs.pts_[i];
       }
     }
-    is_empty_ |= rhs.is_empty_;
+    is_empty_ &= rhs.is_empty_;
   }
   // HACK: allow empty list but still having a source
   src_ |= rhs.src_;
@@ -327,7 +339,7 @@ const cellpoints_map_type
 apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
-  const points_type& cell_pts
+  const spreading_points::mapped_type& cell_pts
 )
 {
   // NOTE: really tried to do this in parallel, but not enough points
@@ -341,8 +353,8 @@ apply_offsets_spreadkey(
     for (const auto& pts_for_cell : cell_pts)
     {
       const Location& src = std::get<0>(pts_for_cell);
-      const OffsetSet& pts = std::get<1>(pts_for_cell);
-      for (const auto& p : pts)
+      const CellPoints& pts = std::get<1>(pts_for_cell);
+      for (const auto& p : pts.unique())
       {
         // putting results in copy of offsets and returning that
         // at the end of everything, we're just adding something to every double in the set by
@@ -394,5 +406,69 @@ apply_offsets_spreadkey(
     }
   }
   return static_cast<const cellpoints_map_type>(r1);
+}
+
+/**
+ * \brief Move constructor
+ * \param rhs CellPoints to move from
+ */
+CellPoints::CellPoints(
+  CellPoints&& rhs
+) noexcept
+  : pts_(std::move(rhs.pts_)),
+    dists_(std::move(rhs.dists_)),
+    src_(rhs.src_),
+    is_empty_(rhs.is_empty_)
+{
+}
+
+/**
+ * \brief Copy constructor
+ * \param rhs CellPoints to copy from
+ */
+CellPoints::CellPoints(
+  const CellPoints& rhs
+) noexcept
+  : pts_({}),
+    dists_({}),
+    src_(rhs.src_),
+    is_empty_(rhs.is_empty_)
+{
+  std::copy(rhs.pts_.begin(), rhs.pts_.end(), pts_.begin());
+  std::copy(rhs.dists_.begin(), rhs.dists_.end(), dists_.begin());
+}
+
+/**
+ * \brief Move assignment
+ * \param rhs CellPoints to move from
+ * \return This, after assignment
+ */
+CellPoints&
+CellPoints::operator=(
+  CellPoints&& rhs
+) noexcept
+{
+  pts_ = std::move(rhs.pts_);
+  dists_ = std::move(rhs.dists_);
+  src_ = rhs.src_;
+  is_empty_ = rhs.is_empty_;
+  return *this;
+}
+
+/**
+ * \brief Copy assignment
+ * \param rhs CellPoints to copy from
+ * \return This, after assignment
+ */
+CellPoints&
+CellPoints::operator=(
+  const CellPoints& rhs
+) noexcept
+{
+  std::copy(rhs.pts_.begin(), rhs.pts_.end(), pts_.begin());
+  std::copy(rhs.dists_.begin(), rhs.dists_.end(), dists_.begin());
+  src_ = rhs.src_;
+  is_empty_ = rhs.is_empty_;
+  return *this;
 }
 }
