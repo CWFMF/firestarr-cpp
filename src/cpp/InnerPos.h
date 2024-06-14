@@ -99,21 +99,17 @@ constexpr Offset after(const double duration, const Offset& o)
 {
   return o.after(duration);
 }
-using merged_map_type = map<Location, pair<CellIndex, OffsetSet>>;
 using topo::Cell;
 using topo::SpreadKey;
-using source_pair = pair<CellIndex, OffsetSet>;
-using merged_map_type = map<Location, source_pair>;
-using merged_map_pair = pair<Location, source_pair>;
-using map_type = map<Location, OffsetSet>;
-using CellPts = tuple<Cell, const OffsetSet>;
-using CellPair = pair<const SpreadKey, vector<CellPts>>;
-using tuple_temp = tuple<const Location, const OffsetSet&, source_pair*>;
-using spreading_points = map<SpreadKey, vector<CellPts>>;
+using points_list_type = OffsetSet;
+using merged_map_type = map<Location, pair<CellIndex, points_list_type>>;
+using spreading_points = map<SpreadKey, vector<pair<Cell, const points_list_type>>>;
+using points_type = spreading_points::value_type::second_type;
+
 const merged_map_type apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
-  const vector<CellPts>& cell_pts);
+  const points_type& cell_pts);
 }
 namespace tbd::sim
 {

@@ -65,10 +65,11 @@ const merged_map_type merge_list(
   return static_cast<const merged_map_type>(
     merge_reduce_maps(
       to_spread,
-      [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
+      [&duration, &spread_info](
+        const spreading_points::value_type& kv0) -> const merged_map_type {
         auto& key = kv0.first;
         const auto& offsets = spread_info[key].offsets();
-        const vector<CellPts>& cell_pts = kv0.second;
+        const points_type& cell_pts = kv0.second;
         return apply_offsets_spreadkey(duration, offsets, cell_pts);
       }));
 }
@@ -83,10 +84,11 @@ void calculate_spread(
 {
   do_each(
     merge_list(spread_info, duration, to_spread),
-    [&scenario, &points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
+    [&scenario, &points_out, &sources_out, &unburnable](
+      const merged_map_type::value_type& ksp) {
       // look up Cell from scenario here since we don't need attributes until now
       const Cell k = scenario.cell(ksp.first);
-      const source_pair& sp = ksp.second;
+      const merged_map_type::mapped_type& sp = ksp.second;
       const CellIndex& s = sp.first;
       sources_out[k] |= s;
       const auto h = k.hash();
