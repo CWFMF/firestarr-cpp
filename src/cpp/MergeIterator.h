@@ -100,20 +100,4 @@ const M merge_maps_generic(
   }
   return out;
 }
-
-const merged_map_type merge_maps(
-  const merged_map_type& lhs,
-  const merged_map_type& rhs);
-
-template <class F>
-const merged_map_type merge_reduce_maps(
-  const auto& points_and_sources,
-  F fct_transform)
-{
-  return do_transform_reduce(
-    points_and_sources,
-    merged_map_type{},
-    merge_maps,
-    fct_transform);
-}
 }
