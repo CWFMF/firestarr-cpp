@@ -89,7 +89,8 @@ public:
       const auto cell_y = static_cast<tbd::Idx>((*it).y());
       while (end != it)
       {
-        insert(cell_x, cell_y, *it);
+        const auto p = *it;
+        insert(cell_x, cell_y, p.x(), p.y());
         ++it;
       }
     }
@@ -103,7 +104,7 @@ public:
     const OffsetSet& offsets,
     const points_type& cell_pts);
 private:
-  CellPoints& insert(const double cell_x, const double cell_y, const InnerPos& p) noexcept;
+  CellPoints& insert(const double cell_x, const double cell_y, const double x, const double y) noexcept;
   array_pts pts_;
   array_dists dists_;
 };
