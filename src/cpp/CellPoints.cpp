@@ -238,8 +238,16 @@ CellPoints::insert(
   const CellPoints& rhs
 )
 {
-  // FIX: we know distances in each direction so just pick closer
-  insert(rhs.pts_.begin(), rhs.pts_.end());
+  // we know distances in each direction so just pick closer
+  for (size_t i = 0; i < pts_.size(); ++i)
+  {
+    if (rhs.dists_[i] < dists_[i])
+    {
+      // closer so replace
+      dists_[i] = rhs.dists_[i];
+      pts_[i] = rhs.pts_[i];
+    }
+  }
 }
 }
 namespace fs
