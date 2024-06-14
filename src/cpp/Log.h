@@ -137,6 +137,46 @@ void check_fatal(bool condition, const char* format, ...)
 #endif
   ;
 /**
+ * \brief Check if items are not equal and log and exit if true
+ * \param lhs first value
+ * \param rhs second value
+ * \param name String for message describing what's being compared
+ */
+void check_equal(const double lhs, const double rhs, const char* name)
+#ifdef NDEBUG
+  noexcept
+#endif
+  ;
+/**
+ * \brief Check if items are not equal and log and exit if true
+ * \param lhs first value
+ * \param rhs second value
+ * \param name String for message describing what's being compared
+ */
+void check_equal(const char* lhs, const char* rhs, const char* name)
+#ifdef NDEBUG
+  noexcept
+#endif
+  ;
+/**
+ * \brief Check if items are not equal and log and exit if true
+ * \param lhs first value
+ * \param rhs second value
+ * \param name String for message describing what's being compared
+ */
+template <class V>
+void check_equal(const V& lhs, const V& rhs, const char* name)
+#ifdef NDEBUG
+  noexcept
+#endif
+{
+  logging::check_fatal(lhs != rhs,
+                       "Expected %s to be %d but got %d",
+                       name,
+                       rhs,
+                       lhs);
+}
+/**
  * \brief Log with FATAL level and exit
  * \param format Format string for message
  * \param ... Arguments to format message with

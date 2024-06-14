@@ -254,10 +254,7 @@ protected:
     const FuelGrid& fuel,
     const ElevationGrid& elevation)
   {
-    logging::check_fatal(fuel.yllcorner() != elevation.yllcorner(),
-                         "Expected yllcorner %f but got %f",
-                         fuel.yllcorner(),
-                         elevation.yllcorner());
+    logging::check_equal(fuel.yllcorner(), elevation.yllcorner(), "yllcorner");
     static Cell nodata{};
     auto values = vector<Cell>{fuel.data.size()};
     vector<HashSize> hashes{};

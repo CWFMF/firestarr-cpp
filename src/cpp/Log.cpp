@@ -43,7 +43,8 @@ static FILE* out_;
 int Log::openLogFile(const char* filename) noexcept
 {
   out_ = fopen(filename, "w");
-  if (nullptr != out_) {
+  if (nullptr != out_)
+  {
     // turn off buffering so lines write to file immediately
     setbuf(out_, nullptr);
     return true;
@@ -244,6 +245,28 @@ void check_fatal(const bool condition, const char* format, ...)
     // cppcheck-suppress va_end_missing
     // va_end(args);
   }
+}
+void check_equal(const double lhs, const double rhs, const char* name)
+#ifdef NDEBUG
+  noexcept
+#endif
+{
+  logging::check_fatal(lhs != rhs,
+                       "Expected %s to be %f but got %f",
+                       name,
+                       rhs,
+                       lhs);
+}
+void check_equal(const char* lhs, const char* rhs, const char* name)
+#ifdef NDEBUG
+  noexcept
+#endif
+{
+  logging::check_fatal(0 != strcmp(lhs, rhs),
+                       "Expected %s to be %s got %s",
+                       name,
+                       rhs,
+                       lhs);
 }
 void SelfLogger::log_output(const int level, const char* format, ...) const noexcept
 {
