@@ -107,6 +107,7 @@ private:
   CellPoints& insert(const double cell_x, const double cell_y, const double x, const double y) noexcept;
   array_pts pts_;
   array_dists dists_;
+  bool is_empty_;
 };
 using cellpoints_map_type = CellPoints::cellpoints_map_type;
 
