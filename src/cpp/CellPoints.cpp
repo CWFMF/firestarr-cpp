@@ -7,6 +7,7 @@
 #include "CellPoints.h"
 #include "Log.h"
 #include "ConvexHull.h"
+#include "Location.h"
 
 namespace tbd::sim
 {
@@ -63,6 +64,7 @@ const CellPoints::array_pts CellPoints::points() const
 CellPoints::CellPoints() noexcept
   : pts_({}),
     dists_({}),
+    src_(topo::DIRECTION_NONE),
     is_empty_(true)
 {
   std::fill(pts_.begin(), pts_.end(), INVALID_POINT);
@@ -78,7 +80,7 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept
 {
   if (nullptr != rhs)
   {
-    insert(*rhs);
+    merge(*rhs);
   }
 }
 CellPoints::CellPoints(const double x, const double y) noexcept
@@ -265,19 +267,28 @@ CellPoints::CellPoints(const vector<InnerPos>& pts) noexcept
 {
   insert(pts.begin(), pts.end());
 }
-CellPoints& CellPoints::insert(const CellPoints& rhs)
+void CellPoints::add_source(const CellIndex src)
 {
-  // we know distances in each direction so just pick closer
-  for (size_t i = 0; i < pts_.size(); ++i)
+  src_ |= src;
+}
+CellPoints& CellPoints::merge(const CellPoints& rhs)
+{
+  if (!rhs.is_empty_)
   {
-    if (rhs.dists_[i] <= dists_[i])
+    // we know distances in each direction so just pick closer
+    for (size_t i = 0; i < pts_.size(); ++i)
     {
-      // closer so replace
-      dists_[i] = rhs.dists_[i];
-      pts_[i] = rhs.pts_[i];
+      if (rhs.dists_[i] <= dists_[i])
+      {
+        // closer so replace
+        dists_[i] = rhs.dists_[i];
+        pts_[i] = rhs.pts_[i];
+      }
     }
+    is_empty_ |= rhs.is_empty_;
   }
-  is_empty_ = false;
+  // HACK: allow empty list but still having a source
+  src_ |= rhs.src_;
   return *this;
 }
 const cellpoints_map_type apply_offsets_spreadkey(
@@ -312,12 +323,9 @@ const cellpoints_map_type apply_offsets_spreadkey(
           Location{
             static_cast<Idx>(y),
             static_cast<Idx>(x)},
-          tbd::topo::DIRECTION_NONE,
           nullptr);
 
-        // FIX: nested so we can use same variable names
-        auto& pair1 = e.first->second;
-        auto& cell_pts = pair1.second;
+        auto& cell_pts = e.first->second;
 #ifdef DEBUG_POINTS
         if (e.second)
         {
@@ -356,9 +364,10 @@ const cellpoints_map_type apply_offsets_spreadkey(
         {
           // we inserted a pair of (src, dst), which means we've never
           // calculated the relativeIndex for this so add it to main map
-          pair1.first |= relativeIndex(
-            src,
-            dst);
+          cell_pts.add_source(
+            relativeIndex(
+              src,
+              dst));
         }
       }
     }
