@@ -43,6 +43,7 @@ static constexpr size_t NUM_DIRECTIONS = 16;
 class CellPoints
 {
 public:
+  using cellpoints_map_type = map<Location, pair<CellIndex, CellPoints>>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
   static constexpr auto INVALID_DISTANCE = std::numeric_limits<double>::max();
@@ -117,7 +118,7 @@ public:
   {
     return pts_;
   }
-  friend const merged_map_type
+  friend const cellpoints_map_type
   apply_offsets_spreadkey(
     const double duration,
     const OffsetSet& offsets,
@@ -129,8 +130,9 @@ private:
   array_pts pts_;
   array_dists dists_;
 };
+using cellpoints_map_type = CellPoints::cellpoints_map_type;
 
-const merged_map_type
+const cellpoints_map_type
 apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
