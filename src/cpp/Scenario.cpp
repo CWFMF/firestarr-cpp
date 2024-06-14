@@ -63,8 +63,26 @@ const merged_map_type merge_list(
   const spreading_points& to_spread)
 {
   return static_cast<const merged_map_type>(
-    merge_reduce_maps(
+    do_transform_reduce(
       to_spread,
+      merged_map_type{},
+      [](const auto& lhs, const auto& rhs) {
+        return merge_maps_generic<merged_map_type>(
+          lhs,
+          rhs,
+          [](const auto& lhs,
+             const auto& rhs) -> const merged_map_type::mapped_type {
+            merged_map_type::mapped_type pair_out{lhs};
+            CellIndex& s_out = pair_out.first;
+            auto& pts_out = pair_out.second;
+            const CellIndex& s_from = rhs.first;
+            const auto& pts_from = rhs.second;
+            s_out |= s_from;
+            pts_out.insert(pts_out.end(), pts_from.begin(), pts_from.end());
+            // pts_out.insert(pts_from);
+            return pair_out;
+          });
+      },
       [&duration, &spread_info](
         const spreading_points::value_type& kv0) -> const merged_map_type {
         auto& key = kv0.first;
