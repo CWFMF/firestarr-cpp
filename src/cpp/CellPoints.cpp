@@ -6,6 +6,7 @@
 
 #include "CellPoints.h"
 #include "Log.h"
+#include "ConvexHull.h"
 
 namespace tbd::sim
 {
@@ -30,7 +31,12 @@ CellPoints::CellPoints() noexcept
   : pts_(),
     dists_()
 {
-  std::fill_n(dists_.begin(), NUM_DIRECTIONS, numeric_limits<double>::max());
+  std::fill_n(dists_.begin(), NUM_DIRECTIONS, INVALID_DISTANCE);
+}
+
+CellPoints::CellPoints(size_t) noexcept
+  : CellPoints()
+{
 }
 
 CellPoints::CellPoints(const double x, const double y) noexcept
@@ -41,7 +47,16 @@ CellPoints::CellPoints(const double x, const double y) noexcept
 
 void CellPoints::insert(const double x, const double y) noexcept
 {
-  insert(InnerPos{x, y});
+  InnerPos p{x, y};
+  insert(p);
+  logging::check_fatal(
+    p.x() != x || p.y() != y,
+    "Inserting (%0.4f, %0.4f) gives (%0.4f, %0.4f)\n",
+    x,
+    y,
+    p.x(),
+    p.y());
+  //   insert(InnerPos{x, y});
 }
 
 CellPoints::CellPoints(const InnerPos& p) noexcept
@@ -224,17 +239,16 @@ void CellPoints::insert(const CellPoints& rhs)
     }
   }
 }
-}
-namespace tbd
-{
 const merged_map_type apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
   const points_type& cell_pts)
 {
+  using cellpoints_map_type = map<Location, pair<CellIndex, CellPoints>>;
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   merged_map_type result{};
+  cellpoints_map_type r1{};
   // apply offsets to point
   for (const auto& out : offsets)
   {
@@ -261,17 +275,78 @@ const merged_map_type apply_offsets_spreadkey(
             static_cast<Idx>(x)},
           tbd::topo::DIRECTION_NONE,
           NULL);
-        auto& pair1 = e.first->second;
-        // always add point since we're calling try_emplace with empty list
-        pair1.second.emplace_back(x, y);
-        const Location& dst = e.first->first;
-        if (src != dst)
         {
-          // we inserted a pair of (src, dst), which means we've never
-          // calculated the relativeIndex for this so add it to main map
-          pair1.first |= relativeIndex(
-            src,
-            dst);
+          auto& pair1 = e.first->second;
+          // always add point since we're calling try_emplace with empty list
+          pair1.second.emplace_back(x, y);
+          // pair1.second.insert(x, y);
+          const Location& dst = e.first->first;
+          if (src != dst)
+          {
+            // we inserted a pair of (src, dFst), which means we've never
+            // calculated the relativeIndex for this so add it to main map
+            pair1.first |= relativeIndex(
+              src,
+              dst);
+          }
+        }
+        {
+          auto e1 = r1.try_emplace(
+            Location{
+              static_cast<Idx>(y),
+              static_cast<Idx>(x)},
+            tbd::topo::DIRECTION_NONE,
+            NULL);
+          logging::check_fatal(e.second != e1.second,
+                               "Inserted into one but not other");
+          // FIX: nested so we can use same variable names
+          auto& pair1 = e1.first->second;
+          // always add point since we're calling try_emplace with empty list
+          pair1.second.insert(x, y);
+          // pair1.second.insert(x, y);
+          const Location& dst = e.first->first;
+          if (src != dst)
+          {
+            // we inserted a pair of (src, dst), which means we've never
+            // calculated the relativeIndex for this so add it to main map
+            pair1.first |= relativeIndex(
+              src,
+              dst);
+          }
+          auto& pair0 = e.first->second;
+          const auto& pts_old = pair0.second;
+          auto c1 = CellPoints(pts_old);
+          auto& c0 = pair1.second;
+          // make sure CellPoints created by insertion match construction from list version
+          for (size_t i = 0; i < c0.pts_.size(); ++i)
+          {
+            auto& d0 = c1.dists_[i];
+            auto& d1 = c0.dists_[i];
+            auto& p0 = c0.pts_[i];
+            auto& p1 = c1.pts_[i];
+            logging::check_equal(d0, d1, "distance");
+            logging::check_equal(p0.x(), p1.x(), "x");
+            logging::check_equal(p0.y(), p1.y(), "y");
+          }
+          auto s0 = c0.unique();
+          vector<tbd::sim::InnerPos> pts_hull{pts_old.begin(), pts_old.end()};
+          hull(pts_hull);
+          set<Offset> s1{pts_hull.begin(), pts_hull.end()};
+          if (s0 != s1)
+          {
+            for (const auto& p : s0)
+            {
+              printf("(%0.4f, %0.4f)\n", p.x(), p.y());
+            }
+            printf("***************************\n");
+            for (const auto& p : s1)
+            {
+              printf("(%0.4f, %0.4f)\n", p.x(), p.y());
+            }
+            //   logging::check_equal(s0.size(), s1.size(), "number of points");
+            logging::check_fatal(s0 != s1,
+                                 "Expected sets to be equal");
+          }
         }
       }
     }
