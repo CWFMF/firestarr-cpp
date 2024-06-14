@@ -88,18 +88,7 @@ merge_list(
       const auto& offsets = spread_info[key].offsets();
       const points_type& cell_pts = kv0.second;
       const auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
-      merged_map_type merged{};
-      for (const auto& kv : r)
-      {
-        const Location dst = kv.first;
-        auto& for_dst = merged[dst];
-        const CellIndex src = kv.second.first;
-        const CellPoints& pts = kv.second.second;
-        const auto u = pts.unique();
-        for_dst.first |= src;
-        for_dst.second.insert(for_dst.second.end(), u.begin(), u.end());
-      }
-      return merged;
+      return convert_map(r);
     }
   ));
 }
