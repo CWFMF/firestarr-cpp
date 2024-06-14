@@ -21,7 +21,7 @@
     <ClInclude Include="ConstantGrid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConvexHull.h">
+    <ClInclude Include="CellPoints.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Duff.h">
@@ -149,7 +149,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConvexHull.cpp">
+    <ClCompile Include="CellPoints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Duff.cpp">
