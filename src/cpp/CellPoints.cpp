@@ -239,12 +239,11 @@ void CellPoints::insert(const CellPoints& rhs)
     }
   }
 }
-const merged_map_type apply_offsets_spreadkey(
+const cellpoints_map_type apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
   const points_type& cell_pts)
 {
-  using cellpoints_map_type = map<Location, pair<CellIndex, CellPoints>>;
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   merged_map_type result{};
@@ -351,6 +350,7 @@ const merged_map_type apply_offsets_spreadkey(
       }
     }
   }
-  return static_cast<const merged_map_type>(result);
+  //   return static_cast<const merged_map_type>(result);
+  return static_cast<const cellpoints_map_type>(r1);
 }
 }
