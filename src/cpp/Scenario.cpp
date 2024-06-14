@@ -57,39 +57,38 @@ void do_par(T& for_list, F fct)
     fct);
 }
 
-const merged_map_type merge_list(
+const cellpoints_map_type merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
   const spreading_points& to_spread)
 {
-  return static_cast<const merged_map_type>(
+  return static_cast<const cellpoints_map_type>(
     do_transform_reduce(
       to_spread,
-      merged_map_type{},
+      cellpoints_map_type{},
       [](const auto& lhs, const auto& rhs) {
-        return merge_maps_generic<merged_map_type>(
+        return merge_maps_generic<cellpoints_map_type>(
           lhs,
           rhs,
           [](const auto& lhs,
-             const auto& rhs) -> const merged_map_type::mapped_type {
-            merged_map_type::mapped_type pair_out{lhs};
+             const auto& rhs) -> const cellpoints_map_type::mapped_type {
+            cellpoints_map_type::mapped_type pair_out{lhs};
             CellIndex& s_out = pair_out.first;
             auto& pts_out = pair_out.second;
             const CellIndex& s_from = rhs.first;
             const auto& pts_from = rhs.second;
             s_out |= s_from;
-            pts_out.insert(pts_out.end(), pts_from.begin(), pts_from.end());
-            // pts_out.insert(pts_from);
+            // pts_out.insert(pts_out.end(), pts_from.begin(), pts_from.end());
+            pts_out.insert(pts_from);
             return pair_out;
           });
       },
       [&duration, &spread_info](
-        const spreading_points::value_type& kv0) -> const merged_map_type {
+        const spreading_points::value_type& kv0) -> const cellpoints_map_type {
         auto& key = kv0.first;
         const auto& offsets = spread_info[key].offsets();
         const points_type& cell_pts = kv0.second;
-        const auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
-        return convert_map(r);
+        return apply_offsets_spreadkey(duration, offsets, cell_pts);
       }));
 }
 void calculate_spread(
@@ -102,7 +101,7 @@ void calculate_spread(
   const BurnedData& unburnable)
 {
   do_each(
-    merge_list(spread_info, duration, to_spread),
+    convert_map(merge_list(spread_info, duration, to_spread)),
     [&scenario, &points_out, &sources_out, &unburnable](
       const merged_map_type::value_type& ksp) {
       // look up Cell from scenario here since we don't need attributes until now
