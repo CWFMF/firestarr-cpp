@@ -171,7 +171,7 @@ public:
   {
 #ifdef DEBUG_POINTS
     constexpr int num_bits = std::numeric_limits<HashSize>::digits;
-    constexpr Topo m = util::bit_mask<num_bits, Topo>();
+    constexpr Topo m = bit_mask<num_bits, Topo>();
     logging::check_equal(
       static_cast<HashSize>(topo_data_),
       static_cast<HashSize>(m & topo_data_),

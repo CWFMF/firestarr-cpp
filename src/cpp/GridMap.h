@@ -13,6 +13,7 @@
 
 namespace fs
 {
+
 /**
  * \brief A GridData that uses an unordered_map for storage.
  * \tparam T Type of data after conversion from initialization type.

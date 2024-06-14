@@ -6,8 +6,8 @@
 
 #include "Scenario.h"
 
-#include "ConvexHull.h"
-#include "FireSpread.h"
+#include "CellPoints.h"
+#include "FuelType.h"
 #include "IntensityMap.h"
 #include "MergeIterator.h"
 #include "Observer.h"
@@ -55,10 +55,10 @@ merge_list(
 {
   return static_cast<const merged_map_type>(merge_reduce_maps(
     to_spread,
-    [&duration, &spread_info](const CellPair& kv0) -> const merged_map_type {
+    [&duration, &spread_info](const spreading_points::value_type& kv0) -> const merged_map_type {
       auto& key = kv0.first;
       const auto& offsets = spread_info[key].offsets();
-      const vector<CellPts>& cell_pts = kv0.second;
+      const points_type& cell_pts = kv0.second;
       return apply_offsets_spreadkey(duration, offsets, cell_pts);
     }
   ));
@@ -77,10 +77,10 @@ calculate_spread(
 {
   do_each(
     merge_list(spread_info, duration, to_spread),
-    [&scenario, &points_out, &sources_out, &unburnable](const merged_map_pair& ksp) {
+    [&scenario, &points_out, &sources_out, &unburnable](const merged_map_type::value_type& ksp) {
       // look up Cell from scenario here since we don't need attributes until now
       const Cell k = scenario.cell(ksp.first);
-      const source_pair& sp = ksp.second;
+      const merged_map_type::mapped_type& sp = ksp.second;
       const CellIndex& s = sp.first;
       sources_out[k] |= s;
       const auto h = k.hash();
@@ -88,15 +88,9 @@ calculate_spread(
       {
         // pair that is currently in merge_from for the given key
         const auto& sp = std::get<1>(ksp);
-        const vector<InnerPos>& p1 = sp.second;
+        auto p1 = CellPoints(sp.second).unique();
         auto& p0 = points_out[k];
         p0.insert(p0.end(), p1.begin(), p1.end());
-        // works the same if we hull here
-        if (p0.size() > MAX_BEFORE_CONDENSE)
-        {
-          // 3 points should just be a triangle usually (could be co-linear, but that's fine
-          hull(p0);
-        }
       }
     }
   );

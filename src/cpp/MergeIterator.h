@@ -7,16 +7,12 @@
 #include "stdafx.h"
 
 #include "Cell.h"
+#include "CellPoints.h"
 #include "InnerPos.h"
 #include "Location.h"
 
 namespace fs
 {
-
-using source_pair = pair<CellIndex, vector<InnerPos>>;
-using merged_map_type = map<Location, source_pair>;
-using merged_map_pair = pair<Location, source_pair>;
-using map_type = map<Location, vector<InnerPos>>;
 
 // mangled version of std::transform_reduce() that calls .begin() and .end()
 template <typename _ForwardIteratorSource, class _Tp, class _BinaryOperation, class _UnaryOperation>
