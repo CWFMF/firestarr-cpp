@@ -17,6 +17,11 @@ static const double MAX_X = std::numeric_limits<double>::max();
 constexpr double DIST_22_5 = 0.2071067811865475244008443621048490392848359376884740365883398689;
 constexpr double P_0_5 = 0.5 + DIST_22_5;
 constexpr double M_0_5 = 0.5 - DIST_22_5;
+static const InnerPos INVALID_POINT{};
+//   static constexpr double INVALID_DISTANCE = std::numeric_limits<double>::max();
+// not sure what's going on with this and wondering if it doesn't keep number exactly
+// shouldn't be any way to be further than twice the entire width of the area
+static const double INVALID_DISTANCE = static_cast<double>(MAX_ROWS * MAX_ROWS);
 
 inline constexpr double distPtPt(const tbd::sim::InnerPos& a, const tbd::sim::InnerPos& b) noexcept
 {
@@ -26,11 +31,28 @@ inline constexpr double distPtPt(const tbd::sim::InnerPos& a, const tbd::sim::In
   return (std::pow((b.x() - a.x()), 2) + std::pow((b.y() - a.y()), 2));
 #endif
 }
+set<InnerPos> CellPoints::unique() const noexcept
+{
+  set<InnerPos> result{};
+  for (size_t i = 0; i < pts_.size(); ++i)
+  {
+    if (INVALID_DISTANCE != dists_[i])
+    {
+      result.emplace(pts_[i]);
+    }
+  }
+  return result;
+}
+const CellPoints::array_pts CellPoints::points() const
+{
+  return pts_;
+}
 
 CellPoints::CellPoints() noexcept
-  : pts_(),
-    dists_()
+  : pts_({}),
+    dists_({})
 {
+  std::fill(pts_.begin(), pts_.end(), INVALID_POINT);
   std::fill(dists_.begin(), dists_.end(), INVALID_DISTANCE);
 }
 
@@ -241,7 +263,7 @@ CellPoints& CellPoints::insert(const CellPoints& rhs)
   // we know distances in each direction so just pick closer
   for (size_t i = 0; i < pts_.size(); ++i)
   {
-    if (rhs.dists_[i] < dists_[i])
+    if (rhs.dists_[i] <= dists_[i])
     {
       // closer so replace
       dists_[i] = rhs.dists_[i];
@@ -278,87 +300,84 @@ const cellpoints_map_type apply_offsets_spreadkey(
         //   Location dst = Location(
         //     static_cast<Idx>(y),
         //     static_cast<Idx>(x));
+
+        auto e = r1.try_emplace(
+          Location{
+            static_cast<Idx>(y),
+            static_cast<Idx>(x)},
+          tbd::topo::DIRECTION_NONE,
+          nullptr);
+
+        // FIX: nested so we can use same variable names
+        auto& pair1 = e.first->second;
+        auto& cell_pts = pair1.second;
+        auto& pts = cell_pts.pts_;
+        auto& dists = cell_pts.dists_;
+        if (e.second)
+        {
+          // was just inserted, so except all distances to be max and points invalid
+          for (size_t i = 0; i < pts.size(); ++i)
+          {
+            logging::check_equal(dists[i], INVALID_DISTANCE, "distance");
+            logging::check_equal(pts[i].x(), INVALID_POINT.x(), "point x");
+            logging::check_equal(pts[i].y(), INVALID_POINT.y(), "point y");
+          }
+          // always add point since we're calling try_emplace with empty list
+          cell_pts.insert(x, y);
+          // was just inserted, so except all distances to be max and points invalid
+          for (size_t i = 0; i < pts.size(); ++i)
+          {
+            logging::check_fatal(dists[i] == INVALID_DISTANCE,
+                                 "Distance %ld is invalid",
+                                 i);
+            logging::check_equal(pts[i].x(), x, "inserted x");
+            logging::check_equal(pts[i].y(), y, "inserted y");
+          }
+        }
+        else
+        {
+          // always add point since we're calling try_emplace with empty list
+          cell_pts.insert(x, y);
+        }
+        // pair1.second.insert(x, y);
+        const Location& dst = e.first->first;
+        if (src != dst)
+        {
+          // we inserted a pair of (src, dst), which means we've never
+          // calculated the relativeIndex for this so add it to main map
+          pair1.first |= relativeIndex(
+            src,
+            dst);
+        }
         // try to insert a pair with no direction and no points
-        auto e = result.try_emplace(
+        auto e_old = result.try_emplace(
           Location{
             static_cast<Idx>(y),
             static_cast<Idx>(x)},
           tbd::topo::DIRECTION_NONE,
           NULL);
-        {
-          auto& pair1 = e.first->second;
-          // always add point since we're calling try_emplace with empty list
-          pair1.second.emplace_back(x, y);
-          // pair1.second.insert(x, y);
-          const Location& dst = e.first->first;
-          if (src != dst)
-          {
-            // we inserted a pair of (src, dFst), which means we've never
-            // calculated the relativeIndex for this so add it to main map
-            pair1.first |= relativeIndex(
-              src,
-              dst);
-          }
-        }
-        {
-          auto e1 = r1.try_emplace(
-            Location{
-              static_cast<Idx>(y),
-              static_cast<Idx>(x)},
-            tbd::topo::DIRECTION_NONE,
-            nullptr);
-          logging::check_fatal(e.second != e1.second,
-                               "Inserted into one but not other");
-          // FIX: nested so we can use same variable names
-          auto& pair1 = e1.first->second;
-          // always add point since we're calling try_emplace with empty list
-          pair1.second.insert(x, y);
-          // pair1.second.insert(x, y);
-          const Location& dst = e.first->first;
-          if (src != dst)
-          {
-            // we inserted a pair of (src, dst), which means we've never
-            // calculated the relativeIndex for this so add it to main map
-            pair1.first |= relativeIndex(
-              src,
-              dst);
-          }
-          auto& pair0 = e.first->second;
-          const auto& pts_old = pair0.second;
-          auto c1 = CellPoints(pts_old);
-          auto& c0 = pair1.second;
-          // make sure CellPoints created by insertion match construction from list version
-          for (size_t i = 0; i < c0.pts_.size(); ++i)
-          {
-            const double d0 = c0.dists_[i];
-            const double d1 = c1.dists_[i];
-            // auto& p0 = c0.pts_[i];
-            // auto& p1 = c1.pts_[i];
-            // FIX: HOW DOES THIS NOT WORK IF WE DON'T CHECK DISTANCE?
-            logging::check_equal(d0, d1, "distance");
-            // logging::check_equal(p0.x(), p1.x(), "x");
-            // logging::check_equal(p0.y(), p1.y(), "y");
-          }
-          //   auto s0 = c0.unique();
-          //   vector<tbd::sim::InnerPos> pts_hull{pts_old.begin(), pts_old.end()};
-          //   hull(pts_hull);
-          //   set<Offset> s1{pts_hull.begin(), pts_hull.end()};
-          //   if (s0 != s1)
-          //   {
-          //     for (const auto& p : s0)
-          //     {
-          //       printf("(%0.4f, %0.4f)\n", p.x(), p.y());
-          //     }
-          //     printf("***************************\n");
-          //     for (const auto& p : s1)
-          //     {
-          //       printf("(%0.4f, %0.4f)\n", p.x(), p.y());
-          //     }
-          //     //   logging::check_equal(s0.size(), s1.size(), "number of points");
-          //     logging::check_fatal(s0 != s1,
-          //                          "Expected sets to be equal");
-          //   }
-        }
+        auto& pair_old = e_old.first->second;
+        auto& pts_old = pair_old.second;
+        // always add point since we're calling try_emplace with empty list
+        pts_old.emplace_back(x, y);
+
+        logging::check_fatal(e_old.second != e.second,
+                             "Inserted into one but not other");
+        const auto u = cell_pts.unique();
+        const vector<Offset> pts_old_c{u.begin(), u.end()};
+        const CellPoints c1{pts_old_c};
+        // // auto& c0 = pair1.second;
+        // // make sure CellPoints created by insertion match construction from list version
+        // // FIX: somehow this is required?
+        // double d = 0;
+        // for (size_t i = 0; i < c1.pts_.size(); ++i)
+        // {
+        //   d += c1.dists_[i];
+        // }
+        // if (d == 0)
+        // {
+        //   printf("%f\n", d);
+        // }
       }
     }
   }
