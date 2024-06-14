@@ -266,18 +266,9 @@ public:
     standard_deviation_ = sqrt(total / n_);
     sample_variance_ = total / (n_ - 1);
 #ifdef DEBUG_STATISTICS
-    logging::check_fatal(min_ != percentiles_[0],
-                         "Expected min to be %f not %f",
-                         min_,
-                         percentiles_[0]);
-    logging::check_fatal(max_ != percentiles_[100],
-                         "Expected max to be %f not %f",
-                         max_,
-                         percentiles_[100]);
-    logging::check_fatal(median_ != percentiles_[50],
-                         "Expected median to be %f not %f",
-                         median_,
-                         percentiles_[50]);
+    logging::check_equal(min_, percentiles_[0], "min");
+    logging::check_equal(max_, percentiles_[100], "max");
+    logging::check_equal(median_, percentiles_[50], "median");
 #endif
   }
   /**

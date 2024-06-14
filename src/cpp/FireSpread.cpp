@@ -167,10 +167,9 @@ static topo::SpreadKey make_key(const SlopeSize slope,
   const auto a = topo::Cell::aspect(key);
   const auto s = topo::Cell::slope(key);
   const auto fuel = fuel::fuel_by_code(topo::Cell::fuelCode(key));
-  logging::check_fatal(s != slope, "Expected slope to be %d but got %d", slope, s);
-  const auto aspect_expected = 0 == slope ? 0 : aspect;
-  logging::check_fatal(a != aspect_expected, "Expected aspect to be %d but got %d", aspect_expected, a);
-  logging::check_fatal(0 != strcmp(fuel->name(), fuel_name), "Expected fuel to be %s but got %s", fuel_name, fuel->name());
+  logging::check_equal(s, slope, "slope");
+  logging::check_equal(a, (0 == slope ? 0 : aspect), "aspect");
+  logging::check_equal(fuel->name(), fuel_name, "fuel");
   return key;
 }
 SpreadInfo::SpreadInfo(
