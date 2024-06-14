@@ -6,6 +6,7 @@
 
 #include "CellPoints.h"
 #include "Log.h"
+
 namespace tbd::sim
 {
 static const double MIN_X = std::numeric_limits<double>::min();
@@ -34,6 +35,11 @@ CellPoints::CellPoints() noexcept
 
 CellPoints::CellPoints(const double x, const double y) noexcept
   : CellPoints()
+{
+  insert(x, y);
+}
+
+void CellPoints::insert(const double x, const double y) noexcept
 {
   insert(InnerPos{x, y});
 }
@@ -203,12 +209,65 @@ void CellPoints::insert(const double cell_x, const double cell_y, const InnerPos
 CellPoints::CellPoints(const vector<InnerPos>& pts) noexcept
   : CellPoints()
 {
-  // should always be in the same cell so do this once
-  const auto cell_x = static_cast<tbd::Idx>(pts[0].x());
-  const auto cell_y = static_cast<tbd::Idx>(pts[0].y());
-  for (auto& p : pts)
+  insert(pts.begin(), pts.end());
+}
+void CellPoints::insert(const CellPoints& rhs)
+{
+  // FIX: we know distances in each direction so just pick closer
+  insert(rhs.pts_.begin(), rhs.pts_.end());
+}
+}
+namespace tbd
+{
+const merged_map_type apply_offsets_spreadkey(
+  const double duration,
+  const OffsetSet& offsets,
+  const points_type& cell_pts)
+{
+  // NOTE: really tried to do this in parallel, but not enough points
+  // in a cell for it to work well
+  merged_map_type result{};
+  // apply offsets to point
+  for (const auto& out : offsets)
   {
-    insert(cell_x, cell_y, p);
+    const double x_o = duration * out.x();
+    const double y_o = duration * out.y();
+    for (const auto& pts_for_cell : cell_pts)
+    {
+      const Location& src = std::get<0>(pts_for_cell);
+      const OffsetSet& pts = std::get<1>(pts_for_cell);
+      for (const auto& p : pts)
+      {
+        // putting results in copy of offsets and returning that
+        // at the end of everything, we're just adding something to every double in the set by duration?
+        const double x = x_o + p.x();
+        const double y = y_o + p.y();
+        // don't need cell attributes, just location
+        //   Location dst = Location(
+        //     static_cast<Idx>(y),
+        //     static_cast<Idx>(x));
+        // try to insert a pair with no direction and no points
+        auto e = result.try_emplace(
+          Location{
+            static_cast<Idx>(y),
+            static_cast<Idx>(x)},
+          tbd::topo::DIRECTION_NONE,
+          NULL);
+        auto& pair1 = e.first->second;
+        // always add point since we're calling try_emplace with empty list
+        pair1.second.emplace_back(x, y);
+        const Location& dst = e.first->first;
+        if (src != dst)
+        {
+          // we inserted a pair of (src, dst), which means we've never
+          // calculated the relativeIndex for this so add it to main map
+          pair1.first |= relativeIndex(
+            src,
+            dst);
+        }
+      }
+    }
   }
+  return static_cast<const merged_map_type>(result);
 }
 }

@@ -5,6 +5,7 @@
 #pragma once
 #include "stdafx.h"
 #include "Cell.h"
+
 namespace tbd
 {
 using topo::Location;
@@ -99,17 +100,6 @@ constexpr Offset after(const double duration, const Offset& o)
 {
   return o.after(duration);
 }
-using topo::Cell;
-using topo::SpreadKey;
-using points_list_type = OffsetSet;
-using merged_map_type = map<Location, pair<CellIndex, points_list_type>>;
-using spreading_points = map<SpreadKey, vector<pair<Cell, const points_list_type>>>;
-using points_type = spreading_points::value_type::second_type;
-
-const merged_map_type apply_offsets_spreadkey(
-  const double duration,
-  const OffsetSet& offsets,
-  const points_type& cell_pts);
 }
 namespace tbd::sim
 {
