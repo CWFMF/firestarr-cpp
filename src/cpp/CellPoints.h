@@ -45,7 +45,6 @@ public:
   using cellpoints_map_type = map<Location, pair<CellIndex, CellPoints>>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
-  static constexpr double INVALID_DISTANCE = std::numeric_limits<double>::max();
   CellPoints() noexcept;
   //   // HACK: so we can emplace with NULL
   //   CellPoints(size_t) noexcept;
@@ -81,34 +80,24 @@ public:
   template <class _ForwardIterator>
   CellPoints& insert(_ForwardIterator begin, _ForwardIterator end)
   {
-    auto it = begin;
-    // should always be in the same cell so do this once
-    const auto cell_x = static_cast<tbd::Idx>((*it).x());
-    const auto cell_y = static_cast<tbd::Idx>((*it).y());
-    while (end != it)
+    // don't do anything if empty
+    if (end != begin)
     {
-      insert(cell_x, cell_y, *it);
-      ++it;
+      auto it = begin;
+      // should always be in the same cell so do this once
+      const auto cell_x = static_cast<tbd::Idx>((*it).x());
+      const auto cell_y = static_cast<tbd::Idx>((*it).y());
+      while (end != it)
+      {
+        insert(cell_x, cell_y, *it);
+        ++it;
+      }
     }
     return *this;
   }
   CellPoints& insert(const CellPoints& rhs);
-  set<InnerPos> unique() const noexcept
-  {
-    set<InnerPos> result{};
-    for (size_t i = 0; i < pts_.size(); ++i)
-    {
-      if (INVALID_DISTANCE != dists_[i])
-      {
-        result.emplace(pts_[i]);
-      }
-    }
-    return result;
-  }
-  const array_pts points() const
-  {
-    return pts_;
-  }
+  set<InnerPos> unique() const noexcept;
+  const array_pts points() const;
   friend const cellpoints_map_type apply_offsets_spreadkey(
     const double duration,
     const OffsetSet& offsets,
