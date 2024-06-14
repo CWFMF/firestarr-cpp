@@ -45,10 +45,7 @@ public:
   using cellpoints_map_type = map<Location, pair<CellIndex, CellPoints>>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
-  static constexpr double INVALID_DISTANCE = std::numeric_limits<double>::max();
   CellPoints() noexcept;
-  //   // HACK: so we can emplace with NULL
-  //   CellPoints(size_t) noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
   CellPoints(const vector<InnerPos>& pts) noexcept;
@@ -72,41 +69,29 @@ public:
     _ForwardIterator end
   )
   {
-    auto it = begin;
-    // should always be in the same cell so do this once
-    const auto cell_x = static_cast<fs::Idx>((*it).x());
-    const auto cell_y = static_cast<fs::Idx>((*it).y());
-    while (end != it)
+    // don't do anything if empty
+    if (end != begin)
     {
-      insert(cell_x, cell_y, *it);
-      ++it;
+      auto it = begin;
+      // should always be in the same cell so do this once
+      const auto cell_x = static_cast<fs::Idx>((*it).x());
+      const auto cell_y = static_cast<fs::Idx>((*it).y());
+      while (end != it)
+      {
+        const auto p = *it;
+        insert(cell_x, cell_y, p.x(), p.y());
+        ++it;
+      }
     }
     return *this;
   }
 
   CellPoints&
   insert(const CellPoints& rhs);
-
   set<InnerPos>
-  unique() const noexcept
-  {
-    set<InnerPos> result{};
-    for (size_t i = 0; i < pts_.size(); ++i)
-    {
-      if (INVALID_DISTANCE != dists_[i])
-      {
-        result.emplace(pts_[i]);
-      }
-    }
-    return result;
-  }
-
+  unique() const noexcept;
   const array_pts
-  points() const
-  {
-    return pts_;
-  }
-
+  points() const;
   friend const cellpoints_map_type
   apply_offsets_spreadkey(
     const double duration,
@@ -116,9 +101,10 @@ public:
 
 private:
   CellPoints&
-  insert(const double cell_x, const double cell_y, const InnerPos& p) noexcept;
+  insert(const double cell_x, const double cell_y, const double x, const double y) noexcept;
   array_pts pts_;
   array_dists dists_;
+  bool is_empty_;
 };
 
 using cellpoints_map_type = CellPoints::cellpoints_map_type;
