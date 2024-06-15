@@ -5,22 +5,6 @@
 #define FS_CELLPOINTS_H
 namespace fs
 {
-static constexpr size_t FURTHEST_N = 0;
-static constexpr size_t FURTHEST_NNE = 1;
-static constexpr size_t FURTHEST_NE = 2;
-static constexpr size_t FURTHEST_ENE = 3;
-static constexpr size_t FURTHEST_E = 4;
-static constexpr size_t FURTHEST_ESE = 5;
-static constexpr size_t FURTHEST_SE = 6;
-static constexpr size_t FURTHEST_SSE = 7;
-static constexpr size_t FURTHEST_S = 8;
-static constexpr size_t FURTHEST_SSW = 9;
-static constexpr size_t FURTHEST_SW = 10;
-static constexpr size_t FURTHEST_WSW = 11;
-static constexpr size_t FURTHEST_W = 12;
-static constexpr size_t FURTHEST_WNW = 13;
-static constexpr size_t FURTHEST_NW = 14;
-static constexpr size_t FURTHEST_NNW = 15;
 static constexpr size_t NUM_DIRECTIONS = 16;
 /**
  * Points in a cell furthest in each direction
@@ -30,8 +14,7 @@ class CellPoints
 public:
   using cellpoints_map_type = map<Location, CellPoints>;
   using spreading_points = map<SpreadKey, vector<pair<Cell, CellPoints>>>;
-  using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
-  using array_dists = std::array<double, NUM_DIRECTIONS>;
+  using array_dists = std::array<pair<double, InnerPos>, NUM_DIRECTIONS>;
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
@@ -68,7 +51,6 @@ public:
   bool empty() const { return is_empty_; }
   CellPoints& merge(const CellPoints& rhs);
   set<InnerPos> unique() const noexcept;
-  const array_pts points() const;
   friend const cellpoints_map_type apply_offsets_spreadkey(
     const double duration,
     const OffsetSet& offsets,
@@ -76,7 +58,7 @@ public:
   );
 
 private:
-  array_dists find_distances(
+  static array_dists find_distances(
     const double cell_x,
     const double cell_y,
     const double p_x,
@@ -88,8 +70,7 @@ private:
     const double x,
     const double y
   ) noexcept;
-  array_pts pts_;
-  array_dists dists_;
+  array_dists pts_;
   CellIndex src_;
   bool is_empty_;
 };
