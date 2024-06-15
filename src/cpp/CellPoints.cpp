@@ -118,8 +118,6 @@ CellPoints::insert(
     }
     logging::check_fatal(INVALID_DISTANCE == pts_[i].first, "Invalid distance at position %ld", i);
   }
-  const auto u = unique();
-
   return *this;
 }
 
