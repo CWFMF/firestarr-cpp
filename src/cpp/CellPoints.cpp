@@ -37,6 +37,7 @@ set<InnerPos> CellPoints::unique() const noexcept
       }
     }
   }
+#ifdef DEBUG_POINTS
   else
   {
     for (size_t i = 0; i < pts_.size(); ++i)
@@ -46,6 +47,7 @@ set<InnerPos> CellPoints::unique() const noexcept
       logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
     }
   }
+#endif
   return result;
 }
 // const CellPoints::array_dists CellPoints::points() const
@@ -59,12 +61,14 @@ CellPoints::CellPoints() noexcept
     is_empty_(true)
 {
   std::fill(pts_.begin(), pts_.end(), INVALID_PAIR);
+#ifdef DEBUG_POINTS
   for (size_t i = 0; i < pts_.size(); ++i)
   {
     logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
     logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
     logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
   }
+#endif
 }
 
 // CellPoints::CellPoints(size_t) noexcept
@@ -78,12 +82,14 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept
   {
     merge(*rhs);
   }
+#ifdef DEBUG_POINTS
   for (size_t i = 0; i < pts_.size(); ++i)
   {
     logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
     logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
     logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
   }
+#endif
 }
 CellPoints::CellPoints(const double x, const double y) noexcept
   : CellPoints()
@@ -95,9 +101,11 @@ CellPoints& CellPoints::insert(const double x, const double y) noexcept
 {
   const auto cell_x = static_cast<tbd::Idx>(x);
   const auto cell_y = static_cast<tbd::Idx>(y);
+#ifdef DEBUG_POINTS
   const bool was_empty = is_empty_;
+#endif
   insert(cell_x, cell_y, x, y);
-  //   // HACK: somehow this makes it produce the same results as it was
+#ifdef DEBUG_POINTS
   logging::check_fatal(empty(), "Empty after insert of (%f, %f)", x, y);
   //   set<InnerPos> result{};
   for (size_t i = 0; i < pts_.size(); ++i)
@@ -112,6 +120,7 @@ CellPoints& CellPoints::insert(const double x, const double y) noexcept
       "Invalid distance at position %ld",
       i);
   }
+#endif
   return *this;
 }
 
