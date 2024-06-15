@@ -112,8 +112,6 @@ CellPoints& CellPoints::insert(const double x, const double y) noexcept
       "Invalid distance at position %ld",
       i);
   }
-  const auto u = unique();
-
   return *this;
 }
 
