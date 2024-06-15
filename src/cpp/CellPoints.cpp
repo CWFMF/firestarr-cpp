@@ -22,29 +22,6 @@ static const InnerPos INVALID_POINT{};
 // not sure what's going on with this and wondering if it doesn't keep number exactly
 // shouldn't be any way to be further than twice the entire width of the area
 static const double INVALID_DISTANCE = static_cast<double>(MAX_ROWS * MAX_ROWS);
-
-inline constexpr double
-distPtPt(
-  const fs::sim::InnerPos& a,
-  const fs::sim::InnerPos& b
-) noexcept
-{
-#ifdef _WIN32
-  return (((b.x() - a.x()) * (b.x() - a.x())) + ((b.y() - a.y()) * (b.y() - a.y())));
-#else
-  return (std::pow((b.x() - a.x()), 2) + std::pow((b.y() - a.y()), 2));
-#endif
-}
-std::function<double(double, double)>
-make_distance_function(
-  const double x0,
-  const double y0
-)
-{
-  return [x0, y0](const double x, const double y) {
-    return (((x - x0) * (x - x0)) + ((y - y0) * (y - y0)));
-  };
-}
 set<InnerPos>
 CellPoints::unique() const noexcept
 {
@@ -175,40 +152,44 @@ CellPoints::find_distances(
   const InnerPos p{p_x, p_y};
   const auto x = p.x() - cell_x;
   const auto y = p.y() - cell_y;
-  array_dists dists = {// north is closest to point (0.5, 1.0)
-                       ((x - 0.5) * (x - 0.5)) + ((1 - y) * (1 - y)),
-                       // north-northeast is closest to point (0.5 + 0.207, 1.0)
-                       ((x - P_0_5) * (x - P_0_5)) + ((1 - y) * (1 - y)),
-                       // northeast is closest to point (1.0, 1.0)
-                       ((1 - x) * (1 - x)) + ((1 - y) * (1 - y)),
-                       // east-northeast is closest to point (1.0, 0.5 + 0.207)
-                       ((1 - x) * (1 - x)) + ((y - P_0_5) * (y - P_0_5)),
-                       // east is closest to point (1.0, 0.5)
-                       ((1 - x) * (1 - x)) + ((y - 0.5) * (y - 0.5)),
-                       // east-southeast is closest to point (1.0, 0.5 - 0.207)
-                       ((1 - x) * (1 - x)) + ((y - M_0_5) * (y - M_0_5)),
-                       // southeast is closest to point (1.0, 0.0)
-                       ((1 - x) * (1 - x)) + (y * y),
-                       // south-southeast is closest to point (0.5 + 0.207, 0.0)
-                       ((x - P_0_5) * (x - P_0_5)) + (y * y),
-                       // south is closest to point (0.5, 0.0)
-                       ((x - 0.5) * (x - 0.5)) + (y * y),
-                       // south-southwest is closest to point (0.5 - 0.207, 0.0)
-                       ((x - M_0_5) * (x - M_0_5)) + (y * y),
-                       // southwest is closest to point (0.0, 0.0)
-                       (x * x) + (y * y),
-                       // west-southwest is closest to point (0.0, 0.5 - 0.207)
-                       (x * x) + ((y - M_0_5) * (y - M_0_5)),
-                       // west is closest to point (0.0, 0.5)
-                       (x * x) + ((y - 0.5) * (y - 0.5)),
-                       // west-northwest is closest to point (0.0, 0.5 + 0.207)
-                       (x * x) + ((y - P_0_5) * (y - P_0_5)),
-                       // northwest is closest to point (0.0, 1.0)
-                       (x * x) + ((1 - y) * (1 - y)),
-                       // north-northwest is closest to point (0.5 - 0.207, 1.0)
-                       ((x - M_0_5) * (x - M_0_5)) + ((1 - y) * (1 - y))
+#define DISTANCE_1D(a, b) (((a) - (b)) * ((a) - (b)))
+#define DISTANCE(x0, y0) (DISTANCE_1D((x), (x0)) + DISTANCE_1D((y), (y0)))
+  // NOTE: order of x0/x and y0/y shouldn't matter since squaring
+  return {// north is closest to point (0.5, 1.0)
+          DISTANCE(0.5, 1.0),
+          // north-northeast is closest to point (0.5 + 0.207, 1.0)
+          DISTANCE(P_0_5, 1.0),
+          // northeast is closest to point (1.0, 1.0)
+          DISTANCE(1.0, 1.0),
+          // east-northeast is closest to point (1.0, 0.5 + 0.207)
+          DISTANCE(1.0, P_0_5),
+          // east is closest to point (1.0, 0.5)
+          DISTANCE(1.0, 0.5),
+          // east-southeast is closest to point (1.0, 0.5 - 0.207)
+          DISTANCE(1.0, M_0_5),
+          // southeast is closest to point (1.0, 0.0)
+          DISTANCE(1.0, 0),
+          // south-southeast is closest to point (0.5 + 0.207, 0.0)
+          DISTANCE(P_0_5, 0.0),
+          // south is closest to point (0.5, 0.0)
+          DISTANCE(0.5, 0.0),
+          // south-southwest is closest to point (0.5 - 0.207, 0.0)
+          DISTANCE(M_0_5, 0.0),
+          // southwest is closest to point (0.0, 0.0)
+          DISTANCE(0.0, 0.0),
+          // west-southwest is closest to point (0.0, 0.5 - 0.207)
+          DISTANCE(0.0, M_0_5),
+          // west is closest to point (0.0, 0.5)
+          DISTANCE(0.0, 0.5),
+          // west-northwest is closest to point (0.0, 0.5 + 0.207)
+          DISTANCE(0.0, P_0_5),
+          // northwest is closest to point (0.0, 1.0)
+          DISTANCE(0.0, 1.0),
+          // north-northwest is closest to point (0.5 - 0.207, 1.0)
+          DISTANCE(M_0_5, 1.0)
   };
-  return dists;
+#undef DISTANCE_1D
+#undef DISTANCE
 }
 CellPoints&
 CellPoints::insert(
