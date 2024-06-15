@@ -127,6 +127,13 @@ public:
     const spreading_points::mapped_type& cell_pts
   );
 private:
+  array_dists
+  find_distances(
+    const double cell_x,
+    const double cell_y,
+    const double p_x,
+    const double p_y
+  ) noexcept;
   CellPoints&
   insert(const double cell_x, const double cell_y, const double x, const double y) noexcept;
   array_pts pts_;
