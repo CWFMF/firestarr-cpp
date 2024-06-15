@@ -28,26 +28,30 @@ set<InnerPos> CellPoints::unique() const noexcept
       }
     }
   }
+#ifdef DEBUG_POINTS
   else
   {
-    for (const auto& pt : pts_)
+    for (size_t i = 0; i < pts_.size(); ++i)
     {
-      logging::check_equal(INVALID_DISTANCE, pt.first, "distances");
-      logging::check_equal(pt.second.x(), INVALID_POINT.x(), "point x");
-      logging::check_equal(pt.second.y(), INVALID_POINT.y(), "point y");
+      logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
+      logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
+      logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
     }
   }
+#endif
   return result;
 }
 CellPoints::CellPoints() noexcept : pts_({}), src_(DIRECTION_NONE), is_empty_(true)
 {
   std::fill(pts_.begin(), pts_.end(), INVALID_PAIR);
-  for (auto& pt : pts_)
+#ifdef DEBUG_POINTS
+  for (size_t i = 0; i < pts_.size(); ++i)
   {
-    logging::check_equal(INVALID_DISTANCE, pt.first, "distances");
-    logging::check_equal(pt.second.x(), INVALID_POINT.x(), "point x");
-    logging::check_equal(pt.second.y(), INVALID_POINT.y(), "point y");
+    logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
+    logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
+    logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
   }
+#endif
 }
 CellPoints::CellPoints(const CellPoints* rhs) noexcept : CellPoints()
 {
@@ -55,21 +59,25 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept : CellPoints()
   {
     merge(*rhs);
   }
-  for (auto& pt : pts_)
+#ifdef DEBUG_POINTS
+  for (size_t i = 0; i < pts_.size(); ++i)
   {
-    logging::check_equal(INVALID_DISTANCE, pt.first, "distances");
-    logging::check_equal(pt.second.x(), INVALID_POINT.x(), "point x");
-    logging::check_equal(pt.second.y(), INVALID_POINT.y(), "point y");
+    logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
+    logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
+    logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
   }
+#endif
 }
 CellPoints::CellPoints(const double x, const double y) noexcept : CellPoints() { insert(x, y); }
 CellPoints& CellPoints::insert(const double x, const double y) noexcept
 {
   const auto cell_x = static_cast<fs::Idx>(x);
   const auto cell_y = static_cast<fs::Idx>(y);
+#ifdef DEBUG_POINTS
   const bool was_empty = is_empty_;
+#endif
   insert(cell_x, cell_y, x, y);
-  //   // HACK: somehow this makes it produce the same results as it was
+#ifdef DEBUG_POINTS
   logging::check_fatal(empty(), "Empty after insert of (%f, %f)", x, y);
   for (size_t i = 0; i < pts_.size(); ++i)
   {
@@ -80,6 +88,7 @@ CellPoints& CellPoints::insert(const double x, const double y) noexcept
     }
     logging::check_fatal(INVALID_DISTANCE == pts_[i].first, "Invalid distance at position %ld", i);
   }
+#endif
   return *this;
 }
 CellPoints::CellPoints(const InnerPos& p) noexcept : CellPoints() { insert(p); }
