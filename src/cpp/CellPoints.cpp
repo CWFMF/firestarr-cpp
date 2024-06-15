@@ -138,138 +138,56 @@ CellPoints& CellPoints::insert(const InnerPos& p) noexcept
   insert(p.x(), p.y());
   return *this;
 }
-CellPoints& CellPoints::insert(const double cell_x, const double cell_y, const double p_x, const double p_y) noexcept
+CellPoints::array_dists CellPoints::find_distances(const double cell_x, const double cell_y, const double p_x, const double p_y) noexcept
 {
-  auto& n = dists_[FURTHEST_N];
-  auto& nne = dists_[FURTHEST_NNE];
-  auto& ne = dists_[FURTHEST_NE];
-  auto& ene = dists_[FURTHEST_ENE];
-  auto& e = dists_[FURTHEST_E];
-  auto& ese = dists_[FURTHEST_ESE];
-  auto& se = dists_[FURTHEST_SE];
-  auto& sse = dists_[FURTHEST_SSE];
-  auto& s = dists_[FURTHEST_S];
-  auto& ssw = dists_[FURTHEST_SSW];
-  auto& sw = dists_[FURTHEST_SW];
-  auto& wsw = dists_[FURTHEST_WSW];
-  auto& w = dists_[FURTHEST_W];
-  auto& wnw = dists_[FURTHEST_WNW];
-  auto& nw = dists_[FURTHEST_NW];
-  auto& nnw = dists_[FURTHEST_NNW];
+  array_dists dists{};
   const InnerPos p{p_x, p_y};
   const auto x = p.x() - cell_x;
   const auto y = p.y() - cell_y;
   // north is closest to point (0.5, 1.0)
-  const auto cur_n = ((x - 0.5) * (x - 0.5)) + ((1 - y) * (1 - y));
-  if (cur_n < n)
-  {
-    pts_[FURTHEST_N] = p;
-    n = cur_n;
-  }
+  dists[FURTHEST_N] = ((x - 0.5) * (x - 0.5)) + ((1 - y) * (1 - y));
   // south is closest to point (0.5, 0.0)
-  const auto cur_s = ((x - 0.5) * (x - 0.5)) + (y * y);
-  if (cur_s < s)
-  {
-    pts_[FURTHEST_S] = p;
-    s = cur_s;
-  }
+  dists[FURTHEST_S] = ((x - 0.5) * (x - 0.5)) + (y * y);
   // northeast is closest to point (1.0, 1.0)
-  const auto cur_ne = ((1 - x) * (1 - x)) + ((1 - y) * (1 - y));
-  if (cur_ne < ne)
-  {
-    pts_[FURTHEST_NE] = p;
-    ne = cur_ne;
-  }
+  dists[FURTHEST_NE] = ((1 - x) * (1 - x)) + ((1 - y) * (1 - y));
   // southwest is closest to point (0.0, 0.0)
-  const auto cur_sw = (x * x) + (y * y);
-  if (cur_sw < sw)
-  {
-    pts_[FURTHEST_SW] = p;
-    sw = cur_sw;
-  }
+  dists[FURTHEST_SW] = (x * x) + (y * y);
   // east is closest to point (1.0, 0.5)
-  const auto cur_e = ((1 - x) * (1 - x)) + ((y - 0.5) * (y - 0.5));
-  if (cur_e < e)
-  {
-    pts_[FURTHEST_E] = p;
-    e = cur_e;
-  }
+  dists[FURTHEST_E] = ((1 - x) * (1 - x)) + ((y - 0.5) * (y - 0.5));
   // west is closest to point (0.0, 0.5)
-  const auto cur_w = (x * x) + ((y - 0.5) * (y - 0.5));
-  if (cur_w < w)
-  {
-    pts_[FURTHEST_W] = p;
-    w = cur_w;
-  }
+  dists[FURTHEST_W] = (x * x) + ((y - 0.5) * (y - 0.5));
   // southeast is closest to point (1.0, 0.0)
-  const auto cur_se = ((1 - x) * (1 - x)) + (y * y);
-  if (cur_se < se)
-  {
-    pts_[FURTHEST_SE] = p;
-    se = cur_se;
-  }
+  dists[FURTHEST_SE] = ((1 - x) * (1 - x)) + (y * y);
   // northwest is closest to point (0.0, 1.0)
-  const auto cur_nw = (x * x) + ((1 - y) * (1 - y));
-  if (cur_nw < nw)
-  {
-    pts_[FURTHEST_NW] = p;
-    nw = cur_nw;
-  }
+  dists[FURTHEST_NW] = (x * x) + ((1 - y) * (1 - y));
   // south-southwest is closest to point (0.5 - 0.207, 0.0)
-  const auto cur_ssw = ((x - M_0_5) * (x - M_0_5)) + (y * y);
-  if (cur_ssw < ssw)
-  {
-    pts_[FURTHEST_SSW] = p;
-    ssw = cur_ssw;
-  }
+  dists[FURTHEST_SSW] = ((x - M_0_5) * (x - M_0_5)) + (y * y);
   // south-southeast is closest to point (0.5 + 0.207, 0.0)
-  const auto cur_sse = ((x - P_0_5) * (x - P_0_5)) + (y * y);
-  if (cur_sse < sse)
-  {
-    pts_[FURTHEST_SSE] = p;
-    sse = cur_sse;
-  }
+  dists[FURTHEST_SSE] = ((x - P_0_5) * (x - P_0_5)) + (y * y);
   // north-northwest is closest to point (0.5 - 0.207, 1.0)
-  const auto cur_nnw = ((x - M_0_5) * (x - M_0_5)) + ((1 - y) * (1 - y));
-  if (cur_nnw < nnw)
-  {
-    pts_[FURTHEST_NNW] = p;
-    nnw = cur_nnw;
-  }
+  dists[FURTHEST_NNW] = ((x - M_0_5) * (x - M_0_5)) + ((1 - y) * (1 - y));
   // north-northeast is closest to point (0.5 + 0.207, 1.0)
-  const auto cur_nne = ((x - P_0_5) * (x - P_0_5)) + ((1 - y) * (1 - y));
-  if (cur_nne < nne)
-  {
-    pts_[FURTHEST_NNE] = p;
-    nne = cur_nne;
-  }
+  dists[FURTHEST_NNE] = ((x - P_0_5) * (x - P_0_5)) + ((1 - y) * (1 - y));
   // west-southwest is closest to point (0.0, 0.5 - 0.207)
-  const auto cur_wsw = (x * x) + ((y - M_0_5) * (y - M_0_5));
-  if (cur_wsw < wsw)
-  {
-    pts_[FURTHEST_WSW] = p;
-    wsw = cur_wsw;
-  }
+  dists[FURTHEST_WSW] = (x * x) + ((y - M_0_5) * (y - M_0_5));
   // west-northwest is closest to point (0.0, 0.5 + 0.207)
-  const auto cur_wnw = (x * x) + ((y - P_0_5) * (y - P_0_5));
-  if (cur_wnw < wnw)
-  {
-    pts_[FURTHEST_WNW] = p;
-    wnw = cur_wnw;
-  }
+  dists[FURTHEST_WNW] = (x * x) + ((y - P_0_5) * (y - P_0_5));
   // east-southeast is closest to point (1.0, 0.5 - 0.207)
-  const auto cur_ese = ((1 - x) * (1 - x)) + ((y - M_0_5) * (y - M_0_5));
-  if (cur_ese < ese)
-  {
-    pts_[FURTHEST_ESE] = p;
-    ese = cur_ese;
-  }
+  dists[FURTHEST_ESE] = ((1 - x) * (1 - x)) + ((y - M_0_5) * (y - M_0_5));
   // east-northeast is closest to point (1.0, 0.5 + 0.207)
-  const auto cur_ene = ((1 - x) * (1 - x)) + ((y - P_0_5) * (y - P_0_5));
-  if (cur_ene < ene)
+  dists[FURTHEST_ENE] = ((1 - x) * (1 - x)) + ((y - P_0_5) * (y - P_0_5));
+  return dists;
+}
+CellPoints& CellPoints::insert(const double cell_x, const double cell_y, const double p_x, const double p_y) noexcept
+{
+  array_dists dists = find_distances(cell_x, cell_y, p_x, p_y);
+  for (size_t i = 0; i < dists.size(); ++i)
   {
-    pts_[FURTHEST_ENE] = p;
-    ene = cur_ene;
+    if (dists[i] <= dists_[i])
+    {
+      dists_[i] = dists[i];
+      pts_[i] = InnerPos{p_x, p_y};
+    }
   }
   // either we had something already or we should now?
   is_empty_ = false;
