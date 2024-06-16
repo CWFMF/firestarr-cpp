@@ -50,6 +50,7 @@ public:
   CellIndex sources() const { return src_; }
   bool empty() const { return is_empty_; }
   CellPoints& merge(const CellPoints& rhs);
+  friend CellPoints merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs);
   set<InnerPos> unique() const noexcept;
   friend const cellpoints_map_type apply_offsets_spreadkey(
     const double duration,
@@ -81,5 +82,6 @@ const cellpoints_map_type apply_offsets_spreadkey(
   const OffsetSet& offsets,
   const spreading_points::mapped_type& cell_pts
 );
+CellPoints merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs);
 }
 #endif
