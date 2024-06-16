@@ -98,10 +98,6 @@ public:
   {
     return src_;
   }
-  bool empty() const
-  {
-    return is_empty_;
-  }
   CellPoints& merge(const CellPoints& rhs);
   friend CellPoints merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs);
   set<InnerPos> unique() const noexcept;
@@ -116,7 +112,6 @@ private:
   //   array_pts pts_;
   array_dists pts_;
   CellIndex src_;
-  bool is_empty_;
 };
 using cellpoints_map_type = CellPoints::cellpoints_map_type;
 using spreading_points = CellPoints::spreading_points;
