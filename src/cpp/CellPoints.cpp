@@ -17,57 +17,84 @@ static const InnerPos INVALID_POINT{};
 // not sure what's going on with this and wondering if it doesn't keep number exactly
 // shouldn't be any way to be further than twice the entire width of the area
 static const double INVALID_DISTANCE = static_cast<double>(MAX_ROWS * MAX_ROWS);
-static const pair<double, InnerPos> INVALID_PAIR{INVALID_DISTANCE, INVALID_POINT};
+static const pair<double, InnerPos> INVALID_PAIR{INVALID_DISTANCE, {}};
+static const Idx INVALID_LOCATION = INVALID_PAIR.second.x();
+void assert_all_equal(const CellPoints::array_dists& pts, const double x, const double y)
+{
+  for (const auto& pt : pts)
+  {
+    logging::check_equal(pt.second.x(), x, "point x");
+    logging::check_equal(pt.second.y(), y, "point y");
+  }
+}
+void assert_all_invalid(const CellPoints::array_dists& pts)
+{
+  for (const auto& pt : pts)
+  {
+    logging::check_equal(INVALID_DISTANCE, pt.first, "distances");
+  }
+  assert_all_equal(pts, INVALID_LOCATION, INVALID_LOCATION);
+}
 set<InnerPos> CellPoints::unique() const noexcept
 {
   set<InnerPos> result{};
-  if (!is_empty_)
+#ifdef DEBUG_POINTS
+  Idx cell_x_ = std::numeric_limits<Idx>::min();
+  Idx cell_y_ = std::numeric_limits<Idx>::min();
+#endif
+  for (const auto& pt : pts_)
   {
-    for (const auto& pt : pts_)
+    if (INVALID_DISTANCE != pt.first)
     {
-      if (INVALID_DISTANCE != pt.first)
-      {
-        result.emplace(pt.second);
-      }
+      const auto& p = pt.second;
+#ifdef DEBUG_POINTS
+      cell_x_ = max(cell_x_, static_cast<Idx>(p.x()));
+      cell_y_ = max(cell_y_, static_cast<Idx>(p.y()));
+#endif
+      result.emplace(p);
     }
   }
 #ifdef DEBUG_POINTS
-  else
+  for (size_t i = 0; i < pts_.size(); ++i)
   {
-    for (size_t i = 0; i < pts_.size(); ++i)
+    if (INVALID_DISTANCE != pts_[i].first)
     {
-      logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
-      logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
-      logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
+      const auto& p = pts_[i].second;
+      const Location loc1{static_cast<Idx>(p.y()), static_cast<Idx>(p.x())};
+      logging::check_equal(loc1.column(), cell_x_, "column");
+      logging::check_equal(loc1.row(), cell_y_, "row");
     }
+  }
+  if (result.empty())
+  {
+    assert_all_invalid(pts_);
   }
 #endif
   return result;
 }
-CellPoints::CellPoints() noexcept : pts_({}), src_(DIRECTION_NONE), is_empty_(true)
+CellPoints::CellPoints() noexcept : pts_({}), src_(DIRECTION_NONE)
 {
   std::fill(pts_.begin(), pts_.end(), INVALID_PAIR);
 #ifdef DEBUG_POINTS
-  for (size_t i = 0; i < pts_.size(); ++i)
-  {
-    logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
-    logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
-    logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
-  }
+  assert_all_invalid(pts_);
 #endif
 }
 CellPoints::CellPoints(const CellPoints* rhs) noexcept : CellPoints()
 {
   if (nullptr != rhs)
   {
+#ifdef DEBUG_POINTS
+    bool rhs_empty = rhs->unique().empty();
+#endif
     merge(*rhs);
+#ifdef DEBUG_POINTS
+    logging::check_equal(unique().empty(), rhs_empty, "empty");
+#endif
   }
 #ifdef DEBUG_POINTS
-  for (size_t i = 0; i < pts_.size(); ++i)
+  else
   {
-    logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
-    logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
-    logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
+    assert_all_invalid(pts_);
   }
 #endif
 }
@@ -77,11 +104,11 @@ CellPoints& CellPoints::insert(const double x, const double y) noexcept
   const auto cell_x = static_cast<fs::Idx>(x);
   const auto cell_y = static_cast<fs::Idx>(y);
 #ifdef DEBUG_POINTS
-  const bool was_empty = is_empty_;
+  bool was_empty = unique().empty();
 #endif
   insert(cell_x, cell_y, x, y);
 #ifdef DEBUG_POINTS
-  logging::check_fatal(empty(), "Empty after insert of (%f, %f)", x, y);
+  logging::check_fatal(unique().empty(), "Empty after insert of (%f, %f)", x, y);
   for (size_t i = 0; i < pts_.size(); ++i)
   {
     if (was_empty)
@@ -162,8 +189,6 @@ CellPoints& CellPoints::insert(
     // NOTE: comparing pair will look at distance first
     pts_[i] = min(pts_[i], dists[i]);
   }
-  // either we had something already or we should now?
-  is_empty_ = false;
   return *this;
 }
 CellPoints::CellPoints(const vector<InnerPos>& pts) noexcept : CellPoints()
@@ -173,18 +198,25 @@ CellPoints::CellPoints(const vector<InnerPos>& pts) noexcept : CellPoints()
 void CellPoints::add_source(const CellIndex src) { src_ |= src; }
 CellPoints& CellPoints::merge(const CellPoints& rhs)
 {
-  if (!rhs.is_empty_)
+  // we know distances in each direction so just pick closer
+  for (size_t i = 0; i < pts_.size(); ++i)
   {
-    // we know distances in each direction so just pick closer
-    for (size_t i = 0; i < pts_.size(); ++i)
-    {
-      pts_[i] = min(pts_[i], rhs.pts_[i]);
-    }
-    is_empty_ &= rhs.is_empty_;
+    pts_[i] = min(pts_[i], rhs.pts_[i]);
   }
-  // HACK: allow empty list but still having a source
   src_ |= rhs.src_;
   return *this;
+}
+CellPoints merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs)
+{
+  CellPoints result{};
+  // we know distances in each direction so just pick closer
+  for (size_t i = 0; i < result.pts_.size(); ++i)
+  {
+    result.pts_[i] = min(lhs.pts_[i], rhs.pts_[i]);
+  }
+  // HACK: allow empty list but still having a source
+  result.src_ = lhs.src_ | rhs.src_;
+  return result;
 }
 const cellpoints_map_type apply_offsets_spreadkey(
   const double duration,
@@ -217,22 +249,21 @@ const cellpoints_map_type apply_offsets_spreadkey(
         if (e.second)
         {
           auto& pts = cell_pts.pts_;
-          auto& dists = cell_pts.dists_;
           // was just inserted, so except all distances to be max and points invalid
           for (size_t i = 0; i < pts.size(); ++i)
           {
-            logging::check_equal(dists[i], INVALID_DISTANCE, "distance");
-            logging::check_equal(pts[i].x(), INVALID_POINT.x(), "point x");
-            logging::check_equal(pts[i].y(), INVALID_POINT.y(), "point y");
+            logging::check_equal(pts[i].first, INVALID_DISTANCE, "distance");
+            logging::check_equal(pts[i].second.x(), INVALID_POINT.x(), "point x");
+            logging::check_equal(pts[i].second.y(), INVALID_POINT.y(), "point y");
           }
           // always add point since we're calling try_emplace with empty list
           cell_pts.insert(x, y);
           // was just inserted, so except all distances to be max and points invalid
           for (size_t i = 0; i < pts.size(); ++i)
           {
-            logging::check_fatal(dists[i] == INVALID_DISTANCE, "Distance %ld is invalid", i);
-            logging::check_equal(pts[i].x(), x, "inserted x");
-            logging::check_equal(pts[i].y(), y, "inserted y");
+            logging::check_fatal(pts[i].first == INVALID_DISTANCE, "Distance %ld is invalid", i);
+            logging::check_equal(pts[i].second.x(), x, "inserted x");
+            logging::check_equal(pts[i].second.y(), y, "inserted y");
           }
         }
         else
@@ -259,15 +290,12 @@ const cellpoints_map_type apply_offsets_spreadkey(
  * \brief Move constructor
  * \param rhs CellPoints to move from
  */
-CellPoints::CellPoints(CellPoints&& rhs) noexcept
-  : pts_(std::move(rhs.pts_)), src_(rhs.src_), is_empty_(rhs.is_empty_)
-{ }
+CellPoints::CellPoints(CellPoints&& rhs) noexcept : pts_(std::move(rhs.pts_)), src_(rhs.src_) { }
 /**
  * \brief Copy constructor
  * \param rhs CellPoints to copy from
  */
-CellPoints::CellPoints(const CellPoints& rhs) noexcept
-  : pts_({}), src_(rhs.src_), is_empty_(rhs.is_empty_)
+CellPoints::CellPoints(const CellPoints& rhs) noexcept : pts_({}), src_(rhs.src_)
 {
   std::copy(rhs.pts_.begin(), rhs.pts_.end(), pts_.begin());
 }
@@ -280,7 +308,6 @@ CellPoints& CellPoints::operator=(CellPoints&& rhs) noexcept
 {
   pts_ = std::move(rhs.pts_);
   src_ = rhs.src_;
-  is_empty_ = rhs.is_empty_;
   return *this;
 }
 /**
@@ -292,7 +319,6 @@ CellPoints& CellPoints::operator=(const CellPoints& rhs) noexcept
 {
   std::copy(rhs.pts_.begin(), rhs.pts_.end(), pts_.begin());
   src_ = rhs.src_;
-  is_empty_ = rhs.is_empty_;
   return *this;
 }
 }
