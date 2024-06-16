@@ -70,12 +70,7 @@ const cellpoints_map_type merge_list(
         return merge_maps_generic<cellpoints_map_type>(
           lhs,
           rhs,
-          [](const CellPoints& lhs,
-             const CellPoints& rhs) -> const CellPoints {
-            CellPoints cell_pts{lhs};
-            cell_pts.merge(rhs);
-            return cell_pts;
-          });
+          merge_cellpoints);
       },
       [&duration, &spread_info](
         const spreading_points::value_type& kv0) -> const cellpoints_map_type {

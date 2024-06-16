@@ -203,18 +203,31 @@ void CellPoints::add_source(const CellIndex src)
 }
 CellPoints& CellPoints::merge(const CellPoints& rhs)
 {
-  if (!rhs.is_empty_)
+  //   if (!rhs.is_empty_)
+  //   {
+  // we know distances in each direction so just pick closer
+  for (size_t i = 0; i < pts_.size(); ++i)
   {
-    // we know distances in each direction so just pick closer
-    for (size_t i = 0; i < pts_.size(); ++i)
-    {
-      pts_[i] = min(pts_[i], rhs.pts_[i]);
-    }
-    is_empty_ &= rhs.is_empty_;
+    pts_[i] = min(pts_[i], rhs.pts_[i]);
   }
+  is_empty_ &= rhs.is_empty_;
+  //   }
   // HACK: allow empty list but still having a source
   src_ |= rhs.src_;
   return *this;
+}
+CellPoints merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs)
+{
+  CellPoints result{};
+  // we know distances in each direction so just pick closer
+  for (size_t i = 0; i < result.pts_.size(); ++i)
+  {
+    result.pts_[i] = min(lhs.pts_[i], rhs.pts_[i]);
+  }
+  result.is_empty_ = lhs.is_empty_ && rhs.is_empty_;
+  // HACK: allow empty list but still having a source
+  result.src_ = lhs.src_ | rhs.src_;
+  return result;
 }
 const cellpoints_map_type apply_offsets_spreadkey(
   const double duration,
