@@ -74,12 +74,6 @@ public:
     return src_;
   }
 
-  bool
-  empty() const
-  {
-    return is_empty_;
-  }
-
   CellPoints&
   merge(const CellPoints& rhs);
   friend CellPoints
@@ -105,7 +99,6 @@ private:
   insert(const double cell_x, const double cell_y, const double x, const double y) noexcept;
   array_dists pts_;
   CellIndex src_;
-  bool is_empty_;
 };
 
 using cellpoints_map_type = CellPoints::cellpoints_map_type;
