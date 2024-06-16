@@ -116,6 +116,8 @@ public:
   }
   CellPoints&
   merge(const CellPoints& rhs);
+  friend CellPoints
+  merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs);
   set<InnerPos>
   unique() const noexcept;
   //   const array_pts points() const;
@@ -151,5 +153,7 @@ apply_offsets_spreadkey(
 );
 
 // const merged_map_type convert_map(const cellpoints_map_type& m);
+CellPoints
+merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs);
 }
 #endif
