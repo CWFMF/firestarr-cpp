@@ -24,6 +24,7 @@ namespace fs::topo
 {
 using FuelGrid = data::ConstantGrid<const fuel::FuelType*, FuelSize>;
 using ElevationGrid = data::ConstantGrid<ElevationSize>;
+using CellGrid = data::ConstantGrid<Cell, Topo>;
 /*!
  * \page environment Fire environment
  *
@@ -275,11 +276,11 @@ public:
   }
 protected:
   /**
-   * \brief Combine rasters into ConstantGrid<Cell>
+   * \brief Combine rasters into ConstantGrid<Cell, Topo>
    * \param elevation Elevation raster
    * \return
    */
-  [[nodiscard]] static data::ConstantGrid<Cell>*
+  [[nodiscard]] static CellGrid*
   makeCells(
     const FuelGrid& fuel,
     const ElevationGrid& elevation
@@ -401,11 +402,11 @@ protected:
         //      });
       }
     }
-    return new data::ConstantGrid<Cell>(
+    return new topo::CellGrid(
       fuel.cellSize(),
       fuel.rows(),
       fuel.columns(),
-      nodata,
+      nodata.fullHash(),
       nodata,
       fuel.xllcorner(),
       fuel.yllcorner(),
@@ -421,7 +422,7 @@ protected:
    */
   shared_ptr<sim::BurnedData>
   initializeNotBurnable(
-    const data::ConstantGrid<Cell>& cells
+    const CellGrid& cells
   ) const
   {
     // shared_ptr<sim::BurnedData> result{};
@@ -451,7 +452,7 @@ protected:
    */
   Environment(
     const string dir_out,
-    data::ConstantGrid<Cell>* cells,
+    CellGrid* cells,
     const ElevationSize elevation
   ) noexcept
     : dir_out_(dir_out),
@@ -491,29 +492,28 @@ protected:
     {
       logging::debug("Saving fuel grid");
       const auto lookup = sim::Settings::fuelLookup();
+      auto convert_to_area = [&elevation](const ElevationSize v) {
+        // need to still be nodata if it was
+        return (v == elevation.nodataValue()) ? v : 3;
+      };
+      auto convert_to_fuelcode = [&lookup](const fuel::FuelType* const value) {
+        return lookup.fuelToCode(value);
+      };
       if (sim::Settings::saveAsAscii())
       {
-        fuel.saveToAsciiFile(dir_out_, "fuel", [&lookup](const fuel::FuelType* const value) {
-          return lookup.fuelToCode(value);
-        });
+        fuel.saveToAsciiFile(dir_out_, "fuel", convert_to_fuelcode);
         elevation.saveToAsciiFile(dir_out_, "dem");
         // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up
         // anything else
-        elevation.saveToAsciiFile(dir_out_, "simulation_area", [](const ElevationSize) {
-          return 3;
-        });
+        elevation.saveToAsciiFile(dir_out_, "simulation_area", convert_to_area);
       }
       else
       {
-        fuel.saveToTiffFile(dir_out_, "fuel", [&lookup](const fuel::FuelType* const value) {
-          return lookup.fuelToCode(value);
-        });
+        fuel.saveToTiffFile(dir_out_, "fuel", convert_to_fuelcode);
         elevation.saveToTiffFile(dir_out_, "dem");
         // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up
         // anything else
-        elevation.saveToTiffFile(dir_out_, "simulation_area", [](const ElevationSize) {
-          return 3;
-        });
+        elevation.saveToTiffFile(dir_out_, "simulation_area", convert_to_area);
       }
       logging::debug("Done saving fuel grid");
     }
@@ -523,7 +523,7 @@ private:
   /**
    * \brief Cells representing Environment
    */
-  data::ConstantGrid<Cell>* cells_;
+  CellGrid* cells_;
   /**
    * \brief BurnedData of cells that are not burnable
    */

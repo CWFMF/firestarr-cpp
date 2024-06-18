@@ -50,7 +50,7 @@ public:
     const auto value = this->data.find(location);
     if (value == this->data.end())
     {
-      return this->noData();
+      return this->nodataValue();
     }
     return get<1>(*value);
   }
@@ -96,7 +96,7 @@ public:
     const Idx rows,
     const Idx columns,
     T no_data,
-    const V nodata,
+    const int nodata,
     const double xllcorner,
     const double yllcorner,
     const double xurcorner,
@@ -125,6 +125,15 @@ public:
       "Grid is too big for cells to be hashed - "
       "recompile with a larger HashSize value"
     );
+#ifdef DEBUG_GRIDS
+    // enforce converting to an int and back produces same V
+    const auto n0 = this->nodataInput();
+    const auto n1 = static_cast<NodataIntType>(n0);
+    const auto n2 = static_cast<V>(n1);
+    const auto n3 = static_cast<NodataIntType>(n2);
+    logging::check_equal(n1, n3, "nodata_input_ as int");
+    logging::check_equal(n0, n2, "nodata_input_ from int");
+#endif
     // HACK: reserve space for this based on how big our Idx is because that
     // tells us how many cells there could be
     // HACK: divide because we expect most perimeters to be fairly small, but we
@@ -265,9 +274,20 @@ public:
   saveToAsciiFile(
     const string& dir,
     const string& base_name,
-    std::function<R(V value)> convert
+    std::function<R(T value)> convert
   ) const
   {
+#ifdef DEBUG_GRIDS
+    // enforce converting to an int and back produces same V
+    const auto n0 = this->nodataInput();
+    const auto n1 = static_cast<NodataIntType>(n0);
+    const auto n2 = static_cast<V>(n1);
+    const auto n3 = static_cast<NodataIntType>(n2);
+    const auto v0 = this->nodataValue();
+    logging::check_equal(n1, n3, "nodata_input_ as int");
+    logging::check_equal(n0, n2, "nodata_input_ from int");
+    logging::check_equal(convert(v0), n0, "convert nodata");
+#endif
     Idx min_row = this->rows();
     int16_t max_row = 0;
     Idx min_column = this->columns();
@@ -309,7 +329,7 @@ public:
       xll,
       yll,
       this->cellSize(),
-      static_cast<double>(this->noDataInt())
+      static_cast<double>(this->nodataInput())
     );
     for (Idx ro = 0; ro < num_rows; ++ro)
     {
@@ -322,7 +342,8 @@ public:
         // HACK: use + here so that it gets promoted to a printable number
         //       prevents char type being output as characters
         out << +(
-          (this->data.find(idx) != this->data.end()) ? convert(this->data.at(idx)) : this->noData()
+          (this->data.find(idx) != this->data.end()) ? convert(this->data.at(idx))
+                                                     : this->nodataInput()
         ) << " ";
       }
       out << "\n";
@@ -357,9 +378,20 @@ public:
   saveToTiffFile(
     const string& dir,
     const string& base_name,
-    std::function<R(V value)> convert
+    std::function<R(T value)> convert
   ) const
   {
+#ifdef DEBUG_GRIDS
+    // enforce converting to an int and back produces same V
+    const auto n0 = this->nodataInput();
+    const auto n1 = static_cast<NodataIntType>(n0);
+    const auto n2 = static_cast<V>(n1);
+    const auto n3 = static_cast<NodataIntType>(n2);
+    const auto v0 = this->nodataValue();
+    logging::check_equal(n1, n3, "nodata_input_ as int");
+    logging::check_equal(n0, n2, "nodata_input_ from int");
+    logging::check_equal(convert(v0), n0, "convert nodata");
+#endif
     uint32_t tileWidth = min((int)(this->columns()), 256);
     uint32_t tileHeight = min((int)(this->rows()), 256);
     Idx min_row = this->rows();
@@ -449,7 +481,14 @@ public:
     constexpr auto n = std::numeric_limits<V>::digits10;
     static_assert(n > 0);
     char str[n + 6]{0};
-    sxprintf(str, "%d.000", this->noDataInt());
+    const auto nodata_as_int = static_cast<int>(this->nodataInput());
+    sxprintf(str, "%d.000", nodata_as_int);
+    logging::extensive(
+      "GridMap using nodata string '%s' for nodata value of (%d, %f)",
+      str,
+      nodata_as_int,
+      static_cast<double>(this->nodataInput())
+    );
     TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
     logging::extensive("%s takes %d bits", base_name.c_str(), bps);
     TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);

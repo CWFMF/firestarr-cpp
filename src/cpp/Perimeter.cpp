@@ -62,7 +62,7 @@ public:
         const auto loc = env.cell(r, c);
         const Location fixed_loc(static_cast<Idx>(r + offset_y), static_cast<Idx>(c + offset_x));
         const auto value = perim_grid.at(fixed_loc);
-        if (value != perim_grid.noData() && !fuel::is_null_fuel(loc))
+        if (value != perim_grid.nodataValue() && !fuel::is_null_fuel(loc))
         {
           this->GridMap<unsigned char, unsigned char>::set(loc, value);
           // logging::debug("(%d, %d) = (%d)", fixed_loc.column(), fixed_loc.row(), value);

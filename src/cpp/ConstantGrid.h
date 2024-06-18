@@ -85,8 +85,8 @@ public:
    * \param cell_size Cell width and height (m)
    * \param rows Number of rows
    * \param columns Number of columns
-   * \param no_data Value to use for no data
-   * \param nodata Integer value that represents no data
+   * \param nodata_input Value that represents no data for type V
+   * \param nodata_value Value that represents no data for type T
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
    * \param xurcorner Upper right corner X coordinate (m)
@@ -98,8 +98,8 @@ public:
     const double cell_size,
     const Idx rows,
     const Idx columns,
-    const T no_data,
-    const V nodata,
+    const V nodata_input,
+    const T nodata_value,
     const double xllcorner,
     const double yllcorner,
     const double xurcorner,
@@ -111,8 +111,8 @@ public:
         cell_size,
         rows,
         columns,
-        no_data,
-        nodata,
+        nodata_input,
+        nodata_value,
         xllcorner,
         yllcorner,
         xurcorner,
@@ -127,8 +127,8 @@ public:
    * \param cell_size Cell width and height (m)
    * \param rows Number of rows
    * \param columns Number of columns
-   * \param no_data Value to use for no data
-   * \param nodata Integer value that represents no data
+   * \param nodata_input Value that represents no data for type V
+   * \param nodata_value Value that represents no data for type T
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
    * \param proj4 Proj4 projection definition
@@ -138,8 +138,8 @@ public:
     const double cell_size,
     const Idx rows,
     const Idx columns,
-    const T& no_data,
-    const V nodata,
+    const V nodata_input,
+    const T nodata_value,
     const double xllcorner,
     const double yllcorner,
     const string& proj4,
@@ -149,8 +149,8 @@ public:
         cell_size,
         rows,
         columns,
-        no_data,
-        nodata,
+        nodata_input,
+        nodata_value,
         xllcorner,
         yllcorner,
         proj4,
@@ -201,8 +201,8 @@ public:
     logging::debug("NODATA value is '%s'", static_cast<char*>(data));
     const auto nodata_orig = stoi(string(static_cast<char*>(data)));
     logging::debug("NODATA value is originally parsed as %d", nodata_orig);
-    const auto nodata = static_cast<V>(stoi(string(static_cast<char*>(data))));
-    logging::debug("NODATA value is parsed as %d", nodata);
+    const auto nodata_input = static_cast<V>(stoi(string(static_cast<char*>(data))));
+    logging::debug("NODATA value is parsed as %d", nodata_input);
     auto actual_rows = grid_info.calculateRows();
     auto actual_columns = grid_info.calculateColumns();
     const auto coordinates = grid_info.findFullCoordinates(point, true);
@@ -254,8 +254,12 @@ public:
     );
     logging::check_fatal(max_row > actual_rows, "Can't have more than actual %d rows", actual_rows);
 #endif
-    T no_data = convert(nodata, nodata);
-    vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, no_data);
+    T nodata_value = convert(nodata_input, nodata_input);
+    logging::check_fatal(
+      convert(nodata_input, nodata_input) != nodata_value,
+      "Expected nodata value to be returned from convert()"
+    );
+    vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, nodata_value);
     logging::verbose("%s: malloc start", filename.c_str());
     int bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
     int bps_file;
@@ -319,7 +323,7 @@ public:
 #endif
                 // try
                 // {
-                values.at(cur_hash) = convert(cur, nodata);
+                values.at(cur_hash) = convert(cur, nodata_input);
                 // logging::check_fatal(Settings::fuelLookup().values.at(cur_hash));
                 // }
                 // // catch (const std::out_of_range& err)
@@ -327,7 +331,7 @@ public:
                 // {
                 //   logging::error("Error trying to read tiff");
                 //   logging::debug("cur = %d", cur);
-                //   logging::debug("nodata = %d", nodata);
+                //   logging::debug("nodata_input = %d", nodata_input);
                 //   logging::debug("T = %s, V = %s", typeid(T).name(), typeid(V).name());
                 //   if constexpr (std::is_same_v<T, const fs::fuel::FuelType*>)
                 //   {
@@ -371,8 +375,8 @@ public:
       grid_info.cellSize(),
       num_rows,
       num_columns,
-      no_data,
-      nodata,
+      nodata_input,
+      nodata_value,
       new_xll,
       new_yll,
       new_xll + (static_cast<double>(num_columns) + 1) * grid_info.cellSize(),
@@ -400,7 +404,7 @@ public:
    * \brief Read a section of a TIFF into a ConstantGrid
    * \param filename File name to read from
    * \param point Point to center ConstantGrid on
-   * \param convert Function taking int and nodata int value that returns T
+   * \param convert Function taking V and nodata V value that returns T
    * \return ConstantGrid containing clipped data for TIFF
    */
   [[nodiscard]] static ConstantGrid<T, V>*
@@ -477,7 +481,7 @@ public:
       xll,
       yll,
       this->cellSize(),
-      static_cast<double>(this->noDataInt())
+      static_cast<double>(this->nodataInput())
     );
     // need to output in reverse order since (0,0) is bottom left
     for (Idx r = num_rows - 1; r >= 0; --r)
@@ -523,6 +527,17 @@ public:
     std::function<V(T)> convert
   ) const
   {
+#ifdef DEBUG_GRIDS
+    // enforce converting to an int and back produces same V
+    const auto n0 = this->nodataInput();
+    const auto n1 = static_cast<NodataIntType>(n0);
+    const auto n2 = static_cast<V>(n1);
+    const auto n3 = static_cast<NodataIntType>(n2);
+    const auto v0 = this->nodataValue();
+    logging::check_equal(n1, n3, "nodata_input_ as int");
+    logging::check_equal(n0, n2, "nodata_input_ from int");
+    logging::check_equal(convert(v0), n0, "convert nodata");
+#endif
     Idx min_row = 0;
     //    Idx num_rows = this->rows();
     Idx min_column = 0;
@@ -547,6 +562,20 @@ public:
     double tiePoints[6] = {0.0, 0.0, 0.0, xul, yul, 0.0};
     double pixelScale[3] = {this->cellSize(), this->cellSize(), 0.0};
     uint32_t bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
+    // FIX: was using double, and that usually doesn't make sense, but sometime it might?
+    // use buffer big enought to fit any (V  + '.000\0') + 1
+    constexpr auto n = std::numeric_limits<V>::digits10;
+    static_assert(n > 0);
+    char str[n + 6]{0};
+    const auto nodata_as_int = static_cast<int>(this->nodataInput());
+    sxprintf(str, "%d.000", nodata_as_int);
+    logging::note(
+      "ConstantGrid using nodata string '%s' for nodata value of (%d, %f)",
+      str,
+      nodata_as_int,
+      static_cast<double>(this->nodataInput())
+    );
+    TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
     TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);
     TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height);
     TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
@@ -597,19 +626,20 @@ private:
   /**
    * \brief Constructor
    * \param grid_info GridBase defining Grid area
-   * \param no_data Value that represents no data
+   * \param nodata_input Value that represents no data for type V
+   * \param nodata_value Value that represents no data for type T
    * \param values Values to initialize grid with
    */
   ConstantGrid(
     const GridBase& grid_info,
-    const T& no_data,
-    const V& nodata,
+    const V nodata_input,
+    const T nodata_value,
     vector<T>&& values
   )
     : ConstantGrid(
         grid_info.cellSize(),
-        no_data,
-        nodata,
+        nodata_input,
+        nodata_value,
         grid_info.xllcorner(),
         grid_info.yllcorner(),
         grid_info.xurcorner(),

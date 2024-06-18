@@ -137,7 +137,7 @@ public:
   {
     map_->clear();
   }
-private:
+protected:
   /**
    * \brief Map of observations
    */
