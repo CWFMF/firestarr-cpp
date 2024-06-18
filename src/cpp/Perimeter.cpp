@@ -23,7 +23,7 @@ public:
    */
   BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const Environment& env)
     : GridMap<unsigned char, unsigned char>(
-      *env.makeMap<unsigned char>(static_cast<unsigned char>(0)))
+        *env.makeMap<unsigned char>(static_cast<unsigned char>(0)))
   {
     // HACK: fix offset if the perimeter raster is different from this one
     logging::check_fatal(0 != strcmp(perim_grid.proj4().c_str(), this->proj4().c_str()),
@@ -57,7 +57,7 @@ public:
         const Location fixed_loc(static_cast<Idx>(r + offset_y),
                                  static_cast<Idx>(c + offset_x));
         const auto value = perim_grid.at(fixed_loc);
-        if (value != perim_grid.noData() && !fuel::is_null_fuel(loc))
+        if (value != perim_grid.nodataValue() && !fuel::is_null_fuel(loc))
         {
           this->GridMap<unsigned char, unsigned char>::set(loc, value);
           // logging::debug("(%d, %d) = (%d)", fixed_loc.column(), fixed_loc.row(), value);
