@@ -48,6 +48,15 @@ public:
       location.column()
     );
 #endif
+#ifdef DEBUG_POINTS
+    {
+      const Location loc{location.row(), location.column()};
+      logging::check_equal(loc.column(), location.column(), "column");
+      logging::check_equal(loc.row(), location.row(), "row");
+      // if we're going to use the hash then we need to make sure it actually matches
+      logging::check_equal(loc.hash(), location.hash(), "hash");
+    }
+#endif
     // return at(location.hash());
     return this->data.at(location.hash());
   }

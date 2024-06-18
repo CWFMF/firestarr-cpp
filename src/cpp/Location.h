@@ -86,6 +86,20 @@ public:
   {
 #ifdef DEBUG_GRIDS
     logging::check_fatal(
+      row < 0 || row >= MAX_ROWS,
+      "Row %d is out of bounds (%d, %d)",
+      row,
+      0,
+      MAX_ROWS
+    );
+    logging::check_fatal(
+      column < 0 || column >= MAX_COLUMNS,
+      "Column %d is out of bounds (%d, %d)",
+      column,
+      0,
+      MAX_COLUMNS
+    );
+    logging::check_fatal(
       (row != unhashRow(topo_data_)) || column != unhashColumn(topo_data_),
       "Hash is incorrect (%d, %d)",
       row,
@@ -147,6 +161,15 @@ public:
   [[nodiscard]] constexpr HashSize
   hash() const noexcept
   {
+#ifdef DEBUG_POINTS
+    constexpr int num_bits = std::numeric_limits<HashSize>::digits;
+    constexpr Topo m = util::bit_mask<num_bits, Topo>();
+    logging::check_equal(
+      static_cast<HashSize>(topo_data_),
+      static_cast<HashSize>(m & topo_data_),
+      "hash()"
+    );
+#endif
     // can get away with just casting because all the other bits are outside this area
     return static_cast<HashSize>(topo_data_);
   }
