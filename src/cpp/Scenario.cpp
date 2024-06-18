@@ -128,7 +128,7 @@ public:
     // don't loop if not logging
     if (isLogging())
     {
-      for (const auto p : points.unique())
+      for (const auto& p : points.unique())
       {
         log_point(step, stage, time, p.x(), p.y());
       }
