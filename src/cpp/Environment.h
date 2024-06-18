@@ -23,6 +23,7 @@ namespace tbd::topo
 {
 using FuelGrid = data::ConstantGrid<const fuel::FuelType*, FuelSize>;
 using ElevationGrid = data::ConstantGrid<ElevationSize>;
+using CellGrid = data::ConstantGrid<Cell, Topo>;
 /*!
  * \page environment Fire environment
  *
@@ -250,11 +251,11 @@ public:
   }
 protected:
   /**
-   * \brief Combine rasters into ConstantGrid<Cell>
+   * \brief Combine rasters into ConstantGrid<Cell, Topo>
    * \param elevation Elevation raster
    * \return
    */
-  [[nodiscard]] static data::ConstantGrid<Cell>* makeCells(
+  [[nodiscard]] static CellGrid* makeCells(
     const FuelGrid& fuel,
     const ElevationGrid& elevation)
   {
@@ -367,22 +368,23 @@ protected:
         //      });
       }
     }
-    return new data::ConstantGrid<Cell>(fuel.cellSize(),
-                                        fuel.rows(),
-                                        fuel.columns(),
-                                        nodata,
-                                        nodata,
-                                        fuel.xllcorner(),
-                                        fuel.yllcorner(),
-                                        fuel.xurcorner(),
-                                        fuel.yurcorner(),
-                                        string(fuel.proj4()),
-                                        std::move(values));
+    return new topo::CellGrid(
+      fuel.cellSize(),
+      fuel.rows(),
+      fuel.columns(),
+      nodata.fullHash(),
+      nodata,
+      fuel.xllcorner(),
+      fuel.yllcorner(),
+      fuel.xurcorner(),
+      fuel.yurcorner(),
+      string(fuel.proj4()),
+      std::move(values));
   }
   /**
    * \brief Creates a map of areas that are not burnable either because of fuel or the initial perimeter.
    */
-  shared_ptr<sim::BurnedData> initializeNotBurnable(const data::ConstantGrid<Cell>& cells) const
+  shared_ptr<sim::BurnedData> initializeNotBurnable(const CellGrid& cells) const
   {
     // shared_ptr<sim::BurnedData> result{};
     //     std::fill(not_burnable_.begin(), not_burnable_.end(), false);
@@ -409,7 +411,7 @@ protected:
    * \param elevation Elevation at origin Point
    */
   Environment(const string dir_out,
-              data::ConstantGrid<Cell>* cells,
+              CellGrid* cells,
               const ElevationSize elevation) noexcept
     : dir_out_(dir_out),
       cells_(cells),
@@ -446,27 +448,38 @@ protected:
     {
       logging::debug("Saving fuel grid");
       const auto lookup = sim::Settings::fuelLookup();
+      auto convert_to_area =
+        [&elevation](
+          const ElevationSize v) {
+          // need to still be nodata if it was
+          return (v == elevation.nodataValue()) ? v : 3;
+        };
+      auto convert_to_fuelcode =
+        [&lookup](
+          const fuel::FuelType* const value) {
+          return lookup.fuelToCode(value);
+        };
       if (sim::Settings::saveAsAscii())
       {
         fuel.saveToAsciiFile(dir_out_,
                              "fuel",
-                             [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
+                             convert_to_fuelcode);
         elevation.saveToAsciiFile(dir_out_, "dem");
         // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
         elevation.saveToAsciiFile(dir_out_,
                                   "simulation_area",
-                                  [](const ElevationSize) { return 3; });
+                                  convert_to_area);
       }
       else
       {
         fuel.saveToTiffFile(dir_out_,
                             "fuel",
-                            [&lookup](const fuel::FuelType* const value) { return lookup.fuelToCode(value); });
+                            convert_to_fuelcode);
         elevation.saveToTiffFile(dir_out_, "dem");
         // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything else
         elevation.saveToTiffFile(dir_out_,
                                  "simulation_area",
-                                 [](const ElevationSize) { return 3; });
+                                 convert_to_area);
       }
       logging::debug("Done saving fuel grid");
     }
@@ -476,7 +489,7 @@ private:
   /**
    * \brief Cells representing Environment
    */
-  data::ConstantGrid<Cell>* cells_;
+  CellGrid* cells_;
   /**
    * \brief BurnedData of cells that are not burnable
    */

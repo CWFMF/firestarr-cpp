@@ -13,6 +13,7 @@
 #include "Point.h"
 
 using tbd::topo::Location;
+using NodataIntType = int64_t;
 /**
  * \brief Provides hash function for Location.
  */
@@ -252,25 +253,17 @@ public:
    * \brief Value used for grid locations that have no data.
    * \return Value used for grid locations that have no data.
    */
-  [[nodiscard]] constexpr V nodata() const noexcept
+  [[nodiscard]] constexpr V nodataInput() const noexcept
   {
-    return nodata_;
+    return nodata_input_;
   }
   /**
    * \brief Value representing no data
    * \return Value representing no data
    */
-  constexpr T noData() const noexcept
+  constexpr T nodataValue() const noexcept
   {
-    return no_data_;
-  }
-  /**
-   * \brief Value used to represent no data at a Location.
-   * \return Value used to represent no data at a Location.
-   */
-  [[nodiscard]] constexpr V noDataInt() const noexcept
-  {
-    return nodata_;
+    return nodata_value_;
   }
   // NOTE: only use this for simple types because it's returning by value
   /**
@@ -293,7 +286,8 @@ protected:
    * \param cell_size Cell width and height (m)
    * \param rows Number of rows
    * \param columns Number of columns
-   * \param no_data Value that represents no data
+   * \param nodata_input Value that represents no data for type V
+   * \param nodata_value Value that represents no data for type T
    * \param nodata Integer value that represents no data
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
@@ -302,8 +296,8 @@ protected:
   Grid(const double cell_size,
        const Idx rows,
        const Idx columns,
-       T no_data,
-       const V nodata,
+       const V nodata_input,
+       const T nodata_value,
        const double xllcorner,
        const double yllcorner,
        const double xurcorner,
@@ -315,14 +309,29 @@ protected:
                xurcorner,
                yurcorner,
                std::forward<string>(proj4)),
-      nodata_(nodata),
-      no_data_(no_data),
+      nodata_input_(nodata_input),
+      nodata_value_(nodata_value),
       rows_(rows),
       columns_(columns)
   {
 #ifdef DEBUG_GRIDS
     logging::check_fatal(rows > MAX_ROWS, "Too many rows (%d > %d)", rows, MAX_ROWS);
     logging::check_fatal(columns > MAX_COLUMNS, "Too many columns (%d > %d)", columns, MAX_COLUMNS);
+#endif
+#ifdef DEBUG_GRIDS
+    // enforce converting to an int and back produces same V
+    const auto n0 = this->nodata_input_;
+    const auto n1 = static_cast<NodataIntType>(n0);
+    const auto n2 = static_cast<V>(n1);
+    const auto n3 = static_cast<NodataIntType>(n2);
+    logging::check_equal(
+      n1,
+      n3,
+      "nodata_input_ as int");
+    logging::check_equal(
+      n0,
+      n2,
+      "nodata_input_ from int");
 #endif
   }
   /**
@@ -347,11 +356,11 @@ private:
   /**
    * \brief Value used to represent no data at a Location.
    */
-  V nodata_;
+  V nodata_input_;
   /**
    * \brief Value to use for representing no data at a Location.
    */
-  T no_data_;
+  T nodata_value_;
   /**
    * \brief Number of rows in the grid.
    */
@@ -378,8 +387,8 @@ public:
    * \param cell_size Cell width and height (m)
    * \param rows Number of rows
    * \param columns Number of columns
-   * \param no_data Value that represents no data
-   * \param nodata Integer value that represents no data
+   * \param nodata_input Value that represents no data for type V
+   * \param nodata_value Value that represents no data for type T
    * \param xllcorner Lower left corner X coordinate (m)
    * \param yllcorner Lower left corner Y coordinate (m)
    * \param xurcorner Upper right corner X coordinate (m)
@@ -390,8 +399,8 @@ public:
   GridData(const double cell_size,
            const Idx rows,
            const Idx columns,
-           const T no_data,
-           const V nodata,
+           const V nodata_input,
+           const T nodata_value,
            const double xllcorner,
            const double yllcorner,
            const double xurcorner,
@@ -401,8 +410,8 @@ public:
     : Grid<T, V>(cell_size,
                  rows,
                  columns,
-                 no_data,
-                 nodata,
+                 nodata_input,
+                 nodata_value,
                  xllcorner,
                  yllcorner,
                  xurcorner,

@@ -14,9 +14,25 @@ string IObserver::makeName(const string& base_name, const string& suffix)
   }
   return suffix;
 }
+constexpr double NODATA_ARRIVAL = 0;
 ArrivalObserver::ArrivalObserver(const Scenario& scenario)
-  : MapObserver<double>(scenario, 0.0, "arrival")
+  : MapObserver<double>(scenario, NODATA_ARRIVAL, "arrival")
 {
+#ifdef DEBUG_GRIDS
+  // enforce converting to an int and back produces same V
+  const auto n0 = NODATA_ARRIVAL;
+  const auto n1 = static_cast<NodataIntType>(n0);
+  const auto n2 = static_cast<double>(n1);
+  const auto n3 = static_cast<NodataIntType>(n2);
+  logging::check_equal(
+    n1,
+    n3,
+    "nodata_value_ as int");
+  logging::check_equal(
+    n0,
+    n2,
+    "nodata_value_ from int");
+#endif
 }
 double ArrivalObserver::getValue(const Event& event) const noexcept
 {
