@@ -26,7 +26,7 @@ public:
    * \param cells Constant cells
    */
   explicit TestEnvironment(const string dir_out,
-                           data::ConstantGrid<topo::Cell>* cells) noexcept
+                           topo::CellGrid* cells) noexcept
     : Environment(dir_out, cells, 0)
   {
   }
@@ -153,12 +153,13 @@ string run_test(const string output_directory,
       values.emplace_back(r, c, slope, aspect, fuel::FuelType::safeCode(fuel));
     }
   }
-  const auto cells = new data::ConstantGrid<topo::Cell>{
+  const topo::Cell cell_nodata{};
+  const auto cells = new topo::CellGrid{
     TEST_GRID_SIZE,
     MAX_ROWS,
     MAX_COLUMNS,
-    topo::Cell{},
-    topo::Cell{},
+    cell_nodata.fullHash(),
+    cell_nodata,
     TEST_XLLCORNER,
     TEST_YLLCORNER,
     TEST_XLLCORNER + TEST_GRID_SIZE * MAX_COLUMNS,
