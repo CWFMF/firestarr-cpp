@@ -18,6 +18,9 @@ namespace tbd::sim
 // if not defined then use variable step degrees
 // #define STEP
 
+static constexpr double INVALID_ROS = -1.0;
+static constexpr double INVALID_INTENSITY = -1.0;
+
 SlopeTableArray make_slope_table() noexcept
 {
   // HACK: slope can be infinite, but anything > max is the same as max
@@ -115,7 +118,7 @@ double SpreadInfo::initial(SpreadInfo& spread,
                    * bui_eff;
   if (min_ros > spread.head_ros_)
   {
-    spread.head_ros_ = -1;
+    spread.head_ros_ = INVALID_ROS;
   }
   else
   {
@@ -247,7 +250,7 @@ SpreadInfo::SpreadInfo(const double time,
     nd_(nd)
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
-  max_intensity_ = -1;
+  max_intensity_ = INVALID_INTENSITY;
   const auto slope_azimuth = topo::Cell::aspect(key_);
   const auto fuel = fuel::fuel_by_code(topo::Cell::fuelCode(key_));
   const auto has_no_slope = 0 == percentSlope();
@@ -308,6 +311,7 @@ SpreadInfo::SpreadInfo(const double time,
       return;
     }
   }
+  logging::verbose("initial ros is %f", head_ros_);
   const auto back_isi = ffmc_effect * STANDARD_BACK_ISI_WSV(wsv);
   auto back_ros = fuel->calculateRos(nd,
                                      *weather,
@@ -340,10 +344,21 @@ SpreadInfo::SpreadInfo(const double time,
                                                 head_ros_,
                                                 back_ros,
                                                 l_b);
+  // might not be correct depending on slope angle correction
+  // #ifdef DEBUG_POINTS
+  //   // if (head_ros_ >= min_ros)
+  //   {
+  //     logging::check_fatal(
+  //       offsets_.empty(),
+  //       "Empty when ros of %f >= %f",
+  //       head_ros_,
+  //       min_ros);
+  //   }
+  // #endif
   // if no offsets then not spreading so invalidate head_ros_
   if (0 == offsets_.size())
   {
-    head_ros_ = -1;
+    head_ros_ = INVALID_ROS;
   }
 }
 // double SpreadInfo::calculateSpreadProbability(const double ros)
