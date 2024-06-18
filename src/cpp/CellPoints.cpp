@@ -23,26 +23,66 @@ static const InnerPos INVALID_POINT{};
 // not sure what's going on with this and wondering if it doesn't keep number exactly
 // shouldn't be any way to be further than twice the entire width of the area
 static const double INVALID_DISTANCE = static_cast<double>(MAX_ROWS * MAX_ROWS);
-static const pair<double, InnerPos> INVALID_PAIR{INVALID_DISTANCE, INVALID_POINT};
+static const pair<double, InnerPos> INVALID_PAIR{INVALID_DISTANCE, {}};
+static const Idx INVALID_LOCATION = INVALID_PAIR.second.x();
+void assert_all_equal(
+  const CellPoints::array_dists& pts,
+  const double x,
+  const double y)
+{
+  for (size_t i = 0; i < pts.size(); ++i)
+  {
+    logging::check_equal(pts[i].second.x(), x, "point x");
+    logging::check_equal(pts[i].second.y(), y, "point y");
+  }
+}
+void assert_all_invalid(const CellPoints::array_dists& pts)
+{
+  for (size_t i = 0; i < pts.size(); ++i)
+  {
+    logging::check_equal(INVALID_DISTANCE, pts[i].first, "distances");
+  }
+  assert_all_equal(pts, INVALID_LOCATION, INVALID_LOCATION);
+}
 set<InnerPos> CellPoints::unique() const noexcept
 {
   set<InnerPos> result{};
+#ifdef DEBUG_POINTS
+  Idx cell_x_ = std::numeric_limits<Idx>::min();
+  Idx cell_y_ = std::numeric_limits<Idx>::min();
+#endif
   for (size_t i = 0; i < pts_.size(); ++i)
   {
     if (INVALID_DISTANCE != pts_[i].first)
     {
-      result.emplace(pts_[i].second);
+      const auto& p = pts_[i].second;
+#ifdef DEBUG_POINTS
+      cell_x_ = max(cell_x_, static_cast<Idx>(p.x()));
+      cell_y_ = max(cell_y_, static_cast<Idx>(p.y()));
+#endif
+      result.emplace(p);
     }
   }
 #ifdef DEBUG_POINTS
+  for (size_t i = 0; i < pts_.size(); ++i)
+  {
+    if (INVALID_DISTANCE != pts_[i].first)
+    {
+      const auto& p = pts_[i].second;
+      const Location loc1{static_cast<Idx>(p.y()), static_cast<Idx>(p.x())};
+      logging::check_equal(
+        loc1.column(),
+        cell_x_,
+        "column");
+      logging::check_equal(
+        loc1.row(),
+        cell_y_,
+        "row");
+    }
+  }
   if (result.empty())
   {
-    for (size_t i = 0; i < pts_.size(); ++i)
-    {
-      logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
-      logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
-      logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
-    }
+    assert_all_invalid(pts_);
   }
 #endif
   return result;
@@ -58,12 +98,7 @@ CellPoints::CellPoints() noexcept
 {
   std::fill(pts_.begin(), pts_.end(), INVALID_PAIR);
 #ifdef DEBUG_POINTS
-  for (size_t i = 0; i < pts_.size(); ++i)
-  {
-    logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
-    logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
-    logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
-  }
+  assert_all_invalid(pts_);
 #endif
 }
 
@@ -76,14 +111,21 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept
 {
   if (nullptr != rhs)
   {
+#ifdef DEBUG_POINTS
+    bool rhs_empty = rhs->unique().empty();
+#endif
     merge(*rhs);
+#ifdef DEBUG_POINTS
+    logging::check_equal(
+      unique().empty(),
+      rhs_empty,
+      "empty");
+#endif
   }
 #ifdef DEBUG_POINTS
-  for (size_t i = 0; i < pts_.size(); ++i)
+  else
   {
-    logging::check_equal(INVALID_DISTANCE, pts_[i].first, "distances");
-    logging::check_equal(pts_[i].second.x(), INVALID_POINT.x(), "point x");
-    logging::check_equal(pts_[i].second.y(), INVALID_POINT.y(), "point y");
+    assert_all_invalid(pts_);
   }
 #endif
 }
