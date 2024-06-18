@@ -140,21 +140,50 @@ HorizontalAdjustment horizontal_adjustment(
   OffsetSet offsets{};
   const auto add_offset = [this, &offsets](const double direction,
                                            const double ros) {
+#ifdef DEBUG_POINTS
+    const auto s0 = offsets.size();
+#endif
     if (ros < min_ros_)
     {
+      // might not be correct depending on slope angle correction
+      // #ifdef DEBUG_POINTS
+      //       // should never be empty since head_ros must have been high enough
+      //       logging::check_fatal(offsets.empty(), "offsets.empty()");
+      // #endif
       return false;
     }
     const auto ros_cell = ros / cell_size_;
     // spreading, so figure out offset from current point
     offsets.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction));
+    // // HACK: avoid bounds check
+    // offsets.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction), false);
+#ifdef DEBUG_POINTS
+    const auto s1 = offsets.size();
+    logging::check_equal(s0 + 1, s1, "offsets.size()");
+    logging::check_fatal(offsets.empty(), "offsets.empty()");
+#endif
     return true;
   };
   // if not over spread threshold then don't spread
   // HACK: set ros in boolean if we get that far so that we don't have to repeat the if body
   if (!add_offset(head_raz, head_ros * correction_factor(head_raz)))
   {
+    // might not be correct depending on slope angle correction
+    // #ifdef DEBUG_POINTS
+    //     // if (head_ros >= min_ros_)
+    //     {
+    //       logging::check_fatal(
+    //         offsets.empty(),
+    //         "Empty when ros of %f >= %f",
+    //         head_ros,
+    //         min_ros_);
+    //     }
+    // #endif
     return offsets;
   }
+#ifdef DEBUG_POINTS
+  logging::check_fatal(offsets.empty(), "offsets.empty()");
+#endif
   const auto a = (head_ros + back_ros) / 2.0;
   const auto c = a - back_ros;
   const auto flank_ros = a / length_to_breadth;
@@ -303,6 +332,16 @@ HorizontalAdjustment horizontal_adjustment(
       static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
     }
   }
+#ifdef DEBUG_POINTS
+  if (head_ros >= min_ros_)
+  {
+    logging::check_fatal(
+      offsets.empty(),
+      "Empty when ros of %f >= %f",
+      head_ros,
+      min_ros_);
+  }
+#endif
   return offsets;
 }
 }
