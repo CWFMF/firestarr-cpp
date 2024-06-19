@@ -167,6 +167,14 @@ public:
   {
     return topo_data_;
   }
+  /**
+   * \brief Construct with given hash that may contain data from subclasses
+   * \param hash_size Hash to store
+   */
+  explicit constexpr Location(const HashSize& hash_size) noexcept
+    : Location(static_cast<Topo>(hash_size))
+  {
+  }
 protected:
   /**
    * \brief Stored hash that contains row and column data
