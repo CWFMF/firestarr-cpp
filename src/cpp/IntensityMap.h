@@ -50,23 +50,48 @@ public:
    */
   void applyPerimeter(const Perimeter& perimeter) noexcept;
   /**
-   * \brief Whether or not the Cell can burn
-   * \param location Cell to check
-   * \return Whether or not the Cell can burn
+   * \brief Whether or not the Cell with the given hash can burn
+   * \param hash Hash for Cell to check
+   * \return Whether or not the Cell with the given hash can burn
    */
-  [[nodiscard]] bool canBurn(const Cell& location) const;
+  [[nodiscard]] bool canBurn(const Location& location) const;
+  template <class P>
+  [[nodiscard]] bool canBurn(const Position<P>& position) const
+  {
+    return canBurn(Location{position.hash()});
+  }
   /**
    * \brief Whether or not the Location with the given hash can burn
    * \param hash Hash for Location to check
    * \return Whether or not the Location with the given hash can burn
    */
   [[nodiscard]] bool hasBurned(const Location& location) const;
+  template <class P>
+  [[nodiscard]] bool hasBurned(const Position<P>& position) const
+  {
+    return hasBurned(Location{position.hash()});
+  }
   /**
    * \brief Whether or not all Locations surrounding the given Location are burned
    * \param location Location to check
    * \return Whether or not all Locations surrounding the given Location are burned
    */
   [[nodiscard]] bool isSurrounded(const Location& location) const;
+  template <class P>
+  [[nodiscard]] bool isSurrounded(const Position<P>& position) const
+  {
+    return isSurrounded(Location{position.hash()});
+  }
+  /**
+   * \brief Mark given location as burned
+   * \param location Location to burn
+   */
+  void ignite(const Location& location);
+  template <class P>
+  void ignite(const Position<P>& position)
+  {
+    ignite(Location{position.hash()});
+  }
   /**
    * \brief Update Location with specified values
    * \param location Location to burn
@@ -74,12 +99,17 @@ public:
    * \param ros Rate of spread to check against maximu (m/min)
    * \param raz Spread azimuth for ros
    */
-  void burn(const Location& location, IntensitySize intensity, double ros, fs::Direction raz);
-  /**
-   * \brief Mark given location as burned
-   * \param location Location to burn
-   */
-  void ignite(const Location& location);
+  void burn(const Location& location, IntensitySize intensity, MathSize ros, fs::Direction raz);
+  template <class P>
+  void burn(
+    const Position<P>& position,
+    const IntensitySize intensity,
+    const MathSize ros,
+    const fs::Direction& raz
+  )
+  {
+    burn(Location{position.hash()}, intensity, ros, raz);
+  }
   /**
    * \brief Save contents to an ASCII file
    * \param dir Directory to save to

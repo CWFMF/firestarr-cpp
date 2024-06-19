@@ -35,7 +35,7 @@ void IntensityMap::applyPerimeter(const Perimeter& perimeter) noexcept
     [this](const auto& location) { ignite(location); }
   );
 }
-bool IntensityMap::canBurn(const Cell& location) const { return !hasBurned(location); }
+bool IntensityMap::canBurn(const Location& location) const { return !hasBurned(location); }
 bool IntensityMap::hasBurned(const Location& location) const
 {
   lock_guard<mutex> lock(mutex_);

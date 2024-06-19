@@ -2,27 +2,28 @@
 /* SPDX-FileCopyrightText: 2020 Queen's Printer for Ontario */
 /* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#include "stdafx.h"
-#include "InnerPos.h"
 #ifndef FS_CELLPOINTS_H
 #define FS_CELLPOINTS_H
+#include "stdafx.h"
+#include "InnerPos.h"
+#include "IntensityMap.h"
 namespace fs
 {
 static constexpr size_t NUM_DIRECTIONS = 16;
+class CellPointsMap;
 /**
  * Points in a cell furthest in each direction
  */
 class CellPoints
 {
 public:
-  using cellpoints_map_type = map<Location, CellPoints>;
-  using spreading_points = map<SpreadKey, vector<pair<Cell, CellPoints>>>;
+  using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
   using array_dists = std::array<pair<double, InnerPos>, NUM_DIRECTIONS>;
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
-  CellPoints(const vector<InnerPos>& pts) noexcept;
   CellPoints(const double x, const double y) noexcept;
+  CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
   CellPoints(const InnerPos& p) noexcept;
   CellPoints(CellPoints&& rhs) noexcept;
   CellPoints(const CellPoints& rhs) noexcept;
@@ -30,59 +31,52 @@ public:
   CellPoints& operator=(const CellPoints& rhs) noexcept;
   CellPoints& insert(const double x, const double y) noexcept;
   CellPoints& insert(const InnerPos& p) noexcept;
-  template <class _ForwardIterator>
-  CellPoints& insert(_ForwardIterator begin, _ForwardIterator end)
-  {
-    // don't do anything if empty
-    if (end != begin)
-    {
-      auto it = begin;
-      // should always be in the same cell so do this once
-      const auto cell_x = static_cast<fs::Idx>((*it).x());
-      const auto cell_y = static_cast<fs::Idx>((*it).y());
-      while (end != it)
-      {
-        const auto p = *it;
-        insert(cell_x, cell_y, p.x(), p.y());
-        ++it;
-      }
-    }
-    return *this;
-  }
   void add_source(const CellIndex src);
   CellIndex sources() const { return src_; }
   CellPoints& merge(const CellPoints& rhs);
-  friend CellPoints merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs);
   set<InnerPos> unique() const noexcept;
-  friend const cellpoints_map_type apply_offsets_spreadkey(
+  bool operator<(const CellPoints& rhs) const noexcept;
+  bool operator==(const CellPoints& rhs) const noexcept;
+  [[nodiscard]] Location location() const noexcept;
+  void clear();
+  friend CellPointsMap apply_offsets_spreadkey(
     const double duration,
     const OffsetSet& offsets,
     const spreading_points::mapped_type& cell_pts
   );
+  bool is_invalid() const;
+  bool empty() const;
+  friend CellPointsMap;
 
 private:
-  static array_dists find_distances(
-    const double cell_x,
-    const double cell_y,
-    const double p_x,
-    const double p_y
-  ) noexcept;
-  CellPoints& insert(
-    const double cell_x,
-    const double cell_y,
-    const double x,
-    const double y
-  ) noexcept;
+  array_dists find_distances(const double p_x, const double p_y) noexcept;
+  CellPoints& insert_(const double x, const double y) noexcept;
   array_dists pts_;
+  // use Idx instead of Location    so it can be negative (invalid)
+  Idx cell_x_;
+  Idx cell_y_;
   CellIndex src_;
 };
-using cellpoints_map_type = CellPoints::cellpoints_map_type;
+// map that merges items when try_emplace doesn't insert
+class CellPointsMap
+{
+public:
+  CellPointsMap();
+  void emplace(const CellPoints& pts);
+  CellPoints& insert(const double x, const double y) noexcept;
+  CellPointsMap& merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
+  set<InnerPos> unique() const noexcept;
+  // apply function to each CellPoints within and remove matches
+  void remove_if(std::function<bool(const pair<Location, CellPoints>&)> F);
+  // FIX: public for debugging right now
+  // private:
+  map<Location, CellPoints> map_;
+};
 using spreading_points = CellPoints::spreading_points;
-const cellpoints_map_type apply_offsets_spreadkey(
+CellPointsMap apply_offsets_spreadkey(
   const double duration,
   const OffsetSet& offsets,
   const spreading_points::mapped_type& cell_pts
 );
-CellPoints merge_cellpoints(const CellPoints& lhs, const CellPoints& rhs);
 }
 #endif

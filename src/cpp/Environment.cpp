@@ -313,7 +313,6 @@ Cell Environment::cell(const Idx row, const Idx column) const
 {
   return cells_.at(Location(row, column));
 }
-Cell Environment::cell(const Location& location) const { return cells_.at(location); }
 Cell Environment::offset(const Event& event, const Idx row, const Idx column) const
 {
   const auto& p = event.cell();

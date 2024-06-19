@@ -198,11 +198,11 @@ using SlopeSize = uint16_t;
 /**
  * \brief Type used for storing intensities
  */
-using IntensitySize = uint16_t;
+using IntensitySize = uint32_t;
 /**
  * \brief Type used for storing distances within cells
  */
-using DistanceSize = float16_t;
+using DistanceSize = double;
 /**
  * \brief Type used for storing locations within cells
  */

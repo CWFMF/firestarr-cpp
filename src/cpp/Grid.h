@@ -29,7 +29,7 @@ struct std::hash<fs::Location>
 namespace fs
 {
 using fs::Location;
-using std::cout;
+using fs::Position;
 using NodataIntType = int64_t;
 string create_file_name(
   const string_view dir,
@@ -232,6 +232,11 @@ public:
    * \return Value at grid Location.
    */
   [[nodiscard]] virtual T at(const Location& location) const = 0;
+  template <class P>
+  [[nodiscard]] T at(const Position<P>& position) const
+  {
+    return at(Location{position.hash()});
+  }
   // NOTE: use set instead of at to avoid issues with bool
   /**
    * \brief Set value for grid at given Location.
@@ -240,6 +245,11 @@ public:
    * \return None
    */
   virtual void set(const Location& location, T value) = 0;
+  template <class P>
+  void set(const Position<P>& position, const T value)
+  {
+    set(Location{position.hash()});
+  }
 
 protected:
   Grid() = default;
