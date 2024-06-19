@@ -59,6 +59,7 @@ void do_par(T& for_list, F fct)
 }
 
 CellPointsMap merge_list(
+  const BurnedData& unburnable,
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
   const spreading_points& to_spread)
@@ -98,12 +99,17 @@ CellPointsMap merge_list(
       cell_pts.unique().empty(),
       "Merging empty points");
 #endif
-    out.merge(cell_pts);
+    // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not adding
+    // const auto h = cell_pts.location().hash();
+    // if (!unburnable[h])
+    // {
+    out.merge(unburnable, cell_pts);
 #ifdef DEBUG_POINTS
     logging::check_fatal(
       out.unique().empty(),
       "Empty points after merge");
 #endif
+    // }
     ++it;
   }
   return out;
@@ -115,7 +121,11 @@ CellPointsMap calculate_spread(
   const spreading_points& to_spread,
   const BurnedData& unburnable)
 {
-  CellPointsMap cell_pts = merge_list(spread_info, duration, to_spread);
+  CellPointsMap cell_pts = merge_list(
+    unburnable,
+    spread_info,
+    duration,
+    to_spread);
 #ifdef DEBUG_POINTS
   const auto u = cell_pts.unique();
   logging::check_fatal(
@@ -851,7 +861,18 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
 void Scenario::burn(const Event& event, const IntensitySize)
 {
 #ifdef DEBUG_SIMULATION
-  log_check_fatal(intensity_->hasBurned(event.cell()), "Re-burning cell");
+  log_check_fatal(
+    intensity_->hasBurned(event.cell()),
+    "Re-burning cell (%d, %d)",
+    event.cell().column(),
+    event.cell().row());
+#endif
+#ifdef DEBUG_POINTS
+  log_check_fatal(
+    (*unburnable_)[event.cell().hash()],
+    "Burning unburnable cell (%d, %d)",
+    event.cell().column(),
+    event.cell().row());
 #endif
   // Observers only care about cells burning so do it here
   notify(event);
@@ -1105,10 +1126,13 @@ void Scenario::scheduleFireSpread(const Event& event)
       logging::check_fatal(
         fuel::is_null_fuel(for_cell),
         "Spreading in non-fuel");
+      const auto h = kv.first.hash();
 #endif
       const auto key = for_cell.key();
       // HACK: need to lookup before emplace since might try to create Cell without fuel
       // if (!fuel::is_null_fuel(loc))
+      const auto h = for_cell.hash();
+      if (!(*unburnable_)[h])
       {
         const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
         // any cell that has the same fuel, slope, and aspect has the same spread
@@ -1161,6 +1185,10 @@ void Scenario::scheduleFireSpread(const Event& event)
                            : max_duration);
   // note("Spreading for %f minutes", duration);
   const auto new_time = time + duration / DAY_MINUTES;
+  if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
+  {
+    printf("here\n");
+  }
   CellPointsMap points_cur = calculate_spread(
     *this,
     spread_info_,
@@ -1184,7 +1212,9 @@ void Scenario::scheduleFireSpread(const Event& event)
     "No points");
 #endif
   // need to merge new points back into cells that didn't spread
-  points_.merge(points_cur);
+  points_.merge(
+    *unburnable_,
+    points_cur);
 #ifdef DEBUG_POINTS
   map<Location, set<InnerPos>> m1{};
   for (const auto& kv : points_cur.map_)
@@ -1291,6 +1321,10 @@ void Scenario::scheduleFireSpread(const Event& event)
         for_cell.hash(),
         "for_cell.hash()");
 #endif
+      if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
+      {
+        printf("here\n");
+      }
       if (canBurn(for_cell) && max_intensity > 0)
       {
         // HACK: make sure it can't round down to 0
@@ -1303,6 +1337,10 @@ void Scenario::scheduleFireSpread(const Event& event)
           intensity,
           for_cell,
           pts.sources());
+        if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
+        {
+          printf("here\n");
+        }
         burn(fake_event, intensity);
       }
       if (!(*unburnable_)[for_cell.hash()]
@@ -1310,7 +1348,29 @@ void Scenario::scheduleFireSpread(const Event& event)
                && !isSurrounded(for_cell))))
       {
         log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
-        const Location loc{for_cell.row(), for_cell.column()};
+        const auto r = for_cell.row();
+        const auto c = for_cell.column();
+        const auto f_c = for_cell.fuelCode();
+        const auto f = fuel::fuel_by_code(f_c);
+        if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
+        {
+          printf(
+            "(%d, %d) is fuel code %d with name %s\n",
+            c,
+            r,
+            f_c,
+            f->name());
+          if (0 == strcmp(f->name(), "M-1/M-2 (00 PC)"))
+          {
+            printf(
+              "(%d, %d) is fuel code %d with name %s\n",
+              c,
+              r,
+              f_c,
+              f->name());
+          }
+        }
+        const Location loc{r, c};
 #ifdef DEBUG_POINTS
         logging::check_equal(
           for_cell.column(),
@@ -1356,7 +1416,15 @@ void Scenario::scheduleFireSpread(const Event& event)
         // just inserted false, so make sure unburnable gets updated
         // whether it went out or is surrounded just mark it as unburnable
         (*unburnable_)[for_cell.hash()] = true;
-        // not swapping means these points get dropped
+// not swapping means these points get dropped
+#ifdef DEBUG_POINTS
+        auto seek = points_.map_.find(loc);
+        logging::check_fatal(
+          seek != points_.map_.end(),
+          "points_.map_ contains (%d, %d) when it shouldn't",
+          loc.column(),
+          loc.row());
+#endif
       }
     });
 #ifdef DEBUG_POINTS
