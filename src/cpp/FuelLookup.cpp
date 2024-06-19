@@ -39,6 +39,7 @@ static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Unknown", "Non-fuel"},
   {"Unclassified", "D-1/D-2"},
   {"Vegetated Non-Fuel", "M-1/M-2 (25 PC)"},
+  {"Boreal Mixedwood - Leafless (00% Conifer)", "M-1 (00 PC)"},
   {"Boreal Mixedwood - Leafless (05% Conifer)", "M-1 (05 PC)"},
   {"Boreal Mixedwood - Leafless (10% Conifer)", "M-1 (10 PC)"},
   {"Boreal Mixedwood - Leafless (15% Conifer)", "M-1 (15 PC)"},
@@ -58,6 +59,7 @@ static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Boreal Mixedwood - Leafless (85% Conifer)", "M-1 (85 PC)"},
   {"Boreal Mixedwood - Leafless (90% Conifer)", "M-1 (90 PC)"},
   {"Boreal Mixedwood - Leafless (95% Conifer)", "M-1 (95 PC)"},
+  {"Boreal Mixedwood - Green (00% Conifer)", "M-2 (00 PC)"},
   {"Boreal Mixedwood - Green (05% Conifer)", "M-2 (05 PC)"},
   {"Boreal Mixedwood - Green (10% Conifer)", "M-2 (10 PC)"},
   {"Boreal Mixedwood - Green (15% Conifer)", "M-2 (15 PC)"},
@@ -77,6 +79,7 @@ static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Boreal Mixedwood - Green (85% Conifer)", "M-2 (85 PC)"},
   {"Boreal Mixedwood - Green (90% Conifer)", "M-2 (90 PC)"},
   {"Boreal Mixedwood - Green (95% Conifer)", "M-2 (95 PC)"},
+  {"Boreal Mixedwood (00% Conifer)", "M-1/M-2 (00 PC)"},
   {"Boreal Mixedwood (05% Conifer)", "M-1/M-2 (05 PC)"},
   {"Boreal Mixedwood (10% Conifer)", "M-1/M-2 (10 PC)"},
   {"Boreal Mixedwood (15% Conifer)", "M-1/M-2 (15 PC)"},
@@ -292,6 +295,12 @@ static fbp::FuelM3M4<85> M3_M4_85{52, "M-3/M-4 (85 PDF)", &M3_85, &M4_85};
 static fbp::FuelM3M4<90> M3_M4_90{53, "M-3/M-4 (90 PDF)", &M3_90, &M4_90};
 static fbp::FuelM3M4<95> M3_M4_95{54, "M-3/M-4 (95 PDF)", &M3_95, &M4_95};
 static fbp::FuelM3M4<100> M3_M4_100{55, "M-3/M-4 (100 PDF)", &M3_100, &M4_100};
+static fbp::FuelM1<0> M1_00{56, "M-1 (00 PC)"};
+static fbp::FuelM2<0> M2_00{56, "M-2 (00 PC)"};
+static fbp::FuelM1M2<0> M1_M2_00{56, "M-1/M-2 (00 PC)", &M1_00, &M2_00};
+static fbp::FuelM3<0> M3_00{57, "M-3 (00 PDF)"};
+static fbp::FuelM4<0> M4_00{57, "M-4 (00 PDF)"};
+static fbp::FuelM3M4<0> M3_M4_00{57, "M-3/M-4 (00 PDF)", &M3_00, &M4_00};
 /**
  * \brief Implementation class for FuelLookup
  */
@@ -320,6 +329,10 @@ public:
     emplaceFuel("M-2", FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M1_M2_05)));
     emplaceFuel("M-1/M-2",
                 FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M1_M2_05)));
+    // // 0% dead fir makes these effectively D1 because of how the equations work
+    // emplaceFuel("M-1 (00 PC)", &D1);
+    // emplaceFuel("M-2 (00 PC)", &D1);
+    // emplaceFuel("M-1/M-2 (00 PC)", &D1);
     const auto pdf = sim::Settings::defaultPercentDeadFir();
     logging::check_fatal(0 > pdf || 100 < pdf || (pdf % 5) != 0,
                          "Invalid default percent dead fir (%d)",
@@ -329,10 +342,10 @@ public:
     emplaceFuel("M-4", FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M3_M4_05)));
     emplaceFuel("M-3/M-4",
                 FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M3_M4_05)));
-    // 0% dead fir makes these effectively D1 because of how the equations work
-    emplaceFuel("M-3 (00 PDF)", &D1);
-    emplaceFuel("M-4 (00 PDF)", &D1);
-    emplaceFuel("M-3/M-4 (00 PDF)", &D1);
+    // // 0% dead fir makes these effectively D1 because of how the equations work
+    // emplaceFuel("M-3 (00 PDF)", &D1);
+    // emplaceFuel("M-4 (00 PDF)", &D1);
+    // emplaceFuel("M-3/M-4 (00 PDF)", &D1);
     emplaceFuel("M-1 (05 PC)", &M1_M2_05);
     emplaceFuel("M-2 (05 PC)", &M1_M2_05);
     emplaceFuel("M-1 (10 PC)", &M1_M2_10);

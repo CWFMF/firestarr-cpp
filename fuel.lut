@@ -27,6 +27,7 @@ grid_value, export_value, descriptive_name, fuel_type, r, g, b, h, s, l
 104,104,Unclassified,D-1/D-2,166,166,166,170,0,166
 105,105,Vegetated Non-Fuel,M-1/M-2 (25 PC),204,204,204,170,0,204
 106,106,Urban,D-1/D-2,166,166,166,170,0,166
+400,400,Boreal Mixedwood - Leafless (00% Conifer),M-1 (00 PC),255,211,127,28,255,191
 405,405,Boreal Mixedwood - Leafless (05% Conifer),M-1 (05 PC),255,211,127,28,255,191
 410,410,Boreal Mixedwood - Leafless (10% Conifer),M-1 (10 PC),255,211,127,28,255,191
 415,415,Boreal Mixedwood - Leafless (15% Conifer),M-1 (15 PC),255,211,127,28,255,191
@@ -46,6 +47,7 @@ grid_value, export_value, descriptive_name, fuel_type, r, g, b, h, s, l
 485,485,Boreal Mixedwood - Leafless (85% Conifer),M-1 (85 PC),255,211,127,28,255,191
 490,490,Boreal Mixedwood - Leafless (90% Conifer),M-1 (90 PC),255,211,127,28,255,191
 495,495,Boreal Mixedwood - Leafless (95% Conifer),M-1 (95 PC),255,211,127,28,255,191
+500,500,Boreal Mixedwood - Green (00% Conifer),M-2 (00 PC),255,170,0,28,255,128
 505,505,Boreal Mixedwood - Green (05% Conifer),M-2 (05 PC),255,170,0,28,255,128
 510,510,Boreal Mixedwood - Green (10% Conifer),M-2 (10 PC),255,170,0,28,255,128
 515,515,Boreal Mixedwood - Green (15% Conifer),M-2 (15 PC),255,170,0,28,255,128
@@ -65,6 +67,7 @@ grid_value, export_value, descriptive_name, fuel_type, r, g, b, h, s, l
 585,585,Boreal Mixedwood - Green (85% Conifer),M-2 (85 PC),255,170,0,28,255,128
 590,590,Boreal Mixedwood - Green (90% Conifer),M-2 (90 PC),255,170,0,28,255,128
 595,595,Boreal Mixedwood - Green (95% Conifer),M-2 (95 PC),255,170,0,28,255,128
+600,600,Boreal Mixedwood (00% Conifer),M-1/M-2 (00 PC),255,211,127,28,255,191
 605,605,Boreal Mixedwood (05% Conifer),M-1/M-2 (05 PC),255,211,127,28,255,191
 610,610,Boreal Mixedwood (10% Conifer),M-1/M-2 (10 PC),255,211,127,28,255,191
 615,615,Boreal Mixedwood (15% Conifer),M-1/M-2 (15 PC),255,211,127,28,255,191
