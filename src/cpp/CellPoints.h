@@ -7,6 +7,7 @@
 #pragma once
 #include "stdafx.h"
 #include "InnerPos.h"
+#include "IntensityMap.h"
 
 namespace tbd::sim
 {
@@ -126,7 +127,9 @@ public:
   CellPointsMap();
   void emplace(const CellPoints& pts);
   CellPoints& insert(const double x, const double y) noexcept;
-  CellPointsMap& merge(const CellPointsMap& rhs) noexcept;
+  CellPointsMap& merge(
+    const BurnedData& unburnable,
+    const CellPointsMap& rhs) noexcept;
   set<InnerPos> unique() const noexcept;
   // apply function to each CellPoints within and remove matches
   void remove_if(std::function<bool(const pair<Location, CellPoints>&)> F);

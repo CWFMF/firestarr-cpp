@@ -166,9 +166,10 @@ public:
    * \param location Location
    * \return Cell at given Location
    */
-  [[nodiscard]] constexpr Cell cell(const Location& location) const
+  template <class P>
+  [[nodiscard]] constexpr Cell cell(const Position<P>& position) const
   {
-    return cells_->at(location);
+    return cells_->at(position);
   }
   /**
    * \brief Cell at Location with given hash
