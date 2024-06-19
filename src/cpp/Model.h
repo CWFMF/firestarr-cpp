@@ -201,12 +201,13 @@ public:
    * \param location Location to get Cell for
    * \return Cell at the given Location
    */
+  template <class P>
   [[nodiscard]] constexpr Cell
   cell(
-    const Location& location
+    const Position<P>& position
   ) const
   {
-    return env_->cell(location);
+    return env_->cell(position);
   }
 
   /**

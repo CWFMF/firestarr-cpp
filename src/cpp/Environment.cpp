@@ -377,14 +377,6 @@ Environment::cell(
 }
 
 Cell
-Environment::cell(
-  const Location& location
-) const
-{
-  return cells_.at(location);
-}
-
-Cell
 Environment::offset(
   const Event& event,
   const Idx row,

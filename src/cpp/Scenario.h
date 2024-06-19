@@ -22,6 +22,7 @@ namespace fs
 {
 class IObserver;
 class Event;
+
 using PointSet = vector<InnerPos>;
 
 /**
@@ -209,12 +210,13 @@ public:
    * \param location Location
    * \return Cell for given Location
    */
+  template <class P>
   [[nodiscard]] constexpr Cell
   cell(
-    const Location& location
+    const Position<P>& position
   ) const
   {
-    return model_->cell(location);
+    return model_->cell(position);
   }
 
   /**
@@ -418,6 +420,16 @@ public:
    */
   [[nodiscard]] bool
   isSurrounded(const Location& location) const;
+
+  template <class P>
+  [[nodiscard]] bool
+  isSurrounded(
+    const Position<P>& position
+  ) const
+  {
+    return isSurrounded(Location{position.hash()});
+  }
+
   /**
    * \brief Cell that InnerPos falls within
    * \param p InnerPos
@@ -458,6 +470,16 @@ public:
    */
   [[nodiscard]] bool
   hasBurned(const Location& location) const;
+
+  template <class P>
+  [[nodiscard]] bool
+  hasBurned(
+    const Position<P>& position
+  ) const
+  {
+    return hasBurned(Location{position.hash()});
+  }
+
   /**
    * \brief Add an Event to the queue
    * \param event Event to add
@@ -645,7 +667,7 @@ protected:
   /**
    * \brief Map of Cells to the PointSets within them
    */
-  map<Cell, CellPoints> points_{};
+  CellPointsMap points_;
   /**
    * \brief Contains information on cells that are not burnable
    */

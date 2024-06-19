@@ -131,8 +131,14 @@ public:
    * \param location Location
    * \return Cell at given Location
    */
+  template <class P>
   [[nodiscard]] Cell
-  cell(const Location& location) const;
+  cell(
+    const Position<P>& position
+  ) const
+  {
+    return cells_.at(position);
+  }
 
   /**
    * \brief Cell at Location with offset of row and column from Location of Event

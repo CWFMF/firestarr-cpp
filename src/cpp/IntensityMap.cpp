@@ -56,7 +56,7 @@ IntensityMap::applyPerimeter(
 
 bool
 IntensityMap::canBurn(
-  const Cell& location
+  const Location& location
 ) const
 {
   return !hasBurned(location);
