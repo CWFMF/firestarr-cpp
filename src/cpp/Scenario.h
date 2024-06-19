@@ -26,6 +26,8 @@ namespace fs::sim
 class LogPoints;
 class IObserver;
 class Event;
+using topo::Location;
+using topo::Position;
 using PointSet = vector<InnerPos>;
 /**
  * \brief Deleter for IObserver to get around incomplete class with unique_ptr
@@ -186,22 +188,14 @@ public:
    * \param location Location
    * \return Cell for given Location
    */
+  template <class P>
   [[nodiscard]] constexpr topo::Cell
   cell(
-    const Location& location
+    const Position<P>& position
   ) const
   {
-    return model_->cell(location);
+    return model_->cell(position);
   }
-  /**
-   * \brief Get Cell for Location with given hash
-   * \param hash_size Hash
-   * \return Cell for Location with given hash
-   */
-  //  [[nodiscard]] constexpr topo::Cell cell(const HashSize hash_size) const
-  //  {
-  //    return model_->cell(hash_size);
-  //  }
   /**
    * \brief Number of rows
    * \return Number of rows
@@ -386,6 +380,14 @@ public:
    */
   [[nodiscard]] bool
   isSurrounded(const Location& location) const;
+  template <class P>
+  [[nodiscard]] bool
+  isSurrounded(
+    const Position<P>& position
+  ) const
+  {
+    return isSurrounded(Location{position.hash()});
+  }
   /**
    * \brief Cell that InnerPos falls within
    * \param p InnerPos
@@ -432,6 +434,14 @@ public:
    */
   [[nodiscard]] bool
   hasBurned(const Location& location) const;
+  template <class P>
+  [[nodiscard]] bool
+  hasBurned(
+    const Position<P>& position
+  ) const
+  {
+    return hasBurned(Location{position.hash()});
+  }
   /**
    * \brief Whether or not Location with given hash has burned already
    * \param hash Hash of Location to check

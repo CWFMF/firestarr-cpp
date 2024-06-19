@@ -723,6 +723,7 @@ CellPointsMap::insert(
 }
 CellPointsMap&
 CellPointsMap::merge(
+  const BurnedData& unburnable,
   const CellPointsMap& rhs
 ) noexcept
 {
@@ -734,7 +735,11 @@ CellPointsMap::merge(
       "Trying to merge CellPointsMap with invalid CellPoints"
     );
 #endif
-    emplace(kv.second);
+    const auto h = kv.first.hash();
+    if (!unburnable[h])
+    {
+      emplace(kv.second);
+    }
   }
   return *this;
 }
@@ -745,6 +750,7 @@ CellPointsMap::remove_if(
 {
   auto it = map_.begin();
 #ifdef DEBUG_POINTS
+  set<Location> removed_items{};
   const auto u0 = unique();
   const auto s0 = u0.size();
   size_t removed = 0;
@@ -764,6 +770,9 @@ CellPointsMap::remove_if(
 #endif
     if (F(*it))
     {
+#ifdef DEBUG_POINTS
+      removed_items.emplace(it->first);
+#endif
       // remove if F returns true for current
       logging::verbose("Removing CellPoints for (%d, %d)", location.column(), location.row());
       it = map_.erase(it);
@@ -781,6 +790,27 @@ CellPointsMap::remove_if(
     logging::check_equal(u_cur.size(), s0 - removed, "u_cur.size()");
 #endif
   }
+#ifdef DEBUG_POINTS
+  for (const auto& loc : removed_items)
+  {
+    auto seek = map_.find(loc);
+    logging::check_fatal(
+      map_.end() != seek,
+      "Still have map entry for (%d, %d)",
+      loc.column(),
+      loc.row()
+    );
+  }
+  for (const auto& kv : map_)
+  {
+    logging::check_fatal(
+      F(kv),
+      "Should have removed (%d, %d) but didn't",
+      kv.first.column(),
+      kv.first.row()
+    );
+  }
+#endif
 }
 set<InnerPos>
 CellPointsMap::unique() const noexcept

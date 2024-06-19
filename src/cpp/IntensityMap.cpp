@@ -149,7 +149,7 @@ IntensityMap::applyPerimeter(
 // }
 bool
 IntensityMap::canBurn(
-  const topo::Cell& location
+  const Location& location
 ) const
 {
   return !hasBurned(location);

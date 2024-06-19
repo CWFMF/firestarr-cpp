@@ -3,11 +3,12 @@
 /* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
-#include "stdafx.h"
-#include "InnerPos.h"
-
 #ifndef FS_CELLPOINTS_H
 #define FS_CELLPOINTS_H
+
+#include "stdafx.h"
+#include "InnerPos.h"
+#include "IntensityMap.h"
 
 namespace fs::sim
 {
@@ -148,7 +149,7 @@ public:
   CellPoints&
   insert(const double x, const double y) noexcept;
   CellPointsMap&
-  merge(const CellPointsMap& rhs) noexcept;
+  merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
   set<InnerPos>
   unique() const noexcept;
   // apply function to each CellPoints within and remove matches

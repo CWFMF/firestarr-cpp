@@ -39,6 +39,10 @@ ArrivalObserver::getValue(
   const Event& event
 ) const noexcept
 {
+  if (abs(event.time() - 154.9987423154746) < 0.001)
+  {
+    printf("here\n");
+  }
   return event.time();
 }
 SourceObserver::SourceObserver(

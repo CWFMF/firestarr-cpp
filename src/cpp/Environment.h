@@ -181,12 +181,13 @@ public:
    * \param location Location
    * \return Cell at given Location
    */
+  template <class P>
   [[nodiscard]] constexpr Cell
   cell(
-    const Location& location
+    const Position<P>& position
   ) const
   {
-    return cells_->at(location);
+    return cells_->at(position);
   }
   /**
    * \brief Cell at Location with given hash

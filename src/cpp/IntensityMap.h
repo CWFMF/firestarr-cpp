@@ -9,7 +9,7 @@
 #include <string>
 #include <bitset>
 #include "GridMap.h"
-#include "Weather.h"
+#include "Location.h"
 namespace fs
 {
 namespace topo
@@ -19,6 +19,7 @@ class Cell;
 }
 namespace sim
 {
+using fs::topo::Position;
 class ProbabilityMap;
 class Model;
 using BurnedData = std::bitset<static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS>;
@@ -71,31 +72,35 @@ public:
   void
   applyPerimeter(const topo::Perimeter& perimeter) noexcept;
   /**
-   * \brief Whether or not the Cell can burn
-   * \param location Cell to check
-   * \return Whether or not the Cell can burn
-   */
-  [[nodiscard]] bool
-  canBurn(const topo::Cell& location) const;
-  /**
    * \brief Whether or not the Cell with the given hash can burn
    * \param hash Hash for Cell to check
    * \return Whether or not the Cell with the given hash can burn
    */
-  //  [[nodiscard]] bool canBurn(HashSize hash) const;
-  /**
-   * \brief Whether or not the Location can burn
-   * \param location Location to check
-   * \return Whether or not the Location can burn
-   */
   [[nodiscard]] bool
-  hasBurned(const Location& location) const;
+  canBurn(const Location& location) const;
+  template <class P>
+  [[nodiscard]] bool
+  canBurn(
+    const Position<P>& position
+  ) const
+  {
+    return canBurn(Location{position.hash()});
+  }
   /**
    * \brief Whether or not the Location with the given hash can burn
    * \param hash Hash for Location to check
    * \return Whether or not the Location with the given hash can burn
    */
-  //  [[nodiscard]] bool hasBurned(HashSize hash) const;
+  [[nodiscard]] bool
+  hasBurned(const Location& location) const;
+  template <class P>
+  [[nodiscard]] bool
+  hasBurned(
+    const Position<P>& position
+  ) const
+  {
+    return hasBurned(Location{position.hash()});
+  }
   /**
    * \brief Whether or not all Locations surrounding the given Location are burned
    * \param location Location to check
@@ -103,7 +108,28 @@ public:
    */
   [[nodiscard]] bool
   isSurrounded(const Location& location) const;
-
+  template <class P>
+  [[nodiscard]] bool
+  isSurrounded(
+    const Position<P>& position
+  ) const
+  {
+    return isSurrounded(Location{position.hash()});
+  }
+  /**
+   * \brief Mark given location as burned
+   * \param location Location to burn
+   */
+  void
+  ignite(const Location& location);
+  template <class P>
+  void
+  ignite(
+    const Position<P>& position
+  )
+  {
+    ignite(Location{position.hash()});
+  }
   /**
    * \brief Update Location with specified values
    * \param location Location to burn
@@ -113,14 +139,17 @@ public:
    */
   void
   burn(const Location& location, IntensitySize intensity, double ros, fs::wx::Direction raz);
-  /**
-   * \brief Mark given location as burned
-   * \param location Location to burn
-   */
+  template <class P>
   void
-  ignite(const Location& location);
-  // void update(const Location& location,
-  //             const SpreadInfo& spread_info);
+  burn(
+    const Position<P>& position,
+    const IntensitySize intensity,
+    const double ros,
+    const fs::wx::Direction& raz
+  )
+  {
+    burn(Location{position.hash()}, intensity, ros, raz);
+  }
   /**
    * \brief Save contents to an ASCII file
    * \param dir Directory to save to
