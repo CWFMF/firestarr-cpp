@@ -10,6 +10,8 @@
 #include "Settings.h"
 namespace tbd::data
 {
+using topo::Location;
+using topo::Position;
 /**
  * \brief A GridData that uses an unordered_map for storage.
  * \tparam T Type of data after conversion from initialization type.
@@ -29,6 +31,11 @@ public:
   {
     return this->data.end() != this->data.find(location);
   }
+  template <class P>
+  [[nodiscard]] bool contains(const Position<P>& position) const
+  {
+    return contains(Location{position.hash()});
+  }
   /**
    * \brief Retrieve value at Location
    * \param location Location to get value for
@@ -43,6 +50,11 @@ public:
     }
     return get<1>(*value);
   }
+  template <class P>
+  [[nodiscard]] T at(const Position<P>& position) const
+  {
+    return at(Location{position.hash()});
+  }
   /**
    * \brief Set value at Location
    * \param location Location to set value for
@@ -50,17 +62,13 @@ public:
    */
   void set(const Location& location, const T value) override
   {
-    //    const auto seek = this->data.find(location);
-    //    if (seek == this->data.end())
-    //    {
-    //      this->data.emplace(location, value);
-    //    }
-    //    else
-    //    {
-    //      this->data.at(location) = value;
-    //    }
     this->data[location] = value;
     assert(at(location) == value);
+  }
+  template <class P>
+  void set(const Position<P>& position, const T value)
+  {
+    return set(Location{position.hash()}, value);
   }
   ~GridMap() = default;
   /**
