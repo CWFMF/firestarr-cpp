@@ -878,6 +878,11 @@ void Scenario::burn(const Event& event, const IntensitySize)
   notify(event);
   // WIP: call burn without proper information for now so we can commit IntensityMap changes
   intensity_->burn(event.cell(), event.intensity(), 0, tbd::wx::Direction::Zero);
+#ifdef DEBUG_GRIDS
+  log_check_fatal(
+    !intensity_->hasBurned(event.cell()),
+    "Wasn't marked as burned after burn");
+#endif
   arrival_[event.cell()] = event.time();
   // scheduleFireSpread(event);
 }
@@ -1126,13 +1131,13 @@ void Scenario::scheduleFireSpread(const Event& event)
       logging::check_fatal(
         fuel::is_null_fuel(for_cell),
         "Spreading in non-fuel");
-      const auto h = kv.first.hash();
 #endif
       const auto key = for_cell.key();
       // HACK: need to lookup before emplace since might try to create Cell without fuel
       // if (!fuel::is_null_fuel(loc))
       const auto h = for_cell.hash();
       if (!(*unburnable_)[h])
+      // if (canBurn(for_cell))
       {
         const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
         // any cell that has the same fuel, slope, and aspect has the same spread
@@ -1344,6 +1349,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         burn(fake_event, intensity);
       }
       if (!(*unburnable_)[for_cell.hash()]
+          // && canBurn(for_cell)
           && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
                && !isSurrounded(for_cell))))
       {
@@ -1351,23 +1357,34 @@ void Scenario::scheduleFireSpread(const Event& event)
         const auto r = for_cell.row();
         const auto c = for_cell.column();
         const auto f_c = for_cell.fuelCode();
-        const auto f = fuel::fuel_by_code(f_c);
         if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
         {
+          const auto f = fuel::fuel_by_code(f_c);
           printf(
             "(%d, %d) is fuel code %d with name %s\n",
             c,
             r,
             f_c,
             f->name());
-          if (0 == strcmp(f->name(), "M-1/M-2 (00 PC)"))
+          // if (0 == strcmp(f->name(), "M-1/M-2 (00 PC)"))
+          // {
+          //   printf(
+          //     "(%d, %d) is fuel code %d with name %s\n",
+          //     c,
+          //     r,
+          //     f_c,
+          //     f->name());
+          // }
+          if (1 >= abs(c - 2048) && 1 >= abs(r - 2048))
           {
             printf(
-              "(%d, %d) is fuel code %d with name %s\n",
+              "spreading in center (%d, %d) (%d) is fuel code %d with name %s: cell unburnable is %s\n",
               c,
               r,
+              for_cell.hash(),
               f_c,
-              f->name());
+              f->name(),
+              ((*unburnable_)[for_cell.hash()] ? "true" : "false"));
           }
         }
         const Location loc{r, c};
