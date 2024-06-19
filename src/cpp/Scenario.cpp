@@ -16,6 +16,7 @@
 #include "FuelType.h"
 #include "MergeIterator.h"
 #include "CellPoints.h"
+#include "FuelLookup.h"
 
 namespace tbd::sim
 {
@@ -57,53 +58,146 @@ void do_par(T& for_list, F fct)
     fct);
 }
 
-const cellpoints_map_type merge_list(
+CellPointsMap merge_list(
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
   const spreading_points& to_spread)
 {
-  return static_cast<const cellpoints_map_type>(
-    do_transform_reduce(
-      to_spread,
-      cellpoints_map_type{},
-      [](const auto& lhs, const auto& rhs) {
-        return merge_maps_generic<cellpoints_map_type>(
-          lhs,
-          rhs,
-          merge_cellpoints);
-      },
-      [&duration, &spread_info](
-        const spreading_points::value_type& kv0) -> const cellpoints_map_type {
-        auto& key = kv0.first;
-        const auto& offsets = spread_info[key].offsets();
-        const spreading_points::mapped_type& cell_pts = kv0.second;
-        return apply_offsets_spreadkey(duration, offsets, cell_pts);
-      }));
+  auto spread = std::views::transform(
+    to_spread,
+    [&duration, &spread_info](
+      const spreading_points::value_type& kv0) -> CellPointsMap {
+      auto& key = kv0.first;
+      const auto& offsets = spread_info[key].offsets();
+#ifdef DEBUG_POINTS
+      logging::check_fatal(
+        offsets.empty(),
+        "offsets.empty()");
+#endif
+      const spreading_points::mapped_type& cell_pts = kv0.second;
+#ifdef DEBUG_POINTS
+      logging::check_fatal(
+        cell_pts.empty(),
+        "cell_pts.empty()");
+#endif
+      auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
+#ifdef DEBUG_POINTS
+      logging::check_fatal(
+        r.unique().empty(),
+        "r.unique().empty()");
+#endif
+      return r;
+    });
+  auto it = spread.begin();
+  CellPointsMap out{};
+  while (spread.end() != it)
+  {
+    const CellPointsMap& cell_pts = *it;
+#ifdef DEBUG_POINTS
+    logging::check_fatal(
+      cell_pts.unique().empty(),
+      "Merging empty points");
+#endif
+    out.merge(cell_pts);
+#ifdef DEBUG_POINTS
+    logging::check_fatal(
+      out.unique().empty(),
+      "Empty points after merge");
+#endif
+    ++it;
+  }
+  return out;
 }
-void calculate_spread(
+CellPointsMap calculate_spread(
   Scenario& scenario,
   map<SpreadKey, SpreadInfo>& spread_info,
   const double duration,
   const spreading_points& to_spread,
-  map<Cell, CellPoints>& points_out,
   const BurnedData& unburnable)
 {
-  do_each(
-    merge_list(spread_info, duration, to_spread),
-    [&scenario, &points_out, &unburnable](
-      const cellpoints_map_type::value_type& ksp) {
+  CellPointsMap cell_pts = merge_list(spread_info, duration, to_spread);
+#ifdef DEBUG_POINTS
+  const auto u = cell_pts.unique();
+  logging::check_fatal(
+    u.empty(),
+    "No points after spread");
+  size_t total = 0;
+  set<InnerPos> u0{};
+  for (const auto& kv : cell_pts.map_)
+  {
+    const auto loc = kv.first;
+    const auto u1 = kv.second.unique();
+    logging::check_fatal(
+      u1.empty(),
+      "No points in CellPoints for (%d, %d) after spread",
+      loc.column(),
+      loc.row());
+    // make sure all points are actually in the right location
+    const auto s0_cur = u0.size();
+    logging::check_equal(
+      s0_cur,
+      total,
+      "total");
+    for (const auto& p1 : u1)
+    {
+      const Location loc1{static_cast<Idx>(p1.y()), static_cast<Idx>(p1.x())};
+      logging::check_equal(
+        loc1.column(),
+        loc.column(),
+        "column");
+      logging::check_equal(
+        loc1.row(),
+        loc.row(),
+        "row");
+      u0.emplace(p1);
+    }
+    total += u1.size();
+    logging::check_equal(
+      s0_cur + u1.size(),
+      total,
+      "total");
+  }
+#endif
+  cell_pts.remove_if(
+    [&scenario, &unburnable](
+      const pair<Location, CellPoints>& kv) {
+      const auto& location = kv.first;
+#ifdef DEBUG_POINTS
       // look up Cell from scenario here since we don't need attributes until now
-      const Cell k = scenario.cell(ksp.first);
-      const CellPoints& cell_pts = ksp.second;
-      // HACK: keep old behaviour of applying source even if unburnable
-      CellPoints& out = points_out[k];
-      out.add_source(cell_pts.sources());
-      const auto h = k.hash();
-      if (!(unburnable[h]))
+      const Cell k = scenario.cell(location);
+      const auto& cell_pts = kv.second;
+      const auto u = cell_pts.unique();
+      logging::check_fatal(
+        u.empty(),
+        "Empty points when checking to remove");
+      logging::check_equal(
+        k,
+        scenario.cell(cell_pts.location()),
+        "CellPoints location");
+      logging::check_equal(
+        k.column(),
+        location.column(),
+        "Cell column");
+      logging::check_equal(
+        k.row(),
+        location.row(),
+        "Cell row");
+#endif
+      const auto h = location.hash();
+      // clear out if unburnable
+      const auto do_clear = unburnable[h];
+#ifdef DEBUG_POINTS
+      logging::check_equal(h, k.hash(), "Cell vs Location hash()");
+      if (fuel::is_null_fuel(k))
       {
-        out.merge(cell_pts);
+        logging::check_fatal(
+          !do_clear,
+          "Not clearing when not fuel");
       }
+#endif
+      return do_clear;
     });
+  return cell_pts;
 }
 class LogPoints
 {
@@ -128,11 +222,26 @@ public:
     // don't loop if not logging
     if (isLogging())
     {
-      for (const auto& p : points.unique())
+      const auto u = points.unique();
+#ifdef DEBUG_POINTS
+      logging::check_fatal(
+        u.empty(),
+        "Logging empty points");
+#endif
+      for (const auto& p : u)
       {
         log_point(step, stage, time, p.x(), p.y());
       }
     }
+#ifdef DEBUG_POINTS
+    else
+    {
+      const auto u = points.unique();
+      logging::check_fatal(
+        u.empty(),
+        "Logging empty points");
+    }
+#endif
   };
 private:
   size_t id_;
@@ -550,7 +659,7 @@ void Scenario::evaluate(const Event& event)
     case Event::NEW_FIRE:
       log_points_->log_point(step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       // HACK: don't do this in constructor because scenario creates this in its constructor
-      points_[p].insert(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
+      points_.insert(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       if (fuel::is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -819,7 +928,12 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
       log_verbose("Adding point (%f, %f)",
                   cell.column() + CELL_CENTER,
                   cell.row() + CELL_CENTER);
-      points_[cell].insert(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
+      points_.insert(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
+      // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
+      // log_check_fatal(!e.second,
+      //                 "Excepted to add point to new cell but (%ld, %ld) is already in map",
+      //                 cell.column(),
+      //                 cell.row());
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
@@ -829,9 +943,10 @@ Scenario* Scenario::run(map<double, ProbabilityMap*>* probabilities)
   log_verbose("Creating simulation end event for %f", last_save_);
   addEvent(Event::makeEnd(last_save_));
   // mark all original points as burned at start
-  for (auto& kv : points_)
+  for (auto& kv : points_.map_)
   {
-    const auto& location = kv.first;
+    const auto& location = cell(kv.first);
+    // const auto& location = kv.first;
     // would be burned already if perimeter applied
     if (canBurn(location))
     {
@@ -964,33 +1079,75 @@ void Scenario::scheduleFireSpread(const Event& event)
   // make block to prevent it being visible beyond use
   {
     // if we use an iterator this way we don't need to copy keys to erase things
-    auto it = points_.begin();
-    while (it != points_.end())
+    auto it = points_.map_.begin();
+    while (it != points_.map_.end())
     {
-      const auto location = it->first;
-      const auto key = location.key();
-      const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
-      // any cell that has the same fuel, slope, and aspect has the same spread
-      const auto& origin = origin_inserted.first->second;
-      // filter out things not spreading fast enough here so they get copied if they aren't
-      // isNotSpreading() had better be true if ros is lower than minimum
-      const auto ros = origin.headRos();
-      if (ros >= ros_min)
+      const Location& loc = it->first;
+      const Cell for_cell = cell(loc);
+#ifdef DEBUG_POINTS
+      const auto loc1 = it->first;
+      logging::check_equal(
+        cell(loc1).hash(),
+        for_cell.hash(),
+        "hash");
+      logging::check_equal(
+        loc1.column(),
+        loc.column(),
+        "column");
+      logging::check_equal(
+        loc1.row(),
+        loc.row(),
+        "row");
+      const auto f = fuel::fuel_by_code(for_cell.fuelCode());
+      logging::check_fatal(
+        nullptr == f,
+        "Null fuel");
+      logging::check_fatal(
+        fuel::is_null_fuel(for_cell),
+        "Spreading in non-fuel");
+#endif
+      const auto key = for_cell.key();
+      // HACK: need to lookup before emplace since might try to create Cell without fuel
+      // if (!fuel::is_null_fuel(loc))
       {
-        max_ros_ = max(max_ros_, ros);
-        to_spread[key].emplace_back(location, std::move(it->second));
-        it = points_.erase(it);
-      }
-      else
-      {
-        ++it;
+        const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
+        // any cell that has the same fuel, slope, and aspect has the same spread
+        const auto& origin = origin_inserted.first->second;
+        // filter out things not spreading fast enough here so they get copied if they aren't
+        // isNotSpreading() had better be true if ros is lower than minimum
+        const auto ros = origin.headRos();
+#ifdef DEBUG_POINTS
+        SpreadInfo spread{*this, time, key, nd(time), wx};
+        logging::check_equal(
+          spread.headRos(),
+          ros,
+          "ros");
+        if (fuel::is_null_fuel(for_cell))
+        {
+          logging::check_equal(
+            -1,
+            ros,
+            "ros in non-fuel");
+        }
+#endif
+        if (ros >= ros_min)
+        {
+          max_ros_ = max(max_ros_, ros);
+          // NOTE: shouldn't be Cell if we're looking up by just Location later
+          to_spread[key].emplace_back(loc, std::move(it->second));
+          it = points_.map_.erase(it);
+        }
+        else
+        {
+          ++it;
+        }
       }
     }
   }
   // if nothing in to_spread then nothing is spreading
   if (to_spread.empty())
   {
-    // if no spread then we swapped everything back into points_ already
+    // if no spread then we left everything back in points_ still
     log_verbose("Waiting until %f", max_time);
     addEvent(Event::makeFireSpread(max_time));
     return;
@@ -1004,23 +1161,96 @@ void Scenario::scheduleFireSpread(const Event& event)
                            : max_duration);
   // note("Spreading for %f minutes", duration);
   const auto new_time = time + duration / DAY_MINUTES;
-  calculate_spread(
+  CellPointsMap points_cur = calculate_spread(
     *this,
     spread_info_,
     duration,
     to_spread,
-    points_,
     *unburnable_);
-
-  map<Cell, CellPoints> points_cur{};
-  std::swap(points_, points_cur);
+#ifdef DEBUG_POINTS
+  logging::check_fatal(
+    points_.unique().empty(),
+    "points_.unique().empty()");
+  map<Location, set<InnerPos>> m0{};
+  for (const auto& kv : points_.map_)
+  {
+    m0.emplace(kv.first, kv.second.unique());
+    logging::check_fatal(
+      fuel::is_null_fuel(cell(kv.first)),
+      "Spreading in non-fuel");
+  }
+  logging::check_fatal(
+    m0.empty(),
+    "No points");
+#endif
+  // need to merge new points back into cells that didn't spread
+  points_.merge(points_cur);
+#ifdef DEBUG_POINTS
+  map<Location, set<InnerPos>> m1{};
+  for (const auto& kv : points_cur.map_)
+  {
+    m1.emplace(kv.first, kv.second.unique());
+    logging::check_fatal(
+      fuel::is_null_fuel(cell(kv.first)),
+      "Spreading in non-fuel");
+  }
+  logging::check_fatal(
+    m0 != m1,
+    "Sets of points don't match after swap");
+#endif
   // if we move everything out of points_ we can parallelize this check?
   do_each(
-    points_cur,
-    [this, &new_time](pair<const Cell, CellPoints>& kv) {
-      auto& for_cell = kv.first;
+    points_.map_,
+    [this, &new_time](pair<const Location, CellPoints>& kv) {
+      const auto for_cell = cell(kv.first);
+#ifdef DEBUG_POINTS
+      {
+        const Location loc{for_cell.row(), for_cell.column()};
+        logging::check_equal(
+          for_cell.column(),
+          loc.column(),
+          "column");
+        logging::check_equal(
+          for_cell.row(),
+          loc.row(),
+          "row");
+      }
+      {
+        const Location loc{kv.first.row(), kv.first.column()};
+        logging::check_equal(
+          for_cell.column(),
+          loc.column(),
+          "column");
+        logging::check_equal(
+          for_cell.row(),
+          loc.row(),
+          "row");
+      }
+      logging::check_equal(
+        for_cell.column(),
+        kv.first.column(),
+        "column");
+      logging::check_equal(
+        for_cell.row(),
+        kv.first.row(),
+        "row");
+      const auto c1 = cell(for_cell);
+      logging::check_equal(
+        for_cell.column(),
+        c1.column(),
+        "column");
+      logging::check_equal(
+        for_cell.row(),
+        c1.row(),
+        "row");
+      logging::check_equal(
+        c1.hash(),
+        for_cell.hash(),
+        "for_cell");
+#endif
       CellPoints& pts = kv.second;
       // logging::check_fatal(pts.empty(), "Empty points for some reason");
+      // ******************* CHECK THIS BECAUSE IF SOMETHING IS IN HERE SHOULD IT ALWAYS HAVE SPREAD????? *****************8
       const auto& seek_spread = spread_info_.find(for_cell.key());
       const auto max_intensity = (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
       // // if we don't have empty cells anymore then intensity should always be >0?
@@ -1030,14 +1260,36 @@ void Scenario::scheduleFireSpread(const Event& event)
       // HACK: just use side-effect to log and check bounds
       log_points_->log_points(step_, STAGE_SPREAD, new_time, pts);
 #ifdef DEBUG_POINTS
+      const auto loc = pts.location();
+      logging::check_equal(
+        for_cell.column(),
+        loc.column(),
+        "column");
+      logging::check_equal(
+        for_cell.row(),
+        loc.row(),
+        "row");
       for (auto& pos : pts.unique())
       {
+        const Location loc1{static_cast<Idx>(pos.y()), static_cast<Idx>(pos.x())};
+        logging::check_equal(
+          loc1.column(),
+          loc.column(),
+          "column");
+        logging::check_equal(
+          loc1.row(),
+          loc.row(),
+          "row");
         // was doing this check after getting for_cell, so it didn't help when out of bounds
         log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
                         "Tried to spread out of bounds to (%f, %f)",
                         pos.x(),
                         pos.y());
       }
+      logging::check_equal(
+        cell(kv.first).hash(),
+        for_cell.hash(),
+        "for_cell.hash()");
 #endif
       if (canBurn(for_cell) && max_intensity > 0)
       {
@@ -1058,7 +1310,46 @@ void Scenario::scheduleFireSpread(const Event& event)
                && !isSurrounded(for_cell))))
       {
         log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
-        std::swap(points_[for_cell], pts);
+        const Location loc{for_cell.row(), for_cell.column()};
+#ifdef DEBUG_POINTS
+        logging::check_equal(
+          for_cell.column(),
+          loc.column(),
+          "column");
+        logging::check_equal(
+          for_cell.row(),
+          loc.row(),
+          "row");
+        const Location loc1 = pts.location();
+        logging::check_equal(
+          loc1.column(),
+          loc.column(),
+          "column");
+        logging::check_equal(
+          loc1.row(),
+          loc.row(),
+          "row");
+        const auto s0 = pts.unique().size();
+        const auto c1 = cell(loc);
+        const auto h0 = for_cell.hash();
+        const auto h1 = c1.hash();
+        logging::check_equal(
+          h1,
+          h0,
+          "for_cell");
+        logging::check_fatal(
+          fuel::is_null_fuel(for_cell),
+          "Invalid fuel but trying to save points");
+#endif
+        std::swap(points_.map_[loc], pts);
+#ifdef DEBUG_POINTS
+        const auto s1 = points_.map_[loc].unique().size();
+        logging::check_equal(s0, s1, "size");
+        logging::check_equal(
+          pts.unique().size(),
+          0,
+          "old size");
+#endif
       }
       else
       {
@@ -1068,7 +1359,35 @@ void Scenario::scheduleFireSpread(const Event& event)
         // not swapping means these points get dropped
       }
     });
-  log_extensive("Spreading %d points until %f", points_.size(), new_time);
+#ifdef DEBUG_POINTS
+  for (const auto& kv : points_.map_)
+  {
+    const auto& pts = kv.second;
+    const auto u = pts.unique();
+    logging::check_fatal(
+      u.empty(),
+      "Empty points after spread");
+    for (auto& pos : u)
+    {
+      const auto loc = pts.location();
+      const Location loc1{static_cast<Idx>(pos.y()), static_cast<Idx>(pos.x())};
+      logging::check_equal(
+        loc1.column(),
+        loc.column(),
+        "column");
+      logging::check_equal(
+        loc1.row(),
+        loc.row(),
+        "row");
+      // was doing this check after getting for_cell, so it didn't help when out of bounds
+      log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+                      "Tried to spread out of bounds to (%f, %f)",
+                      pos.x(),
+                      pos.y());
+    }
+  }
+#endif
+  log_extensive("Spreading %d cells until %f", points_.map_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
 double
