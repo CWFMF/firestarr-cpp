@@ -821,7 +821,9 @@ CellPoints& CellPointsMap::insert(const double x, const double y) noexcept
 #endif
   return e.first->second;
 }
-CellPointsMap& CellPointsMap::merge(const CellPointsMap& rhs) noexcept
+CellPointsMap& CellPointsMap::merge(
+  const BurnedData& unburnable,
+  const CellPointsMap& rhs) noexcept
 {
   for (const auto& kv : rhs.map_)
   {
@@ -830,7 +832,11 @@ CellPointsMap& CellPointsMap::merge(const CellPointsMap& rhs) noexcept
       kv.second.is_invalid(),
       "Trying to merge CellPointsMap with invalid CellPoints");
 #endif
-    emplace(kv.second);
+    const auto h = kv.first.hash();
+    if (!unburnable[h])
+    {
+      emplace(kv.second);
+    }
   }
   return *this;
 }
@@ -838,6 +844,7 @@ void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints
 {
   auto it = map_.begin();
 #ifdef DEBUG_POINTS
+  set<Location> removed_items{};
   const auto u0 = unique();
   const auto s0 = u0.size();
   size_t removed = 0;
@@ -861,6 +868,9 @@ void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints
 #endif
     if (F(*it))
     {
+#ifdef DEBUG_POINTS
+      removed_items.emplace(it->first);
+#endif
       // remove if F returns true for current
       logging::verbose(
         "Removing CellPoints for (%d, %d)",
@@ -884,6 +894,25 @@ void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints
       "u_cur.size()");
 #endif
   }
+#ifdef DEBUG_POINTS
+  for (const auto& loc : removed_items)
+  {
+    auto seek = map_.find(loc);
+    logging::check_fatal(
+      map_.end() != seek,
+      "Still have map entry for (%d, %d)",
+      loc.column(),
+      loc.row());
+  }
+  for (const auto& kv : map_)
+  {
+    logging::check_fatal(
+      F(kv),
+      "Should have removed (%d, %d) but didn't",
+      kv.first.column(),
+      kv.first.row());
+  }
+#endif
 }
 set<InnerPos> CellPointsMap::unique() const noexcept
 {
