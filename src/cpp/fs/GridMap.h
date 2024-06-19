@@ -25,6 +25,11 @@ public:
   {
     return this->data.end() != this->data.find(location);
   }
+  template <class P>
+  [[nodiscard]] bool contains(const Position<P>& position) const
+  {
+    return contains(Location{position.hash()});
+  }
   /**
    * \brief Retrieve value at Location
    * \param location Location to get value for
@@ -39,6 +44,11 @@ public:
     }
     return get<1>(*value);
   }
+  template <class P>
+  [[nodiscard]] T at(const Position<P>& position) const
+  {
+    return at(Location{position.hash()});
+  }
   /**
    * \brief Set value at Location
    * \param location Location to set value for
@@ -48,6 +58,11 @@ public:
   {
     this->data[location] = value;
     assert(at(location) == value);
+  }
+  template <class P>
+  void set(const Position<P>& position, const T value)
+  {
+    return set(Location{position.hash()}, value);
   }
   GridMap() noexcept = default;
   ~GridMap() override = default;
@@ -172,17 +187,6 @@ public:
 protected:
   tuple<Idx, Idx, Idx, Idx> dataBounds() const override
   {
-#ifdef DEBUG_GRIDS
-    // enforce converting to an int and back produces same V
-    const auto n0 = this->nodataInput();
-    const auto n1 = static_cast<NodataIntType>(n0);
-    const auto n2 = static_cast<V>(n1);
-    const auto n3 = static_cast<NodataIntType>(n2);
-    const auto v0 = this->nodataValue();
-    logging::check_equal(n1, n3, "nodata_input_ as int");
-    logging::check_equal(n0, n2, "nodata_input_ from int");
-    logging::check_equal(convert(v0), n0, "convert nodata");
-#endif
     Idx min_row = this->rows();
     Idx max_row = 0;
     Idx min_column = this->columns();

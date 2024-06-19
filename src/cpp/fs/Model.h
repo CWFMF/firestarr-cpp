@@ -152,7 +152,11 @@ public:
    * \param location Location to get Cell for
    * \return Cell at the given Location
    */
-  [[nodiscard]] constexpr Cell cell(const Location& location) const { return env_->cell(location); }
+  template <class P>
+  [[nodiscard]] constexpr Cell cell(const Position<P>& position) const
+  {
+    return env_->cell(position);
+  }
   /**
    * \brief Number of rows in extent
    * \return Number of rows in extent

@@ -42,6 +42,11 @@ public:
 #endif
     return this->data.at(location.hash());
   }
+  template <class P>
+  [[nodiscard]] constexpr T at(const Position<P>& position) const noexcept
+  {
+    return at(Location{position.hash()});
+  }
   /**
    * \brief Throw an error because ConstantGrid can't change values.
    */
