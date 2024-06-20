@@ -9,10 +9,12 @@
 #include <string>
 #include <utility>
 #include "Location.h"
+#include "Cell.h"
 #include "Log.h"
 #include "Point.h"
 
 using tbd::topo::Location;
+using tbd::topo::Position;
 using NodataIntType = int64_t;
 /**
  * \brief Provides hash function for Location.
@@ -264,14 +266,18 @@ public:
   constexpr T nodataValue() const noexcept
   {
     return nodata_value_;
-  }
-  // NOTE: only use this for simple types because it's returning by value
+  }   // NOTE: only use this for simple types because it's returning by value
   /**
    * \brief Value for grid at given Location.
    * \param location Location to get value for.
    * \return Value at grid Location.
    */
   [[nodiscard]] virtual T at(const Location& location) const = 0;
+  template <class P>
+  [[nodiscard]] T at(const Position<P>& position) const
+  {
+    return at(Location{position.hash()});
+  }
   // NOTE: use set instead of at to avoid issues with bool
   /**
    * \brief Set value for grid at given Location.
@@ -280,6 +286,11 @@ public:
    * \return None
    */
   virtual void set(const Location& location, T value) = 0;
+  template <class P>
+  void set(const Position<P>& position, const T value)
+  {
+    set(Location{position.hash()});
+  }
 protected:
   /**
    * \brief Constructor

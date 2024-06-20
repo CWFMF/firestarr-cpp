@@ -10,10 +10,10 @@ namespace tbd::topo
 {
 using SpreadKey = uint32_t;
 /**
- * \brief A Location with a Slope, Aspect, and Fuel.
+ * \brief A Position with a Slope, Aspect, and Fuel.
  */
 class Cell
-  : public Location
+  : public Position<Topo>
 {
 public:
   /**
@@ -26,6 +26,14 @@ public:
            numeric_limits<AspectSize>::min(),
            numeric_limits<FuelCodeSize>::min())
   {
+  }
+  /**
+   * \brief Full stored hash that may contain data from subclasses
+   * \return Full stored hash that may contain data from subclasses
+   */
+  [[nodiscard]] constexpr Topo fullHash() const
+  {
+    return topo_data_;
   }
   /**
    * \brief Hash attributes into a Topo value
@@ -48,7 +56,7 @@ public:
    * \param hash Hash defining all attributes
    */
   explicit constexpr Cell(const Topo hash) noexcept
-    : Location(hash)
+    : Position<Topo>(hash)
   {
   }
   /**
@@ -62,7 +70,9 @@ public:
                  const SlopeSize slope,
                  const AspectSize aspect,
                  const FuelCodeSize& fuel) noexcept
-    : Location(static_cast<Topo>(hash & HashMask) | hashCell(slope, aspect, fuel))
+    : Position<Topo>(
+        static_cast<Topo>(hash & HashMask)
+        | hashCell(slope, aspect, fuel))
   {
   }
   /**
@@ -78,8 +88,9 @@ public:
                  const SlopeSize slope,
                  const AspectSize aspect,
                  const FuelCodeSize& fuel) noexcept
-    : Location(static_cast<Topo>(doHash(row, column))
-               | hashCell(slope, aspect, fuel))
+    : Position<Topo>(
+        static_cast<Topo>(doHash(row, column))
+        | hashCell(slope, aspect, fuel))
   {
   }
   /**

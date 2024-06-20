@@ -38,6 +38,16 @@ public:
   Perimeter(const Location& location,
             size_t size,
             const Environment& env);
+  template <class P>
+  Perimeter(const Position<P>& position,
+            size_t size,
+            const Environment& env)
+    : Perimeter(
+        Location{position.hash()},
+        size,
+        env)
+  {
+  }
   // /**
   //  * \brief Map of all burned Locations
   //  * \return All Locations burned by this Perimeter

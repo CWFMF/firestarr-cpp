@@ -61,6 +61,11 @@ public:
     // return at(location.hash());
     return this->data.at(location.hash());
   }
+  template <class P>
+  [[nodiscard]] constexpr T at(const Position<P>& position) const noexcept
+  {
+    return at(Location{position.hash()});
+  }
   /**
    * \brief Value for grid at given Location.
    * \param hash HashSize hash for Location to get value for.

@@ -159,9 +159,10 @@ public:
    * \param location Location to get Cell for
    * \return Cell at the given Location
    */
-  [[nodiscard]] constexpr topo::Cell cell(const Location& location) const
+  template <class P>
+  [[nodiscard]] constexpr topo::Cell cell(const Position<P>& position) const
   {
-    return env_->cell(location);
+    return env_->cell(position);
   }
   /**
    * \brief Cell at the Location represented by the given hash
@@ -245,7 +246,7 @@ public:
   }
   /**
    * \brief How many ignition scenarios are being used
-  * \return How many ignition scenarios are being used
+   * \return How many ignition scenarios are being used
    */
   [[nodiscard]] int ignitionScenarios() const noexcept
   {
