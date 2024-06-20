@@ -17,9 +17,12 @@
 #include "MergeIterator.h"
 #include "CellPoints.h"
 #include "FuelLookup.h"
+#include "Location.h"
+#include "Cell.h"
 
 namespace tbd::sim
 {
+using topo::Position;
 using topo::Cell;
 using topo::Perimeter;
 using topo::SpreadKey;

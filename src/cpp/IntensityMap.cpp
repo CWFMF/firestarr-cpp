@@ -131,7 +131,7 @@ void IntensityMap::applyPerimeter(const topo::Perimeter& perimeter) noexcept
 //{
 //   return !hasBurned(hash);
 // }
-bool IntensityMap::canBurn(const topo::Cell& location) const
+bool IntensityMap::canBurn(const Location& location) const
 {
   return !hasBurned(location);
 }
