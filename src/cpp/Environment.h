@@ -490,28 +490,28 @@ protected:
     {
       logging::debug("Saving fuel grid");
       const auto lookup = sim::Settings::fuelLookup();
-      auto convert_to_area = [&elevation](const ElevationSize v) {
+      auto convert_to_area = [&elevation](const ElevationSize v) -> ElevationSize {
         // need to still be nodata if it was
         return (v == elevation.nodataValue()) ? v : 3;
       };
-      auto convert_to_fuelcode = [&lookup](const fuel::FuelType* const value) {
+      auto convert_to_fuelcode = [&lookup](const fuel::FuelType* const value) -> FuelSize {
         return lookup.fuelToCode(value);
       };
       if (sim::Settings::saveAsAscii())
       {
-        fuel.saveToAsciiFile(dir_out_, "fuel", convert_to_fuelcode);
+        fuel.saveToAsciiFile<FuelSize>(dir_out_, "fuel", convert_to_fuelcode);
         elevation.saveToAsciiFile(dir_out_, "dem");
         // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up
         // anything else
-        elevation.saveToAsciiFile(dir_out_, "simulation_area", convert_to_area);
+        elevation.saveToAsciiFile<ElevationSize>(dir_out_, "simulation_area", convert_to_area);
       }
       else
       {
-        fuel.saveToTiffFile(dir_out_, "fuel", convert_to_fuelcode);
+        fuel.saveToTiffFile<FuelSize>(dir_out_, "fuel", convert_to_fuelcode);
         elevation.saveToTiffFile(dir_out_, "dem");
         // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up
         // anything else
-        elevation.saveToTiffFile(dir_out_, "simulation_area", convert_to_area);
+        elevation.saveToTiffFile<ElevationSize>(dir_out_, "simulation_area", convert_to_area);
       }
       logging::debug("Done saving fuel grid");
     }
