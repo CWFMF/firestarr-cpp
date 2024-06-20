@@ -393,187 +393,38 @@ public:
   {
     return readTiff(filename, point, util::no_convert<T>);
   }
-  /**
-   * \brief Save contents to .asc file
-   * \param dir Directory to save into
-   * \param base_name File base name to use
-   */
-  void saveToAsciiFile(const string& dir,
-                       const string& base_name) const
-  {
-    saveToAsciiFile(dir, base_name, [](V value) { return value; });
-  }
-  /**
-   * \brief Save contents to .asc file
-   * \tparam R Type to be written to .asc file
-   * \param dir Directory to save into
-   * \param base_name File base name to use
-   * \param convert Function to convert from V to R
-   */
-  void saveToAsciiFile(const string& dir,
-                       const string& base_name,
-                       std::function<V(T)> convert) const
+protected:
+  tuple<Idx, Idx, Idx, Idx> dataBounds() const override
   {
     Idx min_row = 0;
-    Idx num_rows = this->rows();
+    Idx max_row = this->rows();
     Idx min_column = 0;
-    Idx num_columns = this->columns();
-    const double xll = this->xllcorner() + min_column * this->cellSize();
-    // offset is different for y since it's flipped
-    const double yll = this->yllcorner() + (min_row) * this->cellSize();
-    logging::extensive("Lower left corner is (%f, %f)", xll, yll);
-    ofstream out;
-    out.open(dir + base_name + ".asc");
-    write_ascii_header(out,
-                       num_columns,
-                       num_rows,
-                       xll,
-                       yll,
-                       this->cellSize(),
-                       static_cast<double>(this->nodataInput()));
-    // need to output in reverse order since (0,0) is bottom left
-    for (Idx r = num_rows - 1; r >= 0; --r)
-    {
-      for (Idx c = 0; c < num_columns; ++c)
-      {
-        const Location idx(static_cast<Idx>(r), static_cast<Idx>(c));
-        // HACK: use + here so that it gets promoted to a printable number
-        //       prevents char type being output as characters
-        out << +(convert(this->at(idx)))
-            << " ";
-      }
-      out << "\n";
-    }
-    out.close();
-    this->createPrj(dir, base_name);
-  }
-  /**
-   * \brief Save contents to .tif file
-   * \param dir Directory to save into
-   * \param base_name File base name to use
-   */
-  void saveToTiffFile(const string& dir,
-                      const string& base_name) const
-  {
-    saveToTiffFile(dir, base_name, [](V value) { return value; });
-  }
-  /**
-   * \brief Save contents to .tif file
-   * \tparam R Type to be written to .tif file
-   * \param dir Directory to save into
-   * \param base_name File base name to use
-   * \param convert Function to convert from V to R
-   */
-  void saveToTiffFile(const string& dir,
-                      const string& base_name,
-                      std::function<V(T)> convert) const
-  {
-#ifdef DEBUG_GRIDS
-    // enforce converting to an int and back produces same V
-    const auto n0 = this->nodataInput();
-    const auto n1 = static_cast<NodataIntType>(n0);
-    const auto n2 = static_cast<V>(n1);
-    const auto n3 = static_cast<NodataIntType>(n2);
-    const auto v0 = this->nodataValue();
-    logging::check_equal(
-      n1,
-      n3,
-      "nodata_input_ as int");
-    logging::check_equal(
-      n0,
-      n2,
-      "nodata_input_ from int");
-    logging::check_equal(
-      convert(v0),
-      n0,
-      "convert nodata");
-#endif
-    Idx min_row = 0;
-    //    Idx num_rows = this->rows();
-    Idx min_column = 0;
-    //    Idx num_columns = this->columns();
-    const double xll = this->xllcorner() + min_column * this->cellSize();
-    // offset is different for y since it's flipped
-    const double yll = this->yllcorner() + (min_row) * this->cellSize();
-    logging::extensive("Lower left corner is (%f, %f)", xll, yll);
-    constexpr uint32_t tileWidth = TILE_WIDTH;
-    constexpr uint32_t tileHeight = TILE_WIDTH;
-    // ensure this is always divisible by tile size
-    static_assert(0 == MAX_ROWS % tileWidth);
-    static_assert(0 == MAX_COLUMNS % tileHeight);
-    uint32_t width = this->columns();
-    uint32_t height = this->rows();
-    string filename = dir + base_name + ".tif";
-    TIFF* tif = GeoTiffOpen(filename.c_str(), "w");
-    auto gtif = GTIFNew(tif);
-    logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
-    const double xul = this->xllcorner();
-    const double yul = this->yllcorner() + (this->cellSize() * this->rows());
-    double tiePoints[6] = {
-      0.0,
-      0.0,
-      0.0,
-      xul,
-      yul,
-      0.0};
-    double pixelScale[3] = {
-      this->cellSize(),
-      this->cellSize(),
-      0.0};
-    uint32_t bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
-    // FIX: was using double, and that usually doesn't make sense, but sometime it might?
-    // use buffer big enought to fit any (V  + '.000\0') + 1
-    constexpr auto n = std::numeric_limits<V>::digits10;
-    static_assert(n > 0);
-    char str[n + 6]{0};
-    const auto nodata_as_int = static_cast<int>(this->nodataInput());
-    sxprintf(str, "%d.000", nodata_as_int);
-    logging::note("ConstantGrid using nodata string '%s' for nodata value of (%d, %f)",
-                  str,
-                  nodata_as_int,
-                  static_cast<double>(this->nodataInput()));
-    TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
-    TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);
-    TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height);
-    TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
-    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, bps);
-    TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileWidth);
-    TIFFSetField(tif, TIFFTAG_TILELENGTH, tileHeight);
-    TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-    TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-    TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-    GTIFSetFromProj4(gtif, this->proj4().c_str());
-    TIFFSetField(tif, TIFFTAG_GEOTIEPOINTS, 6, tiePoints);
-    TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
-    const auto tile_size = TIFFTileSize(tif);
-    logging::debug("Tile size for writing %s is %ld", base_name.c_str(), tile_size);
-    auto buf = (V*)_TIFFmalloc(tile_size);
-    for (size_t i = 0; i < width; i += tileWidth)
-    {
-      for (size_t j = 0; j < height; j += tileHeight)
-      {
-        // need to put data from grid into buffer, but flipped vertically
-        for (size_t x = 0; x < tileWidth; ++x)
-        {
-          for (size_t y = 0; y < tileHeight; ++y)
-          {
-            const size_t actual_x = i + x;
-            const size_t actual_y = j + y;
-            const size_t flipped_y = height - actual_y - 1;
-            const size_t actual = actual_x + flipped_y * width;
-            buf[x + y * tileWidth] = convert(this->data[actual]);
-          }
-        }
-        logging::check_fatal(TIFFWriteTile(tif, buf, i, j, 0, 0) < 0, "Cannot write tile to %s", filename.c_str());
-      }
-    }
-    GTIFWriteKeys(gtif);
-    if (gtif)
-    {
-      GTIFFree(gtif);
-    }
-    _TIFFfree(buf);
-    TIFFClose(tif);
+    Idx max_column = this->columns();
+    // const Location loc_min{min_row, min_column};
+    // const Location loc_max{max_row, max_column};
+    // // #ifdef DEBUG_POINTS
+    // logging::check_equal(
+    //   loc_min.column(),
+    //   min_column,
+    //   "min_column");
+    // logging::check_equal(
+    //   loc_min.row(),
+    //   min_row,
+    //   "min_row");
+    // logging::check_equal(
+    //   loc_max.column(),
+    //   max_column,
+    //   "max_column");
+    // logging::check_equal(
+    //   loc_max.row(),
+    //   max_row,
+    //   "max_row");
+    // // #endif
+    return tuple<Idx, Idx, Idx, Idx>{
+      min_row,
+      min_column,
+      max_row,
+      max_column};
   }
 private:
   /**

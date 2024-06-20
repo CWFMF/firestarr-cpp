@@ -1193,10 +1193,12 @@ void Scenario::scheduleFireSpread(const Event& event)
                            : max_duration);
   // note("Spreading for %f minutes", duration);
   const auto new_time = time + duration / DAY_MINUTES;
+#ifdef DEBUG_TEMPORARY
   if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
   {
     printf("here\n");
   }
+#endif
   CellPointsMap points_cur = calculate_spread(
     *this,
     spread_info_,
@@ -1219,11 +1221,17 @@ void Scenario::scheduleFireSpread(const Event& event)
     m0.empty(),
     "No points");
 #endif
+#ifdef DEBUG_TEMPORARY
+  logging::note("%ld cells didn't spread", points_.map_.size());
+  logging::note("%ld cells were spread into", points_cur.map_.size());
+#endif
   // need to merge new points back into cells that didn't spread
   points_.merge(
     *unburnable_,
     points_cur);
-  logging::note("%ld cells burning", points_.map_.size());
+#ifdef DEBUG_TEMPORARY
+  logging::note("%ld cells after merge", points_.map_.size());
+#endif
 #ifdef DEBUG_POINTS
   map<Location, set<InnerPos>> m1{};
   for (const auto& kv : points_cur.map_)
@@ -1330,10 +1338,12 @@ void Scenario::scheduleFireSpread(const Event& event)
         for_cell.hash(),
         "for_cell.hash()");
 #endif
+#ifdef DEBUG_TEMPORARY
       if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
       {
         printf("here\n");
       }
+#endif
       if (canBurn(for_cell) && max_intensity > 0)
       {
         // HACK: make sure it can't round down to 0
@@ -1346,10 +1356,12 @@ void Scenario::scheduleFireSpread(const Event& event)
           intensity,
           for_cell,
           pts.sources());
+#ifdef DEBUG_TEMPORARY
         if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
         {
           printf("here\n");
         }
+#endif
         burn(fake_event, intensity);
       }
       if (!(*unburnable_)[for_cell.hash()]
@@ -1360,6 +1372,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
         const auto r = for_cell.row();
         const auto c = for_cell.column();
+#ifdef DEBUG_TEMPORARY
         const auto f_c = for_cell.fuelCode();
         if ((0 == id_) && (abs(new_time - 154.9987423154746) < 0.001))
         {
@@ -1391,6 +1404,7 @@ void Scenario::scheduleFireSpread(const Event& event)
               ((*unburnable_)[for_cell.hash()] ? "true" : "false"));
           }
         }
+#endif
         const Location loc{r, c};
 #ifdef DEBUG_POINTS
         logging::check_equal(
@@ -1483,7 +1497,9 @@ void Scenario::scheduleFireSpread(const Event& event)
     }
   }
 #endif
+#ifdef DEBUG_TEMPORARY
   logging::note("%ld cells after spread", points_.map_.size());
+#endif
   log_extensive("Spreading %d cells until %f", points_.map_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
