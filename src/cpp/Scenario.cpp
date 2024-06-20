@@ -1138,8 +1138,8 @@ void Scenario::scheduleFireSpread(const Event& event)
       const auto key = for_cell.key();
       // HACK: need to lookup before emplace since might try to create Cell without fuel
       // if (!fuel::is_null_fuel(loc))
-      const auto h = for_cell.hash();
-      if (!(*unburnable_)[h])
+      // const auto h = for_cell.hash();
+      // if (!(*unburnable_)[h])
       // if (canBurn(for_cell))
       {
         const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
@@ -1223,6 +1223,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   points_.merge(
     *unburnable_,
     points_cur);
+  logging::note("%ld cells burning", points_.map_.size());
 #ifdef DEBUG_POINTS
   map<Location, set<InnerPos>> m1{};
   for (const auto& kv : points_cur.map_)
@@ -1438,6 +1439,13 @@ void Scenario::scheduleFireSpread(const Event& event)
         (*unburnable_)[for_cell.hash()] = true;
 // not swapping means these points get dropped
 #ifdef DEBUG_POINTS
+        if (isSurrounded(for_cell))
+        {
+          logging::note(
+            "(%d, %d) is surrounded",
+            for_cell.column(),
+            for_cell.row());
+        }
         auto seek = points_.map_.find(loc);
         logging::check_fatal(
           seek != points_.map_.end(),
@@ -1475,6 +1483,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     }
   }
 #endif
+  logging::note("%ld cells after spread", points_.map_.size());
   log_extensive("Spreading %d cells until %f", points_.map_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
