@@ -112,15 +112,13 @@ public:
    * \param raz Spread azimuth for ros
    */
   void
-  ignite(const Location& location);
+  burn(const Location& location, IntensitySize intensity, double ros, fs::wx::Direction raz);
   /**
    * \brief Mark given location as burned
    * \param location Location to burn
    */
   void
-  burn(const Location& location);
-  void
-  update(const Location& location, IntensitySize intensity, double ros, fs::wx::Direction raz);
+  ignite(const Location& location);
   // void update(const Location& location,
   //             const SpreadInfo& spread_info);
   /**
