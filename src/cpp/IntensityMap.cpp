@@ -172,36 +172,48 @@ bool IntensityMap::isSurrounded(const Location& location) const
   }
   return true;
 }
-void IntensityMap::burn(const Location& location)
-{
-  lock_guard<mutex> lock(mutex_);
-  intensity_max_->set(location, 1);
-  (*is_burned_).set(location.hash());
-}
 void IntensityMap::ignite(const Location& location)
 {
-  update(location, 1, 0, tbd::wx::Direction::Zero);
+  burn(location, 1, 0, tbd::wx::Direction::Zero);
 }
-void IntensityMap::update(const Location& location,
-                          IntensitySize intensity,
-                          double ros,
-                          tbd::wx::Direction raz)
-// void IntensityMap::update(const Location& location,
-//                           const SpreadInfo& spread_info)
+void IntensityMap::burn(const Location& location,
+                        IntensitySize intensity,
+                        double ros,
+                        tbd::wx::Direction raz)
 {
   lock_guard<mutex> lock(mutex_);
+  // const auto is_new = !(*is_burned_)[location.hash()];
+  // if (is_new || intensity_max_->at(location) < intensity)
+  // {
+  //   intensity_max_->set(location, intensity);
+  // }
+  // // update ros and direction if higher ros
+  // if (is_new || rate_of_spread_at_max_->at(location) < ros)
+  // {
+  //   rate_of_spread_at_max_->set(location, ros);
+  //   direction_of_spread_at_max_->set(location, static_cast<DegreesSize>(raz.asDegrees()));
+  // }
+  // // just set anyway since it's probably faster than checking if we should
   // (*is_burned_).set(location.hash());
-  const auto intensity_cur = intensity_max_->at(location);
-  if (intensity_cur < intensity)
+  if (!(*is_burned_)[location.hash()])
   {
     intensity_max_->set(location, intensity);
-  }
-  const auto ros_cur = rate_of_spread_at_max_->at(location);
-  // update ros and direction if higher ros
-  if (ros_cur < ros)
-  {
     rate_of_spread_at_max_->set(location, ros);
     direction_of_spread_at_max_->set(location, static_cast<DegreesSize>(raz.asDegrees()));
+    (*is_burned_).set(location.hash());
+  }
+  else
+  {
+    if (intensity_max_->at(location) < intensity)
+    {
+      intensity_max_->set(location, intensity);
+    }
+    // update ros and direction if higher ros
+    if (rate_of_spread_at_max_->at(location) < ros)
+    {
+      rate_of_spread_at_max_->set(location, ros);
+      direction_of_spread_at_max_->set(location, static_cast<DegreesSize>(raz.asDegrees()));
+    }
   }
 }
 void IntensityMap::save(const string& dir, const string& base_name) const
