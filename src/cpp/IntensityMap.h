@@ -100,16 +100,15 @@ public:
    * \param ros Rate of spread to check against maximu (m/min)
    * \param raz Spread azimuth for ros
    */
-  void ignite(const Location& location);
+  void burn(const Location& location,
+            IntensitySize intensity,
+            double ros,
+            tbd::wx::Direction raz);
   /**
    * \brief Mark given location as burned
    * \param location Location to burn
    */
-  void burn(const Location& location);
-  void update(const Location& location,
-              IntensitySize intensity,
-              double ros,
-              tbd::wx::Direction raz);
+  void ignite(const Location& location);
   // void update(const Location& location,
   //             const SpreadInfo& spread_info);
   /**
