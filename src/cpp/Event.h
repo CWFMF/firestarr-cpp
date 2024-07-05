@@ -5,6 +5,8 @@
 #pragma once
 #include "stdafx.h"
 #include "Cell.h"
+#include "FireSpread.h"
+
 namespace tbd::sim
 {
 /**
@@ -35,7 +37,7 @@ public:
    */
   [[nodiscard]] static constexpr Event makeEnd(const double time)
   {
-    return {time, NoLocation, 0, END_SIMULATION, 0, 0};
+    return {time, NoLocation, 0, END_SIMULATION, nullptr, 0};
   }
   /**
    * \brief Make new fire event
@@ -46,7 +48,7 @@ public:
   [[nodiscard]] static Event constexpr makeNewFire(const double time,
                                                    const topo::Cell& cell)
   {
-    return {time, cell, 0, NEW_FIRE, 0, 0};
+    return {time, cell, 0, NEW_FIRE, nullptr, 0};
   }
   /**
    * \brief Make simulation save event
@@ -55,7 +57,7 @@ public:
    */
   [[nodiscard]] static Event constexpr makeSave(const double time)
   {
-    return {time, NoLocation, 0, SAVE, 0, 0};
+    return {time, NoLocation, 0, SAVE, nullptr, 0};
   }
   /**
    * \brief Make fire spread event
@@ -64,7 +66,7 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(const double time)
   {
-    return makeFireSpread(time, 0);
+    return makeFireSpread(time, nullptr);
   }
   /**
    * \brief Make fire spread event
@@ -74,9 +76,9 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const double time,
-    const IntensitySize intensity)
+    const SpreadInfo* spread_info)
   {
-    return makeFireSpread(time, intensity, NoLocation);
+    return makeFireSpread(time, spread_info, NoLocation);
   }
   /**
    * \brief Make fire spread event
@@ -87,10 +89,10 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const double time,
-    const IntensitySize intensity,
+    const SpreadInfo* spread_info,
     const topo::Cell& cell)
   {
-    return makeFireSpread(time, intensity, cell, 254);
+    return makeFireSpread(time, spread_info, cell, 254);
   }
   /**
    * \brief Make fire spread event
@@ -101,11 +103,11 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const double time,
-    const IntensitySize intensity,
+    const SpreadInfo* spread_info,
     const topo::Cell& cell,
     const CellIndex source)
   {
-    return {time, cell, source, FIRE_SPREAD, intensity, 0};
+    return {time, cell, source, FIRE_SPREAD, spread_info, 0};
   }
   ~Event() = default;
   /**
@@ -160,7 +162,23 @@ public:
    */
   [[nodiscard]] constexpr IntensitySize intensity() const
   {
-    return intensity_;
+    return nullptr == spread_info_ ? 1 : spread_info_->maxIntensity();
+  }
+  /**
+   * \brief Head fire spread direction
+   * \return Head fire spread direction
+   */
+  [[nodiscard]] constexpr wx::Direction raz() const
+  {
+    return nullptr == spread_info_ ? tbd::wx::Direction::Zero : spread_info_->headDirection();
+  }
+  /**
+   * \brief Head fire rate of spread (m/min)
+   * \return Head fire rate of spread (m/min)
+   */
+  [[nodiscard]] constexpr double ros() const
+  {
+    return nullptr == spread_info_ ? 0 : spread_info_->headRos();
   }
   /**
    * \brief Cell Event takes place in
@@ -192,13 +210,13 @@ private:
                   const topo::Cell& cell,
                   const CellIndex source,
                   const Type type,
-                  const IntensitySize intensity,
+                  const SpreadInfo* spread_info,
                   const double time_at_location)
     : time_(time),
       time_at_location_(time_at_location),
       cell_(cell),
       type_(type),
-      intensity_(intensity),
+      spread_info_(spread_info),
       source_(source)
   {
   }
@@ -219,9 +237,9 @@ private:
    */
   Type type_;
   /**
-   * \brief Burn Intensity (kW/m)
+   * \brief Spread information at time and place of event
    */
-  IntensitySize intensity_;
+  const SpreadInfo* spread_info_;
   /**
    * \brief CellIndex for relative Cell that spread into from
    */
