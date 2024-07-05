@@ -524,7 +524,7 @@ Scenario::evaluate(
         // HACK: we still want the fire to have existed, so set the intensity of the origin
       }
       // fires start with intensity of 1
-      burn(event, 1);
+      burn(event);
       scheduleFireSpread(event);
       break;
     case Event::END_SIMULATION:
@@ -725,8 +725,7 @@ Scenario::operator=(
 
 void
 Scenario::burn(
-  const Event& event,
-  const IntensitySize
+  const Event& event
 )
 {
 #ifdef DEBUG_SIMULATION
@@ -747,8 +746,7 @@ Scenario::burn(
 #endif
   //  Observers only care about cells burning so do it here
   notify(event);
-  // WIP: call burn without proper information for now so we can commit IntensityMap changes
-  intensity_->burn(event.cell(), event.intensity(), 0, fs::Direction::Zero);
+  intensity_->burn(event.cell(), event.intensity(), event.ros(), event.raz());
 #ifdef DEBUG_GRIDS
   log_check_fatal(!intensity_->hasBurned(event.cell()), "Wasn't marked as burned after burn");
 #endif
@@ -852,12 +850,8 @@ Scenario::run(
     // would be burned already if perimeter applied
     if (canBurn(location))
     {
-      const auto fake_event = Event::makeFireSpread(
-        start_time_,
-        static_cast<IntensitySize>(1),
-        location
-      );
-      burn(fake_event, static_cast<IntensitySize>(1));
+      const auto fake_event = Event::makeFireSpread(start_time_, nullptr, location);
+      burn(fake_event);
     }
   }
   while (!cancelled_ && !scheduler_.empty())
@@ -1093,11 +1087,14 @@ Scenario::scheduleFireSpread(
 #endif
     if (canBurn(for_cell) && max_intensity > 0)
     {
-      // HACK: make sure it can't round down to 0
-      const auto intensity = static_cast<IntensitySize>(max(1.0, max_intensity));
       // HACK: just use the first cell as the source
-      const auto fake_event = Event::makeFireSpread(new_time, intensity, for_cell, pts.sources());
-      burn(fake_event, intensity);
+      const auto fake_event = Event::makeFireSpread(
+        new_time,
+        &(seek_spread->second),
+        for_cell,
+        pts.sources()
+      );
+      burn(fake_event);
     }
     if (!unburnable_.at(for_cell.hash())
         // && canBurn(for_cell)

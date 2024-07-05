@@ -176,10 +176,9 @@ public:
   /**
    * \brief Burn cell that Event takes place in
    * \param event Event with cell location
-   * \param burn_intensity Intensity to burn cell with
    */
   void
-  burn(const Event& event, IntensitySize burn_intensity);
+  burn(const Event& event);
   /**
    * Mark as cancelled so it stops computing on next event.
    * \param Whether to log a warning about this being cancelled
@@ -243,7 +242,7 @@ public:
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   cellSize() const
   {
     return model_->cellSize();
@@ -273,7 +272,7 @@ public:
    * \brief Simulation start time
    * \return Simulation start time
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr DurationSize
   startTime() const
   {
     return start_time_;
@@ -304,7 +303,7 @@ public:
    * \param for_day Day to get sunrise time for
    * \return Sunrise time for given day
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr DurationSize
   dayStart(
     const size_t for_day
   ) const
@@ -317,7 +316,7 @@ public:
    * \param for_day Day to get sunset time for
    * \return Sunset time for given day
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr DurationSize
   dayEnd(
     const size_t for_day
   ) const
@@ -364,7 +363,7 @@ public:
    * \param time Time to get value for
    * \return Extinction threshold for given time
    */
-  [[nodiscard]] double
+  [[nodiscard]] ThresholdSize
   extinctionThreshold(
     const DurationSize time
   ) const
@@ -377,7 +376,7 @@ public:
    * \param time Time to get value for
    * \return Spread threshold for given time
    */
-  [[nodiscard]] double
+  [[nodiscard]] ThresholdSize
   spreadThresholdByRos(
     const DurationSize time
   ) const
@@ -405,7 +404,7 @@ public:
    * \param time Time to determine for
    * \return Minimum Fine Fuel Moisture Code for spread to be possible
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   minimumFfmcForSpread(
     const DurationSize time
   ) const noexcept
@@ -443,7 +442,7 @@ public:
    * \return This
    */
   Scenario*
-  run(map<double, ProbabilityMap*>* probabilities);
+  run(map<DurationSize, ProbabilityMap*>* probabilities);
   /**
    * \brief Schedule a fire spread Event
    * \param event Event to schedule
@@ -454,7 +453,7 @@ public:
    * \brief Current fire size (ha)
    * \return Current fire size (ha)
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   currentFireSize() const;
   /**
    * \brief Whether or not a Cell can burn
@@ -586,7 +585,7 @@ public:
    * \brief List of what times the simulation will save
    * \return List of what times the simulation will save
    */
-  [[nodiscard]] vector<double>
+  [[nodiscard]] vector<DurationSize>
   savePoints() const;
   /**
    * \brief Save state of Scenario at given time
@@ -651,15 +650,15 @@ protected:
   /**
    * \brief List of times to save simulation
    */
-  vector<double> save_points_;
+  vector<DurationSize> save_points_;
   /**
    * \brief Thresholds used to determine if extinction occurs
    */
-  vector<double> extinction_thresholds_{};
+  vector<ThresholdSize> extinction_thresholds_{};
   /**
    * \brief Thresholds used to determine if spread occurs
    */
-  vector<double> spread_thresholds_by_ros_{};
+  vector<ThresholdSize> spread_thresholds_by_ros_{};
   /**
    * \brief Current time for this Scenario
    */
@@ -691,11 +690,11 @@ protected:
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
-  map<Cell, double> arrival_{};
+  map<Cell, DurationSize> arrival_{};
   /**
    * \brief Maximum rate of spread for current time
    */
-  double max_ros_;
+  MathSize max_ros_;
   /**
    * \brief Cell that the Scenario starts from if no Perimeter
    */
@@ -715,7 +714,7 @@ protected:
   /**
    * \brief Map of ProbabilityMaps by time snapshot for them was taken
    */
-  map<double, ProbabilityMap*>* probabilities_{nullptr};
+  map<DurationSize, ProbabilityMap*>* probabilities_{nullptr};
   /**
    * \brief Where to append the final size of this Scenario when run is complete
    */
@@ -735,7 +734,7 @@ protected:
   /**
    * \brief Which save point is the last one
    */
-  double last_save_;
+  DurationSize last_save_;
   /**
    * \brief Time index for current time
    */

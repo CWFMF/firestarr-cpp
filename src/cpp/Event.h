@@ -8,6 +8,7 @@
 #include "stdafx.h"
 
 #include "Cell.h"
+#include "FireSpread.h"
 
 namespace fs
 {
@@ -44,7 +45,7 @@ public:
     const DurationSize time
   )
   {
-    return {time, NoLocation, 0, END_SIMULATION, 0, 0};
+    return {time, NoLocation, 0, END_SIMULATION, nullptr, 0};
   }
 
   /**
@@ -58,7 +59,7 @@ public:
     const Cell& cell
   )
   {
-    return {time, cell, 0, NEW_FIRE, 0, 0};
+    return {time, cell, 0, NEW_FIRE, nullptr, 0};
   }
 
   /**
@@ -70,7 +71,7 @@ public:
     const DurationSize time
   )
   {
-    return {time, NoLocation, 0, SAVE, 0, 0};
+    return {time, NoLocation, 0, SAVE, nullptr, 0};
   }
 
   /**
@@ -82,7 +83,7 @@ public:
     const DurationSize time
   )
   {
-    return makeFireSpread(time, 0);
+    return makeFireSpread(time, nullptr);
   }
 
   /**
@@ -93,10 +94,10 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const DurationSize time,
-    const IntensitySize intensity
+    const SpreadInfo* spread_info
   )
   {
-    return makeFireSpread(time, intensity, NoLocation);
+    return makeFireSpread(time, spread_info, NoLocation);
   }
 
   /**
@@ -108,11 +109,11 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const DurationSize time,
-    const IntensitySize intensity,
+    const SpreadInfo* spread_info,
     const Cell& cell
   )
   {
-    return makeFireSpread(time, intensity, cell, 254);
+    return makeFireSpread(time, spread_info, cell, 254);
   }
 
   /**
@@ -124,12 +125,12 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const DurationSize time,
-    const IntensitySize intensity,
+    const SpreadInfo* spread_info,
     const Cell& cell,
     const CellIndex source
   )
   {
-    return {time, cell, source, FIRE_SPREAD, intensity, 0};
+    return {time, cell, source, FIRE_SPREAD, spread_info, 0};
   }
 
   ~Event() = default;
@@ -144,7 +145,7 @@ public:
    * \brief Time of Event (decimal days)
    * \return Time of Event (decimal days)
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr DurationSize
   time() const
   {
     return time_;
@@ -164,7 +165,7 @@ public:
    * \brief Duration that Event Cell has been burning (decimal days)
    * \return Duration that Event Cell has been burning (decimal days)
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr DurationSize
   timeAtLocation() const
   {
     return time_at_location_;
@@ -177,7 +178,27 @@ public:
   [[nodiscard]] constexpr IntensitySize
   intensity() const
   {
-    return intensity_;
+    return nullptr == spread_info_ ? 1 : spread_info_->maxIntensity();
+  }
+
+  /**
+   * \brief Head fire spread direction
+   * \return Head fire spread direction
+   */
+  [[nodiscard]] constexpr Direction
+  raz() const
+  {
+    return nullptr == spread_info_ ? fs::Direction::Zero : spread_info_->headDirection();
+  }
+
+  /**
+   * \brief Head fire rate of spread (m/min)
+   * \return Head fire rate of spread (m/min)
+   */
+  [[nodiscard]] constexpr MathSize
+  ros() const
+  {
+    return nullptr == spread_info_ ? 0 : spread_info_->headRos();
   }
 
   /**
@@ -215,14 +236,14 @@ private:
     const Cell& cell,
     const CellIndex source,
     const Type type,
-    const IntensitySize intensity,
+    const SpreadInfo* spread_info,
     const DurationSize time_at_location
   )
     : time_(time),
       time_at_location_(time_at_location),
       cell_(cell),
       type_(type),
-      intensity_(intensity),
+      spread_info_(spread_info),
       source_(source)
   {
   }
@@ -244,14 +265,13 @@ private:
    */
   Type type_;
   /**
-   * \brief Burn Intensity (kW/m)
+   * \brief Spread information at time and place of event
    */
-  IntensitySize intensity_;
+  const SpreadInfo* spread_info_{nullptr};
   /**
    * \brief CellIndex for relative Cell that spread into from
    */
   CellIndex source_;
 };
 }
-
 #endif
