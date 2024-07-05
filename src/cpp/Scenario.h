@@ -140,9 +140,8 @@ public:
   /**
    * \brief Burn cell that Event takes place in
    * \param event Event with cell location
-   * \param burn_intensity Intensity to burn cell with
    */
-  void burn(const Event& event, IntensitySize burn_intensity);
+  void burn(const Event& event);
   /**
    * Mark as cancelled so it stops computing on next event.
    * \param Whether to log a warning about this being cancelled
