@@ -247,10 +247,10 @@ protected:
       min_column = max_column = this->columns() / 2;
     }
     return tuple<Idx, Idx, Idx, Idx>{
-      min_row,
       min_column,
-      max_row,
-      max_column};
+      min_row,
+      max_column,
+      max_row};
   }
 public:
   /**

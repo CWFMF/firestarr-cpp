@@ -421,10 +421,10 @@ protected:
     //   "max_row");
     // // #endif
     return tuple<Idx, Idx, Idx, Idx>{
-      min_row,
       min_column,
-      max_row,
-      max_column};
+      min_row,
+      max_column,
+      max_row};
   }
 private:
   /**
