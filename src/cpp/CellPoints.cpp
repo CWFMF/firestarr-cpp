@@ -8,6 +8,7 @@
 #include "Log.h"
 #include "ConvexHull.h"
 #include "Location.h"
+#include "Scenario.h"
 
 namespace tbd::sim
 {
@@ -945,5 +946,166 @@ set<InnerPos> CellPointsMap::unique() const noexcept
 #endif
   }
   return r;
+}
+CellPointsMap merge_list(
+  const BurnedData& unburnable,
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const spreading_points& to_spread)
+{
+  auto spread = std::views::transform(
+    to_spread,
+    [&duration, &spread_info](
+      const spreading_points::value_type& kv0) -> CellPointsMap {
+      auto& key = kv0.first;
+      const auto& offsets = spread_info[key].offsets();
+#ifdef DEBUG_POINTS
+      logging::check_fatal(
+        offsets.empty(),
+        "offsets.empty()");
+#endif
+      const spreading_points::mapped_type& cell_pts = kv0.second;
+#ifdef DEBUG_POINTS
+      logging::check_fatal(
+        cell_pts.empty(),
+        "cell_pts.empty()");
+#endif
+      auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
+#ifdef DEBUG_POINTS
+      logging::check_fatal(
+        r.unique().empty(),
+        "r.unique().empty()");
+#endif
+      return r;
+    });
+  auto it = spread.begin();
+  CellPointsMap out{};
+  while (spread.end() != it)
+  {
+    const CellPointsMap& cell_pts = *it;
+#ifdef DEBUG_POINTS
+    logging::check_fatal(
+      cell_pts.unique().empty(),
+      "Merging empty points");
+#endif
+    // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not adding
+    // const auto h = cell_pts.location().hash();
+    // if (!unburnable[h])
+    // {
+    out.merge(unburnable, cell_pts);
+#ifdef DEBUG_POINTS
+    logging::check_fatal(
+      out.unique().empty(),
+      "Empty points after merge");
+#endif
+    // }
+    ++it;
+  }
+  return out;
+}
+void CellPointsMap::calculate_spread(
+  Scenario& scenario,
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const double duration,
+  const spreading_points& to_spread,
+  const BurnedData& unburnable)
+{
+  CellPointsMap cell_pts = merge_list(
+    unburnable,
+    spread_info,
+    duration,
+    to_spread);
+#ifdef DEBUG_POINTS
+  const auto u = cell_pts.unique();
+  logging::check_fatal(
+    u.empty(),
+    "No points after spread");
+  size_t total = 0;
+  set<InnerPos> u0{};
+  for (const auto& kv : cell_pts.map_)
+  {
+    const auto loc = kv.first;
+    const auto u1 = kv.second.unique();
+    logging::check_fatal(
+      u1.empty(),
+      "No points in CellPoints for (%d, %d) after spread",
+      loc.column(),
+      loc.row());
+    // make sure all points are actually in the right location
+    const auto s0_cur = u0.size();
+    logging::check_equal(
+      s0_cur,
+      total,
+      "total");
+    for (const auto& p1 : u1)
+    {
+      const Location loc1{static_cast<Idx>(p1.y()), static_cast<Idx>(p1.x())};
+      logging::check_equal(
+        loc1.column(),
+        loc.column(),
+        "column");
+      logging::check_equal(
+        loc1.row(),
+        loc.row(),
+        "row");
+      u0.emplace(p1);
+    }
+    total += u1.size();
+    logging::check_equal(
+      s0_cur + u1.size(),
+      total,
+      "total");
+  }
+#endif
+  cell_pts.remove_if(
+    [&scenario, &unburnable](
+      const pair<Location, CellPoints>& kv) {
+      const auto& location = kv.first;
+#ifdef DEBUG_POINTS
+      // look up Cell from scenario here since we don't need attributes until now
+      const Cell k = scenario.cell(location);
+      const auto& cell_pts = kv.second;
+      const auto u = cell_pts.unique();
+      logging::check_fatal(
+        u.empty(),
+        "Empty points when checking to remove");
+      logging::check_equal(
+        k,
+        scenario.cell(cell_pts.location()),
+        "CellPoints location");
+      logging::check_equal(
+        k.column(),
+        location.column(),
+        "Cell column");
+      logging::check_equal(
+        k.row(),
+        location.row(),
+        "Cell row");
+#endif
+      const auto h = location.hash();
+      // clear out if unburnable
+      const auto do_clear = unburnable[h];
+#ifdef DEBUG_POINTS
+      logging::check_equal(h, k.hash(), "Cell vs Location hash()");
+      if (fuel::is_null_fuel(k))
+      {
+        logging::check_fatal(
+          !do_clear,
+          "Not clearing when not fuel");
+      }
+#endif
+      return do_clear;
+    });
+#ifdef DEBUG_TEMPORARY
+  logging::note("%ld cells didn't spread", points_.map_.size());
+  logging::note("%ld cells were spread into", points_cur.map_.size());
+#endif
+  // need to merge new points back into cells that didn't spread
+  merge(
+    unburnable,
+    cell_pts);
+#ifdef DEBUG_TEMPORARY
+  logging::note("%ld cells after merge", points_.map_.size());
+#endif
 }
 }
