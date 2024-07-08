@@ -139,6 +139,8 @@ private:
   CellIndex src_;
 };
 
+using spreading_points = CellPoints::spreading_points;
+class Scenario;
 // map that merges items when try_emplace doesn't insert
 class CellPointsMap
 {
@@ -155,11 +157,18 @@ public:
   // apply function to each CellPoints within and remove matches
   void
   remove_if(std::function<bool(const pair<Location, CellPoints>&)> F);
+  void
+  calculate_spread(
+    Scenario& scenario,
+    map<SpreadKey, SpreadInfo>& spread_info,
+    const double duration,
+    const spreading_points& to_spread,
+    const BurnedData& unburnable
+  );
   // FIX: public for debugging right now
   // private:
   map<Location, CellPoints> map_;
 };
-using spreading_points = CellPoints::spreading_points;
 
 CellPointsMap
 apply_offsets_spreadkey(
