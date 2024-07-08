@@ -21,8 +21,8 @@ namespace fs
 {
 using std::cout;
 
-constexpr auto CELL_CENTER = 0.5;
-constexpr auto PRECISION = 0.001;
+constexpr auto CELL_CENTER = static_cast<InnerSize>(0.5);
+constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
 static atomic<size_t> TOTAL_STEPS = 0;
@@ -47,119 +47,6 @@ do_par(
 )
 {
   std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
-}
-
-CellPointsMap
-merge_list(
-  const BurnedData& unburnable,
-  map<SpreadKey, SpreadInfo>& spread_info,
-  const double duration,
-  const spreading_points& to_spread
-)
-{
-  auto spread = std::views::transform(
-    to_spread,
-    [&duration, &spread_info](const spreading_points::value_type& kv0) -> CellPointsMap {
-      auto& key = kv0.first;
-      const auto& offsets = spread_info[key].offsets();
-#ifdef DEBUG_POINTS
-      logging::check_fatal(offsets.empty(), "offsets.empty()");
-#endif
-      const spreading_points::mapped_type& cell_pts = kv0.second;
-#ifdef DEBUG_POINTS
-      logging::check_fatal(cell_pts.empty(), "cell_pts.empty()");
-#endif
-      auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
-#ifdef DEBUG_POINTS
-      logging::check_fatal(r.unique().empty(), "r.unique().empty()");
-#endif
-      return r;
-    }
-  );
-  auto it = spread.begin();
-  CellPointsMap out{};
-  while (spread.end() != it)
-  {
-    const CellPointsMap& cell_pts = *it;
-#ifdef DEBUG_POINTS
-    logging::check_fatal(cell_pts.unique().empty(), "Merging empty points");
-#endif
-    // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not
-    // adding const auto h = cell_pts.location().hash(); if (!unburnable[h])
-    // {
-    out.merge(unburnable, cell_pts);
-#ifdef DEBUG_POINTS
-    logging::check_fatal(out.unique().empty(), "Empty points after merge");
-#endif
-    ++it;
-  }
-  return out;
-}
-
-CellPointsMap
-calculate_spread(
-  Scenario& scenario,
-  map<SpreadKey, SpreadInfo>& spread_info,
-  const double duration,
-  const spreading_points& to_spread,
-  const BurnedData& unburnable
-)
-{
-  CellPointsMap cell_pts = merge_list(unburnable, spread_info, duration, to_spread);
-#ifdef DEBUG_POINTS
-  const auto u = cell_pts.unique();
-  logging::check_fatal(u.empty(), "No points after spread");
-  size_t total = 0;
-  set<InnerPos> u0{};
-  for (const auto& kv : cell_pts.map_)
-  {
-    const auto loc = kv.first;
-    const auto u1 = kv.second.unique();
-    logging::check_fatal(
-      u1.empty(),
-      "No points in CellPoints for (%d, %d) after spread",
-      loc.column(),
-      loc.row()
-    );
-    // make sure all points are actually in the right location
-    const auto s0_cur = u0.size();
-    logging::check_equal(s0_cur, total, "total");
-    for (const auto& p1 : u1)
-    {
-      const Location loc1{static_cast<Idx>(p1.y()), static_cast<Idx>(p1.x())};
-      logging::check_equal(loc1.column(), loc.column(), "column");
-      logging::check_equal(loc1.row(), loc.row(), "row");
-      u0.emplace(p1);
-    }
-    total += u1.size();
-    logging::check_equal(s0_cur + u1.size(), total, "total");
-  }
-#endif
-  cell_pts.remove_if([&scenario, &unburnable](const pair<Location, CellPoints>& kv) {
-    const auto& location = kv.first;
-#ifdef DEBUG_POINTS
-    // look up Cell from scenario here since we don't need attributes until now
-    const Cell k = scenario.cell(location);
-    const auto& cell_pts = kv.second;
-    const auto u = cell_pts.unique();
-    logging::check_fatal(u.empty(), "Empty points when checking to remove");
-    logging::check_equal(k, scenario.cell(cell_pts.location()), "CellPoints location");
-    logging::check_equal(k.column(), location.column(), "Cell column");
-    logging::check_equal(k.row(), location.row(), "Cell row");
-#endif
-    const auto h = location.hash();
-    // clear out if unburnable
-    const auto do_clear = unburnable.at(h);
-#ifdef DEBUG_POINTS
-    logging::check_equal(h, k.hash(), "Cell vs Location hash()");
-    if (is_null_fuel(k))
-    {
-      logging::check_fatal(!do_clear, "Not clearing when not fuel");
-    }
-#endif
-    return do_clear;
-  });
-  return cell_pts;
 }
 
 void
@@ -234,16 +121,16 @@ Scenario::~Scenario()
  */
 static void
 make_threshold(
-  vector<double>* thresholds,
+  vector<ThresholdSize>* thresholds,
   mt19937* mt,
   const Day start_day,
   const Day last_date,
-  double (*convert)(double value)
+  ThresholdSize (*convert)(double value)
 )
 {
   const auto total_weight = Settings::thresholdScenarioWeight() + Settings::thresholdDailyWeight()
                           + Settings::thresholdHourlyWeight();
-  uniform_real_distribution<double> rand(0.0, 1.0);
+  uniform_real_distribution<ThresholdSize> rand(0.0, 1.0);
   const auto general = rand(*mt);
   for (size_t i = start_day; i < MAX_DAYS; ++i)
   {
@@ -275,9 +162,10 @@ make_threshold(
   }
 }
 
-constexpr double
+template <class V>
+constexpr V
 same(
-  const double value
+  const V value
 ) noexcept
 {
   return value;
@@ -285,7 +173,7 @@ same(
 
 static void
 make_threshold(
-  vector<double>* thresholds,
+  vector<ThresholdSize>* thresholds,
   mt19937* mt,
   const Day start_day,
   const Day last_date
@@ -786,7 +674,7 @@ void
 saveProbabilities(
   const string_view dir,
   const string_view base_name,
-  vector<double>& thresholds
+  vector<ThresholdSize>& thresholds
 )
 {
   ofstream out{string(dir) + string(base_name) + ".csv"};
@@ -799,7 +687,7 @@ saveProbabilities(
 #endif
 Scenario*
 Scenario::run(
-  map<double, ProbabilityMap*>* probabilities
+  map<DurationSize, ProbabilityMap*>* probabilities
 )
 {
 #ifdef DEBUG_SIMULATION
@@ -807,13 +695,14 @@ Scenario::run(
 #endif
   log_verbose("Starting");
   CriticalSection _(Model::task_limiter);
+  logging::debug("Concurrent Scenario limit is %d", Model::task_limiter.limit());
   unburnable_ = model_->environment().unburnable();
   probabilities_ = probabilities;
   log_verbose("Setting save points");
   for (auto time : save_points_)
   {
     // NOTE: these happen in this order because of the way they sort based on type
-    addEvent(Event::makeSave(static_cast<double>(time)));
+    addEvent(Event::makeSave(static_cast<DurationSize>(time)));
   }
   if (nullptr == perimeter_)
   {
@@ -870,7 +759,7 @@ Scenario::run(
   const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
   if (Settings::surface())
   {
-    const auto ratio_done = static_cast<double>(completed) / count;
+    const auto ratio_done = static_cast<MathSize>(completed) / count;
     const auto s = model_->runTime().count();
     const auto r = static_cast<size_t>(s / ratio_done) - s;
     log_output(
@@ -929,7 +818,7 @@ Scenario::scheduleFireSpread(
   const auto wx_daily = Settings::surface() ? model_->yesterday() : weather_daily(time);
   current_time_ = time;
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
-  const auto next_time = static_cast<double>(this_time + 1) / DAY_HOURS;
+  const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
   const auto max_duration = (next_time - time) * DAY_MINUTES;
   const auto max_time = time + max_duration / DAY_MINUTES;
@@ -1013,8 +902,7 @@ Scenario::scheduleFireSpread(
     ((max_ros_ > 0) ? min(max_duration, Settings::maximumSpreadDistance() * cellSize() / max_ros_)
                     : max_duration);
   const auto new_time = time + duration / DAY_MINUTES;
-  CellPointsMap
-    points_cur = calculate_spread(*this, spread_info_, duration, to_spread, unburnable_);
+  points_.calculate_spread(*this, spread_info_, duration, to_spread, unburnable_);
 #ifdef DEBUG_POINTS
   logging::check_fatal(points_.unique().empty(), "points_.unique().empty()");
   map<Location, set<InnerPos>> m0{};
@@ -1025,11 +913,9 @@ Scenario::scheduleFireSpread(
   }
   logging::check_fatal(m0.empty(), "No points");
 #endif
-  // need to merge new points back into cells that didn't spread
-  points_.merge(unburnable_, points_cur);
 #ifdef DEBUG_POINTS
   map<Location, set<InnerPos>> m1{};
-  for (const auto& kv : points_cur.map_)
+  for (const auto& kv : points_.map_)
   {
     m1.emplace(kv.first, kv.second.unique());
     logging::check_fatal(is_null_fuel(cell(kv.first)), "Spreading in non-fuel");
@@ -1172,7 +1058,7 @@ Scenario::scheduleFireSpread(
   addEvent(Event::makeFireSpread(new_time));
 }
 
-double
+MathSize
 Scenario::currentFireSize() const
 {
   return intensity_->fireSize();
@@ -1211,7 +1097,7 @@ Scenario::addSaveByOffset(
   addSave(static_cast<Day>(startTime()) + offset);
 }
 
-vector<double>
+vector<DurationSize>
 Scenario::savePoints() const
 {
   return save_points_;
