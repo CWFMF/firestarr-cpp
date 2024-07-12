@@ -477,13 +477,24 @@ public:
                              fuel.c_str(),
                              fuel_obj->code());
             }
-            fuel_grid_codes_[fuel_obj] = value;
-            fuel_good_values_.emplace(value, str);
+            // fuel_grid_codes_[fuel_obj] = value;
+            auto emplaced = fuel_grid_codes_.try_emplace(fuel_obj, value);
+            if (!emplaced.second)
+            {
+              logging::debug("Fuel (%d, '%s') is treated like '%s' with internal code %d and tried to replace value %d for %d",
+                             value,
+                             name.c_str(),
+                             fuel.c_str(),
+                             fuel_obj->code(),
+                             value,
+                             emplaced.first->second);
+            }
+            fuel_good_values_[value].push_back(str);
           }
           else
           {
             logging::warning("Unknown fuel type '%s' in fuel lookup table", str.c_str());
-            fuel_bad_values_.emplace(value, str);
+            fuel_bad_values_[value].push_back(str);
           }
           read_ok = true;
         }
@@ -566,7 +577,10 @@ public:
   {
     for (const auto& kv : fuel_good_values_)
     {
-      logging::note("%ld => %s", kv.first, kv.second.c_str());
+      for (const auto& name : kv.second)
+      {
+        logging::note("%ld => %s", kv.first, name.c_str());
+      }
     }
   }
   /**
@@ -628,11 +642,11 @@ private:
   /**
    * \brief Codes from input .lut that were for fuel types that are implemented
    */
-  unordered_map<FuelSize, string> fuel_good_values_{};
+  unordered_map<FuelSize, vector<string>> fuel_good_values_{};
   /**
    * \brief Codes from input .lut that were for fuel types that are not implemented
    */
-  unordered_map<FuelSize, string> fuel_bad_values_{};
+  unordered_map<FuelSize, vector<string>> fuel_bad_values_{};
 };
 const FuelType* FuelLookup::codeToFuel(const FuelSize value, const FuelSize nodata) const
 {
