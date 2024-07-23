@@ -4,23 +4,15 @@
 
 #include "ProbabilityMap.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstddef>
-#include <cstdio>
-#include <ctime>
-
-#include <sqltypes.h>
-
-#include "Grid.h"
 #include "GridMap.h"
 #include "IntensityMap.h"
-#include "Log.h"
-#include "Settings.h"
-#include "Util.h"
 
 namespace fs
 {
+static constexpr size_t VALUE_UNPROCESSED = 2;
+static constexpr size_t VALUE_PROCESSING = 3;
+static constexpr size_t VALUE_PROCESSED = 4;
+
 ProbabilityMap::ProbabilityMap(
   const DurationSize time,
   const DurationSize start_time,
@@ -230,7 +222,8 @@ ProbabilityMap::saveAll(
         &ProbabilityMap::saveTotal,
         this,
         output_directory,
-        fix_string("probability")
+        fix_string("probability"),
+        is_interim
       ));
     }
     if (Settings::saveOccurrence())
@@ -280,7 +273,7 @@ ProbabilityMap::saveAll(
   {
     if (Settings::saveProbability())
     {
-      files.append_range(saveTotal(output_directory, fix_string("probability")));
+      files.append_range(saveTotal(output_directory, fix_string("probability"), is_interim));
     }
     if (Settings::saveOccurrence())
     {
@@ -300,16 +293,18 @@ ProbabilityMap::saveAll(
 FileList
 ProbabilityMap::saveTotal(
   const string_view output_directory,
-  const string_view base_name
+  const string_view base_name,
+  const bool is_interim
 ) const
 {
+  // FIX: do this for other outputs too
   auto with_perim = all_;
   if (nullptr != perimeter_)
   {
     for (auto loc : perimeter_->burned())
     {
-      // make initial perimeter cells 2* so that probability ends up as 2
-      with_perim.data[loc] *= 2;
+      // multiply initial perimeter cells so that probability shows processing status
+      with_perim.data[loc] *= (is_interim ? VALUE_PROCESSING : VALUE_PROCESSED);
     }
   }
   return with_perim

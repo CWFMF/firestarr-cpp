@@ -78,7 +78,7 @@ public:
    * \brief List of sizes of IntensityMaps that have been added
    * \return List of sizes of IntensityMaps that have been added
    */
-  [[nodiscard]] vector<double>
+  [[nodiscard]] vector<MathSize>
   getSizes() const;
   /**
    * \brief Generate Statistics on sizes of IntensityMaps that have been added
@@ -127,7 +127,8 @@ public:
    * \return FileList of file names saved to
    */
   [[nodiscard]] FileList
-  saveTotal(const string_view output_directory, const string_view base_name) const;
+  saveTotal(const string_view output_directory, const string_view base_name, const bool is_interim)
+    const;
   /**
    * \brief Save map representing all intensities occurrence
    * \param output_directory Directory to save to
@@ -186,7 +187,7 @@ private:
   /**
    * \brief List of sizes for perimeters that have been added
    */
-  vector<double> sizes_{};
+  vector<MathSize> sizes_{};
   /**
    * \brief Time in simulation this ProbabilityMap represents
    */
