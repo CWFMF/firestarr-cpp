@@ -102,7 +102,7 @@ public:
    * \brief Save map representing all intensities
    * \param base_name Base file name to save to
    */
-  void saveTotal(const string& base_name) const;
+  void saveTotal(const string& base_name, const bool is_interim) const;
   /**
    * \brief Save map representing all intensities occurrence
    * \param base_name Base file name to save to

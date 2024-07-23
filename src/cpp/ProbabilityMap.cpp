@@ -8,8 +8,13 @@
 #include "FBP45.h"
 #include "IntensityMap.h"
 #include "Model.h"
+#include "GridMap.h"
 namespace tbd::sim
 {
+static constexpr size_t VALUE_UNPROCESSED = 2;
+static constexpr size_t VALUE_PROCESSING = 3;
+static constexpr size_t VALUE_PROCESSED = 4;
+
 ProbabilityMap::ProbabilityMap(const string dir_out,
                                const double time,
                                const double start_time,
@@ -193,7 +198,8 @@ void ProbabilityMap::saveAll(const tm& start_time,
       results.push_back(async(launch::async,
                               &ProbabilityMap::saveTotal,
                               this,
-                              fix_string("probability")));
+                              fix_string("probability"),
+                              is_interim));
     }
     if (Settings::saveOccurrence())
     {
@@ -230,7 +236,7 @@ void ProbabilityMap::saveAll(const tm& start_time,
   {
     if (Settings::saveProbability())
     {
-      saveTotal(fix_string("probability"));
+      saveTotal(fix_string("probability"), is_interim);
     }
     if (Settings::saveOccurrence())
     {
@@ -245,15 +251,16 @@ void ProbabilityMap::saveAll(const tm& start_time,
     saveSizes(fix_string("sizes"));
   }
 }
-void ProbabilityMap::saveTotal(const string& base_name) const
+void ProbabilityMap::saveTotal(const string& base_name, const bool is_interim) const
 {
+  // FIX: do this for other outputs too
   auto with_perim = all_;
   if (nullptr != perimeter_)
   {
     for (auto loc : perimeter_->burned())
     {
-      // make initial perimeter cells 2* so that probability ends up as 2
-      with_perim.data[loc] *= 2;
+      // multiply initial perimeter cells so that probability shows processing status
+      with_perim.data[loc] *= (is_interim ? VALUE_PROCESSING : VALUE_PROCESSED);
     }
   }
   with_perim.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
