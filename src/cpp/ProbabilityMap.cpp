@@ -7,8 +7,13 @@
 #include "FBP45.h"
 #include "IntensityMap.h"
 #include "Model.h"
+#include "GridMap.h"
 namespace fs::sim
 {
+static constexpr size_t VALUE_UNPROCESSED = 2;
+static constexpr size_t VALUE_PROCESSING = 3;
+static constexpr size_t VALUE_PROCESSED = 4;
+
 ProbabilityMap::ProbabilityMap(
   const string dir_out,
   const double time,
@@ -210,9 +215,13 @@ ProbabilityMap::saveAll(
     vector<std::future<void>> results{};
     if (Settings::saveProbability())
     {
-      results.push_back(
-        async(launch::async, &ProbabilityMap::saveTotal, this, fix_string("probability"))
-      );
+      results.push_back(async(
+        launch::async,
+        &ProbabilityMap::saveTotal,
+        this,
+        fix_string("probability"),
+        is_interim
+      ));
     }
     if (Settings::saveOccurrence())
     {
@@ -242,7 +251,7 @@ ProbabilityMap::saveAll(
   {
     if (Settings::saveProbability())
     {
-      saveTotal(fix_string("probability"));
+      saveTotal(fix_string("probability"), is_interim);
     }
     if (Settings::saveOccurrence())
     {
@@ -259,16 +268,18 @@ ProbabilityMap::saveAll(
 }
 void
 ProbabilityMap::saveTotal(
-  const string& base_name
+  const string& base_name,
+  const bool is_interim
 ) const
 {
+  // FIX: do this for other outputs too
   auto with_perim = all_;
   if (nullptr != perimeter_)
   {
     for (auto loc : perimeter_->burned())
     {
-      // make initial perimeter cells 2* so that probability ends up as 2
-      with_perim.data[loc] *= 2;
+      // multiply initial perimeter cells so that probability shows processing status
+      with_perim.data[loc] *= (is_interim ? VALUE_PROCESSING : VALUE_PROCESSED);
     }
   }
   with_perim.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));

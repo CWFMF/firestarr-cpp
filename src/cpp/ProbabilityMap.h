@@ -117,7 +117,7 @@ public:
    * \param base_name Base file name to save to
    */
   void
-  saveTotal(const string& base_name) const;
+  saveTotal(const string& base_name, const bool is_interim) const;
   /**
    * \brief Save map representing all intensities occurrence
    * \param base_name Base file name to save to
