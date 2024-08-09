@@ -647,9 +647,9 @@ public:
    * \param convert Function to convert from V to R
    */
   template <class R>
-  void saveToTiffFile(const string& dir,
-                      const string& base_name,
-                      std::function<R(T value)> convert) const
+  void _saveToTiffFile(const string& dir,
+                       const string& base_name,
+                       std::function<R(T value)> convert) const
   {
 #ifdef DEBUG_GRIDS
     // enforce converting to an int and back produces same V
@@ -840,6 +840,25 @@ public:
     }
     _TIFFfree(buf);
     TIFFClose(tif);
+  }
+  template <class R>
+  void saveToTiffFile(const string& dir,
+                      const string& base_name,
+                      std::function<R(T value)> convert) const
+  {
+    // HACK: (hopefully) ensure that write works
+    try
+    {
+      return _saveToTiffFile<R>(dir, base_name, convert);
+    }
+    catch (const std::exception& err)
+    {
+      logging::error("Error trying to write %s to %s so retrying",
+                     base_name.c_str(),
+                     dir.c_str());
+      logging::error(err.what());
+      return _saveToTiffFile<R>(dir, base_name, convert);
+    }
   }
 };
 }
