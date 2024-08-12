@@ -51,34 +51,40 @@ assert_all_invalid(
 set<InnerPos>
 CellPoints::unique() const noexcept
 {
-  set<InnerPos> result{};
-  for (size_t i = 0; i < pts_.size(); ++i)
+  if (pts_dirty_)
   {
-    if (INVALID_DISTANCE != pts_[i].first)
+    pts_unique_ = {};
+    for (size_t i = 0; i < pts_.size(); ++i)
     {
-      const auto& p = pts_[i].second;
+      if (INVALID_DISTANCE != pts_[i].first)
+      {
+        const auto& p = pts_[i].second;
 #ifdef DEBUG_POINTS
-      const Location loc{cell_y_, cell_x_};
-      const Location loc1{static_cast<Idx>(p.y()), static_cast<Idx>(p.x())};
-      logging::check_equal(loc1.column(), loc.column(), "column");
-      logging::check_equal(loc1.row(), loc.row(), "row");
+        const Location loc{cell_y_, cell_x_};
+        const Location loc1{static_cast<Idx>(p.y()), static_cast<Idx>(p.x())};
+        logging::check_equal(loc1.column(), loc.column(), "column");
+        logging::check_equal(loc1.row(), loc.row(), "row");
 #endif
-      result.emplace(p);
+        pts_unique_.emplace(p);
+      }
     }
-  }
 #ifdef DEBUG_POINTS
-  if (result.empty())
-  {
-    assert_all_invalid(pts_);
-  }
+    if (result.empty())
+    {
+      assert_all_invalid(pts_);
+    }
 #endif
-  return result;
+    pts_dirty_ = false;
+  }
+  return pts_unique_;
 }
 CellPoints::CellPoints(
   const Idx cell_x,
   const Idx cell_y
 ) noexcept
   : pts_({}),
+    pts_unique_({}),
+    pts_dirty_(true),
     cell_x_(cell_x),
     cell_y_(cell_y),
     src_(topo::DIRECTION_NONE)
@@ -332,6 +338,8 @@ CellPoints::insert_(
     }
 #endif
   }
+  // NOTE: can either set once here or try to only set if required
+  pts_dirty_ = true;
   return *this;
 }
 // CellPoints::CellPoints(const vector<InnerPos>& pts) noexcept
@@ -422,6 +430,8 @@ CellPoints::merge(
   {
     pts_[i] = min(pts_[i], rhs.pts_[i]);
   }
+  // NOTE: can either set once here or try to only set if required
+  pts_dirty_ = true;
   add_source(rhs.src_);
   return *this;
 }
@@ -525,6 +535,8 @@ CellPoints::CellPoints(
   CellPoints&& rhs
 ) noexcept
   : pts_(std::move(rhs.pts_)),
+    pts_unique_(std::move(rhs.pts_unique_)),
+    pts_dirty_(static_cast<bool>(rhs.pts_dirty_)),
     cell_x_(rhs.cell_x_),
     cell_y_(rhs.cell_y_),
     src_(rhs.src_)
@@ -538,11 +550,13 @@ CellPoints::CellPoints(
   const CellPoints& rhs
 ) noexcept
   : pts_({}),
+    pts_unique_(rhs.pts_unique_.cbegin(), rhs.pts_unique_.cend()),
+    pts_dirty_(static_cast<bool>(rhs.pts_dirty_)),
     cell_x_(rhs.cell_x_),
     cell_y_(rhs.cell_y_),
     src_(rhs.src_)
 {
-  std::copy(rhs.pts_.begin(), rhs.pts_.end(), pts_.begin());
+  std::copy(rhs.pts_.cbegin(), rhs.pts_.cend(), pts_.begin());
 }
 /**
  * \brief Move assignment
@@ -555,6 +569,8 @@ CellPoints::operator=(
 ) noexcept
 {
   pts_ = std::move(rhs.pts_);
+  pts_unique_ = std::move(rhs.pts_unique_);
+  pts_dirty_ = static_cast<bool>(rhs.pts_dirty_);
   cell_x_ = rhs.cell_x_;
   cell_y_ = rhs.cell_y_;
   src_ = rhs.src_;
@@ -571,6 +587,8 @@ CellPoints::operator=(
 ) noexcept
 {
   std::copy(rhs.pts_.begin(), rhs.pts_.end(), pts_.begin());
+  pts_unique_ = rhs.pts_unique_;
+  pts_dirty_ = static_cast<bool>(rhs.pts_dirty_);
   cell_x_ = rhs.cell_x_;
   cell_y_ = rhs.cell_y_;
   src_ = rhs.src_;
