@@ -62,7 +62,7 @@ set<InnerPos> CellPoints::unique() const noexcept
   return pts_unique_;
 }
 CellPoints::CellPoints(const Idx cell_x, const Idx cell_y) noexcept
-  : pts_({}), pts_unique_({}), pts_dirty_(true), cell_x_(cell_x), cell_y_(cell_y),
+  : pts_({}), pts_unique_({}), pts_dirty_(false), cell_x_(cell_x), cell_y_(cell_y),
     src_(DIRECTION_NONE)
 {
   std::fill(pts_.begin(), pts_.end(), INVALID_PAIR);
@@ -251,7 +251,12 @@ CellPoints& CellPoints::insert_(const double x, const double y) noexcept
     logging::check_equal(y, dists[i].second.y(), "distance pair y");
 #endif
     // NOTE: comparing pair will look at distance first
-    pts_[i] = min(pts_[i], dists[i]);
+    if (dists[i].first < pts_[i].first)
+    {
+      pts_[i] = dists[i];
+      // only mark as dirty if actually changing a value
+      pts_dirty_ = true;
+    }
 #ifdef DEBUG_POINTS
     if (pts_[i].first == dists[i].first)
     {
@@ -260,8 +265,6 @@ CellPoints& CellPoints::insert_(const double x, const double y) noexcept
     }
 #endif
   }
-  // NOTE: can either set once here or try to only set if required
-  pts_dirty_ = true;
   return *this;
 }
 void CellPoints::add_source(const CellIndex src)
@@ -325,10 +328,13 @@ CellPoints& CellPoints::merge(const CellPoints& rhs)
   // we know distances in each direction so just pick closer
   for (size_t i = 0; i < pts_.size(); ++i)
   {
-    pts_[i] = min(pts_[i], rhs.pts_[i]);
+    if (rhs.pts_[i].first < pts_[i].first)
+    {
+      pts_[i] = rhs.pts_[i];
+      // only mark as dirty if actually changing a value
+      pts_dirty_ = true;
+    }
   }
-  // NOTE: can either set once here or try to only set if required
-  pts_dirty_ = true;
   add_source(rhs.src_);
   return *this;
 }
