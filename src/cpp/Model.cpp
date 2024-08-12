@@ -699,7 +699,7 @@ Model::add_statistics(
   static_cast<void>(util::insert_sorted(means, s.mean()));
   // NOTE: Used to just look at mean and percentile of each iteration, but should probably look at
   // all the sizes together?
-  for (const auto size : cur_sizes)
+  for (const auto& size : cur_sizes)
   {
     static_cast<void>(util::insert_sorted(all_sizes, size));
   }
@@ -810,7 +810,7 @@ Model::saveProbabilities(
 )
 {
   auto final_time = numeric_limits<double>::min();
-  for (const auto by_time : probabilities)
+  for (const auto& by_time : probabilities)
   {
     const auto time = by_time.first;
     final_time = max(final_time, time);
@@ -837,7 +837,7 @@ Model::runIterations(
 )
 {
   auto last_date = start_day;
-  for (const auto i : Settings::outputDateOffsets())
+  for (const auto& i : Settings::outputDateOffsets())
   {
     last_date = max(static_cast<Day>(start_day + i), last_date);
   }

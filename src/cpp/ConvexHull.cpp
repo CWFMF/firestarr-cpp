@@ -251,7 +251,7 @@ hull(
   fs::sim::InnerPos maxPos{MIN_X, MIN_X};
   fs::sim::InnerPos minPos{MAX_X, MAX_X};
 
-  for (const auto p : a)
+  for (const auto& p : a)
   {
     if (p.x() > maxPos.x())
     {
@@ -304,7 +304,7 @@ quickHull(
    * for distance from the line n1n2 to the current point
    */
 
-  for (const auto p : a)
+  for (const auto& p : a)
   {
     // loop through points, looking for furthest
     const auto d = (abX * (n1.y() - p.y()) - (n1.x() - p.x()) * abY);
