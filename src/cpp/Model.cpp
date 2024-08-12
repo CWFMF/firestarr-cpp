@@ -636,7 +636,7 @@ bool Model::add_statistics(vector<double>* all_sizes,
   static_cast<void>(util::insert_sorted(pct, s.percentile(95)));
   static_cast<void>(util::insert_sorted(means, s.mean()));
   // NOTE: Used to just look at mean and percentile of each iteration, but should probably look at all the sizes together?
-  for (const auto size : cur_sizes)
+  for (const auto& size : cur_sizes)
   {
     static_cast<void>(util::insert_sorted(all_sizes, size));
   }
@@ -735,7 +735,7 @@ size_t runs_required(const size_t i,
 double Model::saveProbabilities(map<double, ProbabilityMap*>& probabilities, const Day start_day, const bool is_interim)
 {
   auto final_time = numeric_limits<double>::min();
-  for (const auto by_time : probabilities)
+  for (const auto& by_time : probabilities)
   {
     const auto time = by_time.first;
     final_time = max(final_time, time);
@@ -757,7 +757,7 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
                                                   const Day start_day)
 {
   auto last_date = start_day;
-  for (const auto i : Settings::outputDateOffsets())
+  for (const auto& i : Settings::outputDateOffsets())
   {
     last_date = max(static_cast<Day>(start_day + i), last_date);
   }
