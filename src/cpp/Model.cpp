@@ -922,7 +922,14 @@ map<double, ProbabilityMap*> Model::runIterations(const topo::StartPoint& start_
     // const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() * PCT_CPU);
     // const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() / 4);
     // const auto MAX_THREADS = std::thread::hardware_concurrency() - 1;
-    const auto MAX_THREADS = std::thread::hardware_concurrency();
+    const auto HARDWARE_THREADS = static_cast<size_t>(std::thread::hardware_concurrency());
+    // maybe a bit slower but prefer to run all scenarios at the same time
+    const auto MAX_THREADS = max(HARDWARE_THREADS, scenarios_per_iteration);
+    if (MAX_THREADS > HARDWARE_THREADS)
+    {
+      logging::note("Increasing to use at least one thread for each of %ld scenarios", scenarios_per_iteration);
+      Model::task_limiter.set_limit(MAX_THREADS);
+    }
     // const auto MAX_CONCURRENT = std::max<size_t>(MAX_THREADS, 1);
     // const auto concurrent_iterations = std::max<size_t>(
     //   MAX_CONCURRENT / all_iterations[0].getScenarios().size(),
