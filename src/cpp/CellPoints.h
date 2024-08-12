@@ -53,8 +53,9 @@ private:
   CellPoints& insert_(const double x, const double y) noexcept;
   array_dists pts_;
   mutable set<InnerPos> pts_unique_;
-  mutable atomic<bool> pts_dirty_;
-  // use Idx instead of Location    so it can be negative (invalid)
+  // FIX: no point in atomic if not parallel, but need mutex if it is
+  mutable bool pts_dirty_;
+  // use Idx instead of Location so it can be negative (invalid)
   Idx cell_x_;
   Idx cell_y_;
   CellIndex src_;
