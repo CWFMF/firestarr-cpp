@@ -37,21 +37,28 @@ public:
    * \param n Number of concurrent things running
    */
   explicit Semaphore(const int n)
-    : count_{n}
+    : used_{0},
+      limit_{n}
   {
-    logging::note("Semaphore count is %d", count_);
+    logging::debug("Semaphore limit is %d", limit_);
   }
   Semaphore(const Semaphore& rhs) = delete;
   Semaphore(Semaphore&& rhs) = delete;
   Semaphore& operator=(const Semaphore& rhs) = delete;
   Semaphore& operator=(Semaphore&& rhs) = delete;
+  void set_limit(size_t limit)
+  {
+    logging::debug("Changing Semaphore limit from %d to %d", limit_, limit);
+    // NOTE: won't drop threads if set lower but won't give out more until below limit
+    limit_ = limit;
+  }
   /**
    * \brief Notify something that's waiting so it can run
    */
   void notify()
   {
     std::unique_lock<std::mutex> l(mutex_);
-    ++count_;
+    --used_;
     cv_.notify_one();
   }
   /**
@@ -60,8 +67,8 @@ public:
   void wait()
   {
     std::unique_lock<std::mutex> l(mutex_);
-    cv_.wait(l, [this] { return count_ != 0; });
-    --count_;
+    cv_.wait(l, [this] { return used_ <= limit_; });
+    ++used_;
   }
 private:
   /**
@@ -75,7 +82,11 @@ private:
   /**
    * \brief Variable to keep count of threads in use
    */
-  int count_;
+  int used_;
+  /**
+   * \brief Limit for number of threads
+   */
+  int limit_;
 };
 /**
  * \brief Indicates a section of code that is limited to a certain number of threads running at once.
