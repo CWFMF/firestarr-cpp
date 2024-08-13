@@ -15,6 +15,12 @@ static constexpr size_t VALUE_UNPROCESSED = 2;
 static constexpr size_t VALUE_PROCESSING = 3;
 static constexpr size_t VALUE_PROCESSED = 4;
 
+/**
+ * \brief List of interim files that were saved
+ */
+static set<string> PATHS_INTERIM{};
+static mutex PATHS_INTERIM_MUTEX{};
+
 ProbabilityMap::ProbabilityMap(const string dir_out,
                                const double time,
                                const double start_time,
@@ -146,10 +152,28 @@ void ProbabilityMap::show() const
     s.mean(),
     s.median());
 }
+bool ProbabilityMap::record_if_interim(const char* filename) const
+{
+  lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
+  logging::verbose("Checking if %s is interim", filename);
+  if (NULL != strstr(filename, "interim_"))
+  {
+    logging::verbose("Recording %s as interim", filename);
+    // is an interim file, so keep path for later deleting
+    PATHS_INTERIM.emplace(string(filename));
+    logging::check_fatal(!PATHS_INTERIM.contains(filename),
+                         "Expected %s to be in interim files list",
+                         filename);
+    return true;
+  }
+  return false;
+}
 void ProbabilityMap::saveSizes(const string& base_name) const
 {
   ofstream out;
-  out.open(dir_out_ + base_name + ".csv");
+  string filename = dir_out_ + base_name + ".csv";
+  record_if_interim(filename.c_str());
+  out.open(filename.c_str());
   auto sizes = getSizes();
   if (!sizes.empty())
   {
@@ -175,7 +199,27 @@ string make_string(const char* name, const tm& t, const int day)
            t.tm_mday);
   return string(tmp);
 };
-
+void ProbabilityMap::deleteInterim()
+{
+  lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
+  for (const auto& path : PATHS_INTERIM)
+  {
+    logging::debug("Removing interim file %s", path.c_str());
+    if (util::file_exists(path.c_str()))
+    {
+      try
+      {
+        unlink(path.c_str());
+      }
+      catch (const std::exception& err)
+      {
+        logging::error("Error trying to remove %s",
+                       path.c_str());
+        logging::error(err.what());
+      }
+    }
+  }
+}
 void ProbabilityMap::saveAll(const tm& start_time,
                              const double time,
                              const bool is_interim) const
@@ -263,23 +307,23 @@ void ProbabilityMap::saveTotal(const string& base_name, const bool is_interim) c
       with_perim.data[loc] *= (is_interim ? VALUE_PROCESSING : VALUE_PROCESSED);
     }
   }
-  with_perim.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
+  saveToProbabilityFile<float>(with_perim, dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveTotalCount(const string& base_name) const
 {
-  all_.saveToProbabilityFile<uint32_t>(dir_out_, base_name, 1);
+  saveToProbabilityFile<uint32_t>(all_, dir_out_, base_name, 1);
 }
 void ProbabilityMap::saveHigh(const string& base_name) const
 {
-  high_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
+  saveToProbabilityFile<float>(high_, dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveModerate(const string& base_name) const
 {
-  med_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
+  saveToProbabilityFile<float>(med_, dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::saveLow(const string& base_name) const
 {
-  low_.saveToProbabilityFile<float>(dir_out_, base_name, static_cast<float>(numSizes()));
+  saveToProbabilityFile<float>(low_, dir_out_, base_name, static_cast<float>(numSizes()));
 }
 void ProbabilityMap::reset()
 {

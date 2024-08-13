@@ -535,9 +535,9 @@ public:
    * \param dir Directory to save into
    * \param base_name File base name to use
    */
-  void saveToAsciiFile(const string& dir, const string& base_name) const
+  string saveToAsciiFile(const string& dir, const string& base_name) const
   {
-    saveToAsciiFile<T>(
+    return saveToAsciiFile<T>(
       dir,
       base_name,
       [](V value) {
@@ -552,9 +552,9 @@ public:
    * \param convert Function to convert from V to R
    */
   template <class R>
-  void saveToAsciiFile(const string& dir,
-                       const string& base_name,
-                       std::function<R(T value)> convert) const
+  string saveToAsciiFile(const string& dir,
+                         const string& base_name,
+                         std::function<R(T value)> convert) const
   {
 #ifdef DEBUG_GRIDS
     // enforce converting to an int and back produces same V
@@ -597,7 +597,8 @@ public:
     const auto num_rows = static_cast<double>(max_row) - min_row + 1;
     const auto num_columns = static_cast<double>(max_column) - min_column + 1;
     ofstream out;
-    out.open(dir + base_name + ".asc");
+    string filename = dir + base_name + ".asc";
+    out.open(filename.c_str());
     write_ascii_header(
       out,
       num_columns,
@@ -623,16 +624,17 @@ public:
     }
     out.close();
     this->createPrj(dir, base_name);
+    return filename;
   }
   /**
    * \brief Save contents to .tif file
    * \param dir Directory to save into
    * \param base_name File base name to usem
    */
-  void saveToTiffFile(const string& dir,
-                      const string& base_name) const
+  string saveToTiffFile(const string& dir,
+                        const string& base_name) const
   {
-    saveToTiffFile<T>(
+    return saveToTiffFile<T>(
       dir,
       base_name,
       [](V value) {
@@ -647,9 +649,9 @@ public:
    * \param convert Function to convert from V to R
    */
   template <class R>
-  void _saveToTiffFile(const string& dir,
-                       const string& base_name,
-                       std::function<R(T value)> convert) const
+  string _saveToTiffFile(const string& dir,
+                         const string& base_name,
+                         std::function<R(T value)> convert) const
   {
 #ifdef DEBUG_GRIDS
     // enforce converting to an int and back produces same V
@@ -840,11 +842,12 @@ public:
     }
     _TIFFfree(buf);
     TIFFClose(tif);
+    return filename;
   }
   template <class R>
-  void saveToTiffFile(const string& dir,
-                      const string& base_name,
-                      std::function<R(T value)> convert) const
+  string saveToTiffFile(const string& dir,
+                        const string& base_name,
+                        std::function<R(T value)> convert) const
   {
     // HACK: (hopefully) ensure that write works
     try
