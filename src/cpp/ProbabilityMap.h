@@ -127,7 +127,29 @@ public:
    * \brief Clear maps and return to initial state
    */
   void reset();
+  /**
+   * Delete interim output files
+   */
+  static void deleteInterim();
 private:
+  /**
+   * \brief Make note of any interim files for later deletion
+   */
+  bool record_if_interim(const char* filename) const;
+  /**
+   * \brief Save probability file and record filename if interim
+   * \return Path for file that was written
+   */
+  template <class R>
+  string saveToProbabilityFile(const data::GridMap<size_t>& grid,
+                               const string& dir,
+                               const string& base_name,
+                               const R divisor) const
+  {
+    const string filename = grid.saveToProbabilityFile(dir, base_name, divisor);
+    record_if_interim(filename.c_str());
+    return filename;
+  };
   /**
    * \brief Directory to write outputs to
    */
