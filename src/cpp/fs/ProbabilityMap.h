@@ -5,6 +5,7 @@
 #include "GridMap.h"
 #include "Perimeter.h"
 #include "Statistics.h"
+#include "Util.h"
 namespace fs
 {
 class Model;
@@ -153,8 +154,30 @@ public:
    * \brief Clear maps and return to initial state
    */
   void reset();
+  /**
+   * Delete interim output files
+   */
+  static void deleteInterim();
 
 private:
+  /**
+   * \brief Make note of any interim files for later deletion
+   */
+  FileList record_if_interim(FileList&& files) const;
+  /**
+   * \brief Save probability file and record filename if interim
+   * \return Path for file that was written
+   */
+  template <class R>
+  FileList saveToProbabilityFile(
+    const GridMap<size_t>& grid,
+    const string_view dir,
+    const string_view base_name,
+    const R divisor
+  ) const
+  {
+    return record_if_interim(grid.saveToProbabilityFile(dir, base_name, divisor));
+  };
   /**
    * \brief Map representing all intensities
    */

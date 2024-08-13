@@ -7,6 +7,11 @@ namespace fs
 static constexpr size_t VALUE_UNPROCESSED = 2;
 static constexpr size_t VALUE_PROCESSING = 3;
 static constexpr size_t VALUE_PROCESSED = 4;
+/**
+ * \brief List of interim files that were saved
+ */
+static set<string> PATHS_INTERIM{};
+static mutex PATHS_INTERIM_MUTEX{};
 ProbabilityMap::ProbabilityMap(
   const DurationSize time,
   const DurationSize start_time,
@@ -91,7 +96,7 @@ void ProbabilityMap::addProbability(const IntensityMap& for_time)
   const auto size = for_time.fireSize();
   static_cast<void>(insert_sorted(&sizes_, size));
 }
-vector<double> ProbabilityMap::getSizes() const { return sizes_; }
+vector<MathSize> ProbabilityMap::getSizes() const { return sizes_; }
 Statistics ProbabilityMap::getStatistics() const { return Statistics{getSizes()}; }
 size_t ProbabilityMap::numSizes() const noexcept { return sizes_.size(); }
 void ProbabilityMap::show() const
@@ -109,10 +114,29 @@ void ProbabilityMap::show() const
     s.median()
   );
 }
+FileList ProbabilityMap::record_if_interim(FileList&& files) const
+{
+  lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
+  for (const auto& f : files)
+  {
+    const auto filename = f.c_str();
+    logging::verbose("Checking if %s is interim", filename);
+    if (nullptr != strstr(filename, "interim_"))
+    {
+      logging::verbose("Recording %s as interim", filename);
+      // is an interim file, so keep path for later deleting
+      PATHS_INTERIM.emplace(filename);
+      logging::check_fatal(
+        !PATHS_INTERIM.contains(filename), "Expected %s to be in interim files list", filename
+      );
+    }
+  }
+  return files;
+}
 FileList ProbabilityMap::saveSizes(const string_view output_directory, const string_view base_name)
   const
 {
-  const string filename = string(output_directory) + string(base_name) + ".csv";
+  const auto filename = string(output_directory) + string(base_name) + ".csv";
   ofstream out{filename};
   auto sizes = getSizes();
   if (!sizes.empty())
@@ -125,7 +149,7 @@ FileList ProbabilityMap::saveSizes(const string_view output_directory, const str
     out << s << "\n";
   }
   out.close();
-  return {filename};
+  return record_if_interim({filename});
 }
 string make_string(const char* name, const tm& t, const int day)
 {
@@ -134,6 +158,26 @@ string make_string(const char* name, const tm& t, const int day)
   sxprintf(tmp, mask, name, day, t.tm_year + TM_YEAR_OFFSET, t.tm_mon + TM_MONTH_OFFSET, t.tm_mday);
   return string(tmp);
 };
+void ProbabilityMap::deleteInterim()
+{
+  lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
+  for (const auto& path : PATHS_INTERIM)
+  {
+    logging::debug("Removing interim file %s", path.c_str());
+    if (file_exists(path.c_str()))
+    {
+      try
+      {
+        unlink(path.c_str());
+      }
+      catch (const std::exception& err)
+      {
+        logging::error("Error trying to remove %s", path.c_str());
+        logging::error(err.what());
+      }
+    }
+  }
+}
 FileList ProbabilityMap::saveAll(
   const string_view output_directory,
   const tm& start_time,
@@ -237,8 +281,8 @@ FileList ProbabilityMap::saveTotal(
       with_perim.data[loc] *= (is_interim ? VALUE_PROCESSING : VALUE_PROCESSED);
     }
   }
-  return with_perim.saveToProbabilityFile<float>(
-    output_directory, base_name, static_cast<float>(numSizes())
+  return saveToProbabilityFile<float>(
+    with_perim, output_directory, base_name, static_cast<float>(numSizes())
   );
 }
 FileList ProbabilityMap::saveTotalCount(
@@ -246,13 +290,13 @@ FileList ProbabilityMap::saveTotalCount(
   const string_view base_name
 ) const
 {
-  return all_.saveToProbabilityFile<uint32_t>(output_directory, base_name, 1);
+  return saveToProbabilityFile<uint32_t>(all_, output_directory, base_name, 1);
 }
 FileList ProbabilityMap::saveHigh(const string_view output_directory, const string_view base_name)
   const
 {
-  return high_.saveToProbabilityFile<float>(
-    output_directory, base_name, static_cast<float>(numSizes())
+  return saveToProbabilityFile<float>(
+    high_, output_directory, base_name, static_cast<float>(numSizes())
   );
 }
 FileList ProbabilityMap::saveModerate(
@@ -260,15 +304,15 @@ FileList ProbabilityMap::saveModerate(
   const string_view base_name
 ) const
 {
-  return med_.saveToProbabilityFile<float>(
-    output_directory, base_name, static_cast<float>(numSizes())
+  return saveToProbabilityFile<float>(
+    med_, output_directory, base_name, static_cast<float>(numSizes())
   );
 }
 FileList ProbabilityMap::saveLow(const string_view output_directory, const string_view base_name)
   const
 {
-  return low_.saveToProbabilityFile<float>(
-    output_directory, base_name, static_cast<float>(numSizes())
+  return saveToProbabilityFile<float>(
+    low_, output_directory, base_name, static_cast<float>(numSizes())
   );
 }
 void ProbabilityMap::reset()
