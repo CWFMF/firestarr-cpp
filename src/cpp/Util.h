@@ -219,6 +219,12 @@ std::basic_istream<Elem, Traits>& getline(
  */
 [[nodiscard]] bool directory_exists(const char* dir) noexcept;
 /**
+ * \brief Check if a file exists
+ * \param path File to check existence of
+ * \return Whether or not the file exists
+ */
+[[nodiscard]] bool file_exists(const char* path) noexcept;
+/**
  * \brief Get a list of items in the given directory matching the given regex
  * \param for_files Match files and not directories
  * \param name Directory to search
