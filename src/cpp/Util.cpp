@@ -122,6 +122,14 @@ bool directory_exists(const char* dir) noexcept
   };
   return stat(dir, &dir_info) == 0 && dir_info.st_mode & S_IFDIR;
 }
+bool file_exists(const char* path) noexcept
+{
+  struct stat path_info
+  {
+  };
+  // FIX: check that this works on symlinks
+  return stat(path, &path_info) == 0 && path_info.st_mode & S_IFREG;
+}
 void make_directory(const char* dir) noexcept
 {
 #ifdef _WIN32
