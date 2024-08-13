@@ -302,7 +302,7 @@ public:
    * \param divisor Number of simulations to divide by to calculate probability per cell
    */
   template <class R>
-  void
+  string
   saveToProbabilityFile(
     const string& dir,
     const string& base_name,
@@ -314,11 +314,11 @@ public:
     };
     if (fs::sim::Settings::saveAsAscii())
     {
-      this->template saveToAsciiFile<R>(dir, base_name, div);
+      return this->template saveToAsciiFile<R>(dir, base_name, div);
     }
     else
     {
-      this->template saveToTiffFile<R>(dir, base_name, div);
+      return this->template saveToTiffFile<R>(dir, base_name, div);
     }
   }
   /**
