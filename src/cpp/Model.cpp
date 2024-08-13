@@ -1117,6 +1117,7 @@ int Model::runScenarios(
   show_probabilities(probabilities);
   // auto final_time =
   model.saveProbabilities(probabilities, start_day, false);
+  ProbabilityMap::deleteInterim();
   // HACK: update last checked time to use in calculation
   model.last_checked_ = Clock::now();
   logging::note("Total simulation time was %ld seconds", model.runTime());
