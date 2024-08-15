@@ -16,6 +16,7 @@
 #include "Test.h"
 #include "TimeUtil.h"
 #include "Log.h"
+#include "version.h"
 using fs::logging::Log;
 using fs::sim::Settings;
 static const char* BIN_NAME = nullptr;
@@ -255,6 +256,7 @@ main(
   const char* const argv[]
 )
 {
+  printf("FireSTARR %s\n\n", SPECIFIC_REVISION);
   fs::debug::show_debug_settings();
   ARGC = argc;
   ARGV = argv;
