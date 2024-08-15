@@ -19,7 +19,12 @@ constexpr double M_0_5 = 0.5 - DIST_22_5;
 static const double INVALID_DISTANCE = static_cast<double>(MAX_ROWS * MAX_ROWS);
 static const pair<double, InnerPos> INVALID_PAIR{INVALID_DISTANCE, {}};
 static const Idx INVALID_LOCATION = INVALID_PAIR.second.x();
-void assert_all_equal(const CellPoints::array_dists& pts, const double x, const double y)
+#ifdef DEBUG_POINTS
+inline void assert_all_equal(
+  const CellPoints::array_dist_pts& pts,
+  const InnerSize x,
+  const InnerSize y
+)
 {
   for (const auto& pt : pts)
   {
@@ -27,7 +32,7 @@ void assert_all_equal(const CellPoints::array_dists& pts, const double x, const 
     logging::check_equal(pt.second.y(), y, "point y");
   }
 }
-void assert_all_invalid(const CellPoints::array_dists& pts)
+inline void assert_all_invalid(const CellPoints::array_dist_pts& pts)
 {
   for (const auto& pt : pts)
   {
@@ -35,6 +40,7 @@ void assert_all_invalid(const CellPoints::array_dists& pts)
   }
   assert_all_equal(pts, INVALID_LOCATION, INVALID_LOCATION);
 }
+#endif
 set<InnerPos> CellPoints::unique() const noexcept
 {
   if (pts_dirty_)
@@ -55,7 +61,7 @@ set<InnerPos> CellPoints::unique() const noexcept
       }
     }
 #ifdef DEBUG_POINTS
-    if (result.empty())
+    if (pts_unique_.empty())
     {
       assert_all_invalid(pts_);
     }
@@ -75,8 +81,10 @@ CellPoints::CellPoints(const Idx cell_x, const Idx cell_y) noexcept
 }
 CellPoints::CellPoints() noexcept : CellPoints(INVALID_LOCATION, INVALID_LOCATION)
 {
+#ifdef DEBUG_POINTS
   // already done but check again since debugging
   assert_all_invalid(pts_);
+#endif
 }
 CellPoints::CellPoints(const CellPoints* rhs) noexcept : CellPoints()
 {
@@ -97,7 +105,7 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept : CellPoints()
   }
 #endif
 }
-CellPoints::CellPoints(const double x, const double y) noexcept
+CellPoints::CellPoints(const InnerSize x, const InnerSize y) noexcept
   : CellPoints(static_cast<Idx>(x), static_cast<Idx>(y))
 {
 #ifdef DEBUG_POINTS
@@ -108,7 +116,7 @@ CellPoints::CellPoints(const double x, const double y) noexcept
   assert_all_equal(pts_, x, y);
 #endif
 }
-CellPoints& CellPoints::insert(const double x, const double y) noexcept
+CellPoints& CellPoints::insert(const InnerSize x, const InnerSize y) noexcept
 {
 #ifdef DEBUG_POINTS
   const bool was_empty = empty();
@@ -135,7 +143,9 @@ CellPoints& CellPoints::insert(const double x, const double y) noexcept
 }
 CellPoints::CellPoints(const InnerPos& p) noexcept : CellPoints(p.x(), p.y())
 {
+#ifdef DEBUG_POINTS
   assert_all_equal(pts_, p.x(), p.y());
+#endif
 }
 CellPoints& CellPoints::insert(const InnerPos& p) noexcept
 {
@@ -164,7 +174,8 @@ CellPoints& CellPoints::insert(const InnerPos& p) noexcept
 #endif
   return *this;
 }
-CellPoints::array_dists CellPoints::find_distances(const double p_x, const double p_y) noexcept
+CellPoints::array_dists CellPoints::find_distances(const InnerSize p_x, const InnerSize p_y)
+  const noexcept
 {
 #ifdef DEBUG_GRIDS
   logging::check_fatal(
@@ -181,52 +192,61 @@ CellPoints::array_dists CellPoints::find_distances(const double p_x, const doubl
   logging::check_fatal(y < 0 || y > 1, "y %f is out of cell (%f, %f)", y, 0, 1);
 #endif
 #define DISTANCE_1D(a, b) (((a) - (b)) * ((a) - (b)))
-#define DISTANCE_XY(x0, y0) (DISTANCE_1D((x), (x0)) + DISTANCE_1D((y), (y0)))
-#define DISTANCE(x0, y0) (pair<double, InnerPos>{DISTANCE_XY(x0, y0), InnerPos{p_x, p_y}})
+#define DISTANCE(x_dist, y_dist) ((x_dist) + (y_dist))
 #ifdef DEBUG_POINTS
   const auto dist_self = DISTANCE(x, y);
-  logging::check_equal(0, dist_self.first, "distance to self");
-  logging::check_equal(p_x, dist_self.second.x(), "x from distance to self");
-  logging::check_equal(p_y, dist_self.second.y(), "y from distance to self");
+  logging::check_equal(0, dist_self, "distance to self");
+  logging::check_equal(p_x, x, "x from distance to self");
+  logging::check_equal(p_y, y, "y from distance to self");
 #endif
+  const auto x_0_0 = DISTANCE_1D(x, 0.0);
+  const auto x_M_0_5 = DISTANCE_1D(x, M_0_5);
+  const auto x_0_5 = DISTANCE_1D(x, 0.5);
+  const auto x_P_0_5 = DISTANCE_1D(x, P_0_5);
+  const auto x_1_0 = DISTANCE_1D(x, 1.0);
+  const auto y_0_0 = DISTANCE_1D(y, 0.0);
+  const auto y_M_0_5 = DISTANCE_1D(y, M_0_5);
+  const auto y_0_5 = DISTANCE_1D(y, 0.5);
+  const auto y_P_0_5 = DISTANCE_1D(y, P_0_5);
+  const auto y_1_0 = DISTANCE_1D(y, 1.0);
   // NOTE: order of x0/x and y0/y shouldn't matter since squaring
   return {// north is closest to point (0.5, 1.0)
-          DISTANCE(0.5, 1.0),
+          DISTANCE(x_0_5, y_1_0),
           // north-northeast is closest to point (0.5 + 0.207, 1.0)
-          DISTANCE(P_0_5, 1.0),
+          DISTANCE(x_P_0_5, y_1_0),
           // northeast is closest to point (1.0, 1.0)
-          DISTANCE(1.0, 1.0),
+          DISTANCE(x_1_0, y_1_0),
           // east-northeast is closest to point (1.0, 0.5 + 0.207)
-          DISTANCE(1.0, P_0_5),
+          DISTANCE(x_1_0, y_P_0_5),
           // east is closest to point (1.0, 0.5)
-          DISTANCE(1.0, 0.5),
+          DISTANCE(x_1_0, y_0_5),
           // east-southeast is closest to point (1.0, 0.5 - 0.207)
-          DISTANCE(1.0, M_0_5),
+          DISTANCE(x_1_0, y_M_0_5),
           // southeast is closest to point (1.0, 0.0)
-          DISTANCE(1.0, 0),
+          DISTANCE(x_1_0, y_0_0),
           // south-southeast is closest to point (0.5 + 0.207, 0.0)
-          DISTANCE(P_0_5, 0.0),
+          DISTANCE(x_P_0_5, y_0_0),
           // south is closest to point (0.5, 0.0)
-          DISTANCE(0.5, 0.0),
+          DISTANCE(x_0_5, y_0_0),
           // south-southwest is closest to point (0.5 - 0.207, 0.0)
-          DISTANCE(M_0_5, 0.0),
+          DISTANCE(x_M_0_5, y_0_0),
           // southwest is closest to point (0.0, 0.0)
-          DISTANCE(0.0, 0.0),
+          DISTANCE(x_0_0, y_0_0),
           // west-southwest is closest to point (0.0, 0.5 - 0.207)
-          DISTANCE(0.0, M_0_5),
+          DISTANCE(x_0_0, y_M_0_5),
           // west is closest to point (0.0, 0.5)
-          DISTANCE(0.0, 0.5),
+          DISTANCE(x_0_0, y_0_5),
           // west-northwest is closest to point (0.0, 0.5 + 0.207)
-          DISTANCE(0.0, P_0_5),
+          DISTANCE(x_0_0, y_P_0_5),
           // northwest is closest to point (0.0, 1.0)
-          DISTANCE(0.0, 1.0),
+          DISTANCE(x_0_0, y_1_0),
           // north-northwest is closest to point (0.5 - 0.207, 1.0)
-          DISTANCE(M_0_5, 1.0)
+          DISTANCE(x_M_0_5, y_1_0)
   };
 #undef DISTANCE_1D
 #undef DISTANCE
 }
-CellPoints& CellPoints::insert_(const double x, const double y) noexcept
+CellPoints& CellPoints::insert_(const InnerSize x, const InnerSize y) noexcept
 {
 #ifdef DEBUG_POINTS
   logging::check_fatal(
@@ -239,34 +259,17 @@ CellPoints& CellPoints::insert_(const double x, const double y) noexcept
   );
   logging::check_fatal(y < 0 || y >= MAX_ROWS, "y %f is out of bounds (%f, %f)", y, 0, MAX_ROWS);
 #endif
-  array_dists dists = find_distances(x, y);
+  auto dists = find_distances(x, y);
   for (size_t i = 0; i < dists.size(); ++i)
   {
-#ifdef DEBUG_POINTS
-    logging::check_fatal(
-      INVALID_DISTANCE == dists[i].first,
-      "Invalid distance returned from find_distances(%f, %f) for %ld",
-      x,
-      y,
-      i
-    );
-    logging::check_equal(x, dists[i].second.x(), "distance pair x");
-    logging::check_equal(y, dists[i].second.y(), "distance pair y");
-#endif
-    // NOTE: comparing pair will look at distance first
-    if (dists[i].first < pts_[i].first)
+    const auto& d = dists[i];
+    auto& p_d = pts_[i];
+    if (d < p_d.first)
     {
-      pts_[i] = dists[i];
+      p_d = dist_pt{d, InnerPos(x, y)};
       // only mark as dirty if actually changing a value
       pts_dirty_ = true;
     }
-#ifdef DEBUG_POINTS
-    if (pts_[i].first == dists[i].first)
-    {
-      logging::check_equal(pts_[i].second.x(), dists[i].second.x(), "distance pair x");
-      logging::check_equal(pts_[i].second.y(), dists[i].second.y(), "distance pair y");
-    }
-#endif
   }
   return *this;
 }
@@ -342,7 +345,7 @@ CellPoints& CellPoints::merge(const CellPoints& rhs)
   return *this;
 }
 CellPointsMap apply_offsets_spreadkey(
-  const double duration,
+  const DurationSize duration,
   const OffsetSet& offsets,
   const spreading_points::mapped_type& cell_pts
 )
@@ -360,8 +363,8 @@ CellPointsMap apply_offsets_spreadkey(
   // apply offsets to point
   for (const auto& out : offsets)
   {
-    const double x_o = duration * out.x();
-    const double y_o = duration * out.y();
+    const auto x_o = static_cast<InnerSize>(duration * out.x());
+    const auto y_o = static_cast<InnerSize>(duration * out.y());
 #ifdef DEBUG_POINTS
     logging::check_fatal(cell_pts.empty(), "cell_pts.empty()");
 #endif
@@ -384,10 +387,10 @@ CellPointsMap apply_offsets_spreadkey(
       for (const auto& p : u)
       {
         // putting results in copy of offsets and returning that
-        // at the end of everything, we're just adding something to every double in the set by
+        // at the end of everything, we're just adding something to every InnerSize in the set by
         // duration?
-        const double x = x_o + p.x();
-        const double y = y_o + p.y();
+        const auto x = x_o + p.x();
+        const auto y = y_o + p.y();
 #ifdef DEBUG_POINTS
         const Location from_xy{static_cast<Idx>(y), static_cast<Idx>(x)};
         auto seek_cell_pts = r1.map_.find(from_xy);
@@ -521,6 +524,7 @@ bool CellPoints::empty() const
   // NOTE: is_invalid() should never be true if it's checking cell_x_
   return unique().empty();
 }
+#ifdef DEBUG_POINTS
 bool CellPoints::is_invalid() const
 {
 #ifdef DEBUG_POINTS
@@ -539,6 +543,7 @@ bool CellPoints::is_invalid() const
   );
   return cell_x_ == INVALID_LOCATION;
 }
+#endif
 [[nodiscard]] Location CellPoints::location() const noexcept
 {
 #ifdef DEBUG_POINTS
@@ -579,7 +584,7 @@ void CellPointsMap::emplace(const CellPoints& pts)
   logging::check_fatal(INVALID_LOCATION == cell_pts.cell_y_, "CellPoints has invalid cell_y_");
 #endif
 }
-CellPoints& CellPointsMap::insert(const double x, const double y) noexcept
+CellPoints& CellPointsMap::insert(const InnerSize x, const InnerSize y) noexcept
 {
   const Location location{static_cast<Idx>(y), static_cast<Idx>(x)};
   auto e = map_.try_emplace(location, x, y);
@@ -620,7 +625,7 @@ CellPointsMap& CellPointsMap::merge(const BurnedData& unburnable, const CellPoin
   }
   return *this;
 }
-void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints>&)> F)
+void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints>&)> F) noexcept
 {
   auto it = map_.begin();
 #ifdef DEBUG_POINTS
@@ -632,8 +637,8 @@ void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints
 #endif
   while (map_.end() != it)
   {
-    const Location location = it->first;
 #ifdef DEBUG_POINTS
+    const Location location = it->first;
     const CellPoints& cell_pts = it->second;
     const auto u = cell_pts.unique();
     logging::check_fatal(u.empty(), "Checking if empty CellPoints should be removed");
@@ -647,8 +652,10 @@ void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints
 #ifdef DEBUG_POINTS
       removed_items.emplace(it->first);
 #endif
+#ifdef DEBUG_POINTS
       // remove if F returns true for current
       logging::verbose("Removing CellPoints for (%d, %d)", location.column(), location.row());
+#endif
       it = map_.erase(it);
 #ifdef DEBUG_POINTS
       // if all points from that were in the original then it should be exactly that many fewer
@@ -707,7 +714,7 @@ set<InnerPos> CellPointsMap::unique() const noexcept
 CellPointsMap merge_list(
   const BurnedData& unburnable,
   map<SpreadKey, SpreadInfo>& spread_info,
-  const double duration,
+  const DurationSize duration,
   const spreading_points& to_spread
 )
 {
@@ -752,7 +759,7 @@ CellPointsMap merge_list(
 void CellPointsMap::calculate_spread(
   Scenario& scenario,
   map<SpreadKey, SpreadInfo>& spread_info,
-  const double duration,
+  const DurationSize duration,
   const spreading_points& to_spread,
   const BurnedData& unburnable
 )
