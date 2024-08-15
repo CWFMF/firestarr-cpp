@@ -25,11 +25,13 @@ class CellPoints
 {
 public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
-  using array_dists = std::array<pair<double, InnerPos>, NUM_DIRECTIONS>;
+  using dist_pt = pair<double, InnerPos>;
+  using array_dist_pts = std::array<dist_pt, NUM_DIRECTIONS>;
+  using array_dists = std::array<double, NUM_DIRECTIONS>;
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
-  CellPoints(const double x, const double y) noexcept;
+  CellPoints(const InnerSize x, const InnerSize y) noexcept;
   CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
   CellPoints(const InnerPos& p) noexcept;
   CellPoints(CellPoints&& rhs) noexcept;
@@ -39,7 +41,7 @@ public:
   CellPoints&
   operator=(const CellPoints& rhs) noexcept;
   CellPoints&
-  insert(const double x, const double y) noexcept;
+  insert(const InnerSize x, const InnerSize y) noexcept;
   CellPoints&
   insert(const InnerPos& p) noexcept;
   void
@@ -65,22 +67,24 @@ public:
   clear();
   friend CellPointsMap
   apply_offsets_spreadkey(
-    const double duration,
+    const DurationSize duration,
     const OffsetSet& offsets,
     const spreading_points::mapped_type& cell_pts
   );
+#ifdef DEBUG_POINTS
   bool
   is_invalid() const;
+#endif
   bool
   empty() const;
   friend CellPointsMap;
 
 private:
   array_dists
-  find_distances(const double p_x, const double p_y) noexcept;
+  find_distances(const InnerSize p_x, const InnerSize p_y) const noexcept;
   CellPoints&
   insert_(const double x, const double y) noexcept;
-  array_dists pts_;
+  array_dist_pts pts_;
   mutable set<InnerPos> pts_unique_;
   // FIX: no point in atomic if not parallel, but need mutex if it is
   mutable bool pts_dirty_;
@@ -101,19 +105,19 @@ public:
   void
   emplace(const CellPoints& pts);
   CellPoints&
-  insert(const double x, const double y) noexcept;
+  insert(const InnerSize x, const InnerSize y) noexcept;
   CellPointsMap&
   merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
   set<InnerPos>
   unique() const noexcept;
   // apply function to each CellPoints within and remove matches
   void
-  remove_if(std::function<bool(const pair<Location, CellPoints>&)> F);
+  remove_if(std::function<bool(const pair<Location, CellPoints>&)> F) noexcept;
   void
   calculate_spread(
     Scenario& scenario,
     map<SpreadKey, SpreadInfo>& spread_info,
-    const double duration,
+    const DurationSize duration,
     const spreading_points& to_spread,
     const BurnedData& unburnable
   );
@@ -124,7 +128,7 @@ public:
 
 CellPointsMap
 apply_offsets_spreadkey(
-  const double duration,
+  const DurationSize duration,
   const OffsetSet& offsets,
   const spreading_points::mapped_type& cell_pts
 );
