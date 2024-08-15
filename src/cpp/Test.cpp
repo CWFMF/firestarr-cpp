@@ -129,6 +129,7 @@ string run_test(const string output_directory,
   }
   // delay instantiation so things only get made when executed
   CriticalSection _(num_concurrent);
+  logging::debug("Concurrent test limit is %d", num_concurrent.limit());
   logging::note("Running test for %s", output_directory.c_str());
   const auto year = 2020;
   const auto month = 6;
