@@ -874,6 +874,7 @@ Scenario::run(
 #endif
   log_verbose("Starting");
   CriticalSection _(Model::task_limiter);
+  logging::debug("Concurrent Scenario limit is %d", Model::task_limiter.limit());
   unburnable_ = model_->getBurnedVector();
   probabilities_ = probabilities;
   log_verbose("Setting save points");
