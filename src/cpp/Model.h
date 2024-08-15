@@ -40,7 +40,6 @@ public:
     : used_{0},
       limit_{n}
   {
-    logging::debug("Semaphore limit is %d", limit_);
   }
   Semaphore(const Semaphore& rhs) = delete;
   Semaphore(Semaphore&& rhs) = delete;
@@ -51,6 +50,10 @@ public:
     logging::debug("Changing Semaphore limit from %d to %d", limit_, limit);
     // NOTE: won't drop threads if set lower but won't give out more until below limit
     limit_ = limit;
+  }
+  size_t limit()
+  {
+    return limit_;
   }
   /**
    * \brief Notify something that's waiting so it can run
