@@ -26,7 +26,7 @@ static const double INVALID_DISTANCE = static_cast<double>(MAX_ROWS * MAX_ROWS);
 static const pair<double, InnerPos> INVALID_PAIR{INVALID_DISTANCE, {}};
 static const Idx INVALID_LOCATION = INVALID_PAIR.second.x();
 void assert_all_equal(
-  const CellPoints::array_dists& pts,
+  const CellPoints::array_dist_pts& pts,
   const double x,
   const double y)
 {
@@ -36,7 +36,7 @@ void assert_all_equal(
     logging::check_equal(pts[i].second.y(), y, "point y");
   }
 }
-void assert_all_invalid(const CellPoints::array_dists& pts)
+void assert_all_invalid(const CellPoints::array_dist_pts& pts)
 {
   for (size_t i = 0; i < pts.size(); ++i)
   {
@@ -242,8 +242,7 @@ CellPoints::array_dists CellPoints::find_distances(const double p_x, const doubl
     1);
 #endif
 #define DISTANCE_1D(a, b) (((a) - (b)) * ((a) - (b)))
-#define DISTANCE_XY(x0, y0) (DISTANCE_1D((x), (x0)) + DISTANCE_1D((y), (y0)))
-#define DISTANCE(x0, y0) (pair<double, InnerPos>{DISTANCE_XY(x0, y0), InnerPos{p_x, p_y}})
+#define DISTANCE(x_dist, y_dist) ((x_dist) + (y_dist))
 #ifdef DEBUG_POINTS
   const auto dist_self = DISTANCE(x, y);
   logging::check_equal(
@@ -259,40 +258,50 @@ CellPoints::array_dists CellPoints::find_distances(const double p_x, const doubl
     dist_self.second.y(),
     "y from distance to self");
 #endif
+  const auto x_0_0 = DISTANCE_1D(x, 1.0);
+  const auto x_M_0_5 = DISTANCE_1D(x, M_0_5);
+  const auto x_0_5 = DISTANCE_1D(x, 0.5);
+  const auto x_P_0_5 = DISTANCE_1D(x, P_0_5);
+  const auto x_1_0 = DISTANCE_1D(x, 1.0);
+  const auto y_0_0 = DISTANCE_1D(y, 1.0);
+  const auto y_M_0_5 = DISTANCE_1D(y, M_0_5);
+  const auto y_0_5 = DISTANCE_1D(y, 0.5);
+  const auto y_P_0_5 = DISTANCE_1D(y, P_0_5);
+  const auto y_1_0 = DISTANCE_1D(y, 1.0);
   // NOTE: order of x0/x and y0/y shouldn't matter since squaring
   return {
     // north is closest to point (0.5, 1.0)
-    DISTANCE(0.5, 1.0),
+    DISTANCE(x_0_5, y_1_0),
     // north-northeast is closest to point (0.5 + 0.207, 1.0)
-    DISTANCE(P_0_5, 1.0),
+    DISTANCE(x_P_0_5, y_1_0),
     // northeast is closest to point (1.0, 1.0)
-    DISTANCE(1.0, 1.0),
+    DISTANCE(x_1_0, y_1_0),
     // east-northeast is closest to point (1.0, 0.5 + 0.207)
-    DISTANCE(1.0, P_0_5),
+    DISTANCE(x_1_0, y_P_0_5),
     // east is closest to point (1.0, 0.5)
-    DISTANCE(1.0, 0.5),
+    DISTANCE(x_1_0, y_0_5),
     // east-southeast is closest to point (1.0, 0.5 - 0.207)
-    DISTANCE(1.0, M_0_5),
+    DISTANCE(x_1_0, y_M_0_5),
     // southeast is closest to point (1.0, 0.0)
-    DISTANCE(1.0, 0),
+    DISTANCE(x_1_0, y_0_0),
     // south-southeast is closest to point (0.5 + 0.207, 0.0)
-    DISTANCE(P_0_5, 0.0),
+    DISTANCE(x_P_0_5, y_0_0),
     // south is closest to point (0.5, 0.0)
-    DISTANCE(0.5, 0.0),
+    DISTANCE(x_0_5, y_0_0),
     // south-southwest is closest to point (0.5 - 0.207, 0.0)
-    DISTANCE(M_0_5, 0.0),
+    DISTANCE(x_M_0_5, y_0_0),
     // southwest is closest to point (0.0, 0.0)
-    DISTANCE(0.0, 0.0),
+    DISTANCE(x_0_0, y_0_0),
     // west-southwest is closest to point (0.0, 0.5 - 0.207)
-    DISTANCE(0.0, M_0_5),
+    DISTANCE(x_0_0, y_M_0_5),
     // west is closest to point (0.0, 0.5)
-    DISTANCE(0.0, 0.5),
+    DISTANCE(x_0_0, y_0_5),
     // west-northwest is closest to point (0.0, 0.5 + 0.207)
-    DISTANCE(0.0, P_0_5),
+    DISTANCE(x_0_0, y_P_0_5),
     // northwest is closest to point (0.0, 1.0)
-    DISTANCE(0.0, 1.0),
+    DISTANCE(x_0_0, y_1_0),
     // north-northwest is closest to point (0.5 - 0.207, 1.0)
-    DISTANCE(M_0_5, 1.0)};
+    DISTANCE(x_M_0_5, y_1_0)};
 #undef DISTANCE_1D
 #undef DISTANCE
 }
@@ -319,45 +328,17 @@ CellPoints& CellPoints::insert_(const double x, const double y) noexcept
     0,
     MAX_ROWS);
 #endif
-  array_dists dists = find_distances(x, y);
+  auto dists = find_distances(x, y);
   for (size_t i = 0; i < dists.size(); ++i)
   {
-#ifdef DEBUG_POINTS
-    logging::check_fatal(
-      INVALID_DISTANCE == dists[i].first,
-      "Invalid distance returned from find_distances(%f, %f) for %ld",
-      x,
-      y,
-      i);
-    logging::check_equal(
-      x,
-      dists[i].second.x(),
-      "distance pair x");
-    logging::check_equal(
-      y,
-      dists[i].second.y(),
-      "distance pair y");
-#endif
-    // NOTE: comparing pair will look at distance first
-    if (dists[i].first < pts_[i].first)
+    const auto& d = dists[i];
+    auto& p_d = pts_[i];
+    if (d < p_d.first)
     {
-      pts_[i] = dists[i];
+      p_d = dist_pt{d, InnerPos(x, y)};
       // only mark as dirty if actually changing a value
       pts_dirty_ = true;
     }
-#ifdef DEBUG_POINTS
-    if (pts_[i].first == dists[i].first)
-    {
-      logging::check_equal(
-        pts_[i].second.x(),
-        dists[i].second.x(),
-        "distance pair x");
-      logging::check_equal(
-        pts_[i].second.y(),
-        dists[i].second.y(),
-        "distance pair y");
-    }
-#endif
   }
   return *this;
 }
