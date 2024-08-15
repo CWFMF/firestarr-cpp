@@ -16,6 +16,7 @@
 #include "Test.h"
 #include "TimeUtil.h"
 #include "Log.h"
+#include "version.h"
 using tbd::logging::Log;
 using tbd::sim::Settings;
 static const char* BIN_NAME = nullptr;
@@ -165,6 +166,7 @@ void register_index(T& index, string v, string help, bool required)
 // }
 int main(const int argc, const char* const argv[])
 {
+  printf("FireSTARR %s <%s>\n\n", VERSION, COMPILE_DATE);
   tbd::debug::show_debug_settings();
   ARGC = argc;
   ARGV = argv;

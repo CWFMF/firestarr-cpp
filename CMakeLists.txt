@@ -30,6 +30,25 @@ endif()
 
 add_definitions(-D_POSIX_C_SOURCE=200809L)
 
+# add version to version.cpp from environment variable so C++ can compile it in
+set(VERSION $ENV{VERSION})
+message("VERSION = ${VERSION}")
+execute_process(COMMAND date -u --rfc-3339=seconds
+                OUTPUT_VARIABLE COMPILE_DATE
+                ERROR_QUIET)
+string(REGEX REPLACE "(.*) (.*)\\+00:00\n$" "\\1T\\2Z" COMPILE_DATE "${COMPILE_DATE}")
+message("COMPILE_DATE = ${COMPILE_DATE}")
+set(VERSION_CODE "const char* VERSION = \"${VERSION}\";\nconst char* COMPILE_DATE = \"${COMPILE_DATE}\";\n")
+if(EXISTS src/cpp/version.cpp)
+    file(READ src/cpp/version.cpp VERSION_CODE_OLD)
+else()
+    set(VERSION_CODE_OLD "")
+endif()
+
+if (NOT "${VERSION_CODE}" STREQUAL "${VERSION_CODE_OLD}")
+    file(WRITE src/cpp/version.cpp "${VERSION_CODE}")
+endif()
+
 file(GLOB SOURCES src/cpp/*.cpp)
 set_source_files_properties(src/cpp/unstable.cpp PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}")
 
