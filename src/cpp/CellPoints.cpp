@@ -258,12 +258,12 @@ CellPoints::array_dists CellPoints::find_distances(const double p_x, const doubl
     dist_self.second.y(),
     "y from distance to self");
 #endif
-  const auto x_0_0 = DISTANCE_1D(x, 1.0);
+  const auto x_0_0 = DISTANCE_1D(x, 0.0);
   const auto x_M_0_5 = DISTANCE_1D(x, M_0_5);
   const auto x_0_5 = DISTANCE_1D(x, 0.5);
   const auto x_P_0_5 = DISTANCE_1D(x, P_0_5);
   const auto x_1_0 = DISTANCE_1D(x, 1.0);
-  const auto y_0_0 = DISTANCE_1D(y, 1.0);
+  const auto y_0_0 = DISTANCE_1D(y, 0.0);
   const auto y_M_0_5 = DISTANCE_1D(y, M_0_5);
   const auto y_0_5 = DISTANCE_1D(y, 0.5);
   const auto y_P_0_5 = DISTANCE_1D(y, P_0_5);
