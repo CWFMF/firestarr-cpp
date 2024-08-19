@@ -238,8 +238,8 @@ read_header(
   GTIFDefn definition;
   if (GTIFGetDefn(gtif, &definition))
   {
-    int columns;
-    int rows;
+    uint32_t columns;
+    uint32_t rows;
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &columns);
     //    logging::check_fatal(columns > numeric_limits<Idx>::max(),
     //                         "Cannot use grids with more than %d columns",
