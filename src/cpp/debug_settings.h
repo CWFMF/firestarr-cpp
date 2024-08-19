@@ -6,6 +6,7 @@
 #pragma once
 
 // if in debug mode then set everything, otherwise uncomment turning things off if trying to debug specific things
+#define DEBUG_DIRECTIONS
 #define DEBUG_FUEL_VARIABLE
 #define DEBUG_FWI_WEATHER
 #define DEBUG_GRIDS
@@ -19,6 +20,7 @@
 
 #ifdef NDEBUG
 
+#undef DEBUG_DIRECTIONS
 #undef DEBUG_FUEL_VARIABLE
 #undef DEBUG_FWI_WEATHER
 #undef DEBUG_GRIDS
@@ -30,7 +32,7 @@
 
 #endif
 
-#if not(defined(NDEBUG)) || defined(DEBUG_FUEL_VARIABLE) || defined(DEBUG_FWI_WEATHER) || defined(DEBUG_GRIDS) || defined(DEBUG_POINTS) || defined(DEBUG_PROBABILITY) || defined(DEBUG_SIMULATION) || defined(DEBUG_STATISTICS) || defined(DEBUG_WEATHER)
+#if not(defined(NDEBUG)) || defined(DEBUG_DIRECTIONS) || defined(DEBUG_FUEL_VARIABLE) || defined(DEBUG_FWI_WEATHER) || defined(DEBUG_GRIDS) || defined(DEBUG_POINTS) || defined(DEBUG_PROBABILITY) || defined(DEBUG_SIMULATION) || defined(DEBUG_STATISTICS) || defined(DEBUG_WEATHER)
 #define DEBUG_ANY
 #endif
 
