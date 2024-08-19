@@ -305,7 +305,7 @@ check_fatal(
     fatal(format, args);
   }
 }
-void
+inline void
 check_fatal(
   const bool condition,
   const char* format,

@@ -9,7 +9,7 @@ CellIndex
 relativeIndex(
   const Location& src,
   const Location& dst
-)
+) noexcept
 {
   static constexpr CellIndex DIRECTIONS[9] = {
     DIRECTION_SW,
