@@ -41,9 +41,10 @@ class CellPoints
 {
 public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
-  using dist_pt = pair<double, InnerPos>;
-  using array_dist_pts = std::array<dist_pt, NUM_DIRECTIONS>;
+  // using dist_pt = pair<double, InnerPos>;
+  // using array_dist_pts = std::array<dist_pt, NUM_DIRECTIONS>;
   using array_dists = std::array<double, NUM_DIRECTIONS>;
+  using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   //   using array_dist_pts = std::array<double, NUM_DIRECTIONS>;
   CellPoints() noexcept;
   //   // HACK: so we can emplace with NULL
@@ -109,13 +110,15 @@ public:
     const double duration,
     const OffsetSet& offsets,
     const spreading_points::mapped_type& cell_pts);
+#ifdef DEBUG_POINTS
   bool is_invalid() const;
+#endif
   bool empty() const;
   friend CellPointsMap;
 private:
   array_dists find_distances(const double p_x, const double p_y) noexcept;
   CellPoints& insert_(const double x, const double y) noexcept;
-  array_dist_pts pts_;
+  pair<array_dists, array_pts> pts_;
   mutable set<InnerPos> pts_unique_;
   // FIX: no point in atomic if not parallel, but need mutex if it is
   mutable bool pts_dirty_;
@@ -139,7 +142,7 @@ public:
     const CellPointsMap& rhs) noexcept;
   set<InnerPos> unique() const noexcept;
   // apply function to each CellPoints within and remove matches
-  void remove_if(std::function<bool(const pair<Location, CellPoints>&)> F);
+  void remove_if(std::function<bool(const pair<Location, CellPoints>&)> F) noexcept;
   void calculate_spread(
     Scenario& scenario,
     map<SpreadKey, SpreadInfo>& spread_info,

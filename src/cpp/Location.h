@@ -223,6 +223,7 @@ static constexpr CellIndex DIRECTION_SW = 0b00010000;
 static constexpr CellIndex DIRECTION_NE = 0b00100000;
 static constexpr CellIndex DIRECTION_NW = 0b01000000;
 static constexpr CellIndex DIRECTION_SE = 0b10000000;
+#ifdef DEBUG_DIRECTIONS
 // FIX: seems like there must be something with enum type that would be better?
 static const map<CellIndex, const char*> DIRECTION_NAMES{
   {DIRECTION_NONE, "NONE"},
@@ -234,6 +235,7 @@ static const map<CellIndex, const char*> DIRECTION_NAMES{
   {DIRECTION_NE, "NE"},
   {DIRECTION_NW, "NW"},
   {DIRECTION_SE, "SE"}};
+#endif
 
 class Location
   : public Position<HashSize>
@@ -319,5 +321,5 @@ public:
  * @return Direction that you would have to go in to get to dst from src
  */
 CellIndex
-  relativeIndex(const Location& src, const Location& dst);
+  relativeIndex(const Location& src, const Location& dst) noexcept;
 }

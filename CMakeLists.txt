@@ -26,15 +26,30 @@ else()
     execute_process(COMMAND bash -c "(gcc -march=native -Q --help=target | grep ${ARCH_PREFERRED} > /dev/null && echo -n ${ARCH_PREFERRED}) || (echo -n 'native')"
                     OUTPUT_VARIABLE USE_ARCH
                     ERROR_QUIET)
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+    # # set(USE_ARCH native)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=\"${USE_ARCH}\"")
+    # # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=\"${USE_ARCH}\"")
     message("USE_ARCH = ${USE_ARCH}")
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -march=\"${USE_ARCH}\"")
-    # set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wfatal-errors")
-    set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx -mavx2")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx -mavx2 -mavx512f")
+    message("Disabling AVX512 because performance is worse with it on")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-avx512f")
+    # # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx10.1")
+    # # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mprefer-vector-width=512")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mprefer-vector-width=256")
+    # # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mprefer-avx128")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info-vec-all -Wfatal-errors")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info-vec-missed -Wfatal-errors")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info-all -Wfatal-errors")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info-missed -Wfatal-errors")
+    # set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
     add_compile_options(
         "$<$<CONFIG:RELEASE>:-O3;>"
-        "$<$<CONFIG:DEBUG>:-O0;-fno-omit-frame-pointer;-g;>"
-)
+        "$<$<CONFIG:DEBUG>:-O3;-fno-omit-frame-pointer;-g;>"
+    )
 endif()
+message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
 add_definitions(-D_POSIX_C_SOURCE=200809L)
 

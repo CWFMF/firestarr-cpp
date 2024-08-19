@@ -232,7 +232,7 @@ void check_fatal(const bool condition, const char* format, va_list* args)
     fatal(format, args);
   }
 }
-void check_fatal(const bool condition, const char* format, ...)
+inline void check_fatal(const bool condition, const char* format, ...)
 #ifdef NDEBUG
   noexcept
 #endif

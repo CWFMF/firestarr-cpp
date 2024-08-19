@@ -14,5 +14,11 @@
 #endif
 
 #include <cmath>
+// HACK: alias these so unstable code doesn't change results of functions in debug vs release version
 double _cos(double angle) noexcept;
 double _sin(double angle) noexcept;
+// instead of defining as a call just define directly from cmath functions
+// #define _cos(x) (cos(x))
+// #define _sin(x) (sin(x))
+// constexpr auto _cos = cos;
+// constexpr auto _sin = sin;
