@@ -19,8 +19,9 @@ constexpr double P_0_5 = 0.5 + DIST_22_5;
 constexpr double M_0_5 = 0.5 - DIST_22_5;
 // not sure what's going on with this and wondering if it doesn't keep number exactly
 // shouldn't be any way to be further than twice the entire width of the area
-static const double INVALID_DISTANCE = static_cast<double>(MAX_ROWS * MAX_ROWS);
-static const pair<double, InnerPos> INVALID_PAIR{INVALID_DISTANCE, {}};
+static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
+static const InnerPos INVALID_POSITION{};
+static const pair<DistanceSize, InnerPos> INVALID_PAIR{INVALID_DISTANCE, {}};
 static const Idx INVALID_LOCATION = INVALID_PAIR.second.x();
 #ifdef DEBUG_POINTS
 inline void
@@ -30,10 +31,10 @@ assert_all_equal(
   const InnerSize y
 )
 {
-  for (const auto& pt : pts)
+  for (size_t i = 0; i < pts.size(); ++i)
   {
-    logging::check_equal(pt.second.x(), x, "point x");
-    logging::check_equal(pt.second.y(), y, "point y");
+    logging::check_equal(pts[i].second.x(), x, "point x");
+    logging::check_equal(pts[i].second.y(), y, "point y");
   }
 }
 
@@ -42,9 +43,9 @@ assert_all_invalid(
   const CellPoints::array_dist_pts& pts
 )
 {
-  for (const auto& pt : pts)
+  for (size_t i = 0; i < pts.size(); ++i)
   {
-    logging::check_equal(INVALID_DISTANCE, pt.first, "distances");
+    logging::check_equal(INVALID_DISTANCE, pts[i].first, "distances");
   }
   assert_all_equal(pts, INVALID_LOCATION, INVALID_LOCATION);
 }
@@ -55,11 +56,11 @@ CellPoints::unique() const noexcept
   if (pts_dirty_)
   {
     pts_unique_ = {};
-    for (const auto& pt : pts_)
+    for (size_t i = 0; i < pts_.first.size(); ++i)
     {
-      if (INVALID_DISTANCE != pt.first)
+      if (INVALID_DISTANCE != pts_.first[i])
       {
-        const auto& p = pt.second;
+        const auto& p = pts_.second[i];
 #ifdef DEBUG_POINTS
         const Location loc{cell_y_, cell_x_};
         const Location loc1{static_cast<Idx>(p.y()), static_cast<Idx>(p.x())};
@@ -91,7 +92,8 @@ CellPoints::CellPoints(
     cell_y_(cell_y),
     src_(DIRECTION_NONE)
 {
-  std::fill(pts_.begin(), pts_.end(), INVALID_PAIR);
+  std::fill(pts_.first.begin(), pts_.first.end(), INVALID_DISTANCE);
+  std::fill(pts_.second.begin(), pts_.second.end(), INVALID_POSITION);
 #ifdef DEBUG_POINTS
   assert_all_invalid(pts_);
 #endif
@@ -166,7 +168,7 @@ CellPoints::insert(
     for (size_t i = 0; i < pts_.size(); ++i)
     {
       logging::check_fatal(
-        INVALID_DISTANCE == pts_[i].first,
+        INVALID_DISTANCE == pts_.first[i],
         "Invalid distance at position %ld",
         i
       );
@@ -209,7 +211,7 @@ CellPoints::insert(
     for (size_t i = 0; i < pts_.size(); ++i)
     {
       logging::check_fatal(
-        INVALID_DISTANCE == pts_[i].first,
+        INVALID_DISTANCE == pts_.first[i],
         "Invalid distance at position %ld",
         i
       );
@@ -218,6 +220,40 @@ CellPoints::insert(
 #endif
   return *this;
 }
+
+constexpr std::array<pair<double, double>, NUM_DIRECTIONS> POINTS_OUTER{
+  pair<double, double>{0.5, 1.0},
+  // north-northeast is closest to point (0.5 + 0.207, 1.0)
+  pair<double, double>{P_0_5, 1.0},
+  // northeast is closest to point (1.0, 1.0)
+  pair<double, double>{1.0, 1.0},
+  // east-northeast is closest to point (1.0, 0.5 + 0.207)
+  pair<double, double>{1.0, P_0_5},
+  // east is closest to point (1.0, 0.5)
+  pair<double, double>{1.0, 0.5},
+  // east-southeast is closest to point (1.0, 0.5 - 0.207)
+  pair<double, double>{1.0, M_0_5},
+  // southeast is closest to point (1.0, 0.0)
+  pair<double, double>{1.0, 0.0},
+  // south-southeast is closest to point (0.5 + 0.207, 0.0)
+  pair<double, double>{P_0_5, 0.0},
+  // south is closest to point (0.5, 0.0)
+  pair<double, double>{0.5, 0.0},
+  // south-southwest is closest to point (0.5 - 0.207, 0.0)
+  pair<double, double>{M_0_5, 0.0},
+  // southwest is closest to point (0.0, 0.0)
+  pair<double, double>{0.0, 0.0},
+  // west-southwest is closest to point (0.0, 0.5 - 0.207)
+  pair<double, double>{0.0, M_0_5},
+  // west is closest to point (0.0, 0.5)
+  pair<double, double>{0.0, 0.5},
+  // west-northwest is closest to point (0.0, 0.5 + 0.207)
+  pair<double, double>{0.0, P_0_5},
+  // northwest is closest to point (0.0, 1.0)
+  pair<double, double>{0.0, 1.0},
+  // north-northwest is closest to point (0.5 - 0.207, 1.0)
+  pair<double, double>{M_0_5, 1.0}
+};
 
 CellPoints::array_dists
 CellPoints::find_distances(
@@ -247,60 +283,24 @@ CellPoints::find_distances(
   logging::check_fatal(x < 0 || x > 1, "x %f is out of cell (%f, %f)", x, 0, 1);
   logging::check_fatal(y < 0 || y > 1, "y %f is out of cell (%f, %f)", y, 0, 1);
 #endif
-#define DISTANCE_1D(a, b) (((a) - (b)) * ((a) - (b)))
-#define DISTANCE(x_dist, y_dist) ((x_dist) + (y_dist))
 #ifdef DEBUG_POINTS
   const auto dist_self = DISTANCE(x, y);
   logging::check_equal(0, dist_self, "distance to self");
   logging::check_equal(p_x, x, "x from distance to self");
   logging::check_equal(p_y, y, "y from distance to self");
 #endif
-  const auto x_0_0 = DISTANCE_1D(x, 0.0);
-  const auto x_M_0_5 = DISTANCE_1D(x, M_0_5);
-  const auto x_0_5 = DISTANCE_1D(x, 0.5);
-  const auto x_P_0_5 = DISTANCE_1D(x, P_0_5);
-  const auto x_1_0 = DISTANCE_1D(x, 1.0);
-  const auto y_0_0 = DISTANCE_1D(y, 0.0);
-  const auto y_M_0_5 = DISTANCE_1D(y, M_0_5);
-  const auto y_0_5 = DISTANCE_1D(y, 0.5);
-  const auto y_P_0_5 = DISTANCE_1D(y, P_0_5);
-  const auto y_1_0 = DISTANCE_1D(y, 1.0);
-  // NOTE: order of x0/x and y0/y shouldn't matter since squaring
-  return {// north is closest to point (0.5, 1.0)
-          DISTANCE(x_0_5, y_1_0),
-          // north-northeast is closest to point (0.5 + 0.207, 1.0)
-          DISTANCE(x_P_0_5, y_1_0),
-          // northeast is closest to point (1.0, 1.0)
-          DISTANCE(x_1_0, y_1_0),
-          // east-northeast is closest to point (1.0, 0.5 + 0.207)
-          DISTANCE(x_1_0, y_P_0_5),
-          // east is closest to point (1.0, 0.5)
-          DISTANCE(x_1_0, y_0_5),
-          // east-southeast is closest to point (1.0, 0.5 - 0.207)
-          DISTANCE(x_1_0, y_M_0_5),
-          // southeast is closest to point (1.0, 0.0)
-          DISTANCE(x_1_0, y_0_0),
-          // south-southeast is closest to point (0.5 + 0.207, 0.0)
-          DISTANCE(x_P_0_5, y_0_0),
-          // south is closest to point (0.5, 0.0)
-          DISTANCE(x_0_5, y_0_0),
-          // south-southwest is closest to point (0.5 - 0.207, 0.0)
-          DISTANCE(x_M_0_5, y_0_0),
-          // southwest is closest to point (0.0, 0.0)
-          DISTANCE(x_0_0, y_0_0),
-          // west-southwest is closest to point (0.0, 0.5 - 0.207)
-          DISTANCE(x_0_0, y_M_0_5),
-          // west is closest to point (0.0, 0.5)
-          DISTANCE(x_0_0, y_0_5),
-          // west-northwest is closest to point (0.0, 0.5 + 0.207)
-          DISTANCE(x_0_0, y_P_0_5),
-          // northwest is closest to point (0.0, 1.0)
-          DISTANCE(x_0_0, y_1_0),
-          // north-northwest is closest to point (0.5 - 0.207, 1.0)
-          DISTANCE(x_M_0_5, y_1_0)
-  };
+  array_dists d{};
+  for (size_t i = 0; i < d.size(); ++i)
+  {
+    const auto& p = POINTS_OUTER[i];
+    const auto& x0 = p.first;
+    const auto& y0 = p.second;
+    d[i] = ((x - x0) * (x - x0) + (y - y0) * (y - y0));
+  }
+  return d;
 #undef DISTANCE_1D
 #undef DISTANCE
+#undef dist
 }
 
 CellPoints&
@@ -331,10 +331,12 @@ CellPoints::insert_(
   for (size_t i = 0; i < dists.size(); ++i)
   {
     const auto& d = dists[i];
-    auto& p_d = pts_[i];
-    if (d < p_d.first)
+    auto& p_d = pts_.first[i];
+    auto& p_pt = pts_.second[i];
+    if (d < p_d)
     {
-      p_d = dist_pt{d, InnerPos(x, y)};
+      p_d = d;
+      p_pt = InnerPos(x, y);
       // only mark as dirty if actually changing a value
       pts_dirty_ = true;
     }
@@ -408,11 +410,12 @@ CellPoints::merge(
   }
 #endif
   // we know distances in each direction so just pick closer
-  for (size_t i = 0; i < pts_.size(); ++i)
+  for (size_t i = 0; i < pts_.first.size(); ++i)
   {
-    if (rhs.pts_[i].first < pts_[i].first)
+    if (rhs.pts_.first[i] < pts_.first[i])
     {
-      pts_[i] = rhs.pts_[i];
+      pts_.first[i] = rhs.pts_.first[i];
+      pts_.second[i] = rhs.pts_.second[i];
       // only mark as dirty if actually changing a value
       pts_dirty_ = true;
     }
@@ -543,7 +546,8 @@ CellPoints::CellPoints(
     cell_y_(rhs.cell_y_),
     src_(rhs.src_)
 {
-  std::copy(rhs.pts_.cbegin(), rhs.pts_.cend(), pts_.begin());
+  std::copy(rhs.pts_.first.cbegin(), rhs.pts_.first.cend(), pts_.first.begin());
+  std::copy(rhs.pts_.second.cbegin(), rhs.pts_.second.cend(), pts_.second.begin());
 }
 
 /**
@@ -575,7 +579,8 @@ CellPoints::operator=(
   const CellPoints& rhs
 ) noexcept
 {
-  std::copy(rhs.pts_.begin(), rhs.pts_.end(), pts_.begin());
+  std::copy(rhs.pts_.first.cbegin(), rhs.pts_.first.cend(), pts_.first.begin());
+  std::copy(rhs.pts_.second.cbegin(), rhs.pts_.second.cend(), pts_.second.begin());
   pts_unique_ = rhs.pts_unique_;
   pts_dirty_ = static_cast<bool>(rhs.pts_dirty_);
   cell_x_ = rhs.cell_x_;
@@ -593,11 +598,11 @@ CellPoints::operator<(
   {
     if (cell_y_ == rhs.cell_y_)
     {
-      for (size_t i = 0; i < pts_.size(); ++i)
+      for (size_t i = 0; i < pts_.first.size(); ++i)
       {
-        if (pts_[i] != rhs.pts_[i])
+        if (pts_.second[i] != rhs.pts_.second[i])
         {
-          return pts_[i] < rhs.pts_[i];
+          return pts_.second[i] < rhs.pts_.second[i];
         }
       }
       // all points are equal if we got here
@@ -614,9 +619,9 @@ CellPoints::operator==(
 {
   if (cell_x_ == rhs.cell_x_ && cell_y_ == rhs.cell_y_)
   {
-    for (size_t i = 0; i < pts_.size(); ++i)
+    for (size_t i = 0; i < pts_.second.size(); ++i)
     {
-      if (pts_[i] != rhs.pts_[i])
+      if (pts_.second[i] != rhs.pts_.second[i])
       {
         return false;
       }
