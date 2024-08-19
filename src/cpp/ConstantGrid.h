@@ -189,8 +189,8 @@ public:
                    std::numeric_limits<V>::min(),
                    std::numeric_limits<V>::max());
     const GridBase grid_info = read_header(tif, gtif);
-    int tile_width;
-    int tile_length;
+    uint32_t tile_width;
+    uint32_t tile_length;
     TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tile_width);
     TIFFGetField(tif, TIFFTAG_TILELENGTH, &tile_length);
     void* data;
@@ -239,10 +239,10 @@ public:
     vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, nodata_value);
     logging::verbose("%s: malloc start", filename.c_str());
     int bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
-    int bps_file;
+    uint16_t bps_file;
     TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps_file);
     logging::check_fatal(bps != bps_file,
-                         "Raster %s type is not expected type (%ld bits instead of %ld)",
+                         "Raster %s type is not expected type (%d bits instead of %d)",
                          filename.c_str(),
                          bps_file,
                          bps);
@@ -272,14 +272,20 @@ public:
       for (auto w = tile_column; w <= max_column; w += tile_width)
       {
         TIFFReadTile(tif, buf, static_cast<uint32_t>(w), static_cast<uint32_t>(h), 0, smp);
-        for (auto y = 0; (y < tile_length) && (y + h <= max_row); ++y)
+        for (
+          FullIdx y = 0;
+          (y < static_cast<FullIdx>(tile_length)) && (y + h <= max_row);
+          ++y)
         {
           // read in so that (0, 0) has a hash of 0
           const auto y_row = static_cast<HashSize>((h - min_row) + y);
           const auto actual_row = (max_row - min_row) - y_row;
           if (actual_row >= 0 && actual_row < MAX_ROWS)
           {
-            for (auto x = 0; (x < tile_width) && (x + w <= max_column); ++x)
+            for (
+              auto x = 0;
+              (x < static_cast<FullIdx>(tile_width)) && (x + w <= max_column);
+              ++x)
             {
               const auto offset = y * tile_width + x;
               const auto actual_column = ((w - min_column) + x);
