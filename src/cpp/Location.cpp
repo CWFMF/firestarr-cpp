@@ -6,7 +6,7 @@
 #include "Location.h"
 namespace tbd::topo
 {
-CellIndex relativeIndex(const Location& src, const Location& dst)
+CellIndex relativeIndex(const Location& src, const Location& dst) noexcept
 {
   static constexpr CellIndex DIRECTIONS[9] =
     {
