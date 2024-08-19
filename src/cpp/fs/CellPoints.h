@@ -15,9 +15,8 @@ class CellPoints
 {
 public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
-  using dist_pt = pair<double, InnerPos>;
-  using array_dist_pts = std::array<dist_pt, NUM_DIRECTIONS>;
-  using array_dists = std::array<double, NUM_DIRECTIONS>;
+  using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
+  using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
@@ -51,8 +50,8 @@ public:
 
 private:
   array_dists find_distances(const InnerSize p_x, const InnerSize p_y) const noexcept;
-  CellPoints& insert_(const double x, const double y) noexcept;
-  array_dist_pts pts_;
+  CellPoints& insert_(const InnerSize x, const InnerSize y) noexcept;
+  pair<array_dists, array_pts> pts_;
   mutable set<InnerPos> pts_unique_;
   // FIX: no point in atomic if not parallel, but need mutex if it is
   mutable bool pts_dirty_;
