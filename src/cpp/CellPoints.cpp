@@ -69,7 +69,7 @@ CellPoints::unique() const noexcept
       }
     }
 #ifdef DEBUG_POINTS
-    if (result.empty())
+    if (pts_unique_.empty())
     {
       assert_all_invalid(pts_);
     }
@@ -248,9 +248,9 @@ CellPoints::find_distances(
 #define DISTANCE(x_dist, y_dist) ((x_dist) + (y_dist))
 #ifdef DEBUG_POINTS
   const auto dist_self = DISTANCE(x, y);
-  logging::check_equal(0, dist_self.first, "distance to self");
-  logging::check_equal(p_x, dist_self.second.x(), "x from distance to self");
-  logging::check_equal(p_y, dist_self.second.y(), "y from distance to self");
+  logging::check_equal(0, dist_self, "distance to self");
+  logging::check_equal(p_x, x, "x from distance to self");
+  logging::check_equal(p_y, y, "y from distance to self");
 #endif
   const auto x_0_0 = DISTANCE_1D(x, 0.0);
   const auto x_M_0_5 = DISTANCE_1D(x, M_0_5);
