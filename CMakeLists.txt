@@ -32,6 +32,10 @@ add_definitions(-D_POSIX_C_SOURCE=200809L)
 
 # add version to version.cpp from environment variable so C++ can compile it in
 set(VERSION $ENV{VERSION})
+if ("${VERSION}" STREQUAL "")
+    message(FATAL_ERROR "VERSION IS NOT SET")
+    exit()
+endif()
 message("VERSION = ${VERSION}")
 execute_process(COMMAND date -u --rfc-3339=seconds
                 OUTPUT_VARIABLE COMPILE_DATE
