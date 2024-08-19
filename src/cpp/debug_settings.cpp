@@ -33,6 +33,9 @@ void show_debug_settings()
 #ifndef NDEBUG
   printf_centered("DEBUG");
 #endif
+#ifdef DEBUG_DIRECTIONS
+  printf_centered("DEBUG_DIRECTIONS");
+#endif
 #ifdef DEBUG_FUEL_VARIABLE
   printf_centered("DEBUG_FUEL_VARIABLE");
 #endif
