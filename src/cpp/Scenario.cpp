@@ -1071,7 +1071,7 @@ void Scenario::scheduleFireSpread(const Event& event)
 #endif
 #ifdef DEBUG_POINTS
   map<Location, set<InnerPos>> m1{};
-  for (const auto& kv : points_cur.map_)
+  for (const auto& kv : points_.map_)
   {
     m1.emplace(kv.first, kv.second.unique());
     logging::check_fatal(

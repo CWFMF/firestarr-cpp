@@ -70,7 +70,7 @@ set<InnerPos> CellPoints::unique() const noexcept
       }
     }
 #ifdef DEBUG_POINTS
-    if (result.empty())
+    if (pts_unique_.empty())
     {
       assert_all_invalid(pts_);
     }
@@ -247,15 +247,15 @@ CellPoints::array_dists CellPoints::find_distances(const double p_x, const doubl
   const auto dist_self = DISTANCE(x, y);
   logging::check_equal(
     0,
-    dist_self.first,
+    dist_self,
     "distance to self");
   logging::check_equal(
     p_x,
-    dist_self.second.x(),
+    x,
     "x from distance to self");
   logging::check_equal(
     p_y,
-    dist_self.second.y(),
+    y,
     "y from distance to self");
 #endif
   const auto x_0_0 = DISTANCE_1D(x, 0.0);
