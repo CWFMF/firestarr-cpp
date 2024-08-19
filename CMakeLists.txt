@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# HACK: architecture that works on azure batch and local machine
+set(ARCH_PREFERRED "skylake-avx512")
+
 if(WIN32)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
   CACHE STRING "Vcpkg toolchain file")
@@ -19,7 +22,12 @@ if (WIN32)
     # don't set -Wextra
     set(CMAKE_CXX_FLAGS "-Wall")
 else()
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+    # HACK: if gcc supports ARCH_PREFERRED on this then use that else native
+    execute_process(COMMAND bash -c "(gcc -march=native -Q --help=target | grep ${ARCH_PREFERRED} > /dev/null && echo -n ${ARCH_PREFERRED}) || (echo -n 'native')"
+                    OUTPUT_VARIABLE USE_ARCH
+                    ERROR_QUIET)
+    message("USE_ARCH = ${USE_ARCH}")
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -march=\"${USE_ARCH}\"")
     # set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wfatal-errors")
     set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
     add_compile_options(
