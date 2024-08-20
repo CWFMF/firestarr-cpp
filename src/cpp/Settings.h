@@ -12,9 +12,9 @@ namespace tbd
 namespace sim
 {
 /**
- * \brief Difference minimum for doubles to be considered the same
+ * \brief Difference minimum for MathSizes to be considered the same
  */
-static const double COMPARE_LIMIT = 1.0E-20f;
+static const MathSize COMPARE_LIMIT = 1.0E-20f;
 /**
  * \brief Reads and provides access to settings for the simulation.
  */
@@ -194,33 +194,33 @@ public:
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */
-  [[nodiscard]] static double minimumRos() noexcept;
-  static void setMinimumRos(double value) noexcept;
+  [[nodiscard]] static MathSize minimumRos() noexcept;
+  static void setMinimumRos(MathSize value) noexcept;
   /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    * \return Maximum distance that the fire is allowed to spread in one step (# of cells)
    */
-  [[nodiscard]] static double maximumSpreadDistance() noexcept;
+  [[nodiscard]] static MathSize maximumSpreadDistance() noexcept;
   /**
    * \brief Minimum Fine Fuel Moisture Code required for spread during the day
    * \return Minimum Fine Fuel Moisture Code required for spread during the day
    */
-  [[nodiscard]] static double minimumFfmc() noexcept;
+  [[nodiscard]] static MathSize minimumFfmc() noexcept;
   /**
    * \brief Minimum Fine Fuel Moisture Code required for spread during the night
    * \return Minimum Fine Fuel Moisture Code required for spread during the night
    */
-  [[nodiscard]] static double minimumFfmcAtNight() noexcept;
+  [[nodiscard]] static MathSize minimumFfmcAtNight() noexcept;
   /**
    * \brief Offset from sunrise at which the day is considered to start (hours)
    * \return Offset from sunrise at which the day is considered to start (hours)
    */
-  [[nodiscard]] static double offsetSunrise() noexcept;
+  [[nodiscard]] static DurationSize offsetSunrise() noexcept;
   /**
    * \brief Offset from sunrise at which the day is considered to end (hours)
    * \return Offset from sunrise at which the day is considered to end (hours)
    */
-  [[nodiscard]] static double offsetSunset() noexcept;
+  [[nodiscard]] static DurationSize offsetSunset() noexcept;
   /**
    * \brief Default Percent Conifer to use for M1/M2 fuels where none is specified (%)
    * \return Percent of the stand that is composed of conifer (%)
@@ -245,12 +245,12 @@ public:
    * \brief Confidence required before simulation stops (% / 100)
    * \return Confidence required before simulation stops (% / 100)
    */
-  [[nodiscard]] static double confidenceLevel() noexcept;
+  [[nodiscard]] static ThresholdSize confidenceLevel() noexcept;
   /**
    * \brief Set confidence required before simulation stops (% / 100)
    * \return Set confidence required before simulation stops (% / 100)
    */
-  static void setConfidenceLevel(const double value) noexcept;
+  static void setConfidenceLevel(const ThresholdSize value) noexcept;
   /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used (s)
    * \return Maximum time simulation can run before it is ended and whatever results it has are used (s)
@@ -270,17 +270,17 @@ public:
    * \brief Weight to give to Scenario part of thresholds
    * \return Weight to give to Scenario part of thresholds
    */
-  [[nodiscard]] static double thresholdScenarioWeight() noexcept;
+  [[nodiscard]] static ThresholdSize thresholdScenarioWeight() noexcept;
   /**
    * \brief Weight to give to daily part of thresholds
    * \return Weight to give to daily part of thresholds
    */
-  [[nodiscard]] static double thresholdDailyWeight() noexcept;
+  [[nodiscard]] static ThresholdSize thresholdDailyWeight() noexcept;
   /**
    * \brief Weight to give to hourly part of thresholds
    * \return Weight to give to hourly part of thresholds
    */
-  [[nodiscard]] static double thresholdHourlyWeight() noexcept;
+  [[nodiscard]] static ThresholdSize thresholdHourlyWeight() noexcept;
   /**
    * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
    * \return Days to output probability contours for (1 is start date, 2 is day after, etc.)

@@ -61,7 +61,7 @@
 //    * \brief Get a vector with the stored values
 //    * \return A vector with the stored values
 //    */
-//   [[nodiscard]] std::vector<double> getValues() const;
+//   [[nodiscard]] std::vector<MathSize> getValues() const;
 //   /**
 //    * \brief Calculate Statistics for values in this SafeMap
 //    * \return Statistics for values in this SafeMap

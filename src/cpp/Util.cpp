@@ -187,16 +187,16 @@ tm to_tm(const int year,
   mktime(&t);
   return t;
 }
-double to_time(const tm& t)
+DurationSize to_time(const tm& t)
 {
   return t.tm_yday
-       + ((t.tm_hour + (static_cast<double>(t.tm_min) / HOUR_MINUTES)) / DAY_HOURS);
+       + ((t.tm_hour + (static_cast<DurationSize>(t.tm_min) / HOUR_MINUTES)) / DAY_HOURS);
 }
-double to_time(const int year,
-               const int month,
-               const int day,
-               const int hour,
-               const int minute)
+DurationSize to_time(const int year,
+                     const int month,
+                     const int day,
+                     const int hour,
+                     const int minute)
 {
   return to_time(to_tm(year, month, day, hour, minute));
 }
@@ -262,11 +262,11 @@ bool tbd::is_leap_year(const int year)
   }
   return (year % 4 == 0);
 }
-string tbd::make_timestamp(const int year, const double time)
+string tbd::make_timestamp(const int year, const DurationSize time)
 {
   size_t day = floor(time);
-  size_t hour = (time - day) * static_cast<double>(DAY_HOURS);
-  size_t minute = round(((time - day) * static_cast<double>(DAY_HOURS) - hour) * HOUR_MINUTES);
+  size_t hour = (time - day) * static_cast<DurationSize>(DAY_HOURS);
+  size_t minute = round(((time - day) * static_cast<DurationSize>(DAY_HOURS) - hour) * HOUR_MINUTES);
   if (60 == minute)
   {
     minute = 0;
