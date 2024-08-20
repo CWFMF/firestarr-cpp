@@ -43,12 +43,12 @@ SafeVector& SafeVector::operator=(SafeVector&& rhs) noexcept
     std::terminate();
   }
 }
-void SafeVector::addValue(const double value)
+void SafeVector::addValue(const MathSize value)
 {
   lock_guard<mutex> lock(mutex_);
   static_cast<void>(insert_sorted(&values_, value));
 }
-vector<double> SafeVector::getValues() const
+vector<MathSize> SafeVector::getValues() const
 {
   lock_guard<mutex> lock(mutex_);
   return values_;

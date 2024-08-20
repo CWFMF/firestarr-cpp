@@ -134,7 +134,7 @@ public:
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double cellSize() const
+  [[nodiscard]] constexpr MathSize cellSize() const
   {
     return cells_->cellSize();
   }
@@ -210,8 +210,8 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \return ProbabilityMap with the same extent as this
    */
-  [[nodiscard]] sim::ProbabilityMap* makeProbabilityMap(double time,
-                                                        double start_time,
+  [[nodiscard]] sim::ProbabilityMap* makeProbabilityMap(DurationSize time,
+                                                        DurationSize start_time,
                                                         int min_value,
                                                         int low_max,
                                                         int med_max,
@@ -293,7 +293,7 @@ protected:
           // HACK: don't calculate for outside box of cells
           if (r > 0 && r < fuel.rows() - 1 && c > 0 && c < fuel.columns() - 1)
           {
-            double dem[9];
+            MathSize dem[9];
             for (int i = -1; i < 2; ++i)
             {
               for (int j = -1; j < 2; ++j)
@@ -308,17 +308,17 @@ protected:
               }
             }
             // Horn's algorithm
-            const double dx = ((dem[2] + dem[5] + dem[5] + dem[8])
-                               - (dem[0] + dem[3] + dem[3] + dem[6]))
-                            / elevation.cellSize();
-            const double dy = ((dem[6] + dem[7] + dem[7] + dem[8])
-                               - (dem[0] + dem[1] + dem[1] + dem[2]))
-                            / elevation.cellSize();
-            const double key = (dx * dx + dy * dy);
+            const MathSize dx = ((dem[2] + dem[5] + dem[5] + dem[8])
+                                 - (dem[0] + dem[3] + dem[3] + dem[6]))
+                              / elevation.cellSize();
+            const MathSize dy = ((dem[6] + dem[7] + dem[7] + dem[8])
+                                 - (dem[0] + dem[1] + dem[1] + dem[2]))
+                              / elevation.cellSize();
+            const MathSize key = (dx * dx + dy * dy);
             auto slope_pct = static_cast<float>(100 * (sqrt(key) / 8.0));
             s = min(static_cast<SlopeSize>(MAX_SLOPE_FOR_DISTANCE), static_cast<SlopeSize>(round(slope_pct)));
             static_assert(std::numeric_limits<SlopeSize>::max() >= MAX_SLOPE_FOR_DISTANCE);
-            double aspect_azimuth = 0.0;
+            MathSize aspect_azimuth = 0.0;
 
             if (s > 0 && (dx != 0 || dy != 0))
             {

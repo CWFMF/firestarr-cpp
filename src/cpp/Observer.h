@@ -126,7 +126,7 @@ protected:
  * \brief Tracks when fire initially arrives in a Cell.
  */
 class ArrivalObserver final
-  : public MapObserver<double>
+  : public MapObserver<DurationSize>
 {
 public:
   ~ArrivalObserver() override = default;
@@ -139,7 +139,7 @@ public:
    * \param scenario Scenario to track
    */
   explicit ArrivalObserver(const Scenario& scenario);
-  [[nodiscard]] double getValue(const Event& event) const noexcept override;
+  [[nodiscard]] DurationSize getValue(const Event& event) const noexcept override;
 };
 /**
  * \brief Tracks source Cell that fire arrived in Cell from.
