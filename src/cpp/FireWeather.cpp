@@ -70,7 +70,7 @@ FireWeather::FireWeather(const set<const fuel::FuelType*>& used_fuels,
   {
     if (nullptr != w)
     {
-      const auto dsr = 0.0272 * pow(w->fwi().asDouble(), 1.77);
+      const auto dsr = 0.0272 * pow(w->fwi().asValue(), 1.77);
       weighted_dsr_ += static_cast<size_t>(weight * dsr);
       weight *= 0.8;
     }

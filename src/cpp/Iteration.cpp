@@ -49,7 +49,7 @@ Iteration* Iteration::reset(mt19937* mt_extinction, mt19937* mt_spread)
   return this;
 }
 //
-// Iteration* Iteration::run(map<double, ProbabilityMap*>* probabilities)
+// Iteration* Iteration::run(map<DurationSize, ProbabilityMap*>* probabilities)
 //{
 //  // sort in run so that they still get the same extinction thresholds as when unsorted
 //		std::sort(scenarios_.begin(),
@@ -63,7 +63,7 @@ Iteration* Iteration::reset(mt19937* mt_extinction, mt19937* mt_spread)
 //  {
 //    vector<future<Scenario*>> results{};
 //    // make a local copy so that we don't have mutex competition with other Iterations
-//    map<double, ProbabilityMap*> local_probabilities{};
+//    map<DurationSize, ProbabilityMap*> local_probabilities{};
 //    for (auto& kv : *probabilities)
 //    {
 //      local_probabilities[kv.first] = kv.second->copyEmpty();
@@ -95,11 +95,11 @@ Iteration* Iteration::reset(mt19937* mt_extinction, mt19937* mt_spread)
 //  }
 //  return this;
 //}
-vector<double> Iteration::savePoints() const
+vector<DurationSize> Iteration::savePoints() const
 {
   return scenarios_.at(0)->savePoints();
 }
-double Iteration::startTime() const
+DurationSize Iteration::startTime() const
 {
   return scenarios_.at(0)->startTime();
 }

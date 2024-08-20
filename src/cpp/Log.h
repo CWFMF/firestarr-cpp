@@ -142,7 +142,7 @@ void check_fatal(bool condition, const char* format, ...)
  * \param rhs second value
  * \param name String for message describing what's being compared
  */
-void check_equal(const double lhs, const double rhs, const char* name)
+void check_equal(const MathSize lhs, const MathSize rhs, const char* name)
 #ifdef NDEBUG
   noexcept
 #endif

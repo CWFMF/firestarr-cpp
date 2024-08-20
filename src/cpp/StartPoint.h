@@ -17,14 +17,14 @@ class StartPoint : public Point
   /**
    * \brief Array of tuple for sunrise/sunset times by day
    */
-  array<tuple<double, double>, MAX_DAYS> days_;
+  array<tuple<DurationSize, DurationSize>, MAX_DAYS> days_;
 public:
   /**
    * \brief Constructor
    * \param latitude Latitude (decimal degrees)
    * \param longitude Longitude (decimal degrees)
    */
-  StartPoint(double latitude, double longitude) noexcept;
+  StartPoint(MathSize latitude, MathSize longitude) noexcept;
   ~StartPoint() noexcept = default;
   /**
    * \brief Copy constructor
@@ -53,7 +53,7 @@ public:
    * \param day Day
    * \return Sunrise time on give day
    */
-  [[nodiscard]] constexpr double dayStart(const size_t day) const
+  [[nodiscard]] constexpr DurationSize dayStart(const size_t day) const
   {
     return get<0>(days_.at(day));
   }
@@ -62,7 +62,7 @@ public:
    * \param day Day
    * \return Sunset time on give day
    */
-  [[nodiscard]] constexpr double dayEnd(const size_t day) const
+  [[nodiscard]] constexpr DurationSize dayEnd(const size_t day) const
   {
     return get<1>(days_.at(day));
   }

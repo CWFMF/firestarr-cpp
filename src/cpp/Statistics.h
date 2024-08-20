@@ -17,7 +17,7 @@ namespace util
 /**
  * \brief Student's T critical values
  */
-static constexpr array<double, 100> T_VALUES{
+static constexpr array<MathSize, 100> T_VALUES{
   3.078,
   1.886,
   1.638,
@@ -128,7 +128,7 @@ public:
    * \brief Minimum value
    * \return Minimum value
    */
-  [[nodiscard]] double min() const noexcept
+  [[nodiscard]] MathSize min() const noexcept
   {
     return percentiles_[0];
   }
@@ -136,7 +136,7 @@ public:
    * \brief Maximum value
    * \return Maximum value
    */
-  [[nodiscard]] double max() const noexcept
+  [[nodiscard]] MathSize max() const noexcept
   {
     return percentiles_[100];
   }
@@ -144,7 +144,7 @@ public:
    * \brief Median value
    * \return Median value
    */
-  [[nodiscard]] double median() const noexcept
+  [[nodiscard]] MathSize median() const noexcept
   {
     return percentiles_[50];
   }
@@ -152,7 +152,7 @@ public:
    * \brief Mean (average) value
    * \return Mean (average) value
    */
-  [[nodiscard]] double mean() const noexcept
+  [[nodiscard]] MathSize mean() const noexcept
   {
     return mean_;
   }
@@ -160,7 +160,7 @@ public:
    * \brief Standard Deviation
    * \return Standard Deviation
    */
-  [[nodiscard]] double standardDeviation() const noexcept
+  [[nodiscard]] MathSize standardDeviation() const noexcept
   {
     return standard_deviation_;
   }
@@ -168,7 +168,7 @@ public:
    * \brief Sample Variance
    * \return Sample Variance
    */
-  [[nodiscard]] double sampleVariance() const noexcept
+  [[nodiscard]] MathSize sampleVariance() const noexcept
   {
     return sample_variance_;
   }
@@ -185,7 +185,7 @@ public:
    * \param i Percentile to retrieve value for
    * \return Value for given percentile
    */
-  [[nodiscard]] double percentile(const uint8_t i) const noexcept
+  [[nodiscard]] MathSize percentile(const uint8_t i) const noexcept
   {
 #ifdef DEBUG_STATISTICS
     logging::check_fatal(static_cast<size_t>(i) >= percentiles_.size(),
@@ -198,7 +198,7 @@ public:
    * \brief 80% Confidence Interval
    * \return 80% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval80() const
+  [[nodiscard]] MathSize confidenceInterval80() const
   {
     return confidenceInterval(1.28);
   }
@@ -206,7 +206,7 @@ public:
    * \brief 90% Confidence Interval
    * \return 90% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval90() const
+  [[nodiscard]] MathSize confidenceInterval90() const
   {
     return confidenceInterval(1.645);
   }
@@ -214,7 +214,7 @@ public:
    * \brief 95% Confidence Interval
    * \return 95% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval95() const
+  [[nodiscard]] MathSize confidenceInterval95() const
   {
     return confidenceInterval(1.96);
   }
@@ -222,7 +222,7 @@ public:
    * \brief 98% Confidence Interval
    * \return 98% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval98() const
+  [[nodiscard]] MathSize confidenceInterval98() const
   {
     return confidenceInterval(2.33);
   }
@@ -230,7 +230,7 @@ public:
    * \brief 99% Confidence Interval
    * \return 99% Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval99() const
+  [[nodiscard]] MathSize confidenceInterval99() const
   {
     return confidenceInterval(2.58);
   }
@@ -238,7 +238,7 @@ public:
    * \brief Calculates statistics on a vector of values
    * \param values Values to use for calculation
    */
-  explicit Statistics(vector<double> values)
+  explicit Statistics(vector<MathSize> values)
   {
     // values should already be sorted
     //  std::sort(values.begin(), values.end());
@@ -249,20 +249,20 @@ public:
     const auto total_sum = std::accumulate(values.begin(),
                                            values.end(),
                                            0.0,
-                                           [](const double t, const double x) { return t + x; });
+                                           [](const MathSize t, const MathSize x) { return t + x; });
     mean_ = total_sum / n_;
     for (size_t i = 0; i < percentiles_.size(); ++i)
     {
       const auto pos = std::min(n_ - 1,
                                 static_cast<size_t>(truncl(
-                                  (static_cast<double>(i) / (percentiles_.size() - 1)) * n_)));
+                                  (static_cast<MathSize>(i) / (percentiles_.size() - 1)) * n_)));
       // note("For %d values %dth percentile is at %d", n_, i, pos);
       percentiles_[i] = values[pos];
     }
     const auto total = std::accumulate(values.begin(),
                                        values.end(),
                                        0.0,
-                                       [this](const double t, const double x) { return t + pow_int<2>(x - mean_); });
+                                       [this](const MathSize t, const MathSize x) { return t + pow_int<2>(x - mean_); });
     standard_deviation_ = sqrt(total / n_);
     sample_variance_ = total / (n_ - 1);
 #ifdef DEBUG_STATISTICS
@@ -275,7 +275,7 @@ public:
    * \brief Calculate Student's T value
    * \return Student's T value
    */
-  [[nodiscard]] double studentsT() const noexcept
+  [[nodiscard]] MathSize studentsT() const noexcept
   {
     const auto result = T_VALUES[std::min(T_VALUES.size(), n()) - 1]
                       * sqrt(sampleVariance() / n()) / abs(mean());
@@ -287,7 +287,7 @@ public:
    * \param relative_error Relative Error that is required
    * \return If Student's T value is less than the relative error
    */
-  [[nodiscard]] bool isConfident(const double relative_error) const noexcept
+  [[nodiscard]] bool isConfident(const MathSize relative_error) const noexcept
   {
     const auto st = studentsT();
     const auto re = relative_error / (1 + relative_error);
@@ -302,10 +302,10 @@ public:
    */
   [[nodiscard]] size_t runsRequired(
     // const size_t cur_runs,
-    const double relative_error) const
+    const MathSize relative_error) const
   {
     const auto re = relative_error / (1 + relative_error);
-    const std::function<double(size_t)> fct = [this](const size_t i) noexcept {
+    const std::function<MathSize(size_t)> fct = [this](const size_t i) noexcept {
       return T_VALUES[std::min(T_VALUES.size(), i) - 1]
            * sqrt(sampleVariance() / i) / abs(mean());
     };
@@ -318,7 +318,7 @@ private:
    * \param z Z value to calculate for
    * \return Confidence Interval
    */
-  [[nodiscard]] double confidenceInterval(const double z) const
+  [[nodiscard]] MathSize confidenceInterval(const MathSize z) const
   {
     return z * mean_ / sqrt(n_);
   }
@@ -329,31 +329,31 @@ private:
   /**
    * \brief Minimum value
    */
-  double min_;
+  MathSize min_;
   /**
    * \brief Maximum value
    */
-  double max_;
+  MathSize max_;
   /**
    * \brief Mean (average) value
    */
-  double mean_;
+  MathSize mean_;
   /**
    * \brief Median value
    */
-  double median_;
+  MathSize median_;
   /**
    * \brief Standard Deviation
    */
-  double standard_deviation_;
+  MathSize standard_deviation_;
   /**
    * \brief Sample variance
    */
-  double sample_variance_;
+  MathSize sample_variance_;
   /**
    * \brief Array of all integer percentile values
    */
-  array<double, 101> percentiles_{};
+  array<MathSize, 101> percentiles_{};
 };
 }
 }

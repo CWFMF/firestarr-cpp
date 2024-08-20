@@ -102,9 +102,9 @@ bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
 }
-double parse_double()
+MathSize parse_value()
 {
-  return parse_once<double>([] { return stod(get_arg()); });
+  return parse_once<MathSize>([] { return stod(get_arg()); });
 }
 size_t parse_size_t()
 {
@@ -121,7 +121,7 @@ string parse_string()
 template <class T>
 T parse_index()
 {
-  // return T(parse_double());
+  // return T(parse_value());
   return parse_once<T>([] { return T(stod(get_arg())); });
 }
 // template <class T>
@@ -263,7 +263,7 @@ int main(const int argc, const char* const argv[])
       register_flag(&Settings::setRowColIgnition, true, "--rowcol-ignition", "Use row and col to specific start point. Assumes force-fuel is set.");
       register_setter<size_t>(&Settings::setIgnRow, "--ign-row", "Specify ignition row", false, &parse_size_t);
       register_setter<size_t>(&Settings::setIgnCol, "--ign-col", "Specify ignition column", false, &parse_size_t);
-      register_setter<double>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_double);
+      register_setter<tbd::ThresholdSize>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_value);
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
       // HACK: want different text for same flag so define here too

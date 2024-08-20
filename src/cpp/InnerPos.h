@@ -20,20 +20,20 @@ public:
   /**
    * \brief X direction (column)
    */
-  inline constexpr double x() const noexcept
+  inline constexpr InnerSize x() const noexcept
   {
     return x_;
   }
   /**
    * \brief Y direction (row)
    */
-  inline constexpr double y() const noexcept
+  inline constexpr InnerSize y() const noexcept
   {
     return y_;
   }
   constexpr BoundedPoint(
-    const double x,
-    const double y) noexcept
+    const InnerSize x,
+    const InnerSize y) noexcept
     : x_(x),
       y_(y)
   {
@@ -88,7 +88,7 @@ public:
    * \param duration time to multiply by
    */
   template <class T>
-  constexpr T after(const double duration) const noexcept
+  constexpr T after(const DurationSize duration) const noexcept
   {
     return static_cast<T>(class_type(x() * duration, y() * duration));
   }
@@ -129,8 +129,8 @@ public:
     return static_cast<T>(class_type(x() + o.x(), y() + o.y()));
   }
 private:
-  double x_;
-  double y_;
+  InnerSize x_;
+  InnerSize y_;
 };
 /**
  * \brief Offset from a position
@@ -148,7 +148,7 @@ public:
 using OffsetSet = Offset::OffsetSet;
 // define multiplication in other order since equivalent
 template <class T>
-constexpr T after(const double duration, const T& o)
+constexpr T after(const DurationSize duration, const T& o)
 {
   return o.after(duration);
 }

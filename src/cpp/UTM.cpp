@@ -13,9 +13,6 @@ namespace tbd::topo
 // Original Javascript by Chuck Taylor
 // Port to C++ by Alex Hajnal
 //
-// *** THIS CODE USES 32-BIT doubleS BY DEFAULT ***
-// *** For 64-bit double-precision edit UTM.h: undefine double_32 and define double_64
-//
 // This is a simple port of the code on the Geographic/UTM Coordinate Converter (1) page
 // from Javascript to C++.
 // Using this you can easily convert between UTM and WGS84 (latitude and longitude).
@@ -33,7 +30,7 @@ using util::pow_int;
 constexpr auto SM_A = 6378137.0;
 constexpr auto SM_B = 6356752.314;
 constexpr auto UTM_SCALE_FACTOR = 0.9996;
-double arc_length_of_meridian(const double phi) noexcept
+MathSize arc_length_of_meridian(const MathSize phi) noexcept
 {
   const auto n = (SM_A - SM_B) / (SM_A + SM_B);
   const auto alpha = ((SM_A + SM_B) / 2.0) * (1.0 + (pow_int<2>(n) / 4.0) + (pow_int<4>(n) / 64.0));
@@ -44,15 +41,15 @@ double arc_length_of_meridian(const double phi) noexcept
   /* Now calculate the sum of the series and return */
   return alpha * (phi + (beta * _sin(2.0 * phi)) + (gamma * _sin(4.0 * phi)) + (delta * _sin(6.0 * phi)) + (epsilon * _sin(8.0 * phi)));
 }
-constexpr double utm_central_meridian(const double zone)
+constexpr MathSize utm_central_meridian(const MathSize zone)
 {
   return to_radians(utm_central_meridian_deg(zone));
 }
-constexpr double utm_central_meridian_deg(const int zone)
+constexpr MathSize utm_central_meridian_deg(const int zone)
 {
-  return -183.0 + (static_cast<double>(zone) * 6.0);
+  return -183.0 + (static_cast<MathSize>(zone) * 6.0);
 }
-double footpoint_latitude(const double y) noexcept
+MathSize footpoint_latitude(const MathSize y) noexcept
 {
   /* Precalculate n (Eq. 10.18) */
   const auto n = (SM_A - SM_B) / (SM_A + SM_B);
@@ -75,11 +72,11 @@ double footpoint_latitude(const double y) noexcept
        + (delta * _sin(6.0 * y_alpha))
        + (epsilon * _sin(8.0 * y_alpha));
 }
-void map_lat_lon_to_xy(const double phi,
-                       const double lambda,
-                       const double lambda0,
-                       double* x,
-                       double* y) noexcept
+void map_lat_lon_to_xy(const MathSize phi,
+                       const MathSize lambda,
+                       const MathSize lambda0,
+                       MathSize* x,
+                       MathSize* y) noexcept
 {
   const auto ep2 = (pow_int<2>(SM_A) - pow_int<2>(SM_B)) / pow_int<2>(SM_B);
   const auto c = _cos(phi);
@@ -116,11 +113,11 @@ void map_lat_lon_to_xy(const double phi,
 //
 //   x1_fraction, x2_fraction, x2_polynomial, x3_polynomial, etc. are to enhance
 //   readability and to optimize computations.
-void map_xy_to_lat_lon(const double x,
-                       const double y,
-                       const double lambda0,
-                       double* phi,
-                       double* lambda) noexcept
+void map_xy_to_lat_lon(const MathSize x,
+                       const MathSize y,
+                       const MathSize lambda0,
+                       MathSize* phi,
+                       MathSize* lambda) noexcept
 {
   /* Get the value of phi_f, the footpoint latitude. */
   const auto phi_f = footpoint_latitude(y);
@@ -171,7 +168,7 @@ void map_xy_to_lat_lon(const double x,
           + x5_fraction * x5_polynomial * pow_int<5>(x)
           + x7_fraction * x7_polynomial * pow_int<7>(x);
 }
-int lat_lon_to_utm(const Point& point, double* x, double* y) noexcept
+int lat_lon_to_utm(const Point& point, MathSize* x, MathSize* y) noexcept
 {
   const auto zone = static_cast<int>((point.longitude() + 180.0) / 6) + 1;
   map_lat_lon_to_xy(to_radians(point.latitude()),
@@ -186,7 +183,7 @@ int lat_lon_to_utm(const Point& point, double* x, double* y) noexcept
     *y += 10000000.0;
   return zone;
 }
-void lat_lon_to_utm(const Point& point, const double zone, double* x, double* y) noexcept
+void lat_lon_to_utm(const Point& point, const MathSize zone, MathSize* x, MathSize* y) noexcept
 {
   map_lat_lon_to_xy(to_radians(point.latitude()),
                     to_radians(point.longitude()),
@@ -199,12 +196,12 @@ void lat_lon_to_utm(const Point& point, const double zone, double* x, double* y)
   if (*y < 0.0)
     *y += 10000000.0;
 }
-void utm_to_lat_lon(double x,
-                    double y,
+void utm_to_lat_lon(MathSize x,
+                    MathSize y,
                     const int zone,
                     const bool is_southern_hemisphere,
-                    double* lat,
-                    double* lon) noexcept
+                    MathSize* lat,
+                    MathSize* lon) noexcept
 {
   x -= 500000.0;
   x /= UTM_SCALE_FACTOR;

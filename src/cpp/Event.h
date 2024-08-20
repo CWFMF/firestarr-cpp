@@ -35,7 +35,7 @@ public:
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static constexpr Event makeEnd(const double time)
+  [[nodiscard]] static constexpr Event makeEnd(const DurationSize time)
   {
     return {time, NoLocation, 0, END_SIMULATION, nullptr, 0};
   }
@@ -45,7 +45,7 @@ public:
    * \param cell Cell to start new fire in
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeNewFire(const double time,
+  [[nodiscard]] static Event constexpr makeNewFire(const DurationSize time,
                                                    const topo::Cell& cell)
   {
     return {time, cell, 0, NEW_FIRE, nullptr, 0};
@@ -55,7 +55,7 @@ public:
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeSave(const double time)
+  [[nodiscard]] static Event constexpr makeSave(const DurationSize time)
   {
     return {time, NoLocation, 0, SAVE, nullptr, 0};
   }
@@ -64,7 +64,7 @@ public:
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(const double time)
+  [[nodiscard]] static Event constexpr makeFireSpread(const DurationSize time)
   {
     return makeFireSpread(time, nullptr);
   }
@@ -75,7 +75,7 @@ public:
    * \return Event created
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
-    const double time,
+    const DurationSize time,
     const SpreadInfo* spread_info)
   {
     return makeFireSpread(time, spread_info, NoLocation);
@@ -88,7 +88,7 @@ public:
    * \return Event created
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
-    const double time,
+    const DurationSize time,
     const SpreadInfo* spread_info,
     const topo::Cell& cell)
   {
@@ -102,7 +102,7 @@ public:
    * \return Event created
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
-    const double time,
+    const DurationSize time,
     const SpreadInfo* spread_info,
     const topo::Cell& cell,
     const CellIndex source)
@@ -136,7 +136,7 @@ public:
    * \brief Time of Event (decimal days)
    * \return Time of Event (decimal days)
    */
-  [[nodiscard]] constexpr double time() const
+  [[nodiscard]] constexpr DurationSize time() const
   {
     return time_;
   }
@@ -152,7 +152,7 @@ public:
    * \brief Duration that Event Cell has been burning (decimal days)
    * \return Duration that Event Cell has been burning (decimal days)
    */
-  [[nodiscard]] constexpr double timeAtLocation() const
+  [[nodiscard]] constexpr DurationSize timeAtLocation() const
   {
     return time_at_location_;
   }
@@ -176,7 +176,7 @@ public:
    * \brief Head fire rate of spread (m/min)
    * \return Head fire rate of spread (m/min)
    */
-  [[nodiscard]] constexpr double ros() const
+  [[nodiscard]] constexpr MathSize ros() const
   {
     return nullptr == spread_info_ ? 0 : spread_info_->headRos();
   }
@@ -206,12 +206,12 @@ private:
    * \param intensity Intensity to spread with (kW/m)
    * \param time_at_location Duration that Event Cell has been burning (decimal days)
    */
-  constexpr Event(const double time,
+  constexpr Event(const DurationSize time,
                   const topo::Cell& cell,
                   const CellIndex source,
                   const Type type,
                   const SpreadInfo* spread_info,
-                  const double time_at_location)
+                  const DurationSize time_at_location)
     : time_(time),
       time_at_location_(time_at_location),
       cell_(cell),
@@ -223,11 +223,11 @@ private:
   /**
    * \brief Time to schedule for
    */
-  double time_;
+  DurationSize time_;
   /**
    * \brief Duration that Event Cell has been burning (decimal days)
    */
-  double time_at_location_;
+  DurationSize time_at_location_;
   /**
    * \brief Cell to spread in
    */

@@ -71,11 +71,11 @@ public:
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    * \return Minimum rate of spread before fire is considered to be spreading (m/min)
    */
-  [[nodiscard]] double minimumRos() const noexcept
+  [[nodiscard]] MathSize minimumRos() const noexcept
   {
     return minimum_ros_;
   }
-  void setMinimumRos(const double value) noexcept
+  void setMinimumRos(const MathSize value) noexcept
   {
     minimum_ros_ = value;
   }
@@ -83,7 +83,7 @@ public:
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    * \return Maximum distance that the fire is allowed to spread in one step (# of cells)
    */
-  [[nodiscard]] constexpr double maximumSpreadDistance() const noexcept
+  [[nodiscard]] constexpr MathSize maximumSpreadDistance() const noexcept
   {
     return maximum_spread_distance_;
   }
@@ -91,7 +91,7 @@ public:
    * \brief Minimum Fine Fuel Moisture Code required for spread during the day
    * \return Minimum Fine Fuel Moisture Code required for spread during the day
    */
-  [[nodiscard]] constexpr double minimumFfmc() const noexcept
+  [[nodiscard]] constexpr MathSize minimumFfmc() const noexcept
   {
     return minimum_ffmc_;
   }
@@ -99,7 +99,7 @@ public:
    * \brief Minimum Fine Fuel Moisture Code required for spread during the night
    * \return Minimum Fine Fuel Moisture Code required for spread during the night
    */
-  [[nodiscard]] constexpr double minimumFfmcAtNight() const noexcept
+  [[nodiscard]] constexpr MathSize minimumFfmcAtNight() const noexcept
   {
     return minimum_ffmc_at_night_;
   }
@@ -107,7 +107,7 @@ public:
    * \brief Offset from sunrise at which the day is considered to start (hours)
    * \return Offset from sunrise at which the day is considered to start (hours)
    */
-  [[nodiscard]] constexpr double offsetSunrise() const noexcept
+  [[nodiscard]] constexpr DurationSize offsetSunrise() const noexcept
   {
     return offset_sunrise_;
   }
@@ -115,7 +115,7 @@ public:
    * \brief Offset from sunrise at which the day is considered to end (hours)
    * \return Offset from sunrise at which the day is considered to end (hours)
    */
-  [[nodiscard]] constexpr double offsetSunset() const noexcept
+  [[nodiscard]] constexpr DurationSize offsetSunset() const noexcept
   {
     return offset_sunset_;
   }
@@ -155,7 +155,7 @@ public:
    * \brief Confidence required before simulation stops (% / 100)
    * \return Confidence required before simulation stops (% / 100)
    */
-  [[nodiscard]] double confidenceLevel() const noexcept
+  [[nodiscard]] ThresholdSize confidenceLevel() const noexcept
   {
     return confidence_level_;
   }
@@ -163,7 +163,7 @@ public:
    * \brief Set confidence required before simulation stops (% / 100)
    * \return Set confidence required before simulation stops (% / 100)
    */
-  void setConfidenceLevel(const double value) noexcept
+  void setConfidenceLevel(const ThresholdSize value) noexcept
   {
     confidence_level_ = value;
   }
@@ -227,7 +227,7 @@ public:
    * \brief Weight to give to Scenario part of thresholds
    * \return Weight to give to Scenario part of thresholds
    */
-  [[nodiscard]] constexpr double thresholdScenarioWeight() const noexcept
+  [[nodiscard]] constexpr ThresholdSize thresholdScenarioWeight() const noexcept
   {
     return threshold_scenario_weight_;
   }
@@ -235,7 +235,7 @@ public:
    * \brief Weight to give to daily part of thresholds
    * \return Weight to give to daily part of thresholds
    */
-  [[nodiscard]] constexpr double thresholdDailyWeight() const noexcept
+  [[nodiscard]] constexpr ThresholdSize thresholdDailyWeight() const noexcept
   {
     return threshold_daily_weight_;
   }
@@ -243,7 +243,7 @@ public:
    * \brief Weight to give to hourly part of thresholds
    * \return Weight to give to hourly part of thresholds
    */
-  [[nodiscard]] constexpr double thresholdHourlyWeight() const noexcept
+  [[nodiscard]] constexpr ThresholdSize thresholdHourlyWeight() const noexcept
   {
     return threshold_hourly_weight_;
   }
@@ -300,31 +300,31 @@ private:
   /**
    * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
    */
-  atomic<double> minimum_ros_;
+  atomic<MathSize> minimum_ros_;
   /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    */
-  double maximum_spread_distance_;
+  MathSize maximum_spread_distance_;
   /**
    * \brief Minimum Fine Fuel Moisture Code required for spread during the day
    */
-  double minimum_ffmc_;
+  MathSize minimum_ffmc_;
   /**
    * \brief Minimum Fine Fuel Moisture Code required for spread during the night
    */
-  double minimum_ffmc_at_night_;
+  MathSize minimum_ffmc_at_night_;
   /**
    * \brief Offset from sunrise at which the day is considered to start (hours)
    */
-  double offset_sunrise_;
+  DurationSize offset_sunrise_;
   /**
    * \brief Offset from sunrise at which the day is considered to end (hours)
    */
-  double offset_sunset_;
+  DurationSize offset_sunset_;
   /**
    * \brief Confidence required before simulation stops (% / 100)
    */
-  atomic<double> confidence_level_;
+  atomic<ThresholdSize> confidence_level_;
   /**
    * \brief Ignition position row
    */
@@ -344,15 +344,15 @@ private:
   /**
    * \brief Weight to give to Scenario part of thresholds
    */
-  double threshold_scenario_weight_;
+  ThresholdSize threshold_scenario_weight_;
   /**
    * \brief Weight to give to daily part of thresholds
    */
-  double threshold_daily_weight_;
+  ThresholdSize threshold_daily_weight_;
   /**
    * \brief Weight to give to hourly part of thresholds
    */
-  double threshold_hourly_weight_;
+  ThresholdSize threshold_hourly_weight_;
   /**
    * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
    */
@@ -693,31 +693,31 @@ void Settings::setIgnCol(const int value) noexcept
 {
   SettingsImplementation::instance().setIgnCol(value);
 }
-double Settings::minimumRos() noexcept
+MathSize Settings::minimumRos() noexcept
 {
   return SettingsImplementation::instance().minimumRos();
 }
-void Settings::setMinimumRos(const double value) noexcept
+void Settings::setMinimumRos(const MathSize value) noexcept
 {
   SettingsImplementation::instance().setMinimumRos(value);
 }
-double Settings::maximumSpreadDistance() noexcept
+MathSize Settings::maximumSpreadDistance() noexcept
 {
   return SettingsImplementation::instance().maximumSpreadDistance();
 }
-double Settings::minimumFfmc() noexcept
+MathSize Settings::minimumFfmc() noexcept
 {
   return SettingsImplementation::instance().minimumFfmc();
 }
-double Settings::minimumFfmcAtNight() noexcept
+MathSize Settings::minimumFfmcAtNight() noexcept
 {
   return SettingsImplementation::instance().minimumFfmcAtNight();
 }
-double Settings::offsetSunrise() noexcept
+DurationSize Settings::offsetSunrise() noexcept
 {
   return SettingsImplementation::instance().offsetSunrise();
 }
-double Settings::offsetSunset() noexcept
+DurationSize Settings::offsetSunset() noexcept
 {
   return SettingsImplementation::instance().offsetSunset();
 }
@@ -737,11 +737,11 @@ int Settings::intensityMaxModerate() noexcept
 {
   return SettingsImplementation::instance().intensityMaxModerate();
 }
-double Settings::confidenceLevel() noexcept
+ThresholdSize Settings::confidenceLevel() noexcept
 {
   return SettingsImplementation::instance().confidenceLevel();
 }
-void Settings::setConfidenceLevel(const double value) noexcept
+void Settings::setConfidenceLevel(const ThresholdSize value) noexcept
 {
   SettingsImplementation::instance().setConfidenceLevel(value);
 }
@@ -757,15 +757,15 @@ size_t Settings::maximumCountSimulations() noexcept
 {
   return SettingsImplementation::instance().maximumCountSimulations();
 }
-double Settings::thresholdScenarioWeight() noexcept
+ThresholdSize Settings::thresholdScenarioWeight() noexcept
 {
   return SettingsImplementation::instance().thresholdScenarioWeight();
 }
-double Settings::thresholdDailyWeight() noexcept
+ThresholdSize Settings::thresholdDailyWeight() noexcept
 {
   return SettingsImplementation::instance().thresholdDailyWeight();
 }
-double Settings::thresholdHourlyWeight() noexcept
+ThresholdSize Settings::thresholdHourlyWeight() noexcept
 {
   return SettingsImplementation::instance().thresholdHourlyWeight();
 }

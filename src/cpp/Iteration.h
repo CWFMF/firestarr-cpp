@@ -77,12 +77,12 @@ public:
    * \brief Points in time that ProbabilityMaps get saved for
    * \return Points in time that ProbabilityMaps get saved for
    */
-  [[nodiscard]] vector<double> savePoints() const;
+  [[nodiscard]] vector<DurationSize> savePoints() const;
   /**
    * \brief Time that simulations start
    * \return Time that simulations start
    */
-  [[nodiscard]] double startTime() const;
+  [[nodiscard]] DurationSize startTime() const;
   /**
    * \brief Number of Scenarios in this Iteration
    * \return Number of Scenarios in this Iteration

@@ -43,12 +43,12 @@
 //     std::terminate();
 //   }
 // }
-// void SafeMap::addValue(const double value)
+// void SafeMap::addValue(const MathSize value)
 // {
 //   lock_guard<mutex> lock(mutex_);
 //   static_cast<void>(insert_sorted(&values_, value));
 // }
-// vector<double> SafeMap::getValues() const
+// vector<MathSize> SafeMap::getValues() const
 // {
 //   lock_guard<mutex> lock(mutex_);
 //   return values_;

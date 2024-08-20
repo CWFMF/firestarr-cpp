@@ -207,7 +207,7 @@ public:
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double cellSize() const
+  [[nodiscard]] constexpr MathSize cellSize() const
   {
     return env_->cellSize();
   }
@@ -279,7 +279,7 @@ public:
    * \param time Date to get value for
    * \return Difference between date and the date of minimum foliar moisture content
    */
-  [[nodiscard]] constexpr int nd(const double time) const
+  [[nodiscard]] constexpr int nd(const DurationSize time) const
   {
     return nd_.at(static_cast<Day>(time));
   }
@@ -302,8 +302,8 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \return ProbabilityMap with the same extent as this
    */
-  [[nodiscard]] ProbabilityMap* makeProbabilityMap(double time,
-                                                   double start_time,
+  [[nodiscard]] ProbabilityMap* makeProbabilityMap(DurationSize time,
+                                                   DurationSize start_time,
                                                    int min_value,
                                                    int low_max,
                                                    int med_max,
@@ -333,7 +333,7 @@ public:
    * \param filename Weather file to read
    */
   void readWeather(const wx::FwiWeather& yesterday,
-                   const double latitude,
+                   const MathSize latitude,
                    const string& filename);
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
@@ -355,7 +355,7 @@ public:
    * \return Iteration containing initialized Scenarios
    */
   [[nodiscard]] Iteration readScenarios(const topo::StartPoint& start_point,
-                                        double start,
+                                        DurationSize start,
                                         Day start_day,
                                         Day last_date);
   /**
@@ -388,9 +388,9 @@ private:
    * \param pct 95th percentile sizes per iteration
    * \param cur_sizes Sizes to add to statistics
    */
-  [[nodiscard]] bool add_statistics(vector<double>* all_sizes,
-                                    vector<double>* means,
-                                    vector<double>* pct,
+  [[nodiscard]] bool add_statistics(vector<MathSize>* all_sizes,
+                                    vector<MathSize>* means,
+                                    vector<MathSize>* pct,
                                     const util::SafeVector& sizes);
   /**
    * \brief Mutex for parallel access
@@ -411,9 +411,9 @@ private:
    * \param start_day Start day for simulation
    * \return Map of times to ProbabilityMap for that time
    */
-  map<double, ProbabilityMap*> runIterations(const topo::StartPoint& start_point,
-                                             double start,
-                                             Day start_day);
+  map<DurationSize, ProbabilityMap*> runIterations(const topo::StartPoint& start_point,
+                                                   DurationSize start,
+                                                   Day start_day);
   /**
    * \brief Find all Cell(s) that can burn in entire Environment
    */
@@ -421,7 +421,7 @@ private:
   /**
    * Save probability rasters
    */
-  double saveProbabilities(map<double, ProbabilityMap*>& probabilities, const Day start_day, const bool is_interim);
+  DurationSize saveProbabilities(map<DurationSize, ProbabilityMap*>& probabilities, const Day start_day, const bool is_interim);
   /**
    * \brief Find Cell(s) that can burn closest to Location
    * \param location Location to look for start Cells
@@ -501,11 +501,11 @@ private:
   /**
    * \brief Latitude to use for any calcualtions
    */
-  double latitude_;
+  MathSize latitude_;
   /**
    * \brief Longitude to use for any calcualtions
    */
-  double longitude_;
+  MathSize longitude_;
 };
 }
 }
