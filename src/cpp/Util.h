@@ -53,25 +53,25 @@ namespace tbd
 namespace util
 {
 /**
- * \brief Convert day and hour to double representing time
+ * \brief Convert day and hour to DurationSize representing time
  * \tparam T Type used for representing day
  * \param day Day
  * \param hour Hour
- * \return double representing time at day and hour
+ * \return DurationSize representing time at day and hour
  */
 template <typename T>
-[[nodiscard]] double to_time(const T day, const int hour) noexcept
+[[nodiscard]] DurationSize to_time(const T day, const int hour) noexcept
 {
   return day + hour / (1.0 * DAY_HOURS);
 }
 /**
- * \brief Convert time index to double representing time
+ * \brief Convert time index to DurationSize representing time
  * \param t_index index for array of times
- * \return double representing time at day and hour
+ * \return DurationSize representing time at day and hour
  */
-[[nodiscard]] constexpr double to_time(const size_t t_index) noexcept
+[[nodiscard]] constexpr DurationSize to_time(const size_t t_index) noexcept
 {
-  return static_cast<double>(t_index) / DAY_HOURS;
+  return static_cast<DurationSize>(t_index) / DAY_HOURS;
 }
 /**
  * \brief Convert day and hour into time index
@@ -100,21 +100,21 @@ template <typename T>
   return time_index(day, hour) - static_cast<size_t>(DAY_HOURS) * min_date;
 }
 /**
- * \brief Convert double into time index
+ * \brief Convert DurationSize into time index
  * \param time time to get time index for
  * \return index for array of times
  */
-[[nodiscard]] constexpr size_t time_index(const double time) noexcept
+[[nodiscard]] constexpr size_t time_index(const DurationSize time) noexcept
 {
   return static_cast<size_t>(time * DAY_HOURS);
 }
 /**
- * \brief Convert double into time index since min_date
+ * \brief Convert DurationSize into time index since min_date
  * \param time Time to convert to time index
  * \param min_date Date at time index 0
  * \return index for array of times
  */
-[[nodiscard]] constexpr size_t time_index(const double time,
+[[nodiscard]] constexpr size_t time_index(const DurationSize time,
                                           const Day min_date) noexcept
 {
   return time_index(time) - static_cast<size_t>(DAY_HOURS) * min_date;
@@ -135,7 +135,7 @@ template <class T>
  * \param theta value to ensure is within bounds
  * \return value within range of (0, 2 * PI]
  */
-[[nodiscard]] constexpr double fix_radians(const double theta)
+[[nodiscard]] constexpr MathSize fix_radians(const MathSize theta)
 {
   if (theta > M_2_X_PI)
   {
@@ -152,7 +152,7 @@ template <class T>
  * \param degrees Angle in degrees
  * \return Angle in radians
  */
-[[nodiscard]] constexpr double to_radians(const double degrees) noexcept
+[[nodiscard]] constexpr MathSize to_radians(const MathSize degrees) noexcept
 {
   return fix_radians(degrees / M_RADIANS_TO_DEGREES);
 }
@@ -160,25 +160,25 @@ template <class T>
 /**
  * \brief 360 degrees in radians
  */
-static constexpr double RAD_360 = to_radians(360);
+static constexpr MathSize RAD_360 = to_radians(360);
 /**
  * \brief 270 degrees in radians
  */
-static constexpr double RAD_270 = to_radians(270);
+static constexpr MathSize RAD_270 = to_radians(270);
 /**
  * \brief 180 degrees in radians
  */
-static constexpr double RAD_180 = to_radians(180);
+static constexpr MathSize RAD_180 = to_radians(180);
 /**
  * \brief 90 degrees in radians
  */
-static constexpr double RAD_090 = to_radians(90);
+static constexpr MathSize RAD_090 = to_radians(90);
 /**
  * \brief Convert radians to degrees
  * \param radians Value in radians
  * \return Value in degrees
  */
-[[nodiscard]] constexpr double to_degrees(const double radians)
+[[nodiscard]] constexpr MathSize to_degrees(const MathSize radians)
 {
   return fix_radians(radians) * M_RADIANS_TO_DEGREES;
 }
@@ -187,7 +187,7 @@ static constexpr double RAD_090 = to_radians(90);
  * \param azimuth Bearing
  * \return Heading
  */
-[[nodiscard]] constexpr double to_heading(const double azimuth)
+[[nodiscard]] constexpr MathSize to_heading(const MathSize azimuth)
 {
   return fix_radians(azimuth + RAD_180);
 }
@@ -311,7 +311,7 @@ template <unsigned int N, class T>
  * \return Value after rounding
  */
 template <unsigned int N>
-[[nodiscard]] double round_to_precision(const double value) noexcept
+[[nodiscard]] MathSize round_to_precision(const MathSize value) noexcept
 {
   // HACK: this can't actually make the value be the precision we want due to
   // floating point storage, but we can round it to what it would be if it were
@@ -339,7 +339,7 @@ tm to_tm(const int year,
  * \return internal time representation
  */
 
-double to_time(const tm& t);
+DurationSize to_time(const tm& t);
 /**
  * \brief Convert date and time into internal represenation
  * \param year year
@@ -349,11 +349,11 @@ double to_time(const tm& t);
  * \param minute minute
  * \return internal time representation
  */
-double to_time(const int year,
-               const int month,
-               const int day,
-               const int hour,
-               const int minute);
+DurationSize to_time(const int year,
+                     const int month,
+                     const int day,
+                     const int hour,
+                     const int minute);
 /**
  * \brief Read a date from the given stream
  * \param iss Stream to read from
@@ -435,7 +435,7 @@ void insert_unique(std::vector<T>* vec, T const& item)
 template <typename T, typename V>
 T binary_find(const T lower,
               const T upper,
-              const double value,
+              const MathSize value,
               const std::function<V(T)>& fct)
 {
   const auto mid = lower + (upper - lower) / 2;
@@ -462,7 +462,7 @@ T binary_find(const T lower,
 template <typename T, typename V>
 T binary_find_checked(const T lower,
                       const T upper,
-                      const double value,
+                      const MathSize value,
                       const std::function<V(T)>& fct)
 {
   if (fct(lower) < value)
@@ -495,15 +495,15 @@ void month_and_day(const int year, const size_t day_of_year, size_t* month, size
  * @param time Simulation time (fractional day of year)
  * @return YYYY-mm-dd HH:00 time string for given time
  */
-[[nodiscard]] string make_timestamp(const int year, const double time);
+[[nodiscard]] string make_timestamp(const int year, const DurationSize time);
 /**
  * Convert circle angle to the angle that would be on an ellipse with
  * given length-to-breadth ratio
  * @param length_to_breadth length-to-breadth ratio
  * @param theta direction to convert to ellipse direction (radians)
  */
-[[nodiscard]] inline double ellipse_angle(const double length_to_breadth,
-                                          const double theta)
+[[nodiscard]] inline MathSize ellipse_angle(const MathSize length_to_breadth,
+                                            const MathSize theta)
 {
   return (util::fix_radians(
     atan2(sin(theta) / length_to_breadth,

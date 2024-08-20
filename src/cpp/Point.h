@@ -16,7 +16,7 @@ public:
    * \param latitude Latitude (decimal degrees)
    * \param longitude Longitude (decimal degrees)
    */
-  constexpr Point(const double latitude, const double longitude) noexcept
+  constexpr Point(const MathSize latitude, const MathSize longitude) noexcept
     : latitude_(latitude), longitude_(longitude)
   {
   }
@@ -47,7 +47,7 @@ public:
    * \brief Latitude (decimal degrees)
    * \return Latitude (degrees)
    */
-  [[nodiscard]] constexpr double latitude() const noexcept
+  [[nodiscard]] constexpr MathSize latitude() const noexcept
   {
     return latitude_;
   }
@@ -55,7 +55,7 @@ public:
    * \brief Longitude (decimal degrees)
    * \return Longitude (decimal degrees)
    */
-  [[nodiscard]] constexpr double longitude() const noexcept
+  [[nodiscard]] constexpr MathSize longitude() const noexcept
   {
     return longitude_;
   }
@@ -63,10 +63,10 @@ private:
   /**
    * \brief Latitude (decimal degrees)
    */
-  double latitude_;
+  MathSize latitude_;
   /**
    * \brief Longitude (decimal degrees)
    */
-  double longitude_;
+  MathSize longitude_;
 };
 }

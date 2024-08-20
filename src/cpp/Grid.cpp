@@ -24,9 +24,9 @@ int str_to_int(const string& str)
 {
   return stoi(str);
 }
-double str_to_double(const string& str)
+MathSize str_to_value(const string& str)
 {
-  return stod(str);
+  return static_cast<MathSize>(stod(str));
 }
 template <class T>
 bool find_value(const string& key,
@@ -43,7 +43,7 @@ bool find_value(const string& key,
   }
   return false;
 }
-double find_meridian(const string& proj4) noexcept
+MathSize find_meridian(const string& proj4) noexcept
 {
   try
   {
@@ -53,7 +53,7 @@ double find_meridian(const string& proj4) noexcept
     {
       meridian = topo::utm_central_meridian_deg(zone);
     }
-    else if (!find_value("+lon_0=", proj4, &meridian, &str_to_double))
+    else if (!find_value("+lon_0=", proj4, &meridian, &str_to_value))
     {
       logging::fatal("Can't find meridian for grid");
     }
@@ -61,15 +61,15 @@ double find_meridian(const string& proj4) noexcept
   }
   catch (...)
   {
-    return logging::fatal<double>("Unable to parse meridian in string '%s'",
-                                  proj4.c_str());
+    return logging::fatal<MathSize>("Unable to parse meridian in string '%s'",
+                                    proj4.c_str());
   }
 }
-GridBase::GridBase(const double cell_size,
-                   const double xllcorner,
-                   const double yllcorner,
-                   const double xurcorner,
-                   const double yurcorner,
+GridBase::GridBase(const MathSize cell_size,
+                   const MathSize xllcorner,
+                   const MathSize yllcorner,
+                   const MathSize xurcorner,
+                   const MathSize yurcorner,
                    string&& proj4) noexcept
   : proj4_(std::forward<string>(proj4)),
     cell_size_(cell_size),
@@ -133,8 +133,8 @@ unique_ptr<Coordinates> GridBase::findCoordinates(const topo::Point& point,
 unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& point,
                                                           const bool flipped) const
 {
-  auto x = 0.0;
-  auto y = 0.0;
+  auto x = static_cast<MathSize>(0.0);
+  auto y = static_cast<MathSize>(0.0);
   lat_lon_to_utm(point, this->zone(), &x, &y);
   logging::debug("Coordinates (%f, %f) converted to (%0.1f, %f, %f)",
                  point.latitude(),
@@ -177,12 +177,12 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const topo::Point& poi
                                       sub_y);
 }
 void write_ascii_header(ofstream& out,
-                        const double num_columns,
-                        const double num_rows,
-                        const double xll,
-                        const double yll,
-                        const double cell_size,
-                        const double no_data)
+                        const MathSize num_columns,
+                        const MathSize num_rows,
+                        const MathSize xll,
+                        const MathSize yll,
+                        const MathSize cell_size,
+                        const MathSize no_data)
 {
   out << "ncols         " << num_columns << "\n";
   out << "nrows         " << num_rows << "\n";

@@ -45,8 +45,8 @@ Environment Environment::load(const string dir_out,
                        ElevationGrid::readTiff(string(in_elevation), point)),
                      point);
 }
-sim::ProbabilityMap* Environment::makeProbabilityMap(const double time,
-                                                     const double start_time,
+sim::ProbabilityMap* Environment::makeProbabilityMap(const DurationSize time,
+                                                     const DurationSize start_time,
                                                      const int min_value,
                                                      const int low_max,
                                                      const int med_max,
@@ -70,13 +70,13 @@ Environment Environment::loadEnvironment(const string dir_out,
   logging::note("Using ignition point (%f, %f)", point.latitude(), point.longitude());
   logging::info("Running using inputs directory '%s'", path.c_str());
   auto rasters = util::find_rasters(path, year);
-  auto best_x = numeric_limits<double>::max();
-  auto best_y = numeric_limits<double>::max();
+  auto best_x = numeric_limits<MathSize>::max();
+  auto best_y = numeric_limits<MathSize>::max();
   unique_ptr<const EnvironmentInfo> env_info = nullptr;
   unique_ptr<data::GridBase> for_info = nullptr;
   string best_fuel = "";
   string best_elevation = "";
-  double best_meridian = numeric_limits<double>::max();
+  MathSize best_meridian = numeric_limits<MathSize>::max();
   auto found_best = false;
   if (!perimeter.empty())
   {
@@ -100,8 +100,8 @@ Environment Environment::loadEnvironment(const string dir_out,
     auto zone_guess = fuel.substr(find_zone_start, find_suffix - find_zone_start);
     std::replace(zone_guess.begin(), zone_guess.end(), '_', '.');
     logging::debug("Assuming file %s is for zone %s", fuel.c_str(), zone_guess.c_str());
-    double zone;
-    double meridian;
+    MathSize zone;
+    MathSize meridian;
     unique_ptr<const EnvironmentInfo> cur_info;
     if (sscanf(zone_guess.c_str(), "%lf", &zone))
     {

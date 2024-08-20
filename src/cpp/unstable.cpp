@@ -3,11 +3,13 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "unstable.h"
-double _cos(const double angle) noexcept
+#include <cmath>
+
+MathSize _cos(const double angle) noexcept
 {
-  return cos(angle);
+  return static_cast<MathSize>(cos(angle));
 }
-double _sin(const double angle) noexcept
+MathSize _sin(const double angle) noexcept
 {
-  return sin(angle);
+  return static_cast<MathSize>(sin(angle));
 }

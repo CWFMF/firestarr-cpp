@@ -91,7 +91,7 @@ public:
    * \brief Central meridian of UTM projection this uses
    * \return Central meridian of UTM projection this uses
    */
-  [[nodiscard]] constexpr double meridian() const
+  [[nodiscard]] constexpr MathSize meridian() const
   {
     return fuel_.meridian();
   }
@@ -99,7 +99,7 @@ public:
    * \brief UTM zone for projection this uses
    * \return UTM zone for projection this uses
    */
-  [[nodiscard]] constexpr double zone() const
+  [[nodiscard]] constexpr MathSize zone() const
   {
     return fuel_.zone();
   }
