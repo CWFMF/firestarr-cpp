@@ -246,7 +246,7 @@ inline void check_fatal(const bool condition, const char* format, ...)
     // va_end(args);
   }
 }
-void check_equal(const double lhs, const double rhs, const char* name)
+void check_equal(const MathSize lhs, const MathSize rhs, const char* name)
 #ifdef NDEBUG
   noexcept
 #endif

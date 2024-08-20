@@ -116,12 +116,12 @@ public:
    */
   void burn(const Location& location,
             IntensitySize intensity,
-            double ros,
+            MathSize ros,
             tbd::wx::Direction raz);
   template <class P>
   void burn(const Position<P>& position,
             const IntensitySize intensity,
-            const double ros,
+            const MathSize ros,
             const tbd::wx::Direction& raz)
   {
     burn(
@@ -140,7 +140,7 @@ public:
    * \brief Size of the fire represented by this
    * \return Size of the fire represented by this
    */
-  [[nodiscard]] double fireSize() const;
+  [[nodiscard]] MathSize fireSize() const;
   /**
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
@@ -166,7 +166,7 @@ private:
   /**
    * \brief Map of rate of spread/direction that cells have burned with at max ros
    */
-  unique_ptr<data::GridMap<double>> rate_of_spread_at_max_;
+  unique_ptr<data::GridMap<MathSize>> rate_of_spread_at_max_;
   unique_ptr<data::GridMap<DegreesSize>> direction_of_spread_at_max_;
   /**
    * \brief bitset denoting cells that can no longer burn

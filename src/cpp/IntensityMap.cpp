@@ -54,7 +54,7 @@ protected:
 };
 
 static GridMapCache<IntensitySize> CacheIntensitySize{};
-static GridMapCache<double> CacheDouble{};
+static GridMapCache<MathSize> CacheMathSize{};
 static GridMapCache<DegreesSize> CacheDegreesSize{};
 
 // IntensityMap::IntensityMap(const Model& model, topo::Perimeter* perimeter) noexcept
@@ -86,7 +86,7 @@ static GridMapCache<DegreesSize> CacheDegreesSize{};
 IntensityMap::IntensityMap(const Model& model) noexcept
   : model_(model),
     intensity_max_(CacheIntensitySize.acquire_map(model)),
-    rate_of_spread_at_max_(CacheDouble.acquire_map(model)),
+    rate_of_spread_at_max_(CacheMathSize.acquire_map(model)),
     direction_of_spread_at_max_(CacheDegreesSize.acquire_map(model)),
     is_burned_(model.getBurnedVector())
 {
@@ -113,7 +113,7 @@ IntensityMap::~IntensityMap() noexcept
 {
   model_.releaseBurnedVector(is_burned_);
   CacheIntensitySize.release_map(std::move(intensity_max_));
-  CacheDouble.release_map(std::move(rate_of_spread_at_max_));
+  CacheMathSize.release_map(std::move(rate_of_spread_at_max_));
   CacheDegreesSize.release_map(std::move(direction_of_spread_at_max_));
 }
 void IntensityMap::applyPerimeter(const topo::Perimeter& perimeter) noexcept
@@ -178,7 +178,7 @@ void IntensityMap::ignite(const Location& location)
 }
 void IntensityMap::burn(const Location& location,
                         IntensitySize intensity,
-                        double ros,
+                        MathSize ros,
                         tbd::wx::Direction raz)
 {
   lock_guard<mutex> lock(mutex_);
@@ -237,7 +237,7 @@ void IntensityMap::save(const string& dir, const string& base_name) const
     direction_of_spread_at_max_->saveToTiffFile(dir, name_raz);
   }
 }
-double IntensityMap::fireSize() const
+MathSize IntensityMap::fireSize() const
 {
   lock_guard<mutex> lock(mutex_);
   return intensity_max_->fireSize();

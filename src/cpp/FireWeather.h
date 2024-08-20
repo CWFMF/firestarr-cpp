@@ -50,7 +50,7 @@ public:
    * \param time Time to get weather for
    * \return FwiWeather for given time
    */
-  [[nodiscard]] const FwiWeather* at(const double time) const
+  [[nodiscard]] const FwiWeather* at(const DurationSize time) const
   {
 #ifdef DEBUG_FWI_WEATHER
     logging::check_fatal(time < 0 || time >= MAX_DAYS, "Invalid weather time %f", time);
@@ -63,8 +63,8 @@ public:
    * \param in_fuel FuelCodeSize of FuelType to use
    * \return Probability of survival in given fuel at given time
    */
-  [[nodiscard]] double survivalProbability(const double time,
-                                           const FuelCodeSize& in_fuel) const
+  [[nodiscard]] ThresholdSize survivalProbability(const DurationSize time,
+                                                  const FuelCodeSize& in_fuel) const
   {
     return survival_probability_->at(in_fuel).at(util::time_index(time, min_date_));
   }
@@ -151,7 +151,7 @@ private:
   {
     for (auto hour = 0; hour < DAY_HOURS; ++hour)
     {
-      const auto time = static_cast<double>(day) + hour / 24.0;
+      const auto time = static_cast<DurationSize>(day) + hour / 24.0;
       if (lhs.at(time) != rhs.at(time))
       {
         return false;
