@@ -150,7 +150,7 @@ protected:
 /**
  * \brief Tracks when fire initially arrives in a Cell.
  */
-class ArrivalObserver final : public MapObserver<double>
+class ArrivalObserver final : public MapObserver<DurationSize>
 {
 public:
   ~ArrivalObserver() = default;
@@ -165,7 +165,7 @@ public:
    * \param scenario Scenario to track
    */
   explicit ArrivalObserver(const Scenario& scenario);
-  [[nodiscard]] double
+  [[nodiscard]] DurationSize
   getValue(const Event& event) const noexcept override;
 };
 /**

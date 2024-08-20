@@ -7,7 +7,7 @@
 
 namespace fs
 {
-using HorizontalAdjustment = std::function<double(double)>;
+using HorizontalAdjustment = std::function<MathSize(MathSize)>;
 
 HorizontalAdjustment
 horizontal_adjustment(const AspectSize slope_azimuth, const SlopeSize slope);
@@ -18,10 +18,10 @@ public:
   [[nodiscard]] virtual OffsetSet
   calculate_offsets(
     HorizontalAdjustment correction_factor,
-    double head_raz,
-    double head_ros,
-    double back_ros,
-    double length_to_breadth
+    MathSize head_raz,
+    MathSize head_ros,
+    MathSize back_ros,
+    MathSize length_to_breadth
   ) const noexcept = 0;
 };
 
@@ -29,9 +29,9 @@ class BaseSpreadAlgorithm : public SpreadAlgorithm
 {
 public:
   BaseSpreadAlgorithm(
-    const double max_angle,
-    const double cell_size,
-    const double min_ros
+    const MathSize max_angle,
+    const MathSize cell_size,
+    const MathSize min_ros
   )
     : max_angle_(max_angle),
       cell_size_(cell_size),
@@ -39,9 +39,9 @@ public:
   {
   }
 protected:
-  double max_angle_;
-  double cell_size_;
-  double min_ros_;
+  MathSize max_angle_;
+  MathSize cell_size_;
+  MathSize min_ros_;
 };
 
 class OriginalSpreadAlgorithm : public BaseSpreadAlgorithm
@@ -51,10 +51,10 @@ public:
   [[nodiscard]] OffsetSet
   calculate_offsets(
     HorizontalAdjustment correction_factor,
-    double head_raz,
-    double head_ros,
-    double back_ros,
-    double length_to_breadth
+    MathSize head_raz,
+    MathSize head_ros,
+    MathSize back_ros,
+    MathSize length_to_breadth
   ) const noexcept override;
 };
 
@@ -65,10 +65,10 @@ public:
   [[nodiscard]] OffsetSet
   calculate_offsets(
     HorizontalAdjustment correction_factor,
-    double head_raz,
-    double head_ros,
-    double back_ros,
-    double length_to_breadth
+    MathSize head_raz,
+    MathSize head_ros,
+    MathSize back_ros,
+    MathSize length_to_breadth
   ) const noexcept override;
 };
 }

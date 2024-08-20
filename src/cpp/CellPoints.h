@@ -42,18 +42,19 @@ class CellPoints
 {
 public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
-  // using dist_pt = pair<double, InnerPos>;
+  // using dist_pt = pair<DistanceSize, InnerPos>;
   // using array_dist_pts = std::array<dist_pt, NUM_DIRECTIONS>;
-  using array_dists = std::array<double, NUM_DIRECTIONS>;
+  using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
-  //   using array_dist_pts = std::array<double, NUM_DIRECTIONS>;
+  using array_dist_pts = pair<CellPoints::array_dists, CellPoints::array_pts>;
+  //   using array_dist_pts = std::array<DistanceSize, NUM_DIRECTIONS>;
   CellPoints() noexcept;
   //   // HACK: so we can emplace with NULL
   //   CellPoints(size_t) noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
   //   CellPoints(const vector<InnerPos>& pts) noexcept;
-  CellPoints(const double x, const double y) noexcept;
+  CellPoints(const InnerSize x, const InnerSize y) noexcept;
   CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
   CellPoints(const InnerPos& p) noexcept;
   /**
@@ -81,7 +82,7 @@ public:
   CellPoints&
   operator=(const CellPoints& rhs) noexcept;
   CellPoints&
-  insert(const double x, const double y) noexcept;
+  insert(const InnerSize x, const InnerSize y) noexcept;
   CellPoints&
   insert(const InnerPos& p) noexcept;
   //   template <class _ForwardIterator>
@@ -121,7 +122,7 @@ public:
   //   const array_pts points() const;
   friend CellPointsMap
   apply_offsets_spreadkey(
-    const double duration,
+    const DurationSize duration,
     const OffsetSet& offsets,
     const spreading_points::mapped_type& cell_pts
   );
@@ -134,9 +135,9 @@ public:
   friend CellPointsMap;
 private:
   array_dists
-  find_distances(const double p_x, const double p_y) noexcept;
+  find_distances(const InnerSize p_x, const InnerSize p_y) const noexcept;
   CellPoints&
-  insert_(const double x, const double y) noexcept;
+  insert_(const InnerSize x, const InnerSize y) noexcept;
   pair<array_dists, array_pts> pts_;
   mutable set<InnerPos> pts_unique_;
   // FIX: no point in atomic if not parallel, but need mutex if it is
@@ -157,7 +158,7 @@ public:
   void
   emplace(const CellPoints& pts);
   CellPoints&
-  insert(const double x, const double y) noexcept;
+  insert(const InnerSize x, const InnerSize y) noexcept;
   CellPointsMap&
   merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
   set<InnerPos>
@@ -169,7 +170,7 @@ public:
   calculate_spread(
     Scenario& scenario,
     map<SpreadKey, SpreadInfo>& spread_info,
-    const double duration,
+    const DurationSize duration,
     const spreading_points& to_spread,
     const BurnedData& unburnable
   );
@@ -180,7 +181,7 @@ public:
 
 CellPointsMap
 apply_offsets_spreadkey(
-  const double duration,
+  const DurationSize duration,
   const OffsetSet& offsets,
   const spreading_points::mapped_type& cell_pts
 );

@@ -27,8 +27,8 @@ using topo::Perimeter;
 using topo::SpreadKey;
 using topo::StartPoint;
 
-constexpr auto CELL_CENTER = 0.5;
-constexpr auto PRECISION = 0.001;
+constexpr auto CELL_CENTER = static_cast<InnerSize>(0.5);
+constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
 static atomic<size_t> TOTAL_STEPS = 0;
@@ -63,9 +63,9 @@ class LogPoints
 {
 public:
   ~LogPoints();
-  LogPoints(const string dir_out, bool do_log, size_t id, double start_time);
+  LogPoints(const string dir_out, bool do_log, size_t id, DurationSize start_time);
   void
-  log_point(size_t step, const char stage, double time, double x, double y);
+  log_point(size_t step, const char stage, DurationSize time, InnerSize x, InnerSize y);
   bool
   isLogging() const;
   template <class V>
@@ -73,7 +73,7 @@ public:
   log_points(
     size_t step,
     const char stage,
-    double time,
+    DurationSize time,
     V points
   )
   {
@@ -99,11 +99,11 @@ public:
   };
 private:
   size_t id_;
-  double start_time_;
+  DurationSize start_time_;
   char last_stage_;
   size_t last_step_;
 #ifdef DEBUG_POINTS
-  double last_time_;
+  DurationSize last_time_;
 #endif
   char stage_id_[1024];
   /**
@@ -124,7 +124,7 @@ LogPoints::LogPoints(
   const string dir_out,
   bool do_log,
   size_t id,
-  double start_time
+  DurationSize start_time
 )
   : id_(id),
     start_time_(start_time),
@@ -159,9 +159,9 @@ void
 LogPoints::log_point(
   size_t step,
   const char stage,
-  double time,
-  double x,
-  double y
+  DurationSize time,
+  InnerSize x,
+  InnerSize y
 )
 {
   if (!isLogging())
@@ -217,8 +217,8 @@ LogPoints::log_point(
     column,
     row,
 #endif
-    p_x,
-    p_y
+    static_cast<double>(p_x),
+    static_cast<double>(p_y)
   );
 }
 
@@ -297,16 +297,16 @@ Scenario::~Scenario()
  */
 static void
 make_threshold(
-  vector<double>* thresholds,
+  vector<ThresholdSize>* thresholds,
   mt19937* mt,
   const Day start_day,
   const Day last_date,
-  double (*convert)(double value)
+  ThresholdSize (*convert)(double value)
 )
 {
   const auto total_weight = Settings::thresholdScenarioWeight() + Settings::thresholdDailyWeight()
                           + Settings::thresholdHourlyWeight();
-  uniform_real_distribution<double> rand(0.0, 1.0);
+  uniform_real_distribution<ThresholdSize> rand(0.0, 1.0);
   const auto general = rand(*mt);
   for (size_t i = start_day; i < MAX_DAYS; ++i)
   {
@@ -338,16 +338,17 @@ make_threshold(
     }
   }
 }
-constexpr double
+template <class V>
+constexpr V
 same(
-  const double value
+  const V value
 ) noexcept
 {
   return value;
 }
 static void
 make_threshold(
-  vector<double>* thresholds,
+  vector<ThresholdSize>* thresholds,
   mt19937* mt,
   const Day start_day,
   const Day last_date
@@ -360,7 +361,7 @@ Scenario::Scenario(
   const size_t id,
   wx::FireWeather* weather,
   wx::FireWeather* weather_daily,
-  const double start_time,
+  const DurationSize start_time,
   //  const shared_ptr<IntensityMap>& initial_intensity,
   const shared_ptr<Perimeter>& perimeter,
   const StartPoint& start_point,
@@ -387,7 +388,7 @@ Scenario::Scenario(
   const size_t id,
   wx::FireWeather* weather,
   wx::FireWeather* weather_daily,
-  const double start_time,
+  const DurationSize start_time,
   const shared_ptr<Cell>& start_cell,
   const StartPoint& start_point,
   const Day start_day,
@@ -611,7 +612,7 @@ Scenario::Scenario(
   const size_t id,
   wx::FireWeather* weather,
   wx::FireWeather* weather_daily,
-  const double start_time,
+  const DurationSize start_time,
   //  const shared_ptr<IntensityMap>& initial_intensity,
   const shared_ptr<Perimeter>& perimeter,
   const shared_ptr<Cell>& start_cell,
@@ -665,7 +666,7 @@ Scenario::Scenario(
 }
 void
 Scenario::saveStats(
-  const double time
+  const DurationSize time
 ) const
 {
   probabilities_->at(time)->addProbability(*intensity_);
@@ -703,7 +704,7 @@ Scenario::saveObservers(
 }
 void
 Scenario::saveObservers(
-  const double time
+  const DurationSize time
 ) const
 {
   char buffer[64]{0};
@@ -852,7 +853,7 @@ void
 saveProbabilities(
   const string& dir,
   const string& base_name,
-  vector<double>& thresholds
+  vector<ThresholdSize>& thresholds
 )
 {
   ofstream out;
@@ -866,7 +867,7 @@ saveProbabilities(
 #endif
 Scenario*
 Scenario::run(
-  map<double, ProbabilityMap*>* probabilities
+  map<DurationSize, ProbabilityMap*>* probabilities
 )
 {
 #ifdef DEBUG_SIMULATION
@@ -881,7 +882,7 @@ Scenario::run(
   for (auto time : save_points_)
   {
     // NOTE: these happen in this order because of the way they sort based on type
-    addEvent(Event::makeSave(static_cast<double>(time)));
+    addEvent(Event::makeSave(static_cast<DurationSize>(time)));
   }
   if (nullptr == perimeter_)
   {
@@ -952,7 +953,7 @@ Scenario::run(
   const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
   if (Settings::surface())
   {
-    const auto ratio_done = static_cast<double>(completed) / count;
+    const auto ratio_done = static_cast<MathSize>(completed) / count;
     const auto s = model_->runTime().count();
     const auto r = static_cast<size_t>(s / ratio_done) - s;
     log_output(
@@ -1019,7 +1020,7 @@ Scenario::scheduleFireSpread(
   current_time_ = time;
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   //  log_note("%d points", points_->size());
-  const auto next_time = static_cast<double>(this_time + 1) / DAY_HOURS;
+  const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
   const auto max_duration = (next_time - time) * DAY_MINUTES;
   // log_verbose("time is %f, next_time is %f, max_duration is %f",
@@ -1027,9 +1028,9 @@ Scenario::scheduleFireSpread(
   //     next_time,
   //     max_duration);
   const auto max_time = time + max_duration / DAY_MINUTES;
-  // if (wx->ffmc().asDouble() < minimumFfmcForSpread(time))
+  // if (wx->ffmc().asValue() < minimumFfmcForSpread(time))
   // HACK: use the old ffmc for this check to be consistent with previous version
-  if (wx_daily->ffmc().asDouble() < minimumFfmcForSpread(time))
+  if (wx_daily->ffmc().asValue() < minimumFfmcForSpread(time))
   {
     addEvent(Event::makeFireSpread(max_time));
     log_extensive("Waiting until %f because of FFMC", max_time);
@@ -1335,7 +1336,7 @@ Scenario::scheduleFireSpread(
   log_extensive("Spreading %d cells until %f", points_.map_.size(), new_time);
   addEvent(Event::makeFireSpread(new_time));
 }
-double
+MathSize
 Scenario::currentFireSize() const
 {
   return intensity_->fireSize();
@@ -1378,7 +1379,7 @@ Scenario::addSaveByOffset(
   // e.g. 1 is midnight, 2 is tomorrow at midnight
   addSave(static_cast<Day>(startTime()) + offset);
 }
-vector<double>
+vector<DurationSize>
 Scenario::savePoints() const
 {
   return save_points_;
@@ -1389,7 +1390,7 @@ Scenario::addSave(
   V time
 )
 {
-  last_save_ = max(last_save_, static_cast<double>(time));
+  last_save_ = max(last_save_, static_cast<DurationSize>(time));
   save_points_.push_back(time);
 }
 void

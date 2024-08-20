@@ -42,11 +42,11 @@ fix_hours(
 {
   return fix_range(value, 0.0, 24.0);
 }
-static double
+static DurationSize
 sunrise_sunset(
   const int jd,
-  const double latitude,
-  const double longitude,
+  const MathSize latitude,
+  const MathSize longitude,
   const bool for_sunrise
 ) noexcept
 {
@@ -89,32 +89,32 @@ sunrise_sunset(
   const auto ut = mean_t - lng_hour;
   return fix_hours(ut + LocalOffset);
 }
-static double
+static DurationSize
 sunrise(
   const int jd,
-  const double latitude,
-  const double longitude
+  const MathSize latitude,
+  const MathSize longitude
 ) noexcept
 {
   return sunrise_sunset(jd, latitude, longitude, true);
 }
-static double
+static DurationSize
 sunset(
   const int jd,
-  const double latitude,
-  const double longitude
+  const MathSize latitude,
+  const MathSize longitude
 ) noexcept
 {
   return sunrise_sunset(jd, latitude, longitude, false);
 }
-static array<tuple<double, double>, MAX_DAYS>
+static array<tuple<DurationSize, DurationSize>, MAX_DAYS>
 make_days(
-  const double latitude,
-  const double longitude
+  const MathSize latitude,
+  const MathSize longitude
 ) noexcept
 {
-  array<tuple<double, double>, MAX_DAYS> days{};
-  array<double, MAX_DAYS> day_length_hours{};
+  array<tuple<DurationSize, DurationSize>, MAX_DAYS> days{};
+  array<DurationSize, MAX_DAYS> day_length_hours{};
   for (size_t i = 0; i < day_length_hours.size(); ++i)
   {
     days[i] = make_tuple(
@@ -126,8 +126,8 @@ make_days(
   return days;
 }
 StartPoint::StartPoint(
-  const double latitude,
-  const double longitude
+  const MathSize latitude,
+  const MathSize longitude
 ) noexcept
   : Point(latitude, longitude),
     days_(make_days(latitude, longitude))

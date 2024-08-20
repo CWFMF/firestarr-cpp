@@ -326,8 +326,8 @@ check_fatal(
 }
 void
 check_equal(
-  const double lhs,
-  const double rhs,
+  const MathSize lhs,
+  const MathSize rhs,
   const char* name
 )
 #ifdef NDEBUG

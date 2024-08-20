@@ -12,17 +12,19 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "unstable.h"
-double
+#include <cmath>
+
+MathSize
 _cos(
   const double angle
 ) noexcept
 {
-  return cos(angle);
+  return static_cast<MathSize>(cos(angle));
 }
-double
+MathSize
 _sin(
   const double angle
 ) noexcept
 {
-  return sin(angle);
+  return static_cast<MathSize>(sin(angle));
 }

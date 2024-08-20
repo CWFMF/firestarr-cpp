@@ -19,9 +19,9 @@ namespace fs::sim
 constexpr auto FMT_OUT =
   "%ld,%d-%02d-%02d %02d:%02d:%02d,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f%s";
 #endif
-// constexpr double PCT_CPU = 0.8;
+// constexpr MathSize PCT_CPU = 0.8;
 // HACK: assume using half the CPUs probably means that faster cores are being used?
-constexpr double PCT_CPU = 0.5;
+constexpr MathSize PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 BurnedData*
 Model::getBurnedVector() const noexcept
@@ -121,7 +121,7 @@ Model::setWeather(
 void
 Model::readWeather(
   const wx::FwiWeather& yesterday,
-  const double latitude,
+  const MathSize latitude,
   const string& filename
 )
 {
@@ -159,7 +159,7 @@ Model::readWeather(
     );
     auto prev = &yesterday;
     // HACK: adding to original object if we don't do this?
-    auto apcp_24h = yesterday.prec().asDouble();
+    auto apcp_24h = yesterday.prec().asValue();
     while (getline(in, str))
     {
       istringstream iss(str);
@@ -197,10 +197,10 @@ Model::readWeather(
           prev = &yesterday;
           logging::extensive(
             "Resetting new scenario precip to %f from %f",
-            yesterday.prec().asDouble(),
+            yesterday.prec().asValue(),
             apcp_24h
           );
-          apcp_24h = yesterday.prec().asDouble();
+          apcp_24h = yesterday.prec().asValue();
         }
         auto& s = wx.at(cur);
         struct tm t{};
@@ -242,14 +242,14 @@ Model::readWeather(
         const wx::FwiWeather* w = new wx::FwiWeather(&iss, &str);
         s->at(for_time) = w;
         logging::check_fatal(
-          0 > w->prec().asDouble(),
+          0 > w->prec().asValue(),
           "Hourly weather precip %f is negative",
-          w->prec().asDouble()
+          w->prec().asValue()
         );
-        apcp_24h += w->prec().asDouble();
+        apcp_24h += w->prec().asValue();
         logging::extensive(
           "Adding %f to precip results in accumulation of %f",
-          w->prec().asDouble(),
+          w->prec().asValue(),
           apcp_24h
         );
         if (12 == t.tm_hour)
@@ -287,17 +287,17 @@ Model::readWeather(
           t.tm_hour,
           t.tm_min,
           t.tm_sec,
-          w->prec().asDouble(),
-          w->temp().asDouble(),
-          w->rh().asDouble(),
-          w->wind().speed().asDouble(),
-          w->wind().direction().asDouble(),
-          w->ffmc().asDouble(),
-          w->dmc().asDouble(),
-          w->dc().asDouble(),
-          w->isi().asDouble(),
-          w->bui().asDouble(),
-          w->fwi().asDouble(),
+          w->prec().asValue(),
+          w->temp().asValue(),
+          w->rh().asValue(),
+          w->wind().speed().asValue(),
+          w->wind().direction().asValue(),
+          w->ffmc().asValue(),
+          w->dmc().asValue(),
+          w->dc().asValue(),
+          w->isi().asValue(),
+          w->bui().asValue(),
+          w->fwi().asValue(),
           ""
         );
         fprintf(
@@ -310,17 +310,17 @@ Model::readWeather(
           t.tm_hour,
           t.tm_min,
           t.tm_sec,
-          w->prec().asDouble(),
-          w->temp().asDouble(),
-          w->rh().asDouble(),
-          w->wind().speed().asDouble(),
-          w->wind().direction().asDouble(),
-          w->ffmc().asDouble(),
-          w->dmc().asDouble(),
-          w->dc().asDouble(),
-          w->isi().asDouble(),
-          w->bui().asDouble(),
-          w->fwi().asDouble(),
+          w->prec().asValue(),
+          w->temp().asValue(),
+          w->rh().asValue(),
+          w->wind().speed().asValue(),
+          w->wind().direction().asValue(),
+          w->ffmc().asValue(),
+          w->dmc().asValue(),
+          w->dc().asValue(),
+          w->isi().asValue(),
+          w->bui().asValue(),
+          w->fwi().asValue(),
           "\r\n"
         );
 #endif
@@ -351,17 +351,17 @@ Model::readWeather(
   //              "%ld,%d,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g\r\n,
   //              i,
   //              day,
-  //              w.prec().asDouble(),
-  //              w.temp().asDouble(),
-  //              w.rh().asDouble(),
-  //              w.wind().speed().asDouble(),
-  //              w.wind().direction().asDouble(),
-  //              w.ffmc().asDouble(),
-  //              w.dmc().asDouble(),
-  //              w.dc().asDouble(),
-  //              w.isi().asDouble(),
-  //              w.bui().asDouble(),
-  //              w.fwi().asDouble());
+  //              w.prec().asValue(),
+  //              w.temp().asValue(),
+  //              w.rh().asValue(),
+  //              w.wind().speed().asValue(),
+  //              w.wind().direction().asValue(),
+  //              w.ffmc().asValue(),
+  //              w.dmc().asValue(),
+  //              w.dc().asValue(),
+  //              w.isi().asValue(),
+  //              w.bui().asValue(),
+  //              w.fwi().asValue());
   //    }
   //    ++i;
   //  }
@@ -518,7 +518,7 @@ Model::makeStarts(
 Iteration
 Model::readScenarios(
   const topo::StartPoint& start_point,
-  const double start,
+  const DurationSize start,
   const Day start_day,
   const Day last_date
 )
@@ -631,8 +631,8 @@ Model::isOverSimulationCountLimit() const noexcept
 }
 ProbabilityMap*
 Model::makeProbabilityMap(
-  const double time,
-  const double start_time,
+  const DurationSize time,
+  const DurationSize start_time,
   const int min_value,
   const int low_max,
   const int med_max,
@@ -643,7 +643,7 @@ Model::makeProbabilityMap(
 }
 static void
 show_probabilities(
-  const map<double, ProbabilityMap*>& probabilities
+  const map<ThresholdSize, ProbabilityMap*>& probabilities
 )
 {
   for (const auto& kv : probabilities)
@@ -651,18 +651,18 @@ show_probabilities(
     kv.second->show();
   }
 }
-map<double, ProbabilityMap*>
+map<DurationSize, ProbabilityMap*>
 make_prob_map(
   const Model& model,
-  const vector<double>& saves,
-  const double started,
+  const vector<DurationSize>& saves,
+  const DurationSize started,
   const int min_value,
   const int low_max,
   const int med_max,
   const int max_value
 )
 {
-  map<double, ProbabilityMap*> result{};
+  map<DurationSize, ProbabilityMap*> result{};
   for (const auto& time : saves)
   {
     result.emplace(
@@ -672,12 +672,12 @@ make_prob_map(
   }
   return result;
 }
-map<double, util::SafeVector*>
+map<DurationSize, util::SafeVector*>
 make_size_map(
-  const vector<double>& saves
+  const vector<DurationSize>& saves
 )
 {
-  map<double, util::SafeVector*> result{};
+  map<DurationSize, util::SafeVector*> result{};
   for (const auto& time : saves)
   {
     result.emplace(time, new util::SafeVector());
@@ -686,9 +686,9 @@ make_size_map(
 }
 bool
 Model::add_statistics(
-  vector<double>* all_sizes,
-  vector<double>* means,
-  vector<double>* pct,
+  vector<MathSize>* all_sizes,
+  vector<MathSize>* means,
+  vector<MathSize>* pct,
   const util::SafeVector& sizes
 )
 {
@@ -742,9 +742,9 @@ Model::add_statistics(
 size_t
 runs_required(
   const size_t i,
-  const vector<double>* all_sizes,
-  const vector<double>* means,
-  const vector<double>* pct,
+  const vector<MathSize>* all_sizes,
+  const vector<MathSize>* means,
+  const vector<MathSize>* pct,
   const Model& model
 )
 {
@@ -802,14 +802,14 @@ runs_required(
   const auto left = max(max(runs_for_means, runs_for_pct), runs_for_sizes);
   return left;
 }
-double
+DurationSize
 Model::saveProbabilities(
-  map<double, ProbabilityMap*>& probabilities,
+  map<DurationSize, ProbabilityMap*>& probabilities,
   const Day start_day,
   const bool is_interim
 )
 {
-  auto final_time = numeric_limits<double>::min();
+  auto final_time = numeric_limits<DurationSize>::min();
   for (const auto& by_time : probabilities)
   {
     const auto time = by_time.first;
@@ -829,10 +829,10 @@ Model::saveProbabilities(
   }
   return final_time;
 }
-map<double, ProbabilityMap*>
+map<DurationSize, ProbabilityMap*>
 Model::runIterations(
   const topo::StartPoint& start_point,
-  const double start,
+  const DurationSize start,
   const Day start_day
 )
 {
@@ -860,9 +860,9 @@ Model::runIterations(
   std::seed_seq seed_extinction{static_cast<size_t>(1), static_cast<size_t>(start_day), lat, lon};
   mt19937 mt_spread(seed_spread);
   mt19937 mt_extinction(seed_extinction);
-  vector<double> all_sizes{};
-  vector<double> means{};
-  vector<double> pct{};
+  vector<MathSize> all_sizes{};
+  vector<MathSize> means{};
+  vector<MathSize> pct{};
   size_t iterations_done = 0;
   size_t scenarios_done = 0;
   size_t scenarios_required_done = 0;
@@ -885,7 +885,7 @@ Model::runIterations(
     Settings::intensityMaxModerate(),
     numeric_limits<int>::max()
   );
-  vector<map<double, ProbabilityMap*>> all_probabilities{};
+  vector<map<DurationSize, ProbabilityMap*>> all_probabilities{};
   all_probabilities.push_back(make_prob_map(
     *this,
     saves,
@@ -1270,14 +1270,14 @@ Model::runScenarios(
   Model model(dir_out, start_point, &env);
   // HACK: set after constructor so Test doesn't need to set
   model.start_time_ = start_time;
-  auto x = 0.0;
-  auto y = 0.0;
+  auto x = static_cast<MathSize>(0.0);
+  auto y = static_cast<MathSize>(0.0);
   const auto zone = lat_lon_to_utm(start_point, &x, &y);
   logging::note("UTM coordinates are: %d %d %d", zone, static_cast<int>(x), static_cast<int>(y));
   logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
   logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
-  auto
-    start_hour = ((start_time.tm_hour + (static_cast<double>(start_time.tm_min) / 60)) / DAY_HOURS);
+  auto start_hour =
+    ((start_time.tm_hour + (static_cast<DurationSize>(start_time.tm_min) / 60)) / DAY_HOURS);
   logging::note(
     "Simulation start time is %d-%02d-%02d %02d:%02d",
     start_time.tm_year + 1900,
@@ -1407,17 +1407,17 @@ Model::outputWeather(
           static_cast<uint8_t>(hour - day * DAY_HOURS),
           0,
           0,
-          w->prec().asDouble(),
-          w->temp().asDouble(),
-          w->rh().asDouble(),
-          w->wind().speed().asDouble(),
-          w->wind().direction().asDouble(),
-          w->ffmc().asDouble(),
-          w->dmc().asDouble(),
-          w->dc().asDouble(),
-          w->isi().asDouble(),
-          w->bui().asDouble(),
-          w->fwi().asDouble(),
+          w->prec().asValue(),
+          w->temp().asValue(),
+          w->rh().asValue(),
+          w->wind().speed().asValue(),
+          w->wind().direction().asValue(),
+          w->ffmc().asValue(),
+          w->dmc().asValue(),
+          w->dc().asValue(),
+          w->isi().asValue(),
+          w->bui().asValue(),
+          w->fwi().asValue(),
           "\r\n"
         );
         // printf(FMT_OUT,
@@ -1428,17 +1428,17 @@ Model::outputWeather(
         //        static_cast<uint8_t>(hour - day * DAY_HOURS),
         //        0,
         //        0,
-        //        w->prec().asDouble(),
-        //        w->temp().asDouble(),
-        //        w->rh().asDouble(),
-        //        w->wind().speed().asDouble(),
-        //        w->wind().direction().asDouble(),
-        //        w->ffmc().asDouble(),
-        //        w->dmc().asDouble(),
-        //        w->dc().asDouble(),
-        //        w->isi().asDouble(),
-        //        w->bui().asDouble(),
-        //        w->fwi().asDouble(),
+        //        w->prec().asValue(),
+        //        w->temp().asValue(),
+        //        w->rh().asValue(),
+        //        w->wind().speed().asValue(),
+        //        w->wind().direction().asValue(),
+        //        w->ffmc().asValue(),
+        //        w->dmc().asValue(),
+        //        w->dc().asValue(),
+        //        w->isi().asValue(),
+        //        w->bui().asValue(),
+        //        w->fwi().asValue(),
         //        "\r\n");
         // SlopeSize SLOPE_MAX = 300;
         SlopeSize SLOPE_MAX = MAX_SLOPE_FOR_DISTANCE;
@@ -1485,17 +1485,17 @@ Model::outputWeather(
                 static_cast<uint8_t>(hour - day * DAY_HOURS),
                 0,
                 0,
-                w->prec().asDouble(),
-                w->temp().asDouble(),
-                w->rh().asDouble(),
-                w->wind().speed().asDouble(),
-                w->wind().direction().asDouble(),
-                w->ffmc().asDouble(),
-                w->dmc().asDouble(),
-                w->dc().asDouble(),
-                w->isi().asDouble(),
-                w->bui().asDouble(),
-                w->fwi().asDouble(),
+                w->prec().asValue(),
+                w->temp().asValue(),
+                w->rh().asValue(),
+                w->wind().speed().asValue(),
+                w->wind().direction().asValue(),
+                w->ffmc().asValue(),
+                w->dmc().asValue(),
+                w->dc().asValue(),
+                w->isi().asValue(),
+                w->bui().asValue(),
+                w->fwi().asValue(),
                 spread.crownFractionBurned(),
                 spread.crownFuelConsumption(),
                 spread.fireDescription(),
@@ -1516,17 +1516,17 @@ Model::outputWeather(
                 static_cast<uint8_t>(hour - day * DAY_HOURS),
                 0,
                 0,
-                w->prec().asDouble(),
-                w->temp().asDouble(),
-                w->rh().asDouble(),
-                w->wind().speed().asDouble(),
-                w->wind().direction().asDouble(),
-                w->ffmc().asDouble(),
-                w->dmc().asDouble(),
-                w->dc().asDouble(),
-                w->isi().asDouble(),
-                w->bui().asDouble(),
-                w->fwi().asDouble(),
+                w->prec().asValue(),
+                w->temp().asValue(),
+                w->rh().asValue(),
+                w->wind().speed().asValue(),
+                w->wind().direction().asValue(),
+                w->ffmc().asValue(),
+                w->dmc().asValue(),
+                w->dc().asValue(),
+                w->isi().asValue(),
+                w->bui().asValue(),
+                w->fwi().asValue(),
                 spread.crownFractionBurned(),
                 spread.crownFuelConsumption(),
                 spread.fireDescription(),

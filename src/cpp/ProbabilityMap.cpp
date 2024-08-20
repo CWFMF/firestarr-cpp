@@ -22,8 +22,8 @@ static mutex PATHS_INTERIM_MUTEX{};
 
 ProbabilityMap::ProbabilityMap(
   const string dir_out,
-  const double time,
-  const double start_time,
+  const DurationSize time,
+  const DurationSize start_time,
   const int min_value,
   const int low_max,
   const int med_max,
@@ -136,7 +136,7 @@ ProbabilityMap::addProbability(
   const auto size = for_time.fireSize();
   static_cast<void>(util::insert_sorted(&sizes_, size));
 }
-vector<double>
+vector<MathSize>
 ProbabilityMap::getSizes() const
 {
   return sizes_;
@@ -245,7 +245,7 @@ ProbabilityMap::deleteInterim()
 void
 ProbabilityMap::saveAll(
   const tm& start_time,
-  const double time,
+  const DurationSize time,
   const bool is_interim
 ) const
 {

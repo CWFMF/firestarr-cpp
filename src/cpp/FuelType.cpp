@@ -9,79 +9,79 @@
 #include "Log.h"
 namespace fs::fuel
 {
-double
+MathSize
 InvalidFuel::buiEffect(
-  double
+  MathSize
 ) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
-double
+MathSize
 InvalidFuel::crownConsumption(
-  double
+  MathSize
 ) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
-double
+MathSize
 InvalidFuel::calculateRos(
   const int,
   const wx::FwiWeather&,
-  double
+  MathSize
 ) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
-double
+MathSize
 InvalidFuel::calculateIsf(
   const SpreadInfo&,
-  double
+  MathSize
 ) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
-double InvalidFuel::surfaceFuelConsumption(const SpreadInfo&) const
+MathSize InvalidFuel::surfaceFuelConsumption(const SpreadInfo&) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
-double
+MathSize
 InvalidFuel::lengthToBreadth(
-  double
+  MathSize
 ) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
-double
+MathSize
 InvalidFuel::finalRos(
   const SpreadInfo&,
-  double,
-  double,
-  double
+  MathSize,
+  MathSize,
+  MathSize
 ) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
-double InvalidFuel::criticalSurfaceIntensity(const SpreadInfo&) const
+MathSize InvalidFuel::criticalSurfaceIntensity(const SpreadInfo&) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
-double
+MathSize
 InvalidFuel::crownFractionBurned(
-  double,
-  double
+  MathSize,
+  MathSize
 ) const noexcept
 {
-  return logging::fatal<double>("Invalid fuel type in fuel map");
+  return logging::fatal<MathSize>("Invalid fuel type in fuel map");
 }
-double
+MathSize
 InvalidFuel::probabilityPeat(
-  double
+  MathSize
 ) const noexcept
 {
-  return logging::fatal<double>("Invalid fuel type in fuel map");
+  return logging::fatal<MathSize>("Invalid fuel type in fuel map");
 }
-double InvalidFuel::survivalProbability(const wx::FwiWeather&) const noexcept
+MathSize InvalidFuel::survivalProbability(const wx::FwiWeather&) const noexcept
 {
-  return logging::fatal<double>("Invalid fuel type in fuel map");
+  return logging::fatal<MathSize>("Invalid fuel type in fuel map");
 }
 }

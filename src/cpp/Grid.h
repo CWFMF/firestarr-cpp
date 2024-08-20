@@ -75,7 +75,7 @@ public:
    * \brief Cell size used for GridBase.
    * \return Cell height and width in meters.
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   cellSize() const noexcept
   {
     return cell_size_;
@@ -106,7 +106,7 @@ public:
    * \brief Lower left corner X coordinate in meters.
    * \return Lower left corner X coordinate in meters.
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   xllcorner() const noexcept
   {
     return xllcorner_;
@@ -115,7 +115,7 @@ public:
    * \brief Lower left corner Y coordinate in meters.
    * \return Lower left corner Y coordinate in meters.
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   yllcorner() const noexcept
   {
     return yllcorner_;
@@ -124,7 +124,7 @@ public:
    * \brief Upper right corner X coordinate in meters.
    * \return Upper right corner X coordinate in meters.
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   xurcorner() const noexcept
   {
     return xurcorner_;
@@ -133,7 +133,7 @@ public:
    * \brief Upper right corner Y coordinate in meters.
    * \return Upper right corner Y coordinate in meters.
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   yurcorner() const noexcept
   {
     return yurcorner_;
@@ -151,7 +151,7 @@ public:
    * \brief Central meridian of UTM zone for this grid.
    * \return Central meridian of UTM zone for this grid.
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   meridian() const noexcept
   {
     return meridian_;
@@ -160,7 +160,7 @@ public:
    * \brief UTM zone represented by proj4 string for this grid.
    * \return UTM zone represented by proj4 string for this grid.
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   zone() const noexcept
   {
     return zone_;
@@ -175,11 +175,11 @@ public:
    * \param proj4 Proj4 projection definition
    */
   GridBase(
-    double cell_size,
-    double xllcorner,
-    double yllcorner,
-    double xurcorner,
-    double yurcorner,
+    MathSize cell_size,
+    MathSize xllcorner,
+    MathSize yllcorner,
+    MathSize xurcorner,
+    MathSize yurcorner,
     string&& proj4
   ) noexcept;
   /**
@@ -217,41 +217,41 @@ private:
   /**
    * \brief Cell height and width in meters.
    */
-  double cell_size_;
+  MathSize cell_size_;
   /**
    * \brief Lower left corner X coordinate in meters.
    */
-  double xllcorner_;
+  MathSize xllcorner_;
   /**
    * \brief Lower left corner Y coordinate in meters.
    */
-  double yllcorner_;
+  MathSize yllcorner_;
   /**
    * \brief Upper right corner X coordinate in meters.
    */
-  double xurcorner_;
+  MathSize xurcorner_;
   /**
    * \brief Upper right corner Y coordinate in meters.
    */
-  double yurcorner_;
+  MathSize yurcorner_;
   /**
    * \brief Central meridian of projection in degrees.
    */
-  double meridian_;
+  MathSize meridian_;
   /**
    * \brief UTM zone of projection.
    */
-  double zone_;
+  MathSize zone_;
 };
 void
 write_ascii_header(
   ofstream& out,
-  double num_columns,
-  double num_rows,
-  double xll,
-  double yll,
-  double cell_size,
-  double no_data
+  MathSize num_columns,
+  MathSize num_rows,
+  MathSize xll,
+  MathSize yll,
+  MathSize cell_size,
+  MathSize no_data
 );
 template <class R>
 [[nodiscard]] R
@@ -382,15 +382,15 @@ protected:
    * \param proj4 Proj4 projection definition
    */
   Grid(
-    const double cell_size,
+    const MathSize cell_size,
     const Idx rows,
     const Idx columns,
     const V nodata_input,
     const T nodata_value,
-    const double xllcorner,
-    const double yllcorner,
-    const double xurcorner,
-    const double yurcorner,
+    const MathSize xllcorner,
+    const MathSize yllcorner,
+    const MathSize xurcorner,
+    const MathSize yurcorner,
     string&& proj4
   ) noexcept
     : GridBase(cell_size, xllcorner, yllcorner, xurcorner, yurcorner, std::forward<string>(proj4)),
@@ -480,15 +480,15 @@ public:
    * \param data Data to populate GridData with
    */
   GridData(
-    const double cell_size,
+    const MathSize cell_size,
     const Idx rows,
     const Idx columns,
     const V nodata_input,
     const T nodata_value,
-    const double xllcorner,
-    const double yllcorner,
-    const double xurcorner,
-    const double yurcorner,
+    const MathSize xllcorner,
+    const MathSize yllcorner,
+    const MathSize xurcorner,
+    const MathSize yurcorner,
     string&& proj4,
     D&& data
   )
@@ -631,13 +631,13 @@ public:
     logging::note("Bounds are (%d, %d), (%d, %d)", min_column, min_row, max_column, max_row);
     logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
     logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
-    const double xll = this->xllcorner() + min_column * this->cellSize();
+    const MathSize xll = this->xllcorner() + min_column * this->cellSize();
     // offset is different for y since it's flipped
-    const double yll = this->yllcorner() + (min_row) * this->cellSize();
+    const MathSize yll = this->yllcorner() + (min_row) * this->cellSize();
     logging::extensive("Lower left corner is (%f, %f)", xll, yll);
     // HACK: make sure it's always at least 1
-    const auto num_rows = static_cast<double>(max_row) - min_row + 1;
-    const auto num_columns = static_cast<double>(max_column) - min_column + 1;
+    const auto num_rows = static_cast<MathSize>(max_row) - min_row + 1;
+    const auto num_columns = static_cast<MathSize>(max_column) - min_column + 1;
     ofstream out;
     string filename = dir + base_name + ".asc";
     out.open(filename.c_str());
@@ -648,7 +648,7 @@ public:
       xll,
       yll,
       this->cellSize(),
-      static_cast<double>(this->nodataInput())
+      static_cast<MathSize>(this->nodataInput())
     );
     for (Idx ro = 0; ro < num_rows; ++ro)
     {
@@ -790,9 +790,9 @@ public:
     );
     logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
     logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
-    const double xll = this->xllcorner() + min_column * this->cellSize();
+    const MathSize xll = this->xllcorner() + min_column * this->cellSize();
     // offset is different for y since it's flipped
-    const double yll = this->yllcorner() + (min_row) * this->cellSize();
+    const MathSize yll = this->yllcorner() + (min_row) * this->cellSize();
     logging::extensive("Lower left corner is (%f, %f)", xll, yll);
     const auto num_rows = static_cast<size_t>(max_row - min_row);
     const auto num_columns = static_cast<size_t>(max_column - min_column);
@@ -829,7 +829,7 @@ public:
       typeid(this).name(),
       str,
       nodata_as_int,
-      static_cast<double>(this->nodataInput())
+      static_cast<MathSize>(this->nodataInput())
     );
     TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
     logging::extensive("%s takes %d bits", base_name.c_str(), bps);

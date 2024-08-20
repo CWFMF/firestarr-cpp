@@ -15,7 +15,7 @@ horizontal_adjustment(
 )
 {
   // do everything we can to avoid calling trig functions unnecessarily
-  constexpr auto no_correction = [](const double) noexcept {
+  constexpr auto no_correction = [](const MathSize) noexcept {
     return 1.0;
   };
   if (0 == slope)
@@ -25,7 +25,7 @@ horizontal_adjustment(
   }
   const auto b_semi = _cos(atan(slope / 100.0));
   const auto slope_radians = util::to_radians(slope_azimuth);
-  const auto do_correction = [b_semi, slope_radians](const double theta) noexcept {
+  const auto do_correction = [b_semi, slope_radians](const MathSize theta) noexcept {
     // never gets called if isInvalid() so don't check
     // figure out how far the ground distance is in map distance horizontally
     auto angle_unrotated = theta - slope_radians;
@@ -47,21 +47,24 @@ horizontal_adjustment(
 [[nodiscard]] OffsetSet
 OriginalSpreadAlgorithm::calculate_offsets(
   HorizontalAdjustment correction_factor,
-  double head_raz,
-  double head_ros,
-  double back_ros,
-  double length_to_breadth
+  MathSize head_raz,
+  MathSize head_ros,
+  MathSize back_ros,
+  MathSize length_to_breadth
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets](const double direction, const double ros) {
+  const auto add_offset = [this, &offsets](const MathSize direction, const MathSize ros) {
     if (ros < min_ros_)
     {
       return false;
     }
     const auto ros_cell = ros / cell_size_;
     // spreading, so figure out offset from current point
-    offsets.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction));
+    offsets.emplace_back(
+      static_cast<InnerSize>(ros_cell * _sin(direction)),
+      static_cast<InnerSize>(ros_cell * _cos(direction))
+    );
     return true;
   };
   // if not over spread threshold then don't spread
@@ -78,7 +81,7 @@ OriginalSpreadAlgorithm::calculate_offsets(
   const auto a_sq_sub_c_sq = a_sq - (c * c);
   const auto ac = a * c;
   const auto calculate_ros = [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](
-                               const double theta
+                               const MathSize theta
                              ) noexcept {
     const auto cos_t = _cos(theta);
     const auto cos_t_sq = cos_t * cos_t;
@@ -96,7 +99,7 @@ OriginalSpreadAlgorithm::calculate_offsets(
   const auto add_offsets = [this,
                             &correction_factor,
                             &add_offset,
-                            head_raz](const double angle_radians, const double ros_flat) {
+                            head_raz](const MathSize angle_radians, const MathSize ros_flat) {
     if (ros_flat < min_ros_)
     {
       return false;
@@ -109,12 +112,12 @@ OriginalSpreadAlgorithm::calculate_offsets(
     added |= add_offset(direction, ros_flat * correction_factor(direction));
     return added;
   };
-  const auto add_offsets_calc_ros = [&add_offsets, &calculate_ros](const double angle_radians) {
+  const auto add_offsets_calc_ros = [&add_offsets, &calculate_ros](const MathSize angle_radians) {
     return add_offsets(angle_radians, calculate_ros(angle_radians));
   };
   // bool added = add_offset(head_raz, head_ros);
   bool added = add_offset(head_raz, head_ros);
-  double i = max_angle_;
+  MathSize i = max_angle_;
   while (added && i < 90)
   {
     added = add_offsets_calc_ros(util::to_radians(i));
@@ -145,14 +148,14 @@ OriginalSpreadAlgorithm::calculate_offsets(
 [[nodiscard]] OffsetSet
 WidestEllipseAlgorithm::calculate_offsets(
   const HorizontalAdjustment correction_factor,
-  const double head_raz,
-  const double head_ros,
-  const double back_ros,
-  const double length_to_breadth
+  const MathSize head_raz,
+  const MathSize head_ros,
+  const MathSize back_ros,
+  const MathSize length_to_breadth
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets](const double direction, const double ros) {
+  const auto add_offset = [this, &offsets](const MathSize direction, const MathSize ros) {
 #ifdef DEBUG_POINTS
     const auto s0 = offsets.size();
 #endif
@@ -167,7 +170,10 @@ WidestEllipseAlgorithm::calculate_offsets(
     }
     const auto ros_cell = ros / cell_size_;
     // spreading, so figure out offset from current point
-    offsets.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction));
+    offsets.emplace_back(
+      static_cast<InnerSize>(ros_cell * _sin(direction)),
+      static_cast<InnerSize>(ros_cell * _cos(direction))
+    );
     // // HACK: avoid bounds check
     // offsets.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction), false);
 #ifdef DEBUG_POINTS
@@ -205,7 +211,7 @@ WidestEllipseAlgorithm::calculate_offsets(
   const auto a_sq_sub_c_sq = a_sq - (c * c);
   const auto ac = a * c;
   const auto calculate_ros = [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](
-                               const double theta
+                               const MathSize theta
                              ) noexcept {
     const auto cos_t = _cos(theta);
     const auto cos_t_sq = cos_t * cos_t;
@@ -223,7 +229,7 @@ WidestEllipseAlgorithm::calculate_offsets(
   const auto add_offsets = [this,
                             &correction_factor,
                             &add_offset,
-                            head_raz](const double angle_radians, const double ros_flat) {
+                            head_raz](const MathSize angle_radians, const MathSize ros_flat) {
     if (ros_flat < min_ros_)
     {
       return false;
@@ -236,40 +242,40 @@ WidestEllipseAlgorithm::calculate_offsets(
     added |= add_offset(direction, ros_flat * correction_factor(direction));
     return added;
   };
-  const auto add_offsets_calc_ros = [&add_offsets, &calculate_ros](const double angle_radians) {
+  const auto add_offsets_calc_ros = [&add_offsets, &calculate_ros](const MathSize angle_radians) {
     return add_offsets(angle_radians, calculate_ros(angle_radians));
   };
   // bool added = add_offset(head_raz, head_ros);
   bool added = true;
 #define STEP_X 0.2
 #define STEP_MAX util::to_radians(max_angle_)
-  double step_x = STEP_X;
-  // double step_x = STEP_X / length_to_breadth;
-  double theta = 0;
-  double angle = 0;
-  double last_theta = 0;
-  double cur_x = 1.0;
-  // double last_angle = 0;
+  MathSize step_x = STEP_X;
+  // MathSize step_x = STEP_X / length_to_breadth;
+  MathSize theta = 0;
+  MathSize angle = 0;
+  MathSize last_theta = 0;
+  MathSize cur_x = 1.0;
+  // MathSize last_angle = 0;
   // widest point should be at origin, which is 'c' away from origin
-  double widest = atan2(flank_ros, c);
+  MathSize widest = atan2(flank_ros, c);
   // printf("head_ros = %f, back_ros = %f, flank_ros = %f, c = %f, widest = %f\n",
   //        head_ros,
   //        back_ros,
   //        flank_ros,
   //        c,
   //        util::to_degrees(widest));
-  // double step = 1;
-  // double last_step = 0;
+  // MathSize step = 1;
+  // MathSize last_step = 0;
   size_t num_angles = 0;
-  double widest_x = cos(widest);
-  double step_max = STEP_MAX / pow(length_to_breadth, 0.5);
+  MathSize widest_x = _cos(widest);
+  MathSize step_max = STEP_MAX / pow(length_to_breadth, 0.5);
   while (added && cur_x > (STEP_MAX / 4.0))
   {
     ++num_angles;
     theta = min(acos(cur_x), last_theta + step_max);
     angle = ellipse_angle(length_to_breadth, theta);
     added = add_offsets_calc_ros(angle);
-    cur_x = cos(theta);
+    cur_x = _cos(theta);
     // printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
     //        cur_x,
     //        util::to_degrees(theta),
@@ -297,7 +303,7 @@ WidestEllipseAlgorithm::calculate_offsets(
     ++num_angles;
     angle = ellipse_angle(length_to_breadth, theta);
     added = add_offsets(util::RAD_090, flank_ros * sqrt(a_sq_sub_c_sq) / a);
-    cur_x = cos(theta);
+    cur_x = _cos(theta);
     // printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
     //        cur_x,
     //        util::to_degrees(theta),
@@ -314,9 +320,9 @@ WidestEllipseAlgorithm::calculate_offsets(
   // step_x *= length_to_breadth;
   step_x *= length_to_breadth;
   // just trying random things now
-  // double max_angle = util::RAD_180 - (pow(length_to_breadth, 1.5) * STEP_MAX);
-  double max_angle = util::RAD_180 - (length_to_breadth * step_max);
-  double min_x = cos(max_angle);
+  // MathSize max_angle = util::RAD_180 - (pow(length_to_breadth, 1.5) * STEP_MAX);
+  MathSize max_angle = util::RAD_180 - (length_to_breadth * step_max);
+  MathSize min_x = _cos(max_angle);
   while (added && cur_x >= min_x)
   {
     ++num_angles;
@@ -330,7 +336,7 @@ WidestEllipseAlgorithm::calculate_offsets(
       // angle = ellipse_angle(length_to_breadth, theta);
     }
     added = add_offsets_calc_ros(angle);
-    cur_x = cos(theta);
+    cur_x = _cos(theta);
     // printf("cur_x = %f, theta = %f, angle = %f, last_theta = %f, last_angle = %f\n",
     //        cur_x,
     //        util::to_degrees(theta),

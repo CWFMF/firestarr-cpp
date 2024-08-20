@@ -112,15 +112,15 @@ public:
    * \param data Data to set as grid data
    */
   ConstantGrid(
-    const double cell_size,
+    const MathSize cell_size,
     const Idx rows,
     const Idx columns,
     const V nodata_input,
     const T nodata_value,
-    const double xllcorner,
-    const double yllcorner,
-    const double xurcorner,
-    const double yurcorner,
+    const MathSize xllcorner,
+    const MathSize yllcorner,
+    const MathSize xurcorner,
+    const MathSize yurcorner,
     string&& proj4,
     vector<T>&& data
   )
@@ -152,13 +152,13 @@ public:
    * \param initialization_value Value to initialize entire grid with
    */
   ConstantGrid(
-    const double cell_size,
+    const MathSize cell_size,
     const Idx rows,
     const Idx columns,
     const V nodata_input,
     const T nodata_value,
-    const double xllcorner,
-    const double yllcorner,
+    const MathSize xllcorner,
+    const MathSize yllcorner,
     const string& proj4,
     const T& initialization_value
   ) noexcept
@@ -372,9 +372,9 @@ public:
     _TIFFfree(buf);
     logging::verbose("%s: free end", filename.c_str());
     const auto new_xll = grid_info.xllcorner()
-                       + (static_cast<double>(min_column) * grid_info.cellSize());
+                       + (static_cast<MathSize>(min_column) * grid_info.cellSize());
     const auto new_yll = grid_info.yllcorner()
-                       + (static_cast<double>(actual_rows) - static_cast<double>(max_row))
+                       + (static_cast<MathSize>(actual_rows) - static_cast<MathSize>(max_row))
                            * grid_info.cellSize();
 #ifdef DEBUG_GRIDS
     logging::check_fatal(new_yll < grid_info.yllcorner(), "New yllcorner is outside original grid");
@@ -396,8 +396,8 @@ public:
       nodata_value,
       new_xll,
       new_yll,
-      new_xll + (static_cast<double>(num_columns) + 1) * grid_info.cellSize(),
-      new_yll + (static_cast<double>(num_rows) + 1) * grid_info.cellSize(),
+      new_xll + (static_cast<MathSize>(num_columns) + 1) * grid_info.cellSize(),
+      new_yll + (static_cast<MathSize>(num_rows) + 1) * grid_info.cellSize(),
       string(grid_info.proj4()),
       std::move(values)
     );

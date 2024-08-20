@@ -10,9 +10,6 @@
 // Original Javascript by Chuck Taylor
 // Port to C++ by Alex Hajnal
 //
-// *** THIS CODE USES 32-BIT doubleS BY DEFAULT ***
-// *** For 64-bit double-precision edit UTM.h: undefine double_32 and define double_64
-//
 // This is a simple port of the code on the Geographic/UTM Coordinate Converter (1) page
 // from Javascript to C++.
 // Using this you can easily convert between UTM and WGS84 (latitude and longitude).
@@ -38,11 +35,11 @@ class Point;
  * \param phi Latitude of the point, in radians.
  * \return The ellipsoidal distance of the point from the equator, in meters.
  */
-[[nodiscard]] double
-arc_length_of_meridian(double phi) noexcept;
-[[nodiscard]] constexpr double
+[[nodiscard]] MathSize
+arc_length_of_meridian(MathSize phi) noexcept;
+[[nodiscard]] constexpr MathSize
 meridian_to_zone(
-  const double meridian
+  const MathSize meridian
 ) noexcept
 {
   return (meridian + 183.0) / 6.0;
@@ -52,12 +49,12 @@ meridian_to_zone(
  *
  * Range of the central meridian is the radian equivalent of [-177,+177].
  *
- * \param zone A double designating the UTM zone, range [1,60].
+ * \param zone A MathSize designating the UTM zone, range [1,60].
  * \return The central meridian for the given UTM zone, in degrees
  */
-[[nodiscard]] constexpr double
+[[nodiscard]] constexpr MathSize
 utm_central_meridian_deg(
-  const double zone
+  const MathSize zone
 ) noexcept
 {
   return -183.0 + zone * 6.0;
@@ -70,7 +67,7 @@ utm_central_meridian_deg(
  * \param zone An integer value designating the UTM zone, range [1,60].
  * \return The central meridian for the given UTM zone, in radians
  */
-[[nodiscard]] constexpr double
+[[nodiscard]] constexpr MathSize
 utm_central_meridian(
   const int zone
 ) noexcept
@@ -88,8 +85,8 @@ utm_central_meridian(
  * \param y The UTM northing coordinate, in meters.
  * \return The footpoint latitude, in radians.
  */
-[[nodiscard]] double
-footpoint_latitude(double y) noexcept;
+[[nodiscard]] MathSize
+footpoint_latitude(MathSize y) noexcept;
 /**
  * \brief Converts a latitude/longitude pair to Transverse Mercator x and y coordinates
  *
@@ -108,7 +105,13 @@ footpoint_latitude(double y) noexcept;
  * \return None
  */
 void
-map_lat_lon_to_xy(double phi, double lambda, double lambda0, double* x, double* y) noexcept;
+map_lat_lon_to_xy(
+  MathSize phi,
+  MathSize lambda,
+  MathSize lambda0,
+  MathSize* x,
+  MathSize* y
+) noexcept;
 /**
  * \brief Converts Transverse Mercator to latitude/longitude
  *
@@ -126,7 +129,13 @@ map_lat_lon_to_xy(double phi, double lambda, double lambda0, double* x, double* 
  * \param lambda Longitude in radians.
  */
 void
-map_xy_to_lat_lon(double x, double y, double lambda0, double* phi, double* lambda) noexcept;
+map_xy_to_lat_lon(
+  MathSize x,
+  MathSize y,
+  MathSize lambda0,
+  MathSize* phi,
+  MathSize* lambda
+) noexcept;
 /**
  * \brief Converts a latitude/longitude pair to x and y coordinates in the UTM projection.
  * \param point Point to convert coordinates from
@@ -135,7 +144,7 @@ map_xy_to_lat_lon(double x, double y, double lambda0, double* phi, double* lambd
  * \return The UTM zone used for calculating the values of x and y.
  */
 [[nodiscard]] int
-lat_lon_to_utm(const Point& point, double* x, double* y) noexcept;
+lat_lon_to_utm(const Point& point, MathSize* x, MathSize* y) noexcept;
 /**
  * \brief Converts a latitude/longitude pair to x and y coordinates in the UTM projection.
  * \param point Point to convert coordinates from
@@ -144,7 +153,7 @@ lat_lon_to_utm(const Point& point, double* x, double* y) noexcept;
  * \param y The y coordinate (northing) of the computed point. (in meters)
  */
 void
-lat_lon_to_utm(const Point& point, double zone, double* x, double* y) noexcept;
+lat_lon_to_utm(const Point& point, MathSize zone, MathSize* x, MathSize* y) noexcept;
 /**
  * \brief Convert UTM to latitude/longitude.
  *
@@ -162,12 +171,12 @@ lat_lon_to_utm(const Point& point, double zone, double* x, double* y) noexcept;
  */
 void
 utm_to_lat_lon(
-  double x,
-  double y,
+  MathSize x,
+  MathSize y,
   int zone,
   bool is_southern_hemisphere,
-  double* lat,
-  double* lon
+  MathSize* lat,
+  MathSize* lon
 ) noexcept;
 }
 }

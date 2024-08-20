@@ -55,13 +55,13 @@ SafeVector::operator=(
 }
 void
 SafeVector::addValue(
-  const double value
+  const MathSize value
 )
 {
   lock_guard<mutex> lock(mutex_);
   static_cast<void>(insert_sorted(&values_, value));
 }
-vector<double>
+vector<MathSize>
 SafeVector::getValues() const
 {
   lock_guard<mutex> lock(mutex_);

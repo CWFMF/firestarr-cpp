@@ -9,16 +9,18 @@
 // #include "vld.h"
 #define _USE_MATH_DEFINES
 #define NOMINMAX
-#include <ctime>
-#include <chrono>
 #include <algorithm>
 #include <array>
 #include <atomic>
 #include <cassert>
 #include <cerrno>
+#include <chrono>
 #include <cmath>
 #include <cstdarg>
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <execution>
 #include <fstream>
 #include <functional>
@@ -35,10 +37,9 @@
 #include <ranges>
 #include <set>
 #include <sstream>
-#include <cstdint>
-#include <string>
-#include <cstring>
+#include <stdfloat>
 #include <string_view>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -56,6 +57,7 @@
 #include "tiff.h"
 #include <tiffio.h>
 #include <sys/stat.h>
+#include "unstable.h"
 // unreferenced inline function has been removed
 // Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are
 // no longer caught function 'X' selected for automatic inline expansion function not inlined
@@ -76,6 +78,7 @@ using std::async;
 using std::atomic;
 using std::endl;
 using std::fixed;
+using std::float16_t;
 using std::function;
 using std::future;
 using std::get;
@@ -164,6 +167,24 @@ using SlopeSize = uint8_t;
  * \brief Type used for storing intensities
  */
 using IntensitySize = uint16_t;
+/**
+ * \brief Type used for storing distances within cells
+ */
+using DistanceSize = float16_t;
+/**
+ * \brief Type used for storing locations within cells
+ */
+// FIX: results in "Invalid fuel type in fuel map"
+// using InnerSize = float16_t;
+using InnerSize = double;
+/**
+ * \brief Type used for probability thresholds
+ */
+using ThresholdSize = double;
+/**
+ * \brief Type used for storing locations within cells
+ */
+using DurationSize = double;
 /**
  * \brief A day (0 - 366)
  */

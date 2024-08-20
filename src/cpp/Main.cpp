@@ -129,10 +129,10 @@ parse_flag(
     return not_inverse;
   });
 }
-double
-parse_double()
+MathSize
+parse_value()
 {
-  return parse_once<double>([] {
+  return parse_once<MathSize>([] {
     return stod(get_arg());
   });
 }
@@ -157,7 +157,7 @@ template <class T>
 T
 parse_index()
 {
-  // return T(parse_double());
+  // return T(parse_value());
   return parse_once<T>([] {
     return T(stod(get_arg()));
   });
@@ -404,12 +404,12 @@ main(
         false,
         &parse_size_t
       );
-      register_setter<double>(
+      register_setter<fs::ThresholdSize>(
         &Settings::setConfidenceLevel,
         "--confidence",
         "Use specified confidence level",
         false,
-        &parse_double
+        &parse_value
       );
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);

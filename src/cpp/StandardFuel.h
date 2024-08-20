@@ -16,15 +16,15 @@ namespace fuel
 /**
  * \brief Limit to slope when calculating ISI
  */
-static constexpr double SLOPE_LIMIT_ISI = 0.01;
+static constexpr MathSize SLOPE_LIMIT_ISI = 0.01;
 /**
  * \brief Calculate standard foliar moisture effect (FME) based on FMC [ST-X-3 eq 61]
  * \param fmc Foliar Moisture Content (FMC)
  * \return Standard foliar moisture effect (FME) based on FMC [ST-X-3 eq 61]
  */
-[[nodiscard]] static constexpr double
+[[nodiscard]] static constexpr MathSize
 calculate_standard_foliar_moisture_fmc(
-  const double fmc
+  const MathSize fmc
 ) noexcept
 {
   return util::pow_int<4>(1.5 - 0.00275 * fmc) / (460.0 + 25.9 * fmc) / 0.778 * 1000.0;
@@ -40,9 +40,9 @@ static const util::LookupTable<&calculate_standard_foliar_moisture_fmc>
  * \param isi Initial Spread Index
  * \return RSC / (FME / FME_avg) [ST-X-3 eq 64]
  */
-[[nodiscard]] static double
+[[nodiscard]] static MathSize
 calculate_standard_foliar_moisture_isi(
-  const double isi
+  const MathSize isi
 ) noexcept
 {
   return 60.0 * (1.0 - exp(-0.0497 * isi));
@@ -59,9 +59,9 @@ static const util::LookupTable<&calculate_standard_foliar_moisture_isi>
  * \param ws Wind Speed (km/h)
  * \return Length to Breadth ratio [ST-X-3 eq 79]
  */
-[[nodiscard]] static double
+[[nodiscard]] static MathSize
 calculate_standard_length_to_breadth(
-  const double ws
+  const MathSize ws
 ) noexcept
 {
   return 1.0 + 8.729 * pow(1.0 - exp(-0.030 * ws), 2.155);
@@ -152,9 +152,9 @@ public:
    * \param isi Initial Spread Index
    * \return Initial rate of spread (m/min) [ST-X-3 eq 26]
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   rosBasic(
-    const double isi
+    const MathSize isi
   ) const noexcept
   {
     return a() * pow(1.0 - exp(negB() * isi), c());
@@ -164,9 +164,9 @@ public:
            * \param cfb Crown Fraction Burned (CFB) [ST-X-3 eq 58]
            * \return Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
            */
-    double
+    MathSize
     crownConsumption(
-      const double cfb
+      const MathSize cfb
     ) const noexcept override
   {
     return cfl() * cfb;
@@ -177,10 +177,10 @@ public:
    * \param rsf Slope-adjusted zero wind rate of spread (RSF) [ST-X-3 eq 40]
    * \return ISI with slope influence and zero wind (ISF) [ST-X-3 eq 41]
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   limitIsf(
-    const double mu,
-    const double rsf
+    const MathSize mu,
+    const MathSize rsf
   ) const noexcept
   {
     return (1.0 / negB())
@@ -193,7 +193,7 @@ public:
    * \param spread SpreadInfo to use in calculation
    * \return Critical Surface Fire Intensity (CSI) [ST-X-3 eq 56]
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   criticalSurfaceIntensity(
     const SpreadInfo& spread
   ) const noexcept override
@@ -205,9 +205,9 @@ public:
    * \param ws Wind Speed (km/h)
    * \return Length to Breadth ratio [ST-X-3 eq 79]
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   lengthToBreadth(
-    const double ws
+    const MathSize ws
   ) const noexcept override
   {
     return STANDARD_LENGTH_TO_BREADTH(ws);
@@ -217,12 +217,12 @@ public:
    * \param rss Surface Rate of spread (ROS) (m/min) [ST-X-3 eq 55]
    * \return Final rate of spread (m/min)
    */
-  double
+  MathSize
   finalRos(
     const SpreadInfo&,
-    double,
-    double,
-    const double rss
+    MathSize,
+    MathSize,
+    const MathSize rss
   ) const noexcept override
   {
     return rss;
@@ -232,12 +232,12 @@ public:
    * \param bui Build-up Index
    * \return BUI Effect on surface fire rate of spread [ST-X-3 eq 54]
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   buiEffect(
-    const double bui
+    const MathSize bui
   ) const noexcept override
   {
-    return exp(50.0 * log_q_.asDouble() * ((1.0 / (0 == bui ? 1.0 : bui)) - (1.0 / bui0())));
+    return exp(50.0 * log_q_.asValue() * ((1.0 / (0 == bui ? 1.0 : bui)) - (1.0 / bui0())));
   }
 protected:
   ~StandardFuel() = default;
@@ -245,7 +245,7 @@ protected:
    * \brief Average Build-up Index for the fuel type [ST-X-3 table 7]
    * \return Average Build-up Index for the fuel type [ST-X-3 table 7]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   bui0() noexcept
   {
     return Bui0;
@@ -254,7 +254,7 @@ protected:
    * \brief Crown base height (m) [ST-X-3 table 8]
    * \return Crown base height (m) [ST-X-3 table 8]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   cbh() noexcept
   {
     return Cbh;
@@ -263,7 +263,7 @@ protected:
    * \brief Crown fuel load (kg/m^2) [ST-X-3 table 8]
    * \return Crown fuel load (kg/m^2) [ST-X-3 table 8]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   cfl() noexcept
   {
     return Cfl / 100.0;
@@ -272,7 +272,7 @@ protected:
    * \brief Rate of spread parameter a [ST-X-3 table 6]
    * \return Rate of spread parameter a [ST-X-3 table 6]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   a() noexcept
   {
     return A;
@@ -281,7 +281,7 @@ protected:
    * \brief Negative of rate of spread parameter b [ST-X-3 table 6]
    * \return Negative of rate of spread parameter b [ST-X-3 table 6]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   negB() noexcept
   {
     // the only places this gets used it gets negated so just store it that way
@@ -291,7 +291,7 @@ protected:
    * \brief Rate of spread parameter c [ST-X-3 table 6]
    * \return Rate of spread parameter c [ST-X-3 table 6]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   c() noexcept
   {
     return C / 100.0;
@@ -302,10 +302,10 @@ protected:
    * \param fmc Foliar Moisture Content
    * \return Crown fire spread rate (RSC) (m/min) [ST-X-3 eq 64]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   foliarMoistureEffect(
-    const double isi,
-    const double fmc
+    const MathSize isi,
+    const MathSize fmc
   ) noexcept
   {
     return STANDARD_FOLIAR_MOISTURE_ISI(isi) * STANDARD_FOLIAR_MOISTURE_FMC(fmc);

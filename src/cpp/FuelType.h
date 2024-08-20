@@ -36,19 +36,19 @@ constexpr FuelCodeSize INVALID_FUEL_CODE = 0;
 // https://www.cfs.nrcan.gc.ca/pubwarehouse/pdfs/19950.pdf
 //
 // default grass fuel load (t/ha)
-static constexpr double DEFAULT_GRASS_FUEL_LOAD = 3.5;
+static constexpr MathSize DEFAULT_GRASS_FUEL_LOAD = 3.5;
 // amount of duff to apply ffmc moisture to (cm) (1.2 cm is from Kerry's paper)
-static constexpr double DUFF_FFMC_DEPTH = 1.2;
+static constexpr MathSize DUFF_FFMC_DEPTH = 1.2;
 /**
  * \brief Fire Intensity (kW/m) [ST-X-3 eq 69]
  * \param fc Fuel consumption (kg/m^2)
  * \param ros Rate of spread (m/min)
  * \return Fire Intensity (kW/m) [ST-X-3 eq 69]
  */
-[[nodiscard]] constexpr double
+[[nodiscard]] constexpr MathSize
 fire_intensity(
-  const double fc,
-  const double ros
+  const MathSize fc,
+  const MathSize ros
 )
 {
   return 300.0 * fc * ros;
@@ -89,10 +89,10 @@ public:
    * \param csi Critical Surface Fire Intensity (CSI) (kW/m) [ST-X-3 eq 56]
    * \return Critical rate of spread (m/min)
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   criticalRos(
-    const double sfc,
-    const double csi
+    const MathSize sfc,
+    const MathSize csi
   )
   {
     return sfc > 0 ? csi / (300.0 * sfc) : 0.0;
@@ -105,8 +105,8 @@ public:
    */
   [[nodiscard]] static constexpr bool
   isCrown(
-    const double csi,
-    const double sfi
+    const MathSize csi,
+    const MathSize sfi
   )
   {
     return sfi > csi;
@@ -149,37 +149,37 @@ public:
    * \param rso Critical surface fire spread rate (RSO) [ST-X-3 eq 57]
    * \return Crown Fraction Burned (CFB) [ST-X-3 eq 58]
    */
-  [[nodiscard]] virtual double
-  crownFractionBurned(double rss, double rso) const noexcept = 0;
+  [[nodiscard]] virtual MathSize
+  crownFractionBurned(MathSize rss, MathSize rso) const noexcept = 0;
   /**
    * \brief Calculate probability of burning [Anderson eq 1]
    * \param mc_fraction moisture content (% / 100)
    * \return Calculate probability of burning [Anderson eq 1]
    */
-  [[nodiscard]] virtual double
-  probabilityPeat(double mc_fraction) const noexcept = 0;
+  [[nodiscard]] virtual MathSize
+  probabilityPeat(MathSize mc_fraction) const noexcept = 0;
   /**
    * \brief Survival probability calculated using probability of ony survival based on multiple
    * formulae
    * \param wx FwiWeather to calculate survival probability for
    * \return Chance of survival (% / 100)
    */
-  [[nodiscard]] virtual double
+  [[nodiscard]] virtual ThresholdSize
   survivalProbability(const wx::FwiWeather& wx) const noexcept = 0;
   /**
    * \brief BUI Effect on surface fire rate of spread [ST-X-3 eq 54]
    * \param bui Build-up Index
    * \return BUI Effect on surface fire rate of spread [ST-X-3 eq 54]
    */
-  [[nodiscard]] virtual double
-  buiEffect(double bui) const = 0;
+  [[nodiscard]] virtual MathSize
+  buiEffect(MathSize bui) const = 0;
   /**
    * \brief Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
    * \param cfb Crown Fraction Burned (CFB) [ST-X-3 eq 58]
    * \return Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
    */
-  [[nodiscard]] virtual double
-  crownConsumption(double cfb) const = 0;
+  [[nodiscard]] virtual MathSize
+  crownConsumption(MathSize cfb) const = 0;
   /**
    * \brief Calculate rate of spread (m/min)
    * \param nd Difference between date and the date of minimum foliar moisture content
@@ -187,30 +187,30 @@ public:
    * \param isi Initial Spread Index (may differ from wx because of slope)
    * \return Rate of spread (m/min)
    */
-  [[nodiscard]] virtual double
-  calculateRos(int nd, const wx::FwiWeather& wx, double isi) const = 0;
+  [[nodiscard]] virtual MathSize
+  calculateRos(int nd, const wx::FwiWeather& wx, MathSize isi) const = 0;
   /**
    * \brief Calculate ISI with slope influence and zero wind (ISF) [ST-X-3 eq 41/42]
    * \param spread SpreadInfo to use
    * \param isi Initial Spread Index
    * \return ISI with slope influence and zero wind (ISF) [ST-X-3 eq 41/42]
    */
-  [[nodiscard]] virtual double
-  calculateIsf(const SpreadInfo& spread, double isi) const = 0;
+  [[nodiscard]] virtual MathSize
+  calculateIsf(const SpreadInfo& spread, MathSize isi) const = 0;
   /**
    * \brief Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 9-25]
    * \param spread SpreadInfo to use
    * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 9-25]
    */
-  [[nodiscard]] virtual double
+  [[nodiscard]] virtual MathSize
   surfaceFuelConsumption(const SpreadInfo& spread) const = 0;
   /**
    * \brief Length to Breadth ratio [ST-X-3 eq 79]
    * \param ws Wind Speed (km/h)
    * \return Length to Breadth ratio [ST-X-3 eq 79]
    */
-  [[nodiscard]] virtual double
-  lengthToBreadth(double ws) const = 0;
+  [[nodiscard]] virtual MathSize
+  lengthToBreadth(MathSize ws) const = 0;
   /**
    * \brief Final rate of spread (m/min)
    * \param spread SpreadInfo to use
@@ -219,14 +219,14 @@ public:
    * \param rss Surface Rate of spread (ROS) (m/min) [ST-X-3 eq 55]
    * \return Final rate of spread (m/min)
    */
-  [[nodiscard]] virtual double
-  finalRos(const SpreadInfo& spread, double isi, double cfb, double rss) const = 0;
+  [[nodiscard]] virtual MathSize
+  finalRos(const SpreadInfo& spread, MathSize isi, MathSize cfb, MathSize rss) const = 0;
   /**
    * \brief Critical Surface Fire Intensity (CSI) [ST-X-3 eq 56]
    * \param spread SpreadInfo to use in calculation
    * \return Critical Surface Fire Intensity (CSI) [ST-X-3 eq 56]
    */
-  [[nodiscard]] virtual double
+  [[nodiscard]] virtual MathSize
   criticalSurfaceIntensity(const SpreadInfo& spread) const = 0;
   /**
    * \brief Name of the fuel
@@ -303,10 +303,10 @@ public:
    * \param rso Critical surface fire spread rate (RSO) [ST-X-3 eq 57]
    * \return Crown Fraction Burned (CFB) [ST-X-3 eq 58]
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   crownFractionBurned(
-    const double rss,
-    const double rso
+    const MathSize rss,
+    const MathSize rso
   ) const noexcept override
   {
     return max(0.0, 1.0 - exp(-0.230 * (rss - rso)));
@@ -316,9 +316,9 @@ public:
    * \param mc_fraction moisture content (% / 100)
    * \return Calculate probability of burning [Anderson eq 1]
    */
-  [[nodiscard]] double
+  [[nodiscard]] ThresholdSize
   probabilityPeat(
-    const double mc_fraction
+    const MathSize mc_fraction
   ) const noexcept override
   {
     // Anderson table 1
@@ -338,7 +338,7 @@ public:
    * \param wx FwiWeather to calculate survival probability for
    * \return Chance of survival (% / 100)
    */
-  [[nodiscard]] double
+  [[nodiscard]] ThresholdSize
   survivalProbability(
     const wx::FwiWeather& wx
   ) const noexcept override
@@ -368,7 +368,7 @@ public:
     const auto prob_ffmc_saturated = duffFfmcType()->probabilityOfSurvival(McFfmcSaturated * 100);
     const auto prob_ffmc_zero = duffFfmcType()->probabilityOfSurvival(McDmc);
     const auto prob_ffmc_weighted = (prob_ffmc - prob_ffmc_saturated) / prob_ffmc_zero;
-    const auto term_otway = exp(-3.11 + 0.12 * wx.dmc().asDouble());
+    const auto term_otway = exp(-3.11 + 0.12 * wx.dmc().asValue());
     const auto prob_otway = term_otway / (1 + term_otway);
     const auto mc_pct = wx.mcDmcPct() * dmcRatio() + wx.mcFfmcPct() * ffmcRatio();
     const auto prob_weight_ffmc = duffFfmcType()->probabilityOfSurvival(mc_pct);
@@ -386,7 +386,7 @@ public:
    * \brief Duff Bulk Density (g/cm^3) [Anderson table 1]
    * \return Duff Bulk Density (g/cm^3) [Anderson table 1]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   bulkDensity()
   {
     return BulkDensity / 1000.0;
@@ -395,7 +395,7 @@ public:
    * \brief Inorganic Percent (% / 100) [Anderson table 1]
    * \return Inorganic Percent (% / 100) [Anderson table 1]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   inorganicPercent()
   {
     return InorganicPercent / 100.0;
@@ -404,7 +404,7 @@ public:
    * \brief DuffDepth Depth of Duff layer (cm) [Anderson table 1]
    * \return DuffDepth Depth of Duff layer (cm) [Anderson table 1]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   duffDepth()
   {
     return DuffDepth / 10.0;
@@ -431,7 +431,7 @@ public:
    * \brief What fraction of the duff layer should use FFMC to determine moisture
    * \return What fraction of the duff layer should use FFMC to determine moisture
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   ffmcRatio()
   {
     return 1 - dmcRatio();
@@ -440,7 +440,7 @@ public:
    * \brief What fraction of the duff layer should use DMC to determine moisture
    * \return What fraction of the duff layer should use DMC to determine moisture
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   dmcRatio()
   {
     return (duffDepth() - DUFF_FFMC_DEPTH) / duffDepth();
@@ -488,67 +488,62 @@ public:
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
-  buiEffect(double) const override;
+  [[nodiscard]] MathSize buiEffect(MathSize) const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
-  crownConsumption(double) const override;
+  [[nodiscard]] MathSize crownConsumption(MathSize) const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
-  calculateRos(int, const wx::FwiWeather&, double) const override;
+  [[nodiscard]] MathSize
+  calculateRos(int, const wx::FwiWeather&, MathSize) const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
-  calculateIsf(const SpreadInfo&, double) const override;
+  [[nodiscard]] MathSize
+  calculateIsf(const SpreadInfo&, MathSize) const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   surfaceFuelConsumption(const SpreadInfo&) const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
-  lengthToBreadth(double) const override;
+  [[nodiscard]] MathSize lengthToBreadth(MathSize) const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
-  finalRos(const SpreadInfo&, double, double, double) const override;
+  [[nodiscard]] MathSize
+  finalRos(const SpreadInfo&, MathSize, MathSize, MathSize) const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   criticalSurfaceIntensity(const SpreadInfo&) const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
-  crownFractionBurned(double, double) const noexcept override;
+  [[nodiscard]] MathSize crownFractionBurned(MathSize, MathSize) const noexcept override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
-  probabilityPeat(double) const noexcept override;
+  [[nodiscard]] ThresholdSize probabilityPeat(MathSize) const noexcept override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
    */
-  [[nodiscard]] double
+  [[nodiscard]] ThresholdSize
   survivalProbability(const wx::FwiWeather&) const noexcept override;
 };
 }

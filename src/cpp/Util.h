@@ -67,14 +67,14 @@ namespace fs
 namespace util
 {
 /**
- * \brief Convert day and hour to double representing time
+ * \brief Convert day and hour to DurationSize representing time
  * \tparam T Type used for representing day
  * \param day Day
  * \param hour Hour
- * \return double representing time at day and hour
+ * \return DurationSize representing time at day and hour
  */
 template <typename T>
-[[nodiscard]] double
+[[nodiscard]] DurationSize
 to_time(
   const T day,
   const int hour
@@ -83,16 +83,16 @@ to_time(
   return day + hour / (1.0 * DAY_HOURS);
 }
 /**
- * \brief Convert time index to double representing time
+ * \brief Convert time index to DurationSize representing time
  * \param t_index index for array of times
- * \return double representing time at day and hour
+ * \return DurationSize representing time at day and hour
  */
-[[nodiscard]] constexpr double
+[[nodiscard]] constexpr DurationSize
 to_time(
   const size_t t_index
 ) noexcept
 {
-  return static_cast<double>(t_index) / DAY_HOURS;
+  return static_cast<DurationSize>(t_index) / DAY_HOURS;
 }
 /**
  * \brief Convert day and hour into time index
@@ -128,26 +128,26 @@ time_index(
   return time_index(day, hour) - static_cast<size_t>(DAY_HOURS) * min_date;
 }
 /**
- * \brief Convert double into time index
+ * \brief Convert DurationSize into time index
  * \param time time to get time index for
  * \return index for array of times
  */
 [[nodiscard]] constexpr size_t
 time_index(
-  const double time
+  const DurationSize time
 ) noexcept
 {
   return static_cast<size_t>(time * DAY_HOURS);
 }
 /**
- * \brief Convert double into time index since min_date
+ * \brief Convert DurationSize into time index since min_date
  * \param time Time to convert to time index
  * \param min_date Date at time index 0
  * \return index for array of times
  */
 [[nodiscard]] constexpr size_t
 time_index(
-  const double time,
+  const DurationSize time,
   const Day min_date
 ) noexcept
 {
@@ -173,9 +173,9 @@ no_convert(
  * \param theta value to ensure is within bounds
  * \return value within range of (0, 2 * PI]
  */
-[[nodiscard]] constexpr double
+[[nodiscard]] constexpr MathSize
 fix_radians(
-  const double theta
+  const MathSize theta
 )
 {
   if (theta > M_2_X_PI)
@@ -193,9 +193,9 @@ fix_radians(
  * \param degrees Angle in degrees
  * \return Angle in radians
  */
-[[nodiscard]] constexpr double
+[[nodiscard]] constexpr MathSize
 to_radians(
-  const double degrees
+  const MathSize degrees
 ) noexcept
 {
   return fix_radians(degrees / M_RADIANS_TO_DEGREES);
@@ -204,27 +204,27 @@ to_radians(
 /**
  * \brief 360 degrees in radians
  */
-static constexpr double RAD_360 = to_radians(360);
+static constexpr MathSize RAD_360 = to_radians(360);
 /**
  * \brief 270 degrees in radians
  */
-static constexpr double RAD_270 = to_radians(270);
+static constexpr MathSize RAD_270 = to_radians(270);
 /**
  * \brief 180 degrees in radians
  */
-static constexpr double RAD_180 = to_radians(180);
+static constexpr MathSize RAD_180 = to_radians(180);
 /**
  * \brief 90 degrees in radians
  */
-static constexpr double RAD_090 = to_radians(90);
+static constexpr MathSize RAD_090 = to_radians(90);
 /**
  * \brief Convert radians to degrees
  * \param radians Value in radians
  * \return Value in degrees
  */
-[[nodiscard]] constexpr double
+[[nodiscard]] constexpr MathSize
 to_degrees(
-  const double radians
+  const MathSize radians
 )
 {
   return fix_radians(radians) * M_RADIANS_TO_DEGREES;
@@ -234,9 +234,9 @@ to_degrees(
  * \param azimuth Bearing
  * \return Heading
  */
-[[nodiscard]] constexpr double
+[[nodiscard]] constexpr MathSize
 to_heading(
-  const double azimuth
+  const MathSize azimuth
 )
 {
   return fix_radians(azimuth + RAD_180);
@@ -365,9 +365,9 @@ bit_mask()
  * \return Value after rounding
  */
 template <unsigned int N>
-[[nodiscard]] double
+[[nodiscard]] MathSize
 round_to_precision(
-  const double value
+  const MathSize value
 ) noexcept
 {
   // HACK: this can't actually make the value be the precision we want due to
@@ -393,7 +393,7 @@ to_tm(const int year, const int month, const int day, const int hour, const int 
  * \return internal time representation
  */
 
-double
+DurationSize
 to_time(const tm& t);
 /**
  * \brief Convert date and time into internal represenation
@@ -404,7 +404,7 @@ to_time(const tm& t);
  * \param minute minute
  * \return internal time representation
  */
-double
+DurationSize
 to_time(const int year, const int month, const int day, const int hour, const int minute);
 /**
  * \brief Read a date from the given stream
@@ -500,7 +500,7 @@ T
 binary_find(
   const T lower,
   const T upper,
-  const double value,
+  const MathSize value,
   const std::function<V(T)>& fct
 )
 {
@@ -531,7 +531,7 @@ T
 binary_find_checked(
   const T lower,
   const T upper,
-  const double value,
+  const MathSize value,
   const std::function<V(T)>& fct
 )
 {
@@ -568,17 +568,17 @@ is_leap_year(const int year);
  * @return YYYY-mm-dd HH:00 time string for given time
  */
 [[nodiscard]] string
-make_timestamp(const int year, const double time);
+make_timestamp(const int year, const DurationSize time);
 /**
  * Convert circle angle to the angle that would be on an ellipse with
  * given length-to-breadth ratio
  * @param length_to_breadth length-to-breadth ratio
  * @param theta direction to convert to ellipse direction (radians)
  */
-[[nodiscard]] inline double
+[[nodiscard]] inline MathSize
 ellipse_angle(
-  const double length_to_breadth,
-  const double theta
+  const MathSize length_to_breadth,
+  const MathSize theta
 )
 {
   return (util::fix_radians(atan2(sin(theta) / length_to_breadth, cos(theta))));

@@ -58,7 +58,7 @@ public:
     const shared_ptr<topo::Cell>& start_cell,
     const topo::StartPoint& start_point,
     const int start_date,
-    const double end_date,
+    const DurationSize end_date,
     wx::FireWeather* weather
   )
     : Scenario(
@@ -103,17 +103,17 @@ showSpread(
   printf("\n");
   printf(
     FMT_FBP_OUT,
-    w->prec().asDouble(),
-    w->temp().asDouble(),
-    w->rh().asDouble(),
-    w->wind().speed().asDouble(),
-    w->wind().direction().asDouble(),
-    w->ffmc().asDouble(),
-    w->dmc().asDouble(),
-    w->dc().asDouble(),
-    w->isi().asDouble(),
-    w->bui().asDouble(),
-    w->fwi().asDouble(),
+    w->prec().asValue(),
+    w->temp().asValue(),
+    w->rh().asValue(),
+    w->wind().speed().asValue(),
+    w->wind().direction().asValue(),
+    w->ffmc().asValue(),
+    w->dmc().asValue(),
+    w->dc().asValue(),
+    w->isi().asValue(),
+    w->bui().asValue(),
+    w->fwi().asValue(),
     fuel->name(),
     spread.crownFractionBurned(),
     spread.crownFuelConsumption(),
@@ -133,7 +133,7 @@ run_test(
   const string& fuel_name,
   const SlopeSize slope,
   const AspectSize aspect,
-  const double num_hours,
+  const DurationSize num_hours,
   const wx::Dc& dc,
   const wx::Dmc& dmc,
   const wx::Ffmc& ffmc,
@@ -160,7 +160,7 @@ run_test(
   static const auto Longitude = -84.7395;
   static const topo::StartPoint ForPoint(Latitude, Longitude);
   const auto start_date = t.tm_yday;
-  const auto end_date = start_date + static_cast<double>(num_hours) / DAY_HOURS;
+  const auto end_date = start_date + static_cast<DurationSize>(num_hours) / DAY_HOURS;
   util::make_directory_recursive(output_directory.c_str());
   const auto fuel = Settings::fuelLookup().byName(fuel_name);
   auto values = vector<topo::Cell>();
@@ -195,7 +195,7 @@ run_test(
   const auto w = weather.at(start_date);
   auto info = SpreadInfo(scenario, start_date, start_cell->key(), model.nd(start_date), w);
   showSpread(info, w, fuel);
-  map<double, ProbabilityMap*> probabilities{};
+  map<DurationSize, ProbabilityMap*> probabilities{};
   logging::debug("Starting simulation");
   // NOTE: don't want to reset first because TestScenabuirio handles what that does
   scenario.run(&probabilities);
@@ -251,7 +251,7 @@ const SlopeSize SLOPE_INCREMENT = 60;
 const int WS_INCREMENT = 5;
 const int WD_INCREMENT = 45;
 const int MAX_WIND = 50;
-const double DEFAULT_HOURS = 10.0;
+const DurationSize DEFAULT_HOURS = 10.0;
 const vector<string> FUEL_NAMES{"C-2", "O-1a", "M-1/M-2 (25 PC)", "S-1", "C-3"};
 int
 test(

@@ -42,7 +42,7 @@ public:
   ~SpreadInfo() = default;
   SpreadInfo(
     const Scenario& scenario,
-    double time,
+    DurationSize time,
     const topo::SpreadKey& key,
     int nd,
     const wx::FwiWeather* weather
@@ -57,7 +57,7 @@ public:
    */
   SpreadInfo(
     const Scenario& scenario,
-    double time,
+    DurationSize time,
     const topo::SpreadKey& key,
     int nd,
     const wx::FwiWeather* weather,
@@ -69,21 +69,21 @@ public:
   operator=(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo&
   operator=(const SpreadInfo& rhs) noexcept = default;
-  // static double calculateSpreadProbability(double ros);
+  // static MathSize calculateSpreadProbability(MathSize ros);
   /**
    * \brief Determine rate of spread from probability of spread threshold
    * \param threshold Probability of spread threshold
    * \return Rate of spread at given threshold (m/min)
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   calculateRosFromThreshold(
-    const double threshold
+    const ThresholdSize threshold
   )
   {
     // for some reason it returns -nan instead of nan if it's 1, so return this instead
     if (1.0 == threshold)
     {
-      return std::numeric_limits<double>::infinity();
+      return std::numeric_limits<ThresholdSize>::infinity();
     }
     if (0.0 == threshold)
     {
@@ -97,7 +97,7 @@ public:
    * \brief Maximum intensity in any direction for spread (kW/m)
    * \return Maximum intensity in any direction for spread (kW/m)
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   maxIntensity() const noexcept
   {
     return max_intensity_;
@@ -187,7 +187,7 @@ public:
    * \brief FFMC effect used for spread
    * \return FFMC effect used for spread
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   ffmcEffect() const
   {
     return weather()->ffmcEffect();
@@ -196,7 +196,7 @@ public:
    * \brief Time used for spread
    * \return Time used for spread
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr DurationSize
   time() const
   {
     return time_;
@@ -214,7 +214,7 @@ public:
    * \brief Head fire rate of spread (m/min)
    * \return Head fire rate of spread (m/min)
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   headRos() const
   {
     return head_ros_;
@@ -232,7 +232,7 @@ public:
    * \brief Slope factor calculated from percent slope
    * \return Slope factor calculated from percent slope
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   slopeFactor() const
   {
     // HACK: slope can be infinite, but anything > 60 is the same as 60
@@ -243,7 +243,7 @@ public:
    * \brief Calculate foliar moisture
    * \return Calculated foliar moisture
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   foliarMoisture() const
   {
     // don't need to check  `&& nd_ < 50` in second part because of reordering
@@ -277,8 +277,8 @@ public:
     const int day,
     const int hour,
     const int minute,
-    const double latitude,
-    const double longitude,
+    const MathSize latitude,
+    const MathSize longitude,
     const ElevationSize elevation,
     const SlopeSize slope,
     const AspectSize aspect,
@@ -287,20 +287,20 @@ public:
   );
   SpreadInfo(
     const tm& start_date,
-    const double latitude,
-    const double longitude,
+    const MathSize latitude,
+    const MathSize longitude,
     const ElevationSize elevation,
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
     const wx::FwiWeather* weather
   );
-  double
+  MathSize
   crownFractionBurned() const
   {
     return cfb_;
   }
-  double
+  MathSize
   crownFuelConsumption() const
   {
     return cfc_;
@@ -310,12 +310,12 @@ public:
   {
     return cfb_ >= 0.9 ? 'C' : (cfb_ < 0.1 ? 'S' : 'I');
   }
-  double
+  MathSize
   surfaceFuelConsumption() const
   {
     return sfc_;
   }
-  double
+  MathSize
   totalFuelConsumption() const
   {
     return tfc_;
@@ -325,9 +325,9 @@ private:
    * Actual fire spread calculation without needing to worry about settings or scenarios
    */
   SpreadInfo(
-    double time,
-    double min_ros,
-    double cell_size,
+    DurationSize time,
+    MathSize min_ros,
+    MathSize cell_size,
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
@@ -335,17 +335,17 @@ private:
     const wx::FwiWeather* weather
   );
   SpreadInfo(
-    double time,
-    double min_ros,
-    double cell_size,
+    DurationSize time,
+    MathSize min_ros,
+    MathSize cell_size,
     const topo::SpreadKey& key,
     int nd,
     const wx::FwiWeather* weather
   );
   SpreadInfo(
-    double time,
-    double min_ros,
-    double cell_size,
+    DurationSize time,
+    MathSize min_ros,
+    MathSize cell_size,
     const topo::SpreadKey& key,
     int nd,
     const wx::FwiWeather* weather,
@@ -355,20 +355,20 @@ private:
    * Do initial spread calculations
    * \return Initial head ros calculation (-1 for none)
    */
-  static double
+  static MathSize
   initial(
     SpreadInfo& spread,
     const wx::FwiWeather& weather,
-    double& ffmc_effect,
-    double& wsv,
-    double& rso,
+    MathSize& ffmc_effect,
+    MathSize& wsv,
+    MathSize& rsoi,
     const fuel::FuelType* const fuel,
     bool has_no_slope,
-    double heading_sin,
-    double heading_cos,
-    double bui_eff,
-    double min_ros,
-    double critical_surface_intensity
+    MathSize heading_sin,
+    MathSize heading_cos,
+    MathSize bui_eff,
+    MathSize min_ros,
+    MathSize critical_surface_intensity
   );
   /**
    * \brief Offsets from origin point that represent spread under these conditions
@@ -377,7 +377,7 @@ private:
   /**
    * \brief Maximum intensity in any direction for spread (kW/m)
    */
-  double max_intensity_;
+  MathSize max_intensity_;
   /**
    * \brief Attributes for Cell spread is occurring in
    */
@@ -389,15 +389,15 @@ private:
   /**
    * \brief Time that spread is occurring
    */
-  double time_;
+  DurationSize time_;
   /**
    * \brief Head fire rate of spread (m/min)
    */
-  double head_ros_;
-  double cfb_;
-  double cfc_;
-  double tfc_;
-  double sfc_;
+  MathSize head_ros_;
+  MathSize cfb_;
+  MathSize cfc_;
+  MathSize tfc_;
+  MathSize sfc_;
   bool is_crown_;
   /**
    * \brief Head fire spread direction

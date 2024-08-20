@@ -22,7 +22,7 @@ public:
   /**
    * \brief X direction (column)
    */
-  inline constexpr double
+  inline constexpr InnerSize
   x() const noexcept
   {
     return x_;
@@ -30,14 +30,14 @@ public:
   /**
    * \brief Y direction (row)
    */
-  inline constexpr double
+  inline constexpr InnerSize
   y() const noexcept
   {
     return y_;
   }
   constexpr BoundedPoint(
-    const double x,
-    const double y
+    const InnerSize x,
+    const InnerSize y
   ) noexcept
     : x_(x),
       y_(y)
@@ -103,7 +103,7 @@ public:
   template <class T>
   constexpr T
   after(
-    const double duration
+    const DurationSize duration
   ) const noexcept
   {
     return static_cast<T>(class_type(x() * duration, y() * duration));
@@ -153,8 +153,8 @@ public:
     return static_cast<T>(class_type(x() + o.x(), y() + o.y()));
   }
 private:
-  double x_;
-  double y_;
+  InnerSize x_;
+  InnerSize y_;
 };
 /**
  * \brief Offset from a position
@@ -173,7 +173,7 @@ using OffsetSet = Offset::OffsetSet;
 template <class T>
 constexpr T
 after(
-  const double duration,
+  const DurationSize duration,
   const T& o
 )
 {

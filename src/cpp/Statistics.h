@@ -18,7 +18,7 @@ namespace util
 /**
  * \brief Student's T critical values
  */
-static constexpr array<double, 100> T_VALUES{
+static constexpr array<MathSize, 100> T_VALUES{
   3.078, 1.886, 1.638, 1.533, 1.476, 1.440, 1.415, 1.397, 1.383, 1.372, 1.363, 1.356, 1.350,
   1.345, 1.341, 1.337, 1.333, 1.330, 1.328, 1.325, 1.323, 1.321, 1.319, 1.318, 1.316, 1.315,
   1.314, 1.313, 1.311, 1.310, 1.309, 1.309, 1.308, 1.307, 1.306, 1.306, 1.305, 1.304, 1.304,
@@ -38,7 +38,7 @@ public:
    * \brief Minimum value
    * \return Minimum value
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   min() const noexcept
   {
     return percentiles_[0];
@@ -47,7 +47,7 @@ public:
    * \brief Maximum value
    * \return Maximum value
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   max() const noexcept
   {
     return percentiles_[100];
@@ -56,7 +56,7 @@ public:
    * \brief Median value
    * \return Median value
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   median() const noexcept
   {
     return percentiles_[50];
@@ -65,7 +65,7 @@ public:
    * \brief Mean (average) value
    * \return Mean (average) value
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   mean() const noexcept
   {
     return mean_;
@@ -74,7 +74,7 @@ public:
    * \brief Standard Deviation
    * \return Standard Deviation
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   standardDeviation() const noexcept
   {
     return standard_deviation_;
@@ -83,7 +83,7 @@ public:
    * \brief Sample Variance
    * \return Sample Variance
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   sampleVariance() const noexcept
   {
     return sample_variance_;
@@ -102,7 +102,7 @@ public:
    * \param i Percentile to retrieve value for
    * \return Value for given percentile
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   percentile(
     const uint8_t i
   ) const noexcept
@@ -120,7 +120,7 @@ public:
    * \brief 80% Confidence Interval
    * \return 80% Confidence Interval
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   confidenceInterval80() const
   {
     return confidenceInterval(1.28);
@@ -129,7 +129,7 @@ public:
    * \brief 90% Confidence Interval
    * \return 90% Confidence Interval
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   confidenceInterval90() const
   {
     return confidenceInterval(1.645);
@@ -138,7 +138,7 @@ public:
    * \brief 95% Confidence Interval
    * \return 95% Confidence Interval
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   confidenceInterval95() const
   {
     return confidenceInterval(1.96);
@@ -147,7 +147,7 @@ public:
    * \brief 98% Confidence Interval
    * \return 98% Confidence Interval
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   confidenceInterval98() const
   {
     return confidenceInterval(2.33);
@@ -156,7 +156,7 @@ public:
    * \brief 99% Confidence Interval
    * \return 99% Confidence Interval
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   confidenceInterval99() const
   {
     return confidenceInterval(2.58);
@@ -166,7 +166,7 @@ public:
    * \param values Values to use for calculation
    */
   explicit Statistics(
-    vector<double> values
+    vector<MathSize> values
   )
   {
     // values should already be sorted
@@ -179,7 +179,7 @@ public:
       values.begin(),
       values.end(),
       0.0,
-      [](const double t, const double x) {
+      [](const MathSize t, const MathSize x) {
         return t + x;
       }
     );
@@ -188,7 +188,7 @@ public:
     {
       const auto pos = std::min(
         n_ - 1,
-        static_cast<size_t>(truncl((static_cast<double>(i) / (percentiles_.size() - 1)) * n_))
+        static_cast<size_t>(truncl((static_cast<MathSize>(i) / (percentiles_.size() - 1)) * n_))
       );
       // note("For %d values %dth percentile is at %d", n_, i, pos);
       percentiles_[i] = values[pos];
@@ -197,7 +197,7 @@ public:
       values.begin(),
       values.end(),
       0.0,
-      [this](const double t, const double x) {
+      [this](const MathSize t, const MathSize x) {
         return t + pow_int<2>(x - mean_);
       }
     );
@@ -213,7 +213,7 @@ public:
    * \brief Calculate Student's T value
    * \return Student's T value
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   studentsT() const noexcept
   {
     const auto result = T_VALUES[std::min(T_VALUES.size(), n()) - 1] * sqrt(sampleVariance() / n())
@@ -228,7 +228,7 @@ public:
    */
   [[nodiscard]] bool
   isConfident(
-    const double relative_error
+    const MathSize relative_error
   ) const noexcept
   {
     const auto st = studentsT();
@@ -245,11 +245,11 @@ public:
   [[nodiscard]] size_t
   runsRequired(
     // const size_t cur_runs,
-    const double relative_error
+    const MathSize relative_error
   ) const
   {
     const auto re = relative_error / (1 + relative_error);
-    const std::function<double(size_t)> fct = [this](const size_t i) noexcept {
+    const std::function<MathSize(size_t)> fct = [this](const size_t i) noexcept {
       return T_VALUES[std::min(T_VALUES.size(), i) - 1] * sqrt(sampleVariance() / i) / abs(mean());
     };
     const auto cur_runs = n();
@@ -261,9 +261,9 @@ private:
    * \param z Z value to calculate for
    * \return Confidence Interval
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   confidenceInterval(
-    const double z
+    const MathSize z
   ) const
   {
     return z * mean_ / sqrt(n_);
@@ -275,31 +275,31 @@ private:
   /**
    * \brief Minimum value
    */
-  double min_;
+  MathSize min_;
   /**
    * \brief Maximum value
    */
-  double max_;
+  MathSize max_;
   /**
    * \brief Mean (average) value
    */
-  double mean_;
+  MathSize mean_;
   /**
    * \brief Median value
    */
-  double median_;
+  MathSize median_;
   /**
    * \brief Standard Deviation
    */
-  double standard_deviation_;
+  MathSize standard_deviation_;
   /**
    * \brief Sample variance
    */
-  double sample_variance_;
+  MathSize sample_variance_;
   /**
    * \brief Array of all integer percentile values
    */
-  array<double, 101> percentiles_{};
+  array<MathSize, 101> percentiles_{};
 };
 }
 }

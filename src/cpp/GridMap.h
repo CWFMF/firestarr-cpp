@@ -110,15 +110,15 @@ public:
    * \param proj4 Proj4 projection definition
    */
   GridMap(
-    const double cell_size,
+    const MathSize cell_size,
     const Idx rows,
     const Idx columns,
     T no_data,
     const int nodata,
-    const double xllcorner,
-    const double yllcorner,
-    const double xurcorner,
-    const double yurcorner,
+    const MathSize xllcorner,
+    const MathSize yllcorner,
+    const MathSize xurcorner,
+    const MathSize yurcorner,
     string&& proj4
   )
     : GridData<T, V, map<Location, T>>(
@@ -137,7 +137,7 @@ public:
   {
     constexpr auto max_hash = numeric_limits<HashSize>::max();
     // HACK: we don't want overflow errors, but we want to play with the hash size
-    const auto max_columns = static_cast<double>(max_hash) / static_cast<double>(this->rows());
+    const auto max_columns = static_cast<MathSize>(max_hash) / static_cast<MathSize>(this->rows());
     logging::check_fatal(
       this->columns() >= max_columns,
       "Grid is too big for cells to be hashed - "
@@ -325,13 +325,13 @@ public:
    * \brief Calculate area for cells that have a value (ha)
    * \return Area for cells that have a value (ha)
    */
-  [[nodiscard]] double
+  [[nodiscard]] MathSize
   fireSize() const noexcept
   {
     // we know that every cell is a key, so we convert that to hectares
-    const double per_width = (this->cellSize() / 100.0);
+    const MathSize per_width = (this->cellSize() / 100.0);
     // cells might have 0 as a value, but those shouldn't affect size
-    return static_cast<double>(this->data.size()) * per_width * per_width;
+    return static_cast<MathSize>(this->data.size()) * per_width * per_width;
   }
   /**
    * \brief Make a list of all Locations that are on the edge of cells with a value

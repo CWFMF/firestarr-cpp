@@ -49,7 +49,7 @@ public:
    */
   [[nodiscard]] const FwiWeather*
   at(
-    const double time
+    const DurationSize time
   ) const
   {
 #ifdef DEBUG_FWI_WEATHER
@@ -63,9 +63,9 @@ public:
    * \param in_fuel FuelCodeSize of FuelType to use
    * \return Probability of survival in given fuel at given time
    */
-  [[nodiscard]] double
+  [[nodiscard]] ThresholdSize
   survivalProbability(
-    const double time,
+    const DurationSize time,
     const FuelCodeSize& in_fuel
   ) const
   {
@@ -164,7 +164,7 @@ operator==(
   {
     for (auto hour = 0; hour < DAY_HOURS; ++hour)
     {
-      const auto time = static_cast<double>(day) + hour / 24.0;
+      const auto time = static_cast<DurationSize>(day) + hour / 24.0;
       if (lhs.at(time) != rhs.at(time))
       {
         return false;

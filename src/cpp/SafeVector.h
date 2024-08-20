@@ -19,7 +19,7 @@ class SafeVector
   /**
    * \brief Vector of stored values
    */
-  vector<double> values_{};
+  std::vector<MathSize> values_{};
   /**
    * \brief Mutex for parallel access
    */
@@ -62,12 +62,12 @@ public:
    * \param value Value to add
    */
   void
-  addValue(double value);
+  addValue(MathSize value);
   /**
    * \brief Get a vector with the stored values
    * \return A vector with the stored values
    */
-  [[nodiscard]] vector<double>
+  [[nodiscard]] std::vector<MathSize>
   getValues() const;
   /**
    * \brief Calculate Statistics for values in this SafeVector

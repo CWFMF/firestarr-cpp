@@ -50,7 +50,7 @@ public:
    * \brief Distance Startup value location is from the requested location (m)
    * \return Distance Startup value location is from the requested location (m)
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   distanceFrom() const noexcept
   {
     return distance_from_;
@@ -116,7 +116,7 @@ public:
     string station,
     const tm& generated,
     const topo::Point& point,
-    double distance_from,
+    MathSize distance_from,
     const Ffmc& ffmc,
     const Dmc& dmc,
     const Dc& dc,
@@ -167,7 +167,7 @@ private:
   /**
    * \brief Distance actual point for this is from represented Point (m)
    */
-  double distance_from_;
+  MathSize distance_from_;
   /**
    * \brief Fine Fuel Moisture Code
    */

@@ -17,8 +17,8 @@ namespace fs::sim
 // if not defined then use variable step degrees
 // #define STEP
 
-static constexpr double INVALID_ROS = -1.0;
-static constexpr double INVALID_INTENSITY = -1.0;
+static constexpr MathSize INVALID_ROS = -1.0;
+static constexpr MathSize INVALID_INTENSITY = -1.0;
 
 SlopeTableArray
 make_slope_table() noexcept
@@ -61,17 +61,17 @@ calculate_nd_for_point(
 {
   return static_cast<int>(abs(day - calculate_nd_ref_for_point(elevation, point)));
 }
-static double
+static MathSize
 calculate_standard_back_isi_wsv(
-  const double v
+  const MathSize v
 ) noexcept
 {
   return 0.208 * exp(-0.05039 * v);
 }
 static const util::LookupTable<&calculate_standard_back_isi_wsv> STANDARD_BACK_ISI_WSV{};
-static double
+static MathSize
 calculate_standard_wsv(
-  const double v
+  const MathSize v
 ) noexcept
 {
   return v < 40.0 ? exp(0.05039 * v) : 12.0 * (1.0 - exp(-0.0818 * (v - 28)));
@@ -79,7 +79,7 @@ calculate_standard_wsv(
 static const util::LookupTable<&calculate_standard_wsv> STANDARD_WSV{};
 SpreadInfo::SpreadInfo(
   const Scenario& scenario,
-  const double time,
+  const DurationSize time,
   const topo::SpreadKey& key,
   const int nd,
   const wx::FwiWeather* weather
@@ -87,27 +87,27 @@ SpreadInfo::SpreadInfo(
   : SpreadInfo(scenario, time, key, nd, weather, scenario.weather_daily(time))
 {
 }
-double
+MathSize
 SpreadInfo::initial(
   SpreadInfo& spread,
   const wx::FwiWeather& weather,
-  double& ffmc_effect,
-  double& wsv,
-  double& rso,
+  MathSize& ffmc_effect,
+  MathSize& wsv,
+  MathSize& rso,
   const fuel::FuelType* const fuel,
   bool has_no_slope,
-  double heading_sin,
-  double heading_cos,
-  double bui_eff,
-  double min_ros,
-  double critical_surface_intensity
+  MathSize heading_sin,
+  MathSize heading_cos,
+  MathSize bui_eff,
+  MathSize min_ros,
+  MathSize critical_surface_intensity
 )
 {
   ffmc_effect = spread.ffmcEffect();
   // needs to be non-const so that we can update if slopeEffect changes direction
-  double raz = spread.wind().heading();
+  MathSize raz = spread.wind().heading();
   const auto isz = 0.208 * ffmc_effect;
-  wsv = spread.wind().speed().asDouble();
+  wsv = spread.wind().speed().asValue();
   if (!has_no_slope)
   {
     const auto isf1 = fuel->calculateIsf(spread, isz);
@@ -155,10 +155,10 @@ SpreadInfo::initial(
   }
   return spread.head_ros_;
 }
-static double
+static MathSize
 find_min_ros(
   const Scenario& scenario,
-  const double time
+  const DurationSize time
 )
 {
   return Settings::deterministic()
@@ -167,7 +167,7 @@ find_min_ros(
 }
 SpreadInfo::SpreadInfo(
   const Scenario& scenario,
-  const double time,
+  const DurationSize time,
   const topo::SpreadKey& key,
   const int nd,
   const wx::FwiWeather* weather,
@@ -209,8 +209,8 @@ SpreadInfo::SpreadInfo(
   const int day,
   const int hour,
   const int minute,
-  const double latitude,
-  const double longitude,
+  const MathSize latitude,
+  const MathSize longitude,
   const ElevationSize elevation,
   const SlopeSize slope,
   const AspectSize aspect,
@@ -231,8 +231,8 @@ SpreadInfo::SpreadInfo(
 }
 SpreadInfo::SpreadInfo(
   const tm& start_date,
-  const double latitude,
-  const double longitude,
+  const MathSize latitude,
+  const MathSize longitude,
   const ElevationSize elevation,
   const SlopeSize slope,
   const AspectSize aspect,
@@ -252,9 +252,9 @@ SpreadInfo::SpreadInfo(
 {
 }
 SpreadInfo::SpreadInfo(
-  const double time,
-  const double min_ros,
-  const double cell_size,
+  const DurationSize time,
+  const MathSize min_ros,
+  const MathSize cell_size,
   const SlopeSize slope,
   const AspectSize aspect,
   const char* fuel_name,
@@ -265,9 +265,9 @@ SpreadInfo::SpreadInfo(
 {
 }
 SpreadInfo::SpreadInfo(
-  const double time,
-  const double min_ros,
-  const double cell_size,
+  const DurationSize time,
+  const MathSize min_ros,
+  const MathSize cell_size,
   const topo::SpreadKey& key,
   const int nd,
   const wx::FwiWeather* weather
@@ -276,9 +276,9 @@ SpreadInfo::SpreadInfo(
 {
 }
 SpreadInfo::SpreadInfo(
-  const double time,
-  const double min_ros,
-  const double cell_size,
+  const DurationSize time,
+  const MathSize min_ros,
+  const MathSize cell_size,
   const topo::SpreadKey& key,
   const int nd,
   const wx::FwiWeather* weather,
@@ -294,22 +294,22 @@ SpreadInfo::SpreadInfo(
   const auto slope_azimuth = topo::Cell::aspect(key_);
   const auto fuel = fuel::fuel_by_code(topo::Cell::fuelCode(key_));
   const auto has_no_slope = 0 == percentSlope();
-  double heading_sin = 0;
-  double heading_cos = 0;
+  MathSize heading_sin = 0;
+  MathSize heading_cos = 0;
   if (!has_no_slope)
   {
-    const auto heading = util::to_heading(util::to_radians(static_cast<double>(slope_azimuth)));
+    const auto heading = util::to_heading(util::to_radians(static_cast<MathSize>(slope_azimuth)));
     heading_sin = _sin(heading);
     heading_cos = _cos(heading);
   }
   // HACK: only use BUI from hourly weather for both calculations
-  const auto _bui = bui().asDouble();
+  const auto _bui = bui().asValue();
   const auto bui_eff = fuel->buiEffect(_bui);
   // FIX: gets calculated when not necessary sometimes
   const auto critical_surface_intensity = fuel->criticalSurfaceIntensity(*this);
-  double ffmc_effect;
-  double wsv;
-  double rso;
+  MathSize ffmc_effect;
+  MathSize wsv;
+  MathSize rso;
   if (min_ros > SpreadInfo::initial(
         *this,
         *weather_daily,
@@ -397,7 +397,7 @@ SpreadInfo::SpreadInfo(
     head_ros_ = INVALID_ROS;
   }
 }
-// double SpreadInfo::calculateSpreadProbability(const double ros)
+// MathSize SpreadInfo::calculateSpreadProbability(const MathSize ros)
 // {
 //   // note: based off spread event probability from wotton
 //   return 1 / (1 + exp(1.64 - 0.16 * ros));

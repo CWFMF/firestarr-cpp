@@ -71,14 +71,16 @@ const FwiWeather FwiWeather::Zero{
 //      Month is integer (1..12) value of month of year for calculation
 //
 //******************************************************************************************
-static double
+static MathSize
 day_length_factor(
-  const double latitude,
+  const MathSize latitude,
   const int month
 ) noexcept
 {
-  static constexpr double LfN[] = {-1.6, -1.6, -1.6, 0.9, 3.8, 5.8, 6.4, 5.0, 2.4, 0.4, -1.6, -1.6};
-  static constexpr double LfS[] = {6.4, 5.0, 2.4, 0.4, -1.6, -1.6, -1.6, -1.6, -1.6, 0.9, 3.8, 5.8};
+  static constexpr MathSize LfN[] =
+    {-1.6, -1.6, -1.6, 0.9, 3.8, 5.8, 6.4, 5.0, 2.4, 0.4, -1.6, -1.6};
+  static constexpr MathSize LfS[] =
+    {6.4, 5.0, 2.4, 0.4, -1.6, -1.6, -1.6, -1.6, -1.6, 0.9, 3.8, 5.8};
   //'    '/* Use Northern hemisphere numbers */
   //'   '/* something goes wrong with >= */
   if (latitude > 15.0)
@@ -95,9 +97,9 @@ day_length_factor(
   {
     return LfS[month];
   }
-  return logging::fatal<double>("Unable to calculate DayLengthFactor");
+  return logging::fatal<MathSize>("Unable to calculate DayLengthFactor");
 }
-using MonthArray = array<double, 12>;
+using MonthArray = array<MathSize, 12>;
 static constexpr MonthArray
   DAY_LENGTH46_N{6.5, 7.5, 9.0, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8.0, 7.0, 6.0};
 static constexpr MonthArray
@@ -114,9 +116,9 @@ static constexpr MonthArray
 //      Month is integer (1..12) value of month of year for calculation
 //
 //******************************************************************************************
-static constexpr double
+static constexpr MathSize
 day_length(
-  const double latitude,
+  const MathSize latitude,
   const int month
 ) noexcept
 {
@@ -148,41 +150,40 @@ day_length(
   {
     return DAY_LENGTH40_S.at(static_cast<size_t>(month) - 1);
   }
-  return logging::fatal<double>("Unable to calculate DayLength");
+  return logging::fatal<MathSize>("Unable to calculate DayLength");
 }
-double
+MathSize
 find_m(
   const Temperature& temperature,
   const RelativeHumidity& rh,
   const Speed& wind,
-  const double mo
+  const MathSize mo
 ) noexcept
 {
   //'''/* 4  '*/
-  const auto ed = 0.942 * pow(rh.asDouble(), 0.679) + 11.0 * exp((rh.asDouble() - 100.0) / 10.0)
-                + 0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
+  const auto ed = 0.942 * pow(rh.asValue(), 0.679) + 11.0 * exp((rh.asValue() - 100.0) / 10.0)
+                + 0.18 * (21.1 - temperature.asValue()) * (1.0 - exp(-0.115 * rh.asValue()));
   if (mo > ed)
   {
     //'''/* 6a '*/
-    const auto ko = 0.424 * (1.0 - pow(rh.asDouble() / 100.0, 1.7))
-                  + 0.0694 * sqrt(wind.asDouble())
-                      * (1.0 - util::pow_int<8>(rh.asDouble() / 100.0));
+    const auto ko = 0.424 * (1.0 - pow(rh.asValue() / 100.0, 1.7))
+                  + 0.0694 * sqrt(wind.asValue()) * (1.0 - util::pow_int<8>(rh.asValue() / 100.0));
     //'''/* 6b '*/
-    const auto kd = ko * 0.581 * exp(0.0365 * temperature.asDouble());
+    const auto kd = ko * 0.581 * exp(0.0365 * temperature.asValue());
     //'''/* 8  '*/
     return ed + (mo - ed) * pow(10.0, -kd);
   }
   //'''/* 5  '*/
-  const auto ew = 0.618 * pow(rh.asDouble(), 0.753) + 10.0 * exp((rh.asDouble() - 100.0) / 10.0)
-                + 0.18 * (21.1 - temperature.asDouble()) * (1.0 - exp(-0.115 * rh.asDouble()));
+  const auto ew = 0.618 * pow(rh.asValue(), 0.753) + 10.0 * exp((rh.asValue() - 100.0) / 10.0)
+                + 0.18 * (21.1 - temperature.asValue()) * (1.0 - exp(-0.115 * rh.asValue()));
   if (mo < ew)
   {
     //'''/* 7a '*/
-    const auto kl = 0.424 * (1.0 - pow((100.0 - rh.asDouble()) / 100.0, 1.7))
-                  + 0.0694 * sqrt(wind.asDouble())
-                      * (1 - util::pow_int<8>((100.0 - rh.asDouble()) / 100.0));
+    const auto kl = 0.424 * (1.0 - pow((100.0 - rh.asValue()) / 100.0, 1.7))
+                  + 0.0694 * sqrt(wind.asValue())
+                      * (1 - util::pow_int<8>((100.0 - rh.asValue()) / 100.0));
     //'''/* 7b '*/
-    const auto kw = kl * 0.581 * exp(0.0365 * temperature.asDouble());
+    const auto kw = kl * 0.581 * exp(0.0365 * temperature.asValue());
     //'''/* 9  '*/
     return ew - (ew - mo) * pow(10.0, -kw);
   }
@@ -198,7 +199,7 @@ find_m(
 //    rain is the 24-hour accumulated rainfall in mm, calculated at 12:00 LST
 //    ffmc_previous is the previous day's FFMC
 //******************************************************************************************
-static double
+static MathSize
 calculate_ffmc(
   const Temperature& temperature,
   const RelativeHumidity& rh,
@@ -209,10 +210,10 @@ calculate_ffmc(
 {
   //'''/* 1  '*/
   auto mo = ffmc_to_moisture(ffmc_previous);
-  if (rain.asDouble() > 0.5)
+  if (rain.asValue() > 0.5)
   {
     //'''/* 2  '*/
-    const auto rf = rain.asDouble() - 0.5;
+    const auto rf = rain.asValue() - 0.5;
     //'''/* 3a '*/
     auto mr = mo + 42.5 * rf * (exp(-100.0 / (251.0 - mo))) * (1 - exp(-6.93 / rf));
     if (mo > 150.0)
@@ -251,21 +252,21 @@ Ffmc::Ffmc(
 //    latitude is the latitude in decimal degrees of the location for calculation
 //    month is the month of Year (1..12) for the current day's calculations.
 //******************************************************************************************
-static double
+static MathSize
 calculate_dmc(
   const Temperature& temperature,
   const RelativeHumidity& rh,
   const Precipitation& rain,
   const Dmc& dmc_previous,
   const int month,
-  const double latitude
+  const MathSize latitude
 ) noexcept
 {
-  auto previous = dmc_previous.asDouble();
-  if (rain.asDouble() > 1.5)
+  auto previous = dmc_previous.asValue();
+  if (rain.asValue() > 1.5)
   {
     //'''/* 11  '*/
-    const auto re = 0.92 * rain.asDouble() - 1.27;
+    const auto re = 0.92 * rain.asValue() - 1.27;
     //'''/* 12  '*/
     //    const auto mo = 20.0 + exp(5.6348 - previous / 43.43);
     // Alteration to Eq. 12 to calculate more accurately
@@ -284,8 +285,8 @@ calculate_dmc(
     const auto pr = 43.43 * (5.6348 - log(mr - 20));
     previous = max(pr, 0.0);
   }
-  const auto k = (temperature.asDouble() > -1.1)
-                 ? 1.894 * (temperature.asDouble() + 1.1) * (100.0 - rh.asDouble())
+  const auto k = (temperature.asValue() > -1.1)
+                 ? 1.894 * (temperature.asValue() + 1.1) * (100.0 - rh.asValue())
                      * day_length(latitude, month) * 0.0001
                  : 0.0;
   //'''/* 17  '*/
@@ -297,7 +298,7 @@ Dmc::Dmc(
   const Precipitation& rain,
   const Dmc& dmc_previous,
   const int month,
-  const double latitude
+  const MathSize latitude
 ) noexcept
   : Dmc(calculate_dmc(temperature, rh, rain, dmc_previous, month, latitude))
 {
@@ -312,20 +313,20 @@ Dmc::Dmc(
 //    latitude is the latitude in decimal degrees of the location for calculation
 //    month is the month of Year (1..12) for the current day's calculations.
 //******************************************************************************************
-static double
+static MathSize
 calculate_dc(
   const Temperature& temperature,
   const Precipitation& rain,
   const Dc& dc_previous,
   const int month,
-  const double latitude
+  const MathSize latitude
 ) noexcept
 {
-  auto previous = dc_previous.asDouble();
-  if (rain.asDouble() > 2.8)
+  auto previous = dc_previous.asValue();
+  if (rain.asValue() > 2.8)
   {
     //'/* 18  */
-    const auto rd = 0.83 * (rain.asDouble()) - 1.27;
+    const auto rd = 0.83 * (rain.asValue()) - 1.27;
     //'/* 19  */
     const auto qo = 800.0 * exp(-previous / 400.0);
     //'/* 20  */
@@ -338,7 +339,7 @@ calculate_dc(
   //'/* 22  */
   const auto v = max(
     0.0,
-    (temperature.asDouble() > -2.8) ? 0.36 * (temperature.asDouble() + 2.8) + lf : lf
+    (temperature.asValue() > -2.8) ? 0.36 * (temperature.asValue() + 2.8) + lf : lf
   );
   //'/* 23  */
   const auto d = previous + 0.5 * v;
@@ -350,7 +351,7 @@ Dc::Dc(
   const Precipitation& rain,
   const Dc& dc_previous,
   const int month,
-  const double latitude
+  const MathSize latitude
 ) noexcept
   : Dc(calculate_dc(temperature, rain, dc_previous, month, latitude))
 {
@@ -362,14 +363,14 @@ Dc::Dc(
 //    wind is the 12:00 LST wind speed in kph
 //    ffmc is the current day's FFMC
 //******************************************************************************************
-static double
+static MathSize
 calculate_isi(
   const Speed& wind,
   const Ffmc& ffmc
 ) noexcept
 {
   //'''/* 24  '*/
-  const auto f_wind = exp(0.05039 * wind.asDouble());
+  const auto f_wind = exp(0.05039 * wind.asValue());
   //'''/* 1   '*/
   const auto m = ffmc_to_moisture(ffmc);
   //'''/* 25  '*/
@@ -385,7 +386,7 @@ Isi::Isi(
 {
 }
 Isi::Isi(
-  double
+  MathSize
 #if defined(CHECK_CALCULATION) | defined(USE_GIVEN)
     value
 #endif
@@ -404,7 +405,7 @@ Isi::Isi(
   : Isi(value)
 {
 #ifdef CHECK_CALCULATION
-  const auto cmp = Isi(wind, ffmc).asDouble();
+  const auto cmp = Isi(wind, ffmc).asValue();
 #endif
 #else
   : Isi(wind, ffmc)
@@ -415,11 +416,11 @@ Isi::Isi(
 #endif
 #ifdef CHECK_CALCULATION
   logging::check_fatal(
-    abs(asDouble() - cmp) >= CHECK_EPSILON,
+    abs(asValue() - cmp) >= CHECK_EPSILON,
     "ISI is incorrect %f, %f => %f not %f",
-    wind.asDouble(),
-    ffmc.asDouble(),
-    asDouble(),
+    wind.asValue(),
+    ffmc.asValue(),
+    asValue(),
     cmp
   );
 #endif
@@ -431,32 +432,32 @@ Isi::Isi(
 //    DMC is the current day's Duff Moisture Code
 //    DC is the current day's Drought Code
 //******************************************************************************************
-static double
+static MathSize
 calculate_bui(
   const Dmc& dmc,
   const Dc& dc
 ) noexcept
 {
-  if (dmc.asDouble() <= 0.4 * dc.asDouble())
+  if (dmc.asValue() <= 0.4 * dc.asValue())
   {
     // HACK: this isn't normally part of it, but it's division by 0 without this
-    if (0 == dc.asDouble())
+    if (0 == dc.asValue())
     {
       return 0;
     }
     //'''/* 27a '*/
-    return max(0.0, 0.8 * dmc.asDouble() * dc.asDouble() / (dmc.asDouble() + 0.4 * dc.asDouble()));
+    return max(0.0, 0.8 * dmc.asValue() * dc.asValue() / (dmc.asValue() + 0.4 * dc.asValue()));
   }
   //'''/* 27b '*/
   return max(
     0.0,
-    dmc.asDouble()
-      - (1.0 - 0.8 * dc.asDouble() / (dmc.asDouble() + 0.4 * dc.asDouble()))
-          * (0.92 + pow(0.0114 * dmc.asDouble(), 1.7))
+    dmc.asValue()
+      - (1.0 - 0.8 * dc.asValue() / (dmc.asValue() + 0.4 * dc.asValue()))
+          * (0.92 + pow(0.0114 * dmc.asValue(), 1.7))
   );
 }
 Bui::Bui(
-  double
+  MathSize
 #if defined(CHECK_CALCULATION) | defined(USE_GIVEN)
     value
 #endif
@@ -475,7 +476,7 @@ Bui::Bui(
   : Bui(value)
 {
 #ifdef CHECK_CALCULATION
-  const auto cmp = Bui(dmc, dc).asDouble();
+  const auto cmp = Bui(dmc, dc).asValue();
 #endif
 #else
   : Bui(dmc, dc)
@@ -486,11 +487,11 @@ Bui::Bui(
 #endif
 #ifdef CHECK_CALCULATION
   logging::check_fatal(
-    abs(asDouble() - cmp) >= CHECK_EPSILON,
+    abs(asValue() - cmp) >= CHECK_EPSILON,
     "BUI is incorrect %f, %f => %f not %f",
-    dmc.asDouble(),
-    dc.asDouble(),
-    asDouble(),
+    dmc.asValue(),
+    dc.asValue(),
+    asValue(),
     cmp
   );
 #endif
@@ -509,18 +510,18 @@ Bui::Bui(
 //    ISI is current day's ISI
 //    BUI is the current day's BUI
 //******************************************************************************************
-static double
+static MathSize
 calculate_fwi(
   const Isi& isi,
   const Bui& bui
 ) noexcept
 {
-  const auto f_d = (bui.asDouble() <= 80.0) ?   //'''/* 28a '*/
-                     0.626 * pow(bui.asDouble(), 0.809) + 2.0
-                                            :   //'''/* 28b '*/
-                     1000.0 / (25.0 + 108.64 * exp(-0.023 * bui.asDouble()));
+  const auto f_d = (bui.asValue() <= 80.0) ?   //'''/* 28a '*/
+                     0.626 * pow(bui.asValue(), 0.809) + 2.0
+                                           :   //'''/* 28b '*/
+                     1000.0 / (25.0 + 108.64 * exp(-0.023 * bui.asValue()));
   //'''/* 29  '*/
-  const auto b = 0.1 * isi.asDouble() * f_d;
+  const auto b = 0.1 * isi.asValue() * f_d;
   if (b > 1.0)
   {
     //'''/* 30a '*/
@@ -530,7 +531,7 @@ calculate_fwi(
   return b;
 }
 Fwi::Fwi(
-  double
+  MathSize
 #if defined(CHECK_CALCULATION) | defined(USE_GIVEN)
     value
 #endif
@@ -549,7 +550,7 @@ Fwi::Fwi(
   : Fwi(value)
 {
 #ifdef CHECK_CALCULATION
-  const auto cmp = Fwi(isi, bui).asDouble();
+  const auto cmp = Fwi(isi, bui).asValue();
 #endif
 #else
   : Fwi(isi, bui)
@@ -560,11 +561,11 @@ Fwi::Fwi(
 #endif
 #ifdef CHECK_CALCULATION
   logging::check_fatal(
-    abs(asDouble() - cmp) >= CHECK_EPSILON,
+    abs(asValue() - cmp) >= CHECK_EPSILON,
     "FWI is incorrect %f, %f => %f not %f",
-    isi.asDouble(),
-    bui.asDouble(),
-    asDouble(),
+    isi.asValue(),
+    bui.asValue(),
+    asValue(),
     cmp
   );
 #endif
@@ -582,13 +583,13 @@ Fwi::Fwi(
 // Parameters:
 //    FWI is current day's FWI
 //******************************************************************************************
-static double
+static MathSize
 calculate_dsr(
   const Fwi& fwi
 ) noexcept
 {
   //'''/* 41 '*/
-  return (0.0272 * pow(fwi.asDouble(), 1.77));
+  return (0.0272 * pow(fwi.asValue(), 1.77));
 }
 Dsr::Dsr(
   const Fwi& fwi
@@ -596,7 +597,7 @@ Dsr::Dsr(
   : Dsr(calculate_dsr(fwi))
 {
 }
-inline double
+inline MathSize
 stod(
   const string* const str
 )
@@ -658,7 +659,7 @@ FwiWeather::FwiWeather(
   : FwiWeather(read(iss, str))
 {
 }
-double
+MathSize
 ffmc_effect(
   const Ffmc& ffmc
 ) noexcept
@@ -683,19 +684,19 @@ FwiWeather::FwiWeather(
     dmc_(dmc),
     dc_(dc),
     // HACK: recalculate so that we can check that things are within tolerances
-    isi_(Isi(isi.asDouble(), wind.speed(), ffmc)),
-    bui_(Bui(bui.asDouble(), dmc, dc)),
-    fwi_(Fwi(fwi.asDouble(), isi, bui)),
+    isi_(Isi(isi.asValue(), wind.speed(), ffmc)),
+    bui_(Bui(bui.asValue(), dmc, dc)),
+    fwi_(Fwi(fwi.asValue(), isi, bui)),
     // FIX: this is duplicated in ffmc_effect
     mc_ffmc_pct_(ffmc_to_moisture(ffmc)),
-    mc_dmc_pct_(exp((dmc.asDouble() - 244.72) / -43.43) + 20),
+    mc_dmc_pct_(exp((dmc.asValue() - 244.72) / -43.43) + 20),
     ffmc_effect_(ffmc_effect(ffmc))
 {
 }
 FwiWeather::FwiWeather(
   const FwiWeather& yesterday,
   const int month,
-  const double latitude,
+  const MathSize latitude,
   const Temperature& temp,
   const RelativeHumidity& rh,
   const Wind& wind,

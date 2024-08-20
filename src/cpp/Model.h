@@ -237,7 +237,7 @@ public:
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   cellSize() const
   {
     return env_->cellSize();
@@ -321,7 +321,7 @@ public:
    */
   [[nodiscard]] constexpr int
   nd(
-    const double time
+    const DurationSize time
   ) const
   {
     return nd_.at(static_cast<Day>(time));
@@ -349,8 +349,8 @@ public:
    */
   [[nodiscard]] ProbabilityMap*
   makeProbabilityMap(
-    double time,
-    double start_time,
+    DurationSize time,
+    DurationSize start_time,
     int min_value,
     int low_max,
     int med_max,
@@ -382,7 +382,7 @@ public:
    * \param filename Weather file to read
    */
   void
-  readWeather(const wx::FwiWeather& yesterday, const double latitude, const string& filename);
+  readWeather(const wx::FwiWeather& yesterday, const MathSize latitude, const string& filename);
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
@@ -401,7 +401,12 @@ public:
    * \return Iteration containing initialized Scenarios
    */
   [[nodiscard]] Iteration
-  readScenarios(const topo::StartPoint& start_point, double start, Day start_day, Day last_date);
+  readScenarios(
+    const topo::StartPoint& start_point,
+    DurationSize start,
+    Day start_day,
+    Day last_date
+  );
   /**
    * \brief Acquire a BurnedData that has already burnt cells set
    * \return A BurnedData that has already burnt cells set
@@ -437,9 +442,9 @@ private:
    */
   [[nodiscard]] bool
   add_statistics(
-    vector<double>* all_sizes,
-    vector<double>* means,
-    vector<double>* pct,
+    vector<MathSize>* all_sizes,
+    vector<MathSize>* means,
+    vector<MathSize>* pct,
     const util::SafeVector& sizes
   );
   /**
@@ -461,8 +466,8 @@ private:
    * \param start_day Start day for simulation
    * \return Map of times to ProbabilityMap for that time
    */
-  map<double, ProbabilityMap*>
-  runIterations(const topo::StartPoint& start_point, double start, Day start_day);
+  map<DurationSize, ProbabilityMap*>
+  runIterations(const topo::StartPoint& start_point, DurationSize start, Day start_day);
   /**
    * \brief Find all Cell(s) that can burn in entire Environment
    */
@@ -471,9 +476,9 @@ private:
   /**
    * Save probability rasters
    */
-  double
+  DurationSize
   saveProbabilities(
-    map<double, ProbabilityMap*>& probabilities,
+    map<DurationSize, ProbabilityMap*>& probabilities,
     const Day start_day,
     const bool is_interim
   );
@@ -557,11 +562,11 @@ private:
   /**
    * \brief Latitude to use for any calcualtions
    */
-  double latitude_;
+  MathSize latitude_;
   /**
    * \brief Longitude to use for any calcualtions
    */
-  double longitude_;
+  MathSize longitude_;
 };
 }
 }

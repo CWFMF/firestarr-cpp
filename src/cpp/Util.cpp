@@ -247,14 +247,15 @@ to_tm(
   mktime(&t);
   return t;
 }
-double
+DurationSize
 to_time(
   const tm& t
 )
 {
-  return t.tm_yday + ((t.tm_hour + (static_cast<double>(t.tm_min) / HOUR_MINUTES)) / DAY_HOURS);
+  return t.tm_yday
+       + ((t.tm_hour + (static_cast<DurationSize>(t.tm_min) / HOUR_MINUTES)) / DAY_HOURS);
 }
-double
+DurationSize
 to_time(
   const int year,
   const int month,
@@ -350,12 +351,14 @@ fs::is_leap_year(
 string
 fs::make_timestamp(
   const int year,
-  const double time
+  const DurationSize time
 )
 {
   size_t day = floor(time);
-  size_t hour = (time - day) * static_cast<double>(DAY_HOURS);
-  size_t minute = round(((time - day) * static_cast<double>(DAY_HOURS) - hour) * HOUR_MINUTES);
+  size_t hour = (time - day) * static_cast<DurationSize>(DAY_HOURS);
+  size_t minute = round(
+    ((time - day) * static_cast<DurationSize>(DAY_HOURS) - hour) * HOUR_MINUTES
+  );
   if (60 == minute)
   {
     minute = 0;

@@ -30,12 +30,12 @@ str_to_int(
 {
   return stoi(str);
 }
-double
-str_to_double(
+MathSize
+str_to_value(
   const string& str
 )
 {
-  return stod(str);
+  return static_cast<MathSize>(stod(str));
 }
 template <class T>
 bool
@@ -55,7 +55,7 @@ find_value(
   }
   return false;
 }
-double
+MathSize
 find_meridian(
   const string& proj4
 ) noexcept
@@ -68,7 +68,7 @@ find_meridian(
     {
       meridian = topo::utm_central_meridian_deg(zone);
     }
-    else if (!find_value("+lon_0=", proj4, &meridian, &str_to_double))
+    else if (!find_value("+lon_0=", proj4, &meridian, &str_to_value))
     {
       logging::fatal("Can't find meridian for grid");
     }
@@ -76,15 +76,15 @@ find_meridian(
   }
   catch (...)
   {
-    return logging::fatal<double>("Unable to parse meridian in string '%s'", proj4.c_str());
+    return logging::fatal<MathSize>("Unable to parse meridian in string '%s'", proj4.c_str());
   }
 }
 GridBase::GridBase(
-  const double cell_size,
-  const double xllcorner,
-  const double yllcorner,
-  const double xurcorner,
-  const double yurcorner,
+  const MathSize cell_size,
+  const MathSize xllcorner,
+  const MathSize yllcorner,
+  const MathSize xurcorner,
+  const MathSize yurcorner,
   string&& proj4
 ) noexcept
   : proj4_(std::forward<string>(proj4)),
@@ -161,8 +161,8 @@ GridBase::findFullCoordinates(
   const bool flipped
 ) const
 {
-  auto x = 0.0;
-  auto y = 0.0;
+  auto x = static_cast<MathSize>(0.0);
+  auto y = static_cast<MathSize>(0.0);
   lat_lon_to_utm(point, this->zone(), &x, &y);
   logging::debug(
     "Coordinates (%f, %f) converted to (%0.1f, %f, %f)",
@@ -214,12 +214,12 @@ GridBase::findFullCoordinates(
 void
 write_ascii_header(
   ofstream& out,
-  const double num_columns,
-  const double num_rows,
-  const double xll,
-  const double yll,
-  const double cell_size,
-  const double no_data
+  const MathSize num_columns,
+  const MathSize num_rows,
+  const MathSize xll,
+  const MathSize yll,
+  const MathSize cell_size,
+  const MathSize no_data
 )
 {
   out << "ncols         " << num_columns << "\n";

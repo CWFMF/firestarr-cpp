@@ -64,7 +64,7 @@ public:
     const Precipitation& prec,
     const Dmc& dmc_previous,
     int month,
-    double latitude
+    MathSize latitude
   ) noexcept;
   /**
    * \brief Duff Moisture Code of 0
@@ -93,7 +93,7 @@ public:
     const Precipitation& prec,
     const Dc& dc_previous,
     int month,
-    double latitude
+    MathSize latitude
   ) noexcept;
   /**
    * \brief Drought Code of 0
@@ -113,7 +113,7 @@ public:
    * \param ws Wind Speed (km/h)
    * \param ffmc Fine Fuel Moisture Code
    */
-  Isi(double value, const Speed& ws, const Ffmc& ffmc) noexcept;
+  Isi(MathSize value, const Speed& ws, const Ffmc& ffmc) noexcept;
   /**
    * \brief Calculate Initial Spread Index
    * \param ws Wind Speed (km/h)
@@ -142,7 +142,7 @@ public:
    * \param dmc Duff Moisture Code
    * \param dc Drought Code
    */
-  Bui(double value, const Dmc& dmc, const Dc& dc) noexcept;
+  Bui(MathSize value, const Dmc& dmc, const Dc& dc) noexcept;
   /**
    * \brief Calculate Build-up Index
    * \param dmc Duff Moisture Code
@@ -171,7 +171,7 @@ public:
    * \param isi Initial Spread Index
    * \param bui Build-up Index
    */
-  Fwi(double value, const Isi& isi, const Bui& bui) noexcept;
+  Fwi(MathSize value, const Isi& isi, const Bui& bui) noexcept;
   /**
    * \brief Calculate Fire Weather Index
    * \param isi Initial Spread Index
@@ -239,7 +239,7 @@ public:
   FwiWeather(
     const FwiWeather& yesterday,
     const int month,
-    const double latitude,
+    const MathSize latitude,
     const Temperature& temp,
     const RelativeHumidity& rh,
     const Wind& wind,
@@ -405,7 +405,7 @@ public:
    * \brief Moisture content (%) based on Ffmc
    * \return Moisture content (%) based on Ffmc
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   mcFfmcPct() const
   {
     return mc_ffmc_pct_;
@@ -414,7 +414,7 @@ public:
    * \brief Moisture content (%) based on Dmc
    * \return Moisture content (%) based on Dmc
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   mcDmcPct() const
   {
     return mc_dmc_pct_;
@@ -423,7 +423,7 @@ public:
    * \brief Moisture content (ratio) based on Ffmc
    * \return Moisture content (ratio) based on Ffmc
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   mcFfmc() const
   {
     return mcFfmcPct() / 100.0;
@@ -432,7 +432,7 @@ public:
    * \brief Moisture content (ratio) based on Dmc
    * \return Moisture content (ratio) based on Dmc
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   mcDmc() const
   {
     return mcDmcPct() / 100.0;
@@ -441,7 +441,7 @@ public:
    * \brief Ffmc effect used for spread
    * \return Ffmc effect used for spread
    */
-  [[nodiscard]] constexpr double
+  [[nodiscard]] constexpr MathSize
   ffmcEffect() const
   {
     return ffmc_effect_;
@@ -489,15 +489,15 @@ private:
   /**
    * \brief Moisture content (ratio) based on Ffmc
    */
-  double mc_ffmc_pct_;
+  MathSize mc_ffmc_pct_;
   /**
    * \brief Moisture content (ratio) based on Dmc
    */
-  double mc_dmc_pct_;
+  MathSize mc_dmc_pct_;
   /**
    * \brief Ffmc effect used for spread
    */
-  double ffmc_effect_;
+  MathSize ffmc_effect_;
 };
 [[nodiscard]] constexpr bool
 operator<(
@@ -557,30 +557,30 @@ operator==(
   return !(lhs != rhs);
 }
 constexpr auto FFMC_MOISTURE_CONSTANT = 147.27723;
-constexpr double
+constexpr MathSize
 ffmc_to_moisture(
-  const double ffmc
+  const MathSize ffmc
 ) noexcept
 {
   return FFMC_MOISTURE_CONSTANT * (101.0 - ffmc) / (59.5 + ffmc);
 }
-constexpr double
+constexpr MathSize
 ffmc_to_moisture(
   const Ffmc& ffmc
 ) noexcept
 {
-  return ffmc_to_moisture(ffmc.asDouble());
+  return ffmc_to_moisture(ffmc.asValue());
 }
-constexpr double
+constexpr MathSize
 moisture_to_ffmc(
-  const double m
+  const MathSize m
 ) noexcept
 {
   return (59.5 * (250.0 - m) / (FFMC_MOISTURE_CONSTANT + m));
 }
 constexpr Ffmc
 ffmc_from_moisture(
-  const double m
+  const MathSize m
 ) noexcept
 {
   return Ffmc(moisture_to_ffmc(m));

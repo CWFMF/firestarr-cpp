@@ -8,7 +8,7 @@
 namespace fs::data
 {
 /**
- * \brief A wrapper around a double to ensure correct types are used.
+ * \brief A wrapper around a MathSize to ensure correct types are used.
  * \tparam T The derived class that this Index represents.
  */
 template <class T>
@@ -17,7 +17,7 @@ class Index
   /**
    * \brief Value represented by this
    */
-  double value_;
+  MathSize value_;
 public:
   /**
    * \brief Destructor
@@ -35,7 +35,7 @@ public:
    * \param value Value to assign
    */
   constexpr explicit Index(
-    const double value
+    const MathSize value
   ) noexcept
     : value_(value)
   {
@@ -89,11 +89,11 @@ public:
     return !(*this == rhs);
   }
   /**
-   * \brief Returns value as a double
-   * \return double value for Index
+   * \brief Returns value as a MathSize
+   * \return MathSize value for Index
    */
-  [[nodiscard]] constexpr double
-  asDouble() const noexcept
+  [[nodiscard]] constexpr MathSize
+  asValue() const noexcept
   {
     return value_;
   }
@@ -213,7 +213,7 @@ static constexpr LogValue LOG_0_85{-0.16251892949777494};
 static constexpr LogValue LOG_0_90{-0.10536051565782628};
 static constexpr LogValue LOG_1_00{0.0};
 #ifndef _WIN32
-// windows won't use constexpr with log but we can double check numbers are right when compiling
+// windows won't use constexpr with log but we can MathSize check numbers are right when compiling
 // elsewhere
 static constexpr LogValue LOG_0_70_CALC{log(0.7)};
 static constexpr LogValue LOG_0_75_CALC{log(0.75)};
@@ -221,11 +221,11 @@ static constexpr LogValue LOG_0_80_CALC{log(0.8)};
 static constexpr LogValue LOG_0_85_CALC{log(0.85)};
 static constexpr LogValue LOG_0_90_CALC{log(0.9)};
 static constexpr LogValue LOG_1_00_CALC{log(1.0)};
-static_assert(abs((LOG_0_70 - LOG_0_70_CALC).asDouble()) < numeric_limits<double>::epsilon());
-static_assert(abs((LOG_0_75 - LOG_0_75_CALC).asDouble()) < numeric_limits<double>::epsilon());
-static_assert(abs((LOG_0_80 - LOG_0_80_CALC).asDouble()) < numeric_limits<double>::epsilon());
-static_assert(abs((LOG_0_90 - LOG_0_90_CALC).asDouble()) < numeric_limits<double>::epsilon());
-static_assert(abs((LOG_1_00 - LOG_1_00_CALC).asDouble()) < numeric_limits<double>::epsilon());
+static_assert(abs((LOG_0_70 - LOG_0_70_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_75 - LOG_0_75_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_80 - LOG_0_80_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_90 - LOG_0_90_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_1_00 - LOG_1_00_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
 #endif
 }
 #endif

@@ -43,8 +43,8 @@ public:
    */
   ProbabilityMap(
     const string dir_out,
-    double time,
-    double start_time,
+    DurationSize time,
+    DurationSize start_time,
     int min_value,
     int low_max,
     int med_max,
@@ -80,7 +80,7 @@ public:
    * \brief List of sizes of IntensityMaps that have been added
    * \return List of sizes of IntensityMaps that have been added
    */
-  [[nodiscard]] vector<double>
+  [[nodiscard]] vector<MathSize>
   getSizes() const;
   /**
    * \brief Generate Statistics on sizes of IntensityMaps that have been added
@@ -111,7 +111,7 @@ public:
    * \param time Time for these maps
    */
   void
-  saveAll(const tm& start_time, double time, const bool is_interim) const;
+  saveAll(const tm& start_time, DurationSize time, const bool is_interim) const;
   /**
    * \brief Save map representing all intensities
    * \param base_name Base file name to save to
@@ -198,15 +198,15 @@ private:
   /**
    * \brief List of sizes for perimeters that have been added
    */
-  vector<double> sizes_{};
+  vector<MathSize> sizes_{};
   /**
    * \brief Time in simulation this ProbabilityMap represents
    */
-  const double time_;
+  const DurationSize time_;
   /**
    * \brief Start time of simulation
    */
-  const double start_time_;
+  const DurationSize start_time_;
   /**
    * \brief Mutex for parallel access
    */

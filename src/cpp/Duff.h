@@ -83,8 +83,8 @@ public:
    * \param mc_pct Moisture content (%)
    * \return Chance of survival (% / 100)
    */
-  [[nodiscard]] virtual double
-  probabilityOfSurvival(double mc_pct) const noexcept = 0;
+  [[nodiscard]] virtual ThresholdSize
+  probabilityOfSurvival(MathSize mc_pct) const noexcept = 0;
   //  /**
   //   * \brief Feather moss (upper) [Frandsen table 2/3]
   //   */
@@ -180,9 +180,9 @@ public:
    * \param mc_pct Moisture content, percentage dry oven weight
    * \return Probability of survival (% / 100) [eq Ig-1]
    */
-  [[nodiscard]] double
+  [[nodiscard]] ThresholdSize
   probabilityOfSurvival(
-    const double mc_pct
+    const MathSize mc_pct
   ) const noexcept override
   {
     return probability_of_survival_(mc_pct);
@@ -191,7 +191,7 @@ public:
    * \brief Inorganic content, percentage oven dry weight
    * \return Inorganic content, percentage oven dry weight
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   ash()
   {
     return Ash / 10.0;
@@ -200,7 +200,7 @@ public:
    * \brief Organic bulk density (kg/m^3)
    * \return Organic bulk density (kg/m^3)
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   rho()
   {
     return Rho / 10.0;
@@ -209,7 +209,7 @@ public:
    * \brief B_0 [table 2]
    * \return B_0 [table 2]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   b0()
   {
     return B0 / 10000.0;
@@ -218,7 +218,7 @@ public:
    * \brief B_1 [table 2]
    * \return B_1 [table 2]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   b1()
   {
     return B1 / 10000.0;
@@ -227,7 +227,7 @@ public:
    * \brief B_2 [table 2]
    * \return B_2 [table 2]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   b2()
   {
     return B2 / 10000.0;
@@ -236,7 +236,7 @@ public:
    * \brief B_3 [table 2]
    * \return B_3 [table 2]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr MathSize
   b3()
   {
     return B3 / 10000.0;
@@ -251,9 +251,9 @@ private:
    * \param mc_pct Moisture content, percentage dry oven weight
    * \return Ignition Probability (% / 100) [eq Ig-1]
    */
-  [[nodiscard]] static constexpr double
+  [[nodiscard]] static constexpr ThresholdSize
   duffFunction(
-    const double mc_pct
+    const MathSize mc_pct
   ) noexcept
   {
     const auto d = 1 + exp(-(b1() * mc_pct + ConstantPart));
