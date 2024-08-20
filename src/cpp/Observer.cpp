@@ -14,15 +14,15 @@ string IObserver::makeName(const string& base_name, const string& suffix)
   }
   return suffix;
 }
-constexpr double NODATA_ARRIVAL = 0;
+constexpr DurationSize NODATA_ARRIVAL = 0;
 ArrivalObserver::ArrivalObserver(const Scenario& scenario)
-  : MapObserver<double>(scenario, NODATA_ARRIVAL, "arrival")
+  : MapObserver<DurationSize>(scenario, NODATA_ARRIVAL, "arrival")
 {
 #ifdef DEBUG_GRIDS
   // enforce converting to an int and back produces same V
   const auto n0 = NODATA_ARRIVAL;
   const auto n1 = static_cast<NodataIntType>(n0);
-  const auto n2 = static_cast<double>(n1);
+  const auto n2 = static_cast<DurationSize>(n1);
   const auto n3 = static_cast<NodataIntType>(n2);
   logging::check_equal(
     n1,
@@ -34,7 +34,7 @@ ArrivalObserver::ArrivalObserver(const Scenario& scenario)
     "nodata_value_ from int");
 #endif
 }
-double ArrivalObserver::getValue(const Event& event) const noexcept
+DurationSize ArrivalObserver::getValue(const Event& event) const noexcept
 {
 #ifdef DEBUG_TEMPORARY
   if (abs(event.time() - 154.9987423154746) < 0.001)

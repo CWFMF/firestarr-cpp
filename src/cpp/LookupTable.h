@@ -12,13 +12,13 @@ namespace tbd::util
  * \tparam IndexDigits Number of digits to use for range of values
  * \tparam Precision Precision in decimal places to use for range of values
  */
-template <double (*Fct)(double), int IndexDigits = 3, int Precision = 1>
+template <MathSize (*Fct)(MathSize), int IndexDigits = 3, int Precision = 1>
 class LookupTable
 {
   /**
    * \brief Array with enough space for function called with specific number of digits and precision
    */
-  using ValuesArray = array<double, pow_int<IndexDigits>(10) * pow_int<Precision>(10)>;
+  using ValuesArray = array<MathSize, pow_int<IndexDigits>(10) * pow_int<Precision>(10)>;
   /**
    * \brief Array of values from calling function
    */
@@ -32,7 +32,7 @@ class LookupTable
     ValuesArray values{};
     for (size_t i = 0; i < values.size(); ++i)
     {
-      const auto value = i / static_cast<double>(pow_int<Precision>(10));
+      const auto value = i / static_cast<MathSize>(pow_int<Precision>(10));
       values[i] = Fct(value);
     }
     return values;
@@ -52,7 +52,7 @@ public:
    * \param value value to get lookup result for
    * \return result of lookup for function at value
    */
-  [[nodiscard]] constexpr double operator()(const double value) const
+  [[nodiscard]] constexpr MathSize operator()(const MathSize value) const
   {
     return values_.at(static_cast<size_t>(value * pow_int<Precision>(10)));
   }

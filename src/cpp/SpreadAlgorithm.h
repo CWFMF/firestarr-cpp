@@ -8,7 +8,7 @@
 
 namespace tbd
 {
-using HorizontalAdjustment = std::function<double(double)>;
+using HorizontalAdjustment = std::function<MathSize(MathSize)>;
 
 HorizontalAdjustment horizontal_adjustment(
   const AspectSize slope_azimuth,
@@ -19,10 +19,10 @@ class SpreadAlgorithm
 public:
   [[nodiscard]] virtual OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
-    double head_raz,
-    double head_ros,
-    double back_ros,
-    double length_to_breadth) const
+    MathSize head_raz,
+    MathSize head_ros,
+    MathSize back_ros,
+    MathSize length_to_breadth) const
     noexcept = 0;
 };
 
@@ -30,16 +30,16 @@ class BaseSpreadAlgorithm
   : public SpreadAlgorithm
 {
 public:
-  BaseSpreadAlgorithm(const double max_angle,
-                      const double cell_size,
-                      const double min_ros)
+  BaseSpreadAlgorithm(const MathSize max_angle,
+                      const MathSize cell_size,
+                      const MathSize min_ros)
     : max_angle_(max_angle), cell_size_(cell_size), min_ros_(min_ros)
   {
   }
 protected:
-  double max_angle_;
-  double cell_size_;
-  double min_ros_;
+  MathSize max_angle_;
+  MathSize cell_size_;
+  MathSize min_ros_;
 };
 
 class OriginalSpreadAlgorithm
@@ -49,10 +49,10 @@ public:
   using BaseSpreadAlgorithm::BaseSpreadAlgorithm;
   [[nodiscard]] OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
-    double head_raz,
-    double head_ros,
-    double back_ros,
-    double length_to_breadth) const noexcept override;
+    MathSize head_raz,
+    MathSize head_ros,
+    MathSize back_ros,
+    MathSize length_to_breadth) const noexcept override;
 };
 
 class WidestEllipseAlgorithm
@@ -62,9 +62,9 @@ public:
   using BaseSpreadAlgorithm::BaseSpreadAlgorithm;
   [[nodiscard]] OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
-    double head_raz,
-    double head_ros,
-    double back_ros,
-    double length_to_breadth) const noexcept override;
+    MathSize head_raz,
+    MathSize head_ros,
+    MathSize back_ros,
+    MathSize length_to_breadth) const noexcept override;
 };
 }

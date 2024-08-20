@@ -78,7 +78,7 @@ public:
            size_t id,
            wx::FireWeather* weather,
            wx::FireWeather* weather_daily,
-           double start_time,
+           DurationSize start_time,
            //  const shared_ptr<IntensityMap>& initial_intensity,
            const shared_ptr<topo::Perimeter>& perimeter,
            const topo::StartPoint& start_point,
@@ -100,7 +100,7 @@ public:
            size_t id,
            wx::FireWeather* weather,
            wx::FireWeather* weather_daily,
-           double start_time,
+           DurationSize start_time,
            const shared_ptr<topo::Cell>& start_cell,
            const topo::StartPoint& start_point,
            Day start_day,
@@ -192,7 +192,7 @@ public:
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] constexpr double cellSize() const
+  [[nodiscard]] constexpr MathSize cellSize() const
   {
     return model_->cellSize();
   }
@@ -216,7 +216,7 @@ public:
    * \brief Simulation start time
    * \return Simulation start time
    */
-  [[nodiscard]] constexpr double startTime() const
+  [[nodiscard]] constexpr DurationSize startTime() const
   {
     return start_time_;
   }
@@ -241,7 +241,7 @@ public:
    * \param for_day Day to get sunrise time for
    * \return Sunrise time for given day
    */
-  [[nodiscard]] constexpr double dayStart(const size_t for_day) const
+  [[nodiscard]] constexpr DurationSize dayStart(const size_t for_day) const
   {
     return start_point_.dayStart(for_day);
   }
@@ -250,7 +250,7 @@ public:
    * \param for_day Day to get sunset time for
    * \return Sunset time for given day
    */
-  [[nodiscard]] constexpr double dayEnd(const size_t for_day) const
+  [[nodiscard]] constexpr DurationSize dayEnd(const size_t for_day) const
   {
     return start_point_.dayEnd(for_day);
   }
@@ -259,11 +259,11 @@ public:
    * \param time Time to get weather for (decimal days)
    * \return FwiWeather for given time
    */
-  [[nodiscard]] const wx::FwiWeather* weather(const double time) const
+  [[nodiscard]] const wx::FwiWeather* weather(const DurationSize time) const
   {
     return weather_->at(time);
   }
-  [[nodiscard]] const wx::FwiWeather* weather_daily(const double time) const
+  [[nodiscard]] const wx::FwiWeather* weather_daily(const DurationSize time) const
   {
     return weather_daily_->at(time);
   }
@@ -272,7 +272,7 @@ public:
    * \param time Time to get value for
    * \return Difference between date and the date of minimum foliar moisture content
    */
-  [[nodiscard]] constexpr int nd(const double time) const
+  [[nodiscard]] constexpr int nd(const DurationSize time) const
   {
     return model().nd(time);
   }
@@ -281,7 +281,7 @@ public:
    * \param time Time to get value for
    * \return Extinction threshold for given time
    */
-  [[nodiscard]] double extinctionThreshold(const double time) const
+  [[nodiscard]] ThresholdSize extinctionThreshold(const DurationSize time) const
   {
     return extinction_thresholds_.at(util::time_index(time - start_day_));
   }
@@ -290,7 +290,7 @@ public:
    * \param time Time to get value for
    * \return Spread threshold for given time
    */
-  [[nodiscard]] double spreadThresholdByRos(const double time) const
+  [[nodiscard]] ThresholdSize spreadThresholdByRos(const DurationSize time) const
   {
     return spread_thresholds_by_ros_.at(util::time_index(time - start_day_));
   }
@@ -299,7 +299,7 @@ public:
    * \param time Time to determine for
    * \return Whether or not time is after sunrise and before sunset
    */
-  [[nodiscard]] constexpr bool isAtNight(const double time) const
+  [[nodiscard]] constexpr bool isAtNight(const DurationSize time) const
   {
     const auto day = static_cast<Day>(time);
     const auto hour_part = 24 * (time - day);
@@ -310,7 +310,7 @@ public:
    * \param time Time to determine for
    * \return Minimum Fine Fuel Moisture Code for spread to be possible
    */
-  [[nodiscard]] double minimumFfmcForSpread(const double time) const noexcept
+  [[nodiscard]] MathSize minimumFfmcForSpread(const DurationSize time) const noexcept
   {
     return isAtNight(time) ? Settings::minimumFfmcAtNight() : Settings::minimumFfmc();
   }
@@ -336,7 +336,7 @@ public:
    * \param probabilities map to update ProbabilityMap for times base on Scenario results
    * \return This
    */
-  Scenario* run(map<double, ProbabilityMap*>* probabilities);
+  Scenario* run(map<DurationSize, ProbabilityMap*>* probabilities);
   /**
    * \brief Schedule a fire spread Event
    * \param event Event to schedule
@@ -346,7 +346,7 @@ public:
    * \brief Current fire size (ha)
    * \return Current fire size (ha)
    */
-  [[nodiscard]] double currentFireSize() const;
+  [[nodiscard]] MathSize currentFireSize() const;
   /**
    * \brief Whether or not a Cell can burn
    * \param location Cell
@@ -412,7 +412,7 @@ public:
    * \brief Tell Observers to save their data for the given time
    * \param time Time to save data for
    */
-  void saveObservers(double time) const;
+  void saveObservers(DurationSize time) const;
   /**
    * \brief Save burn intensity information
    * \param dir Directory to save to
@@ -431,9 +431,9 @@ public:
    * \param time_at_location How long the fire has been in that Cell
    * \return Whether or not the fire survives the conditions
    */
-  [[nodiscard]] bool survives(const double time,
+  [[nodiscard]] bool survives(const DurationSize time,
                               const topo::Cell& cell,
-                              const double time_at_location) const
+                              const DurationSize time_at_location) const
   {
     if (Settings::deterministic())
     {
@@ -476,12 +476,12 @@ public:
    * \brief List of what times the simulation will save
    * \return List of what times the simulation will save
    */
-  [[nodiscard]] vector<double> savePoints() const;
+  [[nodiscard]] vector<DurationSize> savePoints() const;
   /**
    * \brief Save state of Scenario at given time
    * \param time
    */
-  void saveStats(double time) const;
+  void saveStats(DurationSize time) const;
   /**
    * \brief Register an IObserver that will be notified when Cells burn
    * \param observer Observer to add to notification list
@@ -518,7 +518,7 @@ protected:
            size_t id,
            wx::FireWeather* weather,
            wx::FireWeather* weather_daily,
-           double start_time,
+           DurationSize start_time,
            //  const shared_ptr<IntensityMap>& initial_intensity,
            const shared_ptr<topo::Perimeter>& perimeter,
            const shared_ptr<topo::Cell>& start_cell,
@@ -532,19 +532,19 @@ protected:
   /**
    * \brief List of times to save simulation
    */
-  vector<double> save_points_;
+  vector<DurationSize> save_points_;
   /**
    * \brief Thresholds used to determine if extinction occurs
    */
-  vector<double> extinction_thresholds_{};
+  vector<ThresholdSize> extinction_thresholds_{};
   /**
    * \brief Thresholds used to determine if spread occurs
    */
-  vector<double> spread_thresholds_by_ros_{};
+  vector<ThresholdSize> spread_thresholds_by_ros_{};
   /**
    * \brief Current time for this Scenario
    */
-  double current_time_;
+  DurationSize current_time_;
   /**
    * \brief Map of Cells to the PointSets within them
    */
@@ -576,11 +576,11 @@ protected:
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
-  map<topo::Cell, double> arrival_{};
+  map<topo::Cell, DurationSize> arrival_{};
   /**
    * \brief Maximum rate of spread for current time
    */
-  double max_ros_;
+  MathSize max_ros_;
   /**
    * \brief Cell that the Scenario starts from if no Perimeter
    */
@@ -600,7 +600,7 @@ protected:
   /**
    * \brief Map of ProbabilityMaps by time snapshot for them was taken
    */
-  map<double, ProbabilityMap*>* probabilities_;
+  map<DurationSize, ProbabilityMap*>* probabilities_;
   /**
    * \brief Where to append the final size of this Scenario when run is complete
    */
@@ -616,11 +616,11 @@ protected:
   /**
    * \brief Start time (decimal days)
    */
-  double start_time_;
+  DurationSize start_time_;
   /**
    * \brief Which save point is the last one
    */
-  double last_save_;
+  DurationSize last_save_;
   /**
    * \brief Time index for current time
    */

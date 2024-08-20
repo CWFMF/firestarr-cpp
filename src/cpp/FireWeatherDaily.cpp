@@ -21,7 +21,7 @@ namespace tbd::wx
  * https://www.for.gov.bc.ca/hfd/pubs/Docs/Frr/FRR245.pdf
  */
 // adjust based on statistical analysis of hourly wind
-static array<double, DAY_HOURS> BY_HOUR = {
+static array<MathSize, DAY_HOURS> BY_HOUR = {
   .570,
   .565,
   .563,
@@ -46,15 +46,15 @@ static array<double, DAY_HOURS> BY_HOUR = {
   .586,
   .584,
   .579};
-inline double wind_speed_adjustment(const int hour) noexcept
+inline MathSize wind_speed_adjustment(const int hour) noexcept
 {
   return BY_HOUR.at(static_cast<size_t>(hour));
 }
-inline Ffmc ffmc_1200(const double x,
-                      const double x_sq,
-                      const double x_cu,
-                      const double rt_x,
-                      const double exp_neg_x) noexcept
+inline Ffmc ffmc_1200(const MathSize x,
+                      const MathSize x_sq,
+                      const MathSize x_cu,
+                      const MathSize rt_x,
+                      const MathSize exp_neg_x) noexcept
 {
   if (x < 21)
   {
@@ -72,11 +72,11 @@ inline Ffmc ffmc_1200(const double x,
   constexpr auto e = -4.7906e+09;
   return ffmc_from_moisture(a + b * x + c * x_cu + d * rt_x + e * exp_neg_x);
 }
-inline Ffmc ffmc_1300(const double x,
-                      const double x_sq,
-                      const double x_cu,
-                      const double rt_x,
-                      const double ln_x) noexcept
+inline Ffmc ffmc_1300(const MathSize x,
+                      const MathSize x_sq,
+                      const MathSize x_cu,
+                      const MathSize rt_x,
+                      const MathSize ln_x) noexcept
 {
   if (x < 22)
   {
@@ -96,11 +96,11 @@ inline Ffmc ffmc_1300(const double x,
   constexpr auto e = 12093.7804;
   return ffmc_from_moisture(a + b * x + c * x_sq * ln_x + d / rt_x + e * ln_x / x);
 }
-inline Ffmc ffmc_1400(const double x,
-                      const double x_sq,
-                      const double rt_x,
-                      const double ln_x,
-                      const double exp_x) noexcept
+inline Ffmc ffmc_1400(const MathSize x,
+                      const MathSize x_sq,
+                      const MathSize rt_x,
+                      const MathSize ln_x,
+                      const MathSize exp_x) noexcept
 {
   if (x < 23)
   {
@@ -118,11 +118,11 @@ inline Ffmc ffmc_1400(const double x,
   constexpr auto e = 3580.933366;
   return ffmc_from_moisture(a + b * x + c * rt_x * ln_x + d * x / ln_x + e / x_sq);
 }
-inline Ffmc ffmc_1500(const double x,
-                      const double x_sq,
-                      const double x_cu,
-                      const double rt_x,
-                      const double ln_x) noexcept
+inline Ffmc ffmc_1500(const MathSize x,
+                      const MathSize x_sq,
+                      const MathSize x_cu,
+                      const MathSize rt_x,
+                      const MathSize ln_x) noexcept
 {
   if (x < 23)
   {
@@ -142,11 +142,11 @@ inline Ffmc ffmc_1500(const double x,
   constexpr auto e = 1790.467302;
   return ffmc_from_moisture(a + b * x + c * rt_x * ln_x + d * x / ln_x + e / x_sq);
 }
-inline Ffmc ffmc_1700(const double x,
-                      const double x_sq,
-                      const double rt_x,
-                      const double ln_x,
-                      const double exp_neg_x) noexcept
+inline Ffmc ffmc_1700(const MathSize x,
+                      const MathSize x_sq,
+                      const MathSize rt_x,
+                      const MathSize ln_x,
+                      const MathSize exp_neg_x) noexcept
 {
   if (x < 40)
   {
@@ -164,11 +164,11 @@ inline Ffmc ffmc_1700(const double x,
   constexpr auto e = -1620.09304;
   return ffmc_from_moisture(a + b * x + c * x_sq * rt_x + d * rt_x * ln_x + e * x / ln_x);
 }
-inline Ffmc ffmc_1800(const double x,
-                      const double x_sq,
-                      const double x_cu,
-                      const double rt_x,
-                      const double ln_x) noexcept
+inline Ffmc ffmc_1800(const MathSize x,
+                      const MathSize x_sq,
+                      const MathSize x_cu,
+                      const MathSize rt_x,
+                      const MathSize ln_x) noexcept
 {
   if (x < 40)
   {
@@ -185,11 +185,11 @@ inline Ffmc ffmc_1800(const double x,
   constexpr auto e = -3240.18702;
   return ffmc_from_moisture(a + b * x + c * x_sq * rt_x + d * rt_x * ln_x + e * x / ln_x);
 }
-inline Ffmc ffmc_1900(const double x,
-                      const double x_sq,
-                      const double rt_x,
-                      const double exp_x,
-                      const double exp_neg_x) noexcept
+inline Ffmc ffmc_1900(const MathSize x,
+                      const MathSize x_sq,
+                      const MathSize rt_x,
+                      const MathSize exp_x,
+                      const MathSize exp_neg_x) noexcept
 {
   if (x < 42)
   {
@@ -207,12 +207,12 @@ inline Ffmc ffmc_1900(const double x,
   constexpr auto e = 0.000585907;
   return ffmc_from_moisture(a + b * x + c * x * rt_x + d * x_sq + e * x_sq * rt_x);
 }
-inline Ffmc ffmc_2000(const double x,
-                      const double x_sq,
-                      const double x_cu,
-                      const double rt_x,
-                      const double ln_x,
-                      const double exp_neg_x) noexcept
+inline Ffmc ffmc_2000(const MathSize x,
+                      const MathSize x_sq,
+                      const MathSize x_cu,
+                      const MathSize rt_x,
+                      const MathSize ln_x,
+                      const MathSize exp_neg_x) noexcept
 {
   if (x < 49)
   {
@@ -230,7 +230,7 @@ inline Ffmc ffmc_2000(const double x,
   constexpr auto e = -5.512e+20;
   return ffmc_from_moisture(a + b * x + c * x_cu + d / ln_x + e * exp_neg_x);
 }
-inline Ffmc ffmc_0600_high(const double x) noexcept
+inline Ffmc ffmc_0600_high(const MathSize x) noexcept
 {
   // default: for unknown or RH > 87
   constexpr auto a = 14.89281073;
@@ -239,7 +239,7 @@ inline Ffmc ffmc_0600_high(const double x) noexcept
   constexpr auto d = 2.390534289;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0700_high(const double x) noexcept
+inline Ffmc ffmc_0700_high(const MathSize x) noexcept
 {
   // default: for unknown or RH > 77
   constexpr auto a = 12.52268635;
@@ -248,7 +248,7 @@ inline Ffmc ffmc_0700_high(const double x) noexcept
   constexpr auto d = 2.26945513;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0800_high(const double x) noexcept
+inline Ffmc ffmc_0800_high(const MathSize x) noexcept
 {
   // default: for unknown or RH > 67
   constexpr auto a = 10.21004191;
@@ -257,7 +257,7 @@ inline Ffmc ffmc_0800_high(const double x) noexcept
   constexpr auto d = 2.154869886;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0900_high(const double x) noexcept
+inline Ffmc ffmc_0900_high(const MathSize x) noexcept
 {
   // default: for unknown or RH > 62
   constexpr auto a = 9.099751897;
@@ -266,7 +266,7 @@ inline Ffmc ffmc_0900_high(const double x) noexcept
   constexpr auto d = 2.288739471;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_1000_high(const double x) noexcept
+inline Ffmc ffmc_1000_high(const MathSize x) noexcept
 {
   // default: for unknown or RH > 57
   constexpr auto a = 7.891852885;
@@ -275,7 +275,7 @@ inline Ffmc ffmc_1000_high(const double x) noexcept
   constexpr auto d = 2.538559055;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_1100_high(const double ln_x, const double ln_x_sq) noexcept
+inline Ffmc ffmc_1100_high(const MathSize ln_x, const MathSize ln_x_sq) noexcept
 {
   // default: for unknown or RH > 54.5
   constexpr auto a = 7.934004974;
@@ -285,7 +285,7 @@ inline Ffmc ffmc_1100_high(const double ln_x, const double ln_x_sq) noexcept
   constexpr auto e = 0.590134367;
   return ffmc_from_moisture((a + c * ln_x + e * ln_x_sq) / (1 + b * ln_x + d * ln_x_sq));
 }
-inline Ffmc ffmc_0600_med(const double x) noexcept
+inline Ffmc ffmc_0600_med(const MathSize x) noexcept
 {
   // default: 68 <= RH <= 87
   constexpr auto a = 11.80584752;
@@ -294,7 +294,7 @@ inline Ffmc ffmc_0600_med(const double x) noexcept
   constexpr auto d = 2.412647414;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0700_med(const double x) noexcept
+inline Ffmc ffmc_0700_med(const MathSize x) noexcept
 {
   // default: 58 <= RH <= 77
   constexpr auto a = 10.62087345;
@@ -303,7 +303,7 @@ inline Ffmc ffmc_0700_med(const double x) noexcept
   constexpr auto d = 2.143231971;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0800_med(const double x) noexcept
+inline Ffmc ffmc_0800_med(const MathSize x) noexcept
 {
   // default: 48 <= RH <= 67
   constexpr auto a = 9.179219105;
@@ -312,7 +312,7 @@ inline Ffmc ffmc_0800_med(const double x) noexcept
   constexpr auto d = 1.946001003;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0900_med(const double x) noexcept
+inline Ffmc ffmc_0900_med(const MathSize x) noexcept
 {
   // default: 43 <= RH <= 62
   constexpr auto a = 6.381382418;
@@ -321,7 +321,7 @@ inline Ffmc ffmc_0900_med(const double x) noexcept
   constexpr auto d = 2.000706808;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_1000_med(const double x) noexcept
+inline Ffmc ffmc_1000_med(const MathSize x) noexcept
 {
   // default: 38 <= RH <= 57
   constexpr auto a = 3.497497088;
@@ -330,7 +330,7 @@ inline Ffmc ffmc_1000_med(const double x) noexcept
   constexpr auto d = 2.010941812;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_1100_med(const double x) noexcept
+inline Ffmc ffmc_1100_med(const MathSize x) noexcept
 {
   // default: 35.5 <= RH <= 54.5
   constexpr auto a = 0.514536459;
@@ -339,7 +339,7 @@ inline Ffmc ffmc_1100_med(const double x) noexcept
   constexpr auto d = 2.149631748;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0600_low(const double x) noexcept
+inline Ffmc ffmc_0600_low(const MathSize x) noexcept
 {
   // default: RH < 68
   constexpr auto a = 6.966628145;
@@ -348,7 +348,7 @@ inline Ffmc ffmc_0600_low(const double x) noexcept
   constexpr auto d = 1.748892433;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0700_low(const double x) noexcept
+inline Ffmc ffmc_0700_low(const MathSize x) noexcept
 {
   // default: RH < 58
   constexpr auto a = 6.221403215;
@@ -357,7 +357,7 @@ inline Ffmc ffmc_0700_low(const double x) noexcept
   constexpr auto d = 1.812026562;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0800_low(const double x) noexcept
+inline Ffmc ffmc_0800_low(const MathSize x) noexcept
 {
   // default: RH < 48
   constexpr auto a = 5.454482668;
@@ -366,7 +366,7 @@ inline Ffmc ffmc_0800_low(const double x) noexcept
   constexpr auto d = 1.896023728;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_0900_low(const double x) noexcept
+inline Ffmc ffmc_0900_low(const MathSize x) noexcept
 {
   // default: RH < 43
   constexpr auto a = 3.966946509;
@@ -375,7 +375,7 @@ inline Ffmc ffmc_0900_low(const double x) noexcept
   constexpr auto d = 1.814962092;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_1000_low(const double x) noexcept
+inline Ffmc ffmc_1000_low(const MathSize x) noexcept
 {
   // default: RH < 38
   constexpr auto a = 2.509991705;
@@ -384,7 +384,7 @@ inline Ffmc ffmc_1000_low(const double x) noexcept
   constexpr auto d = 1.710574764;
   return ffmc_from_moisture(a + b * exp(-0.5 * pow(log(x / c) / d, 2)));
 }
-inline Ffmc ffmc_1100_low(const double ln_x, const double ln_x_sq) noexcept
+inline Ffmc ffmc_1100_low(const MathSize ln_x, const MathSize ln_x_sq) noexcept
 {
   // default: for RH < 35.5
   constexpr auto a = 1.291826916;
@@ -417,7 +417,7 @@ static const FwiWeather* make_wx(const FwiWeather& wx_wind,
                                  const Ffmc& ffmc,
                                  const int hour)
 {
-  return make_wx(Speed(wx_wind.wind().speed().asDouble() * wind_speed_adjustment(hour)),
+  return make_wx(Speed(wx_wind.wind().speed().asValue() * wind_speed_adjustment(hour)),
                  wx,
                  ffmc,
                  hour);
@@ -486,10 +486,10 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
     const auto at_1100_high = ffmc_1100_high(ln_x, ln_x_sq);
     const auto at_1100_med = ffmc_1100_med(x);
     const auto at_1100_low = ffmc_1100_low(ln_x, ln_x_sq);
-    const auto for1200 = at_1200.asDouble();
-    const auto for1100_high = at_1100_high.asDouble();
-    const auto for1100_med = at_1100_med.asDouble();
-    const auto for1100_low = at_1100_low.asDouble();
+    const auto for1200 = at_1200.asValue();
+    const auto for1100_high = at_1100_high.asValue();
+    const auto for1100_med = at_1100_med.asValue();
+    const auto for1100_low = at_1100_low.asValue();
     const auto diff_high = abs(for1200 - for1100_high);
     const auto diff_med = abs(for1200 - for1100_med);
     const auto diff_low = abs(for1200 - for1100_low);
@@ -533,12 +533,12 @@ unique_ptr<vector<const FwiWeather*>> make_vector(map<Day, FwiWeather> data)
   {
     // use first day's weather for min date instead of all 0's
     const auto& wx = (day == min_date ? data.at(day + 1) : data.at(day));
-    const auto ffmc_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->ffmc().asDouble();
-    const auto ffmc_at_2000 = r->at(util::time_index(day, 20, min_date))->ffmc().asDouble();
+    const auto ffmc_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->ffmc().asValue();
+    const auto ffmc_at_2000 = r->at(util::time_index(day, 20, min_date))->ffmc().asValue();
     // need linear interpolation between 2000 and 0600
     const auto ffmc_slope = (ffmc_at_0600 - ffmc_at_2000) / 10.0;
-    const auto wind_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->wind().speed().asDouble();
-    const auto wind_at_2000 = r->at(util::time_index(day, 20, min_date))->wind().speed().asDouble();
+    const auto wind_at_0600 = r->at(util::time_index(day + 1, 6, min_date))->wind().speed().asValue();
+    const auto wind_at_2000 = r->at(util::time_index(day, 20, min_date))->wind().speed().asValue();
     // need linear interpolation between 2000 and 0600
     const auto wind_slope = (wind_at_0600 - wind_at_2000) / 10.0;
     const auto add_wx =
