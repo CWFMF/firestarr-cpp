@@ -72,7 +72,7 @@ public:
    * \param value Direction to use
    * \param is_radians Whether the given direction is in radians (as opposed to degrees)
    */
-  constexpr Direction(const double value, const bool is_radians) noexcept
+  constexpr Direction(const MathSize value, const bool is_radians) noexcept
     : Index(is_radians ? util::to_degrees(value) : value)
   {
   }
@@ -102,7 +102,7 @@ public:
    * \brief Direction as radians, where 0 is North and values increase clockwise
    * \return Direction as radians, where 0 is North and values increase clockwise
    */
-  [[nodiscard]] constexpr double asRadians() const
+  [[nodiscard]] constexpr MathSize asRadians() const
   {
     return util::to_radians(asDegrees());
   }
@@ -110,15 +110,15 @@ public:
    * \brief Direction as degrees, where 0 is North and values increase clockwise
    * \return Direction as degrees, where 0 is North and values increase clockwise
    */
-  [[nodiscard]] constexpr double asDegrees() const
+  [[nodiscard]] constexpr MathSize asDegrees() const
   {
-    return asDouble();
+    return asValue();
   }
   /**
    * \brief Heading (opposite of this direction)
    * \return Heading (opposite of this direction)
    */
-  [[nodiscard]] constexpr double heading() const
+  [[nodiscard]] constexpr MathSize heading() const
   {
     return util::to_heading(asRadians());
   }
@@ -153,8 +153,8 @@ public:
    * \param speed Speed of wind
    */
   Wind(const Direction& direction, const Speed speed) noexcept
-    : wsv_x_(speed.asDouble() * _sin(direction.heading())),
-      wsv_y_(speed.asDouble() * _cos(direction.heading())),
+    : wsv_x_(speed.asValue() * _sin(direction.heading())),
+      wsv_y_(speed.asValue() * _cos(direction.heading())),
       direction_(direction),
       speed_(speed)
   {
@@ -201,7 +201,7 @@ public:
    * \brief Direction wind is going towards
    * \return Direction wind is going towards
    */
-  [[nodiscard]] constexpr double heading() const noexcept
+  [[nodiscard]] constexpr MathSize heading() const noexcept
   {
     return direction_.heading();
   }
@@ -209,7 +209,7 @@ public:
    * \brief X component of wind vector (km/h)
    * \return X component of wind vector (km/h)
    */
-  [[nodiscard]] constexpr double wsvX() const noexcept
+  [[nodiscard]] constexpr MathSize wsvX() const noexcept
   {
     return wsv_x_;
   }
@@ -217,7 +217,7 @@ public:
    * \brief Y component of wind vector (km/h)
    * \return Y component of wind vector (km/h)
    */
-  [[nodiscard]] constexpr double wsvY() const noexcept
+  [[nodiscard]] constexpr MathSize wsvY() const noexcept
   {
     return wsv_y_;
   }
@@ -260,11 +260,11 @@ private:
   /**
    * \brief Wind speed vector in X direction (East is positive)
    */
-  double wsv_x_;
+  MathSize wsv_x_;
   /**
    * \brief Wind speed vector in Y direction (North is positive)
    */
-  double wsv_y_;
+  MathSize wsv_y_;
   /**
    * \brief Direction (degrees or radians, N is 0)
    */
