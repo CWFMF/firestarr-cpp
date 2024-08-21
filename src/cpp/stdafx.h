@@ -176,13 +176,21 @@ using IntensitySize = uint16_t;
 /**
  * \brief Type used for storing distances within cells
  */
-using DistanceSize = _Float16;
+// using DistanceSize = _Float16;
+using DistanceSize = double;
 /**
  * \brief Type used for storing locations within cells
  */
 // FIX: results in "Invalid fuel type in fuel map"
 // using InnerSize = _Float16;
+// using InnerSize = float;
 using InnerSize = double;
+/**
+ * \brief Type used for storing locations in environment
+ */
+using XYSize = double;
+// using InnerSize = float;
+// using InnerSize = double;
 /**
  * \brief Type used for probability thresholds
  */
