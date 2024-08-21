@@ -19,54 +19,64 @@ constexpr InnerSize M_0_5 = static_cast<InnerSize>(0.5) - DIST_22_5;
 // not sure what's going on with this and wondering if it doesn't keep number exactly
 // shouldn't be any way to be further than twice the entire width of the area
 static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
-static const InnerPos INVALID_POSITION{};
-static const pair<DistanceSize, InnerPos> INVALID_PAIR{INVALID_DISTANCE, {}};
-static const Idx INVALID_LOCATION = INVALID_PAIR.second.x();
+static const XYPos INVALID_XY_POSITION{};
+static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, {}};
+static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.x();
+static const InnerPos INVALID_INNER_POSITION{};
+static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
+static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
 #ifdef DEBUG_POINTS
-inline void
-assert_all_equal(
+void
+CellPoints::assert_all_equal(
   const CellPoints::array_dist_pts& pts,
-  const InnerSize x,
-  const InnerSize y
-)
+  const XYSize x,
+  const XYSize y
+) const
+{
+  const auto x0 = static_cast<InnerSize>(x - cell_x_);
+  const auto y0 = static_cast<InnerSize>(y - cell_y_);
+  assert_all_equal(pts, x0, y0);
+}
+
+void
+CellPoints::assert_all_equal(
+  const CellPoints::array_dist_pts& pts,
+  const InnerSize x0,
+  const InnerSize y0
+) const
 {
   for (size_t i = 0; i < pts.second.size(); ++i)
   {
-    logging::check_equal(pts.second[i].x(), x, "point x");
-    logging::check_equal(pts.second[i].y(), y, "point y");
+    logging::check_equal(pts.second[i].x(), x0, "point x");
+    logging::check_equal(pts.second[i].y(), y0, "point y");
   }
 }
 
-inline void
-assert_all_invalid(
+void
+CellPoints::assert_all_invalid(
   const CellPoints::array_dist_pts& pts
-)
+) const
 {
   for (size_t i = 0; i < pts.first.size(); ++i)
   {
     logging::check_equal(INVALID_DISTANCE, pts.first[i], "distances");
   }
-  assert_all_equal(pts, INVALID_LOCATION, INVALID_LOCATION);
+  assert_all_equal(pts, INVALID_INNER_LOCATION, INVALID_INNER_LOCATION);
 }
 #endif
-set<InnerPos>
+set<XYPos>
 CellPoints::unique() const noexcept
 {
   if (pts_dirty_)
   {
     pts_unique_ = {};
-    for (size_t i = 0; i < pts_.first.size(); ++i)
+    // if any point is invalid then they all have to be
+    if (INVALID_DISTANCE != pts_.first[0])
     {
-      if (INVALID_DISTANCE != pts_.first[i])
+      for (size_t i = 0; i < pts_.first.size(); ++i)
       {
         const auto& p = pts_.second[i];
-#ifdef DEBUG_POINTS
-        const Location loc{cell_y_, cell_x_};
-        const Location loc1{static_cast<Idx>(p.y()), static_cast<Idx>(p.x())};
-        logging::check_equal(loc1.column(), loc.column(), "column");
-        logging::check_equal(loc1.row(), loc.row(), "row");
-#endif
-        pts_unique_.emplace(p);
+        pts_unique_.emplace(p.x() + cell_x_, p.y() + cell_y_);
       }
     }
 #ifdef DEBUG_POINTS
@@ -92,14 +102,14 @@ CellPoints::CellPoints(
     src_(DIRECTION_NONE)
 {
   std::fill(pts_.first.begin(), pts_.first.end(), INVALID_DISTANCE);
-  std::fill(pts_.second.begin(), pts_.second.end(), INVALID_POSITION);
+  std::fill(pts_.second.begin(), pts_.second.end(), INVALID_INNER_POSITION);
 #ifdef DEBUG_POINTS
   assert_all_invalid(pts_);
 #endif
 }
 
 CellPoints::CellPoints() noexcept
-  : CellPoints(INVALID_LOCATION, INVALID_LOCATION)
+  : CellPoints(INVALID_XY_LOCATION, INVALID_XY_LOCATION)
 {
 #ifdef DEBUG_POINTS
   // already done but check again since debugging
@@ -131,8 +141,8 @@ CellPoints::CellPoints(
 }
 
 CellPoints::CellPoints(
-  const InnerSize x,
-  const InnerSize y
+  const XYSize x,
+  const XYSize y
 ) noexcept
   : CellPoints(static_cast<Idx>(x), static_cast<Idx>(y))
 {
@@ -147,8 +157,8 @@ CellPoints::CellPoints(
 
 CellPoints&
 CellPoints::insert(
-  const InnerSize x,
-  const InnerSize y
+  const XYSize x,
+  const XYSize y
 ) noexcept
 {
 #ifdef DEBUG_POINTS
@@ -178,7 +188,7 @@ CellPoints::insert(
 }
 
 CellPoints::CellPoints(
-  const InnerPos& p
+  const XYPos& p
 ) noexcept
   : CellPoints(p.x(), p.y())
 {
@@ -258,28 +268,11 @@ constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
 
 CellPoints::array_dists
 CellPoints::find_distances(
-  const InnerSize p_x,
-  const InnerSize p_y
+  const InnerPos& p
 ) const noexcept
 {
-#ifdef DEBUG_GRIDS
-  logging::check_fatal(
-    p_y < 0 || p_y >= MAX_ROWS,
-    "p_y %f is out of bounds (%f, %f)",
-    p_y,
-    0,
-    MAX_ROWS
-  );
-  logging::check_fatal(
-    p_x < 0 || p_x >= MAX_COLUMNS,
-    "p_x %f is out of bounds (%f, %f)",
-    p_x,
-    0,
-    MAX_COLUMNS
-  );
-#endif
-  const auto x = p_x - cell_x_;
-  const auto y = p_y - cell_y_;
+  const auto x = p.x();
+  const auto y = p.y();
 #ifdef DEBUG_GRIDS
   logging::check_fatal(x < 0 || x > 1, "x %f is out of cell (%f, %f)", x, 0, 1);
   logging::check_fatal(y < 0 || y > 1, "y %f is out of cell (%f, %f)", y, 0, 1);
@@ -295,15 +288,12 @@ CellPoints::find_distances(
     d[i] = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
   }
   return d;
-#undef DISTANCE_1D
-#undef DISTANCE
-#undef dist
 }
 
 CellPoints&
 CellPoints::insert_(
-  const InnerSize x,
-  const InnerSize y
+  const XYSize x,
+  const XYSize y
 ) noexcept
 {
 #ifdef DEBUG_POINTS
@@ -324,7 +314,10 @@ CellPoints::insert_(
   );
   logging::check_fatal(y < 0 || y >= MAX_ROWS, "y %f is out of bounds (%f, %f)", y, 0, MAX_ROWS);
 #endif
-  auto dists = find_distances(x, y);
+  const auto x0 = static_cast<InnerSize>(x - cell_x_);
+  const auto y0 = static_cast<InnerSize>(y - cell_y_);
+  const auto p = InnerPos(x0, y0);
+  auto dists = find_distances(p);
   for (size_t i = 0; i < dists.size(); ++i)
   {
     const auto& d = dists[i];
@@ -333,13 +326,15 @@ CellPoints::insert_(
     if (d < p_d)
     {
       p_d = d;
-      p_pt = InnerPos(x, y);
+      p_pt = p;
       // only mark as dirty if actually changing a value
       pts_dirty_ = true;
     }
   }
   return *this;
 }
+
+#undef D_PTS
 
 void
 CellPoints::add_source(
@@ -377,22 +372,22 @@ CellPoints::merge(
   cell_x_ = min(cell_x_, rhs.cell_x_);
   cell_y_ = min(cell_y_, rhs.cell_y_);
 #ifdef DEBUG_POINTS
-  if (INVALID_LOCATION == rhs.cell_x_)
+  if (INVALID_XY_LOCATION == rhs.cell_x_)
   {
     logging::check_equal(cell_x_, prev_x, "orig cell_x_");
     logging::check_equal(cell_y_, prev_y, "orig cell_y_");
   }
-  if (INVALID_LOCATION == rhs.cell_y_)
+  if (INVALID_XY_LOCATION == rhs.cell_y_)
   {
     logging::check_equal(cell_x_, prev_x, "orig cell_x_");
     logging::check_equal(cell_y_, prev_y, "orig cell_y_");
   }
-  if (INVALID_LOCATION == prev_x)
+  if (INVALID_XY_LOCATION == prev_x)
   {
     logging::check_equal(cell_x_, rhs.cell_x_, "orig cell_x_");
     logging::check_equal(cell_y_, rhs.cell_y_, "orig cell_y_");
   }
-  if (INVALID_LOCATION == prev_y)
+  if (INVALID_XY_LOCATION == prev_y)
   {
     logging::check_equal(cell_x_, rhs.cell_x_, "orig cell_x_");
     logging::check_equal(cell_y_, rhs.cell_y_, "orig cell_y_");
@@ -642,21 +637,21 @@ CellPoints::is_invalid() const
 #ifdef DEBUG_POINTS
   // if one is invalid then they both should be
   logging::check_equal(
-    cell_x_ == INVALID_LOCATION,
-    cell_y_ == INVALID_LOCATION,
+    cell_x_ == INVALID_XY_LOCATION,
+    cell_y_ == INVALID_XY_LOCATION,
     "CellPoints Idx is invalid"
   );
   // if invalid then no points should be in list
-  if (cell_x_ == INVALID_LOCATION)
+  if (cell_x_ == INVALID_XY_LOCATION)
   {
     assert_all_invalid(pts_);
   }
 #endif
   logging::check_fatal(
-    cell_x_ == INVALID_LOCATION,
+    cell_x_ == INVALID_XY_LOCATION,
     "CellPoints should always be initialized with some Location"
   );
-  return cell_x_ == INVALID_LOCATION;
+  return cell_x_ == INVALID_XY_LOCATION;
 }
 #endif
 [[nodiscard]] Location
@@ -705,23 +700,23 @@ CellPointsMap::emplace(
   CellPoints& cell_pts1 = map_[location];
   logging::check_equal(cell_pts.cell_x_, cell_pts1.cell_x_, "cell_x_ lookup");
   logging::check_equal(cell_pts.cell_y_, cell_pts1.cell_y_, "cell_y_ lookup");
-  logging::check_fatal(INVALID_LOCATION == cell_pts.cell_x_, "CellPoints has invalid cell_x_");
-  logging::check_fatal(INVALID_LOCATION == cell_pts.cell_y_, "CellPoints has invalid cell_y_");
+  logging::check_fatal(INVALID_XY_LOCATION == cell_pts.cell_x_, "CellPoints has invalid cell_x_");
+  logging::check_fatal(INVALID_XY_LOCATION == cell_pts.cell_y_, "CellPoints has invalid cell_y_");
 #endif
 }
 
 CellPoints&
 CellPointsMap::insert(
-  const InnerSize x,
-  const InnerSize y
+  const XYSize x,
+  const XYSize y
 ) noexcept
 {
   const Location location{static_cast<Idx>(y), static_cast<Idx>(x)};
   auto e = map_.try_emplace(location, x, y);
   CellPoints& cell_pts = e.first->second;
 #ifdef DEBUG_POINTS
-  logging::check_fatal(INVALID_LOCATION == cell_pts.cell_x_, "CellPoints has invalid cell_x_");
-  logging::check_fatal(INVALID_LOCATION == cell_pts.cell_y_, "CellPoints has invalid cell_y_");
+  logging::check_fatal(INVALID_XY_LOCATION == cell_pts.cell_x_, "CellPoints has invalid cell_x_");
+  logging::check_fatal(INVALID_XY_LOCATION == cell_pts.cell_y_, "CellPoints has invalid cell_y_");
 #endif
   if (!e.second)
   {
@@ -834,10 +829,10 @@ CellPointsMap::remove_if(
 #endif
 }
 
-set<InnerPos>
+set<XYPos>
 CellPointsMap::unique() const noexcept
 {
-  set<InnerPos> r{};
+  set<XYPos> r{};
   for (const auto& kv : map_)
   {
     const auto u = kv.second.unique();
@@ -922,7 +917,7 @@ CellPointsMap::calculate_spread(
   const auto u = cell_pts.unique();
   logging::check_fatal(u.empty(), "No points after spread");
   size_t total = 0;
-  set<InnerPos> u0{};
+  set<XYPos> u0{};
   for (const auto& kv : cell_pts.map_)
   {
     const auto loc = kv.first;

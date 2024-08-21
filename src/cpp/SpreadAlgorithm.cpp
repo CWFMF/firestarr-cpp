@@ -66,8 +66,8 @@ OriginalSpreadAlgorithm::calculate_offsets(
     const auto ros_cell = ros / cell_size_;
     // spreading, so figure out offset from current point
     offsets.emplace_back(
-      static_cast<InnerSize>(ros_cell * sin(direction)),
-      static_cast<InnerSize>(ros_cell * cos(direction))
+      static_cast<DistanceSize>(ros_cell * sin(direction)),
+      static_cast<DistanceSize>(ros_cell * cos(direction))
     );
     return true;
   };
@@ -172,8 +172,8 @@ WidestEllipseAlgorithm::calculate_offsets(
     const auto ros_cell = ros / cell_size_;
     // spreading, so figure out offset from current point
     offsets.emplace_back(
-      static_cast<InnerSize>(ros_cell * sin(direction)),
-      static_cast<InnerSize>(ros_cell * cos(direction))
+      static_cast<DistanceSize>(ros_cell * sin(direction)),
+      static_cast<DistanceSize>(ros_cell * cos(direction))
     );
 #ifdef DEBUG_POINTS
     const auto s1 = offsets.size();
