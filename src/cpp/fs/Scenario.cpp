@@ -738,7 +738,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   points_.calculate_spread(*this, spread_info_, duration, to_spread, unburnable_);
 #ifdef DEBUG_POINTS
   logging::check_fatal(points_.unique().empty(), "points_.unique().empty()");
-  map<Location, set<InnerPos>> m0{};
+  map<Location, set<XYPos>> m0{};
   for (const auto& kv : points_.map_)
   {
     m0.emplace(kv.first, kv.second.unique());
@@ -747,7 +747,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   logging::check_fatal(m0.empty(), "No points");
 #endif
 #ifdef DEBUG_POINTS
-  map<Location, set<InnerPos>> m1{};
+  map<Location, set<XYPos>> m1{};
   for (const auto& kv : points_.map_)
   {
     m1.emplace(kv.first, kv.second.unique());

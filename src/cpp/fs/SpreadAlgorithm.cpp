@@ -53,8 +53,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     const auto ros_cell = ros / cell_size_;
     // spreading, so figure out offset from current point
     offsets.emplace_back(
-      static_cast<InnerSize>(ros_cell * sin(direction)),
-      static_cast<InnerSize>(ros_cell * cos(direction))
+      static_cast<DistanceSize>(ros_cell * sin(direction)),
+      static_cast<DistanceSize>(ros_cell * cos(direction))
     );
     return true;
   };
@@ -156,8 +156,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     const auto ros_cell = ros / cell_size_;
     // spreading, so figure out offset from current point
     offsets.emplace_back(
-      static_cast<InnerSize>(ros_cell * sin(direction)),
-      static_cast<InnerSize>(ros_cell * cos(direction))
+      static_cast<DistanceSize>(ros_cell * sin(direction)),
+      static_cast<DistanceSize>(ros_cell * cos(direction))
     );
 #ifdef DEBUG_POINTS
     const auto s1 = offsets.size();
