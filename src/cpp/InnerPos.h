@@ -11,18 +11,18 @@
 namespace fs
 {
 using topo::Location;
-template <int XMin, int XMax, int YMin, int YMax>
+template <class S, int XMin, int XMax, int YMin, int YMax>
 class BoundedPoint
 {
 protected:
-  using class_type = BoundedPoint<XMin, XMax, YMin, YMax>;
+  using class_type = BoundedPoint<S, XMin, XMax, YMin, YMax>;
   static constexpr auto INVALID_X = XMin - 1;
   static constexpr auto INVALID_Y = YMin - 1;
 public:
   /**
    * \brief X direction (column)
    */
-  inline constexpr InnerSize
+  inline constexpr S
   x() const noexcept
   {
     return x_;
@@ -30,14 +30,14 @@ public:
   /**
    * \brief Y direction (row)
    */
-  inline constexpr InnerSize
+  inline constexpr S
   y() const noexcept
   {
     return y_;
   }
   constexpr BoundedPoint(
-    const InnerSize x,
-    const InnerSize y
+    const S x,
+    const S y
   ) noexcept
     : x_(x),
       y_(y)
@@ -153,20 +153,20 @@ public:
     return static_cast<T>(class_type(x() + o.x(), y() + o.y()));
   }
 private:
-  InnerSize x_;
-  InnerSize y_;
+  S x_;
+  S y_;
 };
 /**
  * \brief Offset from a position
  */
-class Offset : public BoundedPoint<-1, 1, -1, 1>
+class Offset : public BoundedPoint<DistanceSize, -1, 1, -1, 1>
 {
 public:
   /**
    * \brief Collection of Offsets
    */
   using OffsetSet = vector<Offset>;
-  using BoundedPoint<-1, 1, -1, 1>::BoundedPoint;
+  using BoundedPoint<DistanceSize, -1, 1, -1, 1>::BoundedPoint;
 };
 using OffsetSet = Offset::OffsetSet;
 // define multiplication in other order since equivalent
@@ -185,9 +185,16 @@ namespace fs::sim
 /**
  * \brief The position within a Cell that a spreading point has.
  */
-class InnerPos : public BoundedPoint<0, MAX_COLUMNS, 0, MAX_ROWS>
+class InnerPos : public BoundedPoint<InnerSize, 0, 1, 0, 1>
 {
-  using BoundedPoint<0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
+  using BoundedPoint<InnerSize, 0, 1, 0, 1>::BoundedPoint;
+};
+/**
+ * \brief The position within the Environment that a spreading point has.
+ */
+class XYPos : public BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>
+{
+  using BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
 };
 }
 #endif

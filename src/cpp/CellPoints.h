@@ -54,9 +54,9 @@ public:
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
   //   CellPoints(const vector<InnerPos>& pts) noexcept;
-  CellPoints(const InnerSize x, const InnerSize y) noexcept;
+  CellPoints(const XYSize x, const XYSize y) noexcept;
   CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
-  CellPoints(const InnerPos& p) noexcept;
+  CellPoints(const XYPos& p) noexcept;
   /**
    * \brief Move constructor
    * \param rhs CellPoints to move from
@@ -82,7 +82,7 @@ public:
   CellPoints&
   operator=(const CellPoints& rhs) noexcept;
   CellPoints&
-  insert(const InnerSize x, const InnerSize y) noexcept;
+  insert(const XYSize x, const XYSize y) noexcept;
   CellPoints&
   insert(const InnerPos& p) noexcept;
   //   template <class _ForwardIterator>
@@ -109,7 +109,7 @@ public:
   }
   CellPoints&
   merge(const CellPoints& rhs);
-  set<InnerPos>
+  set<XYPos>
   unique() const noexcept;
   bool
   operator<(const CellPoints& rhs) const noexcept;
@@ -129,17 +129,23 @@ public:
 #ifdef DEBUG_POINTS
   bool
   is_invalid() const;
+  void
+  assert_all_equal(const array_dist_pts& pts, const InnerSize x0, const InnerSize y0) const;
+  void
+  assert_all_equal(const array_dist_pts& pts, const XYSize x, const XYSize y) const;
+  void
+  assert_all_invalid(const array_dist_pts& pts) const;
 #endif
   bool
   empty() const;
   friend CellPointsMap;
 private:
   array_dists
-  find_distances(const InnerSize p_x, const InnerSize p_y) const noexcept;
+  find_distances(const InnerPos& p) const noexcept;
   CellPoints&
-  insert_(const InnerSize x, const InnerSize y) noexcept;
+  insert_(const XYSize x, const XYSize y) noexcept;
   pair<array_dists, array_pts> pts_;
-  mutable set<InnerPos> pts_unique_;
+  mutable set<XYPos> pts_unique_;
   // FIX: no point in atomic if not parallel, but need mutex if it is
   mutable bool pts_dirty_;
   // use Idx instead of Location so it can be negative (invalid)
@@ -158,10 +164,10 @@ public:
   void
   emplace(const CellPoints& pts);
   CellPoints&
-  insert(const InnerSize x, const InnerSize y) noexcept;
+  insert(const XYSize x, const XYSize y) noexcept;
   CellPointsMap&
   merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
-  set<InnerPos>
+  set<XYPos>
   unique() const noexcept;
   // apply function to each CellPoints within and remove matches
   void

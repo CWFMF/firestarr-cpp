@@ -65,7 +65,7 @@ public:
   ~LogPoints();
   LogPoints(const string dir_out, bool do_log, size_t id, DurationSize start_time);
   void
-  log_point(size_t step, const char stage, DurationSize time, InnerSize x, InnerSize y);
+  log_point(size_t step, const char stage, const DurationSize time, const XYSize x, const XYSize y);
   bool
   isLogging() const;
   template <class V>
@@ -73,8 +73,8 @@ public:
   log_points(
     size_t step,
     const char stage,
-    DurationSize time,
-    V points
+    const DurationSize time,
+    const V points
   )
   {
     // don't loop if not logging
@@ -159,9 +159,9 @@ void
 LogPoints::log_point(
   size_t step,
   const char stage,
-  DurationSize time,
-  InnerSize x,
-  InnerSize y
+  const DurationSize time,
+  const XYSize x,
+  const XYSize y
 )
 {
   if (!isLogging())
@@ -1131,7 +1131,7 @@ Scenario::scheduleFireSpread(
   points_.calculate_spread(*this, spread_info_, duration, to_spread, *unburnable_);
 #ifdef DEBUG_POINTS
   logging::check_fatal(points_.unique().empty(), "points_.unique().empty()");
-  map<Location, set<InnerPos>> m0{};
+  map<Location, set<XYPos>> m0{};
   for (const auto& kv : points_.map_)
   {
     m0.emplace(kv.first, kv.second.unique());
@@ -1140,7 +1140,7 @@ Scenario::scheduleFireSpread(
   logging::check_fatal(m0.empty(), "No points");
 #endif
 #ifdef DEBUG_POINTS
-  map<Location, set<InnerPos>> m1{};
+  map<Location, set<XYPos>> m1{};
   for (const auto& kv : points_.map_)
   {
     m1.emplace(kv.first, kv.second.unique());
