@@ -516,7 +516,7 @@ CellPointsMap apply_offsets_spreadkey(
         const Location from_xy{static_cast<Idx>(y), static_cast<Idx>(x)};
         auto seek_cell_pts = r1.map_.find(from_xy);
 #endif
-        CellPoints& cell_pts = r1.insert(x, y);
+        CellPoints& cell_pts = r1.insert(src, x, y);
 #ifdef DEBUG_POINTS
         if (r1.map_.end() != seek_cell_pts)
         {
@@ -531,54 +531,6 @@ CellPointsMap apply_offsets_spreadkey(
           x,
           y);
 #endif
-        const Location& dst = cell_pts.location();
-#ifdef DEBUG_POINTS
-        logging::check_equal(
-          dst.column(),
-          from_xy.column(),
-          "column");
-        logging::check_equal(
-          dst.row(),
-          from_xy.row(),
-          "row");
-        logging::check_equal(
-          dst.hash(),
-          from_xy.hash(),
-          "hash");
-        CellPoints& cell_pts1 = r1.map_[dst];
-        if (r1.map_.end() != seek_cell_pts)
-        {
-          logging::check_equal(
-            &(seek_cell_pts->second),
-            &cell_pts1,
-            "cell_pts1");
-        }
-        logging::check_equal(
-          cell_pts.cell_x_,
-          cell_pts1.cell_x_,
-          "cell_x_ lookup");
-        logging::check_equal(
-          cell_pts.cell_y_,
-          cell_pts1.cell_y_,
-          "cell_y_ lookup");
-        logging::check_equal(
-          static_cast<Idx>(x),
-          dst.column(),
-          "column/x");
-        logging::check_equal(
-          static_cast<Idx>(y),
-          dst.row(),
-          "row/y");
-#endif
-        if (src != dst)
-        {
-          // we inserted a pair of (src, dst), which means we've never
-          // calculated the relativeIndex for this so add it to main map
-          cell_pts.add_source(
-            relativeIndex(
-              src,
-              dst));
-        }
       }
     }
   }
@@ -808,7 +760,22 @@ CellPoints& CellPointsMap::insert(const XYSize x, const XYSize y) noexcept
   logging::check_equal(location.row(), cell_pts.location().row(), "row");
   logging::check_equal(location.column(), cell_pts.location().column(), "column");
 #endif
-  return e.first->second;
+  return cell_pts;
+}
+CellPoints& CellPointsMap::insert(const Location& src, const XYSize x, const XYSize y) noexcept
+{
+  CellPoints& cell_pts = insert(x, y);
+  const Location& dst = cell_pts.location();
+  if (src != dst)
+  {
+    // we inserted a pair of (src, dst), which means we've never
+    // calculated the relativeIndex for this so add it to main map
+    cell_pts.add_source(
+      relativeIndex(
+        src,
+        dst));
+  }
+  return cell_pts;
 }
 CellPointsMap& CellPointsMap::merge(
   const BurnedData& unburnable,
