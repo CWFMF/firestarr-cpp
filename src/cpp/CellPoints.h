@@ -77,6 +77,7 @@ public:
   CellPointsMap();
   void emplace(const CellPoints& pts);
   CellPoints& insert(const XYSize x, const XYSize y) noexcept;
+  CellPoints& insert(const Location& src, const XYSize x, const XYSize y) noexcept;
   CellPointsMap& merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
   set<XYPos> unique() const noexcept;
   // apply function to each CellPoints within and remove matches
