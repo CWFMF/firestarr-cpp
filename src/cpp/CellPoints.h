@@ -109,7 +109,7 @@ public:
   }
   CellPoints&
   merge(const CellPoints& rhs);
-  set<XYPos>
+  const set<XYPos>&
   unique() const noexcept;
   bool
   operator<(const CellPoints& rhs) const noexcept;
@@ -144,7 +144,10 @@ private:
   find_distances(const InnerPos& p) const noexcept;
   CellPoints&
   insert_(const XYSize x, const XYSize y) noexcept;
+  // FIX: just access directly for now
+public:
   pair<array_dists, array_pts> pts_;
+private:
   mutable set<XYPos> pts_unique_;
   // FIX: no point in atomic if not parallel, but need mutex if it is
   mutable bool pts_dirty_;
