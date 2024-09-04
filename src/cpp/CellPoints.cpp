@@ -64,32 +64,21 @@ CellPoints::assert_all_invalid(
   assert_all_equal(pts, INVALID_INNER_LOCATION, INVALID_INNER_LOCATION);
 }
 #endif
-const set<XYPos>&
+set<XYPos>
 CellPoints::unique() const noexcept
 {
-  if (pts_dirty_)
+  // // if any point is invalid then they all have to be
+  if (INVALID_DISTANCE == pts_.first[0])
   {
-    // // if any point is invalid then they all have to be
-    if (INVALID_DISTANCE != pts_.first[0])
-    {
-      const auto& pts_all = std::views::transform(pts_.second, [this](const auto& p) {
-        return XYPos(p.x() + cell_x_, p.y() + cell_y_);
-      });
-      pts_unique_ = {pts_all.cbegin(), pts_all.cend()};
-    }
-    else
-    {
-      pts_unique_ = {};
-    }
-#ifdef DEBUG_POINTS
-    if (pts_unique_.empty())
-    {
-      assert_all_invalid(pts_);
-    }
-#endif
-    pts_dirty_ = false;
+    return {};
   }
-  return pts_unique_;
+  else
+  {
+    const auto& pts_all = std::views::transform(pts_.second, [this](const auto& p) {
+      return XYPos(p.x() + cell_x_, p.y() + cell_y_);
+    });
+    return {pts_all.cbegin(), pts_all.cend()};
+  }
 }
 
 CellPoints::CellPoints(
@@ -97,8 +86,6 @@ CellPoints::CellPoints(
   const Idx cell_y
 ) noexcept
   : pts_({}),
-    pts_unique_({}),
-    pts_dirty_(false),
     cell_x_(cell_x),
     cell_y_(cell_y),
     src_(DIRECTION_NONE)
@@ -329,8 +316,6 @@ CellPoints::insert_(
     {
       p_d = d;
       p_pt = p;
-      // only mark as dirty if actually changing a value
-      pts_dirty_ = true;
     }
   }
   return *this;
@@ -410,8 +395,6 @@ CellPoints::merge(
     {
       pts_.first[i] = rhs.pts_.first[i];
       pts_.second[i] = rhs.pts_.second[i];
-      // only mark as dirty if actually changing a value
-      pts_dirty_ = true;
     }
   }
   add_source(rhs.src_);
@@ -537,8 +520,6 @@ CellPoints::CellPoints(
   CellPoints&& rhs
 ) noexcept
   : pts_(std::move(rhs.pts_)),
-    pts_unique_(std::move(rhs.pts_unique_)),
-    pts_dirty_(static_cast<bool>(rhs.pts_dirty_)),
     cell_x_(rhs.cell_x_),
     cell_y_(rhs.cell_y_),
     src_(rhs.src_)
@@ -553,8 +534,6 @@ CellPoints::CellPoints(
   const CellPoints& rhs
 ) noexcept
   : pts_({}),
-    pts_unique_(rhs.pts_unique_.cbegin(), rhs.pts_unique_.cend()),
-    pts_dirty_(static_cast<bool>(rhs.pts_dirty_)),
     cell_x_(rhs.cell_x_),
     cell_y_(rhs.cell_y_),
     src_(rhs.src_)
@@ -574,8 +553,6 @@ CellPoints::operator=(
 ) noexcept
 {
   pts_ = std::move(rhs.pts_);
-  pts_unique_ = std::move(rhs.pts_unique_);
-  pts_dirty_ = static_cast<bool>(rhs.pts_dirty_);
   cell_x_ = rhs.cell_x_;
   cell_y_ = rhs.cell_y_;
   src_ = rhs.src_;
@@ -594,8 +571,6 @@ CellPoints::operator=(
 {
   std::copy(rhs.pts_.first.cbegin(), rhs.pts_.first.cend(), pts_.first.begin());
   std::copy(rhs.pts_.second.cbegin(), rhs.pts_.second.cend(), pts_.second.begin());
-  pts_unique_ = rhs.pts_unique_;
-  pts_dirty_ = static_cast<bool>(rhs.pts_dirty_);
   cell_x_ = rhs.cell_x_;
   cell_y_ = rhs.cell_y_;
   src_ = rhs.src_;
