@@ -59,9 +59,10 @@ set<XYPos> CellPoints::unique() const noexcept
   if (pts_dirty_)
   {
     pts_unique_ = {};
-    for (size_t i = 0; i < pts_.first.size(); ++i)
+    // if any point is invalid then they all have to be
+    if (INVALID_DISTANCE != pts_.first[0])
     {
-      if (INVALID_DISTANCE != pts_.first[i])
+      for (size_t i = 0; i < pts_.first.size(); ++i)
       {
         const auto& p = pts_.second[i];
         pts_unique_.emplace(p.x() + cell_x_, p.y() + cell_y_);
