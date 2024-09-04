@@ -101,7 +101,7 @@ public:
     return src_;
   }
   CellPoints& merge(const CellPoints& rhs);
-  const set<XYPos>& unique() const noexcept;
+  set<XYPos> unique() const noexcept;
   bool operator<(const CellPoints& rhs) const noexcept;
   bool operator==(const CellPoints& rhs) const noexcept;
   [[nodiscard]] Location location() const noexcept;
@@ -132,9 +132,6 @@ private:
 public:
   pair<array_dists, array_pts> pts_;
 private:
-  mutable set<XYPos> pts_unique_;
-  // FIX: no point in atomic if not parallel, but need mutex if it is
-  mutable bool pts_dirty_;
   // use Idx instead of Location so it can be negative (invalid)
   Idx cell_x_;
   Idx cell_y_;
