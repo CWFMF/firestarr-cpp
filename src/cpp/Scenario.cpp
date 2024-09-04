@@ -19,6 +19,7 @@
 #include "FuelLookup.h"
 #include "Location.h"
 #include "Cell.h"
+#include "LogPoints.h"
 
 namespace tbd::sim
 {
@@ -35,11 +36,6 @@ static atomic<size_t> COMPLETED = 0;
 static atomic<size_t> TOTAL_STEPS = 0;
 static std::mutex MUTEX_SIM_COUNTS;
 static map<size_t, size_t> SIM_COUNTS{};
-
-constexpr auto STAGE_CONDENSE = 'C';
-constexpr auto STAGE_NEW = 'N';
-constexpr auto STAGE_SPREAD = 'S';
-constexpr auto STAGE_INVALID = 'X';
 
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
@@ -60,178 +56,6 @@ void do_par(T& for_list, F fct)
     for_list.end(),
     fct);
 }
-class LogPoints
-{
-public:
-  ~LogPoints();
-  LogPoints(const string dir_out,
-            bool do_log,
-            size_t id,
-            DurationSize start_time);
-  void log_point(size_t step,
-                 const char stage,
-                 const DurationSize time,
-                 const XYSize x,
-                 const XYSize y);
-  bool isLogging() const;
-  template <class V>
-  void log_points(size_t step,
-                  const char stage,
-                  const DurationSize time,
-                  const V points)
-  {
-    // don't loop if not logging
-    if (isLogging())
-    {
-      const auto u = points.unique();
-#ifdef DEBUG_POINTS
-      logging::check_fatal(
-        u.empty(),
-        "Logging empty points");
-#endif
-      for (const auto& p : u)
-      {
-        log_point(step, stage, time, p.x(), p.y());
-      }
-    }
-#ifdef DEBUG_POINTS
-    else
-    {
-      const auto u = points.unique();
-      logging::check_fatal(
-        u.empty(),
-        "Logging empty points");
-    }
-#endif
-  };
-private:
-  size_t id_;
-  DurationSize start_time_;
-  char last_stage_;
-  size_t last_step_;
-#ifdef DEBUG_POINTS
-  DurationSize last_time_;
-#endif
-  char stage_id_[1024];
-  /**
-   * \brief FILE to write logging information about points to
-   */
-  FILE* log_points_;
-  FILE* log_stages_;
-};
-LogPoints::~LogPoints()
-{
-  if (NULL != log_points_)
-  {
-    fclose(log_points_);
-    fclose(log_stages_);
-  }
-}
-LogPoints::LogPoints(
-  const string dir_out,
-  bool do_log,
-  size_t id,
-  DurationSize start_time)
-  : id_(id),
-    start_time_(start_time),
-    last_stage_(STAGE_INVALID),
-    last_step_(std::numeric_limits<size_t>::max()),
-    stage_id_()
-{
-  if (do_log)
-  {
-    constexpr auto HEADER_STAGES = "step_id,scenario,stage,step,time";
-#ifdef LOG_POINTS_CELL
-    constexpr auto HEADER_POINTS = "step_id,column,row,x,y\n";
-#else
-    constexpr auto HEADER_POINTS = "step_id,x,y\n";
-#endif
-    char log_name[2048];
-    sxprintf(log_name, "%s/scenario_%05ld_points.txt", dir_out.c_str(), id);
-    log_points_ = fopen(log_name, "w");
-    sxprintf(log_name, "%s/scenario_%05ld_stages.txt", dir_out.c_str(), id);
-    log_stages_ = fopen(log_name, "w");
-    fprintf(log_points_, HEADER_POINTS);
-    fprintf(log_stages_, HEADER_STAGES);
-  }
-  else
-  {
-    static_assert(NULL == nullptr);
-    log_points_ = nullptr;
-    log_stages_ = nullptr;
-  }
-}
-void LogPoints::log_point(size_t step,
-                          const char stage,
-                          const DurationSize time,
-                          const XYSize x,
-                          const XYSize y)
-{
-  if (!isLogging())
-  {
-    return;
-  }
-  static const auto FMT_LOG_STAGE = "%s,%ld,%c,%ld,%f\n";
-#ifdef LOG_POINTS_CELL
-  static const auto FMT_LOG_POINT = "%s,%d,%d,%f,%f\n";
-  const auto column = static_cast<Idx>(x);
-  const auto row = static_cast<Idx>(y);
-#else
-  static const auto FMT_LOG_POINT = "%s,%f,%f\n";
-#endif
-#ifdef LOG_POINTS_RELATIVE
-  constexpr auto MID = MAX_COLUMNS / 2;
-  const auto p_x = x - MID;
-  const auto p_y = y - MID;
-  const auto t = time - start_time_;
-#else
-  const auto p_x = x;
-  const auto p_y = y;
-  const auto t = time;
-#endif
-  // time should always be the same for each step, regardless of stage
-  if (last_step_ != step || last_stage_ != stage)
-  {
-    sxprintf(stage_id_, "%ld%c%ld", id_, stage, step);
-    last_stage_ = stage;
-    last_step_ = step;
-#ifdef DEBUG_POINTS
-    last_time_ = t;
-#endif
-    fprintf(log_stages_,
-            FMT_LOG_STAGE,
-            stage_id_,
-            id_,
-            stage,
-            step,
-            t);
-#ifdef DEBUG_POINTS
-  }
-  else
-  {
-    logging::check_fatal(t != last_time_,
-                         "Expected %s to have time %f but got %f",
-                         stage_id_,
-                         last_time_,
-                         t);
-#endif
-  }
-  fprintf(log_points_,
-          FMT_LOG_POINT,
-          stage_id_,
-#ifdef LOG_POINTS_CELL
-          column,
-          row,
-#endif
-          static_cast<double>(p_x),
-          static_cast<double>(p_y));
-}
-
-bool LogPoints::isLogging() const
-{
-  return nullptr != log_points_;
-}
-
 void IObserver_deleter::operator()(IObserver* ptr) const
 {
   delete ptr;
@@ -519,7 +343,7 @@ void Scenario::evaluate(const Event& event)
       saveStats(event.time());
       break;
     case Event::NEW_FIRE:
-      log_points_->log_point(step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
+      log_point(step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       // HACK: don't do this in constructor because scenario creates this in its constructor
       points_.insert(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       if (fuel::is_null_fuel(event.cell()))
@@ -598,10 +422,10 @@ Scenario::Scenario(Model* model,
   logging::check_fatal(last_save > weather_->maxDate(),
                        "No weather for last save time %s",
                        make_timestamp(model->year(), last_save).c_str());
-  log_points_ = make_shared<LogPoints>(model_->outputDirectory(),
-                                       Settings::savePoints(),
-                                       id_,
-                                       start_time_);
+  init_log_points(model_->outputDirectory(),
+                  Settings::savePoints(),
+                  id_,
+                  start_time_);
 }
 void Scenario::saveStats(const DurationSize time) const
 {
@@ -1143,7 +967,7 @@ void Scenario::scheduleFireSpread(const Event& event)
       //                      "Expected max_intensity to be > 0 but got %f",
       //                      max_intensity);
       // HACK: just use side-effect to log and check bounds
-      log_points_->log_points(step_, STAGE_SPREAD, new_time, pts);
+      log_points(step_, STAGE_SPREAD, new_time, pts);
 #ifdef DEBUG_POINTS
       const auto loc = pts.location();
       logging::check_equal(
@@ -1207,7 +1031,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           && ((survives(new_time, for_cell, new_time - arrival_[for_cell])
                && !isSurrounded(for_cell))))
       {
-        log_points_->log_points(step_, STAGE_CONDENSE, new_time, pts);
+        log_points(step_, STAGE_CONDENSE, new_time, pts);
         const auto r = for_cell.row();
         const auto c = for_cell.column();
 #ifdef DEBUG_TEMPORARY
