@@ -50,19 +50,21 @@ void CellPoints::assert_all_invalid(const CellPoints::array_dist_pts& pts) const
   assert_all_equal(pts, INVALID_INNER_LOCATION, INVALID_INNER_LOCATION);
 }
 #endif
-set<XYPos> CellPoints::unique() const noexcept
+const set<XYPos>& CellPoints::unique() const noexcept
 {
   if (pts_dirty_)
   {
-    pts_unique_ = {};
-    // if any point is invalid then they all have to be
+    // // if any point is invalid then they all have to be
     if (INVALID_DISTANCE != pts_.first[0])
     {
-      for (size_t i = 0; i < pts_.first.size(); ++i)
-      {
-        const auto& p = pts_.second[i];
-        pts_unique_.emplace(p.x() + cell_x_, p.y() + cell_y_);
-      }
+      const auto& pts_all = std::views::transform(pts_.second, [this](const auto& p) {
+        return XYPos(p.x() + cell_x_, p.y() + cell_y_);
+      });
+      pts_unique_ = {pts_all.cbegin(), pts_all.cend()};
+    }
+    else
+    {
+      pts_unique_ = {};
     }
 #ifdef DEBUG_POINTS
     if (pts_unique_.empty())
@@ -369,7 +371,14 @@ CellPointsMap apply_offsets_spreadkey(
   {
     const Location& src = std::get<0>(pts_for_cell);
     const CellPoints& pts = std::get<1>(pts_for_cell);
-    const auto& u = pts.unique();
+    if (pts.empty())
+    {
+      continue;
+    }
+    const auto& pts_all = std::views::transform(pts.pts_.second, [&pts](const auto& p) {
+      return XYPos(p.x() + pts.cell_x_, p.y() + pts.cell_y_);
+    });
+    const set<XYPos> u{pts_all.cbegin(), pts_all.cend()};
 #ifdef DEBUG_POINTS
     const Location loc1{src.row(), src.column()};
     logging::check_equal(src.hash(), loc1.hash(), "hash");
@@ -381,6 +390,7 @@ CellPointsMap apply_offsets_spreadkey(
     );
     logging::check_fatal(u.empty(), "Should not have empty CellPoints");
 #endif
+    // unique only works if points are sorted so just make a set
     for (const auto& p : u)
     {
       // apply offsets to point
@@ -526,8 +536,8 @@ bool CellPoints::operator==(const CellPoints& rhs) const noexcept
 }
 bool CellPoints::empty() const
 {
-  // NOTE: is_invalid() should never be true if it's checking cell_x_
-  return unique().empty();
+  // NOTE: if anything is invalid then everything must be
+  return (INVALID_DISTANCE == pts_.first[0]);
 }
 #ifdef DEBUG_POINTS
 bool CellPoints::is_invalid() const
@@ -691,30 +701,6 @@ void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints
     );
   }
 #endif
-}
-set<XYPos> CellPointsMap::unique() const noexcept
-{
-  set<XYPos> r{};
-  for (const auto& kv : map_)
-  {
-    const auto u = kv.second.unique();
-#ifdef DEBUG_POINTS
-    const auto s0 = r.size();
-    const auto s1 = u.size();
-#endif
-    r.insert(u.begin(), u.end());
-#ifdef DEBUG_POINTS
-    logging::check_fatal(r.size() < s1, "Less points after insertion: (%ld vs %ld)", r.size(), s1);
-    logging::check_fatal(r.size() < s0, "Less points than inserted: (%ld vs %ld)", r.size(), s0);
-    logging::check_fatal(
-      r.size() > (s0 + s1),
-      "More points than possible after insertion: (%ld vs %ld)",
-      r.size(),
-      (s0 + s1)
-    );
-#endif
-  }
-  return r;
 }
 CellPointsMap merge_list(
   const BurnedData& unburnable,
