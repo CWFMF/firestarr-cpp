@@ -83,20 +83,6 @@ public:
     y_ = rhs.y();
     return *this;
   }
-  /**
-   * \brief Multiply by duration to get total offset over time
-   * \param duration time to multiply by
-   */
-  template <class T>
-  constexpr T after(const DurationSize duration) const noexcept
-  {
-    return static_cast<T>(class_type(x() * duration, y() * duration));
-  }
-  /**
-   * \brief Less than operator
-   * \param rhs BoundedPoint to compare to
-   * \return Whether or not this is less than the other
-   */
   bool operator<(const class_type& rhs) const noexcept
   {
     if (x() == rhs.x())
@@ -146,12 +132,6 @@ public:
   using BoundedPoint<DistanceSize, -1, 1, -1, 1>::BoundedPoint;
 };
 using OffsetSet = Offset::OffsetSet;
-// define multiplication in other order since equivalent
-template <class T>
-constexpr T after(const DurationSize duration, const T& o)
-{
-  return o.after(duration);
-}
 }
 namespace tbd::sim
 {
