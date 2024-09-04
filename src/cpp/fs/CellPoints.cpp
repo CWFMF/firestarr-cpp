@@ -348,6 +348,13 @@ CellPointsMap apply_offsets_spreadkey(
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   CellPointsMap r1{};
+  const auto all_offsets_after_duration =
+    std::views::transform(offsets, [&duration](const Offset& p) {
+      return Offset(p.x() * duration, p.y() * duration);
+    });
+  const std::set<Offset> offsets_after_duration{
+    all_offsets_after_duration.cbegin(), all_offsets_after_duration.cend()
+  };
 #ifdef DEBUG_POINTS
   logging::check_fatal(offsets.empty(), "offsets.empty()");
   const auto s0 = offsets.size();
@@ -355,32 +362,33 @@ CellPointsMap apply_offsets_spreadkey(
   logging::check_fatal(0 == s0, "Applying no offsets");
   logging::check_fatal(0 == s1, "Applying offsets to no points");
 #endif
-  // apply offsets to point
-  for (const auto& out : offsets)
+#ifdef DEBUG_POINTS
+  logging::check_fatal(cell_pts.empty(), "cell_pts.empty()");
+#endif
+  for (const auto& pts_for_cell : cell_pts)
   {
-    const auto x_o = static_cast<InnerSize>(duration * out.x());
-    const auto y_o = static_cast<InnerSize>(duration * out.y());
+    const Location& src = std::get<0>(pts_for_cell);
+    const CellPoints& pts = std::get<1>(pts_for_cell);
+    const auto& u = pts.unique();
 #ifdef DEBUG_POINTS
-    logging::check_fatal(cell_pts.empty(), "cell_pts.empty()");
+    const Location loc1{src.row(), src.column()};
+    logging::check_equal(src.hash(), loc1.hash(), "hash");
+    logging::check_fatal(
+      u.size() > NUM_DIRECTIONS,
+      "Expected less than %d unique points but have %ld",
+      NUM_DIRECTIONS,
+      u.size()
+    );
+    logging::check_fatal(u.empty(), "Should not have empty CellPoints");
 #endif
-    for (const auto& pts_for_cell : cell_pts)
+    for (const auto& p : u)
     {
-      const Location& src = std::get<0>(pts_for_cell);
-      const CellPoints& pts = std::get<1>(pts_for_cell);
-      const auto& u = pts.unique();
-#ifdef DEBUG_POINTS
-      const Location loc1{src.row(), src.column()};
-      logging::check_equal(src.hash(), loc1.hash(), "hash");
-      logging::check_fatal(
-        u.size() > NUM_DIRECTIONS,
-        "Expected less than %d unique points but have %ld",
-        NUM_DIRECTIONS,
-        u.size()
-      );
-      logging::check_fatal(u.empty(), "Should not have empty CellPoints");
-#endif
-      for (const auto& p : u)
+      // apply offsets to point
+      // should be quicker to loop over offsets in inner loop
+      for (const auto& out : offsets_after_duration)
       {
+        const auto& x_o = out.x();
+        const auto& y_o = out.y();
         // putting results in copy of offsets and returning that
         // at the end of everything, we're just adding something to every InnerSize in the set by
         // duration?
