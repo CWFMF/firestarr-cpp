@@ -134,7 +134,7 @@ public:
 #endif
       for (const auto& p : u)
       {
-        log_point(step, stage, time, p.x(), p.y());
+        log_point(step, stage, time, p.first, p.second);
       }
     }
 #ifdef DEBUG_POINTS

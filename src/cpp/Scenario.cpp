@@ -567,7 +567,7 @@ bool Scenario::isSurrounded(const Location& location) const
 }
 Cell Scenario::cell(const InnerPos& p) const noexcept
 {
-  return cell(p.y(), p.x());
+  return cell(p.second, p.first);
 }
 string Scenario::add_log(const char* format) const noexcept
 {
@@ -980,7 +980,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         "row");
       for (auto& pos : pts.unique())
       {
-        const Location loc1{static_cast<Idx>(pos.y()), static_cast<Idx>(pos.x())};
+        const Location loc1{static_cast<Idx>(pos.second), static_cast<Idx>(pos.first)};
         logging::check_equal(
           loc1.column(),
           loc.column(),
@@ -990,10 +990,10 @@ void Scenario::scheduleFireSpread(const Event& event)
           loc.row(),
           "row");
         // was doing this check after getting for_cell, so it didn't help when out of bounds
-        log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+        log_check_fatal(pos.first < 0 || pos.second < 0 || pos.first >= this->columns() || pos.second >= this->rows(),
                         "Tried to spread out of bounds to (%f, %f)",
-                        pos.x(),
-                        pos.y());
+                        pos.first,
+                        pos.second);
       }
       logging::check_equal(
         cell(kv.first).hash(),
@@ -1142,7 +1142,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     for (auto& pos : u)
     {
       const auto loc = pts.location();
-      const Location loc1{static_cast<Idx>(pos.y()), static_cast<Idx>(pos.x())};
+      const Location loc1{static_cast<Idx>(pos.second), static_cast<Idx>(pos.first)};
       logging::check_equal(
         loc1.column(),
         loc.column(),
@@ -1152,10 +1152,10 @@ void Scenario::scheduleFireSpread(const Event& event)
         loc.row(),
         "row");
       // was doing this check after getting for_cell, so it didn't help when out of bounds
-      log_check_fatal(pos.x() < 0 || pos.y() < 0 || pos.x() >= this->columns() || pos.y() >= this->rows(),
+      log_check_fatal(pos.first < 0 || pos.second < 0 || pos.first >= this->columns() || pos.second >= this->rows(),
                       "Tried to spread out of bounds to (%f, %f)",
-                      pos.x(),
-                      pos.y());
+                      pos.first,
+                      pos.second);
     }
   }
 #endif
