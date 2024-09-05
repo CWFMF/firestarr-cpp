@@ -388,8 +388,9 @@ CellPointsMap apply_offsets_spreadkey(
 #ifdef DEBUG_POINTS
         const Location from_xy{static_cast<Idx>(y), static_cast<Idx>(x)};
         auto seek_cell_pts = r1.map_.find(from_xy);
+        CellPoints& cell_pts =
 #endif
-        CellPoints& cell_pts = r1.insert(src, x, y);
+          r1.insert(src, x, y);
 #ifdef DEBUG_POINTS
         if (r1.map_.end() != seek_cell_pts)
         {
