@@ -314,14 +314,15 @@ CellPointsMap apply_offsets_spreadkey(
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   CellPointsMap r1{};
-  const auto all_offsets_after_duration = std::views::transform(
-    offsets,
+  vector<Offset> offsets_after_duration{};
+  offsets_after_duration.resize(offsets.size());
+  std::transform(
+    offsets.cbegin(),
+    offsets.cend(),
+    offsets_after_duration.begin(),
     [&duration](const Offset& p) {
       return Offset(p.first * duration, p.second * duration);
     });
-  const std::set<Offset> offsets_after_duration{
-    all_offsets_after_duration.cbegin(),
-    all_offsets_after_duration.cend()};
 #ifdef DEBUG_POINTS
   logging::check_fatal(
     offsets.empty(),
