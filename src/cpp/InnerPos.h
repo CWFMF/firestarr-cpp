@@ -19,12 +19,12 @@ public:
   /**
    * \brief X direction (column)
    */
-  inline constexpr S x() const noexcept { return x_; }
+  inline constexpr S x() const noexcept { return x_y_.first; }
   /**
    * \brief Y direction (row)
    */
-  inline constexpr S y() const noexcept { return y_; }
-  constexpr BoundedPoint(const S x, const S y) noexcept : x_(x), y_(y)
+  inline constexpr S y() const noexcept { return x_y_.second; }
+  constexpr BoundedPoint(const S x, const S y) noexcept : x_y_(x, y)
   {
 #ifdef DEBUG_GRIDS
     logging::check_fatal(
@@ -37,43 +37,26 @@ public:
     logging::check_equal(y_, y, "y_");
 #endif
   }
-  constexpr BoundedPoint() noexcept : x_(XMin - 1), y_(YMin - 1) { }
-  constexpr BoundedPoint(class_type&& rhs) noexcept : BoundedPoint(rhs.x(), rhs.y()) { }
-  constexpr BoundedPoint(const class_type& rhs) noexcept : BoundedPoint(rhs.x(), rhs.y()) { }
+  constexpr BoundedPoint() noexcept : x_y_(XMin - 1, YMin - 1) { }
+  constexpr BoundedPoint(class_type&& rhs) noexcept : x_y_(std::move(rhs.x_y_)) { }
+  constexpr BoundedPoint(const class_type& rhs) noexcept : x_y_(rhs.x_y_) { }
   class_type& operator=(const class_type& rhs) noexcept
   {
-    x_ = rhs.x();
-    y_ = rhs.y();
+    x_y_ = rhs.x_y_;
     return *this;
   }
   class_type& operator=(class_type&& rhs) noexcept
   {
-    x_ = rhs.x();
-    y_ = rhs.y();
+    x_y_ = rhs.x_y_;
     return *this;
   }
-  bool operator<(const class_type& rhs) const noexcept
-  {
-    if (x() == rhs.x())
-    {
-      if (y() == rhs.y())
-      {
-        // they are "identical" so this is false
-        return false;
-      }
-      return y() < rhs.y();
-    }
-    return x() < rhs.x();
-  }
+  bool operator<(const class_type& rhs) const noexcept { return x_y_ < rhs.x_y_; }
   /**
    * \brief Equality operator
    * \param rhs BoundedPoint to compare to
    * \return Whether or not this is equivalent to the other
    */
-  bool operator==(const class_type& rhs) const noexcept
-  {
-    return (x() == rhs.x()) && (y() == rhs.y());
-  }
+  bool operator==(const class_type& rhs) const noexcept { return x_y_ == rhs.x_y_; }
   /**
    * \brief Add offset to position and return result
    */
@@ -84,8 +67,8 @@ public:
   }
 
 private:
-  S x_;
-  S y_;
+  // NOTE: expecting comparison of a pair to be quicker than two variables
+  pair<S, S> x_y_;
 };
 /**
  * \brief Offset from a position
