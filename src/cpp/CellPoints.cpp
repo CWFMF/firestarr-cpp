@@ -177,11 +177,9 @@ CellPoints& CellPoints::insert(const XYSize x, const XYSize y) noexcept
     const auto& y1 = p1.second;
     const auto d = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
     auto& p_d = pts_.first[i];
-    if (d < p_d)
-    {
-      p_d = d;
-      pts_.second[i] = p0;
-    }
+    auto& p_p = pts_.second[i];
+    p_p = (d < p_d) ? p0 : p_p;
+    p_d = (d < p_d) ? d : p_d;
   }
   return *this;
 }
