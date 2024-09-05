@@ -46,12 +46,6 @@ public:
     const OffsetSet& offsets,
     const spreading_points::mapped_type& cell_pts
   );
-#ifdef DEBUG_POINTS
-  bool is_invalid() const;
-  void assert_all_equal(const array_dist_pts& pts, const InnerSize x0, const InnerSize y0) const;
-  void assert_all_equal(const array_dist_pts& pts, const XYSize x, const XYSize y) const;
-  void assert_all_invalid(const array_dist_pts& pts) const;
-#endif
   bool empty() const;
   friend CellPointsMap;
   // FIX: just access directly for now
