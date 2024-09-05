@@ -17,10 +17,10 @@ constexpr InnerSize M_0_5 = static_cast<InnerSize>(0.5) - DIST_22_5;
 static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
 static const XYPos INVALID_XY_POSITION{};
 static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, {}};
-static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.x();
+static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.first;
 static const InnerPos INVALID_INNER_POSITION{};
 static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
-static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
+static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.first;
 #ifdef DEBUG_POINTS
 void CellPoints::assert_all_equal(
   const CellPoints::array_dist_pts& pts,
@@ -40,8 +40,8 @@ void CellPoints::assert_all_equal(
 {
   for (size_t i = 0; i < pts.second.size(); ++i)
   {
-    logging::check_equal(pts.second[i].x(), x0, "point x");
-    logging::check_equal(pts.second[i].y(), y0, "point y");
+    logging::check_equal(pts.second[i].first, x0, "point x");
+    logging::check_equal(pts.second[i].second, y0, "point y");
   }
 }
 void CellPoints::assert_all_invalid(const CellPoints::array_dist_pts& pts) const
@@ -63,7 +63,7 @@ set<XYPos> CellPoints::unique() const noexcept
   else
   {
     const auto& pts_all = std::views::transform(pts_.second, [this](const auto& p) {
-      return XYPos(p.x() + cell_x_, p.y() + cell_y_);
+      return XYPos(p.first + cell_x_, p.second + cell_y_);
     });
     return {pts_all.cbegin(), pts_all.cend()};
   }
@@ -149,8 +149,8 @@ CellPoints& CellPoints::insert(const XYSize x, const XYSize y) noexcept
   // since digits aren't wasted on cell
   const auto p0 =
     InnerPos(static_cast<InnerSize>(x - cell_x_), static_cast<InnerSize>(y - cell_y_));
-  const auto x0 = static_cast<DistanceSize>(p0.x());
-  const auto y0 = static_cast<DistanceSize>(p0.y());
+  const auto x0 = static_cast<DistanceSize>(p0.first);
+  const auto y0 = static_cast<DistanceSize>(p0.second);
   for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
   {
     const auto& p1 = POINTS_OUTER[i];
@@ -165,15 +165,15 @@ CellPoints& CellPoints::insert(const XYSize x, const XYSize y) noexcept
   return *this;
 }
 #undef D_PTS
-CellPoints::CellPoints(const XYPos& p) noexcept : CellPoints(p.x(), p.y())
+CellPoints::CellPoints(const XYPos& p) noexcept : CellPoints(p.first, p.second)
 {
 #ifdef DEBUG_POINTS
-  assert_all_equal(pts_, p.x(), p.y());
+  assert_all_equal(pts_, p.first, p.second);
 #endif
 }
 CellPoints& CellPoints::insert(const InnerPos& p) noexcept
 {
-  insert(p.x(), p.y());
+  insert(p.first, p.second);
   return *this;
 }
 void CellPoints::add_source(const CellIndex src)
@@ -255,13 +255,14 @@ CellPointsMap apply_offsets_spreadkey(
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   CellPointsMap r1{};
-  const auto all_offsets_after_duration =
-    std::views::transform(offsets, [&duration](const Offset& p) {
-      return Offset(p.x() * duration, p.y() * duration);
-    });
-  const std::set<Offset> offsets_after_duration{
-    all_offsets_after_duration.cbegin(), all_offsets_after_duration.cend()
-  };
+  vector<Offset> offsets_after_duration{};
+  offsets_after_duration.resize(offsets.size());
+  std::transform(
+    offsets.cbegin(),
+    offsets.cend(),
+    offsets_after_duration.begin(),
+    [&duration](const Offset& p) { return Offset(p.first * duration, p.second * duration); }
+  );
 #ifdef DEBUG_POINTS
   logging::check_fatal(offsets.empty(), "offsets.empty()");
   const auto s0 = offsets.size();
@@ -281,7 +282,7 @@ CellPointsMap apply_offsets_spreadkey(
       continue;
     }
     const auto& pts_all = std::views::transform(pts.pts_.second, [&pts](const auto& p) {
-      return XYPos(p.x() + pts.cell_x_, p.y() + pts.cell_y_);
+      return XYPos(p.first + pts.cell_x_, p.second + pts.cell_y_);
     });
     const set<XYPos> u{pts_all.cbegin(), pts_all.cend()};
 #ifdef DEBUG_POINTS
@@ -302,13 +303,13 @@ CellPointsMap apply_offsets_spreadkey(
       // should be quicker to loop over offsets in inner loop
       for (const auto& out : offsets_after_duration)
       {
-        const auto& x_o = out.x();
-        const auto& y_o = out.y();
+        const auto& x_o = out.first;
+        const auto& y_o = out.second;
         // putting results in copy of offsets and returning that
         // at the end of everything, we're just adding something to every InnerSize in the set by
         // duration?
-        const auto x = x_o + p.x();
-        const auto y = y_o + p.y();
+        const auto x = x_o + p.first;
+        const auto y = y_o + p.second;
 #ifdef DEBUG_POINTS
         const Location from_xy{static_cast<Idx>(y), static_cast<Idx>(x)};
         auto seek_cell_pts = r1.map_.find(from_xy);
@@ -662,7 +663,7 @@ void CellPointsMap::calculate_spread(
     logging::check_equal(s0_cur, total, "total");
     for (const auto& p1 : u1)
     {
-      const Location loc1{static_cast<Idx>(p1.y()), static_cast<Idx>(p1.x())};
+      const Location loc1{static_cast<Idx>(p1.second), static_cast<Idx>(p1.first)};
       logging::check_equal(loc1.column(), loc.column(), "column");
       logging::check_equal(loc1.row(), loc.row(), "row");
       u0.emplace(p1);
