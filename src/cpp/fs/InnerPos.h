@@ -6,7 +6,7 @@
 namespace fs
 {
 template <class S, int XMin, int XMax, int YMin, int YMax>
-class BoundedPoint
+class BoundedPoint : public pair<S, S>
 {
 protected:
   using class_type = BoundedPoint<S, XMin, XMax, YMin, YMax>;
@@ -14,59 +14,18 @@ protected:
   static constexpr auto INVALID_Y = YMin - 1;
 
 public:
-  /**
-   * \brief X direction (column)
-   */
-  inline constexpr S x() const noexcept { return x_y_.first; }
-  /**
-   * \brief Y direction (row)
-   */
-  inline constexpr S y() const noexcept { return x_y_.second; }
-  constexpr BoundedPoint(const S x, const S y) noexcept : x_y_(x, y)
-  {
-#ifdef DEBUG_GRIDS
-    logging::check_fatal(
-      (INVALID_Y != y) && (y < YMin || y >= YMax), "y %f is out of bounds (%d, %d)", y, YMin, YMax
-    );
-    logging::check_fatal(
-      (INVALID_X != x) && (x < XMin || x >= XMax), "x %f is out of bounds (%d, %d)", x, XMin, XMax
-    );
-    logging::check_equal(x_, x, "x_");
-    logging::check_equal(y_, y, "y_");
-#endif
-  }
-  constexpr BoundedPoint() noexcept : x_y_(XMin - 1, YMin - 1) { }
-  constexpr BoundedPoint(class_type&& rhs) noexcept : x_y_(std::move(rhs.x_y_)) { }
-  constexpr BoundedPoint(const class_type& rhs) noexcept : x_y_(rhs.x_y_) { }
-  class_type& operator=(const class_type& rhs) noexcept
-  {
-    x_y_ = rhs.x_y_;
-    return *this;
-  }
-  class_type& operator=(class_type&& rhs) noexcept
-  {
-    x_y_ = rhs.x_y_;
-    return *this;
-  }
-  bool operator<(const class_type& rhs) const noexcept { return x_y_ < rhs.x_y_; }
-  /**
-   * \brief Equality operator
-   * \param rhs BoundedPoint to compare to
-   * \return Whether or not this is equivalent to the other
-   */
-  bool operator==(const class_type& rhs) const noexcept { return x_y_ == rhs.x_y_; }
+  using pair<S, S>::pair;
+  constexpr BoundedPoint() noexcept : BoundedPoint(XMin - 1, YMin - 1) { }
+  S x() const { return std::get<0>(*this); }
+  S y() const { return std::get<1>(*this); }
   /**
    * \brief Add offset to position and return result
    */
   template <class T, class O>
   [[nodiscard]] constexpr T add(const O& o) const noexcept
   {
-    return static_cast<T>(class_type(x() + o.x(), y() + o.y()));
+    return static_cast<T>(class_type(this->first + o.first, this->second + o.second));
   }
-
-private:
-  // NOTE: expecting comparison of a pair to be quicker than two variables
-  pair<S, S> x_y_;
 };
 /**
  * \brief Offset from a position
