@@ -25,7 +25,7 @@ public:
   inline constexpr S
   x() const noexcept
   {
-    return x_;
+    return x_y_.first;
   }
   /**
    * \brief Y direction (row)
@@ -33,14 +33,13 @@ public:
   inline constexpr S
   y() const noexcept
   {
-    return y_;
+    return x_y_.second;
   }
   constexpr BoundedPoint(
     const S x,
     const S y
   ) noexcept
-    : x_(x),
-      y_(y)
+    : x_y_(x, y)
   {
 #ifdef DEBUG_GRIDS
     logging::check_fatal(
@@ -62,20 +61,19 @@ public:
 #endif
   }
   constexpr BoundedPoint() noexcept
-    : x_(XMin - 1),
-      y_(YMin - 1)
+    : x_y_(XMin - 1, YMin - 1)
   {
   }
   constexpr BoundedPoint(
     class_type&& rhs
   ) noexcept
-    : BoundedPoint(rhs.x(), rhs.y())
+    : x_y_(std::move(rhs.x_y_))
   {
   }
   constexpr BoundedPoint(
     const class_type& rhs
   ) noexcept
-    : BoundedPoint(rhs.x(), rhs.y())
+    : x_y_(rhs.x_y_)
   {
   }
   class_type&
@@ -83,8 +81,7 @@ public:
     const class_type& rhs
   ) noexcept
   {
-    x_ = rhs.x();
-    y_ = rhs.y();
+    x_y_ = rhs.x_y_;
     return *this;
   }
   class_type&
@@ -92,8 +89,7 @@ public:
     class_type&& rhs
   ) noexcept
   {
-    x_ = rhs.x();
-    y_ = rhs.y();
+    x_y_ = rhs.x_y_;
     return *this;
   }
   bool
@@ -101,16 +97,7 @@ public:
     const class_type& rhs
   ) const noexcept
   {
-    if (x() == rhs.x())
-    {
-      if (y() == rhs.y())
-      {
-        // they are "identical" so this is false
-        return false;
-      }
-      return y() < rhs.y();
-    }
-    return x() < rhs.x();
+    return x_y_ < rhs.x_y_;
   }
   /**
    * \brief Equality operator
@@ -122,7 +109,7 @@ public:
     const class_type& rhs
   ) const noexcept
   {
-    return (x() == rhs.x()) && (y() == rhs.y());
+    return x_y_ == rhs.x_y_;
   }
   /**
    * \brief Add offset to position and return result
@@ -136,8 +123,8 @@ public:
     return static_cast<T>(class_type(x() + o.x(), y() + o.y()));
   }
 private:
-  S x_;
-  S y_;
+  // NOTE: expecting comparison of a pair to be quicker than two variables
+  pair<S, S> x_y_;
 };
 /**
  * \brief Offset from a position
