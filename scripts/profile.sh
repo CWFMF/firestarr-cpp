@@ -10,6 +10,7 @@ sudo sysctl -w kernel.perf_event_paranoid=1
 rm -rf ${DIR_BUILD}
 cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -S/appl/tbd -B${DIR_BUILD} -G "Unix Makefiles"
 cmake --build ${DIR_BUILD} --config Debug --target all -j $(nproc) --
+cp ${DIR_BUILD}/tbd /appl/tbd/tbd
 time perf record -o ${FILE_PERF} -F ${FREQ} -g --call-graph=dwarf -- $* > ${DIR_PERF}/run.log
 chown ${USER}:${USER} ${FILE_PERF}
 perf script -i ${FILE_PERF} | ${DIR_FG}/stackcollapse-perf.pl | ${DIR_FG}/flamegraph.pl > flame.html
