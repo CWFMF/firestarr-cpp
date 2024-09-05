@@ -84,12 +84,6 @@ public:
   bool
   empty() const;
   friend CellPointsMap;
-
-private:
-  array_dists
-  find_distances(const InnerPos& p) const noexcept;
-  CellPoints&
-  insert_(const XYSize x, const XYSize y) noexcept;
   // FIX: just access directly for now
 
 public:
