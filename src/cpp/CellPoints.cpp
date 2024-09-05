@@ -122,104 +122,9 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept
 CellPoints::CellPoints(const XYSize x, const XYSize y) noexcept
   : CellPoints(static_cast<Idx>(x), static_cast<Idx>(y))
 {
-#ifdef DEBUG_POINTS
-  assert_all_invalid(pts_);
-#endif
-  insert_(x, y);
-#ifdef DEBUG_POINTS
-  assert_all_equal(pts_, x, y);
-#endif
+  insert(x, y);
 }
 
-CellPoints& CellPoints::insert(const XYSize x, const XYSize y) noexcept
-{
-#ifdef DEBUG_POINTS
-  const bool was_empty = empty();
-  logging::check_fatal(
-    is_invalid(),
-    "Invalid when calling insert(%f, %f)",
-    x,
-    y);
-#endif
-  insert_(x, y);
-#ifdef DEBUG_POINTS
-  logging::check_fatal(unique().empty(), "Empty after insert of (%f, %f)", x, y);
-  //   set<InnerPos> result{};
-  if (was_empty)
-  {
-    assert_all_equal(pts_, x, y);
-  }
-  else
-  {
-    for (size_t i = 0; i < pts_.first.size(); ++i)
-    {
-      logging::check_fatal(
-        INVALID_DISTANCE == pts_.first[i],
-        "Invalid distance at position %ld",
-        i);
-    }
-  }
-#endif
-  return *this;
-}
-CellPoints::CellPoints(const XYPos& p) noexcept
-  : CellPoints(p.x(), p.y())
-{
-#ifdef DEBUG_POINTS
-  assert_all_equal(pts_, p.x(), p.y());
-#endif
-}
-
-CellPoints& CellPoints::insert(const InnerPos& p) noexcept
-{
-#ifdef DEBUG_POINTS
-  const auto x = p.x();
-  const auto y = p.y();
-  const bool was_empty = empty();
-  logging::check_fatal(
-    is_invalid(),
-    "Invalid when calling insert(%f, %f)",
-    x,
-    y);
-#endif
-  insert(p.x(), p.y());
-#ifdef DEBUG_POINTS
-  logging::check_fatal(unique().empty(), "Empty after insert of (%f, %f)", x, y);
-  //   set<InnerPos> result{};
-  if (was_empty)
-  {
-    assert_all_equal(pts_, x, y);
-  }
-  else
-  {
-    for (size_t i = 0; i < pts_.first.size(); ++i)
-    {
-      logging::check_fatal(
-        INVALID_DISTANCE == pts_.first[i],
-        "Invalid distance at position %ld",
-        i);
-    }
-  }
-#endif
-  return *this;
-}
-
-// inline DistanceSize DISTANCE_1D(const InnerSize a, const InnerSize b)
-// {
-//   return (((a) - (b)) * ((a) - (b)));
-// }
-// inline DistanceSize DISTANCE(const InnerSize x_dist, const InnerSize y_dist)
-// {
-//   return ((x_dist) + (y_dist));
-// }
-// inline DistanceSize distance(const InnerSize x, const InnerSize y, const InnerSize x0, const InnerSize y0)
-// {
-//   return DISTANCE(DISTANCE_1D(x, x0), DISTANCE_1D(y, y0));
-// };
-// inline DistanceSize distance(const InnerSize x, const InnerSize y, const InnerSize x0, const InnerSize y0)
-// {
-//   return ((x - x0) * (x - x0) + (y - y0) * (y - y0));
-// };
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
 #define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
 constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
@@ -255,77 +160,45 @@ constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
   // north-northwest is closest to point (0.5 - 0.207, 1.0)
   D_PTS(M_0_5, 1.0)};
 
-CellPoints::array_dists CellPoints::find_distances(const InnerPos& p) const noexcept
+CellPoints& CellPoints::insert(const XYSize x, const XYSize y) noexcept
 {
-  const auto x = p.x();
-  const auto y = p.y();
-#ifdef DEBUG_GRIDS
-  logging::check_fatal(
-    x < 0 || x > 1,
-    "x %f is out of cell (%f, %f)",
-    x,
-    0,
-    1);
-  logging::check_fatal(
-    y < 0 || y > 1,
-    "y %f is out of cell (%f, %f)",
-    y,
-    0,
-    1);
-#endif
-  const auto x0 = static_cast<DistanceSize>(x);
-  const auto y0 = static_cast<DistanceSize>(y);
-  array_dists d{};
-  for (size_t i = 0; i < d.size(); ++i)
+  // NOTE: use location inside cell so smaller types can be more precise
+  // since digits aren't wasted on cell
+  const auto p0 = InnerPos(
+    static_cast<InnerSize>(x - cell_x_),
+    static_cast<InnerSize>(y - cell_y_));
+  const auto x0 = static_cast<DistanceSize>(p0.x());
+  const auto y0 = static_cast<DistanceSize>(p0.y());
+  // static_assert(pts_.first.size() == NUM_DIRECTIONS);
+  for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
   {
-    const auto& p = POINTS_OUTER[i];
-    const auto& x1 = p.first;
-    const auto& y1 = p.second;
-    d[i] = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
-  }
-  return d;
-}
-CellPoints& CellPoints::insert_(const XYSize x, const XYSize y) noexcept
-{
-#ifdef DEBUG_POINTS
-  logging::check_fatal(
-    is_invalid(),
-    "Expected cell_x_ and cell_y_ to be set before calling insert_ (%f, %f)",
-    x,
-    y);
-  logging::check_equal(static_cast<Idx>(x), cell_x_, "CellPoints x");
-  logging::check_equal(static_cast<Idx>(y), cell_y_, "CellPoints y");
-  logging::check_fatal(
-    x < 0 || x >= MAX_COLUMNS,
-    "x %f is out of bounds (%f, %f)",
-    x,
-    0,
-    MAX_COLUMNS);
-  logging::check_fatal(
-    y < 0 || y >= MAX_ROWS,
-    "y %f is out of bounds (%f, %f)",
-    y,
-    0,
-    MAX_ROWS);
-#endif
-  const auto x0 = static_cast<InnerSize>(x - cell_x_);
-  const auto y0 = static_cast<InnerSize>(y - cell_y_);
-  const auto p = InnerPos(x0, y0);
-  auto dists = find_distances(p);
-  for (size_t i = 0; i < dists.size(); ++i)
-  {
-    const auto& d = dists[i];
+    const auto& p1 = POINTS_OUTER[i];
+    const auto& x1 = p1.first;
+    const auto& y1 = p1.second;
+    const auto d = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
     auto& p_d = pts_.first[i];
-    auto& p_pt = pts_.second[i];
     if (d < p_d)
     {
       p_d = d;
-      p_pt = p;
+      pts_.second[i] = p0;
     }
   }
   return *this;
 }
 #undef D_PTS
+CellPoints::CellPoints(const XYPos& p) noexcept
+  : CellPoints(p.x(), p.y())
+{
+#ifdef DEBUG_POINTS
+  assert_all_equal(pts_, p.x(), p.y());
+#endif
+}
+
+CellPoints& CellPoints::insert(const InnerPos& p) noexcept
+{
+  insert(p.x(), p.y());
+  return *this;
+}
 
 void CellPoints::add_source(const CellIndex src)
 {
