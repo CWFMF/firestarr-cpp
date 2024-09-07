@@ -269,20 +269,6 @@ CellPointsMap::CellPointsMap()
   : map_({})
 {
 }
-void
-CellPointsMap::emplace(
-  const CellPoints& pts
-)
-{
-  const Location location = pts.location();
-  auto e = map_.try_emplace(location, pts);
-  CellPoints& cell_pts = e.first->second;
-  if (!e.second)
-  {
-    // couldn't insert
-    cell_pts.merge(pts);
-  }
-}
 CellPoints&
 CellPointsMap::insert(
   const XYSize x,
@@ -322,12 +308,21 @@ CellPointsMap::merge(
   const CellPointsMap& rhs
 ) noexcept
 {
+  // FIX: if we iterate through both they should be sorted
   for (const auto& kv : rhs.map_)
   {
     const auto h = kv.first.hash();
     if (!unburnable[h])
     {
-      emplace(kv.second);
+      const CellPoints& pts = kv.second;
+      const Location location = pts.location();
+      auto e = map_.try_emplace(location, pts);
+      CellPoints& cell_pts = e.first->second;
+      if (!e.second)
+      {
+        // couldn't insert
+        cell_pts.merge(pts);
+      }
     }
   }
   return *this;

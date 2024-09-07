@@ -127,8 +127,6 @@ class CellPointsMap
 {
 public:
   CellPointsMap();
-  void
-  emplace(const CellPoints& pts);
   CellPoints&
   insert(const XYSize x, const XYSize y) noexcept;
   CellPoints&
