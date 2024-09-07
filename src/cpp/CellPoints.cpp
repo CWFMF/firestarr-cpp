@@ -231,32 +231,14 @@ bool CellPoints::operator<(const CellPoints& rhs) const noexcept
 {
   if (cell_x_y_ == rhs.cell_x_y_)
   {
-    for (size_t i = 0; i < pts_.first.size(); ++i)
-    {
-      if (pts_.second[i] != rhs.pts_.second[i])
-      {
-        return pts_.second[i] < rhs.pts_.second[i];
-      }
-    }
+    return pts_.second < rhs.pts_.second;
     // all points are equal if we got here
   }
   return cell_x_y_ < rhs.cell_x_y_;
 }
 bool CellPoints::operator==(const CellPoints& rhs) const noexcept
 {
-  if (cell_x_y_ == rhs.cell_x_y_)
-  {
-    for (size_t i = 0; i < pts_.second.size(); ++i)
-    {
-      if (pts_.second[i] != rhs.pts_.second[i])
-      {
-        return false;
-      }
-    }
-    // all points are equal if we got here
-    return true;
-  }
-  return false;
+  return (cell_x_y_ == rhs.cell_x_y_ && pts_.second == rhs.pts_.second);
 }
 bool CellPoints::empty() const
 {
