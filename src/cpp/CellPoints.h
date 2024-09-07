@@ -81,8 +81,7 @@ public:
 
 private:
   // use Idx instead of Location so it can be negative (invalid)
-  Idx cell_x_;
-  Idx cell_y_;
+  CellPos cell_x_y_;
   CellIndex src_;
 };
 

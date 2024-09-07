@@ -37,7 +37,7 @@ CellPoints::unique() const noexcept
   else
   {
     const auto& pts_all = std::views::transform(pts_.second, [this](const auto& p) {
-      return XYPos(p.first + cell_x_, p.second + cell_y_);
+      return XYPos(p.first + cell_x_y_.first, p.second + cell_x_y_.second);
     });
     return {pts_all.cbegin(), pts_all.cend()};
   }
@@ -48,8 +48,7 @@ CellPoints::CellPoints(
   const Idx cell_y
 ) noexcept
   : pts_({}),
-    cell_x_(cell_x),
-    cell_y_(cell_y),
+    cell_x_y_(cell_x, cell_y),
     src_(DIRECTION_NONE)
 {
   std::fill(pts_.first.begin(), pts_.first.end(), INVALID_DISTANCE);
@@ -126,8 +125,8 @@ CellPoints::insert(
   // NOTE: use location inside cell so smaller types can be more precise
   // since digits aren't wasted on cell
   const auto p0 = InnerPos(
-    static_cast<InnerSize>(x - cell_x_),
-    static_cast<InnerSize>(y - cell_y_)
+    static_cast<InnerSize>(x - cell_x_y_.first),
+    static_cast<InnerSize>(y - cell_x_y_.second)
   );
   const auto x0 = static_cast<DistanceSize>(p0.first);
   const auto y0 = static_cast<DistanceSize>(p0.second);
@@ -177,8 +176,7 @@ CellPoints::merge(
 )
 {
   // either both invalid or lower one is valid
-  cell_x_ = min(cell_x_, rhs.cell_x_);
-  cell_y_ = min(cell_y_, rhs.cell_y_);
+  cell_x_y_ = min(cell_x_y_, rhs.cell_x_y_);
   // we know distances in each direction so just pick closer
   for (size_t i = 0; i < pts_.first.size(); ++i)
   {
@@ -221,7 +219,7 @@ apply_offsets_spreadkey(
       continue;
     }
     const auto& pts_all = std::views::transform(pts.pts_.second, [&pts](const auto& p) {
-      return XYPos(p.first + pts.cell_x_, p.second + pts.cell_y_);
+      return XYPos(p.first + pts.cell_x_y_.first, p.second + pts.cell_x_y_.second);
     });
     const set<XYPos> u{pts_all.cbegin(), pts_all.cend()};
     // unique only works if points are sorted so just make a set
@@ -253,8 +251,7 @@ CellPoints::CellPoints(
   CellPoints&& rhs
 ) noexcept
   : pts_(std::move(rhs.pts_)),
-    cell_x_(rhs.cell_x_),
-    cell_y_(rhs.cell_y_),
+    cell_x_y_(rhs.cell_x_y_),
     src_(rhs.src_)
 {
 }
@@ -267,8 +264,7 @@ CellPoints::CellPoints(
   const CellPoints& rhs
 ) noexcept
   : pts_({}),
-    cell_x_(rhs.cell_x_),
-    cell_y_(rhs.cell_y_),
+    cell_x_y_(rhs.cell_x_y_),
     src_(rhs.src_)
 {
   std::copy(rhs.pts_.first.cbegin(), rhs.pts_.first.cend(), pts_.first.begin());
@@ -286,9 +282,8 @@ CellPoints::operator=(
 ) noexcept
 {
   pts_ = std::move(rhs.pts_);
-  cell_x_ = rhs.cell_x_;
-  cell_y_ = rhs.cell_y_;
-  src_ = rhs.src_;
+  cell_x_y_ = std::move(rhs.cell_x_y_);
+  src_ = std::move(rhs.src_);
   return *this;
 }
 
@@ -304,8 +299,7 @@ CellPoints::operator=(
 {
   std::copy(rhs.pts_.first.cbegin(), rhs.pts_.first.cend(), pts_.first.begin());
   std::copy(rhs.pts_.second.cbegin(), rhs.pts_.second.cend(), pts_.second.begin());
-  cell_x_ = rhs.cell_x_;
-  cell_y_ = rhs.cell_y_;
+  cell_x_y_ = rhs.cell_x_y_;
   src_ = rhs.src_;
   return *this;
 }
@@ -315,22 +309,19 @@ CellPoints::operator<(
   const CellPoints& rhs
 ) const noexcept
 {
-  if (cell_x_ == rhs.cell_x_)
+  if (cell_x_y_ == rhs.cell_x_y_)
   {
-    if (cell_y_ == rhs.cell_y_)
+    for (size_t i = 0; i < pts_.first.size(); ++i)
     {
-      for (size_t i = 0; i < pts_.first.size(); ++i)
+      if (pts_.second[i] != rhs.pts_.second[i])
       {
-        if (pts_.second[i] != rhs.pts_.second[i])
-        {
-          return pts_.second[i] < rhs.pts_.second[i];
-        }
+        return pts_.second[i] < rhs.pts_.second[i];
       }
-      // all points are equal if we got here
     }
-    return cell_y_ < rhs.cell_y_;
+    // all points are equal if we got here
   }
-  return cell_x_ < rhs.cell_x_;
+
+  return cell_x_y_ < rhs.cell_x_y_;
 }
 
 bool
@@ -338,7 +329,7 @@ CellPoints::operator==(
   const CellPoints& rhs
 ) const noexcept
 {
-  if (cell_x_ == rhs.cell_x_ && cell_y_ == rhs.cell_y_)
+  if (cell_x_y_ == rhs.cell_x_y_)
   {
     for (size_t i = 0; i < pts_.second.size(); ++i)
     {
@@ -363,7 +354,7 @@ CellPoints::empty() const
 [[nodiscard]] Location
 CellPoints::location() const noexcept
 {
-  return Location{cell_y_, cell_x_};
+  return Location{cell_x_y_.second, cell_x_y_.first};
 }
 
 CellPointsMap::CellPointsMap()
