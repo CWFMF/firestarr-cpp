@@ -63,7 +63,7 @@ CellPoints::CellPoints(
 {
   if (nullptr != rhs)
   {
-    merge(*rhs);
+    *this = *rhs;
   }
 }
 CellPoints::CellPoints(
