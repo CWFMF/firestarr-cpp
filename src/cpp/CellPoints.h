@@ -34,12 +34,12 @@ public:
   CellPoints(const XYSize x, const XYSize y) noexcept;
   CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
   CellPoints(const XYPos& p) noexcept;
-  CellPoints(CellPoints&& rhs) noexcept;
-  CellPoints(const CellPoints& rhs) noexcept;
+  CellPoints(CellPoints&& rhs) noexcept = default;
+  CellPoints(const CellPoints& rhs) noexcept = default;
   CellPoints&
-  operator=(CellPoints&& rhs) noexcept;
+  operator=(CellPoints&& rhs) noexcept = default;
   CellPoints&
-  operator=(const CellPoints& rhs) noexcept;
+  operator=(const CellPoints& rhs) noexcept = default;
   CellPoints&
   insert(const XYSize x, const XYSize y) noexcept;
   CellPoints&
