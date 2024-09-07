@@ -65,4 +65,12 @@ class XYPos
 {
   using BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
 };
+/**
+ * \brief The position within the Environment that a spreading point has.
+ */
+class CellPos
+  : public BoundedPoint<Idx, 0, MAX_COLUMNS, 0, MAX_ROWS>
+{
+  using BoundedPoint<Idx, 0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
+};
 }
