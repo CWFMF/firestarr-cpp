@@ -44,7 +44,7 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept : CellPoints()
 {
   if (nullptr != rhs)
   {
-    merge(*rhs);
+    *this = *rhs;
   }
 }
 CellPoints::CellPoints(const XYSize x, const XYSize y) noexcept
@@ -205,17 +205,6 @@ bool CellPoints::empty() const
   return Location{cell_x_y_.second, cell_x_y_.first};
 }
 CellPointsMap::CellPointsMap() : map_({}) { }
-void CellPointsMap::emplace(const CellPoints& pts)
-{
-  const Location location = pts.location();
-  auto e = map_.try_emplace(location, pts);
-  CellPoints& cell_pts = e.first->second;
-  if (!e.second)
-  {
-    // couldn't insert
-    cell_pts.merge(pts);
-  }
-}
 CellPoints& CellPointsMap::insert(const XYSize x, const XYSize y) noexcept
 {
   const Location location{static_cast<Idx>(y), static_cast<Idx>(x)};
@@ -232,7 +221,7 @@ CellPoints& CellPointsMap::insert(const Location& src, const XYSize x, const XYS
 {
   CellPoints& cell_pts = insert(x, y);
   const Location& dst = cell_pts.location();
-  if (src != dst)
+  // adds 0 if the same so try without checking
   {
     // we inserted a pair of (src, dst), which means we've never
     // calculated the relativeIndex for this so add it to main map
@@ -242,12 +231,21 @@ CellPoints& CellPointsMap::insert(const Location& src, const XYSize x, const XYS
 }
 CellPointsMap& CellPointsMap::merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept
 {
+  // FIX: if we iterate through both they should be sorted
   for (const auto& kv : rhs.map_)
   {
     const auto h = kv.first.hash();
     if (!unburnable.at(h))
     {
-      emplace(kv.second);
+      const CellPoints& pts = kv.second;
+      const Location location = pts.location();
+      auto e = map_.try_emplace(location, pts);
+      CellPoints& cell_pts = e.first->second;
+      if (!e.second)
+      {
+        // couldn't insert
+        cell_pts.merge(pts);
+      }
     }
   }
   return *this;
