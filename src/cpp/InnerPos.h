@@ -56,6 +56,13 @@ class XYPos : public BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>
 {
   using BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
 };
+/**
+ * \brief The position within the Environment that a spreading point has.
+ */
+class CellPos : public BoundedPoint<Idx, 0, MAX_COLUMNS, 0, MAX_ROWS>
+{
+  using BoundedPoint<Idx, 0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
+};
 static constexpr MathSize x(const auto& p) { return p.x(); }
 static constexpr MathSize y(const auto& p) { return p.y(); }
 }
