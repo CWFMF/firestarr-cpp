@@ -67,7 +67,7 @@ CellPoints::CellPoints(
 {
   if (nullptr != rhs)
   {
-    merge(*rhs);
+    *this = *rhs;
   }
 }
 
@@ -282,21 +282,6 @@ CellPointsMap::CellPointsMap()
 {
 }
 
-void
-CellPointsMap::emplace(
-  const CellPoints& pts
-)
-{
-  const Location location = pts.location();
-  auto e = map_.try_emplace(location, pts);
-  CellPoints& cell_pts = e.first->second;
-  if (!e.second)
-  {
-    // couldn't insert
-    cell_pts.merge(pts);
-  }
-}
-
 CellPoints&
 CellPointsMap::insert(
   const XYSize x,
@@ -323,7 +308,7 @@ CellPointsMap::insert(
 {
   CellPoints& cell_pts = insert(x, y);
   const Location& dst = cell_pts.location();
-  if (src != dst)
+  // adds 0 if the same so try without checking
   {
     // we inserted a pair of (src, dst), which means we've never
     // calculated the relativeIndex for this so add it to main map
@@ -338,12 +323,21 @@ CellPointsMap::merge(
   const CellPointsMap& rhs
 ) noexcept
 {
+  // FIX: if we iterate through both they should be sorted
   for (const auto& kv : rhs.map_)
   {
     const auto h = kv.first.hash();
     if (!unburnable.at(h))
     {
-      emplace(kv.second);
+      const CellPoints& pts = kv.second;
+      const Location location = pts.location();
+      auto e = map_.try_emplace(location, pts);
+      CellPoints& cell_pts = e.first->second;
+      if (!e.second)
+      {
+        // couldn't insert
+        cell_pts.merge(pts);
+      }
     }
   }
   return *this;
