@@ -182,48 +182,6 @@ CellPointsMap apply_offsets_spreadkey(
   }
   return r1;
 }
-/**
- * \brief Move constructor
- * \param rhs CellPoints to move from
- */
-CellPoints::CellPoints(CellPoints&& rhs) noexcept
-  : pts_(std::move(rhs.pts_)), cell_x_y_(rhs.cell_x_y_), src_(rhs.src_)
-{ }
-/**
- * \brief Copy constructor
- * \param rhs CellPoints to copy from
- */
-CellPoints::CellPoints(const CellPoints& rhs) noexcept
-  : pts_({}), cell_x_y_(rhs.cell_x_y_), src_(rhs.src_)
-{
-  std::copy(rhs.pts_.first.cbegin(), rhs.pts_.first.cend(), pts_.first.begin());
-  std::copy(rhs.pts_.second.cbegin(), rhs.pts_.second.cend(), pts_.second.begin());
-}
-/**
- * \brief Move assignment
- * \param rhs CellPoints to move from
- * \return This, after assignment
- */
-CellPoints& CellPoints::operator=(CellPoints&& rhs) noexcept
-{
-  pts_ = std::move(rhs.pts_);
-  cell_x_y_ = std::move(rhs.cell_x_y_);
-  src_ = std::move(rhs.src_);
-  return *this;
-}
-/**
- * \brief Copy assignment
- * \param rhs CellPoints to copy from
- * \return This, after assignment
- */
-CellPoints& CellPoints::operator=(const CellPoints& rhs) noexcept
-{
-  std::copy(rhs.pts_.first.cbegin(), rhs.pts_.first.cend(), pts_.first.begin());
-  std::copy(rhs.pts_.second.cbegin(), rhs.pts_.second.cend(), pts_.second.begin());
-  cell_x_y_ = rhs.cell_x_y_;
-  src_ = rhs.src_;
-  return *this;
-}
 bool CellPoints::operator<(const CellPoints& rhs) const noexcept
 {
   if (cell_x_y_ == rhs.cell_x_y_)
