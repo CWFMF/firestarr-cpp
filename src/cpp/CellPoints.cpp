@@ -58,7 +58,7 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept
 {
   if (nullptr != rhs)
   {
-    merge(*rhs);
+    *this = *rhs;
   }
 }
 CellPoints::CellPoints(const XYSize x, const XYSize y) noexcept
