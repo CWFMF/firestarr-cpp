@@ -169,57 +169,6 @@ CellPoints& CellPoints::merge(const CellPoints& rhs)
   add_source(rhs.src_);
   return *this;
 }
-CellPointsMap apply_offsets_spreadkey(
-  const DurationSize duration,
-  const OffsetSet& offsets,
-  const spreading_points::mapped_type& cell_pts)
-{
-  // NOTE: really tried to do this in parallel, but not enough points
-  // in a cell for it to work well
-  CellPointsMap r1{};
-  vector<Offset> offsets_after_duration{};
-  offsets_after_duration.resize(offsets.size());
-  std::transform(
-    offsets.cbegin(),
-    offsets.cend(),
-    offsets_after_duration.begin(),
-    [&duration](const Offset& p) {
-      return Offset(p.first * duration, p.second * duration);
-    });
-  for (const auto& pts_for_cell : cell_pts)
-  {
-    const Location& src = std::get<0>(pts_for_cell);
-    const CellPoints& pts = std::get<1>(pts_for_cell);
-    if (pts.empty())
-    {
-      continue;
-    }
-    const auto& pts_all = std::views::transform(
-      pts.pts_.second,
-      [&pts](const auto& p) {
-        return XYPos(p.first + pts.cell_x_y_.first, p.second + pts.cell_x_y_.second);
-      });
-    const set<XYPos> u{pts_all.cbegin(), pts_all.cend()};
-    // const auto& u = pts.unique();
-    // unique only works if points are sorted so just make a set
-    for (const auto& p : u)
-    {
-      // apply offsets to point
-      // should be quicker to loop over offsets in inner loop
-      for (const auto& out : offsets_after_duration)
-      {
-        const auto& x_o = out.first;
-        const auto& y_o = out.second;
-        // putting results in copy of offsets and returning that
-        // at the end of everything, we're just adding something to every InnerSize in the set by duration?
-        const auto x = x_o + p.first;
-        const auto y = y_o + p.second;
-        r1.insert(src, x, y);
-      }
-    }
-  }
-  return r1;
-}
 bool CellPoints::operator<(const CellPoints& rhs) const noexcept
 {
   if (cell_x_y_ == rhs.cell_x_y_)
@@ -313,62 +262,5 @@ void CellPointsMap::remove_if(std::function<bool(const pair<Location, CellPoints
       ++it;
     }
   }
-}
-CellPointsMap merge_list(
-  const BurnedData& unburnable,
-  map<SpreadKey, SpreadInfo>& spread_info,
-  const DurationSize duration,
-  const spreading_points& to_spread)
-{
-  auto spread = std::views::transform(
-    to_spread,
-    [&duration, &spread_info](
-      const spreading_points::value_type& kv0) -> CellPointsMap {
-      auto& key = kv0.first;
-      const auto& offsets = spread_info[key].offsets();
-      const spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
-      return r;
-    });
-  auto it = spread.begin();
-  CellPointsMap out{};
-  while (spread.end() != it)
-  {
-    const CellPointsMap& cell_pts = *it;
-    // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not adding
-    // const auto h = cell_pts.location().hash();
-    // if (!unburnable[h])
-    // {
-    out.merge(unburnable, cell_pts);
-    // }
-    ++it;
-  }
-  return out;
-}
-void CellPointsMap::calculate_spread(
-  Scenario& scenario,
-  map<SpreadKey, SpreadInfo>& spread_info,
-  const DurationSize duration,
-  const spreading_points& to_spread,
-  const BurnedData& unburnable)
-{
-  CellPointsMap cell_pts = merge_list(
-    unburnable,
-    spread_info,
-    duration,
-    to_spread);
-  cell_pts.remove_if(
-    [&scenario, &unburnable](
-      const pair<Location, CellPoints>& kv) {
-      const auto& location = kv.first;
-      const auto h = location.hash();
-      // clear out if unburnable
-      const auto do_clear = unburnable[h];
-      return do_clear;
-    });
-  // need to merge new points back into cells that didn't spread
-  merge(
-    unburnable,
-    cell_pts);
 }
 }
