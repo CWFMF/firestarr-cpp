@@ -306,7 +306,8 @@ CellPointsMap::insert(
 {
   CellPoints& cell_pts = insert(x, y);
   const Location& dst = cell_pts.location();
-  if (src != dst)
+  // adds 0 if the same so try without checking
+  // if (src != dst)
   {
     // we inserted a pair of (src, dst), which means we've never
     // calculated the relativeIndex for this so add it to main map
