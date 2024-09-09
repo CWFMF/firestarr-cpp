@@ -122,6 +122,18 @@ CellPoints& CellPoints::insert(const XYSize x, const XYSize y) noexcept
     auto& p_p = pts_.second[i];
     p_p = (d < p_d) ? p0 : p_p;
     p_d = (d < p_d) ? d : p_d;
+    // // worse than two checks + assignment
+    // const auto& [p_new, d_new] =
+    //   (d < p_d)
+    //     ? std::make_tuple(p0, d)
+    //     : std::make_tuple(p_p, p_d);
+    // p_p = p_new;
+    // p_d = d_new;
+    // // worse than two checks + assignment
+    // std::tie(p_d, p_p) =
+    //   (d < p_d)
+    //     ? std::make_tuple(d, p0)
+    //     : std::make_tuple(p_d, p_p);
   }
   return *this;
 }
