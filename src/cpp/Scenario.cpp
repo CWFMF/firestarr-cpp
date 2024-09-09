@@ -734,7 +734,7 @@ Scenario* Scenario::run(map<DurationSize, ProbabilityMap*>* probabilities)
 CellPointsMap apply_offsets_spreadkey(
   const DurationSize duration,
   const OffsetSet& offsets,
-  const spreading_points::mapped_type& cell_pts)
+  spreading_points::mapped_type& cell_pts)
 {
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
@@ -748,36 +748,36 @@ CellPointsMap apply_offsets_spreadkey(
     [&duration](const Offset& p) {
       return Offset(p.first * duration, p.second * duration);
     });
-  for (const auto& pts_for_cell : cell_pts)
+  for (auto& pts_for_cell : cell_pts)
   {
     const Location& src = std::get<0>(pts_for_cell);
-    const CellPoints& pts = std::get<1>(pts_for_cell);
-    if (pts.empty())
+    CellPoints& cell_pts = std::get<1>(pts_for_cell);
+    if (cell_pts.empty())
     {
       continue;
     }
-    const auto& pts_all = std::views::transform(
-      pts.pts_.second,
-      [&pts](const auto& p) {
-        return XYPos(p.first + pts.cell_x_y_.first, p.second + pts.cell_x_y_.second);
-      });
-    const set<XYPos> u{pts_all.cbegin(), pts_all.cend()};
-    // const auto& u = pts.unique();
-    // unique only works if points are sorted so just make a set
-    for (const auto& p : u)
+    auto& pts = cell_pts.pts_.second;
+    // never need input again so sorting doesn't hurt anythin
+    std::sort(pts.begin(), pts.end());
+    const auto it_pts_last = std::unique(pts.begin(), pts.end());
+    auto it_pts = pts.cbegin();
+    while (it_pts != it_pts_last)
     {
+      const auto& p = *it_pts;
+      const auto& cell_x = cell_pts.cell_x_y_.first;
+      const auto& cell_y = cell_pts.cell_x_y_.second;
       // apply offsets to point
       // should be quicker to loop over offsets in inner loop
       for (const auto& out : offsets_after_duration)
       {
         const auto& x_o = out.first;
         const auto& y_o = out.second;
-        // putting results in copy of offsets and returning that
-        // at the end of everything, we're just adding something to every InnerSize in the set by duration?
-        const auto x = x_o + p.first;
-        const auto y = y_o + p.second;
-        r1.insert(src, x, y);
+        r1.insert(
+          src,
+          x_o + p.first + cell_x,
+          y_o + p.second + cell_y);
       }
+      ++it_pts;
     }
   }
   return r1;
@@ -885,10 +885,10 @@ void Scenario::scheduleFireSpread(const Event& event)
   auto spread = std::views::transform(
     to_spread,
     [this, &duration](
-      const spreading_points::value_type& kv0) -> CellPointsMap {
+      spreading_points::value_type& kv0) -> CellPointsMap {
       auto& key = kv0.first;
       const auto& offsets = spread_info_[key].offsets();
-      const spreading_points::mapped_type& cell_pts = kv0.second;
+      spreading_points::mapped_type& cell_pts = kv0.second;
       auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
       return r;
     });
