@@ -38,18 +38,11 @@ public:
   bool operator==(const CellPoints& rhs) const noexcept;
   [[nodiscard]] Location location() const noexcept;
   void clear();
-  friend CellPointsMap apply_offsets_spreadkey(
-    const DurationSize duration,
-    const OffsetSet& offsets,
-    const spreading_points::mapped_type& cell_pts
-  );
   bool empty() const;
   friend CellPointsMap;
   // FIX: just access directly for now
 public:
   pair<array_dists, array_pts> pts_;
-
-private:
   // use Idx instead of Location so it can be negative (invalid)
   CellPos cell_x_y_;
   CellIndex src_;
@@ -67,21 +60,9 @@ public:
   set<XYPos> unique() const noexcept;
   // apply function to each CellPoints within and remove matches
   void remove_if(std::function<bool(const pair<Location, CellPoints>&)> F) noexcept;
-  void calculate_spread(
-    Scenario& scenario,
-    map<SpreadKey, SpreadInfo>& spread_info,
-    const DurationSize duration,
-    const spreading_points& to_spread,
-    const BurnedData& unburnable
-  );
   // FIX: public for debugging right now
   // private:
   map<Location, CellPoints> map_;
 };
-CellPointsMap apply_offsets_spreadkey(
-  const DurationSize duration,
-  const OffsetSet& offsets,
-  const spreading_points::mapped_type& cell_pts
-);
 }
 #endif
