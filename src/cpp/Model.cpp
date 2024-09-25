@@ -408,16 +408,32 @@ void Model::findAllStarts()
 }
 void Model::makeStarts(Coordinates coordinates,
                        const topo::Point& point,
-                       const string& perim,
-                       const size_t size)
+                       string perim,
+                       size_t size)
 {
-  const Location location(std::get<0>(coordinates), std::get<1>(coordinates));
+  Location location(std::get<0>(coordinates), std::get<1>(coordinates));
   if (!perim.empty())
   {
     logging::note("Initializing from perimeter %s", perim.c_str());
     perimeter_ = make_shared<topo::Perimeter>(perim, point, *env_);
+    // HACK: if perimeter is only one cell then use position not perimeter so it can bounce if non-fuel
+    const auto burned = perimeter_->burned();
+    const auto s = burned.size();
+    if (1 >= s)
+    {
+      logging::note("Converting perimeter into point since size is %ld", s);
+      // use whatever the one cell is instead of the lat/long
+      if (1 == s)
+      {
+        location = *(burned.begin());
+      }
+      // HACK: use 0 for 0 or 1 so it'll assign by point
+      size = 0;
+      perim = "";
+    }
   }
-  else if (size > 0)
+  // use if instead of else if in case perimeter was a single point and got switched
+  if (size > 0)
   {
     logging::note("Initializing from size %d ha", size);
     perimeter_ = make_shared<topo::Perimeter>(

@@ -344,7 +344,7 @@ public:
    */
   void makeStarts(Coordinates coordinates,
                   const topo::Point& point,
-                  const string& perim,
+                  string perim,
                   size_t size);
   /**
    * \brief Create an Iteration by initializing Scenarios
