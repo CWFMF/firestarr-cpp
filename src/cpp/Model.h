@@ -391,7 +391,7 @@ public:
    * \param size Size of fire to create if no input Perimeter
    */
   void
-  makeStarts(Coordinates coordinates, const topo::Point& point, const string& perim, size_t size);
+  makeStarts(Coordinates coordinates, const topo::Point& point, string perim, size_t size);
   /**
    * \brief Create an Iteration by initializing Scenarios
    * \param start_point StartPoint to use for sunrise/sunset
