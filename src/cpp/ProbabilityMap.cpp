@@ -232,7 +232,11 @@ ProbabilityMap::deleteInterim()
     {
       try
       {
+#ifdef _WIN32
+        _unlink(path.c_str());
+#else
         unlink(path.c_str());
+#endif
       }
       catch (const std::exception& err)
       {
