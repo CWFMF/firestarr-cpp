@@ -156,6 +156,23 @@ public:
   void setRasterRoot(const char* dirname) noexcept { raster_root_ = dirname; }
   void setFuelLookupTable(const char* filename) noexcept { fuel_lookup_table_file_ = filename; }
   /**
+   * \brief Static curing value
+   * \return Static curing value
+   */
+  [[nodiscard]] int staticCuring() const noexcept { return static_curing_; }
+  /**
+   * \brief Set static curing value
+   * \return Set static curing value
+   */
+  void setStaticCuring(const int value) noexcept
+  {
+    logging::check_fatal(
+      0 > value || 100 < value, "Grass curing (%) must be in range [0-100] but got %d", value
+    );
+    static_curing_ = value;
+    force_curing = true;
+  }
+  /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used
    * (s)
    * \return Maximum time simulation can run before it is ended and whatever results it has are used
@@ -281,6 +298,10 @@ private:
    */
   atomic<ThresholdSize> confidence_level_;
   /**
+   * \brief Static curing value
+   */
+  atomic<int> static_curing_ = 75;
+  /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used
    * (s)
    */
@@ -395,6 +416,21 @@ public:
    * \return Whether or not to save simulation area grids
    */
   atomic<bool> save_simulation_area = false;
+  /**
+   * \brief Whether or not to force greenup for all fires
+   * \return Whether or not to force greenup for all fires
+   */
+  atomic<bool> force_greenup = false;
+  /**
+   * \brief Whether or not to force no greenup for all fires
+   * \return Whether or not to force no greenup for all fires
+   */
+  atomic<bool> force_no_greenup = false;
+  /**
+   * \brief Whether or not to force static curing value for all fires
+   * \return Whether or not to force static curing value for all fires
+   */
+  atomic<bool> force_curing = false;
 };
 /**
  * \brief The singleton instance for this class
@@ -609,6 +645,28 @@ bool Settings::saveSimulationArea() noexcept
 void Settings::setSaveSimulationArea(const bool value) noexcept
 {
   SettingsImplementation::instance().save_simulation_area = value;
+}
+bool Settings::forceGreenup() noexcept { return SettingsImplementation::instance().force_greenup; }
+void Settings::setForceGreenup(const bool value) noexcept
+{
+  SettingsImplementation::instance().force_greenup = value;
+}
+bool Settings::forceNoGreenup() noexcept
+{
+  return SettingsImplementation::instance().force_no_greenup;
+}
+void Settings::setForceNoGreenup(const bool value) noexcept
+{
+  SettingsImplementation::instance().force_no_greenup = value;
+}
+bool Settings::forceStaticCuring() noexcept
+{
+  return SettingsImplementation::instance().force_curing;
+}
+int Settings::staticCuring() noexcept { return SettingsImplementation::instance().staticCuring(); }
+void Settings::setStaticCuring(const int value) noexcept
+{
+  SettingsImplementation::instance().setStaticCuring(value);
 }
 MathSize Settings::minimumRos() noexcept { return SettingsImplementation::instance().minimumRos(); }
 void Settings::setMinimumRos(const MathSize value) noexcept

@@ -579,6 +579,10 @@ public:
    */
   [[nodiscard]] MathSize grass_curing(const int nd, const FwiWeather& wx) const override
   {
+    if (Settings::forceStaticCuring())
+    {
+      return Settings::staticCuring();
+    }
     const auto is_drought = wx.dc().asValue() > 500;
     return is_drought ? 100 : calculate_grass_curing(nd);
   }
@@ -1123,7 +1127,10 @@ template <class FuelSpring, class FuelSummer>
 ) noexcept
 {
   // if not green yet, then still in spring conditions
-  return calculate_is_green(nd) ? fuel.summer() : fuel.spring();
+  return Settings::forceGreenup()   ? fuel.summer()
+       : Settings::forceNoGreenup() ? fuel.spring()
+       : calculate_is_green(nd)     ? fuel.summer()
+                                    : fuel.spring();
 }
 template <class FuelSpring, class FuelSummer>
 [[nodiscard]] MathSize compare_by_season(
