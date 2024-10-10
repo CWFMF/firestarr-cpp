@@ -745,6 +745,10 @@ public:
     const FwiWeather& wx
   ) const override
   {
+    if (Settings::forceStaticCuring())
+    {
+      return Settings::staticCuring();
+    }
     const auto is_drought = wx.dc().asValue() > 500;
     return is_drought ? 100 : calculate_grass_curing(nd);
   }
@@ -1471,7 +1475,10 @@ find_fuel_by_season(
 ) noexcept
 {
   // if not green yet, then still in spring conditions
-  return calculate_is_green(nd) ? fuel.summer() : fuel.spring();
+  return Settings::forceGreenup()   ? fuel.summer()
+       : Settings::forceNoGreenup() ? fuel.spring()
+       : calculate_is_green(nd)     ? fuel.summer()
+                                    : fuel.spring();
 }
 
 template <class FuelSpring, class FuelSummer>
