@@ -245,6 +245,15 @@ int main(const int argc, const char* const argv[])
     register_setter<SlopeSize>(slope, "--slope", "Constant slope", false, &parse_value<SlopeSize>);
     register_setter<
       AspectSize>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
+    register_setter<size_t>(
+      &Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t
+    );
+    register_flag(
+      &Settings::setForceGreenup, true, "--force-greenup", "Force green up for all fires"
+    );
+    register_flag(
+      &Settings::setForceNoGreenup, true, "--force-no-greenup", "Force no green up for all fires"
+    );
   }
   else
   {
@@ -277,6 +286,15 @@ int main(const int argc, const char* const argv[])
     );
     register_setter<
       DurationSize>(&Settings::setUtcOffset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
+    register_setter<size_t>(
+      &Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t
+    );
+    register_flag(
+      &Settings::setForceGreenup, true, "--force-greenup", "Force green up for all fires"
+    );
+    register_flag(
+      &Settings::setForceNoGreenup, true, "--force-no-greenup", "Force no green up for all fires"
+    );
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
     {
