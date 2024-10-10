@@ -357,6 +357,24 @@ main(
       false,
       &parse_raw
     );
+    register_flag(
+      &Settings::setForceStaticCuring,
+      true,
+      "--force-curing",
+      "Manually set grass curing for all fires"
+    );
+    register_flag(
+      &Settings::setForceGreenup,
+      true,
+      "--force-greenup",
+      "Force green up for all fires"
+    );
+    register_flag(
+      &Settings::setForceNoGreenup,
+      true,
+      "--force-no-greenup",
+      "Force no green up for all fires"
+    );
     // FIX: this is parsed too late to be used right now
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     size_t SKIPPED_ARGS = 0;
@@ -413,6 +431,13 @@ main(
         &Settings::setIgnCol,
         "--ign-col",
         "Specify ignition column",
+        false,
+        &parse_size_t
+      );
+      register_setter<size_t>(
+        &Settings::setStaticCuring,
+        "--curing",
+        "Specify static grass curing. Requires the force-curing flag to be set.",
         false,
         &parse_size_t
       );
