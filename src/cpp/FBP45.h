@@ -595,10 +595,14 @@ public:
   [[nodiscard]] static MathSize baseMultiplier(const int nd,
                                                const wx::FwiWeather& wx) noexcept
   {
-    const MathSize curing = wx.dc().asValue() > 500
-                            ?   // we're in drought conditions
-                              100
-                            : calculate_grass_curing(nd);
+
+    const MathSize curing = sim::Settings::forceStaticCuring()
+                            ?   // forcing curing value
+                              sim::Settings::staticCuring()
+                            : wx.dc().asValue() > 500
+                                ?   // we're in drought conditions
+                                100
+                                : calculate_grass_curing(nd);
     return BASE_MULTIPLIER_CURING(curing);
   }
   /**
@@ -1217,7 +1221,11 @@ template <class FuelSpring, class FuelSummer>
                                                     FuelSummer>& fuel) noexcept
 {
   // if not green yet, then still in spring conditions
-  return calculate_is_green(nd)
+  return sim::Settings::forceGreenup()
+         ? fuel.summer()
+       : sim::Settings::forceNoGreenup()
+         ? fuel.spring()
+       : calculate_is_green(nd)
          ? fuel.summer()
          : fuel.spring();
 }
