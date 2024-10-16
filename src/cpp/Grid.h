@@ -588,32 +588,25 @@ protected:
    * \param dir Directory to save into
    * \param base_name File base name to use
    * \param convert Function to convert from V to R
+   * \param no_data Value to use as nodata in output
    */
   template <class R>
   string
   saveToAsciiFile(
     const string& dir,
     const string& base_name,
-    std::function<R(T value)> convert
+    std::function<R(T value)> convert,
+    const R no_data
   ) const
   {
-#ifdef DEBUG_GRIDS
-    // enforce converting to an int and back produces same V
-    const auto n0 = this->nodataInput();
-    const auto n1 = static_cast<NodataIntType>(n0);
-    const auto n2 = static_cast<V>(n1);
-    const auto n3 = static_cast<NodataIntType>(n2);
-    const auto v0 = this->nodataValue();
-    logging::check_equal(n1, n3, "nodata_input_ as int");
-    logging::check_equal(n0, n2, "nodata_input_ from int");
-    logging::check_equal(convert(v0), n0, "convert nodata");
-#endif
     tuple<Idx, Idx, Idx, Idx> bounds = dataBounds();
     auto min_column = std::get<0>(bounds);
     auto min_row = std::get<1>(bounds);
     auto max_column = std::get<2>(bounds);
     auto max_row = std::get<3>(bounds);
-    logging::note("Bounds are (%d, %d), (%d, %d)", min_column, min_row, max_column, max_row);
+#ifdef DEBUG_GRIDS
+    logging::debug("Bounds are (%d, %d), (%d, %d)", min_column, min_row, max_column, max_row);
+#endif
     logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
     logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
     const MathSize xll = this->xllcorner() + min_column * this->cellSize();
@@ -633,7 +626,7 @@ protected:
       xll,
       yll,
       this->cellSize(),
-      static_cast<MathSize>(this->nodataInput())
+      static_cast<MathSize>(no_data)
     );
     for (Idx ro = 0; ro < num_rows; ++ro)
     {
@@ -665,20 +658,10 @@ protected:
   saveToTiffFile(
     const string& dir,
     const string& base_name,
-    std::function<R(T value)> convert
+    std::function<R(T value)> convert,
+    const R no_data
   ) const
   {
-#ifdef DEBUG_GRIDS
-    // enforce converting to an int and back produces same V
-    const auto n0 = this->nodataInput();
-    const auto n1 = static_cast<NodataIntType>(n0);
-    const auto n2 = static_cast<V>(n1);
-    const auto n3 = static_cast<NodataIntType>(n2);
-    const auto v0 = this->nodataValue();
-    logging::check_equal(n1, n3, "nodata_input_ as int");
-    logging::check_equal(n0, n2, "nodata_input_ from int");
-    logging::check_equal(convert(v0), n0, "convert nodata");
-#endif
     uint32_t tileWidth = min((int)(this->columns()), 256);
     uint32_t tileHeight = min((int)(this->rows()), 256);
     tuple<Idx, Idx, Idx, Idx> bounds = dataBounds();
@@ -699,7 +682,7 @@ protected:
       max_row
     );
 #ifdef DEBUG_GRIDS
-    logging::note(
+    logging::debug(
       "Bounds are (%d, %d), (%d, %d) initially",
       min_column,
       min_row,
@@ -744,7 +727,7 @@ protected:
       max_row
     );
 #ifdef DEBUG_GRIDS
-    logging::note(
+    logging::debug(
       "Bounds are (%d, %d), (%d, %d) after correction",
       min_column,
       min_row,
@@ -792,14 +775,14 @@ protected:
     constexpr auto n = std::numeric_limits<V>::digits10;
     static_assert(n > 0);
     char str[n + 6]{0};
-    const auto nodata_as_int = static_cast<int>(this->nodataInput());
+    const auto nodata_as_int = static_cast<int>(no_data);
     sxprintf(str, "%d.000", nodata_as_int);
     logging::extensive(
       "%s using nodata string '%s' for nodata value of (%d, %f)",
       typeid(this).name(),
       str,
       nodata_as_int,
-      static_cast<MathSize>(this->nodataInput())
+      static_cast<MathSize>(no_data)
     );
     TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
     logging::extensive("%s takes %d bits", base_name.c_str(), bps);
@@ -823,6 +806,7 @@ protected:
     {
       for (size_t ro = 0; ro < num_rows; ro += tileHeight)
       {
+        std::fill_n(&buf[0], tileWidth * tileHeight, no_data);
         // NOTE: shouldn't need to check if writing outside of tile because we made bounds on tile
         // edges above need to put data from grid into buffer, but flipped vertically
         for (size_t x = 0; x < tileWidth; ++x)
@@ -833,10 +817,10 @@ protected:
             const Idx c = static_cast<Idx>(min_column) + co + x;
             const Location idx(r, c);
             // might be out of bounds if not divisible by number of tiles
-            const R value = (this->rows() <= r || 0 > r || this->columns() <= c || 0 > c)
-                            ? this->nodataInput()
-                            : convert(this->at(idx));
-            buf[x + y * tileWidth] = value;
+            if (!(this->rows() <= r || 0 > r || this->columns() <= c || 0 > c))
+            {
+              buf[x + y * tileWidth] = convert(this->at(idx));
+            }
           }
         }
         logging::check_fatal(
@@ -862,23 +846,25 @@ public:
    * \param dir Directory to save into
    * \param base_name File base name to use
    * \param convert Function to convert from V to R
+   * \param no_data Value to use as nodata in output
    */
   template <class R>
   string
   saveToFileWithoutRetry(
     const string& dir,
     const string& base_name,
-    std::function<R(T value)> convert
+    std::function<R(T value)> convert,
+    const R no_data
   ) const
   {
     // NOTE: do this instead of function pointer because it's using templates
     if (fs::sim::Settings::saveAsAscii())
     {
-      return saveToAsciiFile<R>(dir, base_name, convert);
+      return saveToAsciiFile<R>(dir, base_name, convert, no_data);
     }
     else
     {
-      return saveToTiffFile<R>(dir, base_name, convert);
+      return saveToTiffFile<R>(dir, base_name, convert, no_data);
     }
   }
   /**
@@ -887,20 +873,22 @@ public:
    * \param dir Directory to save into
    * \param base_name File base name to use
    * \param convert Function to convert from V to R
+   * \param no_data Value to use as nodata in output
    */
   template <class R>
   string
   saveToFileWithRetry(
     const string& dir,
     const string& base_name,
-    std::function<R(T value)> convert
+    std::function<R(T value)> convert,
+    const R no_data
   ) const
   {
     // HACK: (hopefully) ensure that write works
     try
     {
       // HACK: use different function name to prevent infinite recursion warning
-      return saveToFileWithoutRetry(dir, base_name, convert);
+      return saveToFileWithoutRetry(dir, base_name, convert, no_data);
     }
     catch (const std::exception& err)
     {
@@ -912,7 +900,7 @@ public:
       );
       try
       {
-        return saveToFileWithoutRetry<R>(dir, base_name, convert);
+        return saveToFileWithoutRetry<R>(dir, base_name, convert, no_data);
       }
       catch (const std::exception& err_fatal)
       {
@@ -932,6 +920,25 @@ public:
    * \param dir Directory to save into
    * \param base_name File base name to use
    * \param convert Function to convert from V to R
+   * \param no_data Value to use as nodata in output
+   */
+  template <class R>
+  string
+  saveToFile(
+    const string& dir,
+    const string& base_name,
+    std::function<R(T value)> convert,
+    const R no_data
+  ) const
+  {
+    return saveToFileWithRetry<R>(dir, base_name, convert, no_data);
+  }
+  /**
+   * \brief Save GridMap contents to file based on settings
+   * \tparam R Type to be written to file
+   * \param dir Directory to save into
+   * \param base_name File base name to use
+   * \param convert Function to convert from V to R
    */
   template <class R>
   string
@@ -941,7 +948,7 @@ public:
     std::function<R(T value)> convert
   ) const
   {
-    return saveToFileWithRetry<R>(dir, base_name, convert);
+    return saveToFile(dir, base_name, convert, static_cast<R>(this->nodataInput()));
   }
   /**
    * \brief Save GridMap contents to file based on settings

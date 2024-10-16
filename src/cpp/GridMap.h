@@ -312,14 +312,7 @@ public:
     auto div = [divisor](T value) -> R {
       return static_cast<R>(value / divisor);
     };
-    if (fs::sim::Settings::saveAsAscii())
-    {
-      return this->template saveToAsciiFile<R>(dir, base_name, div);
-    }
-    else
-    {
-      return this->template saveToTiffFile<R>(dir, base_name, div);
-    }
+    return this->template saveToFile<R>(dir, base_name, div);
   }
   /**
    * \brief Calculate area for cells that have a value (ha)

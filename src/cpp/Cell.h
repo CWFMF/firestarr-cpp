@@ -307,6 +307,7 @@ protected:
    */
   static constexpr Topo AspectBitMask = util::bit_mask<AspectBits, Topo>();
   static_assert(AspectBitMask == 0x1FF);
+  static_assert(AspectBitMask >= INVALID_ASPECT);
   /**
    * \brief Bitmask for aspect in Topo
    */
@@ -325,7 +326,7 @@ protected:
    */
   static constexpr Topo SlopeBitMask = util::bit_mask<SlopeBits, Topo>();
   static_assert(SlopeBitMask == 0x1FF);
-  static_assert(SlopeBitMask >= MAX_SLOPE_FOR_DISTANCE);
+  static_assert(SlopeBitMask >= INVALID_SLOPE);
   /**
    * \brief Bitmask for slope in Topo
    */
