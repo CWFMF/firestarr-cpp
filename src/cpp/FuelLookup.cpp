@@ -734,5 +734,6 @@ const array<const FuelType*, NUMBER_OF_FUELS> FuelLookup::Fuels{
   &M1_M2_80,  &M1_M2_85, &M1_M2_90, &M1_M2_95, &M3_M4_05, &M3_M4_10, &M3_M4_15, &M3_M4_20,
   &M3_M4_25,  &M3_M4_30, &M3_M4_35, &M3_M4_40, &M3_M4_45, &M3_M4_50, &M3_M4_55, &M3_M4_60,
   &M3_M4_65,  &M3_M4_70, &M3_M4_75, &M3_M4_80, &M3_M4_85, &M3_M4_90, &M3_M4_95, &M3_M4_100,
+  &M1_M2_00,  &M3_M4_00,
 };
 }
