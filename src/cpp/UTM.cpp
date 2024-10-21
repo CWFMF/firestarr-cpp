@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "UTM.h"
 #include "Point.h"
+#include "Log.h"
 #include "Util.h"
 #include "unstable.h"
 namespace fs::topo
@@ -219,6 +220,7 @@ lat_lon_to_utm(
     x,
     y
   );
+  fs::logging::note("Converted lat/lon to utm %f,%f", *x, *y);
   /* Adjust easting and northing for UTM system. */
   *x = (*x) * UTM_SCALE_FACTOR + 500000.0;
   *y = (*y) * UTM_SCALE_FACTOR;

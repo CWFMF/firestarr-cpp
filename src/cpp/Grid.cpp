@@ -6,6 +6,8 @@
 #include "Grid.h"
 #include "UTM.h"
 #include "Settings.h"
+#include "project.h"
+
 using fs::Idx;
 namespace fs::data
 {
@@ -96,7 +98,13 @@ GridBase::GridBase(
 {
   // HACK: don't know if meridian is initialized yet, so repeat calculation
   meridian_ = find_meridian(this->proj4_);
-  zone_ = topo::meridian_to_zone(find_meridian(this->proj4_));
+  zone_ = topo::meridian_to_zone(meridian_);
+  logging::verbose(
+    "Converted meridian (%f) to zone (%f) from '%s'",
+    meridian_,
+    zone_,
+    this->proj4_.c_str()
+  );
 }
 GridBase::GridBase() noexcept
   : cell_size_(-1),
@@ -154,6 +162,7 @@ GridBase::findCoordinates(
     std::get<3>(*full)
   );
 }
+
 // Use pair instead of Location, so we can go above max columns & rows
 unique_ptr<FullCoordinates>
 GridBase::findFullCoordinates(
@@ -163,33 +172,85 @@ GridBase::findFullCoordinates(
 {
   auto x = static_cast<MathSize>(0.0);
   auto y = static_cast<MathSize>(0.0);
-  lat_lon_to_utm(point, this->zone(), &x, &y);
-  logging::debug(
-    "Coordinates (%f, %f) converted to (%0.1f, %f, %f)",
+  auto proj4 = to_proj4(this->proj4_, point, &x, &y);
+  auto x_old = static_cast<MathSize>(0.0);
+  auto y_old = static_cast<MathSize>(0.0);
+  lat_lon_to_utm(point, this->zone(), &x_old, &y_old);
+  logging::note(
+    "Coordinates (%f, %f) converted to (%0.1f, %f, %f) vs (%f, %f)",
     point.latitude(),
     point.longitude(),
     this->zone(),
+    x_old,
+    y_old,
     x,
     y
   );
+  // check that north is the top of the raster at least along center
+  // topo::Point south{point.latitude() - 10, meridian_};
+  // topo::Point north{point.latitude() + 10, meridian_};
+  topo::Point south{-90, meridian_};
+  topo::Point north{90, meridian_};
+  auto x_s = static_cast<MathSize>(0.0);
+  auto y_s = static_cast<MathSize>(0.0);
+  auto proj4_check_south = to_proj4(this->proj4_, south, &x_s, &y_s);
+  auto x_n = static_cast<MathSize>(0.0);
+  auto y_n = static_cast<MathSize>(0.0);
+  auto proj4_check_north = to_proj4(this->proj4_, north, &x_n, &y_n);
+  logging::check_equal(x_n, x_s, "X value for due north");
   logging::verbose("Lower left is (%f, %f)", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
   auto actual_y = (!flipped) ? (y - this->yllcorner_) / this->cell_size_
                              : (yurcorner_ - y) / cell_size_;
+  // auto actual_y = (yurcorner_ - y) / cell_size_;
+  // auto actual_y = (y - this->yllcorner_) / this->cell_size_;
+  const auto column = static_cast<FullIdx>(actual_x);
+  const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
   // Override coordinates if provided
   if (sim::Settings::rowColIgnition())
   {
+    const auto row_forced = static_cast<FullIdx>(sim::Settings::ignRow());
+    const auto col_forced = static_cast<FullIdx>(sim::Settings::ignCol());
+    const auto row_actual = flipped ? calculateRows() - row_forced : row_forced;
+    logging::verbose(
+      "Forced coordinates (%d, %d) would be (%d, %d) if flipped and flipped is %s",
+      col_forced,
+      row_forced,
+      col_forced,
+      calculateRows() - row_forced,
+      flipped ? "true" : "false"
+    );
+    // if (row_forced != row || col_forced != column)
+    // {
+    //   logging::error(
+    //     "Forced coordinates (%d, %d) do not match calculated coordinates (%d, %d)",
+    //     col_forced,
+    //     row_forced,
+    //     column,
+    //     row);
+    // }
+    // if (row_actual != row || col_forced != column)
+    {
+      logging::verbose(
+        "Forced coordinates (%d, %d) %smatch calculated coordinates (%d, %d)",
+        col_forced,
+        row_actual,
+        (row_actual != row || col_forced != column) ? "do not " : "",
+        column,
+        row
+      );
+    }
     return make_unique<FullCoordinates>(
-      static_cast<FullIdx>(sim::Settings::ignRow()),
-      static_cast<FullIdx>(sim::Settings::ignCol()),
+      row_actual,
+      col_forced,
       static_cast<SubSize>(0),
       static_cast<SubSize>(0)
     );
   }
-  const auto column = static_cast<FullIdx>(actual_x);
-  const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
+  // const auto column = static_cast<FullIdx>(actual_x);
+  // const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
 
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
@@ -292,12 +353,13 @@ read_header(
       const auto zone_str = proj4.substr(zone_pos + 6);
       const auto zone = stoi(zone_str);
       // zone 15 is -93 and other zones are 6 degrees difference
-      const auto degrees = static_cast<int>(6.0 * (zone - 15.0) - 93);
+      const auto degrees = fs::topo::utm_central_meridian_deg(zone);
       // HACK: assume utm zone is at start
       proj4 = string(
         "+proj=tmerc +lat_0=0.000000000 +lon_0=" + to_string(degrees)
-        + ".000000000 +k=0.999600 +x_0=500000.000 +y_0=0.000"
+        + " +k=0.999600 +x_0=500000.000 +y_0=0.000"
       );
+      printf("Adjusted proj4 is %s", proj4.c_str());
     }
     const auto xurcorner = xllcorner + cell_width * columns;
     const auto yurcorner = yllcorner + cell_width * rows;

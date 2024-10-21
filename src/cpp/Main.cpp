@@ -456,11 +456,12 @@ main(
       "--sim-area",
       "Output simulation area grids"
     );
-    register_flag(
-      &Settings::setForceFuel,
-      true,
-      "--force-fuel",
-      "Use first default fuel raster without checking coordinates"
+    register_setter<const char*>(
+      &Settings::setRasterRoot,
+      "--raster-root",
+      "Use specified directory as raster root",
+      false,
+      &parse_raw
     );
     register_setter<const char*>(
       &Settings::setFuelLookupTable,
