@@ -769,7 +769,7 @@ runs_required(
 {
   if (Settings::deterministic())
   {
-    logging::note("Stopping after %i iteration because running in deterministic mode");
+    logging::note("Stopping after iteration %ld because running in deterministic mode", i);
     return 0;
   }
   if (model.isOverSimulationCountLimit())
