@@ -397,7 +397,7 @@ public:
       string(grid_info.proj4()),
       std::move(values)
     );
-    auto new_location = result->findCoordinates(point, true);
+    auto new_location = result->findCoordinates(point, false);
 #ifdef DEBUG_GRIDS
     logging::check_fatal(nullptr == new_location, "Invalid location after reading");
 #endif
