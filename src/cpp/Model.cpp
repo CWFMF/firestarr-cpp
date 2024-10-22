@@ -1332,7 +1332,7 @@ Model::runScenarios(
       );
     }
     // want to output internal representation of weather to file
-#ifndef NDEBUG
+#ifdef DEBUG_WEATHER
     if (!Settings::surface())
     {
       model.outputWeather();
@@ -1371,7 +1371,7 @@ Model::runScenarios(
   }
   return 0;
 }
-#ifndef NDEBUG
+#ifdef DEBUG_WEATHER
 void
 Model::outputWeather()
 {
