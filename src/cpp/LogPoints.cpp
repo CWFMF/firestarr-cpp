@@ -27,7 +27,7 @@ public:
   {
     if (do_log)
     {
-      constexpr auto HEADER_STAGES = "step_id,scenario,stage,step,time";
+      constexpr auto HEADER_STAGES = "step_id,scenario,stage,step,time\n";
 #ifdef LOG_POINTS_CELL
       constexpr auto HEADER_POINTS = "step_id,column,row,x,y\n";
 #else
