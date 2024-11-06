@@ -2,7 +2,7 @@
 /* SPDX-FileCopyrightText: 2024-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SpreadAlgorithm.h"
-#include "Log.h"
+#include "CellPoints.h"
 #include "unstable.h"
 #include "Util.h"
 namespace fs
@@ -40,6 +40,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 }
 [[nodiscard]] OffsetSet OriginalSpreadAlgorithm::calculate_offsets(
   HorizontalAdjustment correction_factor,
+  MathSize tfc,
   MathSize head_raz,
   MathSize head_ros,
   MathSize back_ros,
@@ -47,16 +48,22 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets](const MathSize direction, const MathSize ros) {
+  const auto add_offset = [this, &offsets, tfc](const MathSize direction, const MathSize ros) {
     if (ros < min_ros_)
     {
       return false;
     }
     const auto ros_cell = ros / cell_size_;
+    const auto intensity = fire_intensity(tfc, ros);
     // spreading, so figure out offset from current point
     offsets.emplace_back(
-      static_cast<DistanceSize>(ros_cell * sin(direction)),
-      static_cast<DistanceSize>(ros_cell * cos(direction))
+      intensity,
+      ros,
+      Direction(direction, true),
+      Offset{
+        static_cast<DistanceSize>(ros_cell * sin(direction)),
+        static_cast<DistanceSize>(ros_cell * cos(direction))
+      }
     );
     return true;
   };
@@ -139,6 +146,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 }
 [[nodiscard]] OffsetSet WidestEllipseAlgorithm::calculate_offsets(
   const HorizontalAdjustment correction_factor,
+  const MathSize tfc,
   const MathSize head_raz,
   const MathSize head_ros,
   const MathSize back_ros,
@@ -146,7 +154,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets](const MathSize direction, const MathSize ros) {
+  const auto add_offset = [this, &offsets, tfc](const MathSize direction, const MathSize ros) {
 #ifdef DEBUG_POINTS
     const auto s0 = offsets.size();
 #endif
@@ -156,10 +164,16 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       return false;
     }
     const auto ros_cell = ros / cell_size_;
+    const auto intensity = fire_intensity(tfc, ros);
     // spreading, so figure out offset from current point
     offsets.emplace_back(
-      static_cast<DistanceSize>(ros_cell * sin(direction)),
-      static_cast<DistanceSize>(ros_cell * cos(direction))
+      intensity,
+      ros,
+      Direction(direction, true),
+      Offset{
+        static_cast<DistanceSize>(ros_cell * sin(direction)),
+        static_cast<DistanceSize>(ros_cell * cos(direction))
+      }
     );
 #ifdef DEBUG_POINTS
     const auto s1 = offsets.size();

@@ -245,7 +245,9 @@ SpreadInfo::SpreadInfo(
   const ptr<const FwiWeather> weather,
   const ptr<const FwiWeather> weather_daily
 )
-  : key_(key), weather_(weather), time_(time), nd_(nd)
+  : offsets_({}), max_intensity_(INVALID_INTENSITY), key_(key), weather_(weather), time_(time),
+    head_ros_(INVALID_ROS), cfb_(-1), cfc_(-1), tfc_(-1), sfc_(-1), is_crown_(false),
+    raz_(fs::Direction::Invalid), nd_(nd)
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
   const auto slope_azimuth = Cell::aspect(key_);
@@ -332,18 +334,25 @@ SpreadInfo::SpreadInfo(
   }
   // max intensity should always be at the head
   max_intensity_ = fire_intensity(tfc_, head_ros_);
-  const auto l_b = fuel->lengthToBreadth(wsv);
+  l_b_ = fuel->lengthToBreadth(wsv);
   const HorizontalAdjustment correction_factor =
     horizontal_adjustment(slope_azimuth, percentSlope());
-  const auto spread_algorithm = OriginalSpreadAlgorithm(0.5, cell_size, min_ros);
+  const auto spread_algorithm = WidestEllipseAlgorithm(5.0, cell_size, min_ros);
   offsets_ = spread_algorithm.calculate_offsets(
-    correction_factor, raz_.asRadians(), head_ros_, back_ros, l_b
+    correction_factor, tfc_, raz_.asRadians(), head_ros_, back_ros, l_b_
   );
   // #endif
   // if no offsets then not spreading so invalidate head_ros_
   if (0 == offsets_.size())
   {
     head_ros_ = INVALID_ROS;
+    max_intensity_ = INVALID_INTENSITY;
+    cfb_ = -1;
+    cfc_ = -1;
+    tfc_ = -1;
+    sfc_ = -1;
+    is_crown_ = false;
+    raz_ = fs::Direction::Invalid;
   }
 }
 }

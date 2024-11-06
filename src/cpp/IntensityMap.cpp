@@ -64,7 +64,10 @@ bool IntensityMap::isSurrounded(const Location& location) const
   }
   return true;
 }
-void IntensityMap::ignite(const Location& location) { burn(location, 1, 0, fs::Direction::Zero); }
+void IntensityMap::ignite(const Location& location)
+{
+  burn(location, 1, 0, fs::Direction::Invalid);
+}
 void IntensityMap::burn(
   const Location& location,
   IntensitySize intensity,
@@ -82,12 +85,14 @@ void IntensityMap::burn(
   }
   else
   {
-    if (intensity_max_.at(location) < intensity)
+    const auto intensity_old = intensity_max_.at(location);
+    if (intensity_old < intensity)
     {
       intensity_max_.set(location, intensity);
     }
     // update ros and direction if higher ros
-    if (rate_of_spread_at_max_.at(location) < ros)
+    const auto ros_old = rate_of_spread_at_max_.at(location);
+    if (ros_old < ros)
     {
       rate_of_spread_at_max_.set(location, ros);
       direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees()));
@@ -102,7 +107,9 @@ FileList IntensityMap::save(const string_view dir, const string_view base_name) 
   const auto name_raz = string(base_name) + "_raz";
   // FIX: already done in IntensityObserver?
   auto files = intensity_max_.saveToFile(dir, name_intensity);
-  files.append_range(rate_of_spread_at_max_.saveToFile(dir, name_ros));
+  // // HACK: writing a double to a tiff seems to not work?
+  // double is way too much precision for outputs
+  files.append_range(rate_of_spread_at_max_.saveToFile<float>(dir, name_ros));
   files.append_range(direction_of_spread_at_max_.saveToFile(dir, name_raz));
   return files;
 }
