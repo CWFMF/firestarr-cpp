@@ -387,7 +387,14 @@ Scenario::evaluate(
       points_log_
         .log(step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       // HACK: don't do this in constructor because scenario creates this in its constructor
-      points_.insert(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
+      points_.insert(
+        event.time(),
+        NO_INTENSITY,
+        NO_ROS,
+        Direction::Invalid,
+        p.column() + CELL_CENTER,
+        p.row() + CELL_CENTER
+      );
       if (is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -723,7 +730,14 @@ Scenario::run(
 #endif
       // log_verbose("Adding point (%d, %d)",
       log_verbose("Adding point (%f, %f)", cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
-      points_.insert(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
+      points_.insert(
+        start_time_,
+        NO_INTENSITY,
+        NO_ROS,
+        Direction::Invalid,
+        cell.column() + CELL_CENTER,
+        cell.row() + CELL_CENTER
+      );
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
@@ -739,7 +753,8 @@ Scenario::run(
     // would be burned already if perimeter applied
     if (canBurn(location))
     {
-      const auto fake_event = Event::makeFireSpread(start_time_, nullptr, location);
+      const auto
+        fake_event = Event::makeFireSpread(start_time_, 0, 0, Direction::Invalid, location);
       burn(fake_event);
     }
   }
@@ -809,30 +824,52 @@ Scenario::run(
 
 CellPointsMap
 apply_offsets_spreadkey(
-  const DurationSize duration,
+  const DurationSize& arrival_time,
+  const DurationSize& duration,
   const OffsetSet& offsets,
-  spreading_points::mapped_type& cell_pts
+  spreading_points::mapped_type& cell_pts_map
 )
 {
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   CellPointsMap r1{};
-  vector<Offset> offsets_after_duration{};
+  OffsetSet offsets_after_duration{};
+  logging::verbose("Applying %ld offsets", offsets.size());
+  // std::transform(
+  //   offsets.cbegin(),
+  //   offsets.cend(),
+  //   std::back_inserter(offsets_after_duration),
   offsets_after_duration.resize(offsets.size());
   std::transform(
     offsets.cbegin(),
     offsets.cend(),
     offsets_after_duration.begin(),
-    [&duration](const Offset& p) {
-      return Offset(p.first * duration, p.second * duration);
+    [&duration, &arrival_time](const ROSOffset& r_p) {
+      const auto& intensity = std::get<0>(r_p);
+      const auto& ros = std::get<1>(r_p);
+      const auto& raz = std::get<2>(r_p);
+      const auto& p = std::get<3>(r_p);
+      return ROSOffset(intensity, ros, raz, Offset(p.first * duration, p.second * duration));
     }
   );
-  for (auto& pts_for_cell : cell_pts)
+  logging::verbose(
+    "Calculated %ld offsets after duration %f",
+    offsets_after_duration.size(),
+    duration
+  );
+  logging::verbose("cell_pts_map has %ld items", cell_pts_map.size());
+  for (auto& pts_for_cell : cell_pts_map)
   {
     const Location& src = std::get<0>(pts_for_cell);
     CellPoints& cell_pts = std::get<1>(pts_for_cell);
+#ifdef DEBUG_CELLPOINTS
+    logging::note("cell_pts for (%d, %d) has %ld items", src.column(), src.row(), cell_pts.size());
+#endif
     if (cell_pts.empty())
     {
+#ifdef DEBUG_CELLPOINTS
+      logging::note("Cell (%d, %d) ignored because empty", src.column(), src.row());
+#endif
       continue;
     }
     auto& pts = cell_pts.pts_.second;
@@ -847,11 +884,38 @@ apply_offsets_spreadkey(
       const auto& cell_y = cell_pts.cell_x_y_.second;
       // apply offsets to point
       // should be quicker to loop over offsets in inner loop
-      for (const auto& out : offsets_after_duration)
+      for (const ROSOffset& r_p : offsets_after_duration)
       {
+        const auto& intensity = std::get<0>(r_p);
+        const auto& ros = std::get<1>(r_p);
+        const auto& raz = std::get<2>(r_p);
+        const auto& out = std::get<3>(r_p);
         const auto& x_o = out.first;
         const auto& y_o = out.second;
-        r1.insert(src, x_o + p.first + cell_x, y_o + p.second + cell_y);
+#ifdef DEBUG_CELLPOINTS
+        logging::note(
+          "src.x %d; src.y %d;"
+          " ros %f; x %f; y %f; duration %f;\n",
+          src.column(),
+          src.row(),
+          ros,
+          p.first,
+          p.second,
+          duration
+        );
+#endif
+        r1.insert(
+          src,
+          arrival_time,
+          intensity,
+          ros,
+          raz,
+          x_o + p.first + cell_x,
+          y_o + p.second + cell_y
+        );
+#ifdef DEBUG_CELLPOINTS
+        logging::note("r1 is now %ld items", r1.size());
+#endif
       }
       ++it_pts;
     }
@@ -917,6 +981,18 @@ Scenario::scheduleFireSpread(
           // NOTE: shouldn't be Cell if we're looking up by just Location later
           to_spread[key].emplace_back(loc, std::move(it->second));
           it = points_.map_.erase(it);
+#ifdef DEBUG_CELLPOINTS
+          auto& v = to_spread[key];
+          const auto n = v.size();
+          const auto& p = v[n - 1].second;
+          logging::note(
+            "added %ld items to to_spread[%d][(%d, %d)]",
+            p.size(),
+            key,
+            loc.column(),
+            loc.row()
+          );
+#endif
         }
         else
         {
@@ -940,11 +1016,11 @@ Scenario::scheduleFireSpread(
   CellPointsMap cell_pts{};
   auto spread = std::views::transform(
     to_spread,
-    [this, &duration](spreading_points::value_type& kv0) -> CellPointsMap {
+    [this, &duration, &new_time](spreading_points::value_type& kv0) -> CellPointsMap {
       auto& key = kv0.first;
       const auto& offsets = spread_info_[key].offsets();
       spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
+      auto r = apply_offsets_spreadkey(new_time, duration, offsets, cell_pts);
       return r;
     }
   );
@@ -958,6 +1034,9 @@ Scenario::scheduleFireSpread(
     cell_pts.merge(unburnable_, cell_pts_cur);
     ++it;
   }
+#ifdef DEBUG_CELLPOINTS
+  const auto n_c = cell_pts.size();
+#endif
   cell_pts.remove_if([this](const pair<Location, CellPoints>& kv) {
     const auto& location = kv.first;
     const auto h = location.hash();
@@ -965,6 +1044,9 @@ Scenario::scheduleFireSpread(
     const auto do_clear = unburnable_.at(h);
     return do_clear;
   });
+#ifdef DEBUG_CELLPOINTS
+  logging::note("%ld cell_pts before remove_if() and %ld after", n_c, cell_pts.size());
+#endif
   // need to merge new points back into cells that didn't spread
   points_.merge(unburnable_, cell_pts);
   // if we move everything out of points_ we can parallelize this check?
@@ -984,7 +1066,9 @@ Scenario::scheduleFireSpread(
       // HACK: just use the first cell as the source
       const auto fake_event = Event::makeFireSpread(
         new_time,
-        &(seek_spread->second),
+        pts.intensity_at_arrival_,
+        pts.ros_at_arrival_,
+        pts.raz_at_arrival_,
         for_cell,
         pts.sources()
       );

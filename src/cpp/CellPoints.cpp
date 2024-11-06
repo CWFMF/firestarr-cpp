@@ -39,20 +39,34 @@ CellPoints::unique() const noexcept
     const auto& pts_all = std::views::transform(pts_.second, [this](const auto& p) {
       return XYPos(p.first + cell_x_y_.first, p.second + cell_x_y_.second);
     });
-    return {pts_all.cbegin(), pts_all.cend()};
+    return {pts_all.begin(), pts_all.end()};
   }
 }
-
+#ifdef DEBUG_CELLPOINTS
+size_t
+CellPoints::size() const noexcept
+{
+  return unique().size();
+}
+#endif
 CellPoints::CellPoints(
   const Idx cell_x,
   const Idx cell_y
 ) noexcept
-  : pts_({}),
+  : arrival_time_(INVALID_TIME),
+    intensity_at_arrival_(0),
+    ros_at_arrival_(INVALID_ROS),
+    raz_at_arrival_(Direction::Invalid),
+    pts_({}),
     cell_x_y_(cell_x, cell_y),
     src_(DIRECTION_NONE)
 {
   std::fill(pts_.first.begin(), pts_.first.end(), INVALID_DISTANCE);
   std::fill(pts_.second.begin(), pts_.second.end(), INVALID_INNER_POSITION);
+
+#ifdef DEBUG_CELLPOINTS
+  logging::note("CellPoints is size %ld after creation and should be empty", size());
+#endif
 }
 
 CellPoints::CellPoints() noexcept
@@ -65,19 +79,21 @@ CellPoints::CellPoints(
 ) noexcept
   : CellPoints()
 {
-  if (nullptr != rhs)
-  {
-    *this = *rhs;
-  }
+  logging::check_fatal(nullptr == rhs, "Initializing CellPoints from nullptr");
+  *this = *rhs;
 }
 
 CellPoints::CellPoints(
+  const DurationSize& arrival_time,
+  const IntensitySize intensity,
+  const ROSSize& ros,
+  const Direction& raz,
   const XYSize x,
   const XYSize y
 ) noexcept
   : CellPoints(static_cast<Idx>(x), static_cast<Idx>(y))
 {
-  insert(x, y);
+  insert(arrival_time, intensity, ros, raz, x, y);
 }
 
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
@@ -118,10 +134,54 @@ constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
 
 CellPoints&
 CellPoints::insert(
+  const DurationSize& arrival_time,
+  const IntensitySize intensity,
+  const ROSSize& ros,
+  const Direction& raz,
   const XYSize x,
   const XYSize y
 ) noexcept
 {
+#ifdef DEBUG_CELLPOINTS
+  logging::note(
+    "Insert (%f, %f) at time %f with ROS %f, Intensity %d, RAZ %f",
+    x,
+    y,
+    arrival_time,
+    ros,
+    intensity,
+    raz.asDegrees()
+  );
+#endif
+  // count things as the same time if within a tolerance
+  constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
+  constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
+  if (0 < arrival_time && 0 > arrival_time_)
+  {
+    logging::verbose("No time so setting ros to %f at time %f", ros, arrival_time);
+    // record ros and time if nothing yet
+    arrival_time_ = arrival_time;
+    ros_at_arrival_ = ros;
+    intensity_at_arrival_ = intensity;
+    raz_at_arrival_ = raz;
+  }
+  else if (abs(arrival_time - arrival_time_) <= TIME_EPSILON)
+  // else if (arrival_time == arrival_time_)
+  {
+    logging::verbose(
+      "Same time so setting ros to max(%f, %f) at time %f",
+      ros,
+      ros_at_arrival_,
+      arrival_time
+    );
+    // the same time so pick higher ros
+    if ((ros_at_arrival_ < ros) || (ros_at_arrival_ == ros && intensity > intensity_at_arrival_))
+    {
+      ros_at_arrival_ = ros;
+      intensity_at_arrival_ = intensity;
+      raz_at_arrival_ = raz;
+    }
+  }
   // NOTE: use location inside cell so smaller types can be more precise
   // since digits aren't wasted on cell
   const auto p0 = InnerPos(
@@ -141,6 +201,9 @@ CellPoints::insert(
     p_p = (d < p_d) ? p0 : p_p;
     p_d = (d < p_d) ? d : p_d;
   }
+#ifdef DEBUG_CELLPOINTS
+  logging::note("now have %ld points", size());
+#endif
   return *this;
 }
 
@@ -158,7 +221,8 @@ CellPoints::insert(
   const InnerPos& p
 ) noexcept
 {
-  insert(p.first, p.second);
+  // HACK: FIX: just do something for now
+  insert(INVALID_TIME, NO_INTENSITY, NO_ROS, Direction::Invalid, p.first, p.second);
   return *this;
 }
 
@@ -175,6 +239,10 @@ CellPoints::merge(
   const CellPoints& rhs
 )
 {
+#ifdef DEBUG_CELLPOINTS
+  const auto n0 = size();
+  const auto n1 = rhs.size();
+#endif
   // either both invalid or lower one is valid
   cell_x_y_ = min(cell_x_y_, rhs.cell_x_y_);
   // we know distances in each direction so just pick closer
@@ -187,6 +255,9 @@ CellPoints::merge(
     }
   }
   add_source(rhs.src_);
+#ifdef DEBUG_CELLPOINTS
+  logging::note("Merging %ld with %ld gives %ld pts", n0, n1, size());
+#endif
   return *this;
 }
 
@@ -231,29 +302,52 @@ CellPointsMap::CellPointsMap()
 
 CellPoints&
 CellPointsMap::insert(
+  const DurationSize& arrival_time,
+  const IntensitySize intensity,
+  const ROSSize& ros,
+  const Direction& raz,
   const XYSize x,
   const XYSize y
 ) noexcept
 {
+#ifdef DEBUG_CELLPOINTS
+  const auto n0 = size();
+#endif
   const Location location{static_cast<Idx>(y), static_cast<Idx>(x)};
-  auto e = map_.try_emplace(location, x, y);
+  auto e = map_.try_emplace(location, arrival_time, intensity, ros, raz, x, y);
   CellPoints& cell_pts = e.first->second;
   if (!e.second)
   {
+    // FIX: should use max of whatever ROS has entered during this time and not just first ros
     // tried to add new CellPoints but already there
-    cell_pts.insert(x, y);
+    cell_pts.insert(arrival_time, intensity, ros, raz, x, y);
   }
+#ifdef DEBUG_CELLPOINTS
+  logging::note(
+    "insert with size %ld of (%f, %f) at time %f with ROS %f gives size %ld",
+    n0,
+    x,
+    y,
+    arrival_time,
+    ros,
+    size()
+  );
+#endif
   return cell_pts;
 }
 
 CellPoints&
 CellPointsMap::insert(
   const Location& src,
+  const DurationSize& arrival_time,
+  const IntensitySize intensity,
+  const ROSSize& ros,
+  const Direction& raz,
   const XYSize x,
   const XYSize y
 ) noexcept
 {
-  CellPoints& cell_pts = insert(x, y);
+  CellPoints& cell_pts = insert(arrival_time, intensity, ros, raz, x, y);
   const Location& dst = cell_pts.location();
   // adds 0 if the same so try without checking
   {
@@ -308,4 +402,25 @@ CellPointsMap::remove_if(
     }
   }
 }
+
+set<XYPos>
+CellPointsMap::unique() const noexcept
+{
+  set<XYPos> r{};
+  for (auto& lp : map_)
+  {
+    for (auto& p : lp.second.unique())
+    {
+      r.insert(p);
+    }
+  }
+  return r;
+}
+#ifdef DEBUG_CELLPOINTS
+size_t
+CellPointsMap::size() const noexcept
+{
+  return unique().size();
+}
+#endif
 }

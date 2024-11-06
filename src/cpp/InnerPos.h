@@ -7,11 +7,11 @@
 
 #include "stdafx.h"
 
-#include "Cell.h"
+#include "Location.h"
+#include "Weather.h"
 
 namespace fs
 {
-
 template <class S, int XMin, int XMax, int YMin, int YMax>
 class BoundedPoint : public pair<S, S>
 {
@@ -62,10 +62,13 @@ public:
   /**
    * \brief Collection of Offsets
    */
-  using OffsetSet = vector<Offset>;
+  using ROSOffset = std::tuple<IntensitySize, ROSSize, Direction, Offset>;
+  using OffsetSet = vector<ROSOffset>;
   using BoundedPoint<DistanceSize, -1, 1, -1, 1>::BoundedPoint;
 };
 
+// FIX: weird to define these twice but it's so they're not always reliant on the class
+using ROSOffset = Offset::ROSOffset;
 using OffsetSet = Offset::OffsetSet;
 
 /**

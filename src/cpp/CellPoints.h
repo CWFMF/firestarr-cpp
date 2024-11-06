@@ -13,6 +13,7 @@
 
 namespace fs
 {
+using fs::Direction;
 
 static constexpr size_t NUM_DIRECTIONS = 16;
 
@@ -31,9 +32,14 @@ public:
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
-  CellPoints(const XYSize x, const XYSize y) noexcept;
-  CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
-  CellPoints(const XYPos& p) noexcept;
+  CellPoints(
+    const DurationSize& arrival_time,
+    const IntensitySize intensity,
+    const ROSSize& ros,
+    const Direction& raz,
+    const XYSize x,
+    const XYSize y
+  ) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
   CellPoints&
@@ -41,7 +47,14 @@ public:
   CellPoints&
   operator=(const CellPoints& rhs) noexcept = default;
   CellPoints&
-  insert(const XYSize x, const XYSize y) noexcept;
+  insert(
+    const DurationSize& arrival_time,
+    const IntensitySize intensity,
+    const ROSSize& ros,
+    const Direction& raz,
+    const XYSize x,
+    const XYSize y
+  ) noexcept;
   CellPoints&
   insert(const InnerPos& p) noexcept;
   void
@@ -57,6 +70,10 @@ public:
   merge(const CellPoints& rhs);
   set<XYPos>
   unique() const noexcept;
+#ifdef DEBUG_CELLPOINTS
+  size_t
+  size() const noexcept;
+#endif
   bool
   operator<(const CellPoints& rhs) const noexcept;
   bool
@@ -67,7 +84,10 @@ public:
   clear();
   bool
   empty() const;
-  friend CellPointsMap;
+  DurationSize arrival_time_;
+  IntensitySize intensity_at_arrival_;
+  ROSSize ros_at_arrival_;
+  Direction raz_at_arrival_;
   // FIX: just access directly for now
 
 public:
@@ -75,6 +95,10 @@ public:
   // use Idx instead of Location so it can be negative (invalid)
   CellPos cell_x_y_;
   CellIndex src_;
+
+private:
+  CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
+  CellPoints(const XYPos& p) noexcept;
 };
 
 using spreading_points = CellPoints::spreading_points;
@@ -86,13 +110,32 @@ class CellPointsMap
 public:
   CellPointsMap();
   CellPoints&
-  insert(const XYSize x, const XYSize y) noexcept;
+  insert(
+    const DurationSize& arrival_time,
+    const IntensitySize intensity,
+    const ROSSize& ros,
+    const Direction& raz,
+    const XYSize x,
+    const XYSize y
+  ) noexcept;
   CellPoints&
-  insert(const Location& src, const XYSize x, const XYSize y) noexcept;
+  insert(
+    const Location& src,
+    const DurationSize& arrival_time,
+    const IntensitySize intensity,
+    const ROSSize& ros,
+    const Direction& raz,
+    const XYSize x,
+    const XYSize y
+  ) noexcept;
   CellPointsMap&
   merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
   set<XYPos>
   unique() const noexcept;
+#ifdef DEBUG_CELLPOINTS
+  size_t
+  size() const noexcept;
+#endif
   // apply function to each CellPoints within and remove matches
   void
   remove_if(std::function<bool(const pair<Location, CellPoints>&)> F) noexcept;

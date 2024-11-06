@@ -207,6 +207,16 @@ public:
   }
 
   /**
+   * \brief Length to breadth ratio used for spread
+   * \return Length to breadth ratio used for spread
+   */
+  [[nodiscard]] constexpr MathSize
+  lengthToBreadth() const
+  {
+    return l_b_;
+  }
+
+  /**
    * \brief Slope used for spread (%)
    * \return Slope used for spread (%)
    */
@@ -436,6 +446,7 @@ private:
    * \brief Time that spread is occurring
    */
   DurationSize time_ = -1;
+  MathSize l_b_ = -1;
   /**
    * \brief Head fire rate of spread (m/min)
    */

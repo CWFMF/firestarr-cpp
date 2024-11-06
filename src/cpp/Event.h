@@ -12,6 +12,8 @@
 
 namespace fs
 {
+using fs::Direction;
+
 /**
  * \brief A specific Event scheduled in a specific Scenario.
  */
@@ -35,17 +37,27 @@ public:
     FIRE_SPREAD,
   };
 
+  [[nodiscard]] static Event
+  makeEvent(
+    const DurationSize time,
+    const Cell& cell,
+    const Type type
+  )
+  {
+    return {time, cell, 0, type, 0, 0, Direction::Invalid, 0};
+  }
+
   /**
    * \brief Make simulation end event
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static constexpr Event
+  [[nodiscard]] static Event
   makeEnd(
     const DurationSize time
   )
   {
-    return {time, NoLocation, 0, END_SIMULATION, nullptr, 0};
+    return makeEvent(time, NoLocation, END_SIMULATION);
   }
 
   /**
@@ -54,12 +66,13 @@ public:
    * \param cell Cell to start new fire in
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeNewFire(
+  [[nodiscard]] static Event
+  makeNewFire(
     const DurationSize time,
     const Cell& cell
   )
   {
-    return {time, cell, 0, NEW_FIRE, nullptr, 0};
+    return makeEvent(time, cell, NEW_FIRE);
   }
 
   /**
@@ -67,11 +80,12 @@ public:
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeSave(
+  [[nodiscard]] static Event
+  makeSave(
     const DurationSize time
   )
   {
-    return {time, NoLocation, 0, SAVE, nullptr, 0};
+    return makeEvent(time, NoLocation, SAVE);
   }
 
   /**
@@ -79,11 +93,12 @@ public:
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(
+  [[nodiscard]] static Event
+  makeFireSpread(
     const DurationSize time
   )
   {
-    return makeFireSpread(time, nullptr);
+    return makeEvent(time, NoLocation, FIRE_SPREAD);
   }
 
   /**
@@ -92,12 +107,15 @@ public:
    * \param intensity Intensity to spread with (kW/m)
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(
+  [[nodiscard]] static Event
+  makeFireSpread(
     const DurationSize time,
-    const SpreadInfo* spread_info
+    const IntensitySize intensity,
+    const ROSSize ros,
+    const Direction raz
   )
   {
-    return makeFireSpread(time, spread_info, NoLocation);
+    return makeFireSpread(time, intensity, ros, raz, NoLocation);
   }
 
   /**
@@ -107,13 +125,16 @@ public:
    * \param cell Cell to spread in
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(
+  [[nodiscard]] static Event
+  makeFireSpread(
     const DurationSize time,
-    const SpreadInfo* spread_info,
+    const IntensitySize intensity,
+    const ROSSize ros,
+    const Direction raz,
     const Cell& cell
   )
   {
-    return makeFireSpread(time, spread_info, cell, 254);
+    return makeFireSpread(time, intensity, ros, raz, cell, 254);
   }
 
   /**
@@ -123,14 +144,17 @@ public:
    * \param cell Cell to spread in
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(
+  [[nodiscard]] static Event
+  makeFireSpread(
     const DurationSize time,
-    const SpreadInfo* spread_info,
+    const IntensitySize intensity,
+    const ROSSize ros,
+    const Direction raz,
     const Cell& cell,
     const CellIndex source
   )
   {
-    return {time, cell, source, FIRE_SPREAD, spread_info, 0};
+    return {time, cell, source, FIRE_SPREAD, intensity, ros, raz, 0};
   }
 
   ~Event() = default;
@@ -178,7 +202,7 @@ public:
   [[nodiscard]] constexpr IntensitySize
   intensity() const
   {
-    return nullptr == spread_info_ ? 1 : spread_info_->maxIntensity();
+    return intensity_;
   }
 
   /**
@@ -188,17 +212,17 @@ public:
   [[nodiscard]] constexpr Direction
   raz() const
   {
-    return nullptr == spread_info_ ? fs::Direction::Zero : spread_info_->headDirection();
+    return raz_;
   }
 
   /**
    * \brief Head fire rate of spread (m/min)
    * \return Head fire rate of spread (m/min)
    */
-  [[nodiscard]] constexpr MathSize
+  [[nodiscard]] constexpr ROSSize
   ros() const
   {
-    return nullptr == spread_info_ ? 0 : spread_info_->headRos();
+    return ros_;
   }
 
   /**
@@ -236,14 +260,18 @@ private:
     const Cell& cell,
     const CellIndex source,
     const Type type,
-    const SpreadInfo* spread_info,
+    const IntensitySize intensity,
+    const ROSSize ros,
+    const Direction raz,
     const DurationSize time_at_location
   )
     : time_(time),
       time_at_location_(time_at_location),
       cell_(cell),
       type_(type),
-      spread_info_(spread_info),
+      intensity_(intensity),
+      ros_(ros),
+      raz_(raz),
       source_(source)
   {
   }
@@ -264,10 +292,9 @@ private:
    * \brief Type of Event
    */
   Type type_;
-  /**
-   * \brief Spread information at time and place of event
-   */
-  const SpreadInfo* spread_info_{nullptr};
+  IntensitySize intensity_;
+  ROSSize ros_;
+  Direction raz_;
   /**
    * \brief CellIndex for relative Cell that spread into from
    */
