@@ -221,9 +221,13 @@ static constexpr auto MAX_ASPECT = 359;
  */
 static constexpr auto MAX_SLOPE_FOR_DISTANCE = 500;
 /**
+ * \brief Invalid angle value
+ */
+static constexpr auto INVALID_ANGLE = 361;
+/**
  * \brief Invalid aspect value
  */
-static constexpr auto INVALID_ASPECT = 361;
+static constexpr auto INVALID_ASPECT = INVALID_ANGLE;
 /**
  * \brief Invalid slope value
  */
