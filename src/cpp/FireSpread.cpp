@@ -17,9 +17,6 @@ namespace fs::sim
 // if not defined then use variable step degrees
 // #define STEP
 
-static constexpr MathSize INVALID_ROS = -1.0;
-static constexpr MathSize INVALID_INTENSITY = -1.0;
-
 /**
  * \brief Maximum slope that affects ISI - everything after this is the same factor
  */
@@ -290,13 +287,21 @@ SpreadInfo::SpreadInfo(
   const wx::FwiWeather* weather,
   const wx::FwiWeather* weather_daily
 )
-  : key_(key),
+  : offsets_({}),
+    max_intensity_(INVALID_INTENSITY),
+    key_(key),
     weather_(weather),
     time_(time),
+    head_ros_(INVALID_ROS),
+    cfb_(-1),
+    cfc_(-1),
+    tfc_(-1),
+    sfc_(-1),
+    is_crown_(false),
+    raz_(fs::wx::Direction::Zero),
     nd_(nd)
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
-  max_intensity_ = INVALID_INTENSITY;
   const auto slope_azimuth = topo::Cell::aspect(key_);
   const auto fuel = fuel::fuel_by_code(topo::Cell::fuelCode(key_));
   const auto has_no_slope = 0 == percentSlope();
@@ -401,6 +406,13 @@ SpreadInfo::SpreadInfo(
   if (0 == offsets_.size())
   {
     head_ros_ = INVALID_ROS;
+    max_intensity_ = INVALID_INTENSITY;
+    cfb_ = -1;
+    cfc_ = -1;
+    tfc_ = -1;
+    sfc_ = -1;
+    is_crown_ = false;
+    raz_ = fs::wx::Direction::Zero;
   }
 }
 // MathSize SpreadInfo::calculateSpreadProbability(const MathSize ros)

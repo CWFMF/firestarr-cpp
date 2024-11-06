@@ -768,14 +768,27 @@ protected:
     // make sure to use floating point if values are
     if (std::is_floating_point<R>::value)
     {
+      logging::extensive(
+        "Writing %s with float data type for %s",
+        filename.c_str(),
+        typeid(R).name()
+      );
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+    }
+    else
+    {
+      logging::extensive(
+        "Writing %s with int data type for %s",
+        filename.c_str(),
+        typeid(R).name()
+      );
     }
     // FIX: was using double, and that usually doesn't make sense, but sometime it might?
     // use buffer big enought to fit any (V  + '.000\0') + 1
     constexpr auto n = std::numeric_limits<V>::digits10;
     static_assert(n > 0);
     char str[n + 6]{0};
-    const auto nodata_as_int = static_cast<int>(no_data);
+    const auto nodata_as_int = static_cast<int>(this->nodataInput());
     sxprintf(str, "%d.000", nodata_as_int);
     logging::extensive(
       "%s using nodata string '%s' for nodata value of (%d, %f)",
@@ -819,7 +832,9 @@ protected:
             // might be out of bounds if not divisible by number of tiles
             if (!(this->rows() <= r || 0 > r || this->columns() <= c || 0 > c))
             {
-              buf[x + y * tileWidth] = convert(this->at(idx));
+              // HACK: was getting invalid rasters if assigning directly into buf
+              const R value = convert(this->at(idx));
+              buf[x + y * tileWidth] = value;
             }
           }
         }
@@ -860,11 +875,11 @@ public:
     // NOTE: do this instead of function pointer because it's using templates
     if (fs::sim::Settings::saveAsAscii())
     {
-      return saveToAsciiFile<R>(dir, base_name, convert, no_data);
+      return this->template saveToAsciiFile<R>(dir, base_name, convert, no_data);
     }
     else
     {
-      return saveToTiffFile<R>(dir, base_name, convert, no_data);
+      return this->template saveToTiffFile<R>(dir, base_name, convert, no_data);
     }
   }
   /**
@@ -888,7 +903,7 @@ public:
     try
     {
       // HACK: use different function name to prevent infinite recursion warning
-      return saveToFileWithoutRetry(dir, base_name, convert, no_data);
+      return this->template saveToFileWithoutRetry<R>(dir, base_name, convert, no_data);
     }
     catch (const std::exception& err)
     {
@@ -900,7 +915,7 @@ public:
       );
       try
       {
-        return saveToFileWithoutRetry<R>(dir, base_name, convert, no_data);
+        return this->template saveToFileWithoutRetry<R>(dir, base_name, convert, no_data);
       }
       catch (const std::exception& err_fatal)
       {
@@ -931,7 +946,7 @@ public:
     const R no_data
   ) const
   {
-    return saveToFileWithRetry<R>(dir, base_name, convert, no_data);
+    return this->template saveToFileWithRetry<R>(dir, base_name, convert, no_data);
   }
   /**
    * \brief Save GridMap contents to file based on settings
@@ -948,21 +963,23 @@ public:
     std::function<R(T value)> convert
   ) const
   {
-    return saveToFile(dir, base_name, convert, static_cast<R>(this->nodataInput()));
+    return this
+      ->template saveToFile<R>(dir, base_name, convert, static_cast<R>(this->nodataInput()));
   }
   /**
    * \brief Save GridMap contents to file based on settings
    * \param dir Directory to save into
    * \param base_name File base name to use
    */
+  template <class R = V>
   string
   saveToFile(
     const string& dir,
     const string& base_name
   ) const
   {
-    return saveToFile<T>(dir, base_name, [](V value) {
-      return static_cast<V>(value);
+    return this->template saveToFile<R>(dir, base_name, [](T value) -> R {
+      return static_cast<R>(value);
     });
   }
 };
