@@ -15,6 +15,19 @@ template <class K>
 class GridMapCache
 {
 public:
+  GridMapCache(K nodata)
+    : nodata_(nodata)
+  {
+  }
+  // // use maximum value as nodata if not given
+  // // HACK: need to be able to convert to int, so don't use a value bigger than that can hold
+  // GridMapCache()
+  //   : GridMapCache(
+  //       static_cast<K>(
+  //         min(static_cast<long double>(std::numeric_limits<int>::max()),
+  //             static_cast<long double>(std::numeric_limits<K>::max()))))
+  // {
+  // }
   void release_map(unique_ptr<data::GridMap<K>> map) noexcept
   {
     map->clear();
@@ -40,7 +53,7 @@ public:
         maps_.pop_back();
         return result;
       }
-      return model.environment().makeMap<K>(false);
+      return model.environment().makeMap<K>(nodata_);
     }
     catch (const std::exception& ex)
     {
@@ -49,13 +62,14 @@ public:
     }
   }
 protected:
+  K nodata_;
   vector<unique_ptr<data::GridMap<K>>> maps_;
   mutex mutex_;
 };
 
-static GridMapCache<IntensitySize> CacheIntensitySize{};
-static GridMapCache<MathSize> CacheMathSize{};
-static GridMapCache<DegreesSize> CacheDegreesSize{};
+static auto CacheIntensitySize = GridMapCache<IntensitySize>(-1);
+static auto CacheMathSize = GridMapCache<MathSize>(-1);
+static auto CacheDegreesSize = GridMapCache<DegreesSize>(-1);
 
 // IntensityMap::IntensityMap(const Model& model, topo::Perimeter* perimeter) noexcept
 //   : model_(model),
@@ -174,12 +188,20 @@ bool IntensityMap::isSurrounded(const Location& location) const
 }
 void IntensityMap::ignite(const Location& location)
 {
-  burn(location, 1, 0, tbd::wx::Direction::Zero);
+  burn(location, 1, 0, tbd::wx::Direction::Zero, false);
 }
 void IntensityMap::burn(const Location& location,
                         IntensitySize intensity,
                         MathSize ros,
                         tbd::wx::Direction raz)
+{
+  burn(location, intensity, ros, raz, true);
+}
+void IntensityMap::burn(const Location& location,
+                        IntensitySize intensity,
+                        MathSize ros,
+                        tbd::wx::Direction raz,
+                        bool check_valid)
 {
   lock_guard<mutex> lock(mutex_);
   // const auto is_new = !(*is_burned_)[location.hash()];
@@ -195,6 +217,12 @@ void IntensityMap::burn(const Location& location,
   // }
   // // just set anyway since it's probably faster than checking if we should
   // (*is_burned_).set(location.hash());
+  // if (check_valid)
+  // {
+  //   // FIX: new fire uses intensity = 1, ros = 0 so this breaks
+  //   logging::check_fatal(0 >= intensity, "Negative or 0 intensity given: %d", intensity);
+  //   logging::check_fatal(0 >= ros, "Negative or 0 ros given: %f", ros);
+  // }
   if (!(*is_burned_)[location.hash()])
   {
     intensity_max_->set(location, intensity);
@@ -204,12 +232,22 @@ void IntensityMap::burn(const Location& location,
   }
   else
   {
-    if (intensity_max_->at(location) < intensity)
+    const auto intensity_old = intensity_max_->at(location);
+    // if (check_valid)
+    // {
+    //   logging::check_fatal(0 >= intensity_old, "Negative or 0 intensity recorded: %f", intensity_old);
+    // }
+    if (intensity_old < intensity)
     {
       intensity_max_->set(location, intensity);
     }
     // update ros and direction if higher ros
-    if (rate_of_spread_at_max_->at(location) < ros)
+    const auto ros_old = rate_of_spread_at_max_->at(location);
+    // if (check_valid)
+    // {
+    //   logging::check_fatal(0 >= ros_old, "Negative or 0 ros recorded: %f", ros_old);
+    // }
+    if (ros_old < ros)
     {
       rate_of_spread_at_max_->set(location, ros);
       direction_of_spread_at_max_->set(location, static_cast<DegreesSize>(raz.asDegrees()));
@@ -225,7 +263,10 @@ void IntensityMap::save(const string& dir, const string& base_name) const
   //   return static_cast<DegreesSize>(raz.asDegrees());
   // };
   intensity_max_->saveToFile(dir, base_name);
-  rate_of_spread_at_max_->saveToFile(dir, name_ros);
+  // // HACK: writing a double to a tiff seems to not work?
+  // double is way too much precision for outputs
+  rate_of_spread_at_max_->saveToFile<float>(dir, name_ros);
+  // rate_of_spread_at_max_->saveToFile(dir, name_ros);
   direction_of_spread_at_max_->saveToFile(dir, name_raz);
 }
 MathSize IntensityMap::fireSize() const
