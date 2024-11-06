@@ -12,6 +12,10 @@
 #include "InnerPos.h"
 namespace tbd::sim
 {
+
+static constexpr MathSize INVALID_ROS = -1.0;
+static constexpr MathSize INVALID_INTENSITY = -1.0;
+
 class Scenario;
 /**
  * \brief Possible results of an attempt to spread.
@@ -226,15 +230,20 @@ public:
   }
   // required for making a map of SpreadInfo objects
   constexpr SpreadInfo() noexcept
-  {
-    offsets_ = {};
-    max_intensity_ = -1;
-    key_ = 0;
-    weather_ = nullptr;
-    time_ = -1;
-    head_ros_ = -1;
-    nd_ = -1;
-  };
+    : offsets_({}),
+      max_intensity_(INVALID_INTENSITY),
+      key_(0),
+      weather_(nullptr),
+      time_(-1),
+      head_ros_(INVALID_ROS),
+      cfb_(-1),
+      cfc_(-1),
+      tfc_(-1),
+      sfc_(-1),
+      is_crown_(false),
+      raz_(tbd::wx::Direction::Zero),
+      nd_(-1) {
+      };
   SpreadInfo(
     const int year,
     const int month,
