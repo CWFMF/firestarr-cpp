@@ -90,6 +90,8 @@ public:
   {
     ignite(Location{position.hash()});
   }
+
+public:
   /**
    * \brief Update Location with specified values
    * \param location Location to burn

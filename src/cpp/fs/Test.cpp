@@ -72,41 +72,62 @@ public:
 };
 void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelType* fuel)
 {
-  constexpr auto FMT_FBP_OUT =
-    "%8.2f%8.1f%8g%8.1f%8g%8.1f%8.1f%8g%8.1f%8.1f%8.1f%20s%8.3f%8.3f%8c%8ld%8g%8.4g%8.4g%8.4g%s";
-  static const vector<const char*> HEADERS{"PREC", "TEMP", "RH",  "WS",  "WD",   "FFMC", "DMC",
-                                           "DC",   "ISI",  "BUI", "FWI", "FUEL", "CFB",  "CFC",
-                                           "FD",   "HFI",  "RAZ", "ROS", "SFC",  "TFC"};
+  // column, (width, format)
+  static const map<const char* const, std::pair<int, const char* const>> FMT{
+    {"PREC", {5, "%*.2f"}}, {"TEMP", {5, "%*.1f"}}, {"RH", {3, "%*g"}},    {"WS", {5, "%*.1f"}},
+    {"WD", {3, "%*g"}},     {"FFMC", {5, "%*.1f"}}, {"DMC", {5, "%*.1f"}}, {"DC", {5, "%*g"}},
+    {"ISI", {5, "%*.1f"}},  {"BUI", {5, "%*.1f"}},  {"FWI", {5, "%*.1f"}}, {"GS", {3, "%*d"}},
+    {"SAZ", {3, "%*d"}},    {"FUEL", {7, "%*s"}},   {"GC", {3, "%*g"}},    {"L:B", {5, "%*.2f"}},
+    {"CBH", {4, "%*.1f"}},  {"CFB", {6, "%*.3f"}},  {"CFC", {6, "%*.3f"}}, {"FD", {2, "%*c"}},
+    {"HFI", {6, "%*ld"}},   {"RAZ", {3, "%*d"}},    {"ROS", {6, "%*.4g"}}, {"SFC", {6, "%*.4g"}},
+    {"TFC", {6, "%*.4g"}},
+  };
   printf("Calculated spread is:\n");
-  for (auto h : HEADERS)
+  // print header row
+  for (const auto& h_f : FMT)
   {
-    printf(0 == strcmp(h, "FUEL") ? "%20s" : "%8s", h);
+    // HACK: need to format string of the same length
+    const auto col = h_f.first;
+    const auto width = h_f.second.first;
+    // column width + 1 space
+    printf("%*s", width + 1, col);
   }
   printf("\n");
-  printf(
-    FMT_FBP_OUT,
-    w->prec().asValue(),
-    w->temp().asValue(),
-    w->rh().asValue(),
-    w->wind().speed().asValue(),
-    w->wind().direction().asValue(),
-    w->ffmc().asValue(),
-    w->dmc().asValue(),
-    w->dc().asValue(),
-    w->isi().asValue(),
-    w->bui().asValue(),
-    w->fwi().asValue(),
-    fuel->name(),
-    spread.crownFractionBurned(),
-    spread.crownFuelConsumption(),
-    spread.fireDescription(),
-    static_cast<size_t>(spread.maxIntensity()),
-    spread.headDirection().asDegrees(),
-    spread.headRos(),
-    spread.surfaceFuelConsumption(),
-    spread.totalFuelConsumption(),
-    "\r\n"
-  );
+  auto print_col = [](const char* col, auto value) {
+    const auto width_fmt = FMT.at(col);
+    const auto width = width_fmt.first + 1;
+    const auto fmt = width_fmt.second;
+    printf(fmt, width, value);
+  };
+  // HACK: just do individual calls for now
+  // can we assign them to a lookup table if they're not all numbers?
+  print_col("PREC", w->prec().asValue());
+  print_col("TEMP", w->temp().asValue());
+  print_col("RH", w->rh().asValue());
+  print_col("WS", w->wind().speed().asValue());
+  print_col("WD", w->wind().direction().asValue());
+  print_col("FFMC", w->ffmc().asValue());
+  print_col("DMC", w->dmc().asValue());
+  print_col("DC", w->dc().asValue());
+  print_col("ISI", w->isi().asValue());
+  print_col("BUI", w->bui().asValue());
+  print_col("FWI", w->fwi().asValue());
+  print_col("GS", spread.percentSlope());
+  print_col("SAZ", spread.slopeAzimuth());
+  const auto simple_fuel = simplify_fuel_name(fuel->name());
+  print_col("FUEL", simple_fuel.c_str());
+  print_col("GC", fuel->grass_curing(spread.nd(), *w));
+  print_col("L:B", spread.lengthToBreadth());
+  print_col("CBH", fuel->cbh());
+  print_col("CFB", spread.crownFractionBurned());
+  print_col("CFC", spread.crownFuelConsumption());
+  print_col("FD", spread.fireDescription());
+  print_col("HFI", static_cast<size_t>(spread.maxIntensity()));
+  print_col("RAZ", static_cast<DirectionSize>(spread.headDirection().asDegrees()));
+  print_col("ROS", spread.headRos());
+  print_col("SFC", spread.surfaceFuelConsumption());
+  print_col("TFC", spread.totalFuelConsumption());
+  printf("\r\n");
 }
 string generate_test_name(
   const auto& fuel,
