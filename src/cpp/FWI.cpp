@@ -356,6 +356,16 @@ Dc::Dc(
   : Dc(calculate_dc(temperature, rain, dc_previous, month, latitude))
 {
 }
+MathSize
+ffmc_effect(
+  const Ffmc& ffmc
+) noexcept
+{
+  //'''/* 1   '*/
+  const auto mc = ffmc_to_moisture(ffmc);
+  //'''/* 25  '*/
+  return 91.9 * exp(-0.1386 * mc) * (1 + pow(mc, 5.31) / 49300000.0);
+}
 //******************************************************************************************
 // Function Name: ISI
 // Description: Calculates today's Initial Spread Index
@@ -371,10 +381,7 @@ calculate_isi(
 {
   //'''/* 24  '*/
   const auto f_wind = exp(0.05039 * wind.asValue());
-  //'''/* 1   '*/
-  const auto m = ffmc_to_moisture(ffmc);
-  //'''/* 25  '*/
-  const auto f_f = 91.9 * exp(-0.1386 * m) * (1.0 + pow(m, 5.31) / 49300000.0);
+  const auto f_f = ffmc_effect(ffmc);
   //'''/* 26  '*/
   return (0.208 * f_wind * f_f);
 }
@@ -658,14 +665,6 @@ FwiWeather::FwiWeather(
 )
   : FwiWeather(read(iss, str))
 {
-}
-MathSize
-ffmc_effect(
-  const Ffmc& ffmc
-) noexcept
-{
-  const auto mc = ffmc_to_moisture(ffmc);
-  return 91.9 * exp(-0.1386 * mc) * (1 + pow(mc, 5.31) / 49300000.0);
 }
 FwiWeather::FwiWeather(
   const Temperature& temp,
