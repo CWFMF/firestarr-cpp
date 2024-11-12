@@ -224,6 +224,7 @@ int main(const int argc, const char* const argv[])
     {
       show_usage_and_exit();
     }
+    show_args();
     result = tbd::sim::test(ARGC, ARGV);
   }
   else
