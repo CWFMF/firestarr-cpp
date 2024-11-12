@@ -137,12 +137,14 @@ run_test(
   const wx::Dc& dc,
   const wx::Dmc& dmc,
   const wx::Ffmc& ffmc,
-  const wx::Wind& wind
+  const wx::Wind& wind,
+  const bool ignore_existing
 )
 {
-  if (util::directory_exists(output_directory.c_str()))
+  if (ignore_existing && util::directory_exists(output_directory.c_str()))
   {
     // skip if directory exists
+    logging::warning("Skipping existing directory %s", output_directory.c_str());
     return output_directory;
   }
   // delay instantiation so things only get made when executed
@@ -202,6 +204,21 @@ run_test(
   scenario.saveObservers("");
   logging::note("Final Size: %0.0f, ROS: %0.2f", scenario.currentFireSize(), info.headRos());
   return output_directory;
+}
+string
+run_test_ignore_existing(
+  const string output_directory,
+  const string& fuel_name,
+  const SlopeSize slope,
+  const AspectSize aspect,
+  const DurationSize num_hours,
+  const wx::Dc& dc,
+  const wx::Dmc& dmc,
+  const wx::Ffmc& ffmc,
+  const wx::Wind& wind
+)
+{
+  return run_test(output_directory, fuel_name, slope, aspect, num_hours, dc, dmc, ffmc, wind, true);
 }
 template <class V, class T = V>
 void
@@ -272,7 +289,13 @@ test(
   static const wx::Temperature TEMP(20.0);
   static const wx::RelativeHumidity RH(30.0);
   static const wx::Precipitation PREC(0.0);
-  assert(argc > 1 && 0 == strcmp(argv[1], "test"));
+  logging::check_fatal(
+    0 != strcmp(argv[1], "test"),
+    "Expected argument to be 'test' but got '%s'",
+    argv[1]
+  );
+  // need at least './firestarr test <dir_output>'
+  logging::check_fatal(argc <= 2, "Invalid number of arguments for test mode");
   try
   {
     // increase logging level because there's no way to on command line right now
@@ -289,7 +312,7 @@ test(
     {
       output_directory += '/';
     }
-    logging::debug("Output directory is %s", output_directory.c_str());
+    logging::note("Output directory is %s", output_directory.c_str());
     if (i == argc - 1 && 0 == strcmp(argv[i], "all"))
     {
       size_t result = 0;
@@ -384,7 +407,7 @@ test(
                 // need to make string now because it'll be another value if we wait
                 results.push_back(async(
                   launch::async,
-                  run_test,
+                  run_test_ignore_existing,
                   string(&(out[0])),
                   fuel,
                   slope,
@@ -426,12 +449,17 @@ test(
       const auto num_hours = argc > i ? stod(argv[i++]) : DEFAULT_HOURS;
       const auto slope = static_cast<SlopeSize>(argc > i ? stoi(argv[i++]) : 0);
       const auto aspect = static_cast<AspectSize>(argc > i ? stoi(argv[i++]) : 0);
-      const wx::Speed wind_speed(argc > i ? stoi(argv[i++]) : 20);
+      const wx::Speed wind_speed(argc > i ? stod(argv[i++]) : 20);
       const wx::Direction wind_direction(argc > i ? stoi(argv[i++]) : 180, false);
       const wx::Wind wind(wind_direction, wind_speed);
-      assert(i == argc);
+      logging::check_fatal(
+        i != argc,
+        "Too many arguments - expected at most %d but got %d",
+        i,
+        argc
+      );
       logging::note(
-        "Running tests with constant inputs for %d:\n"
+        "Running tests with constant inputs for %f hours:\n"
         "\tSlope:\t\t\t%d\n"
         "\tAspect:\t\t\t%d\n"
         "\tWind Speed:\t\t%f\n"
@@ -451,7 +479,8 @@ test(
         dc,
         dmc,
         ffmc,
-        wind
+        wind,
+        false
       );
       logging::check_fatal(
         !util::directory_exists(dir_out.c_str()),

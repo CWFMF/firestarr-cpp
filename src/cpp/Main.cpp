@@ -314,6 +314,7 @@ main(
     {
       show_usage_and_exit();
     }
+    show_args();
     result = fs::sim::test(ARGC, ARGV);
   }
   else
