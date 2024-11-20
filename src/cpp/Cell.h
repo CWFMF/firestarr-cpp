@@ -228,9 +228,13 @@ protected:
    * Row                      0 - 4095          0 - 4095        12      0 - 4095
    * Column                   0 - 4095          0 - 4095        12      0 - 4095
    * PADDING                                                    10
-   * Fuel                     0 - 56            0 - 56          6       0 - 63
+   * Fuel                     0 - 140           0 - 140         8       0 - 255
    * Aspect                   0 - 359           0 - 359         9       0 - 511
+<<<<<<< HEAD
    * Slope                    0 - infinity      0 - 511         9       0 - 511
+=======
+   * Slope                    0 - infinity      0 - 127         7       0 - 127
+>>>>>>> 70c2f12ad (quick fix for seasonal/specific mixedwood fuels)
    * Extra                                                      8
    *
    * Rows and Columns are restricted to 4096 since that's what gets clipped out of
@@ -261,7 +265,7 @@ protected:
    * \brief Bitmask for fuel information in Topo before shift
    */
   static constexpr Topo FuelBitMask = util::bit_mask<FuelBits, Topo>();
-  static_assert(FuelBitMask == 0x3F);
+  static_assert(FuelBitMask == 0xFF);
   static_assert(FuelBitMask >= NUMBER_OF_FUELS);
   /**
    * \brief Bitmask for fuel information in Topo

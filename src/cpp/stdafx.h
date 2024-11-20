@@ -229,7 +229,7 @@ static constexpr auto INVALID_SLOPE = 511;
 /**
  * \brief Number of all possible fuels in simulation
  */
-static constexpr auto NUMBER_OF_FUELS = 57;
+static constexpr auto NUMBER_OF_FUELS = 141;
 /**
  * \brief 2*pi
  */
