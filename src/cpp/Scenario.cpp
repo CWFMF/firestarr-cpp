@@ -345,7 +345,13 @@ void Scenario::evaluate(const Event& event)
     case Event::NEW_FIRE:
       log_point(step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       // HACK: don't do this in constructor because scenario creates this in its constructor
-      points_.insert(p.column() + CELL_CENTER, p.row() + CELL_CENTER);
+      points_.insert(
+        event.time(),
+        NO_INTENSITY,
+        NO_ROS,
+        Direction::Zero,
+        p.column() + CELL_CENTER,
+        p.row() + CELL_CENTER);
       if (fuel::is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -630,7 +636,13 @@ Scenario* Scenario::run(map<DurationSize, ProbabilityMap*>* probabilities)
       log_verbose("Adding point (%f, %f)",
                   cell.column() + CELL_CENTER,
                   cell.row() + CELL_CENTER);
-      points_.insert(cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
+      points_.insert(
+        start_time_,
+        NO_INTENSITY,
+        NO_ROS,
+        Direction::Zero,
+        cell.column() + CELL_CENTER,
+        cell.row() + CELL_CENTER);
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
       // log_check_fatal(!e.second,
       //                 "Excepted to add point to new cell but (%ld, %ld) is already in map",
@@ -654,7 +666,9 @@ Scenario* Scenario::run(map<DurationSize, ProbabilityMap*>* probabilities)
     {
       const auto fake_event = Event::makeFireSpread(
         start_time_,
-        nullptr,
+        0,
+        0,
+        Direction::Zero,
         location);
       burn(fake_event);
     }
@@ -732,28 +746,59 @@ Scenario* Scenario::run(map<DurationSize, ProbabilityMap*>* probabilities)
   return this;
 }
 CellPointsMap apply_offsets_spreadkey(
-  const DurationSize duration,
+  const DurationSize& arrival_time,
+  const DurationSize& duration,
   const OffsetSet& offsets,
-  spreading_points::mapped_type& cell_pts)
+  spreading_points::mapped_type& cell_pts_map)
 {
   // NOTE: really tried to do this in parallel, but not enough points
   // in a cell for it to work well
   CellPointsMap r1{};
-  vector<Offset> offsets_after_duration{};
+  OffsetSet offsets_after_duration{};
+  logging::note("Applying %ld offsets", offsets.size());
+  // // offsets_after_duration.resize(offsets.size());
+  // std::transform(
+  //   offsets.cbegin(),
+  //   offsets.cend(),
+  //   std::back_inserter(offsets_after_duration),
   offsets_after_duration.resize(offsets.size());
   std::transform(
     offsets.cbegin(),
     offsets.cend(),
     offsets_after_duration.begin(),
-    [&duration](const Offset& p) {
-      return Offset(p.first * duration, p.second * duration);
+    [&duration, &arrival_time](const ROSOffset& r_p) {
+      const auto& intensity = std::get<0>(r_p);
+      const auto& ros = std::get<1>(r_p);
+      const auto& raz = std::get<2>(r_p);
+      const auto& p = std::get<3>(r_p);
+      // logging::note("ros %f; x %f; y %f; duration %f;",
+      //               ros,
+      //               p.first,
+      //               p.second,
+      //               duration);
+      return ROSOffset(intensity, ros, raz, Offset(p.first * duration, p.second * duration));
     });
-  for (auto& pts_for_cell : cell_pts)
+  logging::note("Calculated %ld offsets after duration %f", offsets_after_duration.size(), duration);
+  logging::note("cell_pts_map has %ld items", cell_pts_map.size());
+  for (auto& pts_for_cell : cell_pts_map)
   {
     const Location& src = std::get<0>(pts_for_cell);
     CellPoints& cell_pts = std::get<1>(pts_for_cell);
+#ifdef DEBUG_CELLPOINTS
+    logging::note(
+      "cell_pts for (%d, %d) has %ld items",
+      src.column(),
+      src.row(),
+      cell_pts.size());
+#endif
     if (cell_pts.empty())
     {
+#ifdef DEBUG_CELLPOINTS
+      logging::note(
+        "Cell (%d, %d) ignored because empty",
+        src.column(),
+        src.row());
+#endif
       continue;
     }
     auto& pts = cell_pts.pts_.second;
@@ -768,14 +813,36 @@ CellPointsMap apply_offsets_spreadkey(
       const auto& cell_y = cell_pts.cell_x_y_.second;
       // apply offsets to point
       // should be quicker to loop over offsets in inner loop
-      for (const auto& out : offsets_after_duration)
+      for (const ROSOffset& r_p : offsets_after_duration)
       {
+        const auto& intensity = std::get<0>(r_p);
+        const auto& ros = std::get<1>(r_p);
+        const auto& raz = std::get<2>(r_p);
+        const auto& out = std::get<3>(r_p);
         const auto& x_o = out.first;
         const auto& y_o = out.second;
+#ifdef DEBUG_CELLPOINTS
+        logging::note(
+          "src.x %d; src.y %d;"
+          " ros %f; x %f; y %f; duration %f;\n",
+          src.column(),
+          src.row(),
+          ros,
+          p.first,
+          p.second,
+          duration);
+#endif
         r1.insert(
           src,
+          arrival_time,
+          intensity,
+          ros,
+          raz,
           x_o + p.first + cell_x,
           y_o + p.second + cell_y);
+#ifdef DEBUG_CELLPOINTS
+        logging::note("r1 is now %ld items", r1.size());
+#endif
       }
       ++it_pts;
     }
@@ -856,6 +923,16 @@ void Scenario::scheduleFireSpread(const Event& event)
           // NOTE: shouldn't be Cell if we're looking up by just Location later
           to_spread[key].emplace_back(loc, std::move(it->second));
           it = points_.map_.erase(it);
+#ifdef DEBUG_CELLPOINTS
+          auto& v = to_spread[key];
+          const auto n = v.size();
+          const auto& p = v[n - 1].second;
+          logging::note("added %ld items to to_spread[%d][(%d, %d)]",
+                        p.size(),
+                        key,
+                        loc.column(),
+                        loc.row());
+#endif
         }
         else
         {
@@ -884,12 +961,12 @@ void Scenario::scheduleFireSpread(const Event& event)
   CellPointsMap cell_pts{};
   auto spread = std::views::transform(
     to_spread,
-    [this, &duration](
+    [this, &duration, &new_time](
       spreading_points::value_type& kv0) -> CellPointsMap {
       auto& key = kv0.first;
       const auto& offsets = spread_info_[key].offsets();
       spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey(duration, offsets, cell_pts);
+      auto r = apply_offsets_spreadkey(new_time, duration, offsets, cell_pts);
       return r;
     });
   auto it = spread.begin();
@@ -904,6 +981,9 @@ void Scenario::scheduleFireSpread(const Event& event)
     // }
     ++it;
   }
+#ifdef DEBUG_CELLPOINTS
+  const auto n_c = cell_pts.size();
+#endif
   cell_pts.remove_if(
     [this](
       const pair<Location, CellPoints>& kv) {
@@ -913,6 +993,9 @@ void Scenario::scheduleFireSpread(const Event& event)
       const auto do_clear = (*unburnable_)[h];
       return do_clear;
     });
+#ifdef DEBUG_CELLPOINTS
+  logging::note("%ld cell_pts before remove_if() and %ld after", n_c, cell_pts.size());
+#endif
   // need to merge new points back into cells that didn't spread
   points_.merge(
     *unburnable_,
@@ -942,7 +1025,9 @@ void Scenario::scheduleFireSpread(const Event& event)
         // HACK: just use the first cell as the source
         const auto fake_event = Event::makeFireSpread(
           new_time,
-          &(seek_spread->second),
+          pts.intensity_at_arrival_,
+          pts.ros_at_arrival_,
+          pts.raz_at_arrival_,
           for_cell,
           pts.sources());
         burn(fake_event);

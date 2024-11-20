@@ -14,7 +14,7 @@
 #define DEBUG_PROBABILITY
 #define DEBUG_SIMULATION
 #define DEBUG_STATISTICS
-#define DEBUG_WEATHER
+// #define DEBUG_WEATHER
 // // use this for trying to troubleshoot specific problems short-term
 // #define DEBUG_TEMPORARY
 
