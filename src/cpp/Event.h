@@ -9,6 +9,8 @@
 
 namespace tbd::sim
 {
+using topo::Cell;
+using tbd::wx::Direction;
 /**
  * \brief A specific Event scheduled in a specific Scenario.
  */
@@ -18,7 +20,7 @@ public:
   /**
    * \brief Cell representing no location
    */
-  static constexpr topo::Cell NoLocation{};
+  static constexpr Cell NoLocation{};
   // HACK: use type, so we can sort without having to give different times to them
   /**
    * \brief Type of Event
@@ -30,6 +32,21 @@ public:
     NEW_FIRE,
     FIRE_SPREAD,
   };
+  [[nodiscard]] static constexpr Event makeEvent(
+    const DurationSize time,
+    const Cell& cell,
+    const Type type)
+  {
+    return {
+      time,
+      cell,
+      0,
+      type,
+      0,
+      0,
+      Direction::Zero,
+      0};
+  }
   /**
    * \brief Make simulation end event
    * \param time Time to schedule for
@@ -37,7 +54,10 @@ public:
    */
   [[nodiscard]] static constexpr Event makeEnd(const DurationSize time)
   {
-    return {time, NoLocation, 0, END_SIMULATION, nullptr, 0};
+    return makeEvent(
+      time,
+      NoLocation,
+      END_SIMULATION);
   }
   /**
    * \brief Make new fire event
@@ -45,10 +65,14 @@ public:
    * \param cell Cell to start new fire in
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeNewFire(const DurationSize time,
-                                                   const topo::Cell& cell)
+  [[nodiscard]] static Event constexpr makeNewFire(
+    const DurationSize time,
+    const Cell& cell)
   {
-    return {time, cell, 0, NEW_FIRE, nullptr, 0};
+    return makeEvent(
+      time,
+      cell,
+      NEW_FIRE);
   }
   /**
    * \brief Make simulation save event
@@ -57,7 +81,10 @@ public:
    */
   [[nodiscard]] static Event constexpr makeSave(const DurationSize time)
   {
-    return {time, NoLocation, 0, SAVE, nullptr, 0};
+    return makeEvent(
+      time,
+      NoLocation,
+      SAVE);
   }
   /**
    * \brief Make fire spread event
@@ -66,7 +93,10 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(const DurationSize time)
   {
-    return makeFireSpread(time, nullptr);
+    return makeEvent(
+      time,
+      NoLocation,
+      FIRE_SPREAD);
   }
   /**
    * \brief Make fire spread event
@@ -76,9 +106,11 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const DurationSize time,
-    const SpreadInfo* spread_info)
+    const IntensitySize intensity,
+    const ROSSize ros,
+    const Direction raz)
   {
-    return makeFireSpread(time, spread_info, NoLocation);
+    return makeFireSpread(time, intensity, ros, raz, NoLocation);
   }
   /**
    * \brief Make fire spread event
@@ -89,10 +121,12 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const DurationSize time,
-    const SpreadInfo* spread_info,
-    const topo::Cell& cell)
+    const IntensitySize intensity,
+    const ROSSize ros,
+    const Direction raz,
+    const Cell& cell)
   {
-    return makeFireSpread(time, spread_info, cell, 254);
+    return makeFireSpread(time, intensity, ros, raz, cell, 254);
   }
   /**
    * \brief Make fire spread event
@@ -103,11 +137,13 @@ public:
    */
   [[nodiscard]] static Event constexpr makeFireSpread(
     const DurationSize time,
-    const SpreadInfo* spread_info,
-    const topo::Cell& cell,
+    const IntensitySize intensity,
+    const ROSSize ros,
+    const Direction raz,
+    const Cell& cell,
     const CellIndex source)
   {
-    return {time, cell, source, FIRE_SPREAD, spread_info, 0};
+    return {time, cell, source, FIRE_SPREAD, intensity, ros, raz, 0};
   }
   ~Event() = default;
   /**
@@ -162,7 +198,7 @@ public:
    */
   [[nodiscard]] constexpr IntensitySize intensity() const
   {
-    return nullptr == spread_info_ ? 1 : spread_info_->maxIntensity();
+    return intensity_;
   }
   /**
    * \brief Head fire spread direction
@@ -170,21 +206,21 @@ public:
    */
   [[nodiscard]] constexpr wx::Direction raz() const
   {
-    return nullptr == spread_info_ ? tbd::wx::Direction::Zero : spread_info_->headDirection();
+    return raz_;
   }
   /**
    * \brief Head fire rate of spread (m/min)
    * \return Head fire rate of spread (m/min)
    */
-  [[nodiscard]] constexpr MathSize ros() const
+  [[nodiscard]] constexpr ROSSize ros() const
   {
-    return nullptr == spread_info_ ? 0 : spread_info_->headRos();
+    return ros_;
   }
   /**
    * \brief Cell Event takes place in
    * \return Cell Event takes place in
    */
-  [[nodiscard]] constexpr const topo::Cell& cell() const
+  [[nodiscard]] constexpr const Cell& cell() const
   {
     return cell_;
   }
@@ -207,16 +243,20 @@ private:
    * \param time_at_location Duration that Event Cell has been burning (decimal days)
    */
   constexpr Event(const DurationSize time,
-                  const topo::Cell& cell,
+                  const Cell& cell,
                   const CellIndex source,
                   const Type type,
-                  const SpreadInfo* spread_info,
+                  const IntensitySize intensity,
+                  const ROSSize ros,
+                  const Direction raz,
                   const DurationSize time_at_location)
     : time_(time),
       time_at_location_(time_at_location),
       cell_(cell),
       type_(type),
-      spread_info_(spread_info),
+      intensity_(intensity),
+      ros_(ros),
+      raz_(raz),
       source_(source)
   {
   }
@@ -231,15 +271,18 @@ private:
   /**
    * \brief Cell to spread in
    */
-  topo::Cell cell_;
+  Cell cell_;
   /**
    * \brief Type of Event
    */
   Type type_;
-  /**
-   * \brief Spread information at time and place of event
-   */
-  const SpreadInfo* spread_info_;
+  IntensitySize intensity_;
+  ROSSize ros_;
+  Direction raz_;
+  // /**
+  //  * \brief Spread information at time and place of event
+  //  */
+  // const SpreadInfo* spread_info_;
   /**
    * \brief CellIndex for relative Cell that spread into from
    */

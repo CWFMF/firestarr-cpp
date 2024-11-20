@@ -6,9 +6,10 @@
 #include "SpreadAlgorithm.h"
 #include "Util.h"
 #include "unstable.h"
-
+#include "CellPoints.h"
 namespace tbd
 {
+using tbd::sim::NO_INTENSITY;
 HorizontalAdjustment horizontal_adjustment(
   const AspectSize slope_azimuth,
   const SlopeSize slope)
@@ -41,25 +42,33 @@ HorizontalAdjustment horizontal_adjustment(
 }
 [[nodiscard]] OffsetSet OriginalSpreadAlgorithm::calculate_offsets(
   HorizontalAdjustment correction_factor,
+  MathSize tfc,
   MathSize head_raz,
   MathSize head_ros,
   MathSize back_ros,
   MathSize length_to_breadth) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets](const MathSize direction,
-                                           const MathSize ros) {
-    if (ros < min_ros_)
-    {
-      return false;
-    }
-    const auto ros_cell = ros / cell_size_;
-    // spreading, so figure out offset from current point
-    offsets.emplace_back(
-      static_cast<DistanceSize>(ros_cell * _sin(direction)),
-      static_cast<DistanceSize>(ros_cell * _cos(direction)));
-    return true;
-  };
+  const auto add_offset =
+    [this, &offsets, tfc](
+      const MathSize direction,
+      const MathSize ros) {
+      if (ros < min_ros_)
+      {
+        return false;
+      }
+      const auto ros_cell = ros / cell_size_;
+      const auto intensity = fuel::fire_intensity(tfc, ros);
+      // spreading, so figure out offset from current point
+      offsets.emplace_back(
+        intensity,
+        ros,
+        Direction(direction, true),
+        Offset{
+          static_cast<DistanceSize>(ros_cell * _sin(direction)),
+          static_cast<DistanceSize>(ros_cell * _cos(direction))});
+      return true;
+    };
   // if not over spread threshold then don't spread
   // HACK: set ros in boolean if we get that far so that we don't have to repeat the if body
   if (!add_offset(head_raz, head_ros * correction_factor(head_raz)))
@@ -134,40 +143,48 @@ HorizontalAdjustment horizontal_adjustment(
 }
 [[nodiscard]] OffsetSet WidestEllipseAlgorithm::calculate_offsets(
   const HorizontalAdjustment correction_factor,
+  const MathSize tfc,
   const MathSize head_raz,
   const MathSize head_ros,
   const MathSize back_ros,
   const MathSize length_to_breadth) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets](const MathSize direction,
-                                           const MathSize ros) {
+  const auto add_offset =
+    [this, &offsets, tfc](
+      const MathSize direction,
+      const MathSize ros) {
 #ifdef DEBUG_POINTS
-    const auto s0 = offsets.size();
+      const auto s0 = offsets.size();
 #endif
-    if (ros < min_ros_)
-    {
-      // might not be correct depending on slope angle correction
-      // #ifdef DEBUG_POINTS
-      //       // should never be empty since head_ros must have been high enough
-      //       logging::check_fatal(offsets.empty(), "offsets.empty()");
-      // #endif
-      return false;
-    }
-    const auto ros_cell = ros / cell_size_;
-    // spreading, so figure out offset from current point
-    offsets.emplace_back(
-      static_cast<DistanceSize>(ros_cell * _sin(direction)),
-      static_cast<DistanceSize>(ros_cell * _cos(direction)));
+      if (ros < min_ros_)
+      {
+        // might not be correct depending on slope angle correction
+        // #ifdef DEBUG_POINTS
+        //       // should never be empty since head_ros must have been high enough
+        //       logging::check_fatal(offsets.empty(), "offsets.empty()");
+        // #endif
+        return false;
+      }
+      const auto ros_cell = ros / cell_size_;
+      const auto intensity = fuel::fire_intensity(tfc, ros);
+      // spreading, so figure out offset from current point
+      offsets.emplace_back(
+        intensity,
+        ros,
+        Direction(direction, true),
+        Offset{
+          static_cast<DistanceSize>(ros_cell * _sin(direction)),
+          static_cast<DistanceSize>(ros_cell * _cos(direction))});
     // // HACK: avoid bounds check
     // offsets.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction), false);
 #ifdef DEBUG_POINTS
-    const auto s1 = offsets.size();
-    logging::check_equal(s0 + 1, s1, "offsets.size()");
-    logging::check_fatal(offsets.empty(), "offsets.empty()");
+      const auto s1 = offsets.size();
+      logging::check_equal(s0 + 1, s1, "offsets.size()");
+      logging::check_fatal(offsets.empty(), "offsets.empty()");
 #endif
-    return true;
-  };
+      return true;
+    };
   // if not over spread threshold then don't spread
   // HACK: set ros in boolean if we get that far so that we don't have to repeat the if body
   if (!add_offset(head_raz, head_ros * correction_factor(head_raz)))
