@@ -161,6 +161,7 @@ static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Dead Balsam Fir Mixedwood (90% Dead Fir)", "M-3/M-4 (90 PDF)"},
   {"Dead Balsam Fir Mixedwood (95% Dead Fir)", "M-3/M-4 (95 PDF)"},
 };
+// FIX: ensure actual code use in compilation doesn't matter and don't need to be speicified manually in sequence
 static_assert(0 == INVALID_FUEL_CODE);
 static InvalidFuel NULL_FUEL{INVALID_FUEL_CODE, "Non-fuel"};
 static InvalidFuel INVALID{1, "Invalid"};
@@ -198,105 +199,111 @@ static fbp::FuelM1<80> M1_80{32, "M-1 (80 PC)"};
 static fbp::FuelM1<85> M1_85{33, "M-1 (85 PC)"};
 static fbp::FuelM1<90> M1_90{34, "M-1 (90 PC)"};
 static fbp::FuelM1<95> M1_95{35, "M-1 (95 PC)"};
-static fbp::FuelM2<5> M2_05{17, "M-2 (05 PC)"};
-static fbp::FuelM2<10> M2_10{18, "M-2 (10 PC)"};
-static fbp::FuelM2<15> M2_15{19, "M-2 (15 PC)"};
-static fbp::FuelM2<20> M2_20{20, "M-2 (20 PC)"};
-static fbp::FuelM2<25> M2_25{21, "M-2 (25 PC)"};
-static fbp::FuelM2<30> M2_30{22, "M-2 (30 PC)"};
-static fbp::FuelM2<35> M2_35{23, "M-2 (35 PC)"};
-static fbp::FuelM2<40> M2_40{24, "M-2 (40 PC)"};
-static fbp::FuelM2<45> M2_45{25, "M-2 (45 PC)"};
-static fbp::FuelM2<50> M2_50{26, "M-2 (50 PC)"};
-static fbp::FuelM2<55> M2_55{27, "M-2 (55 PC)"};
-static fbp::FuelM2<60> M2_60{28, "M-2 (60 PC)"};
-static fbp::FuelM2<65> M2_65{29, "M-2 (65 PC)"};
-static fbp::FuelM2<70> M2_70{30, "M-2 (70 PC)"};
-static fbp::FuelM2<75> M2_75{31, "M-2 (75 PC)"};
-static fbp::FuelM2<80> M2_80{32, "M-2 (80 PC)"};
-static fbp::FuelM2<85> M2_85{33, "M-2 (85 PC)"};
-static fbp::FuelM2<90> M2_90{34, "M-2 (90 PC)"};
-static fbp::FuelM2<95> M2_95{35, "M-2 (95 PC)"};
-static fbp::FuelM1M2<5> M1_M2_05{17, "M-1/M-2 (05 PC)", &M1_05, &M2_05};
-static fbp::FuelM1M2<10> M1_M2_10{18, "M-1/M-2 (10 PC)", &M1_10, &M2_10};
-static fbp::FuelM1M2<15> M1_M2_15{19, "M-1/M-2 (15 PC)", &M1_15, &M2_15};
-static fbp::FuelM1M2<20> M1_M2_20{20, "M-1/M-2 (20 PC)", &M1_20, &M2_20};
-static fbp::FuelM1M2<25> M1_M2_25{21, "M-1/M-2 (25 PC)", &M1_25, &M2_25};
-static fbp::FuelM1M2<30> M1_M2_30{22, "M-1/M-2 (30 PC)", &M1_30, &M2_30};
-static fbp::FuelM1M2<35> M1_M2_35{23, "M-1/M-2 (35 PC)", &M1_35, &M2_35};
-static fbp::FuelM1M2<40> M1_M2_40{24, "M-1/M-2 (40 PC)", &M1_40, &M2_40};
-static fbp::FuelM1M2<45> M1_M2_45{25, "M-1/M-2 (45 PC)", &M1_45, &M2_45};
-static fbp::FuelM1M2<50> M1_M2_50{26, "M-1/M-2 (50 PC)", &M1_50, &M2_50};
-static fbp::FuelM1M2<55> M1_M2_55{27, "M-1/M-2 (55 PC)", &M1_55, &M2_55};
-static fbp::FuelM1M2<60> M1_M2_60{28, "M-1/M-2 (60 PC)", &M1_60, &M2_60};
-static fbp::FuelM1M2<65> M1_M2_65{29, "M-1/M-2 (65 PC)", &M1_65, &M2_65};
-static fbp::FuelM1M2<70> M1_M2_70{30, "M-1/M-2 (70 PC)", &M1_70, &M2_70};
-static fbp::FuelM1M2<75> M1_M2_75{31, "M-1/M-2 (75 PC)", &M1_75, &M2_75};
-static fbp::FuelM1M2<80> M1_M2_80{32, "M-1/M-2 (80 PC)", &M1_80, &M2_80};
-static fbp::FuelM1M2<85> M1_M2_85{33, "M-1/M-2 (85 PC)", &M1_85, &M2_85};
-static fbp::FuelM1M2<90> M1_M2_90{34, "M-1/M-2 (90 PC)", &M1_90, &M2_90};
-static fbp::FuelM1M2<95> M1_M2_95{35, "M-1/M-2 (95 PC)", &M1_95, &M2_95};
-static fbp::FuelM3<5> M3_05{36, "M-3 (05 PDF)"};
-static fbp::FuelM3<10> M3_10{37, "M-3 (10 PDF)"};
-static fbp::FuelM3<15> M3_15{38, "M-3 (15 PDF)"};
-static fbp::FuelM3<20> M3_20{39, "M-3 (20 PDF)"};
-static fbp::FuelM3<25> M3_25{40, "M-3 (25 PDF)"};
-static fbp::FuelM3<30> M3_30{41, "M-3 (30 PDF)"};
-static fbp::FuelM3<35> M3_35{42, "M-3 (35 PDF)"};
-static fbp::FuelM3<40> M3_40{43, "M-3 (40 PDF)"};
-static fbp::FuelM3<45> M3_45{44, "M-3 (45 PDF)"};
-static fbp::FuelM3<50> M3_50{45, "M-3 (50 PDF)"};
-static fbp::FuelM3<55> M3_55{46, "M-3 (55 PDF)"};
-static fbp::FuelM3<60> M3_60{47, "M-3 (60 PDF)"};
-static fbp::FuelM3<65> M3_65{48, "M-3 (65 PDF)"};
-static fbp::FuelM3<70> M3_70{49, "M-3 (70 PDF)"};
-static fbp::FuelM3<75> M3_75{50, "M-3 (75 PDF)"};
-static fbp::FuelM3<80> M3_80{51, "M-3 (80 PDF)"};
-static fbp::FuelM3<85> M3_85{52, "M-3 (85 PDF)"};
-static fbp::FuelM3<90> M3_90{53, "M-3 (90 PDF)"};
-static fbp::FuelM3<95> M3_95{54, "M-3 (95 PDF)"};
-static fbp::FuelM3<100> M3_100{55, "M-3 (100 PDF)"};
-static fbp::FuelM4<5> M4_05{36, "M-4 (05 PDF)"};
-static fbp::FuelM4<10> M4_10{37, "M-4 (10 PDF)"};
-static fbp::FuelM4<15> M4_15{38, "M-4 (15 PDF)"};
-static fbp::FuelM4<20> M4_20{39, "M-4 (20 PDF)"};
-static fbp::FuelM4<25> M4_25{40, "M-4 (25 PDF)"};
-static fbp::FuelM4<30> M4_30{41, "M-4 (30 PDF)"};
-static fbp::FuelM4<35> M4_35{42, "M-4 (35 PDF)"};
-static fbp::FuelM4<40> M4_40{43, "M-4 (40 PDF)"};
-static fbp::FuelM4<45> M4_45{44, "M-4 (45 PDF)"};
-static fbp::FuelM4<50> M4_50{45, "M-4 (50 PDF)"};
-static fbp::FuelM4<55> M4_55{46, "M-4 (55 PDF)"};
-static fbp::FuelM4<60> M4_60{47, "M-4 (60 PDF)"};
-static fbp::FuelM4<65> M4_65{48, "M-4 (65 PDF)"};
-static fbp::FuelM4<70> M4_70{49, "M-4 (70 PDF)"};
-static fbp::FuelM4<75> M4_75{50, "M-4 (75 PDF)"};
-static fbp::FuelM4<80> M4_80{51, "M-4 (80 PDF)"};
-static fbp::FuelM4<85> M4_85{52, "M-4 (85 PDF)"};
-static fbp::FuelM4<90> M4_90{53, "M-4 (90 PDF)"};
-static fbp::FuelM4<95> M4_95{54, "M-4 (95 PDF)"};
-static fbp::FuelM4<100> M4_100{55, "M-4 (100 PDF)"};
-static fbp::FuelM3M4<5> M3_M4_05{36, "M-3/M-4 (05 PDF)", &M3_05, &M4_05};
-static fbp::FuelM3M4<10> M3_M4_10{37, "M-3/M-4 (10 PDF)", &M3_10, &M4_10};
-static fbp::FuelM3M4<15> M3_M4_15{38, "M-3/M-4 (15 PDF)", &M3_15, &M4_15};
-static fbp::FuelM3M4<20> M3_M4_20{39, "M-3/M-4 (20 PDF)", &M3_20, &M4_20};
-static fbp::FuelM3M4<25> M3_M4_25{40, "M-3/M-4 (25 PDF)", &M3_25, &M4_25};
-static fbp::FuelM3M4<30> M3_M4_30{41, "M-3/M-4 (30 PDF)", &M3_30, &M4_30};
-static fbp::FuelM3M4<35> M3_M4_35{42, "M-3/M-4 (35 PDF)", &M3_35, &M4_35};
-static fbp::FuelM3M4<40> M3_M4_40{43, "M-3/M-4 (40 PDF)", &M3_40, &M4_40};
-static fbp::FuelM3M4<45> M3_M4_45{44, "M-3/M-4 (45 PDF)", &M3_45, &M4_45};
-static fbp::FuelM3M4<50> M3_M4_50{45, "M-3/M-4 (50 PDF)", &M3_50, &M4_50};
-static fbp::FuelM3M4<55> M3_M4_55{46, "M-3/M-4 (55 PDF)", &M3_55, &M4_55};
-static fbp::FuelM3M4<60> M3_M4_60{47, "M-3/M-4 (60 PDF)", &M3_60, &M4_60};
-static fbp::FuelM3M4<65> M3_M4_65{48, "M-3/M-4 (65 PDF)", &M3_65, &M4_65};
-static fbp::FuelM3M4<70> M3_M4_70{49, "M-3/M-4 (70 PDF)", &M3_70, &M4_70};
-static fbp::FuelM3M4<75> M3_M4_75{50, "M-3/M-4 (75 PDF)", &M3_75, &M4_75};
-static fbp::FuelM3M4<80> M3_M4_80{51, "M-3/M-4 (80 PDF)", &M3_80, &M4_80};
-static fbp::FuelM3M4<85> M3_M4_85{52, "M-3/M-4 (85 PDF)", &M3_85, &M4_85};
-static fbp::FuelM3M4<90> M3_M4_90{53, "M-3/M-4 (90 PDF)", &M3_90, &M4_90};
-static fbp::FuelM3M4<95> M3_M4_95{54, "M-3/M-4 (95 PDF)", &M3_95, &M4_95};
-static fbp::FuelM3M4<100> M3_M4_100{55, "M-3/M-4 (100 PDF)", &M3_100, &M4_100};
-static fbp::FuelO1 O1{56, "O-1", &O1_A, &O1_B};
+static fbp::FuelM2<5> M2_05{36, "M-2 (05 PC)"};
+static fbp::FuelM2<10> M2_10{37, "M-2 (10 PC)"};
+static fbp::FuelM2<15> M2_15{38, "M-2 (15 PC)"};
+static fbp::FuelM2<20> M2_20{39, "M-2 (20 PC)"};
+static fbp::FuelM2<25> M2_25{40, "M-2 (25 PC)"};
+static fbp::FuelM2<30> M2_30{41, "M-2 (30 PC)"};
+static fbp::FuelM2<35> M2_35{42, "M-2 (35 PC)"};
+static fbp::FuelM2<40> M2_40{43, "M-2 (40 PC)"};
+static fbp::FuelM2<45> M2_45{44, "M-2 (45 PC)"};
+static fbp::FuelM2<50> M2_50{45, "M-2 (50 PC)"};
+static fbp::FuelM2<55> M2_55{46, "M-2 (55 PC)"};
+static fbp::FuelM2<60> M2_60{47, "M-2 (60 PC)"};
+static fbp::FuelM2<65> M2_65{48, "M-2 (65 PC)"};
+static fbp::FuelM2<70> M2_70{49, "M-2 (70 PC)"};
+static fbp::FuelM2<75> M2_75{50, "M-2 (75 PC)"};
+static fbp::FuelM2<80> M2_80{51, "M-2 (80 PC)"};
+static fbp::FuelM2<85> M2_85{52, "M-2 (85 PC)"};
+static fbp::FuelM2<90> M2_90{53, "M-2 (90 PC)"};
+static fbp::FuelM2<95> M2_95{54, "M-2 (95 PC)"};
+static fbp::FuelM1M2<5> M1_M2_05{55, "M-1/M-2 (05 PC)", &M1_05, &M2_05};
+static fbp::FuelM1M2<10> M1_M2_10{56, "M-1/M-2 (10 PC)", &M1_10, &M2_10};
+static fbp::FuelM1M2<15> M1_M2_15{57, "M-1/M-2 (15 PC)", &M1_15, &M2_15};
+static fbp::FuelM1M2<20> M1_M2_20{58, "M-1/M-2 (20 PC)", &M1_20, &M2_20};
+static fbp::FuelM1M2<25> M1_M2_25{59, "M-1/M-2 (25 PC)", &M1_25, &M2_25};
+static fbp::FuelM1M2<30> M1_M2_30{60, "M-1/M-2 (30 PC)", &M1_30, &M2_30};
+static fbp::FuelM1M2<35> M1_M2_35{61, "M-1/M-2 (35 PC)", &M1_35, &M2_35};
+static fbp::FuelM1M2<40> M1_M2_40{62, "M-1/M-2 (40 PC)", &M1_40, &M2_40};
+static fbp::FuelM1M2<45> M1_M2_45{63, "M-1/M-2 (45 PC)", &M1_45, &M2_45};
+static fbp::FuelM1M2<50> M1_M2_50{64, "M-1/M-2 (50 PC)", &M1_50, &M2_50};
+static fbp::FuelM1M2<55> M1_M2_55{65, "M-1/M-2 (55 PC)", &M1_55, &M2_55};
+static fbp::FuelM1M2<60> M1_M2_60{66, "M-1/M-2 (60 PC)", &M1_60, &M2_60};
+static fbp::FuelM1M2<65> M1_M2_65{67, "M-1/M-2 (65 PC)", &M1_65, &M2_65};
+static fbp::FuelM1M2<70> M1_M2_70{68, "M-1/M-2 (70 PC)", &M1_70, &M2_70};
+static fbp::FuelM1M2<75> M1_M2_75{69, "M-1/M-2 (75 PC)", &M1_75, &M2_75};
+static fbp::FuelM1M2<80> M1_M2_80{70, "M-1/M-2 (80 PC)", &M1_80, &M2_80};
+static fbp::FuelM1M2<85> M1_M2_85{71, "M-1/M-2 (85 PC)", &M1_85, &M2_85};
+static fbp::FuelM1M2<90> M1_M2_90{72, "M-1/M-2 (90 PC)", &M1_90, &M2_90};
+static fbp::FuelM1M2<95> M1_M2_95{73, "M-1/M-2 (95 PC)", &M1_95, &M2_95};
+static fbp::FuelM3<5> M3_05{74, "M-3 (05 PDF)"};
+static fbp::FuelM3<10> M3_10{75, "M-3 (10 PDF)"};
+static fbp::FuelM3<15> M3_15{76, "M-3 (15 PDF)"};
+static fbp::FuelM3<20> M3_20{77, "M-3 (20 PDF)"};
+static fbp::FuelM3<25> M3_25{78, "M-3 (25 PDF)"};
+static fbp::FuelM3<30> M3_30{79, "M-3 (30 PDF)"};
+static fbp::FuelM3<35> M3_35{80, "M-3 (35 PDF)"};
+static fbp::FuelM3<40> M3_40{81, "M-3 (40 PDF)"};
+static fbp::FuelM3<45> M3_45{82, "M-3 (45 PDF)"};
+static fbp::FuelM3<50> M3_50{83, "M-3 (50 PDF)"};
+static fbp::FuelM3<55> M3_55{84, "M-3 (55 PDF)"};
+static fbp::FuelM3<60> M3_60{85, "M-3 (60 PDF)"};
+static fbp::FuelM3<65> M3_65{86, "M-3 (65 PDF)"};
+static fbp::FuelM3<70> M3_70{87, "M-3 (70 PDF)"};
+static fbp::FuelM3<75> M3_75{88, "M-3 (75 PDF)"};
+static fbp::FuelM3<80> M3_80{89, "M-3 (80 PDF)"};
+static fbp::FuelM3<85> M3_85{90, "M-3 (85 PDF)"};
+static fbp::FuelM3<90> M3_90{91, "M-3 (90 PDF)"};
+static fbp::FuelM3<95> M3_95{92, "M-3 (95 PDF)"};
+static fbp::FuelM3<100> M3_100{93, "M-3 (100 PDF)"};
+static fbp::FuelM4<5> M4_05{94, "M-4 (05 PDF)"};
+static fbp::FuelM4<10> M4_10{95, "M-4 (10 PDF)"};
+static fbp::FuelM4<15> M4_15{96, "M-4 (15 PDF)"};
+static fbp::FuelM4<20> M4_20{97, "M-4 (20 PDF)"};
+static fbp::FuelM4<25> M4_25{98, "M-4 (25 PDF)"};
+static fbp::FuelM4<30> M4_30{99, "M-4 (30 PDF)"};
+static fbp::FuelM4<35> M4_35{100, "M-4 (35 PDF)"};
+static fbp::FuelM4<40> M4_40{101, "M-4 (40 PDF)"};
+static fbp::FuelM4<45> M4_45{102, "M-4 (45 PDF)"};
+static fbp::FuelM4<50> M4_50{103, "M-4 (50 PDF)"};
+static fbp::FuelM4<55> M4_55{104, "M-4 (55 PDF)"};
+static fbp::FuelM4<60> M4_60{105, "M-4 (60 PDF)"};
+static fbp::FuelM4<65> M4_65{106, "M-4 (65 PDF)"};
+static fbp::FuelM4<70> M4_70{107, "M-4 (70 PDF)"};
+static fbp::FuelM4<75> M4_75{108, "M-4 (75 PDF)"};
+static fbp::FuelM4<80> M4_80{109, "M-4 (80 PDF)"};
+static fbp::FuelM4<85> M4_85{110, "M-4 (85 PDF)"};
+static fbp::FuelM4<90> M4_90{111, "M-4 (90 PDF)"};
+static fbp::FuelM4<95> M4_95{112, "M-4 (95 PDF)"};
+static fbp::FuelM4<100> M4_100{113, "M-4 (100 PDF)"};
+static fbp::FuelM3M4<5> M3_M4_05{114, "M-3/M-4 (05 PDF)", &M3_05, &M4_05};
+static fbp::FuelM3M4<10> M3_M4_10{115, "M-3/M-4 (10 PDF)", &M3_10, &M4_10};
+static fbp::FuelM3M4<15> M3_M4_15{116, "M-3/M-4 (15 PDF)", &M3_15, &M4_15};
+static fbp::FuelM3M4<20> M3_M4_20{117, "M-3/M-4 (20 PDF)", &M3_20, &M4_20};
+static fbp::FuelM3M4<25> M3_M4_25{118, "M-3/M-4 (25 PDF)", &M3_25, &M4_25};
+static fbp::FuelM3M4<30> M3_M4_30{119, "M-3/M-4 (30 PDF)", &M3_30, &M4_30};
+static fbp::FuelM3M4<35> M3_M4_35{120, "M-3/M-4 (35 PDF)", &M3_35, &M4_35};
+static fbp::FuelM3M4<40> M3_M4_40{121, "M-3/M-4 (40 PDF)", &M3_40, &M4_40};
+static fbp::FuelM3M4<45> M3_M4_45{122, "M-3/M-4 (45 PDF)", &M3_45, &M4_45};
+static fbp::FuelM3M4<50> M3_M4_50{123, "M-3/M-4 (50 PDF)", &M3_50, &M4_50};
+static fbp::FuelM3M4<55> M3_M4_55{124, "M-3/M-4 (55 PDF)", &M3_55, &M4_55};
+static fbp::FuelM3M4<60> M3_M4_60{125, "M-3/M-4 (60 PDF)", &M3_60, &M4_60};
+static fbp::FuelM3M4<65> M3_M4_65{126, "M-3/M-4 (65 PDF)", &M3_65, &M4_65};
+static fbp::FuelM3M4<70> M3_M4_70{127, "M-3/M-4 (70 PDF)", &M3_70, &M4_70};
+static fbp::FuelM3M4<75> M3_M4_75{128, "M-3/M-4 (75 PDF)", &M3_75, &M4_75};
+static fbp::FuelM3M4<80> M3_M4_80{129, "M-3/M-4 (80 PDF)", &M3_80, &M4_80};
+static fbp::FuelM3M4<85> M3_M4_85{130, "M-3/M-4 (85 PDF)", &M3_85, &M4_85};
+static fbp::FuelM3M4<90> M3_M4_90{131, "M-3/M-4 (90 PDF)", &M3_90, &M4_90};
+static fbp::FuelM3M4<95> M3_M4_95{132, "M-3/M-4 (95 PDF)", &M3_95, &M4_95};
+static fbp::FuelM3M4<100> M3_M4_100{133, "M-3/M-4 (100 PDF)", &M3_100, &M4_100};
+static fbp::FuelM1<0> M1_00{134, "M-1 (00 PC)"};
+static fbp::FuelM2<0> M2_00{135, "M-2 (00 PC)"};
+static fbp::FuelM1M2<0> M1_M2_00{136, "M-1/M-2 (00 PC)", &M1_00, &M2_00};
+static fbp::FuelM3<0> M3_00{137, "M-3 (00 PDF)"};
+static fbp::FuelM4<0> M4_00{138, "M-4 (00 PDF)"};
+static fbp::FuelM3M4<0> M3_M4_00{139, "M-3/M-4 (00 PDF)", &M3_00, &M4_00};
+static fbp::FuelO1 O1{140, "O-1", &O1_A, &O1_B};
 /**
  * \brief Implementation class for FuelLookup
  */
@@ -321,104 +328,19 @@ public:
                          "Invalid default percent conifer (%d)",
                          pc);
     const auto pc_offset = (static_cast<size_t>(pc) / 5) - 1;
-    emplaceFuel("M-1", FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M1_M2_05)));
-    emplaceFuel("M-2", FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M1_M2_05)));
+    emplaceFuel("M-1", FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M1_05)));
+    emplaceFuel("M-2", FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M2_05)));
     emplaceFuel("M-1/M-2",
                 FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M1_M2_05)));
-    // 0 PC/PDF makes these effectively D1/D2 because of how the equations work
-    emplaceFuel("M-1 (00 PC)", &D1_D2);
-    emplaceFuel("M-2 (00 PC)", &D1_D2);
-    emplaceFuel("M-1/M-2 (00 PC)", &D1_D2);
-    emplaceFuel("M-3 (00 PDF)", &D1_D2);
-    emplaceFuel("M-4 (00 PDF)", &D1_D2);
-    emplaceFuel("M-3/M-4 (00 PDF)", &D1_D2);
     const auto pdf = sim::Settings::defaultPercentDeadFir();
     logging::check_fatal(0 > pdf || 100 < pdf || (pdf % 5) != 0,
                          "Invalid default percent dead fir (%d)",
                          pdf);
     const auto pdf_offset = static_cast<size_t>(pdf) / 5 - 1;
-    emplaceFuel("M-3", FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M3_M4_05)));
-    emplaceFuel("M-4", FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M3_M4_05)));
+    emplaceFuel("M-3", FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M3_05)));
+    emplaceFuel("M-4", FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M4_05)));
     emplaceFuel("M-3/M-4",
                 FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M3_M4_05)));
-    emplaceFuel("M-1 (05 PC)", &M1_M2_05);
-    emplaceFuel("M-2 (05 PC)", &M1_M2_05);
-    emplaceFuel("M-1 (10 PC)", &M1_M2_10);
-    emplaceFuel("M-2 (10 PC)", &M1_M2_10);
-    emplaceFuel("M-1 (15 PC)", &M1_M2_15);
-    emplaceFuel("M-2 (15 PC)", &M1_M2_15);
-    emplaceFuel("M-1 (20 PC)", &M1_M2_20);
-    emplaceFuel("M-2 (20 PC)", &M1_M2_20);
-    emplaceFuel("M-1 (25 PC)", &M1_M2_25);
-    emplaceFuel("M-2 (25 PC)", &M1_M2_25);
-    emplaceFuel("M-1 (30 PC)", &M1_M2_30);
-    emplaceFuel("M-2 (30 PC)", &M1_M2_30);
-    emplaceFuel("M-1 (35 PC)", &M1_M2_35);
-    emplaceFuel("M-2 (35 PC)", &M1_M2_35);
-    emplaceFuel("M-1 (40 PC)", &M1_M2_40);
-    emplaceFuel("M-2 (40 PC)", &M1_M2_40);
-    emplaceFuel("M-1 (45 PC)", &M1_M2_45);
-    emplaceFuel("M-2 (45 PC)", &M1_M2_45);
-    emplaceFuel("M-1 (50 PC)", &M1_M2_50);
-    emplaceFuel("M-2 (50 PC)", &M1_M2_50);
-    emplaceFuel("M-1 (55 PC)", &M1_M2_55);
-    emplaceFuel("M-2 (55 PC)", &M1_M2_55);
-    emplaceFuel("M-1 (60 PC)", &M1_M2_60);
-    emplaceFuel("M-2 (60 PC)", &M1_M2_60);
-    emplaceFuel("M-1 (65 PC)", &M1_M2_65);
-    emplaceFuel("M-2 (65 PC)", &M1_M2_65);
-    emplaceFuel("M-1 (70 PC)", &M1_M2_70);
-    emplaceFuel("M-2 (70 PC)", &M1_M2_70);
-    emplaceFuel("M-1 (75 PC)", &M1_M2_75);
-    emplaceFuel("M-2 (75 PC)", &M1_M2_75);
-    emplaceFuel("M-1 (80 PC)", &M1_M2_80);
-    emplaceFuel("M-2 (80 PC)", &M1_M2_80);
-    emplaceFuel("M-1 (85 PC)", &M1_M2_85);
-    emplaceFuel("M-2 (85 PC)", &M1_M2_85);
-    emplaceFuel("M-1 (90 PC)", &M1_M2_90);
-    emplaceFuel("M-2 (90 PC)", &M1_M2_90);
-    emplaceFuel("M-1 (95 PC)", &M1_M2_95);
-    emplaceFuel("M-2 (95 PC)", &M1_M2_95);
-    emplaceFuel("M-3 (05 PDF)", &M3_M4_05);
-    emplaceFuel("M-4 (05 PDF)", &M3_M4_05);
-    emplaceFuel("M-3 (10 PDF)", &M3_M4_10);
-    emplaceFuel("M-4 (10 PDF)", &M3_M4_10);
-    emplaceFuel("M-3 (15 PDF)", &M3_M4_15);
-    emplaceFuel("M-4 (15 PDF)", &M3_M4_15);
-    emplaceFuel("M-3 (20 PDF)", &M3_M4_20);
-    emplaceFuel("M-4 (20 PDF)", &M3_M4_20);
-    emplaceFuel("M-3 (25 PDF)", &M3_M4_25);
-    emplaceFuel("M-4 (25 PDF)", &M3_M4_25);
-    emplaceFuel("M-3 (30 PDF)", &M3_M4_30);
-    emplaceFuel("M-4 (30 PDF)", &M3_M4_30);
-    emplaceFuel("M-3 (35 PDF)", &M3_M4_35);
-    emplaceFuel("M-4 (35 PDF)", &M3_M4_35);
-    emplaceFuel("M-3 (40 PDF)", &M3_M4_40);
-    emplaceFuel("M-4 (40 PDF)", &M3_M4_40);
-    emplaceFuel("M-3 (45 PDF)", &M3_M4_45);
-    emplaceFuel("M-4 (45 PDF)", &M3_M4_45);
-    emplaceFuel("M-3 (50 PDF)", &M3_M4_50);
-    emplaceFuel("M-4 (50 PDF)", &M3_M4_50);
-    emplaceFuel("M-3 (55 PDF)", &M3_M4_55);
-    emplaceFuel("M-4 (55 PDF)", &M3_M4_55);
-    emplaceFuel("M-3 (60 PDF)", &M3_M4_60);
-    emplaceFuel("M-4 (60 PDF)", &M3_M4_60);
-    emplaceFuel("M-3 (65 PDF)", &M3_M4_65);
-    emplaceFuel("M-4 (65 PDF)", &M3_M4_65);
-    emplaceFuel("M-3 (70 PDF)", &M3_M4_70);
-    emplaceFuel("M-4 (70 PDF)", &M3_M4_70);
-    emplaceFuel("M-3 (75 PDF)", &M3_M4_75);
-    emplaceFuel("M-4 (75 PDF)", &M3_M4_75);
-    emplaceFuel("M-3 (80 PDF)", &M3_M4_80);
-    emplaceFuel("M-4 (80 PDF)", &M3_M4_80);
-    emplaceFuel("M-3 (85 PDF)", &M3_M4_85);
-    emplaceFuel("M-4 (85 PDF)", &M3_M4_85);
-    emplaceFuel("M-3 (90 PDF)", &M3_M4_90);
-    emplaceFuel("M-4 (90 PDF)", &M3_M4_90);
-    emplaceFuel("M-3 (95 PDF)", &M3_M4_95);
-    emplaceFuel("M-4 (95 PDF)", &M3_M4_95);
-    emplaceFuel("M-3 (100 PDF)", &M3_M4_100);
-    emplaceFuel("M-4 (100 PDF)", &M3_M4_100);
     ifstream in;
     in.open(filename);
     bool read_ok = false;
@@ -692,6 +614,44 @@ const array<const FuelType*, NUMBER_OF_FUELS> FuelLookup::Fuels{
   &S2,
   &S3,
   &D1_D2,
+  &M1_05,
+  &M1_10,
+  &M1_15,
+  &M1_20,
+  &M1_25,
+  &M1_30,
+  &M1_35,
+  &M1_40,
+  &M1_45,
+  &M1_50,
+  &M1_55,
+  &M1_60,
+  &M1_65,
+  &M1_70,
+  &M1_75,
+  &M1_80,
+  &M1_85,
+  &M1_90,
+  &M1_95,
+  &M2_05,
+  &M2_10,
+  &M2_15,
+  &M2_20,
+  &M2_25,
+  &M2_30,
+  &M2_35,
+  &M2_40,
+  &M2_45,
+  &M2_50,
+  &M2_55,
+  &M2_60,
+  &M2_65,
+  &M2_70,
+  &M2_75,
+  &M2_80,
+  &M2_85,
+  &M2_90,
+  &M2_95,
   &M1_M2_05,
   &M1_M2_10,
   &M1_M2_15,
@@ -711,6 +671,47 @@ const array<const FuelType*, NUMBER_OF_FUELS> FuelLookup::Fuels{
   &M1_M2_85,
   &M1_M2_90,
   &M1_M2_95,
+  &M3_05,
+  &M3_10,
+  &M3_15,
+  &M3_20,
+  &M3_25,
+  &M3_30,
+  &M3_35,
+  &M3_40,
+  &M3_45,
+  &M3_50,
+  &M3_55,
+  &M3_60,
+  &M3_65,
+  &M3_70,
+  &M3_75,
+  &M3_80,
+  &M3_85,
+  &M3_90,
+  &M3_95,
+  &M3_100,
+  &M4_05,
+  &M4_10,
+  &M4_15,
+  &M4_20,
+  &M4_25,
+  &M4_30,
+  &M4_35,
+  &M4_40,
+  &M4_45,
+  &M4_50,
+  &M4_55,
+  &M4_60,
+  &M4_65,
+  &M4_70,
+  &M4_75,
+  &M4_80,
+  &M4_85,
+  &M4_90,
+  &M4_95,
+  &M4_100,
+  &M3_M4_00,
   &M3_M4_05,
   &M3_M4_10,
   &M3_M4_15,
@@ -730,6 +731,11 @@ const array<const FuelType*, NUMBER_OF_FUELS> FuelLookup::Fuels{
   &M3_M4_85,
   &M3_M4_90,
   &M3_M4_95,
+  &M1_00,
+  &M2_00,
+  &M1_M2_00,
+  &M3_00,
+  &M4_00,
   &M3_M4_100,
   &O1,
 };
