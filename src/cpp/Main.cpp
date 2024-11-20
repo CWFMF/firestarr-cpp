@@ -17,6 +17,8 @@
 #include "TimeUtil.h"
 #include "Log.h"
 #include "version.h"
+#include "SpreadAlgorithm.h"
+#include "Util.h"
 using fs::logging::Log;
 using fs::sim::Settings;
 static const char* BIN_NAME = nullptr;
@@ -256,6 +258,38 @@ main(
   const char* const argv[]
 )
 {
+  // FILE* out_adj = fopen("horizontal_adjustment.csv", "w");
+  // fprintf(
+  //   out_adj,
+  //   "slope,aspect,theta,horizontal_adjustment\n");
+  // const size_t aspect = 0;
+  // // for (size_t aspect = 0; aspect < 360; aspect += 5)
+  // {
+  //   for (size_t slope = 0; slope < 500; ++slope)
+  //   {
+  //     auto adj = fs::horizontal_adjustment(aspect, slope);
+  //     for (size_t theta = 0; theta < 360; ++theta)
+  //     {
+  //       // aspect is in degrees and theta is radians
+  //       const MathSize f = adj(fs::util::to_radians(theta));
+  //       // printf(
+  //       //   "Adjustment for slope %ld with aspect %ld at angle %ld is %f\n",
+  //       //   slope,
+  //       //   aspect,
+  //       //   theta,
+  //       //   f);
+  //       fprintf(
+  //         out_adj,
+  //         "%ld,%ld,%ld,%f\n",
+  //         slope,
+  //         aspect,
+  //         theta,
+  //         f);
+  //     }
+  //   }
+  // }
+  // fclose(out_adj);
+  // exit(0);
 #ifdef _WIN32
   printf("FireSTARR windows-testing\n\n");
 #else

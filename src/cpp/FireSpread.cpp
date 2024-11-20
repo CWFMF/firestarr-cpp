@@ -387,10 +387,17 @@ SpreadInfo::SpreadInfo(
     slope_azimuth,
     percentSlope()
   );
-  const auto spread_algorithm = OriginalSpreadAlgorithm(0.5, cell_size, min_ros);
-  // const auto spread_algorithm = WidestEllipseAlgorithm(5.0, cell_size, min_ros);
-  offsets_ = spread_algorithm
-               .calculate_offsets(correction_factor, raz_.asRadians(), head_ros_, back_ros, l_b);
+  // const auto spread_algorithm = OriginalSpreadAlgorithm(0.5, cell_size, min_ros);
+  // const auto spread_algorithm = OriginalSpreadAlgorithm(1, cell_size, min_ros);
+  const auto spread_algorithm = WidestEllipseAlgorithm(5.0, cell_size, min_ros);
+  offsets_ = spread_algorithm.calculate_offsets(
+    correction_factor,
+    tfc_,
+    raz_.asRadians(),
+    head_ros_,
+    back_ros,
+    l_b
+  );
   // might not be correct depending on slope angle correction
   // #ifdef DEBUG_POINTS
   //   // if (head_ros_ >= min_ros)

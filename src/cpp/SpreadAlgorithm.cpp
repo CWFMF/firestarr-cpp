@@ -5,9 +5,10 @@
 #include "SpreadAlgorithm.h"
 #include "Util.h"
 #include "unstable.h"
-
+#include "CellPoints.h"
 namespace fs
 {
+using fs::sim::NO_INTENSITY;
 HorizontalAdjustment
 horizontal_adjustment(
   const AspectSize slope_azimuth,
@@ -47,6 +48,7 @@ horizontal_adjustment(
 [[nodiscard]] OffsetSet
 OriginalSpreadAlgorithm::calculate_offsets(
   HorizontalAdjustment correction_factor,
+  MathSize tfc,
   MathSize head_raz,
   MathSize head_ros,
   MathSize back_ros,
@@ -54,16 +56,22 @@ OriginalSpreadAlgorithm::calculate_offsets(
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets](const MathSize direction, const MathSize ros) {
+  const auto add_offset = [this, &offsets, tfc](const MathSize direction, const MathSize ros) {
     if (ros < min_ros_)
     {
       return false;
     }
     const auto ros_cell = ros / cell_size_;
+    const auto intensity = fuel::fire_intensity(tfc, ros);
     // spreading, so figure out offset from current point
     offsets.emplace_back(
-      static_cast<DistanceSize>(ros_cell * _sin(direction)),
-      static_cast<DistanceSize>(ros_cell * _cos(direction))
+      intensity,
+      ros,
+      Direction(direction, true),
+      Offset{
+        static_cast<DistanceSize>(ros_cell * _sin(direction)),
+        static_cast<DistanceSize>(ros_cell * _cos(direction))
+      }
     );
     return true;
   };
@@ -148,6 +156,7 @@ OriginalSpreadAlgorithm::calculate_offsets(
 [[nodiscard]] OffsetSet
 WidestEllipseAlgorithm::calculate_offsets(
   const HorizontalAdjustment correction_factor,
+  const MathSize tfc,
   const MathSize head_raz,
   const MathSize head_ros,
   const MathSize back_ros,
@@ -155,7 +164,7 @@ WidestEllipseAlgorithm::calculate_offsets(
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets](const MathSize direction, const MathSize ros) {
+  const auto add_offset = [this, &offsets, tfc](const MathSize direction, const MathSize ros) {
 #ifdef DEBUG_POINTS
     const auto s0 = offsets.size();
 #endif
@@ -169,10 +178,16 @@ WidestEllipseAlgorithm::calculate_offsets(
       return false;
     }
     const auto ros_cell = ros / cell_size_;
+    const auto intensity = fuel::fire_intensity(tfc, ros);
     // spreading, so figure out offset from current point
     offsets.emplace_back(
-      static_cast<DistanceSize>(ros_cell * _sin(direction)),
-      static_cast<DistanceSize>(ros_cell * _cos(direction))
+      intensity,
+      ros,
+      Direction(direction, true),
+      Offset{
+        static_cast<DistanceSize>(ros_cell * _sin(direction)),
+        static_cast<DistanceSize>(ros_cell * _cos(direction))
+      }
     );
     // // HACK: avoid bounds check
     // offsets.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction), false);
