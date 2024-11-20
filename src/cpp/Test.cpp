@@ -425,8 +425,10 @@ int test(const int argc, const char* const argv[])
         aspect,
         wind_speed,
         wind_direction);
+      Settings::setForceNoGreenup(true);
       auto dir_out = run_test(output_directory.c_str(),
-                              "C-2",
+                              // "C-2",
+                              "M-1 (25 PC)",
                               slope,
                               aspect,
                               num_hours,
