@@ -19,6 +19,7 @@ class SpreadAlgorithm
 public:
   [[nodiscard]] virtual OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
+    MathSize tfc,
     MathSize head_raz,
     MathSize head_ros,
     MathSize back_ros,
@@ -49,6 +50,7 @@ public:
   using BaseSpreadAlgorithm::BaseSpreadAlgorithm;
   [[nodiscard]] OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
+    MathSize tfc,
     MathSize head_raz,
     MathSize head_ros,
     MathSize back_ros,
@@ -62,6 +64,7 @@ public:
   using BaseSpreadAlgorithm::BaseSpreadAlgorithm;
   [[nodiscard]] OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
+    MathSize tfc,
     MathSize head_raz,
     MathSize head_ros,
     MathSize back_ros,

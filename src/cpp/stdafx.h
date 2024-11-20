@@ -154,10 +154,11 @@ using PerimSize = uint8_t;
 // FIX: seriously does not like uint for some reason
 using FuelSize = uint16_t;
 // using FuelSize = int16_t;
+using DirectionSize = uint16_t;
 /**
  * \brief Type used for aspect values (uses [0 - 359])
  */
-using AspectSize = uint16_t;
+using AspectSize = DirectionSize;
 /**
  * \brief Type used for elevation values (uses [? - 9800?])
  */
