@@ -4,6 +4,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "stdafx.h"
+#include "Weather.h"
 #include "FWI.h"
 #include "Log.h"
 // #define CHECK_CALCULATION 1
@@ -51,16 +52,34 @@ const Isi Isi::Zero = Isi(0);
 const Fwi Fwi::Zero = Fwi(0);
 // HACK: can't use the ::Zero fields for these because we don't know when they initialize
 const FwiWeather FwiWeather::Zero{
-  Temperature(0),
-  RelativeHumidity(0),
-  Wind(Direction(0, false), Speed(0)),
-  Precipitation(0),
+  Temperature::Zero,
+  RelativeHumidity::Zero,
+  Wind::Zero,
+  Precipitation::Zero,
   Ffmc::Zero,
   Dmc::Zero,
   Dc::Zero,
   Isi::Zero,
   Bui::Zero,
   Fwi::Zero};
+const Ffmc Ffmc::Invalid = Ffmc(-1);
+const Dmc Dmc::Invalid = Dmc(-1);
+const Dc Dc::Invalid = Dc(-1);
+const Bui Bui::Invalid = Bui(-1);
+const Isi Isi::Invalid = Isi(-1);
+const Fwi Fwi::Invalid = Fwi(-1);
+// HACK: can't use the ::Invalid fields for these because we don't know when they initialize
+const FwiWeather FwiWeather::Invalid{
+  Temperature::Invalid,
+  RelativeHumidity::Invalid,
+  Wind::Invalid,
+  Precipitation::Invalid,
+  Ffmc::Invalid,
+  Dmc::Invalid,
+  Dc::Invalid,
+  Isi::Invalid,
+  Bui::Invalid,
+  Fwi::Invalid};
 // The following two functions refer to the MEA day length adjustment 'note'.
 //
 //******************************************************************************************
