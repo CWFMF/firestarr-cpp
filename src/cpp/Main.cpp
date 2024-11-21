@@ -19,8 +19,26 @@
 #include "version.h"
 #include "SpreadAlgorithm.h"
 #include "Util.h"
+#include "FireWeather.h"
 using tbd::logging::Log;
 using tbd::sim::Settings;
+using tbd::AspectSize;
+using tbd::SlopeSize;
+using tbd::INVALID_TIME;
+using tbd::INVALID_SLOPE;
+using tbd::INVALID_ASPECT;
+using tbd::wx::Ffmc;
+using tbd::wx::Dmc;
+using tbd::wx::Dc;
+using tbd::wx::Precipitation;
+using tbd::wx::Temperature;
+using tbd::wx::RelativeHumidity;
+using tbd::wx::Direction;
+using tbd::wx::Wind;
+using tbd::wx::Speed;
+using tbd::ThresholdSize;
+using tbd::wx::FwiWeather;
+using tbd::topo::StartPoint;
 static const char* BIN_NAME = nullptr;
 static map<std::string, std::function<void()>> PARSE_FCT{};
 static vector<std::pair<std::string, std::string>> PARSE_HELP{};
@@ -61,7 +79,7 @@ void show_usage_and_exit(int exit_code)
   printf("Run simulations and save output in the specified directory\n\n\n");
   printf("Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n", BIN_NAME);
   printf("Calculate probability surface and save output in the specified directory\n\n\n");
-  printf("Usage: %s test <output_dir> <numHours> [slope [aspect [wind_speed [wind_direction]]]]\n\n", BIN_NAME);
+  printf("Usage: %s test <output_dir> [options]\n\n", BIN_NAME);
   printf(" Run test cases and save output in the specified directory\n\n");
   printf(" Input Options\n");
   // FIX: this should show arguments specific to mode, but it doesn't indicate that on the outputs
@@ -111,9 +129,10 @@ bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
 }
-MathSize parse_value()
+template <class T>
+T parse_value()
 {
-  return parse_once<MathSize>([] { return stod(get_arg()); });
+  return parse_once<T>([] { return stod(get_arg()); });
 }
 size_t parse_size_t()
 {
@@ -244,20 +263,23 @@ int main(const int argc, const char* const argv[])
   // return 0;
   string wx_file_name;
   string log_file_name = "firestarr.log";
+  string fuel_name;
   string perim;
+  bool test_all = false;
+  MathSize hours = INVALID_TIME;
   size_t size = 0;
   // ffmc, dmc, dc are required for simulation & surface mode, so no indication of it not being provided
-  tbd::wx::Ffmc ffmc;
-  tbd::wx::Dmc dmc;
-  tbd::wx::Dc dc;
-  size_t wind_direction = 0;
-  size_t wind_speed = 0;
-  size_t slope = 0;
-  size_t aspect = 0;
+  Ffmc ffmc = Ffmc::Invalid;
+  Dmc dmc = Dmc::Invalid;
+  Dc dc = Dc::Invalid;
+  auto wind_direction = Direction::Invalid.asValue();
+  auto wind_speed = Speed::Invalid.asValue();
+  auto slope = static_cast<SlopeSize>(INVALID_SLOPE);
+  auto aspect = static_cast<AspectSize>(INVALID_ASPECT);
 
   size_t SKIPPED_ARGS = 0;
   // FIX: need to get rain since noon yesterday to start of this hourly weather
-  tbd::wx::Precipitation apcp_prev;
+  Precipitation apcp_prev;
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
@@ -270,13 +292,33 @@ int main(const int argc, const char* const argv[])
     mode = TEST;
     CUR_ARG += 1;
     SKIPPED_ARGS = 1;
-    register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", false);
-    register_index<tbd::wx::Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", false);
-    register_index<tbd::wx::Dc>(dc, "--dc", "Constant Drought Code", false);
-    register_setter<size_t>(wind_direction, "--wd", "Constant wind direction", false, &parse_size_t);
-    register_setter<size_t>(wind_speed, "--ws", "Constant wind speed", false, &parse_size_t);
-    register_setter<size_t>(slope, "--slope", "Constant slope", false, &parse_size_t);
-    register_setter<size_t>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_size_t);
+    // not enough arguments for test mode
+    if (3 > ARGC)
+    {
+      show_usage_and_exit();
+    }
+    // if we have a directory and nothing else then use defaults for single run
+    // if we have 'all' then don't accept any other arguments?
+    // - but then we can't overrride indices
+    // - so all should do all the options, but then filter down to the subset that matches what was specified
+
+    register_setter<MathSize>(hours, "--hours", "Duration in hours", false, &parse_value<MathSize>);
+    register_setter<string>(fuel_name, "--fuel", "FBP fuel type", false, &parse_string);
+    register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", false);
+    register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", false);
+    register_index<Dc>(dc, "--dc", "Constant Drought Code", false);
+    register_setter<MathSize>(wind_direction, "--wd", "Constant wind direction", false, &parse_value<MathSize>);
+    register_setter<MathSize>(wind_speed, "--ws", "Constant wind speed", false, &parse_value<MathSize>);
+    register_setter<SlopeSize>(slope, "--slope", "Constant slope", false, &parse_value<SlopeSize>);
+    register_setter<AspectSize>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
+    register_flag(&Settings::setForceStaticCuring, true, "--force-curing", "Manually set grass curing for all fires");
+    register_flag(&Settings::setForceGreenup, true, "--force-greenup", "Force green up for all fires");
+    register_flag(&Settings::setForceNoGreenup, true, "--force-no-greenup", "Force no green up for all fires");
+    // // either the third argument is '-h' or this is invalid
+    // if (3 == ARGC && 0 == strcmp(ARGV[2], "-h"))
+    // {
+    //   show_help_and_exit();
+    // }
   }
   else
   {
@@ -307,15 +349,15 @@ int main(const int argc, const char* const argv[])
       // probabalistic surface is computationally impossible at this point
       Settings::setDeterministic(true);
       Settings::setSurface(true);
-      register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
-      register_index<tbd::wx::Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
-      register_index<tbd::wx::Dc>(dc, "--dc", "Constant Drought Code", true);
-      // register_int_index<tbd::wx::Direction>(wind_direction, "--wd", "Constant wind direction", true);
-      // register_setter<tbd::wx::Direction>(wind_direction, "--wd", "Constant wind direction", true, []() {
-      //   return parse_once<tbd::wx::Direction>([] { return tbd::wx::Direction(stoi(get_arg()), false); });
+      register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
+      register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
+      register_index<Dc>(dc, "--dc", "Constant Drought Code", true);
+      // register_int_index<Direction>(wind_direction, "--wd", "Constant wind direction", true);
+      // register_setter<Direction>(wind_direction, "--wd", "Constant wind direction", true, []() {
+      //   return parse_once<Direction>([] { return Direction(stoi(get_arg()), false); });
       // });
-      register_setter<size_t>(wind_direction, "--wd", "Constant wind direction", true, &parse_size_t);
-      register_setter<size_t>(wind_speed, "--ws", "Constant wind speed", true, &parse_size_t);
+      register_setter<MathSize>(wind_direction, "--wd", "Constant wind direction", true, &parse_value<MathSize>);
+      register_setter<MathSize>(wind_speed, "--ws", "Constant wind speed", true, &parse_value<MathSize>);
     }
     else
     {
@@ -325,14 +367,14 @@ int main(const int argc, const char* const argv[])
       register_setter<size_t>(&Settings::setIgnRow, "--ign-row", "Specify ignition row", false, &parse_size_t);
       register_setter<size_t>(&Settings::setIgnCol, "--ign-col", "Specify ignition column", false, &parse_size_t);
       register_setter<size_t>(&Settings::setStaticCuring, "--curing", "Specify static grass curing. Requires the force-curing flag to be set.", false, &parse_size_t);
-      register_setter<tbd::ThresholdSize>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_value);
+      register_setter<ThresholdSize>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
       // HACK: want different text for same flag so define here too
-      register_index<tbd::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
-      register_index<tbd::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
-      register_index<tbd::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
-      register_index<tbd::wx::Precipitation>(apcp_prev, "--apcp_prev", "Startup precipitation between 1200 yesterday and start of hourly weather", false);
+      register_index<Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
+      register_index<Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
+      register_index<Dc>(dc, "--dc", "Startup Drought Code", true);
+      register_index<Precipitation>(apcp_prev, "--apcp_prev", "Startup precipitation between 1200 yesterday and start of hourly weather", false);
     }
     register_setter<const char*>(&Settings::setOutputDateOffsets, "--output_date_offsets", "Override output date offsets", false, &parse_raw);
     if (2 == ARGC && 0 == strcmp(ARGV[CUR_ARG], "-h"))
@@ -351,11 +393,11 @@ int main(const int argc, const char* const argv[])
 #endif
     if (TEST == mode)
     {
-      // not enough arguments for test mode
-      if (ARGC <= 3)
-      {
-        show_usage_and_exit();
-      }
+      // // not enough arguments for test mode
+      // if (ARGC <= 3)
+      // {
+      //   show_usage_and_exit();
+      // }
     }
     else if (6 <= (ARGC - SKIPPED_ARGS))
     {
@@ -365,9 +407,56 @@ int main(const int argc, const char* const argv[])
     {
       show_usage_and_exit();
     }
+    vector<string> positional_args{};
+    while (CUR_ARG < ARGC)
+    {
+      const string arg = ARGV[CUR_ARG];
+      if (arg.starts_with("-"))
+      {
+        if (PARSE_FCT.find(arg) != PARSE_FCT.end())
+        {
+          try
+          {
+            PARSE_FCT[arg]();
+          }
+          catch (std::exception&)
+          {
+            printf("\n'%s' is not a valid value for argument %s\n\n", ARGV[CUR_ARG], ARGV[CUR_ARG - 1]);
+            show_usage_and_exit();
+          }
+        }
+        else
+        {
+          show_usage_and_exit();
+        }
+      }
+      else
+      {
+        // this is a positional argument so add to that list
+        positional_args.emplace_back(arg);
+      }
+      ++CUR_ARG;
+    }
+    for (auto& kv : PARSE_REQUIRED)
+    {
+      if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
+      {
+        tbd::logging::fatal("%s must be specified", kv.first.c_str());
+      }
+    }
+    size_t cur_arg = 0;
     // parse positional arguments
     // output directory is always the first thing
-    string output_directory(ARGV[CUR_ARG++]);
+    string output_directory(positional_args[cur_arg++]);
+    // // don't process output directory before we look at the flags
+    // // HACK: know there are 4 more positional args in
+    // // "./tbd [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
+    // //                               ^-- here right now
+    // size_t FLAGS_START = (TEST == mode) ? CUR_ARG : CUR_ARG + 4;
+    // size_t POS_NEXT = CUR_ARG;
+    // CUR_ARG = FLAGS_START;
+    // // parse flags
+
     replace(output_directory.begin(), output_directory.end(), '\\', '/');
     if ('/' != output_directory[output_directory.length() - 1])
     {
@@ -389,61 +478,22 @@ int main(const int argc, const char* const argv[])
                               log_file.c_str());
     tbd::logging::note("Output directory is %s", dir_out);
     tbd::logging::note("Output log is %s", log_file.c_str());
-    // HACK: know there are 4 more positional args in
-    // "./tbd [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
-    //                               ^-- here right now
-    size_t FLAGS_START = (TEST == mode) ? CUR_ARG : CUR_ARG + 4;
-    size_t POS_NEXT = CUR_ARG;
-    CUR_ARG = FLAGS_START;
-    // parse flags
-    while (CUR_ARG < ARGC)
-    {
-      if (PARSE_FCT.find(ARGV[CUR_ARG]) != PARSE_FCT.end())
-      {
-        try
-        {
-          PARSE_FCT[ARGV[CUR_ARG]]();
-        }
-        catch (std::exception&)
-        {
-          printf("\n'%s' is not a valid value for argument %s\n\n", ARGV[CUR_ARG], ARGV[CUR_ARG - 1]);
-          show_usage_and_exit();
-        }
-      }
-      else
-      {
-        show_usage_and_exit();
-      }
-      ++CUR_ARG;
-    }
-    for (auto& kv : PARSE_REQUIRED)
-    {
-      if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
-      {
-        tbd::logging::fatal("%s must be specified", kv.first.c_str());
-      }
-    }
-    // revert to last unparsed positional argument
-    CUR_ARG = POS_NEXT;
-    if (TEST == mode)
-    {
-      // do the actual call we used to do right away
-      show_args();
-      result = tbd::sim::test(ARGC, ARGV);
-    }
-    else if (6 <= (ARGC - SKIPPED_ARGS))
+    // // FIX: flags have to be at end, and not sure if this works if not enough args but have flags
+    // // revert to last unparsed positional argument
+    // CUR_ARG = POS_NEXT;
+    if (mode != TEST)
     {
       // handle surface/simulation positional arguments
-      string date(ARGV[CUR_ARG++]);
+      string date(positional_args[cur_arg++]);
       tm start_date{};
       start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
       start_date.tm_mon = stoi(date.substr(5, 2)) - 1;
       start_date.tm_mday = stoi(date.substr(8, 2));
-      const auto latitude = stod(ARGV[CUR_ARG++]);
-      const auto longitude = stod(ARGV[CUR_ARG++]);
-      const tbd::topo::StartPoint start_point(latitude, longitude);
+      const auto latitude = stod(positional_args[cur_arg++]);
+      const auto longitude = stod(positional_args[cur_arg++]);
+      const StartPoint start_point(latitude, longitude);
       size_t num_days = 0;
-      string arg(ARGV[CUR_ARG++]);
+      string arg(positional_args[cur_arg++]);
       tm start{};
       if (5 == arg.size() && ':' == arg[2])
       {
@@ -491,45 +541,67 @@ int main(const int argc, const char* const argv[])
         {
           show_usage_and_exit();
         }
-        // at this point we've parsed positional args and know we're not in test mode
-        if (!PARSE_HAVE.contains("--apcp_prev"))
-        {
-          tbd::logging::warning("Assuming 0 precipitation between noon yesterday and weather start for startup indices");
-          apcp_prev = tbd::wx::Precipitation::Zero;
-        }
-        // HACK: ISI for yesterday really doesn't matter so just use any wind
-        // HACK: it's basically wrong to assign this precip to yesterday's object,
-        // but don't want to add another argument right now
-        const auto yesterday = tbd::wx::FwiWeather(tbd::wx::Temperature(0),
-                                                   tbd::wx::RelativeHumidity(0),
-                                                   tbd::wx::Wind(tbd::wx::Direction(wind_direction, false), tbd::wx::Speed(wind_speed)),
-                                                   tbd::wx::Precipitation(apcp_prev),
-                                                   ffmc,
-                                                   dmc,
-                                                   dc);
-        tbd::util::fix_tm(&start_date);
-        tbd::logging::note("Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
-                           start_date.tm_year + 1900,
-                           start_date.tm_mon + 1,
-                           start_date.tm_mday,
-                           start_date.tm_hour,
-                           start_date.tm_min);
-        start = start_date;
-        log_args();
-        result = tbd::sim::Model::runScenarios(output_directory,
-                                               wx_file_name.c_str(),
-                                               yesterday,
-                                               Settings::rasterRoot(),
-                                               start_point,
-                                               start,
-                                               perim,
-                                               size);
-        Log::closeLogFile();
       }
-      else
+
+      // at this point we've parsed positional args and know we're not in test mode
+      if (!PARSE_HAVE.contains("--apcp_prev"))
       {
-        show_usage_and_exit();
+        tbd::logging::warning("Assuming 0 precipitation between noon yesterday and weather start for startup indices");
+        apcp_prev = Precipitation::Zero;
       }
+      // HACK: ISI for yesterday really doesn't matter so just use any wind
+      // HACK: it's basically wrong to assign this precip to yesterday's object,
+      // but don't want to add another argument right now
+      const auto yesterday = FwiWeather(Temperature::Zero,
+                                        RelativeHumidity::Zero,
+                                        Wind(Direction(wind_direction, false), Speed(wind_speed)),
+                                        Precipitation(apcp_prev),
+                                        ffmc,
+                                        dmc,
+                                        dc);
+      tbd::util::fix_tm(&start_date);
+      tbd::logging::note("Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
+                         start_date.tm_year + 1900,
+                         start_date.tm_mon + 1,
+                         start_date.tm_mday,
+                         start_date.tm_hour,
+                         start_date.tm_min);
+      start = start_date;
+      log_args();
+      result = tbd::sim::Model::runScenarios(output_directory,
+                                             wx_file_name.c_str(),
+                                             yesterday,
+                                             Settings::rasterRoot(),
+                                             start_point,
+                                             start,
+                                             perim,
+                                             size);
+      Log::closeLogFile();
+    }
+    else
+    {
+      // test mode
+      if (cur_arg < positional_args.size() && 0 == strcmp(positional_args[cur_arg++].c_str(), "all"))
+      {
+        test_all = true;
+      }
+      const auto wx = FwiWeather(
+        Temperature::Zero,
+        RelativeHumidity::Zero,
+        Wind(Direction(wind_direction, false), Speed(wind_speed)),
+        Precipitation::Zero,
+        ffmc,
+        dmc,
+        dc);
+      show_args();
+      result = tbd::sim::test(
+        output_directory,
+        hours,
+        &wx,
+        fuel_name,
+        slope,
+        aspect,
+        test_all);
     }
 #ifdef NDEBUG
   }
