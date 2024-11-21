@@ -9,7 +9,6 @@
 #include "CellPoints.h"
 namespace tbd
 {
-using tbd::sim::NO_INTENSITY;
 HorizontalAdjustment horizontal_adjustment(
   const AspectSize slope_azimuth,
   const SlopeSize slope)
