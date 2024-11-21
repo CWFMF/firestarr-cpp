@@ -15,9 +15,6 @@ using tbd::wx::Direction;
 // using sim::CellPoints;
 using topo::Cell;
 using topo::SpreadKey;
-constexpr DurationSize INVALID_TIME = -1;
-constexpr auto NO_INTENSITY = static_cast<IntensitySize>(0);
-constexpr auto NO_ROS = static_cast<ROSSize>(0.0);
 
 // static constexpr size_t FURTHEST_N = 0;
 // static constexpr size_t FURTHEST_NNE = 1;
