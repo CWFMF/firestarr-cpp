@@ -142,7 +142,7 @@ Environment Environment::loadEnvironment(const string dir_out,
         const auto coordinates = cur_info->findFullCoordinates(point, true);
         if (nullptr != coordinates)
         {
-          printf("%f, %f: %d, %d", std::get<0>(*coordinates), std::get<1>(*coordinates), std::get<2>(*coordinates), std::get<3>(*coordinates));
+          printf("%ld, %ld: %d, %d", std::get<0>(*coordinates), std::get<1>(*coordinates), std::get<2>(*coordinates), std::get<3>(*coordinates));
           const auto cur_y = static_cast<FullIdx>(abs(
             std::get<0>(*coordinates) - cur_info->calculateRows() / static_cast<FullIdx>(2)));
           logging::verbose(("Current y value is " + std::to_string(cur_y)).c_str());
