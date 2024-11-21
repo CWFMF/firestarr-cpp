@@ -44,7 +44,7 @@ public:
       type,
       0,
       0,
-      Direction::Zero,
+      Direction::Invalid,
       0};
   }
   /**

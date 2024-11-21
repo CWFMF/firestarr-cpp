@@ -261,7 +261,7 @@ SpreadInfo::SpreadInfo(const DurationSize time,
     tfc_(-1),
     sfc_(-1),
     is_crown_(false),
-    raz_(tbd::wx::Direction::Zero),
+    raz_(tbd::wx::Direction::Invalid),
     nd_(nd)
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
@@ -381,7 +381,7 @@ SpreadInfo::SpreadInfo(const DurationSize time,
     tfc_ = -1;
     sfc_ = -1;
     is_crown_ = false;
-    raz_ = tbd::wx::Direction::Zero;
+    raz_ = tbd::wx::Direction::Invalid;
   }
 }
 // MathSize SpreadInfo::calculateSpreadProbability(const MathSize ros)

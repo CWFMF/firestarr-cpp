@@ -241,7 +241,7 @@ public:
       tfc_(-1),
       sfc_(-1),
       is_crown_(false),
-      raz_(tbd::wx::Direction::Zero),
+      raz_(tbd::wx::Direction::Invalid),
       nd_(-1) {
       };
   SpreadInfo(
