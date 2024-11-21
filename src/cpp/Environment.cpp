@@ -153,7 +153,7 @@ Environment::loadEnvironment(
         if (nullptr != coordinates)
         {
           printf(
-            "%f, %f: %d, %d",
+            "%ld, %ld: %d, %d",
             std::get<0>(*coordinates),
             std::get<1>(*coordinates),
             std::get<2>(*coordinates),

@@ -19,8 +19,26 @@
 #include "version.h"
 #include "SpreadAlgorithm.h"
 #include "Util.h"
+#include "FireWeather.h"
 using fs::logging::Log;
 using fs::sim::Settings;
+using fs::AspectSize;
+using fs::SlopeSize;
+using fs::INVALID_TIME;
+using fs::INVALID_SLOPE;
+using fs::INVALID_ASPECT;
+using fs::wx::Ffmc;
+using fs::wx::Dmc;
+using fs::wx::Dc;
+using fs::wx::Precipitation;
+using fs::wx::Temperature;
+using fs::wx::RelativeHumidity;
+using fs::wx::Direction;
+using fs::wx::Wind;
+using fs::wx::Speed;
+using fs::ThresholdSize;
+using fs::wx::FwiWeather;
+using fs::topo::StartPoint;
 static const char* BIN_NAME = nullptr;
 static map<std::string, std::function<void()>> PARSE_FCT{};
 static vector<std::pair<std::string, std::string>> PARSE_HELP{};
@@ -29,6 +47,12 @@ static map<std::string, bool> PARSE_HAVE{};
 static int ARGC = 0;
 static const char* const* ARGV = nullptr;
 static int CUR_ARG = 0;
+enum MODE
+{
+  SIMULATION,
+  TEST,
+  SURFACE
+};
 string
 get_args()
 {
@@ -67,12 +91,10 @@ show_usage_and_exit(
     BIN_NAME
   );
   printf("Calculate probability surface and save output in the specified directory\n\n\n");
-  printf(
-    "Usage: %s test <output_dir> <numHours> [slope [aspect [wind_speed [wind_direction]]]]\n\n",
-    BIN_NAME
-  );
+  printf("Usage: %s test <output_dir> [options]\n\n", BIN_NAME);
   printf(" Run test cases and save output in the specified directory\n\n");
   printf(" Input Options\n");
+  // FIX: this should show arguments specific to mode, but it doesn't indicate that on the outputs
   for (auto& kv : PARSE_HELP)
   {
     printf("   %-25s %s\n", kv.first.c_str(), kv.second.c_str());
@@ -131,10 +153,11 @@ parse_flag(
     return not_inverse;
   });
 }
-MathSize
+template <class T>
+T
 parse_value()
 {
-  return parse_once<MathSize>([] {
+  return parse_once<T>([] {
     return stod(get_arg());
   });
 }
@@ -327,29 +350,82 @@ main(
   // return 0;
   string wx_file_name;
   string log_file_name = "firestarr.log";
+  string fuel_name;
   string perim;
+  bool test_all = false;
+  MathSize hours = INVALID_TIME;
   size_t size = 0;
-  fs::wx::Ffmc ffmc;
-  fs::wx::Dmc dmc;
-  fs::wx::Dc dc;
-  size_t wind_direction = 0;
-  size_t wind_speed = 0;
+  // ffmc, dmc, dc are required for simulation & surface mode, so no indication of it not being
+  // provided
+  Ffmc ffmc = Ffmc::Invalid;
+  Dmc dmc = Dmc::Invalid;
+  Dc dc = Dc::Invalid;
+  auto wind_direction = Direction::Invalid.asValue();
+  auto wind_speed = Speed::Invalid.asValue();
+  auto slope = static_cast<SlopeSize>(INVALID_SLOPE);
+  auto aspect = static_cast<AspectSize>(INVALID_ASPECT);
 
+  size_t SKIPPED_ARGS = 0;
   // FIX: need to get rain since noon yesterday to start of this hourly weather
-  fs::wx::Precipitation apcp_prev;
+  Precipitation apcp_prev;
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
   register_argument("-q", "Decrease output level", false, &Log::decreaseLogLevel);
   auto result = -1;
+  MODE mode = SIMULATION;
   if (ARGC > 1 && 0 == strcmp(ARGV[1], "test"))
   {
-    if (ARGC <= 3)
+    fs::logging::note("Running in test mode");
+    mode = TEST;
+    CUR_ARG += 1;
+    SKIPPED_ARGS = 1;
+    // not enough arguments for test mode
+    if (3 > ARGC)
     {
       show_usage_and_exit();
     }
-    show_args();
-    result = fs::sim::test(ARGC, ARGV);
+    // if we have a directory and nothing else then use defaults for single run
+    // if we have 'all' then don't accept any other arguments?
+    // - but then we can't overrride indices
+    // - so all should do all the options, but then filter down to the subset that matches what was
+    // specified
+
+    register_setter<MathSize>(hours, "--hours", "Duration in hours", false, &parse_value<MathSize>);
+    register_setter<string>(fuel_name, "--fuel", "FBP fuel type", false, &parse_string);
+    register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", false);
+    register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", false);
+    register_index<Dc>(dc, "--dc", "Constant Drought Code", false);
+    register_setter<
+      MathSize>(wind_direction, "--wd", "Constant wind direction", false, &parse_value<MathSize>);
+    register_setter<
+      MathSize>(wind_speed, "--ws", "Constant wind speed", false, &parse_value<MathSize>);
+    register_setter<SlopeSize>(slope, "--slope", "Constant slope", false, &parse_value<SlopeSize>);
+    register_setter<
+      AspectSize>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
+    register_flag(
+      &Settings::setForceStaticCuring,
+      true,
+      "--force-curing",
+      "Manually set grass curing for all fires"
+    );
+    register_flag(
+      &Settings::setForceGreenup,
+      true,
+      "--force-greenup",
+      "Force green up for all fires"
+    );
+    register_flag(
+      &Settings::setForceNoGreenup,
+      true,
+      "--force-no-greenup",
+      "Force no green up for all fires"
+    );
+    // // either the third argument is '-h' or this is invalid
+    // if (3 == ARGC && 0 == strcmp(ARGV[2], "-h"))
+    // {
+    //   show_help_and_exit();
+    // }
   }
   else
   {
@@ -412,33 +488,27 @@ main(
     );
     // FIX: this is parsed too late to be used right now
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
-    size_t SKIPPED_ARGS = 0;
     if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
     {
       fs::logging::note("Running in probability surface mode");
+      mode = SURFACE;
       // skip 'surface' argument if present
       CUR_ARG += 1;
       SKIPPED_ARGS = 1;
       // probabalistic surface is computationally impossible at this point
       Settings::setDeterministic(true);
       Settings::setSurface(true);
-      register_index<fs::wx::Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
-      register_index<fs::wx::Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
-      register_index<fs::wx::Dc>(dc, "--dc", "Constant Drought Code", true);
-      // register_int_index<fs::wx::Direction>(wind_direction, "--wd", "Constant wind direction",
-      // true); register_setter<fs::wx::Direction>(wind_direction, "--wd", "Constant wind
-      // direction", true, []() {
-      //   return parse_once<fs::wx::Direction>([] { return fs::wx::Direction(stoi(get_arg()),
-      //   false); });
+      register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
+      register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
+      register_index<Dc>(dc, "--dc", "Constant Drought Code", true);
+      // register_int_index<Direction>(wind_direction, "--wd", "Constant wind direction", true);
+      // register_setter<Direction>(wind_direction, "--wd", "Constant wind direction", true, []() {
+      //   return parse_once<Direction>([] { return Direction(stoi(get_arg()), false); });
       // });
-      register_setter<size_t>(
-        wind_direction,
-        "--wd",
-        "Constant wind direction",
-        true,
-        &parse_size_t
-      );
-      register_setter<size_t>(wind_speed, "--ws", "Constant wind speed", true, &parse_size_t);
+      register_setter<
+        MathSize>(wind_direction, "--wd", "Constant wind direction", true, &parse_value<MathSize>);
+      register_setter<
+        MathSize>(wind_speed, "--ws", "Constant wind speed", true, &parse_value<MathSize>);
     }
     else
     {
@@ -476,20 +546,15 @@ main(
         false,
         &parse_size_t
       );
-      register_setter<fs::ThresholdSize>(
-        &Settings::setConfidenceLevel,
-        "--confidence",
-        "Use specified confidence level",
-        false,
-        &parse_value
-      );
+      register_setter<
+        ThresholdSize>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
       // HACK: want different text for same flag so define here too
-      register_index<fs::wx::Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
-      register_index<fs::wx::Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
-      register_index<fs::wx::Dc>(dc, "--dc", "Startup Drought Code", true);
-      register_index<fs::wx::Precipitation>(
+      register_index<Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
+      register_index<Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
+      register_index<Dc>(dc, "--dc", "Startup Drought Code", true);
+      register_index<Precipitation>(
         apcp_prev,
         "--apcp_prev",
         "Startup precipitation between 1200 yesterday and start of hourly weather",
@@ -512,189 +577,245 @@ main(
     {
       show_usage_and_exit();
     }
+  }
 #ifdef NDEBUG
-    try
-    {
+  try
+  {
 #endif
-      if (6 <= (ARGC - SKIPPED_ARGS))
+    if (TEST == mode)
+    {
+      // // not enough arguments for test mode
+      // if (ARGC <= 3)
+      // {
+      //   show_usage_and_exit();
+      // }
+    }
+    else if (6 <= (ARGC - SKIPPED_ARGS))
+    {
+      // ensure correct number of arguments for simulation or surface mode
+    }
+    else
+    {
+      show_usage_and_exit();
+    }
+    vector<string> positional_args{};
+    while (CUR_ARG < ARGC)
+    {
+      const string arg = ARGV[CUR_ARG];
+      if (arg.starts_with("-"))
       {
-        string output_directory(ARGV[CUR_ARG++]);
-        replace(output_directory.begin(), output_directory.end(), '\\', '/');
-        if ('/' != output_directory[output_directory.length() - 1])
-        {
-          output_directory += '/';
-        }
-        const char* dir_out = output_directory.c_str();
-        struct stat info{};
-        if (stat(dir_out, &info) != 0 || !(info.st_mode & S_IFDIR))
-        {
-          fs::util::make_directory_recursive(dir_out);
-        }
-        // FIX: this just doesn't work because --log isn't parsed until later
-        // if name starts with "/" then it's an absolute path, otherwise append to working directory
-        const string log_file = log_file_name.starts_with("/") ? log_file_name
-                                                               : (output_directory + log_file_name);
-        fs::logging::check_fatal(
-          !Log::openLogFile(log_file.c_str()),
-          "Can't open log file %s",
-          log_file.c_str()
-        );
-        fs::logging::note("Output directory is %s", dir_out);
-        fs::logging::note("Output log is %s", log_file.c_str());
-        string date(ARGV[CUR_ARG++]);
-        tm start_date{};
-        start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
-        start_date.tm_mon = stoi(date.substr(5, 2)) - 1;
-        start_date.tm_mday = stoi(date.substr(8, 2));
-        const auto latitude = stod(ARGV[CUR_ARG++]);
-        const auto longitude = stod(ARGV[CUR_ARG++]);
-        const fs::topo::StartPoint start_point(latitude, longitude);
-        size_t num_days = 0;
-        string arg(ARGV[CUR_ARG++]);
-        tm start{};
-        if (5 == arg.size() && ':' == arg[2])
+        if (PARSE_FCT.find(arg) != PARSE_FCT.end())
         {
           try
           {
-            // if this is a time then we aren't just running the weather
-            start_date.tm_hour = stoi(arg.substr(0, 2));
-            fs::logging::check_fatal(
-              start_date.tm_hour < 0 || start_date.tm_hour > 23,
-              "Simulation start time has an invalid hour (%d)",
-              start_date.tm_hour
-            );
-            start_date.tm_min = stoi(arg.substr(3, 2));
-            fs::logging::check_fatal(
-              start_date.tm_min < 0 || start_date.tm_min > 59,
-              "Simulation start time has an invalid minute (%d)",
-              start_date.tm_min
-            );
-            fs::logging::note(
-              "Simulation start time before fix_tm() is %d-%02d-%02d %02d:%02d",
-              start_date.tm_year + 1900,
-              start_date.tm_mon + 1,
-              start_date.tm_mday,
-              start_date.tm_hour,
-              start_date.tm_min
-            );
-            fs::util::fix_tm(&start_date);
-            fs::logging::note(
-              "Simulation start time after fix_tm() is %d-%02d-%02d %02d:%02d",
-              start_date.tm_year + 1900,
-              start_date.tm_mon + 1,
-              start_date.tm_mday,
-              start_date.tm_hour,
-              start_date.tm_min
-            );
-            // we were given a time, so number of days is until end of year
-            start = start_date;
-            const auto start_t = mktime(&start);
-            auto year_end = start;
-            year_end.tm_mon = 11;
-            year_end.tm_mday = 31;
-            const auto seconds = difftime(mktime(&year_end), start_t);
-            // start day counts too, so +1
-            // HACK: but we don't want to go to Jan 1 so don't add 1
-            num_days = static_cast<size_t>(seconds / fs::DAY_SECONDS);
-            fs::logging::debug("Calculated number of days until end of year: %d", num_days);
-            // +1 because day 1 counts too
-            // +2 so that results don't change when we change number of days
-            num_days = min(num_days, static_cast<size_t>(Settings::maxDateOffset()) + 2);
+            PARSE_FCT[arg]();
           }
           catch (std::exception&)
           {
+            printf(
+              "\n'%s' is not a valid value for argument %s\n\n",
+              ARGV[CUR_ARG],
+              ARGV[CUR_ARG - 1]
+            );
             show_usage_and_exit();
-          }
-          while (CUR_ARG < ARGC)
-          {
-            if (PARSE_FCT.find(ARGV[CUR_ARG]) != PARSE_FCT.end())
-            {
-              try
-              {
-                PARSE_FCT[ARGV[CUR_ARG]]();
-              }
-              catch (std::exception&)
-              {
-                printf(
-                  "\n'%s' is not a valid value for argument %s\n\n",
-                  ARGV[CUR_ARG],
-                  ARGV[CUR_ARG - 1]
-                );
-                show_usage_and_exit();
-              }
-            }
-            else
-            {
-              show_usage_and_exit();
-            }
-            ++CUR_ARG;
           }
         }
         else
         {
           show_usage_and_exit();
         }
-        for (auto& kv : PARSE_REQUIRED)
-        {
-          if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
-          {
-            fs::logging::fatal("%s must be specified", kv.first.c_str());
-          }
-        }
-        if (!PARSE_HAVE.contains("--apcp_prev"))
-        {
-          fs::logging::warning(
-            "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
-          );
-          apcp_prev = fs::wx::Precipitation::Zero;
-        }
-        // HACK: ISI for yesterday really doesn't matter so just use any wind
-        // HACK: it's basically wrong to assign this precip to yesterday's object,
-        // but don't want to add another argument right now
-        const auto yesterday = fs::wx::FwiWeather(
-          fs::wx::Temperature(0),
-          fs::wx::RelativeHumidity(0),
-          fs::wx::Wind(fs::wx::Direction(wind_direction, false), fs::wx::Speed(wind_speed)),
-          fs::wx::Precipitation(apcp_prev),
-          ffmc,
-          dmc,
-          dc
-        );
-        fs::util::fix_tm(&start_date);
-        fs::logging::note(
-          "Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
-          start_date.tm_year + 1900,
-          start_date.tm_mon + 1,
-          start_date.tm_mday,
-          start_date.tm_hour,
-          start_date.tm_min
-        );
-        start = start_date;
-        log_args();
-        result = fs::sim::Model::runScenarios(
-          output_directory,
-          wx_file_name.c_str(),
-          yesterday,
-          Settings::rasterRoot(),
-          start_point,
-          start,
-          perim,
-          size
-        );
-        Log::closeLogFile();
       }
       else
       {
-        show_usage_and_exit();
+        // this is a positional argument so add to that list
+        positional_args.emplace_back(arg);
       }
-#ifdef NDEBUG
+      ++CUR_ARG;
     }
-    catch (const std::exception& ex)
+    for (auto& kv : PARSE_REQUIRED)
     {
-      fs::logging::fatal(ex);
-      std::terminate();
+      if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
+      {
+        fs::logging::fatal("%s must be specified", kv.first.c_str());
+      }
     }
-#endif
+    size_t cur_arg = 0;
+    // parse positional arguments
+    // output directory is always the first thing
+    string output_directory(positional_args[cur_arg++]);
+    // // don't process output directory before we look at the flags
+    // // HACK: know there are 4 more positional args in
+    // // "./firestarr [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
+    // //                               ^-- here right now
+    // size_t FLAGS_START = (TEST == mode) ? CUR_ARG : CUR_ARG + 4;
+    // size_t POS_NEXT = CUR_ARG;
+    // CUR_ARG = FLAGS_START;
+    // // parse flags
+
+    replace(output_directory.begin(), output_directory.end(), '\\', '/');
+    if ('/' != output_directory[output_directory.length() - 1])
+    {
+      output_directory += '/';
+    }
+    const char* dir_out = output_directory.c_str();
+    struct stat info{};
+    if (stat(dir_out, &info) != 0 || !(info.st_mode & S_IFDIR))
+    {
+      fs::util::make_directory_recursive(dir_out);
+    }
+    // FIX: this just doesn't work because --log isn't parsed until later
+    // if name starts with "/" then it's an absolute path, otherwise append to working directory
+    const string log_file = log_file_name.starts_with("/") ? log_file_name
+                                                           : (output_directory + log_file_name);
+    fs::logging::check_fatal(
+      !Log::openLogFile(log_file.c_str()),
+      "Can't open log file %s",
+      log_file.c_str()
+    );
+    fs::logging::note("Output directory is %s", dir_out);
+    fs::logging::note("Output log is %s", log_file.c_str());
+    // // FIX: flags have to be at end, and not sure if this works if not enough args but have flags
+    // // revert to last unparsed positional argument
+    // CUR_ARG = POS_NEXT;
+    if (mode != TEST)
+    {
+      // handle surface/simulation positional arguments
+      string date(positional_args[cur_arg++]);
+      tm start_date{};
+      start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
+      start_date.tm_mon = stoi(date.substr(5, 2)) - 1;
+      start_date.tm_mday = stoi(date.substr(8, 2));
+      const auto latitude = stod(positional_args[cur_arg++]);
+      const auto longitude = stod(positional_args[cur_arg++]);
+      const StartPoint start_point(latitude, longitude);
+      size_t num_days = 0;
+      string arg(positional_args[cur_arg++]);
+      tm start{};
+      if (5 == arg.size() && ':' == arg[2])
+      {
+        try
+        {
+          // if this is a time then we aren't just running the weather
+          start_date.tm_hour = stoi(arg.substr(0, 2));
+          fs::logging::check_fatal(
+            start_date.tm_hour < 0 || start_date.tm_hour > 23,
+            "Simulation start time has an invalid hour (%d)",
+            start_date.tm_hour
+          );
+          start_date.tm_min = stoi(arg.substr(3, 2));
+          fs::logging::check_fatal(
+            start_date.tm_min < 0 || start_date.tm_min > 59,
+            "Simulation start time has an invalid minute (%d)",
+            start_date.tm_min
+          );
+          fs::logging::note(
+            "Simulation start time before fix_tm() is %d-%02d-%02d %02d:%02d",
+            start_date.tm_year + 1900,
+            start_date.tm_mon + 1,
+            start_date.tm_mday,
+            start_date.tm_hour,
+            start_date.tm_min
+          );
+          fs::util::fix_tm(&start_date);
+          fs::logging::note(
+            "Simulation start time after fix_tm() is %d-%02d-%02d %02d:%02d",
+            start_date.tm_year + 1900,
+            start_date.tm_mon + 1,
+            start_date.tm_mday,
+            start_date.tm_hour,
+            start_date.tm_min
+          );
+          // we were given a time, so number of days is until end of year
+          start = start_date;
+          const auto start_t = mktime(&start);
+          auto year_end = start;
+          year_end.tm_mon = 11;
+          year_end.tm_mday = 31;
+          const auto seconds = difftime(mktime(&year_end), start_t);
+          // start day counts too, so +1
+          // HACK: but we don't want to go to Jan 1 so don't add 1
+          num_days = static_cast<size_t>(seconds / fs::DAY_SECONDS);
+          fs::logging::debug("Calculated number of days until end of year: %d", num_days);
+          // +1 because day 1 counts too
+          // +2 so that results don't change when we change number of days
+          num_days = min(num_days, static_cast<size_t>(Settings::maxDateOffset()) + 2);
+        }
+        catch (std::exception&)
+        {
+          show_usage_and_exit();
+        }
+      }
+
+      // at this point we've parsed positional args and know we're not in test mode
+      if (!PARSE_HAVE.contains("--apcp_prev"))
+      {
+        fs::logging::warning(
+          "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
+        );
+        apcp_prev = Precipitation::Zero;
+      }
+      // HACK: ISI for yesterday really doesn't matter so just use any wind
+      // HACK: it's basically wrong to assign this precip to yesterday's object,
+      // but don't want to add another argument right now
+      const auto yesterday = FwiWeather(
+        Temperature::Zero,
+        RelativeHumidity::Zero,
+        Wind(Direction(wind_direction, false), Speed(wind_speed)),
+        Precipitation(apcp_prev),
+        ffmc,
+        dmc,
+        dc
+      );
+      fs::util::fix_tm(&start_date);
+      fs::logging::note(
+        "Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
+        start_date.tm_year + 1900,
+        start_date.tm_mon + 1,
+        start_date.tm_mday,
+        start_date.tm_hour,
+        start_date.tm_min
+      );
+      start = start_date;
+      log_args();
+      result = fs::sim::Model::runScenarios(
+        output_directory,
+        wx_file_name.c_str(),
+        yesterday,
+        Settings::rasterRoot(),
+        start_point,
+        start,
+        perim,
+        size
+      );
+      Log::closeLogFile();
+    }
+    else
+    {
+      // test mode
+      if (cur_arg < positional_args.size()
+          && 0 == strcmp(positional_args[cur_arg++].c_str(), "all"))
+      {
+        test_all = true;
+      }
+      const auto wx = FwiWeather(
+        Temperature::Zero,
+        RelativeHumidity::Zero,
+        Wind(Direction(wind_direction, false), Speed(wind_speed)),
+        Precipitation::Zero,
+        ffmc,
+        dmc,
+        dc
+      );
+      show_args();
+      result = fs::sim::test(output_directory, hours, &wx, fuel_name, slope, aspect, test_all);
+    }
+#ifdef NDEBUG
   }
+  catch (const std::exception& ex)
+  {
+    fs::logging::fatal(ex);
+    std::terminate();
+  }
+#endif
   return result;
 }

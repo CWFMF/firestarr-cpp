@@ -5,10 +5,14 @@
 #ifndef FS_TEST_H
 #define FS_TEST_H
 
-namespace fs
+namespace fs::wx
 {
-namespace sim
+class FwiWeather;
+};
+namespace fs::sim
 {
+#include "stdafx.h"
+
 static const double TEST_GRID_SIZE = 100.0;
 static const char TEST_PROJ4[] =
   "+proj=tmerc +lat_0=0.000000000 +lon_0=-90.000000000"
@@ -17,12 +21,22 @@ static const double TEST_XLLCORNER = 324203.990666;
 static const double TEST_YLLCORNER = 12646355.311160;
 /**
  * \brief Runs test cases for constant weather and fuel based on given arguments.
- * \param argc
- * \param argv
+ * \param dir_out root directory for outputs
+ * \param fuel_name FBP fuel to use or empty string for default
+ * \param wx FwiWeather to use for constant indices, where anything Invalid uses default
+ * \param test_all whether to run all combinations of test outputs filtered by criteria (true), or
+ * to just run the default single value modified by whatever has been specified (false)
  * \return
  */
 int
-test(int argc, const char* const argv[]);
-}
+test(
+  const string& output_directory,
+  const DurationSize num_hours,
+  const fs::wx::FwiWeather* wx,
+  const string& fuel_name,
+  const SlopeSize slope,
+  const AspectSize aspect,
+  const bool test_all
+);
 }
 #endif

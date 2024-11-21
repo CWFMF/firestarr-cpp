@@ -8,7 +8,6 @@
 #include "CellPoints.h"
 namespace fs
 {
-using fs::sim::NO_INTENSITY;
 HorizontalAdjustment
 horizontal_adjustment(
   const AspectSize slope_azimuth,
