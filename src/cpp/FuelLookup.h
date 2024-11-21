@@ -12,6 +12,9 @@
 namespace tbd::fuel
 {
 class FuelLookupImpl;
+
+string simplify_fuel_name(const string& fuel);
+
 /**
  * \brief Provides ability to look up a fuel type based on name or code.
  */
@@ -81,6 +84,12 @@ public:
    * \return FuelType based on the given name
    */
   [[nodiscard]] const FuelType* byName(const string& name) const;
+  /**
+   * \brief Look up a FuelType based on the given simplified name
+   * \param name Simplified name of the fuel to find
+   * \return FuelType based on the given name
+   */
+  [[nodiscard]] const FuelType* bySimplifiedName(const string& name) const;
   /**
    * \brief Array of all FuelTypes available to be used in simulations
    */
