@@ -224,7 +224,7 @@ CellPoints::insert(
 ) noexcept
 {
   // HACK: FIX: just do something for now
-  insert(INVALID_TIME, NO_INTENSITY, NO_ROS, Direction::Zero, p.first, p.second);
+  insert(INVALID_TIME, NO_INTENSITY, NO_ROS, Direction::Invalid, p.first, p.second);
   return *this;
 }
 

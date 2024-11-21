@@ -39,6 +39,7 @@ public:
    * \brief Fine Fuel Moisture Code of 0
    */
   static const Ffmc Zero;
+  static const Ffmc Invalid;
 };
 /**
  * \brief Duff Moisture Code value.
@@ -70,6 +71,7 @@ public:
    * \brief Duff Moisture Code of 0
    */
   static const Dmc Zero;
+  static const Dmc Invalid;
 };
 /**
  * \brief Drought Code value.
@@ -99,6 +101,7 @@ public:
    * \brief Drought Code of 0
    */
   static const Dc Zero;
+  static const Dc Invalid;
 };
 /**
  * \brief Initial Spread Index value.
@@ -124,6 +127,7 @@ public:
    * \brief Initial Spread Index of 0
    */
   static const Isi Zero;
+  static const Isi Invalid;
 private:
   //! @cond Doxygen_Suppress
   using Index::Index;
@@ -153,6 +157,7 @@ public:
    * \brief Build-up Index of 0
    */
   static const Bui Zero;
+  static const Bui Invalid;
 private:
   //! @cond Doxygen_Suppress
   using Index::Index;
@@ -182,6 +187,7 @@ public:
    * \brief Fire Weather Index of 0
    */
   static const Fwi Zero;
+  static const Fwi Invalid;
 private:
   //! @cond Doxygen_Suppress
   using Index::Index;
@@ -205,6 +211,7 @@ public:
    * \brief Danger Severity Rating of 0
    */
   static const Dsr Zero;
+  static const Dsr Invalids;
 };
 /**
  * \brief A Weather value with calculated FWI indices.
@@ -216,6 +223,7 @@ public:
    * \brief FwiWeather with 0 for all Indices
    */
   static const FwiWeather Zero;
+  static const FwiWeather Invalid;
   /**
    * \brief Construct with 0 for all values
    */

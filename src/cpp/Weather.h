@@ -27,6 +27,7 @@ public:
    * \brief 0 degrees Celsius
    */
   static const Temperature Zero;
+  static const Temperature Invalid;
 };
 /**
  * \brief Relative humidity as a percentage.
@@ -41,6 +42,7 @@ public:
    * \brief 0% Relative Humidity
    */
   static const RelativeHumidity Zero;
+  static const RelativeHumidity Invalid;
 };
 /**
  * \brief Speed in kilometers per hour.
@@ -55,6 +57,7 @@ public:
    * \brief 0 km/h
    */
   static const Speed Zero;
+  static const Speed Invalid;
 };
 /**
  * \brief Direction with access to degrees or radians.
@@ -137,6 +140,7 @@ public:
    * \brief Direction of 0 (North)
    */
   static const Direction Zero;
+  static const Direction Invalid;
 };
 /**
  * \brief Wind with a Speed and Direction.
@@ -286,6 +290,7 @@ public:
    * \brief Wind with 0 Speed from Direction 0
    */
   [[maybe_unused]] static const Wind Zero;
+  static const Wind Invalid;
 private:
   /**
    * \brief Wind speed vector in X direction (East is positive)
@@ -317,6 +322,7 @@ public:
    * \brief Accumulated Precipitation of 0 mm
    */
   static const Precipitation Zero;
+  static const Precipitation Invalid;
 };
 /**
  * \brief Collection of weather indices used for calculating FwiWeather.

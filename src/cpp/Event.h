@@ -41,7 +41,7 @@ public:
     const Type type
   )
   {
-    return {time, cell, 0, type, 0, 0, Direction::Zero, 0};
+    return {time, cell, 0, type, 0, 0, Direction::Invalid, 0};
   }
   /**
    * \brief Make simulation end event

@@ -395,7 +395,7 @@ Scenario::evaluate(
         event.time(),
         NO_INTENSITY,
         NO_ROS,
-        Direction::Zero,
+        Direction::Invalid,
         p.column() + CELL_CENTER,
         p.row() + CELL_CENTER
       );
@@ -731,7 +731,7 @@ Scenario::run(
         start_time_,
         NO_INTENSITY,
         NO_ROS,
-        Direction::Zero,
+        Direction::Invalid,
         cell.column() + CELL_CENTER,
         cell.row() + CELL_CENTER
       );
@@ -756,7 +756,8 @@ Scenario::run(
     // would be burned already if perimeter applied
     if (canBurn(location))
     {
-      const auto fake_event = Event::makeFireSpread(start_time_, 0, 0, Direction::Zero, location);
+      const auto
+        fake_event = Event::makeFireSpread(start_time_, 0, 0, Direction::Invalid, location);
       burn(fake_event);
     }
   }

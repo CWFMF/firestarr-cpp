@@ -277,7 +277,7 @@ public:
       tfc_(-1),
       sfc_(-1),
       is_crown_(false),
-      raz_(fs::wx::Direction::Zero),
+      raz_(fs::wx::Direction::Invalid),
       nd_(-1) { };
   SpreadInfo(
     const int year,

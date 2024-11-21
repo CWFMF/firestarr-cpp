@@ -218,7 +218,7 @@ IntensityMap::ignite(
   const Location& location
 )
 {
-  burn(location, 1, 0, fs::wx::Direction::Zero, false);
+  burn(location, 1, 0, fs::wx::Direction::Invalid, false);
 }
 void
 IntensityMap::burn(
