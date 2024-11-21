@@ -349,7 +349,7 @@ void Scenario::evaluate(const Event& event)
         event.time(),
         NO_INTENSITY,
         NO_ROS,
-        Direction::Zero,
+        Direction::Invalid,
         p.column() + CELL_CENTER,
         p.row() + CELL_CENTER);
       if (fuel::is_null_fuel(event.cell()))
@@ -640,7 +640,7 @@ Scenario* Scenario::run(map<DurationSize, ProbabilityMap*>* probabilities)
         start_time_,
         NO_INTENSITY,
         NO_ROS,
-        Direction::Zero,
+        Direction::Invalid,
         cell.column() + CELL_CENTER,
         cell.row() + CELL_CENTER);
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
@@ -668,7 +668,7 @@ Scenario* Scenario::run(map<DurationSize, ProbabilityMap*>* probabilities)
         start_time_,
         0,
         0,
-        Direction::Zero,
+        Direction::Invalid,
         location);
       burn(fake_event);
     }

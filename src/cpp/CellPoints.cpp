@@ -210,7 +210,7 @@ CellPoints& CellPoints::insert(const InnerPos& p) noexcept
     INVALID_TIME,
     NO_INTENSITY,
     NO_ROS,
-    Direction::Zero,
+    Direction::Invalid,
     p.first,
     p.second);
   return *this;
