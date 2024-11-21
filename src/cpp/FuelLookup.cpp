@@ -10,6 +10,42 @@
 #include "Settings.h"
 namespace tbd::fuel
 {
+string simplify_fuel_name(const string& fuel)
+{
+  auto simple_fuel_name{fuel};
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '-'),
+    simple_fuel_name.end());
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), ' '),
+    simple_fuel_name.end());
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '('),
+    simple_fuel_name.end());
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), ')'),
+    simple_fuel_name.end());
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '/'),
+    simple_fuel_name.end());
+  std::transform(
+    simple_fuel_name.begin(),
+    simple_fuel_name.end(),
+    simple_fuel_name.begin(),
+    ::toupper);
+  // remove PDF & PC
+  const auto pc = simple_fuel_name.find("PC");
+  if (string::npos != pc)
+  {
+    simple_fuel_name.erase(pc);
+  }
+  const auto pdf = simple_fuel_name.find("PDF");
+  if (string::npos != pdf)
+  {
+    simple_fuel_name.erase(pdf);
+  }
+  return simple_fuel_name;
+}
 static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Spruce-Lichen Woodland", "C-1"},
   {"Boreal Spruce", "C-2"},
@@ -446,6 +482,13 @@ public:
   void emplaceFuel(const string& name, const FuelType* fuel)
   {
     fuel_by_name_.emplace(name, fuel);
+    const auto simple_name = simplify_fuel_name(fuel->name());
+    logging::verbose(
+      "'%s' being registered as '%s' with simplified name '%s'",
+      fuel->name(),
+      name.c_str(),
+      simple_name.c_str());
+    fuel_by_simplified_name_.emplace(simple_name, fuel);
   }
   /**
    * \brief Create a set of all FuelTypes used in this lookup table
@@ -542,6 +585,20 @@ public:
     }
     return nullptr;
   }
+  /**
+   * \brief Look up a FuelType based on the given simplified name
+   * \param name Simplified name of the fuel to find
+   * \return FuelType based on the given name
+   */
+  const FuelType* bySimplifiedName(const string& name) const
+  {
+    const auto seek = fuel_by_simplified_name_.find(name);
+    if (seek != fuel_by_simplified_name_.end())
+    {
+      return seek->second;
+    }
+    return nullptr;
+  }
 private:
   /**
    * \brief Array of all possible fuel types
@@ -555,6 +612,10 @@ private:
    * \brief Map of fuel name to FuelType
    */
   unordered_map<string, const FuelType*> fuel_by_name_{};
+  /**
+   * \brief Map of simplified fuel name to FuelType
+   */
+  unordered_map<string, const FuelType*> fuel_by_simplified_name_{};
   /**
    * \brief Map of fuel name to whether or not it is used in this simulation
    */
@@ -591,6 +652,10 @@ set<const FuelType*> FuelLookup::usedFuels() const
 const FuelType* FuelLookup::byName(const string& name) const
 {
   return impl_->byName(name);
+}
+const FuelType* FuelLookup::bySimplifiedName(const string& name) const
+{
+  return impl_->bySimplifiedName(name);
 }
 FuelLookup::FuelLookup(const char* filename)
   : impl_(make_shared<FuelLookupImpl>(filename))

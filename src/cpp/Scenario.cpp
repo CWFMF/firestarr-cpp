@@ -755,7 +755,7 @@ CellPointsMap apply_offsets_spreadkey(
   // in a cell for it to work well
   CellPointsMap r1{};
   OffsetSet offsets_after_duration{};
-  logging::note("Applying %ld offsets", offsets.size());
+  logging::verbose("Applying %ld offsets", offsets.size());
   // // offsets_after_duration.resize(offsets.size());
   // std::transform(
   //   offsets.cbegin(),
@@ -771,15 +771,15 @@ CellPointsMap apply_offsets_spreadkey(
       const auto& ros = std::get<1>(r_p);
       const auto& raz = std::get<2>(r_p);
       const auto& p = std::get<3>(r_p);
-      // logging::note("ros %f; x %f; y %f; duration %f;",
+      // logging::verbose("ros %f; x %f; y %f; duration %f;",
       //               ros,
       //               p.first,
       //               p.second,
       //               duration);
       return ROSOffset(intensity, ros, raz, Offset(p.first * duration, p.second * duration));
     });
-  logging::note("Calculated %ld offsets after duration %f", offsets_after_duration.size(), duration);
-  logging::note("cell_pts_map has %ld items", cell_pts_map.size());
+  logging::verbose("Calculated %ld offsets after duration %f", offsets_after_duration.size(), duration);
+  logging::verbose("cell_pts_map has %ld items", cell_pts_map.size());
   for (auto& pts_for_cell : cell_pts_map)
   {
     const Location& src = std::get<0>(pts_for_cell);

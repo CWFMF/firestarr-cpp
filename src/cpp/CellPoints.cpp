@@ -139,7 +139,7 @@ CellPoints& CellPoints::insert(
   // constexpr auto TIME_EPSILON = 0.000001;
   if (0 < arrival_time && 0 > arrival_time_)
   {
-    logging::note("No time so setting ros to %f at time %f", ros, arrival_time);
+    logging::verbose("No time so setting ros to %f at time %f", ros, arrival_time);
     // record ros and time if nothing yet
     arrival_time_ = arrival_time;
     ros_at_arrival_ = ros;
@@ -149,7 +149,7 @@ CellPoints& CellPoints::insert(
   // // else if (abs(arrival_time - arrival_time_) <= TIME_EPSILON)
   // else if (arrival_time == arrival_time_)
   // {
-  //   logging::note("Same time so setting ros to max(%f, %f) at time %f", ros, ros_at_arrival_, arrival_time);
+  //   logging::verbose("Same time so setting ros to max(%f, %f) at time %f", ros, ros_at_arrival_, arrival_time);
   //   // the same time so pick higher ros
   //   if (
   //     (ros_at_arrival_ < ros)
