@@ -188,7 +188,7 @@ bool IntensityMap::isSurrounded(const Location& location) const
 }
 void IntensityMap::ignite(const Location& location)
 {
-  burn(location, 1, 0, tbd::wx::Direction::Zero, false);
+  burn(location, 1, 0, tbd::wx::Direction::Invalid, false);
 }
 void IntensityMap::burn(const Location& location,
                         IntensitySize intensity,
