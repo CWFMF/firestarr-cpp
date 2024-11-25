@@ -157,18 +157,6 @@ public:
    */
   static void setSaveSimulationArea(bool value) noexcept;
   /**
-   * \brief Whether or not to use first default fuel grid without checking coordinates
-   * \return Whether or not to use first default fuel grid without checking coordinates
-   * \return None
-   */
-  [[nodiscard]] static bool forceFuel() noexcept;
-  /**
-   * \brief Whether or not to use first default fuel grid without checking coordinates
-   * \return Whether or not to use first default fuel grid without checking coordinates
-   * \return None
-   */
-  static void setForceFuel(bool value) noexcept;
-  /**
    * \brief Whether or not to force greenup for all fires
    * \return None
    */
