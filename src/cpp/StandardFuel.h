@@ -254,8 +254,8 @@ protected:
    * \brief Crown base height (m) [ST-X-3 table 8]
    * \return Crown base height (m) [ST-X-3 table 8]
    */
-  [[nodiscard]] static constexpr MathSize
-  cbh() noexcept
+  [[nodiscard]] MathSize
+  cbh() const override
   {
     return Cbh;
   }
