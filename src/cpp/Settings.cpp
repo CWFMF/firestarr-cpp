@@ -201,7 +201,6 @@ public:
   ) noexcept
   {
     raster_root_ = dirname;
-    force_fuel = true;
   }
   void
   setFuelLookupTable(
@@ -533,11 +532,6 @@ public:
    */
   atomic<bool> save_simulation_area = false;
   /**
-   * \brief Whether or not to use first default fuel grid without checking coordinates
-   * \return Whether or not to use first default fuel grid without checking coordinates
-   */
-  atomic<bool> force_fuel = false;
-  /**
    * \brief Whether or not to force greenup for all fires
    * \return Whether or not to force greenup for all fires
    */
@@ -856,18 +850,6 @@ Settings::setSaveSimulationArea(
 ) noexcept
 {
   SettingsImplementation::instance().save_simulation_area = value;
-}
-bool
-Settings::forceFuel() noexcept
-{
-  return SettingsImplementation::instance().force_fuel;
-}
-void
-Settings::setForceFuel(
-  const bool value
-) noexcept
-{
-  SettingsImplementation::instance().force_fuel = value;
 }
 bool
 Settings::forceGreenup() noexcept
