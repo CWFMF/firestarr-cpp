@@ -9,6 +9,14 @@
 #include "Log.h"
 namespace tbd::fuel
 {
+MathSize InvalidFuel::grass_curing(const int, const wx::FwiWeather&) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::cbh() const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
 MathSize InvalidFuel::buiEffect(MathSize) const
 {
   throw runtime_error("Invalid fuel type in fuel map");

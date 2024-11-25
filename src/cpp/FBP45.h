@@ -587,23 +587,29 @@ public:
     return DEFAULT_GRASS_FUEL_LOAD;
   }
   /**
+   * \brief Grass curing
+   * \return Grass curing (or -1 if invalid for this fuel type)
+   */
+  [[nodiscard]] MathSize grass_curing(const int nd, const wx::FwiWeather& wx) const override
+  {
+    return sim::Settings::forceStaticCuring()
+           ?   // forcing curing value
+             sim::Settings::staticCuring()
+           : wx.dc().asValue() > 500
+               ?   // we're in drought conditions
+               100
+               : calculate_grass_curing(nd);
+  }
+  /**
    * \brief Calculate base rate of spread multiplier
    * \param nd Difference between date and the date of minimum foliar moisture content
    * \param wx FwiWeather to use for calculation
    * \return Base rate of spread multiplier
    */
-  [[nodiscard]] static MathSize baseMultiplier(const int nd,
-                                               const wx::FwiWeather& wx) noexcept
+  [[nodiscard]] MathSize baseMultiplier(const int nd,
+                                        const wx::FwiWeather& wx) const noexcept
   {
-
-    const MathSize curing = sim::Settings::forceStaticCuring()
-                            ?   // forcing curing value
-                              sim::Settings::staticCuring()
-                            : wx.dc().asValue() > 500
-                                ?   // we're in drought conditions
-                                100
-                                : calculate_grass_curing(nd);
-    return BASE_MULTIPLIER_CURING(curing);
+    return BASE_MULTIPLIER_CURING(grass_curing(nd, wx));
   }
   /**
    * \brief Calculate ISI with slope influence and zero wind (ISF) [ST-X-3 eq 41]
@@ -1283,6 +1289,22 @@ public:
   [[nodiscard]] MathSize buiEffect(MathSize bui) const override
   {
     return compare_by_season(*this, [bui](const FuelType& fuel) { return fuel.buiEffect(bui); });
+  }
+  /**
+   * \brief Grass curing
+   * \return Grass curing (or -1 if invalid for this fuel type)
+   */
+  [[nodiscard]] MathSize grass_curing(const int nd, const wx::FwiWeather& wx) const override
+  {
+    return compare_by_season(*this, [&nd, &wx](const FuelType& fuel) { return fuel.grass_curing(nd, wx); });
+  }
+  /**
+   * \brief Crown base height (m) [ST-X-3 table 8]
+   * \return Crown base height (m) [ST-X-3 table 8]
+   */
+  [[nodiscard]] MathSize cbh() const override
+  {
+    return compare_by_season(*this, [](const FuelType& fuel) { return fuel.cbh(); });
   }
   /**
    * \brief Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
