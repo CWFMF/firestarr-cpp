@@ -26,7 +26,7 @@ fi
 
 scripts/mk_clean.sh ${VARIANT}
 
-HOURS=10
+HOURS="--hours 10"
 
 rm -rf "${DIR_OUT}"
 # mkdir -p "${DIR_OUT}"
