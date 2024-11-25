@@ -182,6 +182,14 @@ public:
     return topo::Cell::slope(key_);
   }
   /**
+   * \brief Aspect used for spread (degrees)
+   * \return Aspect used for spread (degrees)
+   */
+  [[nodiscard]] constexpr AspectSize slopeAzimuth() const
+  {
+    return topo::Cell::aspect(key_);
+  }
+  /**
    * \brief Head fire rate of spread (m/min)
    * \return Head fire rate of spread (m/min)
    */

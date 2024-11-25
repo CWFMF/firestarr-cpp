@@ -234,6 +234,10 @@ static constexpr auto INVALID_ANGLE = 361;
  */
 static constexpr auto INVALID_ASPECT = INVALID_ANGLE;
 /**
+ * \brief Invalid grass curing value
+ */
+static constexpr MathSize INVALID_CURING = -1;
+/**
  * \brief Invalid slope value
  */
 static constexpr auto INVALID_SLOPE = 511;

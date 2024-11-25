@@ -181,9 +181,9 @@ public:
    * \return Final rate of spread (m/min)
    */
   MathSize finalRos(const SpreadInfo&,
-                  MathSize,
-                  MathSize,
-                  const MathSize rss) const noexcept override
+                    MathSize,
+                    MathSize,
+                    const MathSize rss) const noexcept override
   {
     return rss;
   }
@@ -211,7 +211,7 @@ protected:
    * \brief Crown base height (m) [ST-X-3 table 8]
    * \return Crown base height (m) [ST-X-3 table 8]
    */
-  [[nodiscard]] static constexpr MathSize cbh() noexcept
+  [[nodiscard]] MathSize cbh() const override
   {
     return Cbh;
   }
@@ -255,7 +255,7 @@ protected:
    * \return Crown fire spread rate (RSC) (m/min) [ST-X-3 eq 64]
    */
   [[nodiscard]] static constexpr MathSize foliarMoistureEffect(const MathSize isi,
-                                                             const MathSize fmc) noexcept
+                                                               const MathSize fmc) noexcept
   {
     return STANDARD_FOLIAR_MOISTURE_ISI(isi) * STANDARD_FOLIAR_MOISTURE_FMC(fmc);
   }
