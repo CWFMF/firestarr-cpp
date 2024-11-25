@@ -119,7 +119,7 @@ get_arg() noexcept
   // check if we don't have any more arguments
   fs::logging::check_fatal(CUR_ARG + 1 >= ARGC, "Missing argument to --%s", ARGV[CUR_ARG]);
   // check if we have another flag right after
-  fs::logging::check_fatal('-' == ARGV[CUR_ARG + 1][0], "Missing argument to --%s", ARGV[CUR_ARG]);
+  fs::logging::check_fatal('-' == ARGV[CUR_ARG + 1][0], "Missing argument to %s", ARGV[CUR_ARG]);
   return ARGV[++CUR_ARG];
 }
 template <class T>
@@ -403,11 +403,12 @@ main(
     register_setter<SlopeSize>(slope, "--slope", "Constant slope", false, &parse_value<SlopeSize>);
     register_setter<
       AspectSize>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
-    register_flag(
-      &Settings::setForceStaticCuring,
-      true,
-      "--force-curing",
-      "Manually set grass curing for all fires"
+    register_setter<size_t>(
+      &Settings::setStaticCuring,
+      "--curing",
+      "Specify static grass curing",
+      false,
+      &parse_size_t
     );
     register_flag(
       &Settings::setForceGreenup,
@@ -468,11 +469,12 @@ main(
       false,
       &parse_raw
     );
-    register_flag(
-      &Settings::setForceStaticCuring,
-      true,
-      "--force-curing",
-      "Manually set grass curing for all fires"
+    register_setter<size_t>(
+      &Settings::setStaticCuring,
+      "--curing",
+      "Specify static grass curing",
+      false,
+      &parse_size_t
     );
     register_flag(
       &Settings::setForceGreenup,
@@ -542,7 +544,7 @@ main(
       register_setter<size_t>(
         &Settings::setStaticCuring,
         "--curing",
-        "Specify static grass curing. Requires the force-curing flag to be set.",
+        "Specify static grass curing",
         false,
         &parse_size_t
       );

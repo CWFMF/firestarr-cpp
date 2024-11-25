@@ -260,7 +260,13 @@ public:
     const int value
   ) noexcept
   {
+    logging::check_fatal(
+      0 > value || 100 < value,
+      "Grass curing (%) must be in range [0-100] but got %d",
+      value
+    );
     static_curing_ = value;
+    force_curing = true;
   }
   /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used
@@ -876,13 +882,6 @@ bool
 Settings::forceStaticCuring() noexcept
 {
   return SettingsImplementation::instance().force_curing;
-}
-void
-Settings::setForceStaticCuring(
-  const bool value
-) noexcept
-{
-  SettingsImplementation::instance().force_curing = value;
 }
 bool
 Settings::rowColIgnition() noexcept
