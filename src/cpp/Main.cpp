@@ -103,10 +103,11 @@ const char* get_arg() noexcept
 {
   // check if we don't have any more arguments
   tbd::logging::check_fatal(CUR_ARG + 1 >= ARGC, "Missing argument to --%s", ARGV[CUR_ARG]);
-  // check if we have another flag right after
-  tbd::logging::check_fatal('-' == ARGV[CUR_ARG + 1][0],
-                            "Missing argument to %s",
-                            ARGV[CUR_ARG]);
+  // NOTE: doing this breaks negative numbers, so don't check for '-' at start
+  // // check if we have another flag right after
+  // tbd::logging::check_fatal('-' == ARGV[CUR_ARG + 1][0],
+  //                           "Missing argument to %s",
+  //                           ARGV[CUR_ARG]);
   return ARGV[++CUR_ARG];
 }
 template <class T>
@@ -391,30 +392,33 @@ int main(const int argc, const char* const argv[])
   try
   {
 #endif
-    if (TEST == mode)
-    {
-      // // not enough arguments for test mode
-      // if (ARGC <= 3)
-      // {
-      //   show_usage_and_exit();
-      // }
-    }
-    else if (6 <= (ARGC - SKIPPED_ARGS))
-    {
-      // ensure correct number of arguments for simulation or surface mode
-    }
-    else
-    {
-      show_usage_and_exit();
-    }
+    // if (TEST == mode)
+    // {
+    //   // // not enough arguments for test mode
+    //   // if (ARGC <= 3)
+    //   // {
+    //   //   show_usage_and_exit();
+    //   // }
+    // }
+    // else if (6 <= (ARGC - SKIPPED_ARGS))
+    // {
+    //   // ensure correct number of arguments for simulation or surface mode
+    // }
+    // else
+    // {
+    //   show_usage_and_exit();
+    // }
     vector<string> positional_args{};
     while (CUR_ARG < ARGC)
     {
       const string arg = ARGV[CUR_ARG];
-      if (arg.starts_with("-"))
+      bool is_positional = !arg.starts_with("-");
+      if (!is_positional)
       {
+        // check for single letter flags or '--'
         if (PARSE_FCT.find(arg) != PARSE_FCT.end())
         {
+          tbd::logging::note("Found flag for argument '%s'", arg.c_str());
           try
           {
             PARSE_FCT[arg]();
@@ -427,13 +431,16 @@ int main(const int argc, const char* const argv[])
         }
         else
         {
-          show_usage_and_exit();
+          // it wasn't a flag, so treat it as a positional argument
+          // show_usage_and_exit();
+          is_positional = true;
         }
       }
-      else
+      if (is_positional)
       {
         // this is a positional argument so add to that list
         positional_args.emplace_back(arg);
+        tbd::logging::note("Found positional argument '%s'", arg.c_str());
       }
       ++CUR_ARG;
     }
@@ -444,10 +451,35 @@ int main(const int argc, const char* const argv[])
         tbd::logging::fatal("%s must be specified", kv.first.c_str());
       }
     }
-    size_t cur_arg = 0;
+    if (0 == positional_args.size())
+    {
+      // always require at least some positional argument
+      show_usage_and_exit();
+    }
     // parse positional arguments
     // output directory is always the first thing
-    string output_directory(positional_args[cur_arg++]);
+    size_t cur_arg = 0;
+    auto has_positional = [&cur_arg, &positional_args]() {
+      return (cur_arg < positional_args.size());
+    };
+    auto get_positional = [&cur_arg, &positional_args, &has_positional]() {
+      if (!has_positional())
+      {
+        tbd::logging::error("Not enough positional arguments");
+        show_usage_and_exit();
+      }
+      // return from front and advance to next
+      return positional_args[cur_arg++];
+    };
+    auto done_positional = [&cur_arg, &positional_args]() {
+      // should be exactly at size since increments after getting argument
+      if (positional_args.size() != cur_arg)
+      {
+        tbd::logging::error("Too many positional arguments");
+        show_usage_and_exit();
+      }
+    };
+    string output_directory(get_positional());
     // // don't process output directory before we look at the flags
     // // HACK: know there are 4 more positional args in
     // // "./tbd [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
@@ -483,17 +515,19 @@ int main(const int argc, const char* const argv[])
     // CUR_ARG = POS_NEXT;
     if (mode != TEST)
     {
+      // FIX: define positional arguments in order similar to flags?
+
       // handle surface/simulation positional arguments
-      string date(positional_args[cur_arg++]);
+      string date(get_positional());
       tm start_date{};
       start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
       start_date.tm_mon = stoi(date.substr(5, 2)) - 1;
       start_date.tm_mday = stoi(date.substr(8, 2));
-      const auto latitude = stod(positional_args[cur_arg++]);
-      const auto longitude = stod(positional_args[cur_arg++]);
+      const auto latitude = stod(get_positional());
+      const auto longitude = stod(get_positional());
       const StartPoint start_point(latitude, longitude);
       size_t num_days = 0;
-      string arg(positional_args[cur_arg++]);
+      string arg(get_positional());
       tm start{};
       if (5 == arg.size() && ':' == arg[2])
       {
@@ -542,7 +576,7 @@ int main(const int argc, const char* const argv[])
           show_usage_and_exit();
         }
       }
-
+      done_positional();
       // at this point we've parsed positional args and know we're not in test mode
       if (!PARSE_HAVE.contains("--apcp_prev"))
       {
@@ -581,10 +615,17 @@ int main(const int argc, const char* const argv[])
     else
     {
       // test mode
-      if (cur_arg < positional_args.size() && 0 == strcmp(positional_args[cur_arg++].c_str(), "all"))
+      if (has_positional())
       {
+        const auto arg = get_positional();
+        if (0 != strcmp(arg.c_str(), "all"))
+        {
+          tbd::logging::error("Only positional argument allowed for test mode aside from output directory is 'all' but got '%s'", arg.c_str());
+          show_usage_and_exit();
+        }
         test_all = true;
       }
+      done_positional();
       const auto wx = FwiWeather(
         Temperature::Zero,
         RelativeHumidity::Zero,
