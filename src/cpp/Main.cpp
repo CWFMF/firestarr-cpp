@@ -105,7 +105,7 @@ const char* get_arg() noexcept
   tbd::logging::check_fatal(CUR_ARG + 1 >= ARGC, "Missing argument to --%s", ARGV[CUR_ARG]);
   // check if we have another flag right after
   tbd::logging::check_fatal('-' == ARGV[CUR_ARG + 1][0],
-                            "Missing argument to --%s",
+                            "Missing argument to %s",
                             ARGV[CUR_ARG]);
   return ARGV[++CUR_ARG];
 }
@@ -311,7 +311,7 @@ int main(const int argc, const char* const argv[])
     register_setter<MathSize>(wind_speed, "--ws", "Constant wind speed", false, &parse_value<MathSize>);
     register_setter<SlopeSize>(slope, "--slope", "Constant slope", false, &parse_value<SlopeSize>);
     register_setter<AspectSize>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
-    register_flag(&Settings::setForceStaticCuring, true, "--force-curing", "Manually set grass curing for all fires");
+    register_setter<size_t>(&Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t);
     register_flag(&Settings::setForceGreenup, true, "--force-greenup", "Force green up for all fires");
     register_flag(&Settings::setForceNoGreenup, true, "--force-no-greenup", "Force no green up for all fires");
     // // either the third argument is '-h' or this is invalid
@@ -334,7 +334,7 @@ int main(const int argc, const char* const argv[])
     register_flag(&Settings::setSaveSimulationArea, true, "--sim-area", "Output simulation area grids");
     register_flag(&Settings::setForceFuel, true, "--force-fuel", "Use first default fuel raster without checking coordinates");
     register_setter<const char*>(&Settings::setFuelLookupTable, "--fuel-lut", "Use specified fuel lookup table", false, &parse_raw);
-    register_flag(&Settings::setForceStaticCuring, true, "--force-curing", "Manually set grass curing for all fires");
+    register_setter<size_t>(&Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t);
     register_flag(&Settings::setForceGreenup, true, "--force-greenup", "Force green up for all fires");
     register_flag(&Settings::setForceNoGreenup, true, "--force-no-greenup", "Force no green up for all fires");
     // FIX: this is parsed too late to be used right now
@@ -366,7 +366,7 @@ int main(const int argc, const char* const argv[])
       register_flag(&Settings::setRowColIgnition, true, "--rowcol-ignition", "Use row and col to specific start point. Assumes force-fuel is set.");
       register_setter<size_t>(&Settings::setIgnRow, "--ign-row", "Specify ignition row", false, &parse_size_t);
       register_setter<size_t>(&Settings::setIgnCol, "--ign-col", "Specify ignition column", false, &parse_size_t);
-      register_setter<size_t>(&Settings::setStaticCuring, "--curing", "Specify static grass curing. Requires the force-curing flag to be set.", false, &parse_size_t);
+      register_setter<size_t>(&Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t);
       register_setter<ThresholdSize>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
