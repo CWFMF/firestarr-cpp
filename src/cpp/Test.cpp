@@ -81,38 +81,62 @@ public:
 };
 void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::FuelType* fuel)
 {
-  constexpr auto FMT_FBP_OUT = "%8.2f%8.1f%8g%8.1f%8g%8.1f%8.1f%8g%8.1f%8.1f%8.1f%20s%8.3f%8.3f%8c%8ld%8g%8.4g%8.4g%8.4g%s";
-  static const vector<const char*> HEADERS{"PREC", "TEMP", "RH", "WS", "WD", "FFMC", "DMC", "DC", "ISI", "BUI", "FWI", "FUEL", "CFB", "CFC", "FD", "HFI", "RAZ", "ROS", "SFC", "TFC"};
+  static const map<const char* const, const char* const> FMT{
+    {"PREC", "%8.2f"},
+    {"TEMP", "%8.1f"},
+    {"RH", "%8g"},
+    {"WS", "%8.1f"},
+    {"WD", "%8g"},
+    {"FFMC", "%8.1f"},
+    {"DMC", "%8.1f"},
+    {"DC", "%8g"},
+    {"ISI", "%8.1f"},
+    {"BUI", "%8.1f"},
+    {"FWI", "%8.1f"},
+    {"FUEL", "%20s"},
+    {"CFB", "%8.3f"},
+    {"CFC", "%8.3f"},
+    {"FD", "%8c"},
+    {"HFI", "%8ld"},
+    {"RAZ", "%8g"},
+    {"ROS", "%8.4g"},
+    {"SFC", "%8.4g"},
+    {"TFC", "%8.4g"},
+  };
   printf("Calculated spread is:\n");
-  for (auto h : HEADERS)
+  // print header row
+  for (const auto& h_f : FMT)
   {
+    // HACK: need to format string of the same length
+    const auto h = h_f.first;
     printf(
       0 == strcmp(h, "FUEL") ? "%20s" : "%8s",
       h);
   }
   printf("\n");
-  printf(FMT_FBP_OUT,
-         w->prec().asValue(),
-         w->temp().asValue(),
-         w->rh().asValue(),
-         w->wind().speed().asValue(),
-         w->wind().direction().asValue(),
-         w->ffmc().asValue(),
-         w->dmc().asValue(),
-         w->dc().asValue(),
-         w->isi().asValue(),
-         w->bui().asValue(),
-         w->fwi().asValue(),
-         fuel->name(),
-         spread.crownFractionBurned(),
-         spread.crownFuelConsumption(),
-         spread.fireDescription(),
-         static_cast<size_t>(spread.maxIntensity()),
-         spread.headDirection().asDegrees(),
-         spread.headRos(),
-         spread.surfaceFuelConsumption(),
-         spread.totalFuelConsumption(),
-         "\r\n");
+  // HACK: just do individual calls for now
+  // can we assign them to a lookup table if they're not all numbers?
+  printf(FMT.at("PREC"), w->prec().asValue());
+  printf(FMT.at("TEMP"), w->temp().asValue());
+  printf(FMT.at("RH"), w->rh().asValue());
+  printf(FMT.at("WS"), w->wind().speed().asValue());
+  printf(FMT.at("WD"), w->wind().direction().asValue());
+  printf(FMT.at("FFMC"), w->ffmc().asValue());
+  printf(FMT.at("DMC"), w->dmc().asValue());
+  printf(FMT.at("DC"), w->dc().asValue());
+  printf(FMT.at("ISI"), w->isi().asValue());
+  printf(FMT.at("BUI"), w->bui().asValue());
+  printf(FMT.at("FWI"), w->fwi().asValue());
+  printf(FMT.at("FUEL"), fuel->name());
+  printf(FMT.at("CFB"), spread.crownFractionBurned());
+  printf(FMT.at("CFC"), spread.crownFuelConsumption());
+  printf(FMT.at("FD"), spread.fireDescription());
+  printf(FMT.at("HFI"), static_cast<size_t>(spread.maxIntensity()));
+  printf(FMT.at("RAZ"), spread.headDirection().asDegrees());
+  printf(FMT.at("ROS"), spread.headRos());
+  printf(FMT.at("SFC"), spread.surfaceFuelConsumption());
+  printf(FMT.at("TFC"), spread.totalFuelConsumption());
+  printf("\r\n");
 }
 static Semaphore num_concurrent{static_cast<int>(std::thread::hardware_concurrency())};
 string run_test(const string output_directory,
