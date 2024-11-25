@@ -219,7 +219,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   bool added = true;
 #define STEP_X 0.2
 #define STEP_MAX to_radians(max_angle_)
-  MathSize step_x = STEP_X;
+  MathSize step_x = STEP_X / pow(length_to_breadth, 0.5);
   MathSize theta = 0;
   MathSize angle = 0;
   MathSize last_theta = 0;
@@ -259,8 +259,6 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     cur_x = cos(theta);
     last_theta = theta;
   }
-  // just because 5 seems good for the front and 10 for the back
-  step_max = 2.0 * STEP_MAX;
   cur_x -= (step_x / 2.0);
   step_x *= length_to_breadth;
   MathSize max_angle = RAD_180 - (length_to_breadth * step_max);
