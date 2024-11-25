@@ -184,25 +184,18 @@ public:
    */
   static void setForceNoGreenup(bool value) noexcept;
   /**
-   * \brief Whether or not to force static curing value for all fires
-   * \return None
+   * \brief Whether or not to force static grass curing value for all fires
+   * \return Whether or not to force static grass curing value for all fires
    */
   [[nodiscard]] static bool forceStaticCuring() noexcept;
   /**
-   * \brief Whether or not to force static curing value for all fires
-   * \return Whether or not to force static curing value for all fires
-   */
-  static void setForceStaticCuring(bool value) noexcept;
-  /**
    * \brief Whether or not the start point is specified by row and column id of a forced fuel grid
    * \return Whether or not the start point is specified by row and column id of a forced fuel grid
-   * \return None
    */
   [[nodiscard]] static bool rowColIgnition() noexcept;
   /**
    * \brief Whether or not the start point is specified by row and column id of a forced fuel grid
    * \return Whether or not the start point is specified by row and column id of a forced fuel grid
-   * \return None
    */
   static void setRowColIgnition(bool value) noexcept;
   /**
