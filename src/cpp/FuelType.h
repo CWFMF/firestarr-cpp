@@ -117,6 +117,21 @@ public:
     return can_crown_;
   }
   /**
+   * \brief Grass curing
+   * \return Grass curing (or -1 if invalid for this fuel type)
+   */
+  [[nodiscard]] virtual MathSize grass_curing(const int, const wx::FwiWeather&) const
+  {
+    // NOTE: grass overrides this but everything else doesn't have curing
+    return INVALID_CURING;
+  }
+
+  /**
+   * \brief Crown base height (m) [ST-X-3 table 8]
+   * \return Crown base height (m) [ST-X-3 table 8]
+   */
+  [[nodiscard]] virtual MathSize cbh() const = 0;
+  /**
    * \brief Crown Fraction Burned (CFB) [ST-X-3 eq 58]
    * \param rss Surface Rate of spread (ROS) (m/min) [ST-X-3 eq 55]
    * \param rso Critical surface fire spread rate (RSO) [ST-X-3 eq 57]
@@ -426,6 +441,16 @@ public:
   InvalidFuel(InvalidFuel&& rhs) noexcept = delete;
   InvalidFuel& operator=(const InvalidFuel& rhs) noexcept = delete;
   InvalidFuel& operator=(InvalidFuel&& rhs) noexcept = delete;
+  /**
+   * \brief Grass curing
+   * \return Grass curing (or -1 if invalid for this fuel type)
+   */
+  [[nodiscard]] MathSize grass_curing(const int nd, const wx::FwiWeather& wx) const override;
+  /**
+   * \brief Crown base height (m) [ST-X-3 table 8]
+   * \return Crown base height (m) [ST-X-3 table 8]
+   */
+  [[nodiscard]] MathSize cbh() const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
