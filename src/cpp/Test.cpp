@@ -82,26 +82,30 @@ public:
 void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::FuelType* fuel)
 {
   static const map<const char* const, const char* const> FMT{
-    {"PREC", "%8.2f"},
-    {"TEMP", "%8.1f"},
-    {"RH", "%8g"},
-    {"WS", "%8.1f"},
-    {"WD", "%8g"},
-    {"FFMC", "%8.1f"},
-    {"DMC", "%8.1f"},
-    {"DC", "%8g"},
-    {"ISI", "%8.1f"},
-    {"BUI", "%8.1f"},
-    {"FWI", "%8.1f"},
+    {"PREC", "%7.2f"},
+    {"TEMP", "%7.1f"},
+    {"RH", "%7g"},
+    {"WS", "%7.1f"},
+    {"WD", "%7g"},
+    {"FFMC", "%7.1f"},
+    {"DMC", "%7.1f"},
+    {"DC", "%7g"},
+    {"ISI", "%7.1f"},
+    {"BUI", "%7.1f"},
+    {"FWI", "%7.1f"},
+    {"GS", "%7d"},
+    {"SAZ", "%7d"},
     {"FUEL", "%20s"},
-    {"CFB", "%8.3f"},
-    {"CFC", "%8.3f"},
-    {"FD", "%8c"},
-    {"HFI", "%8ld"},
-    {"RAZ", "%8g"},
-    {"ROS", "%8.4g"},
-    {"SFC", "%8.4g"},
-    {"TFC", "%8.4g"},
+    {"GC", "%7g"},
+    {"CBH", "%7.1f"},
+    {"CFB", "%7.3f"},
+    {"CFC", "%7.3f"},
+    {"FD", "%7c"},
+    {"HFI", "%7ld"},
+    {"RAZ", "%7d"},
+    {"ROS", "%7.4g"},
+    {"SFC", "%7.4g"},
+    {"TFC", "%7.4g"},
   };
   printf("Calculated spread is:\n");
   // print header row
@@ -110,7 +114,7 @@ void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::F
     // HACK: need to format string of the same length
     const auto h = h_f.first;
     printf(
-      0 == strcmp(h, "FUEL") ? "%20s" : "%8s",
+      0 == strcmp(h, "FUEL") ? "%20s" : "%7s",
       h);
   }
   printf("\n");
@@ -127,12 +131,16 @@ void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::F
   printf(FMT.at("ISI"), w->isi().asValue());
   printf(FMT.at("BUI"), w->bui().asValue());
   printf(FMT.at("FWI"), w->fwi().asValue());
+  printf(FMT.at("GS"), spread.percentSlope());
+  printf(FMT.at("SAZ"), spread.slopeAzimuth());
   printf(FMT.at("FUEL"), fuel->name());
+  printf(FMT.at("GC"), fuel->grass_curing(spread.nd(), *w));
+  printf(FMT.at("CBH"), fuel->cbh());
   printf(FMT.at("CFB"), spread.crownFractionBurned());
   printf(FMT.at("CFC"), spread.crownFuelConsumption());
   printf(FMT.at("FD"), spread.fireDescription());
   printf(FMT.at("HFI"), static_cast<size_t>(spread.maxIntensity()));
-  printf(FMT.at("RAZ"), spread.headDirection().asDegrees());
+  printf(FMT.at("RAZ"), static_cast<DirectionSize>(spread.headDirection().asDegrees()));
   printf(FMT.at("ROS"), spread.headRos());
   printf(FMT.at("SFC"), spread.surfaceFuelConsumption());
   printf(FMT.at("TFC"), spread.totalFuelConsumption());
@@ -166,7 +174,7 @@ string run_test(const string output_directory,
   const auto hour = 12;
   const auto minute = 0;
   const auto t = util::to_tm(year, month, day, hour, minute);
-  printf("DJ = %d\n", t.tm_yday);
+  logging::verbose("DJ = %d\n", t.tm_yday);
   static const auto Latitude = 49.3911;
   static const auto Longitude = -84.7395;
   static const topo::StartPoint ForPoint(Latitude, Longitude);
