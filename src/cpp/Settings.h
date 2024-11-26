@@ -182,36 +182,6 @@ public:
    */
   [[nodiscard]] static bool forceStaticCuring() noexcept;
   /**
-   * \brief Whether or not the start point is specified by row and column id of a forced fuel grid
-   * \return Whether or not the start point is specified by row and column id of a forced fuel grid
-   */
-  [[nodiscard]] static bool rowColIgnition() noexcept;
-  /**
-   * \brief Whether or not the start point is specified by row and column id of a forced fuel grid
-   * \return Whether or not the start point is specified by row and column id of a forced fuel grid
-   */
-  static void setRowColIgnition(bool value) noexcept;
-  /**
-   * \brief Ignition position row
-   * \return Ignition position row
-   */
-  [[nodiscard]] static int ignRow() noexcept;
-  /**
-   * \brief Set ignition position row
-   * \return Set ignition position row
-   */
-  static void setIgnRow(const int value) noexcept;
-  /**
-   * \brief Ignition position col
-   * \return Ignition position col
-   */
-  [[nodiscard]] static int ignCol() noexcept;
-  /**
-   * \brief Set ignition position col
-   * \return Set ignition position col
-   */
-  static void setIgnCol(const int value) noexcept;
-  /**
    * \brief Static curing value
    * \return Static curing value
    */
