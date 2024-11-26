@@ -61,8 +61,6 @@ public:
     const Direction& raz,
     const XYSize x,
     const XYSize y) noexcept;
-  CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
-  CellPoints(const XYPos& p) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
   CellPoints& operator=(CellPoints&& rhs) noexcept = default;
@@ -110,13 +108,16 @@ public:
   IntensitySize intensity_at_arrival_;
   ROSSize ros_at_arrival_;
   Direction raz_at_arrival_;
-  friend CellPointsMap;
+  // friend CellPointsMap;
   // FIX: just access directly for now
 public:
   pair<array_dists, array_pts> pts_;
   // use Idx instead of Location so it can be negative (invalid)
   CellPos cell_x_y_;
   CellIndex src_;
+private:
+  CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
+  CellPoints(const XYPos& p) noexcept;
 };
 
 using spreading_points = CellPoints::spreading_points;
