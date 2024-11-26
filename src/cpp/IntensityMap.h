@@ -130,15 +130,6 @@ public:
   {
     ignite(Location{position.hash()});
   }
-protected:
-  void
-  burn(
-    const Location& location,
-    IntensitySize intensity,
-    MathSize ros,
-    fs::wx::Direction raz,
-    bool check_valid
-  );
 public:
   /**
    * \brief Update Location with specified values

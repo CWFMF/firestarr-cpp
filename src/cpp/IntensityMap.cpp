@@ -218,7 +218,7 @@ IntensityMap::ignite(
   const Location& location
 )
 {
-  burn(location, 1, 0, fs::wx::Direction::Invalid, false);
+  burn(location, 1, 0, fs::wx::Direction::Invalid);
 }
 void
 IntensityMap::burn(
@@ -226,17 +226,6 @@ IntensityMap::burn(
   IntensitySize intensity,
   MathSize ros,
   fs::wx::Direction raz
-)
-{
-  burn(location, intensity, ros, raz, true);
-}
-void
-IntensityMap::burn(
-  const Location& location,
-  IntensitySize intensity,
-  MathSize ros,
-  fs::wx::Direction raz,
-  bool check_valid
 )
 {
   lock_guard<mutex> lock(mutex_);
