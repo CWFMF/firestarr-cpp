@@ -188,20 +188,12 @@ bool IntensityMap::isSurrounded(const Location& location) const
 }
 void IntensityMap::ignite(const Location& location)
 {
-  burn(location, 1, 0, tbd::wx::Direction::Invalid, false);
+  burn(location, 1, 0, tbd::wx::Direction::Invalid);
 }
 void IntensityMap::burn(const Location& location,
                         IntensitySize intensity,
                         MathSize ros,
                         tbd::wx::Direction raz)
-{
-  burn(location, intensity, ros, raz, true);
-}
-void IntensityMap::burn(const Location& location,
-                        IntensitySize intensity,
-                        MathSize ros,
-                        tbd::wx::Direction raz,
-                        bool check_valid)
 {
   lock_guard<mutex> lock(mutex_);
   // const auto is_new = !(*is_burned_)[location.hash()];
