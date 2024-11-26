@@ -11,7 +11,6 @@
 #include "Observer.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
-#include "UTM.h"
 #include "FireWeatherDaily.h"
 #include "ConstantWeather.h"
 namespace tbd::sim

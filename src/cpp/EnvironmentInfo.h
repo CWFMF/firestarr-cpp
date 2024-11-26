@@ -88,22 +88,6 @@ public:
     return fuel_.calculateColumns();
   }
   /**
-   * \brief Central meridian of UTM projection this uses
-   * \return Central meridian of UTM projection this uses
-   */
-  [[nodiscard]] constexpr MathSize meridian() const
-  {
-    return fuel_.meridian();
-  }
-  /**
-   * \brief UTM zone for projection this uses
-   * \return UTM zone for projection this uses
-   */
-  [[nodiscard]] constexpr MathSize zone() const
-  {
-    return fuel_.zone();
-  }
-  /**
    * \brief UTM projection that this uses
    * \return UTM projection that this uses
    */
