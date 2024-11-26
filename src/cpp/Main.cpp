@@ -81,15 +81,9 @@ show_usage_and_exit(
   int exit_code
 )
 {
-  printf(
-    "Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n",
-    BIN_NAME
-  );
+  printf("Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n", BIN_NAME);
   printf("Run simulations and save output in the specified directory\n\n\n");
-  printf(
-    "Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]\n\n",
-    BIN_NAME
-  );
+  printf("Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n", BIN_NAME);
   printf("Calculate probability surface and save output in the specified directory\n\n\n");
   printf("Usage: %s test <output_dir> [options]\n\n", BIN_NAME);
   printf(" Run test cases and save output in the specified directory\n\n");
@@ -383,17 +377,9 @@ main(
     mode = TEST;
     CUR_ARG += 1;
     SKIPPED_ARGS = 1;
-    // not enough arguments for test mode
-    if (3 > ARGC)
-    {
-      show_usage_and_exit();
-    }
     // if we have a directory and nothing else then use defaults for single run
-    // if we have 'all' then don't accept any other arguments?
-    // - but then we can't overrride indices
-    // - so all should do all the options, but then filter down to the subset that matches what was
-    // specified
-
+    // if we have 'all' then overrride specified indices, but then filter down to the subset that
+    // matches what was specified
     register_setter<MathSize>(hours, "--hours", "Duration in hours", false, &parse_value<MathSize>);
     register_setter<string>(fuel_name, "--fuel", "FBP fuel type", false, &parse_string);
     register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", false);
@@ -425,19 +411,11 @@ main(
       "--force-no-greenup",
       "Force no green up for all fires"
     );
-    // // either the third argument is '-h' or this is invalid
-    // if (3 == ARGC && 0 == strcmp(ARGV[2], "-h"))
-    // {
-    //   show_help_and_exit();
-    // }
   }
   else
   {
     register_flag(&Settings::setSaveIndividual, true, "-i", "Save individual maps for simulations");
     register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
-    // register_flag(&Settings::setDeterministic, true, "--deterministic", "Run deterministically
-    // (100% chance of spread & survival)"); register_flag(&Settings::setSurface, true, "--surface",
-    // "Create a probability surface based on igniting every possible location in grid");
     register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
     register_flag(&Settings::setSavePoints, true, "--points", "Save simulation points to file");
     register_flag(
@@ -492,7 +470,6 @@ main(
       "--force-no-greenup",
       "Force no green up for all fires"
     );
-    // FIX: this is parsed too late to be used right now
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
     {
@@ -588,22 +565,6 @@ main(
   try
   {
 #endif
-    // if (TEST == mode)
-    // {
-    //   // // not enough arguments for test mode
-    //   // if (ARGC <= 3)
-    //   // {
-    //   //   show_usage_and_exit();
-    //   // }
-    // }
-    // else if (6 <= (ARGC - SKIPPED_ARGS))
-    // {
-    //   // ensure correct number of arguments for simulation or surface mode
-    // }
-    // else
-    // {
-    //   show_usage_and_exit();
-    // }
     vector<string> positional_args{};
     while (CUR_ARG < ARGC)
     {
@@ -614,23 +575,26 @@ main(
         // check for single letter flags or '--'
         if (PARSE_FCT.find(arg) != PARSE_FCT.end())
         {
-          fs::logging::note("Found flag for argument '%s'", arg.c_str());
+          fs::logging::debug("Found option for argument '%s'", arg.c_str());
           try
           {
             PARSE_FCT[arg]();
           }
           catch (std::exception&)
           {
-            printf(
-              "\n'%s' is not a valid value for argument %s\n\n",
-              ARGV[CUR_ARG],
-              ARGV[CUR_ARG - 1]
-            );
+            // CUR_ARG would be incremented while trying to parse at this point, so -1 is 'arg'
+            printf("\n'%s' is not a valid value for argument %s\n\n", ARGV[CUR_ARG], arg.c_str());
             show_usage_and_exit();
           }
         }
         else
         {
+          if (arg.starts_with("--"))
+          {
+            // anything starting with '--' should be a flag, but it's not a valid one so complain
+            printf("\n'%s' is not a valid option\n\n", arg.c_str());
+            show_usage_and_exit();
+          }
           // it wasn't a flag, so treat it as a positional argument
           // show_usage_and_exit();
           is_positional = true;
@@ -640,7 +604,7 @@ main(
       {
         // this is a positional argument so add to that list
         positional_args.emplace_back(arg);
-        fs::logging::note("Found positional argument '%s'", arg.c_str());
+        fs::logging::debug("Found positional argument '%s'", arg.c_str());
       }
       ++CUR_ARG;
     }
@@ -679,16 +643,9 @@ main(
         show_usage_and_exit();
       }
     };
+    // positional arguments all start with <output_dir> after mode (if applicable)
+    // "./firestarr [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
     string output_directory(get_positional());
-    // // don't process output directory before we look at the flags
-    // // HACK: know there are 4 more positional args in
-    // // "./firestarr [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
-    // //                               ^-- here right now
-    // size_t FLAGS_START = (TEST == mode) ? CUR_ARG : CUR_ARG + 4;
-    // size_t POS_NEXT = CUR_ARG;
-    // CUR_ARG = FLAGS_START;
-    // // parse flags
-
     replace(output_directory.begin(), output_directory.end(), '\\', '/');
     if ('/' != output_directory[output_directory.length() - 1])
     {
@@ -700,7 +657,6 @@ main(
     {
       fs::util::make_directory_recursive(dir_out);
     }
-    // FIX: this just doesn't work because --log isn't parsed until later
     // if name starts with "/" then it's an absolute path, otherwise append to working directory
     const string log_file = log_file_name.starts_with("/") ? log_file_name
                                                            : (output_directory + log_file_name);
@@ -711,14 +667,11 @@ main(
     );
     fs::logging::note("Output directory is %s", dir_out);
     fs::logging::note("Output log is %s", log_file.c_str());
-    // // FIX: flags have to be at end, and not sure if this works if not enough args but have flags
-    // // revert to last unparsed positional argument
-    // CUR_ARG = POS_NEXT;
     if (mode != TEST)
     {
-      // FIX: define positional arguments in order similar to flags?
-
       // handle surface/simulation positional arguments
+      // positional arguments should be:
+      // "./firestarr [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
       string date(get_positional());
       tm start_date{};
       start_date.tm_year = stoi(date.substr(0, 4)) - 1900;
