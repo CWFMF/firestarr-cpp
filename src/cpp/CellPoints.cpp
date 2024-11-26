@@ -48,7 +48,11 @@ size_t CellPoints::size() const noexcept
 }
 #endif
 CellPoints::CellPoints(const Idx cell_x, const Idx cell_y) noexcept
-  : pts_({}),
+  : arrival_time_(INVALID_TIME),
+    intensity_at_arrival_(0),
+    ros_at_arrival_(INVALID_ROS),
+    raz_at_arrival_(Direction::Invalid),
+    pts_({}),
     cell_x_y_(cell_x, cell_y),
     src_(topo::DIRECTION_NONE)
 {
@@ -66,10 +70,8 @@ CellPoints::CellPoints() noexcept
 CellPoints::CellPoints(const CellPoints* rhs) noexcept
   : CellPoints()
 {
-  if (nullptr != rhs)
-  {
-    *this = *rhs;
-  }
+  logging::check_fatal(nullptr == rhs, "Initializing CellPoints from nullptr");
+  *this = *rhs;
 }
 CellPoints::CellPoints(
   const DurationSize& arrival_time,
