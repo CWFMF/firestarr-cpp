@@ -134,22 +134,6 @@ public:
     return proj4_;
   }
   /**
-   * \brief Central meridian of UTM zone for this grid.
-   * \return Central meridian of UTM zone for this grid.
-   */
-  [[nodiscard]] constexpr MathSize meridian() const noexcept
-  {
-    return meridian_;
-  }
-  /**
-   * \brief UTM zone represented by proj4 string for this grid.
-   * \return UTM zone represented by proj4 string for this grid.
-   */
-  [[nodiscard]] constexpr MathSize zone() const noexcept
-  {
-    return zone_;
-  }
-  /**
    * \brief Constructor
    * \param cell_size Cell width and height (m)
    * \param xllcorner Lower left corner X coordinate (m)
@@ -217,14 +201,6 @@ private:
    * \brief Upper right corner Y coordinate in meters.
    */
   MathSize yurcorner_;
-  /**
-   * \brief Central meridian of projection in degrees.
-   */
-  MathSize meridian_;
-  /**
-   * \brief UTM zone of projection.
-   */
-  MathSize zone_;
 };
 void write_ascii_header(ofstream& out,
                         MathSize num_columns,

@@ -15,6 +15,7 @@ namespace tbd
 {
 namespace topo
 {
+using util::sq;
 Environment::~Environment()
 {
   delete cells_;
@@ -70,13 +71,11 @@ Environment Environment::loadEnvironment(const string dir_out,
   logging::note("Using ignition point (%f, %f)", point.latitude(), point.longitude());
   logging::info("Running using inputs directory '%s'", path.c_str());
   auto rasters = util::find_rasters(path, year);
-  auto best_x = numeric_limits<MathSize>::max();
-  auto best_y = numeric_limits<MathSize>::max();
+  auto best_score = numeric_limits<MathSize>::min();
   unique_ptr<const EnvironmentInfo> env_info = nullptr;
   unique_ptr<data::GridBase> for_info = nullptr;
   string best_fuel = "";
   string best_elevation = "";
-  MathSize best_meridian = numeric_limits<MathSize>::max();
   auto found_best = false;
   if (!perimeter.empty())
   {
@@ -86,7 +85,7 @@ Environment Environment::loadEnvironment(const string dir_out,
   for (const auto& raster : rasters)
   {
     auto fuel = raster;
-    printf("Replacing directory separators in path for: %s\n", fuel.c_str());
+    logging::verbose("Replacing directory separators in path for: %s\n", fuel.c_str());
     // make sure we're using a consistent directory separator
     std::replace(fuel.begin(), fuel.end(), '\\', '/');
     // HACK: assume there's only one instance of 'fuel' in the file name we want to change
@@ -94,70 +93,52 @@ Environment Environment::loadEnvironment(const string dir_out,
     const auto find_len = find_what.length();
     const auto find_start = fuel.find(find_what, fuel.find_last_of('/'));
     const auto elevation = string(fuel).replace(find_start, find_len, "dem");
-    // figure out best raster based on meridian by filename first
-    const auto find_zone_start = find_start + find_len + 1;
-    const auto find_suffix = fuel.find_last_of(".");
-    auto zone_guess = fuel.substr(find_zone_start, find_suffix - find_zone_start);
-    std::replace(zone_guess.begin(), zone_guess.end(), '_', '.');
-    logging::debug("Assuming file %s is for zone %s", fuel.c_str(), zone_guess.c_str());
-    MathSize zone;
-    MathSize meridian;
-    unique_ptr<const EnvironmentInfo> cur_info;
-    // FIX: don't assume based on name
-    // if (sscanf(zone_guess.c_str(), "%lf", &zone) && !sim::Settings::forceFuel())
-    // {
-    //   meridian = (zone - 15.0) * 6.0 - 93.0;
-    // }
-    // else
+    unique_ptr<const EnvironmentInfo> cur_info = EnvironmentInfo::loadInfo(
+      fuel,
+      elevation);
+    // want the raster that's going to give us the most room to spread, so pick the one with the most
+    //   cells between the ignition and the edge on the side where it's closest to the edge
+    // FIX: need to pick raster that aligns with perimeter if we have one
+    //      -  for now at least ensure the same projection
+    if (nullptr != for_info && 0 != strcmp(for_info->proj4().c_str(), cur_info->proj4().c_str()))
     {
-      cur_info = EnvironmentInfo::loadInfo(
-        fuel,
-        elevation);
-      zone = cur_info->zone();
-      meridian = cur_info->meridian();
+      continue;
     }
-    // if (sim::Settings::forceFuel())
-    // {
-    //   logging::verbose("FORCING ENV");
-    //   env_info = std::move(cur_info);
-    //   break;
-    // }
-    const auto cur_x = abs(point.longitude() - meridian);
-    logging::verbose("Zone %0.1f meridian is %0.2f degrees from point",
-                     zone,
-                     cur_x);
-    // HACK: assume floating point is going to always be exactly the same result
-    if (cur_x < best_x)
+    // FIX: just worrying about distance from specified lat/long for now, but should pick based on bounds of perimeter
+    // flipped because we're reading from a raster so change (left, top) to (left, bottom)
+    const auto coordinates = cur_info->findFullCoordinates(point, true);
+    if (nullptr != coordinates)
     {
-      logging::verbose("SWITCH X");
-      best_x = cur_x;
-      best_fuel = fuel;
-      best_elevation = elevation;
-      best_meridian = meridian;
-      found_best = true;
-      // if already loaded then keep
-      if (nullptr != cur_info)
+      auto actual_rows = cur_info->calculateRows();
+      auto actual_columns = cur_info->calculateColumns();
+      const auto x = std::get<0>(*coordinates);
+      const auto y = std::get<1>(*coordinates);
+      logging::note("Coordinates before reading are (%d, %d => %f, %f)",
+                    x,
+                    y,
+                    x + std::get<2>(*coordinates) / 1000.0,
+                    y + std::get<3>(*coordinates) / 1000.0);
+      // if it's not in the raster then this is not an option
+      // FIX: are these +/-1 because of counting the cell itself and starting from 0?
+      const auto dist_W = x;
+      const auto dist_E = actual_columns - x;
+      const auto dist_N = actual_rows - y;
+      const auto dist_S = y;
+      // FIX: should take size of cells into account too? But is largest areas or highest resolution the priority?
+      logging::note(
+        "Coordinates distance to bottom left is: (%d, %d) and top right is (%d, %d)",
+        dist_W,
+        dist_S,
+        dist_E,
+        dist_N);
+      // shortest hypoteneuse is the closest corner to the origin, so want highest value for this
+      const auto cur_score = sq(min(dist_W, dist_E)) + sq(min(dist_N, dist_S));
+      if (cur_score > best_score)
       {
-        logging::verbose("CHECK Y");
-        // flipped here because it's looking at a file
-        const auto coordinates = cur_info->findFullCoordinates(point, true);
-        if (nullptr != coordinates)
-        {
-          printf("%ld, %ld: %d, %d", std::get<0>(*coordinates), std::get<1>(*coordinates), std::get<2>(*coordinates), std::get<3>(*coordinates));
-          const auto cur_y = static_cast<FullIdx>(abs(
-            std::get<0>(*coordinates) - cur_info->calculateRows() / static_cast<FullIdx>(2)));
-          logging::verbose(("Current y value is " + std::to_string(cur_y)).c_str());
-          if (cur_y < best_y)
-          {
-            logging::verbose("SWITCH Y");
-            env_info = std::move(cur_info);
-            best_y = cur_y;
-          }
-        }
-      }
-      else
-      {
-        logging::verbose("NULLPTR");
+        best_score = cur_score;
+        best_fuel = fuel;
+        best_elevation = elevation;
+        found_best = true;
       }
     }
   }
@@ -167,23 +148,16 @@ Environment Environment::loadEnvironment(const string dir_out,
       best_fuel,
       best_elevation);
   }
-  logging::check_fatal(nullptr == env_info,
-                       "Could not find an environment to use for (%f, %f)",
-                       point.latitude(),
-                       point.longitude());
-  if (best_meridian != env_info->meridian())
-  {
-    logging::error("Thought file %s with best match was for meridian %f but is actually %f",
-                   best_fuel.c_str(),
-                   best_meridian,
-                   env_info->meridian());
-  }
-  logging::debug("Best match for (%f, %f) is zone %0.2f with a meridian of %0.2f",
-                 point.latitude(),
-                 point.longitude(),
-                 env_info->zone(),
-                 env_info->meridian());
-  logging::note("Projection is %s", env_info->proj4().c_str());
+  logging::check_fatal(
+    nullptr == env_info,
+    "Could not find an environment to use for (%f, %f)",
+    point.latitude(),
+    point.longitude());
+  logging::debug(
+    "Best match for (%f, %f) has projection '%s'",
+    point.latitude(),
+    point.longitude(),
+    env_info->proj4().c_str());
   // envInfo should get deleted automatically because it uses unique_ptr
   return env_info->load(dir_out, point);
 }

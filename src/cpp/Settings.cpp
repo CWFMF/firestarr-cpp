@@ -176,38 +176,6 @@ public:
     fuel_lookup_table_file_ = filename;
   }
   /**
-   * \brief Ignition position row
-   * \return Ignition position row
-   */
-  [[nodiscard]] int ignRow() const noexcept
-  {
-    return ign_row_;
-  }
-  /**
-   * \brief Ignition position row
-   * \return Ignition position row
-   */
-  void setIgnRow(const int value) noexcept
-  {
-    ign_row_ = value;
-  }
-  /**
-   * \brief Ignition position col
-   * \return Ignition position col
-   */
-  [[nodiscard]] int ignCol() const noexcept
-  {
-    return ign_col_;
-  }
-  /**
-   * \brief Ignition position col
-   * \return Ignition position col
-   */
-  void setIgnCol(const int value) noexcept
-  {
-    ign_col_ = value;
-  }
-  /**
    * \brief Static curing value
    * \return Static curing value
    */
@@ -728,30 +696,6 @@ void Settings::setForceNoGreenup(const bool value) noexcept
 bool Settings::forceStaticCuring() noexcept
 {
   return SettingsImplementation::instance().force_curing;
-}
-bool Settings::rowColIgnition() noexcept
-{
-  return SettingsImplementation::instance().rowcol_ignition;
-}
-void Settings::setRowColIgnition(const bool value) noexcept
-{
-  SettingsImplementation::instance().rowcol_ignition = value;
-}
-int Settings::ignRow() noexcept
-{
-  return SettingsImplementation::instance().ignRow();
-}
-void Settings::setIgnRow(const int value) noexcept
-{
-  SettingsImplementation::instance().setIgnRow(value);
-}
-int Settings::ignCol() noexcept
-{
-  return SettingsImplementation::instance().ignCol();
-}
-void Settings::setIgnCol(const int value) noexcept
-{
-  SettingsImplementation::instance().setIgnCol(value);
 }
 int Settings::staticCuring() noexcept
 {

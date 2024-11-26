@@ -277,6 +277,16 @@ void make_directory(const char* dir) noexcept;
  */
 void make_directory_recursive(const char* dir) noexcept;
 /**
+ * \brief Square a number
+ * \param x number to square
+ * \return x squared
+ */
+template <class T>
+[[nodiscard]] inline constexpr MathSize sq(const T& x)
+{
+  return static_cast<MathSize>(x) * static_cast<MathSize>(x);
+}
+/**
  * \brief Return base raised to the power N
  * \tparam N Power to raise to
  * \tparam T Type passed and returned
