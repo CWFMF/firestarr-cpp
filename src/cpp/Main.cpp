@@ -502,26 +502,6 @@ main(
         "--deterministic",
         "Run deterministically (100% chance of spread & survival)"
       );
-      register_flag(
-        &Settings::setRowColIgnition,
-        true,
-        "--rowcol-ignition",
-        "Use row and col to specific start point. Assumes force-fuel is set."
-      );
-      register_setter<size_t>(
-        &Settings::setIgnRow,
-        "--ign-row",
-        "Specify ignition row",
-        false,
-        &parse_size_t
-      );
-      register_setter<size_t>(
-        &Settings::setIgnCol,
-        "--ign-col",
-        "Specify ignition column",
-        false,
-        &parse_size_t
-      );
       register_setter<size_t>(
         &Settings::setStaticCuring,
         "--curing",
