@@ -95,8 +95,8 @@ showSpread(
     {"PREC", " %6.2f"}, {"TEMP", " %6.1f"}, {"RH", " %6g"},    {"WS", " %6.1f"},  {"WD", " %6g"},
     {"FFMC", " %6.1f"}, {"DMC", " %6.1f"},  {"DC", " %6g"},    {"ISI", " %6.1f"}, {"BUI", " %6.1f"},
     {"FWI", " %6.1f"},  {"GS", " %6d"},     {"SAZ", " %6d"},   {"FUEL", "%20s"},  {"GC", " %6g"},
-    {"CBH", " %6.1f"},  {"CFB", " %6.3f"},  {"CFC", " %6.3f"}, {"FD", " %6c"},    {"HFI", " %6ld"},
-    {"RAZ", " %6d"},    {"ROS", " %6.4g"},  {"SFC", " %6.4g"}, {"TFC", " %6.4g"},
+    {"L:B", " %6.2f"},  {"CBH", " %6.1f"},  {"CFB", " %6.3f"}, {"CFC", " %6.3f"}, {"FD", " %6c"},
+    {"HFI", " %6ld"},   {"RAZ", " %6d"},    {"ROS", " %6.4g"}, {"SFC", " %6.4g"}, {"TFC", " %6.4g"},
   };
   printf("Calculated spread is:\n");
   // print header row
@@ -124,6 +124,7 @@ showSpread(
   printf(FMT.at("SAZ"), spread.slopeAzimuth());
   printf(FMT.at("FUEL"), fuel->name());
   printf(FMT.at("GC"), fuel->grass_curing(spread.nd(), *w));
+  printf(FMT.at("L:B"), spread.lengthToBreadth());
   printf(FMT.at("CBH"), fuel->cbh());
   printf(FMT.at("CFB"), spread.crownFractionBurned());
   printf(FMT.at("CFC"), spread.crownFuelConsumption());

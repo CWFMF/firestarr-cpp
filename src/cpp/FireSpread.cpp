@@ -382,7 +382,7 @@ SpreadInfo::SpreadInfo(
   }
   // max intensity should always be at the head
   max_intensity_ = fuel::fire_intensity(tfc_, head_ros_);
-  const auto l_b = fuel->lengthToBreadth(wsv);
+  l_b_ = fuel->lengthToBreadth(wsv);
   const HorizontalAdjustment correction_factor = horizontal_adjustment(
     slope_azimuth,
     percentSlope()
@@ -396,7 +396,7 @@ SpreadInfo::SpreadInfo(
     raz_.asRadians(),
     head_ros_,
     back_ros,
-    l_b
+    l_b_
   );
   // might not be correct depending on slope angle correction
   // #ifdef DEBUG_POINTS
