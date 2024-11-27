@@ -349,7 +349,7 @@ SpreadInfo::SpreadInfo(const DurationSize time,
   }
   // max intensity should always be at the head
   max_intensity_ = fuel::fire_intensity(tfc_, head_ros_);
-  const auto l_b = fuel->lengthToBreadth(wsv);
+  l_b_ = fuel->lengthToBreadth(wsv);
   const HorizontalAdjustment correction_factor = horizontal_adjustment(slope_azimuth, percentSlope());
   // const auto spread_algorithm = OriginalSpreadAlgorithm(0.5, cell_size, min_ros);
   // const auto spread_algorithm = OriginalSpreadAlgorithm(1, cell_size, min_ros);
@@ -359,7 +359,7 @@ SpreadInfo::SpreadInfo(const DurationSize time,
                                                 raz_.asRadians(),
                                                 head_ros_,
                                                 back_ros,
-                                                l_b);
+                                                l_b_);
   // might not be correct depending on slope angle correction
   // #ifdef DEBUG_POINTS
   //   // if (head_ros_ >= min_ros)

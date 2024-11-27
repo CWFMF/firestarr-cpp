@@ -97,6 +97,7 @@ void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::F
     {"SAZ", " %6d"},
     {"FUEL", "%20s"},
     {"GC", " %6g"},
+    {"L:B", " %6.2f"},
     {"CBH", " %6.1f"},
     {"CFB", " %6.3f"},
     {"CFC", " %6.3f"},
@@ -135,6 +136,7 @@ void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::F
   printf(FMT.at("SAZ"), spread.slopeAzimuth());
   printf(FMT.at("FUEL"), fuel->name());
   printf(FMT.at("GC"), fuel->grass_curing(spread.nd(), *w));
+  printf(FMT.at("L:B"), spread.lengthToBreadth());
   printf(FMT.at("CBH"), fuel->cbh());
   printf(FMT.at("CFB"), spread.crownFractionBurned());
   printf(FMT.at("CFC"), spread.crownFuelConsumption());
