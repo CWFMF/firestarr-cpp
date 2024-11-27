@@ -138,7 +138,13 @@ CellPoints& CellPoints::insert(
     intensity,
     raz.asDegrees());
 #endif
-  // constexpr auto TIME_EPSILON = 0.000001;
+  // count things as the same time if within a tolerance
+  constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
+  constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
+  // logging::note(
+  //   "TIME_EPSILON of %f is %f seconds",
+  //   TIME_EPSILON,
+  //   TIME_EPSILON_SECONDS);
   if (0 < arrival_time && 0 > arrival_time_)
   {
     logging::verbose("No time so setting ros to %f at time %f", ros, arrival_time);
@@ -148,21 +154,21 @@ CellPoints& CellPoints::insert(
     intensity_at_arrival_ = intensity;
     raz_at_arrival_ = raz;
   }
-  // // else if (abs(arrival_time - arrival_time_) <= TIME_EPSILON)
+  else if (abs(arrival_time - arrival_time_) <= TIME_EPSILON)
   // else if (arrival_time == arrival_time_)
-  // {
-  //   logging::verbose("Same time so setting ros to max(%f, %f) at time %f", ros, ros_at_arrival_, arrival_time);
-  //   // the same time so pick higher ros
-  //   if (
-  //     (ros_at_arrival_ < ros)
-  //     || (ros_at_arrival_ == ros && intensity > intensity_at_arrival_))
-  //   {
-  //     ros_at_arrival_ = ros;
-  //     intensity_at_arrival_ = intensity;
-  //     raz_at_arrival_ = raz;
-  //   }
-  //   // arrival_time_ = arrival_time;
-  // }
+  {
+    logging::verbose("Same time so setting ros to max(%f, %f) at time %f", ros, ros_at_arrival_, arrival_time);
+    // the same time so pick higher ros
+    if (
+      (ros_at_arrival_ < ros)
+      || (ros_at_arrival_ == ros && intensity > intensity_at_arrival_))
+    {
+      ros_at_arrival_ = ros;
+      intensity_at_arrival_ = intensity;
+      raz_at_arrival_ = raz;
+    }
+    // arrival_time_ = arrival_time;
+  }
   // NOTE: use location inside cell so smaller types can be more precise
   // since digits aren't wasted on cell
   const auto p0 = InnerPos(
