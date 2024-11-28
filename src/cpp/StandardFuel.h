@@ -219,7 +219,7 @@ protected:
    * \brief Crown fuel load (kg/m^2) [ST-X-3 table 8]
    * \return Crown fuel load (kg/m^2) [ST-X-3 table 8]
    */
-  [[nodiscard]] static constexpr MathSize cfl() noexcept
+  [[nodiscard]] MathSize cfl() const override
   {
     return Cfl / 100.0;
   }
