@@ -91,6 +91,11 @@ public:
   {
     return sfi > csi;
   }
+  /**
+   * \brief Crown fuel load (kg/m^2) [ST-X-3 table 8]
+   * \return Crown fuel load (kg/m^2) [ST-X-3 table 8]
+   */
+  [[nodiscard]] virtual MathSize cfl() const = 0;
   virtual ~FuelType() noexcept = default;
   /**
    * \brief Fuel type
@@ -286,7 +291,8 @@ public:
   [[nodiscard]] MathSize crownFractionBurned(const MathSize rss,
                                              const MathSize rso) const noexcept override
   {
-    return max(0.0, 1.0 - exp(-0.230 * (rss - rso)));
+    // can't burn crown if it doesn't exist
+    return cfl() > 0 ? max(0.0, 1.0 - exp(-0.230 * (rss - rso))) : 0.0;
   }
   /**
    * \brief Calculate probability of burning [Anderson eq 1]
@@ -442,15 +448,20 @@ public:
   InvalidFuel& operator=(const InvalidFuel& rhs) noexcept = delete;
   InvalidFuel& operator=(InvalidFuel&& rhs) noexcept = delete;
   /**
-   * \brief Grass curing
-   * \return Grass curing (or -1 if invalid for this fuel type)
+   * \brief Throw a runtime_error
+   * \return Throw a runtime_error
    */
   [[nodiscard]] MathSize grass_curing(const int nd, const wx::FwiWeather& wx) const override;
   /**
-   * \brief Crown base height (m) [ST-X-3 table 8]
-   * \return Crown base height (m) [ST-X-3 table 8]
+   * \brief Throw a runtime_error
+   * \return Throw a runtime_error
    */
   [[nodiscard]] MathSize cbh() const override;
+  /**
+   * \brief Throw a runtime_error
+   * \return Throw a runtime_error
+   */
+  [[nodiscard]] MathSize cfl() const override;
   /**
    * \brief Throw a runtime_error
    * \return Throw a runtime_error
