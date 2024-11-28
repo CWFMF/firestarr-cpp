@@ -1483,6 +1483,17 @@ public:
     });
   }
   /**
+   * \brief Crown fuel load (kg/m^2) [ST-X-3 table 8]
+   * \return Crown fuel load (kg/m^2) [ST-X-3 table 8]
+   */
+  [[nodiscard]] MathSize
+  cfl() const override
+  {
+    return compare_by_season(*this, [](const FuelType& fuel) {
+      return fuel.cfl();
+    });
+  }
+  /**
    * \brief Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
    * \param cfb Crown Fraction Burned (CFB) [ST-X-3 eq 58]
    * \return Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
