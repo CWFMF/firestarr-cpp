@@ -103,7 +103,7 @@ void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::F
     {"CFB", {6, "%*.3f"}},
     {"CFC", {6, "%*.3f"}},
     {"FD", {2, "%*c"}},
-    {"HFI", {5, "%*ld"}},
+    {"HFI", {6, "%*ld"}},
     {"RAZ", {3, "%*d"}},
     {"ROS", {6, "%*.4g"}},
     {"SFC", {6, "%*.4g"}},
