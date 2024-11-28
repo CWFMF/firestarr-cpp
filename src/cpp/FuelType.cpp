@@ -17,6 +17,10 @@ MathSize InvalidFuel::cbh() const
 {
   throw runtime_error("Invalid fuel type in fuel map");
 }
+MathSize InvalidFuel::cfl() const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
 MathSize InvalidFuel::buiEffect(MathSize) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
