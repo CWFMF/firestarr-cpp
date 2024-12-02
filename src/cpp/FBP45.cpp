@@ -52,7 +52,9 @@ MathSize FuelC6::finalRos(const SpreadInfo& spread,
  */
 static MathSize calculate_surface_fuel_consumption_c7_ffmc(const MathSize ffmc) noexcept
 {
-  return min(0.0, 2.0 * (1.0 - exp(-0.104 * (ffmc - 70.0))));
+  return (ffmc > 70)
+         ? 2.0 * (1.0 - exp(-0.104 * (ffmc - 70.0)))
+         : 0.0;
 }
 /**
  * \brief Forest Floor Consumption (FFC) (kg/m^2) [ST-X-3 eq 13]
