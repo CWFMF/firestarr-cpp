@@ -61,7 +61,7 @@ static util::LookupTable<&calculate_surface_fuel_consumption_d1>
  * \tparam Bui0 Average Build-up Index for the fuel type [ST-X-3 table 7]
  * \tparam Cbh Crown base height (m) [ST-X-3 table 8]
  * \tparam Cfl Crown fuel load (kg/m^2) [ST-X-3 table 8]
- * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
+ * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
@@ -115,7 +115,7 @@ protected:
  * \tparam Bui0 Average Build-up Index for the fuel type [ST-X-3 table 7]
  * \tparam Cbh Crown base height (m) [ST-X-3 table 8]
  * \tparam Cfl Crown fuel load (kg/m^2) [ST-X-3 table 8]
- * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
+ * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
@@ -195,7 +195,7 @@ static util::LookupTable<&calculate_surface_fuel_consumption_jackpine>
  * \tparam Bui0 Average Build-up Index for the fuel type [ST-X-3 table 7]
  * \tparam Cbh Crown base height (m) [ST-X-3 table 8]
  * \tparam Cfl Crown fuel load (kg/m^2) [ST-X-3 table 8]
- * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
+ * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
 template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int DuffDepth>
@@ -246,7 +246,7 @@ static util::LookupTable<&calculate_surface_fuel_consumption_pine>
  * \tparam Bui0 Average Build-up Index for the fuel type [ST-X-3 table 7]
  * \tparam Cbh Crown base height (m) [ST-X-3 table 8]
  * \tparam Cfl Crown fuel load (kg/m^2) [ST-X-3 table 8]
- * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
+ * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
 template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int DuffDepth>
@@ -327,7 +327,7 @@ public:
  * \tparam Bui0 Average Build-up Index for the fuel type [ST-X-3 table 7]
  * \tparam RosMultiplier Rate of spread multiplier * 10 [ST-X-3 eq 27/28, GLC-X-10 eq 29/30]
  * \tparam PercentMixed Percent conifer or dead fir
- * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
+ * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
@@ -1063,7 +1063,7 @@ public:
  * \tparam FfcB Forest Floor Consumption parameter b * 10000 [ST-X-3 eq 19/21/23]
  * \tparam WfcA Woody Fuel Consumption parameter a [ST-X-3 eq 20/22/24]
  * \tparam WfcB Woody Fuel Consumption parameter b * 10000 [ST-X-3 eq 20/22/24]
- * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
+ * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  */
 template <int A, int B, int C, int Bui0, int FfcA, int FfcB, int WfcA, int WfcB, int BulkDensity>
 class FuelSlash : public FuelConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>
