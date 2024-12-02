@@ -70,7 +70,7 @@ static const util::LookupTable<&calculate_standard_length_to_breadth>
  * \tparam Bui0 Average Build-up Index for the fuel type [ST-X-3 table 7]
  * \tparam Cbh Crown base height (m) [ST-X-3 table 8]
  * \tparam Cfl Crown fuel load (kg/m^2) [ST-X-3 table 8]
- * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
+ * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
