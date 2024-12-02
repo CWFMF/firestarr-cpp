@@ -250,7 +250,7 @@ private:
 };
 /**
  * \brief Base class for all FuelTypes.
- * \tparam BulkDensity Crown bulk density * 1000 [Anderson table 1]
+ * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
@@ -357,8 +357,8 @@ public:
     return tot_prob;
   }
   /**
-   * \brief Duff Bulk Density (g/cm^3) [Anderson table 1]
-   * \return Duff Bulk Density (g/cm^3) [Anderson table 1]
+   * \brief Duff Bulk Density (kg/m^3) [Anderson table 1]
+   * \return Duff Bulk Density (kg/m^3) [Anderson table 1]
    */
   [[nodiscard]] static constexpr MathSize bulkDensity()
   {
