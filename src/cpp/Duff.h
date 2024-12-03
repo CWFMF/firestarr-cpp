@@ -251,7 +251,7 @@ private:
    * \param mc_pct Moisture content, percentage dry oven weight
    * \return Ignition Probability (% / 100) [eq Ig-1]
    */
-  [[nodiscard]] static constexpr ThresholdSize
+  [[nodiscard]] static ThresholdSize
   duffFunction(
     const MathSize mc_pct
   ) noexcept
@@ -268,7 +268,7 @@ private:
    * \param mc_pct Moisture content, percentage dry oven weight
    * \return Ignition Probability (% / 100) [eq Ig-1]
    */
-  const util::LookupTable<&duffFunction> probability_of_survival_{};
+  util::LookupTable<&duffFunction> probability_of_survival_{};
 };
 }
 }

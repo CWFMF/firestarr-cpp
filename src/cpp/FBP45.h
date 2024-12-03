@@ -49,7 +49,7 @@ calculate_grass_curing(
                    // -43 => 100, 0 => 50, 50 => 0 least-squares best fit:
              : static_cast<int>(52.5042 - 1.07324 * nd);
 }
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
 calculate_surface_fuel_consumption_mixed_or_c2(
   const MathSize bui
 ) noexcept
@@ -58,7 +58,7 @@ calculate_surface_fuel_consumption_mixed_or_c2(
 }
 static const util::LookupTable<&calculate_surface_fuel_consumption_mixed_or_c2>
   SURFACE_FUEL_CONSUMPTION_MIXED_OR_C2{};
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
 calculate_surface_fuel_consumption_d1(
   const MathSize bui
 ) noexcept
@@ -217,7 +217,7 @@ protected:
  * \param bui Build-up Index
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 11]
  */
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
 calculate_surface_fuel_consumption_jackpine(
   const MathSize bui
 ) noexcept
@@ -272,7 +272,7 @@ public:
  * \param bui Build-up Index
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 12]
  */
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
 calculate_surface_fuel_consumption_pine(
   const MathSize bui
 ) noexcept
@@ -517,7 +517,7 @@ protected:
    * \param isi Initial Spread Index
    * \return ISI with slope influence and zero wind (ISF) for D-1 [ST-X-3 eq 41]
    */
-  [[nodiscard]] static MathSize
+  [[nodiscard]] static constexpr MathSize
   isfD1(
     const SpreadInfo& spread,
     const MathSize isi
@@ -615,7 +615,7 @@ public:
 /**
  * \brief Length to Breadth ratio [ST-X-3 eq 80/81]
  */
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
 calculate_length_to_breadth_grass(
   const MathSize ws
 ) noexcept
@@ -631,7 +631,7 @@ static util::LookupTable<calculate_length_to_breadth_grass> LENGTH_TO_BREADTH_GR
  * \param curing Grass fuel curing rate (%)
  * \return Base multiplier for rate of spread [GLC-X-10 eq 35a/35b]
  */
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
 calculate_base_multiplier_curing(
   const MathSize curing
 ) noexcept

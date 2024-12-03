@@ -17,7 +17,7 @@ namespace util
  * \tparam IndexDigits Number of digits to use for range of values
  * \tparam Precision Precision in decimal places to use for range of values
  */
-template <MathSize (*Fct)(MathSize), int IndexDigits = 3, int Precision = 1>
+template <MathSize (*Fct)(const MathSize), int IndexDigits = 3, int Precision = 1>
 class LookupTable
 {
   /**
@@ -35,6 +35,7 @@ class LookupTable
   [[nodiscard]] constexpr ValuesArray
   makeValues()
   {
+    // FIX: would prefer consteval but c++26 or external library is required for cmath functions
     ValuesArray values{};
     for (size_t i = 0; i < values.size(); ++i)
     {
