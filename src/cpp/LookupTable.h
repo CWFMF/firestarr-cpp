@@ -4,6 +4,8 @@
 
 #pragma once
 #include "Util.h"
+#define LOOKUP_TABLES_OFF 1
+#undef LOOKUP_TABLES_OFF
 namespace tbd::util
 {
 /**
@@ -15,6 +17,7 @@ namespace tbd::util
 template <MathSize (*Fct)(const MathSize), int IndexDigits = 3, int Precision = 1>
 class LookupTable
 {
+#ifndef LOOKUP_TABLES_OFF
   /**
    * \brief Array with enough space for function called with specific number of digits and precision
    */
@@ -38,9 +41,12 @@ class LookupTable
     }
     return values;
   }
+#endif
 public:
   constexpr explicit LookupTable() noexcept
+#ifndef LOOKUP_TABLES_OFF
     : values_(makeValues())
+#endif
   {
   }
   ~LookupTable() = default;
@@ -55,7 +61,11 @@ public:
    */
   [[nodiscard]] constexpr MathSize operator()(const MathSize value) const
   {
+#ifndef LOOKUP_TABLES_OFF
     return values_.at(static_cast<size_t>(value * pow_int<Precision>(10)));
+#else
+    return Fct(value);
+#endif
   }
 };
 }
