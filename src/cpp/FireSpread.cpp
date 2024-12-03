@@ -57,12 +57,12 @@ int calculate_nd_for_point(const Day day, const int elevation, const topo::Point
 {
   return static_cast<int>(abs(day - calculate_nd_ref_for_point(elevation, point)));
 }
-static MathSize calculate_standard_back_isi_wsv(const MathSize v) noexcept
+static constexpr MathSize calculate_standard_back_isi_wsv(const MathSize v) noexcept
 {
   return 0.208 * exp(-0.05039 * v);
 }
 static const util::LookupTable<&calculate_standard_back_isi_wsv> STANDARD_BACK_ISI_WSV{};
-static MathSize calculate_standard_wsv(const MathSize v) noexcept
+static constexpr MathSize calculate_standard_wsv(const MathSize v) noexcept
 {
   return v < 40.0
          ? exp(0.05039 * v)
