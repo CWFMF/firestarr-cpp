@@ -20,7 +20,8 @@ MathSize FuelD1::isfD1(const SpreadInfo& spread,
  * \param ffmc Fine Fuel Moisture Code
  * \return Surface Fuel Consumption (SFC) (kg/m^2) [GLC-X-10 eq 9a/9b]
  */
-static MathSize calculate_surface_fuel_consumption_c1(const MathSize ffmc) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_surface_fuel_consumption_c1(const MathSize ffmc) noexcept
 {
   return max(0.0,
              0.75 + ((ffmc > 84) ? 0.75 : -0.75) * sqrt(1 - exp(-0.23 * (ffmc - 84))));
@@ -50,7 +51,8 @@ MathSize FuelC6::finalRos(const SpreadInfo& spread,
  * \param ffmc Fine Fuel Moisture Code
  * \return Forest Floor Consumption (FFC) (kg/m^2) [ST-X-3 eq 13]
  */
-static MathSize calculate_surface_fuel_consumption_c7_ffmc(const MathSize ffmc) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_surface_fuel_consumption_c7_ffmc(const MathSize ffmc) noexcept
 {
   return (ffmc > 70)
          ? 2.0 * (1.0 - exp(-0.104 * (ffmc - 70.0)))
@@ -66,7 +68,8 @@ static LookupTable<&calculate_surface_fuel_consumption_c7_ffmc>
  * \brief Woody Fuel Consumption (WFC) (kg/m^2) [ST-X-3 eq 14]
  * \return Woody Fuel Consumption (WFC) (kg/m^2) [ST-X-3 eq 14]
  */
-static MathSize calculate_surface_fuel_consumption_c7_bui(const MathSize bui) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_surface_fuel_consumption_c7_bui(const MathSize bui) noexcept
 {
   return 1.5 * (1.0 - exp(-0.0201 * bui));
 }
@@ -80,7 +83,8 @@ MathSize FuelC7::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
   return SURFACE_FUEL_CONSUMPTION_C7_FFMC(spread.ffmc().asValue()) + SURFACE_FUEL_CONSUMPTION_C7_BUI(spread.bui().asValue());
 }
-static MathSize calculate_surface_fuel_consumption_d2(const MathSize bui) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_surface_fuel_consumption_d2(const MathSize bui) noexcept
 {
   return bui >= 80 ? 1.5 * (1.0 - exp(-0.0183 * bui)) : 0.0;
 }

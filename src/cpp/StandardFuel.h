@@ -21,8 +21,9 @@ static constexpr MathSize SLOPE_LIMIT_ISI = 0.01;
  * \param fmc Foliar Moisture Content (FMC)
  * \return Standard foliar moisture effect (FME) based on FMC [ST-X-3 eq 61]
  */
-[[nodiscard]] static constexpr MathSize calculate_standard_foliar_moisture_fmc(
-  const MathSize fmc) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_standard_foliar_moisture_fmc(
+    const MathSize fmc) noexcept
 {
   return util::pow_int<4>(1.5 - 0.00275 * fmc) / (460.0 + 25.9 * fmc) / 0.778 * 1000.0;
 }
@@ -36,8 +37,9 @@ static const util::LookupTable<&calculate_standard_foliar_moisture_fmc>
  * \param isi Initial Spread Index
  * \return RSC / (FME / FME_avg) [ST-X-3 eq 64]
  */
-[[nodiscard]] static MathSize calculate_standard_foliar_moisture_isi(
-  const MathSize isi) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_standard_foliar_moisture_isi(
+    const MathSize isi) noexcept
 {
   return 60.0 * (1.0 - exp(-0.0497 * isi));
 }
@@ -52,7 +54,8 @@ static const util::LookupTable<&calculate_standard_foliar_moisture_isi>
  * \param ws Wind Speed (km/h)
  * \return Length to Breadth ratio [ST-X-3 eq 79]
  */
-[[nodiscard]] static MathSize calculate_standard_length_to_breadth(const MathSize ws) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_standard_length_to_breadth(const MathSize ws) noexcept
 {
   return 1.0 + 8.729 * pow(1.0 - exp(-0.030 * ws), 2.155);
 }
