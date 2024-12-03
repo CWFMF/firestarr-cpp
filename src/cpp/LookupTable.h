@@ -6,9 +6,9 @@
 #define FS_LOOKUPTABLE_H
 
 #include "Util.h"
-namespace fs
-{
-namespace util
+#define LOOKUP_TABLES_OFF 1
+#undef LOOKUP_TABLES_OFF
+namespace fs::util
 {
 /**
  * \brief A table initialized using the given function ranging over the number of digits and
@@ -20,6 +20,7 @@ namespace util
 template <MathSize (*Fct)(const MathSize), int IndexDigits = 3, int Precision = 1>
 class LookupTable
 {
+#ifndef LOOKUP_TABLES_OFF
   /**
    * \brief Array with enough space for function called with specific number of digits and precision
    */
@@ -44,9 +45,12 @@ class LookupTable
     }
     return values;
   }
+#endif
 public:
   constexpr explicit LookupTable() noexcept
+#ifndef LOOKUP_TABLES_OFF
     : values_(makeValues())
+#endif
   {
   }
   ~LookupTable() = default;
@@ -69,6 +73,5 @@ public:
     return values_.at(static_cast<size_t>(value * pow_int<Precision>(10)));
   }
 };
-}
 }
 #endif
