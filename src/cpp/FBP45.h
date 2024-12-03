@@ -39,14 +39,14 @@ static constexpr int START_GREENING = -43;
              // -43 => 100, 0 => 50, 50 => 0 least-squares best fit:
              : static_cast<int>(52.5042 - 1.07324 * nd);
 }
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
   calculate_surface_fuel_consumption_mixed_or_c2(const MathSize bui) noexcept
 {
   return 5.0 * (1.0 - exp(-0.0115 * bui));
 }
 static const util::LookupTable<&calculate_surface_fuel_consumption_mixed_or_c2>
   SURFACE_FUEL_CONSUMPTION_MIXED_OR_C2{};
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
   calculate_surface_fuel_consumption_d1(const MathSize bui) noexcept
 {
   return 1.5 * (1.0 - exp(-0.0183 * bui));
@@ -176,8 +176,9 @@ protected:
  * \param bui Build-up Index
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 11]
  */
-[[nodiscard]] static MathSize calculate_surface_fuel_consumption_jackpine(
-  const MathSize bui) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_surface_fuel_consumption_jackpine(
+    const MathSize bui) noexcept
 {
   return 5.0 * pow(1.0 - exp(-0.0164 * bui), 2.24);
 }
@@ -226,7 +227,7 @@ public:
  * \param bui Build-up Index
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 12]
  */
-[[nodiscard]] static MathSize
+[[nodiscard]] static constexpr MathSize
   calculate_surface_fuel_consumption_pine(const MathSize bui) noexcept
 {
   return 5.0 * pow(1.0 - exp(-0.0149 * bui), 2.48);
@@ -433,8 +434,9 @@ protected:
    * \param isi Initial Spread Index
    * \return ISI with slope influence and zero wind (ISF) for D-1 [ST-X-3 eq 41]
    */
-  [[nodiscard]] static MathSize isfD1(const SpreadInfo& spread,
-                                      const MathSize isi) noexcept
+  [[nodiscard]] static constexpr MathSize
+    isfD1(const SpreadInfo& spread,
+          const MathSize isi) noexcept
   {
     static const fbp::FuelD1 F{14};
     return F.isfD1(spread, rosMultiplier(), isi);
@@ -518,7 +520,8 @@ public:
 /**
  * \brief Length to Breadth ratio [ST-X-3 eq 80/81]
  */
-[[nodiscard]] static MathSize calculate_length_to_breadth_grass(const MathSize ws) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_length_to_breadth_grass(const MathSize ws) noexcept
 {
   return ws < 1.0 ? 1.0 : (1.1 * pow(ws, 0.464));
 }
@@ -531,7 +534,8 @@ static util::LookupTable<calculate_length_to_breadth_grass> LENGTH_TO_BREADTH_GR
  * \param curing Grass fuel curing rate (%)
  * \return Base multiplier for rate of spread [GLC-X-10 eq 35a/35b]
  */
-[[nodiscard]] static MathSize calculate_base_multiplier_curing(const MathSize curing) noexcept
+[[nodiscard]] static constexpr MathSize
+  calculate_base_multiplier_curing(const MathSize curing) noexcept
 {
   return (curing >= 58.8)
          ? (0.176 + 0.02 * (curing - 58.8))
