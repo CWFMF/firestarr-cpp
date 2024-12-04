@@ -64,7 +64,7 @@ calculate_nd_for_point(
 {
   return static_cast<int>(abs(day - calculate_nd_ref_for_point(elevation, point)));
 }
-static constexpr MathSize
+static MathSize
 calculate_standard_back_isi_wsv(
   const MathSize v
 ) noexcept

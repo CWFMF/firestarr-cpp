@@ -49,7 +49,7 @@ calculate_grass_curing(
                    // -43 => 100, 0 => 50, 50 => 0 least-squares best fit:
              : static_cast<int>(52.5042 - 1.07324 * nd);
 }
-[[nodiscard]] static constexpr MathSize
+[[nodiscard]] static MathSize
 calculate_surface_fuel_consumption_mixed_or_c2(
   const MathSize bui
 ) noexcept
@@ -58,7 +58,7 @@ calculate_surface_fuel_consumption_mixed_or_c2(
 }
 static const util::LookupTable<&calculate_surface_fuel_consumption_mixed_or_c2>
   SURFACE_FUEL_CONSUMPTION_MIXED_OR_C2{};
-[[nodiscard]] static constexpr MathSize
+[[nodiscard]] static MathSize
 calculate_surface_fuel_consumption_d1(
   const MathSize bui
 ) noexcept
@@ -217,7 +217,7 @@ protected:
  * \param bui Build-up Index
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 11]
  */
-[[nodiscard]] static constexpr MathSize
+[[nodiscard]] static MathSize
 calculate_surface_fuel_consumption_jackpine(
   const MathSize bui
 ) noexcept
@@ -272,7 +272,7 @@ public:
  * \param bui Build-up Index
  * \return Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 12]
  */
-[[nodiscard]] static constexpr MathSize
+[[nodiscard]] static MathSize
 calculate_surface_fuel_consumption_pine(
   const MathSize bui
 ) noexcept
