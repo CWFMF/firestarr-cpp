@@ -69,7 +69,7 @@ public:
                static_cast<Day>(start_date),
                static_cast<Day>(end_date))
   {
-    registerObserver(new IntensityObserver(*this, "intensity"));
+    registerObserver(new IntensityObserver(*this));
     registerObserver(new ArrivalObserver(*this));
     registerObserver(new SourceObserver(*this));
     addEvent(Event::makeEnd(end_date));
@@ -157,7 +157,29 @@ void showSpread(const SpreadInfo& spread, const wx::FwiWeather* w, const fuel::F
   printf("\r\n");
 }
 static Semaphore num_concurrent{static_cast<int>(std::thread::hardware_concurrency())};
-string run_test(const string output_directory,
+string generate_test_name(
+  const auto& fuel,
+  const SlopeSize slope,
+  const AspectSize aspect,
+  const tbd::wx::Wind& wind)
+{
+  // wind speed & direction can be decimal values, but slope and aspect are int
+  constexpr auto mask = "%s_S%03d_A%03d_WD%05.1f_WS%05.1f";
+  auto simple_fuel_name = simplify_fuel_name(fuel);
+  const size_t out_length = simple_fuel_name.length() + 27 + 1;
+  vector<char> out{};
+  out.resize(out_length);
+  sxprintf(&(out[0]),
+           out_length,
+           mask,
+           simple_fuel_name.c_str(),
+           slope,
+           aspect,
+           wind.direction().asDegrees(),
+           wind.speed().asValue());
+  return string(&(out[0]));
+};
+string run_test(const string base_directory,
                 const string& fuel_name,
                 const SlopeSize slope,
                 const AspectSize aspect,
@@ -168,6 +190,13 @@ string run_test(const string output_directory,
                 const wx::Wind& wind,
                 const bool ignore_existing)
 {
+  string test_name = generate_test_name(
+    fuel_name,
+    slope,
+    aspect,
+    wind);
+  logging::verbose("Queueing test for %s", test_name);
+  const string output_directory = base_directory + "/" + test_name + "/";
   if (ignore_existing && util::directory_exists(output_directory.c_str()))
   {
     // skip if directory exists
@@ -232,7 +261,11 @@ string run_test(const string output_directory,
   logging::debug("Starting simulation");
   // NOTE: don't want to reset first because TestScenabuirio handles what that does
   scenario.run(&probabilities);
-  scenario.saveObservers("");
+  logging::note(
+    "Saving results for %s in %s",
+    test_name.c_str(),
+    output_directory.c_str());
+  scenario.saveObservers(test_name);
   logging::note("Final Size: %0.0f, ROS: %0.2f",
                 scenario.currentFireSize(),
                 info.headRos());
@@ -345,7 +378,6 @@ int test(
     if (test_all)
     {
       size_t result = 0;
-      constexpr auto mask = "%s%s_S%03d_A%03d_WD%03d_WS%03d/";
       // generate all options first so we can say how many there are at start
       auto fuel_names = vector<string>();
       if (fixed_fuel_name.empty())
@@ -423,10 +455,6 @@ int test(
       vector<std::future<string>> results{};
       for (const auto& fuel : fuel_names)
       {
-        auto simple_fuel_name = simplify_fuel_name(fuel);
-        const size_t out_length = output_directory.length() + 28 + simple_fuel_name.length() + 1;
-        vector<char> out{};
-        out.resize(out_length);
         // do everything in parallel but not all at once because it uses too much memory for most computers
         for (auto slope : slopes)
         {
@@ -438,20 +466,10 @@ int test(
               for (auto wind_speed : wind_speeds)
               {
                 const wx::Wind wind(direction, wx::Speed(wind_speed));
-                sxprintf(&(out[0]),
-                         out_length,
-                         mask,
-                         output_directory.c_str(),
-                         simple_fuel_name.c_str(),
-                         slope,
-                         aspect,
-                         wind_direction,
-                         wind_speed);
-                logging::verbose("Queueing test for %s", out);
                 // need to make string now because it'll be another value if we wait
                 results.push_back(async(launch::async,
                                         run_test_ignore_existing,
-                                        string(&(out[0])),
+                                        output_directory,
                                         fuel,
                                         slope,
                                         aspect,

@@ -52,20 +52,19 @@ CellIndex SourceObserver::getValue(const Event& event) const noexcept
 {
   return event.source();
 }
-IntensityObserver::IntensityObserver(const Scenario& scenario, string suffix) noexcept
-  : scenario_(scenario), suffix_(std::move(suffix))
+IntensityObserver::IntensityObserver(const Scenario& scenario) noexcept
+  : MapObserver(scenario, NO_INTENSITY, "intensity")
 {
 }
-void IntensityObserver::handleEvent(const Event&) noexcept
+[[nodiscard]] IntensitySize IntensityObserver::getValue(const Event& event) const noexcept
 {
-  // HACK: do nothing because Scenario tracks intensity
+  return event.intensity();
 }
 void IntensityObserver::save(const string& dir, const string& base_name) const
 {
-  scenario_.saveIntensity(dir, makeName(base_name, suffix_));
-}
-void IntensityObserver::reset() noexcept
-{
-  // HACK: do nothing because Scenario tracks intensity
+  // FIX: IntensityObserver not tracking max right now?
+  // MapObserver<IntensitySize>::save(dir, base_name);
+  // FIX: save what scenario is tracking for now, but should be converted
+  scenario_.saveIntensity(dir, base_name);
 }
 }
