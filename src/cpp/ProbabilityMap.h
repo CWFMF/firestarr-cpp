@@ -189,19 +189,19 @@ private:
   /**
    * \brief Lower bound of 'low' intensity range
    */
-  int min_value_;
+  IntensitySize min_value_;
   /**
    * \brief Upper bound of 'high' intensity range
    */
-  int max_value_;
+  IntensitySize max_value_;
   /**
    * \brief Upper bound of 'low' intensity range
    */
-  const int low_max_;
+  const IntensitySize low_max_;
   /**
    * \brief Upper bound of 'moderate' intensity range
    */
-  const int med_max_;
+  const IntensitySize med_max_;
   /**
    * \brief Initial ignition grid to apply to outputs
    */
