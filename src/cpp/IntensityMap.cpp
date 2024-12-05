@@ -75,7 +75,7 @@ protected:
   mutex mutex_;
 };
 
-static auto CacheIntensitySize = GridMapCache<IntensitySize>(-1);
+static auto CacheIntensitySize = GridMapCache<IntensitySize>(NO_INTENSITY);
 static auto CacheMathSize = GridMapCache<MathSize>(-1);
 static auto CacheDegreesSize = GridMapCache<DegreesSize>(-1);
 
@@ -287,12 +287,14 @@ IntensityMap::save(
 ) const
 {
   lock_guard<mutex> lock(mutex_);
+  const auto name_intensity = base_name + "_intensity";
   const auto name_ros = base_name + "_ros";
   const auto name_raz = base_name + "_raz";
   // static std::function<DegreesSize(fs::wx::Direction)> fct_raz = [](fs::wx::Direction raz) {
   //   return static_cast<DegreesSize>(raz.asDegrees());
   // };
-  intensity_max_->saveToFile(dir, base_name);
+  // FIX: already done in IntensityObserver?
+  intensity_max_->saveToFile(dir, name_intensity);
   // // HACK: writing a double to a tiff seems to not work?
   // double is way too much precision for outputs
   rate_of_spread_at_max_->saveToFile<float>(dir, name_ros);

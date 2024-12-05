@@ -88,6 +88,7 @@ public:
     string suffix
   )
     : map_(scenario.model().environment().makeMap<T>(nodata)),
+      scenario_(scenario),
       suffix_(std::move(suffix))
   {
   }
@@ -135,6 +136,10 @@ protected:
    * \brief Map of observations
    */
   unique_ptr<data::GridMap<T>> map_;
+  /**
+   * \brief Scenario being observed
+   */
+  const Scenario& scenario_;
   /**
    * \brief Suffix to append to file during save
    */
@@ -185,7 +190,7 @@ public:
 /**
  * \brief Tracks the intensity that Cells burn at.
  */
-class IntensityObserver final : public IObserver
+class IntensityObserver final : public MapObserver<IntensitySize>
 {
 public:
   ~IntensityObserver() = default;
@@ -200,13 +205,9 @@ public:
    * \param scenario Scenario to observe
    * \param suffix Suffix to append to output file
    */
-  IntensityObserver(const Scenario& scenario, string suffix) noexcept;
-  /**
-   * \brief Handle given event
-   * \param event Event to handle
-   */
-  void
-  handleEvent(const Event& event) noexcept override;
+  explicit IntensityObserver(const Scenario& scenario) noexcept;
+  [[nodiscard]] IntensitySize
+  getValue(const Event& event) const noexcept override;
   /**
    * \brief Save observations
    * \param dir Directory to save to
@@ -214,20 +215,6 @@ public:
    */
   void
   save(const string& dir, const string& base_name) const override;
-  /**
-   * \brief Clear all observations
-   */
-  void
-  reset() noexcept override;
-private:
-  /**
-   * \brief Scenario being observed
-   */
-  const Scenario& scenario_;
-  /**
-   * \brief Suffix to append to output file
-   */
-  string suffix_;
 };
 }
 }

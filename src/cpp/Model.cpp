@@ -549,7 +549,7 @@ Model::readScenarios(
   const auto setup_scenario = [&result, save_individual, &saves](Scenario* scenario) {
     if (save_individual)
     {
-      scenario->registerObserver(new IntensityObserver(*scenario, ""));
+      scenario->registerObserver(new IntensityObserver(*scenario));
       scenario->registerObserver(new ArrivalObserver(*scenario));
       scenario->registerObserver(new SourceObserver(*scenario));
     }
