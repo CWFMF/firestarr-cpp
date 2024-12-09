@@ -21,6 +21,8 @@ static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.first;
 static const InnerPos INVALID_INNER_POSITION{};
 static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
 static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.first;
+static const SpreadData
+  INVALID_SPREAD_DATA{INVALID_TIME, static_cast<IntensitySize>(0), INVALID_ROS, Direction::Invalid};
 set<XYPos> CellPoints::unique() const noexcept
 {
   // // if any point is invalid then they all have to be
@@ -40,8 +42,8 @@ set<XYPos> CellPoints::unique() const noexcept
 size_t CellPoints::size() const noexcept { return unique().size(); }
 #endif
 CellPoints::CellPoints(const Idx cell_x, const Idx cell_y) noexcept
-  : arrival_time_(INVALID_TIME), intensity_at_arrival_(0), ros_at_arrival_(INVALID_ROS),
-    raz_at_arrival_(Direction::Invalid), pts_({}), cell_x_y_(cell_x, cell_y), src_(DIRECTION_NONE)
+  : spread_arrival_(INVALID_SPREAD_DATA), spread_internal_(INVALID_SPREAD_DATA),
+    spread_exit_(INVALID_SPREAD_DATA), pts_({}), cell_x_y_(cell_x, cell_y), src_(DIRECTION_NONE)
 {
   std::fill(pts_.first.begin(), pts_.first.end(), INVALID_DISTANCE);
   std::fill(pts_.second.begin(), pts_.second.end(), INVALID_INNER_POSITION);
@@ -56,16 +58,14 @@ CellPoints::CellPoints(const CellPoints* rhs) noexcept : CellPoints()
   *this = *rhs;
 }
 CellPoints::CellPoints(
-  const DurationSize& arrival_time,
-  const IntensitySize intensity,
-  const ROSSize& ros,
-  const Direction& raz,
+  const XYPos& src,
+  const SpreadData& spread_current,
   const XYSize x,
   const XYSize y
 ) noexcept
   : CellPoints(static_cast<Idx>(x), static_cast<Idx>(y))
 {
-  insert(arrival_time, intensity, ros, raz, x, y);
+  insert(src, spread_current, x, y);
 }
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
 #define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
@@ -103,10 +103,8 @@ constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
   D_PTS(M_0_5, 1.0)
 };
 CellPoints& CellPoints::insert(
-  const DurationSize& arrival_time,
-  const IntensitySize intensity,
-  const ROSSize& ros,
-  const Direction& raz,
+  const XYPos& src,
+  const SpreadData& spread_current,
   const XYSize x,
   const XYSize y
 ) noexcept
@@ -125,27 +123,36 @@ CellPoints& CellPoints::insert(
   // count things as the same time if within a tolerance
   constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
   constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
-  if (0 < arrival_time && 0 > arrival_time_)
+  if (0 < spread_current.time() && 0 > spread_arrival_.time())
   {
-    logging::verbose("No time so setting ros to %f at time %f", ros, arrival_time);
+    logging::verbose(
+      "No time so setting ros to %f at time %f", spread_current.ros(), spread_current.time()
+    );
     // record ros and time if nothing yet
-    arrival_time_ = arrival_time;
-    ros_at_arrival_ = ros;
-    intensity_at_arrival_ = intensity;
-    raz_at_arrival_ = raz;
+    spread_arrival_ = spread_current;
   }
-  else if (abs(arrival_time - arrival_time_) <= TIME_EPSILON)
+  else if (abs(spread_current.time() - spread_arrival_.time()) <= TIME_EPSILON)
   // else if (arrival_time == arrival_time_)
   {
     logging::verbose(
-      "Same time so setting ros to max(%f, %f) at time %f", ros, ros_at_arrival_, arrival_time
+      "Same time so setting ros to max(%f, %f) at time %f",
+      spread_current.ros(),
+      spread_arrival_.ros(),
+      spread_current.time()
     );
     // the same time so pick higher ros
-    if ((ros_at_arrival_ < ros) || (ros_at_arrival_ == ros && intensity > intensity_at_arrival_))
+    if (
+      (spread_arrival_.ros() < spread_current.ros())
+      || (spread_arrival_.ros() == spread_current.ros()
+          && spread_current.intensity() > spread_arrival_.intensity()))
     {
-      ros_at_arrival_ = ros;
-      intensity_at_arrival_ = intensity;
-      raz_at_arrival_ = raz;
+      // NOTE: keep track of original time so this doesn't just always happen
+      spread_arrival_ = SpreadData(
+        spread_arrival_.time(),
+        spread_current.intensity(),
+        spread_current.ros(),
+        spread_current.direction()
+      );
     }
   }
   // NOTE: use location inside cell so smaller types can be more precise
@@ -155,6 +162,8 @@ CellPoints& CellPoints::insert(
   );
   const auto x0 = static_cast<DistanceSize>(p0.first);
   const auto y0 = static_cast<DistanceSize>(p0.second);
+  // CHECK: FIX: is this initializing everything to false or just one element?
+  std::array<bool, NUM_DIRECTIONS> closer{false};
   for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
   {
     const auto& p1 = POINTS_OUTER[i];
@@ -163,12 +172,45 @@ CellPoints& CellPoints::insert(
     const auto d = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
     auto& p_d = pts_.first[i];
     auto& p_p = pts_.second[i];
-    p_p = (d < p_d) ? p0 : p_p;
-    p_d = (d < p_d) ? d : p_d;
+    closer[NUM_DIRECTIONS] = (d < p_d);
+    p_p = closer[NUM_DIRECTIONS] ? p0 : p_p;
+    p_d = closer[NUM_DIRECTIONS] ? d : p_d;
   }
 #ifdef DEBUG_CELLPOINTS
   logging::note("now have %ld points", size());
 #endif
+  const Location& dst = location();
+  // adds 0 if the same so try without checking
+  {
+    // we inserted a pair of (src, dst), which means we've never
+    // calculated the relativeIndex for this so add it to main map
+    add_source(relativeIndex(src.location(), dst));
+  }
+  if (src.location() == dst)
+  {
+    // if we spread from this cell to this cell again then ros could be considered for max
+    // need to make sure we're not spreading back towards where we came from because that doesn't
+    // matter HACK: for now look at source for this cell and exclude points in those directions
+    const auto srcs = sources();
+    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+    {
+      const auto mask = DIRECTION_MASKS[i];
+      if (mask != (srcs & mask))
+      {
+        // at least one of the cells in this direction is not a source, so consider them
+        if (closer[i])
+        {
+          // point was closer to edge than what was there
+          if (spread_current.ros() >= spread_internal_.ros())
+          {
+            // since we spread within cell then set internal spread
+            spread_internal_ = spread_current;
+          }
+        }
+      }
+    }
+  }
+  // FIX: do something with spread on exit
   return *this;
 }
 #undef D_PTS
@@ -176,7 +218,7 @@ CellPoints::CellPoints(const XYPos& p) noexcept : CellPoints(p.first, p.second) 
 CellPoints& CellPoints::insert(const InnerPos& p) noexcept
 {
   // HACK: FIX: just do something for now
-  insert(INVALID_TIME, NO_INTENSITY, NO_ROS, Direction::Invalid, p.first, p.second);
+  insert(INVALID_XY_POSITION, INVALID_SPREAD_DATA, p.first, p.second);
   return *this;
 }
 void CellPoints::add_source(const CellIndex src) { src_ |= src; }
@@ -227,10 +269,8 @@ bool CellPoints::empty() const
 }
 CellPointsMap::CellPointsMap() : map_({}) { }
 CellPoints& CellPointsMap::insert(
-  const DurationSize& arrival_time,
-  const IntensitySize intensity,
-  const ROSSize& ros,
-  const Direction& raz,
+  const XYPos& src,
+  const SpreadData& spread_current,
   const XYSize x,
   const XYSize y
 ) noexcept
@@ -239,13 +279,13 @@ CellPoints& CellPointsMap::insert(
   const auto n0 = size();
 #endif
   const Location location{static_cast<Idx>(y), static_cast<Idx>(x)};
-  auto e = map_.try_emplace(location, arrival_time, intensity, ros, raz, x, y);
+  auto e = map_.try_emplace(location, src, spread_current, x, y);
   CellPoints& cell_pts = e.first->second;
   if (!e.second)
   {
     // FIX: should use max of whatever ROS has entered during this time and not just first ros
     // tried to add new CellPoints but already there
-    cell_pts.insert(arrival_time, intensity, ros, raz, x, y);
+    cell_pts.insert(src, spread_current, x, y);
   }
 #ifdef DEBUG_CELLPOINTS
   logging::note(
@@ -258,26 +298,6 @@ CellPoints& CellPointsMap::insert(
     size()
   );
 #endif
-  return cell_pts;
-}
-CellPoints& CellPointsMap::insert(
-  const Location& src,
-  const DurationSize& arrival_time,
-  const IntensitySize intensity,
-  const ROSSize& ros,
-  const Direction& raz,
-  const XYSize x,
-  const XYSize y
-) noexcept
-{
-  CellPoints& cell_pts = insert(arrival_time, intensity, ros, raz, x, y);
-  const Location& dst = cell_pts.location();
-  // adds 0 if the same so try without checking
-  {
-    // we inserted a pair of (src, dst), which means we've never
-    // calculated the relativeIndex for this so add it to main map
-    cell_pts.add_source(relativeIndex(src, dst));
-  }
   return cell_pts;
 }
 CellPointsMap& CellPointsMap::merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept

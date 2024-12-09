@@ -297,6 +297,9 @@ void Scenario::evaluate(const Event& event)
   );
 #endif
   const auto& p = event.cell();
+  const auto x = p.column() + CELL_CENTER;
+  const auto y = p.row() + CELL_CENTER;
+  const XYPos p0{x, y};
   switch (event.type())
   {
     case Event::FIRE_SPREAD:
@@ -317,22 +320,16 @@ void Scenario::evaluate(const Event& event)
         step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER
       );
       // HACK: don't do this in constructor because scenario creates this in its constructor
-      points_.insert(
-        event.time(),
-        NO_INTENSITY,
-        NO_ROS,
-        Direction::Invalid,
-        p.column() + CELL_CENTER,
-        p.row() + CELL_CENTER
-      );
+      // HACK: insert point as originating from itself
+      points_.insert(p0, SpreadData(event.time(), NO_INTENSITY, NO_ROS, Direction::Invalid), x, y);
       if (is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
       }
       log_verbose(
         "Starting fire at point (%f, %f) in fuel type %s at time %f",
-        p.column() + CELL_CENTER,
-        p.row() + CELL_CENTER,
+        x,
+        y,
         FuelType::safeName(check_fuel(event.cell())),
         event.time()
       );
@@ -567,16 +564,12 @@ Scenario* Scenario::run(map<DurationSize, ProbabilityMap*>* probabilities)
 #ifdef DEBUG_SIMULATION
       log_check_fatal(is_null_fuel(cell), "Null fuel in perimeter");
 #endif
+      const auto x = cell.column() + CELL_CENTER;
+      const auto y = cell.row() + CELL_CENTER;
+      const XYPos p0{x, y};
       // log_verbose("Adding point (%d, %d)",
-      log_verbose("Adding point (%f, %f)", cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
-      points_.insert(
-        start_time_,
-        NO_INTENSITY,
-        NO_ROS,
-        Direction::Invalid,
-        cell.column() + CELL_CENTER,
-        cell.row() + CELL_CENTER
-      );
+      log_verbose("Adding point (%f, %f)", x, y);
+      points_.insert(p0, SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid), x, y);
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
@@ -695,7 +688,7 @@ CellPointsMap apply_offsets_spreadkey(
   logging::verbose("cell_pts_map has %ld items", cell_pts_map.size());
   for (auto& pts_for_cell : cell_pts_map)
   {
-    const Location& src = std::get<0>(pts_for_cell);
+    const Location& location = std::get<0>(pts_for_cell);
     CellPoints& cell_pts = std::get<1>(pts_for_cell);
 #ifdef DEBUG_CELLPOINTS
     logging::note("cell_pts for (%d, %d) has %ld items", src.column(), src.row(), cell_pts.size());
@@ -717,6 +710,8 @@ CellPointsMap apply_offsets_spreadkey(
       const auto& p = *it_pts;
       const auto& cell_x = cell_pts.cell_x_y_.first;
       const auto& cell_y = cell_pts.cell_x_y_.second;
+      // FIX: HACK: recompose into XYPos
+      const XYPos src{location.column() + cell_x, location.row() + cell_y};
       // apply offsets to point
       // should be quicker to loop over offsets in inner loop
       for (const ROSOffset& r_p : offsets_after_duration)
@@ -740,7 +735,10 @@ CellPointsMap apply_offsets_spreadkey(
         );
 #endif
         r1.insert(
-          src, arrival_time, intensity, ros, raz, x_o + p.first + cell_x, y_o + p.second + cell_y
+          src,
+          SpreadData(arrival_time, intensity, ros, raz),
+          x_o + p.first + cell_x,
+          y_o + p.second + cell_y
         );
 #ifdef DEBUG_CELLPOINTS
         logging::note("r1 is now %ld items", r1.size());
@@ -883,14 +881,9 @@ void Scenario::scheduleFireSpread(const Event& event)
     points_log_.log(step_, STAGE_SPREAD, new_time, pts);
     if (canBurn(for_cell) && max_intensity > 0)
     {
-      // HACK: just use the first cell as the source
+      const auto& spread = pts.spread_arrival_;
       const auto fake_event = Event::makeFireSpread(
-        new_time,
-        pts.intensity_at_arrival_,
-        pts.ros_at_arrival_,
-        pts.raz_at_arrival_,
-        for_cell,
-        pts.sources()
+        new_time, spread.intensity(), spread.ros(), spread.direction(), for_cell, pts.sources()
       );
       burn(fake_event);
     }
