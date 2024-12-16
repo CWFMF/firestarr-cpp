@@ -303,7 +303,7 @@ protected:
    * \return Crown fire spread rate (RSC) (m/min) [ST-X-3 eq 64]
    */
   [[nodiscard]] static constexpr MathSize
-  foliarMoistureEffect(
+  crownRateOfSpread(
     const MathSize isi,
     const MathSize fmc
   ) noexcept
