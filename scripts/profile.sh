@@ -1,4 +1,4 @@
-DIR_PERF=/tmp/perf
+DIR_PERF=${TMPDIR}/perf
 DIR_ROOT="$(realpath $(dirname $(realpath "$0"))/..)"
 DIR_BUILD="${DIR_ROOT}/build"
 FILE_PERF=${DIR_PERF}/perf.data
