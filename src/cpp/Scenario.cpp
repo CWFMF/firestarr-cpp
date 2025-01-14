@@ -1108,11 +1108,13 @@ Scenario::scheduleFireSpread(
       //   max_intensity));
       // HACK: just use the first cell as the source
       // FIX: HACK: only output spread within for now
+      // const auto& spread = pts.spread_internal_;
+      const auto& spread = pts.spread_arrival_;
       const auto fake_event = Event::makeFireSpread(
         new_time,
-        pts.spread_internal_.intensity(),
-        pts.spread_internal_.ros(),
-        pts.spread_internal_.direction(),
+        spread.intensity(),
+        spread.ros(),
+        spread.direction(),
         for_cell,
         pts.sources()
       );
