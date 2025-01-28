@@ -88,6 +88,52 @@ static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
 };
 
 class CellPointsMap;
+using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
+using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
+using array_dirs = std::array<MathSize, NUM_DIRECTIONS>;
+using array_cellpts = std::tuple<array_dists, array_pts, array_dirs>;
+
+class CellPointArrays : public array_cellpts
+{
+public:
+  using array_cellpts::array_cellpts;
+
+  inline const array_dists&
+  distances() const
+  {
+    return std::get<0>(*this);
+  }
+
+  inline const array_pts&
+  points() const
+  {
+    return std::get<1>(*this);
+  }
+
+  inline const array_dirs&
+  directions() const
+  {
+    return std::get<2>(*this);
+  }
+
+  inline array_dists&
+  distances()
+  {
+    return std::get<0>(*this);
+  }
+
+  inline array_pts&
+  points()
+  {
+    return std::get<1>(*this);
+  }
+
+  inline array_dirs&
+  directions()
+  {
+    return std::get<2>(*this);
+  }
+};
 
 /**
  * Points in a cell furthest in each direction
@@ -96,9 +142,6 @@ class CellPoints
 {
 public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
-  using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
-  using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
-  using array_dist_pts = pair<CellPoints::array_dists, CellPoints::array_pts>;
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
@@ -156,7 +199,7 @@ public:
   // FIX: just access directly for now
 
 public:
-  pair<array_dists, array_pts> pts_;
+  CellPointArrays pts_;
   // use Idx instead of Location so it can be negative (invalid)
   CellPos cell_x_y_;
   CellIndex src_;
