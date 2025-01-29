@@ -16,10 +16,10 @@ using fs::wx::Direction;
 // using sim::CellPoints;
 using topo::Cell;
 using topo::SpreadKey;
-class SpreadData : std::tuple<DurationSize, IntensitySize, ROSSize, Direction>
+class SpreadData : std::tuple<DurationSize, IntensitySize, ROSSize, Direction, Direction>
 {
 public:
-  using std::tuple<DurationSize, IntensitySize, ROSSize, Direction>::tuple;
+  using std::tuple<DurationSize, IntensitySize, ROSSize, Direction, Direction>::tuple;
   DurationSize
   time() const
   {
@@ -39,6 +39,11 @@ public:
   direction() const
   {
     return std::get<3>(*this);
+  }
+  Direction
+  direction_previous() const
+  {
+    return std::get<4>(*this);
   }
 };
 
