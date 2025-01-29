@@ -7,14 +7,15 @@
 namespace fs
 {
 using fs::Direction;
-class SpreadData : std::tuple<DurationSize, IntensitySize, ROSSize, Direction>
+class SpreadData : std::tuple<DurationSize, IntensitySize, ROSSize, Direction, Direction>
 {
 public:
-  using std::tuple<DurationSize, IntensitySize, ROSSize, Direction>::tuple;
+  using std::tuple<DurationSize, IntensitySize, ROSSize, Direction, Direction>::tuple;
   DurationSize time() const { return std::get<0>(*this); }
   IntensitySize intensity() const { return std::get<1>(*this); }
   ROSSize ros() const { return std::get<2>(*this); }
   Direction direction() const { return std::get<3>(*this); }
+  Direction direction_previous() const { return std::get<4>(*this); }
 };
 static constexpr size_t FURTHEST_N = 0;
 static constexpr size_t FURTHEST_NNE = 1;
