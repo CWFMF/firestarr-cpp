@@ -408,7 +408,7 @@ SpreadInfo::SpreadInfo(
     slope_azimuth,
     percentSlope()
   );
-  const auto spread_algorithm = WidestEllipseAlgorithm(5.0, cell_size, min_ros);
+  const auto spread_algorithm = WidestEllipseAlgorithm(MAX_SPREAD_ANGLE, cell_size, min_ros);
   offsets_ = spread_algorithm.calculate_offsets(
     correction_factor,
     tfc_,

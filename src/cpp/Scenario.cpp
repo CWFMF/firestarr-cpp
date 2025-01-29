@@ -391,7 +391,12 @@ Scenario::evaluate(
         .log(step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
-      points_.insert(p0, SpreadData(event.time(), NO_INTENSITY, NO_ROS, Direction::Invalid), x, y);
+      points_.insert(
+        p0,
+        SpreadData(event.time(), NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
+        x,
+        y
+      );
       if (is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -730,7 +735,12 @@ Scenario::run(
       const XYPos p0{x, y};
       // log_verbose("Adding point (%d, %d)",
       log_verbose("Adding point (%f, %f)", x, y);
-      points_.insert(p0, SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid), x, y);
+      points_.insert(
+        p0,
+        SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
+        x,
+        y
+      );
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
@@ -879,8 +889,7 @@ apply_offsets_spreadkey(
       const auto& dir = std::get<1>(pt_dir);
       const auto& cell_x = cell_pts.cell_x_y_.first;
       const auto& cell_y = cell_pts.cell_x_y_.second;
-      // FIX: HACK: recompose into XYPos
-      const XYPos src{location.column() + cell_x, location.row() + cell_y};
+      const XYPos src{pt.first + cell_x, pt.second + cell_y};
       // apply offsets to point
       // should be quicker to loop over offsets in inner loop
       for (const ROSOffset& r_p : offsets_after_duration)
@@ -892,27 +901,47 @@ apply_offsets_spreadkey(
         const auto& x_o = out.first;
         const auto& y_o = out.second;
         const auto dir_diff = abs(raz.asDegrees() - dir);
-#ifdef DEBUG_CELLPOINTS
-        logging::note(
-          "src.x %d; src.y %d;"
+        // #ifdef DEBUG_CELLPOINTS
+        logging::verbose(
+          "location.x %d; location.y %d;"
+          "cell_x %d; cell_y %d;"
           " ros %f; x %f; y %f; duration %f;\n",
-          src.column(),
-          src.row(),
+          location.column(),
+          location.row(),
+          cell_x,
+          cell_y,
           ros,
           pt.first,
           pt.second,
           duration
         );
-#endif
-        // only spread in a direction that's in front of the normal to the angle it came from
-        // i.e. the 90 degrees on either side of the raz
-        if (90 >= dir_diff)
+        // // NOTE: there should be no change in the extent of the fire if we exclude things behind
+        // the normal to the direction it came from
+        // //       - but if we exclude too much then it can change how things spread, even if it is
+        // a more representative angle for the grids if (is_initial || MAX_DEGREES >= dir_diff)
         {
+          const auto new_x = x_o + pt.first + cell_x;
+          const auto new_y = y_o + pt.second + cell_y;
+          logging::verbose(
+            "(%d, %d): %f: [%f => (%f, %f)] + [%f => (%f, %f)] = [%f => (%f, %f)]",
+            cell_x,
+            cell_y,
+            dir_diff,
+            dir,
+            x_o,
+            y_o,
+            raz.asDegrees(),
+            pt.first,
+            pt.second,
+            raz.asDegrees(),
+            new_x,
+            new_y
+          );
           r1.insert(
             src,
-            SpreadData(arrival_time, intensity, ros, raz),
-            x_o + pt.first + cell_x,
-            y_o + pt.second + cell_y
+            SpreadData(arrival_time, intensity, ros, raz, Direction(dir, false)),
+            new_x,
+            new_y
           );
 #ifdef DEBUG_CELLPOINTS
           logging::note("r1 is now %ld items", r1.size());
