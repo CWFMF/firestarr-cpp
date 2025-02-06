@@ -185,7 +185,8 @@ CellPoints& CellPoints::insert(
   const auto x0 = static_cast<DistanceSize>(p0.first);
   const auto y0 = static_cast<DistanceSize>(p0.second);
   // CHECK: FIX: is this initializing everything to false or just one element?
-  std::array<bool, NUM_DIRECTIONS> closer{false};
+  std::array<bool, NUM_DIRECTIONS> closer{};
+  std::fill_n(closer.begin(), NUM_DIRECTIONS, false);
   for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
   {
     const auto& p1 = POINTS_OUTER[i];
@@ -195,10 +196,10 @@ CellPoints& CellPoints::insert(
     auto& p_d = pts_.distances()[i];
     auto& p_p = pts_.points()[i];
     auto& p_a = pts_.directions()[i];
-    closer[NUM_DIRECTIONS] = (d < p_d);
-    p_p = closer[NUM_DIRECTIONS] ? p0 : p_p;
-    p_d = closer[NUM_DIRECTIONS] ? d : p_d;
-    p_a = closer[NUM_DIRECTIONS] ? spread_current.direction().asDegrees() : p_a;
+    closer[i] = (d < p_d);
+    p_p = (d < p_d) ? p0 : p_p;
+    p_d = (d < p_d) ? d : p_d;
+    p_a = (d < p_d) ? spread_current.direction().asDegrees() : p_a;
   }
 #ifdef DEBUG_CELLPOINTS
   logging::note("now have %ld points", size());

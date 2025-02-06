@@ -710,8 +710,11 @@ CellPointsMap apply_offsets_spreadkey(
     }
     auto& pts = cell_pts.pts_.points();
     auto& dirs = cell_pts.pts_.directions();
-    // combine point and direction that lead to it so we can get unique values
-    auto pt_dirs = std::views::zip(pts, dirs);
+    std::array<std::pair<InnerPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
+    for (size_t i = 0; i < pts.size(); ++i)
+    {
+      pt_dirs[i] = {pts[i], dirs[i]};
+    }
     std::sort(pt_dirs.begin(), pt_dirs.end());
     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
     auto it_pt_dirs = pt_dirs.cbegin();
