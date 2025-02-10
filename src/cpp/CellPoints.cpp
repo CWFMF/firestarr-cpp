@@ -38,7 +38,7 @@ set<XYPos> CellPoints::unique() const noexcept
       [this](const auto& p) {
         return XYPos(p.first + cell_x_y_.first, p.second + cell_x_y_.second);
       });
-    return {pts_all.cbegin(), pts_all.cend()};
+    return {pts_all.begin(), pts_all.end()};
   }
 }
 #ifdef DEBUG_CELLPOINTS
