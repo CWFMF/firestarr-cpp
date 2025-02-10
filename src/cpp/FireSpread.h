@@ -245,7 +245,7 @@ public:
     return -1 == head_ros_;
   }
   // required for making a map of SpreadInfo objects
-  constexpr SpreadInfo() noexcept
+  SpreadInfo() noexcept
     : offsets_({}),
       max_intensity_(INVALID_INTENSITY),
       key_(0),
