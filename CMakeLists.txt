@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 # HACK: architecture that works on azure batch and local machine
@@ -17,7 +17,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
-# set(CMAKE_CXX_FLAGS "-Wall -Wextra -std=c++23")
+# set(CMAKE_CXX_FLAGS "-Wall -Wextra -std=c++20")
 if (WIN32)
     # don't set -Wextra
     set(CMAKE_CXX_FLAGS "-Wall")

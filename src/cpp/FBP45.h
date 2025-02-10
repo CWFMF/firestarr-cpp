@@ -434,7 +434,7 @@ protected:
    * \param isi Initial Spread Index
    * \return ISI with slope influence and zero wind (ISF) for D-1 [ST-X-3 eq 41]
    */
-  [[nodiscard]] static constexpr MathSize
+  [[nodiscard]] static MathSize
     isfD1(const SpreadInfo& spread,
           const MathSize isi) noexcept
   {
