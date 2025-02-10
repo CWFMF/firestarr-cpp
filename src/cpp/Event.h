@@ -34,7 +34,7 @@ public:
     NEW_FIRE,
     FIRE_SPREAD,
   };
-  [[nodiscard]] static constexpr Event
+  [[nodiscard]] static Event
   makeEvent(
     const DurationSize time,
     const Cell& cell,
@@ -48,7 +48,7 @@ public:
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static constexpr Event
+  [[nodiscard]] static Event
   makeEnd(
     const DurationSize time
   )
@@ -61,7 +61,8 @@ public:
    * \param cell Cell to start new fire in
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeNewFire(
+  [[nodiscard]] static Event
+  makeNewFire(
     const DurationSize time,
     const Cell& cell
   )
@@ -73,7 +74,8 @@ public:
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeSave(
+  [[nodiscard]] static Event
+  makeSave(
     const DurationSize time
   )
   {
@@ -84,7 +86,8 @@ public:
    * \param time Time to schedule for
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(
+  [[nodiscard]] static Event
+  makeFireSpread(
     const DurationSize time
   )
   {
@@ -96,7 +99,8 @@ public:
    * \param intensity Intensity to spread with (kW/m)
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(
+  [[nodiscard]] static Event
+  makeFireSpread(
     const DurationSize time,
     const IntensitySize intensity,
     const ROSSize ros,
@@ -112,7 +116,8 @@ public:
    * \param cell Cell to spread in
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(
+  [[nodiscard]] static Event
+  makeFireSpread(
     const DurationSize time,
     const IntensitySize intensity,
     const ROSSize ros,
@@ -129,7 +134,8 @@ public:
    * \param cell Cell to spread in
    * \return Event created
    */
-  [[nodiscard]] static Event constexpr makeFireSpread(
+  [[nodiscard]] static Event
+  makeFireSpread(
     const DurationSize time,
     const IntensitySize intensity,
     const ROSSize ros,
