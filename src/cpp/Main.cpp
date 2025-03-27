@@ -502,13 +502,6 @@ main(
         "--deterministic",
         "Run deterministically (100% chance of spread & survival)"
       );
-      register_setter<size_t>(
-        &Settings::setStaticCuring,
-        "--curing",
-        "Specify static grass curing",
-        false,
-        &parse_size_t
-      );
       register_setter<
         ThresholdSize>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
