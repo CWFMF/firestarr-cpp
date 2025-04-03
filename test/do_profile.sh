@@ -43,7 +43,7 @@ pushd ${DIR}
 
 rm -rf "${dir_out}"
 mkdir -p "${dir_out}"
-rm -f "${DIR_ROOT}/tbd"
+rm -f "${DIR_ROOT}/firestarr"
 
 echo "Running test"
 # HACK: make sure test doesn't change output files
@@ -64,7 +64,7 @@ echo "Running profile"
 
 # HACK: if finishes before sleep does then stop sleep so it doesn't affect next run
 ${DIR_ROOT}/scripts/profile.sh \
-    ${DIR_ROOT}/tbd ${dir_out} 2024-06-03 58.81228184403946 -122.9117103995713 \
+    ${DIR_ROOT}/firestarr ${dir_out} 2024-06-03 58.81228184403946 -122.9117103995713 \
       01:00 ${intensity} ${opts} --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 \
       -v --output_date_offsets ${dates} --wx firestarr_10N_50651_wx.csv --perim 10N_50651.tif \
     && (killall sleep > /dev/null 2>&1 && echo "Ran within ${TIME_LIMIT}s time limit")
