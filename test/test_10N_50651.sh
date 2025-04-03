@@ -63,7 +63,7 @@ rm -rf "${dir_out}"
 mkdir -p "${dir_out}"
 
 ${USE_TIME} \
-  ../../tbd ./${dir_out} 2024-06-03 58.81228184403946 -122.9117103995713 01:00 ${intensity} ${opts} --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 -v --output_date_offsets ${dates} --wx firestarr_10N_50651_wx.csv --perim 10N_50651.tif $*
+  ../../firestarr ./${dir_out} 2024-06-03 58.81228184403946 -122.9117103995713 01:00 ${intensity} ${opts} --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 -v --output_date_offsets ${dates} --wx firestarr_10N_50651_wx.csv --perim 10N_50651.tif $*
 RET=$?
 RESULT=0
 if [ "0" -ne "${RET}" ]; then
