@@ -48,7 +48,7 @@ scripts/build.sh ${VARIANT}
 rm -rf "${DIR_OUT_SUB}"
 mkdir -p "${DIR_OUT}"
 
-opts="--ascii"
+opts=""
 
 # /usr/bin/time -v \
     ${DIR_ROOT}/firestarr test "${DIR_OUT}" --hours ${HOURS} ${opts}

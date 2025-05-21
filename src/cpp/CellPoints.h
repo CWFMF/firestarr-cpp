@@ -15,39 +15,15 @@ namespace fs
 {
 using fs::Direction;
 
-class SpreadData : std::tuple<DurationSize, IntensitySize, ROSSize, Direction, Direction>
+class SpreadData : std::tuple<DurationSize>
 {
 public:
-  using std::tuple<DurationSize, IntensitySize, ROSSize, Direction, Direction>::tuple;
+  using std::tuple<DurationSize>::tuple;
 
   DurationSize
   time() const
   {
     return std::get<0>(*this);
-  }
-
-  IntensitySize
-  intensity() const
-  {
-    return std::get<1>(*this);
-  }
-
-  ROSSize
-  ros() const
-  {
-    return std::get<2>(*this);
-  }
-
-  Direction
-  direction() const
-  {
-    return std::get<3>(*this);
-  }
-
-  Direction
-  direction_previous() const
-  {
-    return std::get<4>(*this);
   }
 };
 
@@ -96,8 +72,7 @@ static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
 class CellPointsMap;
 using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
 using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
-using array_dirs = std::array<MathSize, NUM_DIRECTIONS>;
-using array_cellpts = std::tuple<array_dists, array_pts, array_dirs>;
+using array_cellpts = std::tuple<array_dists, array_pts>;
 
 class CellPointArrays : public array_cellpts
 {
@@ -116,12 +91,6 @@ public:
     return std::get<1>(*this);
   }
 
-  inline const array_dirs&
-  directions() const
-  {
-    return std::get<2>(*this);
-  }
-
   inline array_dists&
   distances()
   {
@@ -132,12 +101,6 @@ public:
   points()
   {
     return std::get<1>(*this);
-  }
-
-  inline array_dirs&
-  directions()
-  {
-    return std::get<2>(*this);
   }
 };
 
@@ -151,12 +114,7 @@ public:
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
-  CellPoints(
-    const XYPos& src,
-    const SpreadData& spread_current,
-    const XYSize x,
-    const XYSize y
-  ) noexcept;
+  CellPoints(const XYSize x, const XYSize y) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
   CellPoints&
@@ -164,31 +122,13 @@ public:
   CellPoints&
   operator=(const CellPoints& rhs) noexcept = default;
   CellPoints&
-  insert(
-    const XYPos& src,
-    const SpreadData& spread_current,
-    const XYSize x,
-    const XYSize y
-  ) noexcept;
+  insert(const XYSize x, const XYSize y) noexcept;
   CellPoints&
   insert(const InnerPos& p) noexcept;
-  void
-  add_source(const CellIndex src);
-
-  CellIndex
-  sources() const
-  {
-    return src_;
-  }
-
   CellPoints&
   merge(const CellPoints& rhs);
   set<XYPos>
   unique() const noexcept;
-#ifdef DEBUG_CELLPOINTS
-  size_t
-  size() const noexcept;
-#endif
   bool
   operator<(const CellPoints& rhs) const noexcept;
   bool
@@ -199,16 +139,12 @@ public:
   clear();
   bool
   empty() const;
-  SpreadData spread_arrival_;
-  SpreadData spread_internal_;
-  SpreadData spread_exit_;
   // FIX: just access directly for now
 
 public:
   CellPointArrays pts_;
   // use Idx instead of Location so it can be negative (invalid)
   CellPos cell_x_y_;
-  CellIndex src_;
 
 private:
   CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
@@ -224,12 +160,7 @@ class CellPointsMap
 public:
   CellPointsMap();
   CellPoints&
-  insert(
-    const XYPos& src,
-    const SpreadData& spread_current,
-    const XYSize x,
-    const XYSize y
-  ) noexcept;
+  insert(const XYSize x, const XYSize y) noexcept;
   CellPointsMap&
   merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
   set<XYPos>

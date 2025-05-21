@@ -26,15 +26,6 @@ class Event;
 using PointSet = vector<InnerPos>;
 
 /**
- * \brief Deleter for IObserver to get around incomplete class with unique_ptr
- */
-struct IObserver_deleter
-{
-  void
-  operator()(IObserver*) const;
-};
-
-/**
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
  */
 class Scenario : public logging::SelfLogger
@@ -193,7 +184,7 @@ public:
    */
   [[nodiscard]]
 #ifdef NDEBUG
-  constexpr
+  CONSTEXPR
 #endif
     Cell
     cell(
@@ -508,31 +499,6 @@ public:
    */
   void
   addSave(const DurationSize time);
-
-  /**
-   * \brief Tell Observers to save their data with base file name
-   * \param output_directory Directory to save to
-   * \param base_name Base file name
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  saveObservers(const string_view output_directory, const string_view base_name) const;
-  /**
-   * \brief Tell Observers to save their data for the given time
-   * \param output_directory Directory to save to
-   * \param time Time to save data for
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  saveObservers(const string_view output_directory, DurationSize time) const;
-  /**
-   * \brief Save burn intensity information
-   * \param output_directory Directory to save to
-   * \param base_name Base file name
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  saveIntensity(const string_view output_directory, const string_view base_name) const;
   /**
    * \brief Whether or not this Scenario has run already
    * \return Whether or not this Scenario has run already
@@ -554,11 +520,6 @@ public:
     const DurationSize time_at_location
   ) const
   {
-    if (Settings::deterministic())
-    {
-      // always survive if deterministic
-      return true;
-    }
     try
     {
       const auto fire_wx = weather_;
@@ -593,18 +554,6 @@ public:
    */
   void
   saveStats(DurationSize time) const;
-  /**
-   * \brief Register an IObserver that will be notified when Cells burn
-   * \param observer Observer to add to notification list
-   */
-  void
-  registerObserver(IObserver* observer);
-  /**
-   * \brief Notify IObservers that a Cell has burned
-   * \param event Event to notify IObservers of
-   */
-  void
-  notify(const Event& event) const;
   /**
    * \brief Take whatever steps are necessary to process the given Event
    * \param event Event to process
@@ -643,10 +592,6 @@ protected:
     Day start_day,
     Day last_date
   );
-  /**
-   * \brief Observers to be notified when cells burn
-   */
-  list<unique_ptr<IObserver, IObserver_deleter>> observers_{};
   /**
    * \brief List of times to save simulation
    */
@@ -763,12 +708,6 @@ protected:
    * \brief How many times point spread event has happened
    */
   size_t step_;
-#ifndef MODE_BP_ONLY
-  /**
-   * \brief Point logging
-   */
-  LogPoints points_log_{};
-#endif
   /**
    * \brief How many times this scenario tried to spread out of bounds
    */

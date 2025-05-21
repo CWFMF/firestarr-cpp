@@ -25,13 +25,7 @@ static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.first;
 static const InnerPos INVALID_INNER_POSITION{};
 static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
 static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.first;
-static const SpreadData INVALID_SPREAD_DATA{
-  INVALID_TIME,
-  static_cast<IntensitySize>(0),
-  INVALID_ROS,
-  Direction::Invalid,
-  Direction::Invalid
-};
+static const SpreadData INVALID_SPREAD_DATA{INVALID_TIME};
 
 set<XYPos>
 CellPoints::unique() const noexcept
@@ -60,16 +54,11 @@ CellPoints::CellPoints(
   const Idx cell_x,
   const Idx cell_y
 ) noexcept
-  : spread_arrival_(INVALID_SPREAD_DATA),
-    spread_internal_(INVALID_SPREAD_DATA),
-    spread_exit_(INVALID_SPREAD_DATA),
-    pts_({}),
-    cell_x_y_(cell_x, cell_y),
-    src_(DIRECTION_NONE)
+  : pts_({}),
+    cell_x_y_(cell_x, cell_y)
 {
   std::fill(pts_.distances().begin(), pts_.distances().end(), INVALID_DISTANCE);
   std::fill(pts_.points().begin(), pts_.points().end(), INVALID_INNER_POSITION);
-  std::fill(pts_.directions().begin(), pts_.directions().end(), INVALID_DIRECTION);
 
 #ifdef DEBUG_CELLPOINTS
   logging::note("CellPoints is size %ld after creation and should be empty", size());
@@ -91,14 +80,12 @@ CellPoints::CellPoints(
 }
 
 CellPoints::CellPoints(
-  const XYPos& src,
-  const SpreadData& spread_current,
   const XYSize x,
   const XYSize y
 ) noexcept
   : CellPoints(static_cast<Idx>(x), static_cast<Idx>(y))
 {
-  insert(src, spread_current, x, y);
+  insert(x, y);
 }
 
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
@@ -140,79 +127,10 @@ constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
 // TODO: add angle
 CellPoints&
 CellPoints::insert(
-  const XYPos& src,
-  const SpreadData& spread_current,
   const XYSize x,
   const XYSize y
 ) noexcept
 {
-#ifdef DEBUG_CELLPOINTS
-  logging::note(
-    "Insert (%f, %f) at time %f with ROS %f, Intensity %d, RAZ %f",
-    x,
-    y,
-    arrival_time,
-    ros,
-    intensity,
-    raz.asDegrees()
-  );
-#endif
-  // count things as the same time if within a tolerance
-  constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
-  constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
-  if (0 < spread_current.time() && 0 > spread_arrival_.time())
-  {
-    logging::verbose(
-      "No time so setting ros to %f at time %f",
-      spread_current.ros(),
-      spread_current.time()
-    );
-    // record ros and time if nothing yet
-    spread_arrival_ = spread_current;
-  }
-  else
-  {
-    // initial burn will have an invalid direction, so needs to burn everywhere
-    const auto is_initial = Direction::Invalid == spread_current.direction_previous();
-    // only spread in a direction that's in front of the normal to the angle it came from
-    // i.e. the 90 degrees on either side of the raz
-    const auto dir_diff = abs(
-      spread_current.direction().asDegrees() - spread_current.direction_previous().asDegrees()
-    );
-    const auto MAX_DEGREES = 90.0;
-    // NOTE: there should be no change in the extent of the fire if we exclude things behind the
-    // normal to the direction it came from
-    //       - but if we exclude too much then it can change how things spread, even if it is a more
-    //       representative angle for the grids
-    if (is_initial || MAX_DEGREES >= dir_diff)
-    {
-      if (abs(spread_current.time() - spread_arrival_.time()) <= TIME_EPSILON)
-      // else if (arrival_time == arrival_time_)
-      {
-        logging::verbose(
-          "Same time so setting ros to max(%f, %f) at time %f",
-          spread_current.ros(),
-          spread_arrival_.ros(),
-          spread_current.time()
-        );
-        // the same time so pick higher ros
-        if (
-          (spread_arrival_.ros() < spread_current.ros())
-          || (spread_arrival_.ros() == spread_current.ros()
-              && spread_current.intensity() > spread_arrival_.intensity()))
-        {
-          // NOTE: keep track of original time so this doesn't just always happen
-          spread_arrival_ = SpreadData(
-            spread_arrival_.time(),
-            spread_current.intensity(),
-            spread_current.ros(),
-            spread_current.direction(),
-            spread_current.direction_previous()
-          );
-        }
-      }
-    }
-  }
   // NOTE: use location inside cell so smaller types can be more precise
   // since digits aren't wasted on cell
   const auto p0 = InnerPos(
@@ -221,9 +139,6 @@ CellPoints::insert(
   );
   const auto x0 = static_cast<DistanceSize>(p0.first);
   const auto y0 = static_cast<DistanceSize>(p0.second);
-  // CHECK: FIX: is this initializing everything to false or just one element?
-  std::array<bool, NUM_DIRECTIONS> closer{};
-  std::fill_n(closer.begin(), NUM_DIRECTIONS, false);
   for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
   {
     const auto& p1 = POINTS_OUTER[i];
@@ -232,46 +147,8 @@ CellPoints::insert(
     const auto d = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
     auto& p_d = pts_.distances()[i];
     auto& p_p = pts_.points()[i];
-    auto& p_a = pts_.directions()[i];
-    closer[i] = (d < p_d);
     p_p = (d < p_d) ? p0 : p_p;
     p_d = (d < p_d) ? d : p_d;
-    p_a = (d < p_d) ? spread_current.direction().asDegrees() : p_a;
-  }
-#ifdef DEBUG_CELLPOINTS
-  logging::note("now have %ld points", size());
-#endif
-
-  const Location& dst = location();
-  // adds 0 if the same so try without checking
-  {
-    // we inserted a pair of (src, dst), which means we've never
-    // calculated the relativeIndex for this so add it to main map
-    add_source(relativeIndex(src.location(), dst));
-  }
-  if (src.location() == dst)
-  {
-    // if we spread from this cell to this cell again then ros could be considered for max
-    // need to make sure we're not spreading back towards where we came from because that doesn't
-    // matter HACK: for now look at source for this cell and exclude points in those directions
-    const auto srcs = sources();
-    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
-    {
-      const auto mask = DIRECTION_MASKS[i];
-      if (mask != (srcs & mask))
-      {
-        // at least one of the cells in this direction is not a source, so consider them
-        if (closer[i])
-        {
-          // point was closer to edge than what was there
-          if (spread_current.ros() >= spread_internal_.ros())
-          {
-            // since we spread within cell then set internal spread
-            spread_internal_ = spread_current;
-          }
-        }
-      }
-    }
   }
   // FIX: do something with spread on exit
   return *this;
@@ -292,16 +169,8 @@ CellPoints::insert(
 ) noexcept
 {
   // HACK: FIX: just do something for now
-  insert(INVALID_XY_POSITION, INVALID_SPREAD_DATA, p.first, p.second);
+  insert(p.first, p.second);
   return *this;
-}
-
-void
-CellPoints::add_source(
-  const CellIndex src
-)
-{
-  src_ |= src;
 }
 
 CellPoints&
@@ -309,10 +178,6 @@ CellPoints::merge(
   const CellPoints& rhs
 )
 {
-#ifdef DEBUG_CELLPOINTS
-  const auto n0 = size();
-  const auto n1 = rhs.size();
-#endif
   // either both invalid or lower one is valid
   cell_x_y_ = min(cell_x_y_, rhs.cell_x_y_);
   auto& d0 = pts_.distances();
@@ -328,10 +193,6 @@ CellPoints::merge(
       p0[i] = p1[i];
     }
   }
-  add_source(rhs.src_);
-#ifdef DEBUG_CELLPOINTS
-  logging::note("Merging %ld with %ld gives %ld pts", n0, n1, size());
-#endif
   return *this;
 }
 
@@ -375,8 +236,6 @@ CellPointsMap::CellPointsMap()
 
 CellPoints&
 CellPointsMap::insert(
-  const XYPos& src,
-  const SpreadData& spread_current,
   const XYSize x,
   const XYSize y
 ) noexcept
@@ -385,25 +244,14 @@ CellPointsMap::insert(
   const auto n0 = size();
 #endif
   const Location location{static_cast<Idx>(y), static_cast<Idx>(x)};
-  auto e = map_.try_emplace(location, src, spread_current, x, y);
+  auto e = map_.try_emplace(location, x, y);
   CellPoints& cell_pts = e.first->second;
   if (!e.second)
   {
     // FIX: should use max of whatever ROS has entered during this time and not just first ros
     // tried to add new CellPoints but already there
-    cell_pts.insert(src, spread_current, x, y);
+    cell_pts.insert(x, y);
   }
-#ifdef DEBUG_CELLPOINTS
-  logging::note(
-    "insert with size %ld of (%f, %f) at time %f with ROS %f gives size %ld",
-    n0,
-    x,
-    y,
-    arrival_time,
-    ros,
-    size()
-  );
-#endif
   return cell_pts;
 }
 

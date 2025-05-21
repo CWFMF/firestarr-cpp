@@ -23,39 +23,24 @@ Environment::load(
 )
 {
   logging::note("Fuel raster is %s", string(in_fuel).c_str());
-  const auto& lookup = Settings::fuelLookup();
-  if (Settings::runAsync())
-  {
-    logging::debug("Loading grids async");
-    auto fuel = async(launch::async, [&in_fuel, &point]() {
-      return FuelGrid::readTiff(in_fuel, point, Settings::fuelLookup());
-    });
-    auto elevation = async(launch::async, [&in_elevation, &point]() {
-      return ElevationGrid::readTiff(in_elevation, point);
-    });
-    logging::debug("Waiting for grids");
-    return Environment(fuel.get(), elevation.get(), point);
-  }
-  logging::warning("Loading grids synchronously");
-  // HACK: need to copy strings since closures do that above
-  return Environment(
-    FuelGrid::readTiff(string(in_fuel), point, lookup),
-    ElevationGrid::readTiff(string(in_elevation), point),
-    point
-  );
+  logging::debug("Loading grids async");
+  auto fuel = async(launch::async, [&in_fuel, &point]() {
+    return FuelGrid::readTiff(in_fuel, point, Settings::fuelLookup());
+  });
+  auto elevation = async(launch::async, [&in_elevation, &point]() {
+    return ElevationGrid::readTiff(in_elevation, point);
+  });
+  logging::debug("Waiting for grids");
+  return Environment(fuel.get(), elevation.get(), point);
 }
 
 ProbabilityMap*
 Environment::makeProbabilityMap(
   const DurationSize time,
-  const DurationSize start_time,
-  const int min_value,
-  const int low_max,
-  const int med_max,
-  const int max_value
+  const DurationSize start_time
 ) const
 {
-  return new ProbabilityMap(time, start_time, min_value, low_max, med_max, max_value, cells_);
+  return new ProbabilityMap(time, start_time, cells_);
 }
 
 Environment
@@ -386,66 +371,6 @@ Environment::offset(
   const auto& p = event.cell();
   return cell(Location(p.row() + row, p.column() + column));
 }
-
-#ifdef FIX_THIS_LATER
-void
-Environment::saveToFile(
-  const string& output_directory
-) const
-{
-#ifndef NDEBUG
-  if (Settings::saveSimulationArea())
-  {
-    logging::debug("Saving simulation area");
-    const auto lookup = Settings::fuelLookup();
-    auto convert_to_slope = [&elevation](const Cell& v) -> SlopeSize {
-      return v.slope();
-    };
-    auto convert_to_aspect = [&elevation](const Cell& v) -> AspectSize {
-      return v.aspect();
-    };
-    auto convert_to_area = [&elevation](const ElevationSize v) -> ElevationSize {
-      // need to still be nodata if it was
-      return (v == elevation.nodataValue()) ? v : 3;
-    };
-    auto convert_to_fuelcode = [&lookup](const FuelType* const value) -> FuelSize {
-      return lookup.fuelToCode(value);
-    };
-    fuel.saveToFile<FuelSize>(output_directory, "fuel", convert_to_fuelcode);
-    elevation.saveToFile(output_directory, "dem");
-    // save slope & aspect grids
-    cells_->saveToFile<SlopeSize>(
-      output_directory,
-      "slope",
-      convert_to_slope,
-      static_cast<SlopeSize>(INVALID_SLOPE)
-    );
-    cells_->saveToFile<AspectSize>(
-      output_directory,
-      "aspect",
-      convert_to_aspect,
-      static_cast<AspectSize>(INVALID_ASPECT)
-    );
-    // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything
-    // else
-    elevation.saveToFile<ElevationSize>(output_directory, "simulation_area", convert_to_area);
-    logging::debug("Done saving fuel grid");
-  }
-  logging::debug("Done saving fuel grid");
-#endif
-  const auto lookup = Settings::fuelLookup();
-  cells_.saveToTiffFile<FuelSize>(output_directory, "fuel", [&](const auto& value) {
-    return lookup.fuelToCode(fuel_by_code(value.fuelCode()));
-  });
-  // FIX: missing elevation
-  cells_.saveToTiffFile<AspectSize>(output_directory, "aspect", [&](const auto& value) {
-    return value.aspect();
-  });
-  cells_.saveToTiffFile<SlopeSize>(output_directory, "slope", [&](const auto& value) {
-    return value.slope();
-  });
-}
-#endif
 
 Environment::Environment(
   CellGrid&& cells,

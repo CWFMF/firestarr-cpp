@@ -185,7 +185,7 @@ public:
    */
   [[nodiscard]]
 #ifdef NDEBUG
-  constexpr
+  CONSTEXPR
 #endif
     Cell
     cell(
@@ -355,14 +355,7 @@ public:
    * \return ProbabilityMap with the same extent as this
    */
   [[nodiscard]] ProbabilityMap*
-  makeProbabilityMap(
-    DurationSize time,
-    DurationSize start_time,
-    int min_value,
-    int low_max,
-    int med_max,
-    int max_value
-  ) const;
+  makeProbabilityMap(DurationSize time, DurationSize start_time) const;
   ~Model() = default;
   /**
    * \brief Constructor
@@ -457,11 +450,6 @@ private:
    */
   map<DurationSize, ProbabilityMap*>
   runIterations(const StartPoint& start_point, DurationSize start, Day start_day);
-  /**
-   * \brief Find all Cell(s) that can burn in entire Environment
-   */
-  void
-  findAllStarts();
   /**
    * Save probability rasters
    */

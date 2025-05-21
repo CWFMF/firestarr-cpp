@@ -44,7 +44,7 @@ public:
     const Type type
   )
   {
-    return {time, cell, 0, type, 0, 0, Direction::Invalid, 0};
+    return {time, cell, type, 0};
   }
 
   /**
@@ -105,56 +105,16 @@ public:
    * \brief Make fire spread event
    * \param time Time to schedule for
    * \param intensity Intensity to spread with (kW/m)
-   * \return Event created
-   */
-  [[nodiscard]] static Event
-  makeFireSpread(
-    const DurationSize time,
-    const IntensitySize intensity,
-    const ROSSize ros,
-    const Direction raz
-  )
-  {
-    return makeFireSpread(time, intensity, ros, raz, NoLocation);
-  }
-
-  /**
-   * \brief Make fire spread event
-   * \param time Time to schedule for
-   * \param intensity Intensity to spread with (kW/m)
    * \param cell Cell to spread in
    * \return Event created
    */
   [[nodiscard]] static Event
   makeFireSpread(
     const DurationSize time,
-    const IntensitySize intensity,
-    const ROSSize ros,
-    const Direction raz,
     const Cell& cell
   )
   {
-    return makeFireSpread(time, intensity, ros, raz, cell, 254);
-  }
-
-  /**
-   * \brief Make fire spread event
-   * \param time Time to schedule for
-   * \param intensity Intensity to spread with (kW/m)
-   * \param cell Cell to spread in
-   * \return Event created
-   */
-  [[nodiscard]] static Event
-  makeFireSpread(
-    const DurationSize time,
-    const IntensitySize intensity,
-    const ROSSize ros,
-    const Direction raz,
-    const Cell& cell,
-    const CellIndex source
-  )
-  {
-    return {time, cell, source, FIRE_SPREAD, intensity, ros, raz, 0};
+    return {time, cell, FIRE_SPREAD, 0};
   }
 
   ~Event() = default;
@@ -196,36 +156,6 @@ public:
   }
 
   /**
-   * \brief Burn Intensity (kW/m)
-   * \return Burn Intensity (kW/m)
-   */
-  [[nodiscard]] constexpr IntensitySize
-  intensity() const
-  {
-    return intensity_;
-  }
-
-  /**
-   * \brief Head fire spread direction
-   * \return Head fire spread direction
-   */
-  [[nodiscard]] constexpr Direction
-  raz() const
-  {
-    return raz_;
-  }
-
-  /**
-   * \brief Head fire rate of spread (m/min)
-   * \return Head fire rate of spread (m/min)
-   */
-  [[nodiscard]] constexpr ROSSize
-  ros() const
-  {
-    return ros_;
-  }
-
-  /**
    * \brief Cell Event takes place in
    * \return Cell Event takes place in
    */
@@ -233,16 +163,6 @@ public:
   cell() const
   {
     return cell_;
-  }
-
-  /**
-   * \brief CellIndex for relative Cell that spread into from
-   * \return CellIndex for relative Cell that spread into from
-   */
-  [[nodiscard]] constexpr CellIndex
-  source() const
-  {
-    return source_;
   }
 
 private:
@@ -258,21 +178,13 @@ private:
   constexpr Event(
     const DurationSize time,
     const Cell& cell,
-    const CellIndex source,
     const Type type,
-    const IntensitySize intensity,
-    const ROSSize ros,
-    const Direction raz,
     const DurationSize time_at_location
   )
     : time_(time),
       time_at_location_(time_at_location),
       cell_(cell),
-      type_(type),
-      intensity_(intensity),
-      ros_(ros),
-      raz_(raz),
-      source_(source)
+      type_(type)
   {
   }
 
@@ -292,13 +204,6 @@ private:
    * \brief Type of Event
    */
   Type type_;
-  IntensitySize intensity_;
-  ROSSize ros_;
-  Direction raz_;
-  /**
-   * \brief CellIndex for relative Cell that spread into from
-   */
-  CellIndex source_;
 };
 }
 #endif

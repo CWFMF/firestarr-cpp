@@ -173,9 +173,7 @@ find_min_ros(
   const DurationSize time
 )
 {
-  return Settings::deterministic()
-         ? Settings::minimumRos()
-         : std::max(scenario.spreadThresholdByRos(time), Settings::minimumRos());
+  return std::max(scenario.spreadThresholdByRos(time), Settings::minimumRos());
 }
 
 SpreadInfo::SpreadInfo(

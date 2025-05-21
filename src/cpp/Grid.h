@@ -839,18 +839,7 @@ public:
     const R no_data
   ) const
   {
-    FileList files{};
-    // NOTE: do this instead of function pointer because it's using templates
-    if (Settings::saveAsAscii())
-    {
-      files.emplace_back(this->template saveToAsciiFile<R>(dir, base_name, convert, no_data));
-    }
-    // always save at least something
-    if (!Settings::saveAsAscii() || Settings::saveAsTiff())
-    {
-      files.emplace_back(this->template saveToTiffFile<R>(dir, base_name, convert, no_data));
-    }
-    return files;
+    return {this->template saveToTiffFile<R>(dir, base_name, convert, no_data)};
   }
 
   /**

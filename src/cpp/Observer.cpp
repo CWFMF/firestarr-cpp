@@ -45,44 +45,4 @@ ArrivalObserver::getValue(
 {
   return event.time();
 }
-
-SourceObserver::SourceObserver(
-  const Scenario& scenario
-)
-  : MapObserver<CellIndex>(scenario, static_cast<CellIndex>(255), "source")
-{
-}
-
-CellIndex
-SourceObserver::getValue(
-  const Event& event
-) const noexcept
-{
-  return event.source();
-}
-
-IntensityObserver::IntensityObserver(
-  const Scenario& scenario
-) noexcept
-  : MapObserver(scenario, NO_INTENSITY, "intensity")
-{
-}
-
-[[nodiscard]] IntensitySize
-IntensityObserver::getValue(
-  const Event& event
-) const noexcept
-{
-  return event.intensity();
-}
-
-FileList
-IntensityObserver::save(
-  const string_view dir,
-  const string_view base_name
-) const
-{
-  // FIX: save what scenario is tracking for now, but should be converted
-  return scenario_.saveIntensity(dir, base_name);
-}
 }

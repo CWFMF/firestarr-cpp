@@ -161,14 +161,7 @@ public:
    * \return ProbabilityMap with the same extent as this
    */
   [[nodiscard]] ProbabilityMap*
-  makeProbabilityMap(
-    DurationSize time,
-    DurationSize start_time,
-    int min_value,
-    int low_max,
-    int med_max,
-    int max_value
-  ) const;
+  makeProbabilityMap(DurationSize time, DurationSize start_time) const;
 
   /**
    * \brief Create a GridMap<Other> covering this Environment
@@ -210,11 +203,6 @@ protected:
    * \param elevation Elevation raster
    */
   Environment(const FuelGrid& fuel, const ElevationGrid& elevation, const Point& point);
-
-#ifdef FIX_THIS_LATER
-  void
-  saveToFile(const string& output_directory) const;
-#endif
 
 private:
   /**

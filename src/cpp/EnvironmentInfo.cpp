@@ -64,20 +64,14 @@ EnvironmentInfo::loadInfo(
   const string_view in_elevation
 )
 {
-  if (Settings::runAsync())
-  {
-    auto fuel_async = async(launch::async, [in_fuel]() {
-      return read_header(in_fuel);
-    });
-    auto elevation_async = async(launch::async, [in_elevation]() {
-      return read_header(in_elevation);
-    });
-    const auto
-      e = new EnvironmentInfo(in_fuel, in_elevation, fuel_async.get(), elevation_async.get());
-    return unique_ptr<EnvironmentInfo>(e);
-  }
+  auto fuel_async = async(launch::async, [in_fuel]() {
+    return read_header(in_fuel);
+  });
+  auto elevation_async = async(launch::async, [in_elevation]() {
+    return read_header(in_elevation);
+  });
   const auto
-    e = new EnvironmentInfo(in_fuel, in_elevation, read_header(in_fuel), read_header(in_elevation));
+    e = new EnvironmentInfo(in_fuel, in_elevation, fuel_async.get(), elevation_async.get());
   return unique_ptr<EnvironmentInfo>(e);
 }
 

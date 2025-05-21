@@ -8,8 +8,7 @@
 #include "FireWeather.h"
 #include "FuelLookup.h"
 #include "Model.h"
-#include "Observer.h"
-#include "SafeVector.h"
+#include "Scenario.h"
 #include "Util.h"
 
 namespace fs
@@ -75,9 +74,6 @@ public:
         static_cast<Day>(end_date)
       )
   {
-    registerObserver(new IntensityObserver(*this));
-    registerObserver(new ArrivalObserver(*this));
-    registerObserver(new SourceObserver(*this));
     addEvent(Event::makeEnd(end_date));
     last_save_ = end_date;
     // cast to avoid warning
@@ -254,7 +250,6 @@ run_test(
   // NOTE: don't want to reset first because TestScenabuirio handles what that does
   scenario.run(&probabilities);
   logging::note("Saving results for %s in %s", test_name.c_str(), output_directory.c_str());
-  std::ignore = scenario.saveObservers(output_directory, test_name);
   logging::note("Final Size: %0.0f, ROS: %0.2f", scenario.currentFireSize(), info.headRos());
   return string(output_directory);
 }
@@ -379,9 +374,7 @@ test(
   SafeVector final_sizes{};
   // FIX: I think this does a lot of the same things as the test code is doing because it was
   // derived from this code
-  Settings::setDeterministic(true);
   Settings::setMinimumRos(0.0);
-  Settings::setSavePoints(false);
   // make sure all tests run regardless of how long it takes
   Settings::setMaximumTimeSeconds(numeric_limits<size_t>::max());
   const auto hours = INVALID_TIME == num_hours ? DEFAULT_HOURS : num_hours;

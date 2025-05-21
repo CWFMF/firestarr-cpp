@@ -144,28 +144,17 @@ public:
    * \param raz Spread azimuth for ros
    */
   void
-  burn(const Location& location, IntensitySize intensity, MathSize ros, fs::Direction raz);
+  burn(const Location& location);
 
   template <class P>
   void
   burn(
-    const Position<P>& position,
-    const IntensitySize intensity,
-    const MathSize ros,
-    const fs::Direction& raz
+    const Position<P>& position
   )
   {
-    burn(Location{position.hash()}, intensity, ros, raz);
+    burn(Location{position.hash()});
   }
 
-  /**
-   * \brief Save contents to an ASCII file
-   * \param dir Directory to save to
-   * \param base_name Base file name to save to
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  save(const string_view dir, const string_view base_name) const;
   /**
    * \brief Size of the fire represented by this
    * \return Size of the fire represented by this
@@ -194,12 +183,6 @@ private:
    * \brief Map of intensity that cells have burned  at
    */
   GridMap<IntensitySize> intensity_max_{};
-  // HACK: just add ROS/RAZ into this object for now
-  /**
-   * \brief Map of rate of spread/direction that cells have burned with at max ros
-   */
-  GridMap<MathSize> rate_of_spread_at_max_{};
-  GridMap<DegreesSize> direction_of_spread_at_max_{};
   /**
    * \brief bitset denoting cells that can no longer burn
    */

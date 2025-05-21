@@ -41,15 +41,7 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \param grid_info GridBase to use for extent of this
    */
-  ProbabilityMap(
-    DurationSize time,
-    DurationSize start_time,
-    int min_value,
-    int low_max,
-    int med_max,
-    int max_value,
-    const GridBase& grid_info
-  );
+  ProbabilityMap(DurationSize time, DurationSize start_time, const GridBase& grid_info);
   /**
    * \brief Assign perimeter to use for marking cells as initial perimeter
    * \param perimeter Ignition grid to store for marking in outputs
@@ -147,30 +139,6 @@ private:
    */
   [[nodiscard]] FileList
   saveTotalCount(const string_view output_directory, const string_view base_name) const;
-  /**
-   * \brief Save map representing high intensities
-   * \param output_directory Directory to save to
-   * \param base_name Base file name to save to
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  saveHigh(const string_view output_directory, const string_view base_name) const;
-  /**
-   * \brief Save map representing moderate intensities
-   * \param output_directory Directory to save to
-   * \param base_name Base file name to save to
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  saveModerate(const string_view output_directory, const string_view base_name) const;
-  /**
-   * \brief Save map representing low intensities
-   * \param output_directory Directory to save to
-   * \param base_name Base file name to save to
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  saveLow(const string_view output_directory, const string_view base_name) const;
 
 private:
   /**
@@ -200,18 +168,6 @@ private:
    */
   GridMap<size_t> all_;
   /**
-   * \brief Map representing high intensities
-   */
-  GridMap<size_t> high_;
-  /**
-   * \brief Map representing moderate intensities
-   */
-  GridMap<size_t> med_;
-  /**
-   * \brief Map representing low intensities
-   */
-  GridMap<size_t> low_;
-  /**
    * \brief List of sizes for perimeters that have been added
    */
   vector<MathSize> sizes_{};
@@ -227,22 +183,6 @@ private:
    * \brief Mutex for parallel access
    */
   mutable mutex mutex_;
-  /**
-   * \brief Lower bound of 'low' intensity range
-   */
-  IntensitySize min_value_;
-  /**
-   * \brief Upper bound of 'high' intensity range
-   */
-  IntensitySize max_value_;
-  /**
-   * \brief Upper bound of 'low' intensity range
-   */
-  const IntensitySize low_max_;
-  /**
-   * \brief Upper bound of 'moderate' intensity range
-   */
-  const IntensitySize med_max_;
   /**
    * \brief Initial ignition grid to apply to outputs
    */

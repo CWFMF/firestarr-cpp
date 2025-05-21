@@ -9,8 +9,6 @@
 #include "FBP45.h"
 #include "FireWeather.h"
 #include "Input.h"
-#include "Log.h"
-#include "Observer.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "Scenario.h"
@@ -343,24 +341,6 @@ Model::findStarts(
 }
 
 void
-Model::findAllStarts()
-{
-  logging::note("Running scenarios for every possible start location");
-  for (Idx x = 0; x < env_->columns(); ++x)
-  {
-    for (Idx y = 0; y < env_->rows(); ++y)
-    {
-      const auto loc = env_->cell(Location(y, x));
-      if (!is_null_fuel(loc))
-      {
-        starts_.push_back(make_shared<Cell>(cell(loc)));
-      }
-    }
-  }
-  logging::info("Using %d start locations:", ignitionScenarios());
-}
-
-void
 Model::makeStarts(
   Coordinates coordinates,
   const Point& point,
@@ -419,21 +399,14 @@ Model::makeStarts(
       logging::note("Using fire perimeter results in empty fire - changing to use point");
       perimeter_ = nullptr;
     }
-    if (Settings::surface())
+    logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
+    if (0 == size && is_null_fuel(cell(location)))
     {
-      findAllStarts();
+      findStarts(location);
     }
     else
     {
-      logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
-      if (0 == size && is_null_fuel(cell(location)))
-      {
-        findStarts(location);
-      }
-      else
-      {
-        starts_.push_back(make_shared<Cell>(cell(location)));
-      }
+      starts_.push_back(make_shared<Cell>(cell(location)));
     }
   }
   logging::note(
@@ -456,14 +429,7 @@ Model::readScenarios(
   // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
   auto saves = Settings::outputDateOffsets();
-  auto save_individual = Settings::saveIndividual();
-  const auto setup_scenario = [&result, save_individual, &saves](Scenario* scenario) {
-    if (save_individual)
-    {
-      scenario->registerObserver(new IntensityObserver(*scenario));
-      scenario->registerObserver(new ArrivalObserver(*scenario));
-      scenario->registerObserver(new SourceObserver(*scenario));
-    }
+  const auto setup_scenario = [&result, &saves](Scenario* scenario) {
     // FIX: this should be relative to the start date, not the weather start date
     for (const auto& i : saves)
     {
@@ -471,58 +437,41 @@ Model::readScenarios(
     }
     result.push_back(scenario);
   };
-  if (Settings::surface())
+  for (const auto& kv : wx_)
   {
-    setup_scenario(new Scenario(
-      this,
-      0,
-      &wx_.at(0),
-      &wx_daily_.at(0),
-      start,
-      starts_.at(0),
-      start_point,
-      start_day,
-      last_date
-    ));
-  }
-  else
-  {
-    for (const auto& kv : wx_)
+    const auto id = kv.first;
+    const auto* cur_wx = &kv.second;
+    const auto* cur_daily = &wx_daily_.at(id);
+    if (nullptr != perimeter_)
     {
-      const auto id = kv.first;
-      const auto* cur_wx = &kv.second;
-      const auto* cur_daily = &wx_daily_.at(id);
-      if (nullptr != perimeter_)
+      setup_scenario(new Scenario(
+        this,
+        id,
+        cur_wx,
+        cur_daily,
+        start,
+        perimeter_,
+        start_point,
+        start_day,
+        last_date
+      ));
+    }
+    else
+    {
+      for (const auto& cur_start : starts_)
       {
+        // should always have at least the day before the fire in the weather stream
         setup_scenario(new Scenario(
           this,
           id,
           cur_wx,
           cur_daily,
           start,
-          perimeter_,
+          cur_start,
           start_point,
           start_day,
           last_date
         ));
-      }
-      else
-      {
-        for (const auto& cur_start : starts_)
-        {
-          // should always have at least the day before the fire in the weather stream
-          setup_scenario(new Scenario(
-            this,
-            id,
-            cur_wx,
-            cur_daily,
-            start,
-            cur_start,
-            start_point,
-            start_day,
-            last_date
-          ));
-        }
       }
     }
   }
@@ -540,7 +489,7 @@ Model::runTime() const
 bool
 Model::shouldStop() const noexcept
 {
-  return !Settings::surface() && (isOutOfTime() || isOverSimulationCountLimit());
+  return (isOutOfTime() || isOverSimulationCountLimit());
 }
 
 bool
@@ -558,14 +507,10 @@ Model::isOverSimulationCountLimit() const noexcept
 ProbabilityMap*
 Model::makeProbabilityMap(
   const DurationSize time,
-  const DurationSize start_time,
-  const int min_value,
-  const int low_max,
-  const int med_max,
-  const int max_value
+  const DurationSize start_time
 ) const
 {
-  return env_->makeProbabilityMap(time, start_time, min_value, low_max, med_max, max_value);
+  return env_->makeProbabilityMap(time, start_time);
 }
 
 static void
@@ -583,33 +528,13 @@ map<DurationSize, ProbabilityMap*>
 make_prob_map(
   const Model& model,
   const vector<DurationSize>& saves,
-  const DurationSize started,
-  const int min_value,
-  const int low_max,
-  const int med_max,
-  const int max_value
+  const DurationSize started
 )
 {
   map<DurationSize, ProbabilityMap*> result{};
   for (const auto& time : saves)
   {
-    result.emplace(
-      time,
-      model.makeProbabilityMap(time, started, min_value, low_max, med_max, max_value)
-    );
-  }
-  return result;
-}
-
-map<DurationSize, SafeVector*>
-make_size_map(
-  const vector<DurationSize>& saves
-)
-{
-  map<DurationSize, SafeVector*> result{};
-  for (const auto& time : saves)
-  {
-    result.emplace(time, new SafeVector());
+    result.emplace(time, model.makeProbabilityMap(time, started));
   }
   return result;
 }
@@ -632,10 +557,6 @@ Model::add_statistics(
   for (const auto& size : cur_sizes)
   {
     static_cast<void>(insert_sorted(all_sizes, size));
-  }
-  if (Settings::surface())
-  {
-    return true;
   }
   is_over_simulation_count_ = all_sizes->size() >= Settings::maximumCountSimulations();
   if (isOverSimulationCountLimit())
@@ -679,11 +600,6 @@ runs_required(
   const Model& model
 )
 {
-  if (Settings::deterministic())
-  {
-    logging::note("Stopping after iteration %ld because running in deterministic mode", i);
-    return 0;
-  }
   if (model.isOverSimulationCountLimit())
   {
     logging::note(
@@ -809,25 +725,9 @@ Model::runIterations(
   logging::verbose("Setting save points");
   const auto saves = iteration.savePoints();
   const auto started = iteration.startTime();
-  auto probabilities = make_prob_map(
-    *this,
-    saves,
-    started,
-    0,
-    Settings::intensityMaxLow(),
-    Settings::intensityMaxModerate(),
-    numeric_limits<int>::max()
-  );
+  auto probabilities = make_prob_map(*this, saves, started);
   vector<map<DurationSize, ProbabilityMap*>> all_probabilities{};
-  all_probabilities.push_back(make_prob_map(
-    *this,
-    saves,
-    started,
-    0,
-    Settings::intensityMaxLow(),
-    Settings::intensityMaxModerate(),
-    numeric_limits<int>::max()
-  ));
+  all_probabilities.push_back(make_prob_map(*this, saves, started));
   logging::verbose("Setting up initial intensity map with perimeter");
   auto runs_left = 1;
   bool is_being_cancelled = false;
@@ -918,202 +818,143 @@ Model::runIterations(
   // if using surface just run each start through in a loop here
   size_t cur_start = 0;
   auto reset_iter = [&cur_start, this, &mt_extinction, &mt_spread](Iteration& iter) {
-    if (Settings::surface())
-    {
-      if (cur_start >= starts_.size())
-      {
-        return false;
-      }
-      auto start_cell = starts_[cur_start];
-      iter.reset_with_new_start(start_cell);
-      ++cur_start;
-    }
-    else
     {
       iter.reset(&mt_extinction, &mt_spread);
     }
     return true;
   };
-  if (Settings::runAsync())
+  const auto HARDWARE_THREADS = static_cast<size_t>(std::thread::hardware_concurrency());
+  // maybe a bit slower but prefer to run all scenarios at the same time
+  const auto MAX_THREADS = max(HARDWARE_THREADS, scenarios_per_iteration);
+  if (MAX_THREADS > HARDWARE_THREADS)
   {
-    const auto HARDWARE_THREADS = static_cast<size_t>(std::thread::hardware_concurrency());
-    // maybe a bit slower but prefer to run all scenarios at the same time
-    const auto MAX_THREADS = max(HARDWARE_THREADS, scenarios_per_iteration);
-    if (MAX_THREADS > HARDWARE_THREADS)
+    logging::note(
+      "Increasing to use at least one thread for each of %ld scenarios",
+      scenarios_per_iteration
+    );
+    Model::task_limiter.set_limit(MAX_THREADS);
+  }
+  // no point in running multiple iterations if deterministic
+  const auto concurrent_iterations = 1;
+  for (size_t x = 1; x < concurrent_iterations; ++x)
+  {
+    all_iterations.push_back(readScenarios(start_point, start, start_day, last_date));
+    all_probabilities.push_back(make_prob_map(*this, saves, started));
+  }
+  auto run_scenario = [this,
+                       &is_being_cancelled,
+                       &scenarios_per_iteration,
+                       &scenarios_required_done,
+                       &scenarios_done,
+                       &all_probabilities,
+                       &all_iterations,
+                       &start_day](Scenario* s, size_t i, bool is_required) {
+    auto result = s->run(&all_probabilities[i]);
+    ++scenarios_done;
+    logging::extensive(
+      "Done %ld scenarios in iteration %ld which %s required",
+      scenarios_done,
+      i,
+      (is_required ? "is" : "is not")
+    );
+    if (is_required)
     {
-      logging::note(
-        "Increasing to use at least one thread for each of %ld scenarios",
-        scenarios_per_iteration
-      );
-      Model::task_limiter.set_limit(MAX_THREADS);
-    }
-    // no point in running multiple iterations if deterministic
-    const auto concurrent_iterations = 1;
-    for (size_t x = 1; x < concurrent_iterations; ++x)
-    {
-      all_iterations.push_back(readScenarios(start_point, start, start_day, last_date));
-      all_probabilities.push_back(make_prob_map(
-        *this,
-        saves,
-        started,
-        0,
-        Settings::intensityMaxLow(),
-        Settings::intensityMaxModerate(),
-        numeric_limits<int>::max()
-      ));
-    }
-    auto run_scenario = [this,
-                         &is_being_cancelled,
-                         &scenarios_per_iteration,
-                         &scenarios_required_done,
-                         &scenarios_done,
-                         &all_probabilities,
-                         &all_iterations,
-                         &start_day](Scenario* s, size_t i, bool is_required) {
-      auto result = s->run(&all_probabilities[i]);
-      ++scenarios_done;
-      logging::extensive(
+      logging::verbose(
         "Done %ld scenarios in iteration %ld which %s required",
         scenarios_done,
         i,
         (is_required ? "is" : "is not")
       );
-      if (is_required)
+      ++scenarios_required_done;
+      logging::debug(
+        "Have (%ld of %ld) scenarios and %s being cancelled",
+        scenarios_required_done,
+        scenarios_per_iteration,
+        (is_being_cancelled ? "is" : "not")
+      );
+      if (is_being_cancelled)
       {
-        logging::verbose(
-          "Done %ld scenarios in iteration %ld which %s required",
-          scenarios_done,
-          i,
-          (is_required ? "is" : "is not")
-        );
-        ++scenarios_required_done;
-        logging::debug(
-          "Have (%ld of %ld) scenarios and %s being cancelled",
-          scenarios_required_done,
-          scenarios_per_iteration,
-          (is_being_cancelled ? "is" : "not")
-        );
-        if (is_being_cancelled)
+        // no point in saving interim if final is done
+        if (scenarios_per_iteration != scenarios_required_done)
         {
-          // no point in saving interim if final is done
-          if (scenarios_per_iteration != scenarios_required_done)
-          {
-            logging::info(
-              "Saving interim results for (%ld of %ld) scenarios",
-              scenarios_required_done,
-              scenarios_per_iteration
-            );
-            saveProbabilities(all_probabilities[0], start_day, true);
-          }
+          logging::info(
+            "Saving interim results for (%ld of %ld) scenarios",
+            scenarios_required_done,
+            scenarios_per_iteration
+          );
+          saveProbabilities(all_probabilities[0], start_day, true);
         }
-      }
-      return result;
-    };
-    logging::debug("Created %d iterations to run concurrently", all_iterations.size());
-    size_t cur_iter = 0;
-    for (auto& iter : all_iterations)
-    {
-      if (reset_iter(iter))
-      {
-        auto& scenarios = iter.getScenarios();
-        for (auto s : scenarios)
-        {
-          threads.emplace_back(run_scenario, s, cur_iter, 0 == cur_iter);
-        }
-        ++cur_iter;
       }
     }
-    cur_iter = 0;
-    while (runs_left > 0)
-    {
-      // should have completed one iteration, so add it
-      auto& iteration = all_iterations[cur_iter];
-      // so now try to loop through and add iterations as they finish
-      // FIX: look at converting so that new threads get started as others complete
-      // - would have to have multiple Iterations so we keep the data from them separate?
-      size_t k = 0;
-      while (k < scenarios_per_iteration)
-      {
-        threads.front().join();
-        threads.pop_front();
-        ++k;
-      }
-      auto final_sizes = iteration.finalSizes();
-      ++iterations_done;
-      for (auto& kv : all_probabilities[cur_iter])
-      {
-        probabilities[kv.first]->addProbabilities(*kv.second);
-        // clear so we don't double count
-        kv.second->reset();
-      }
-      if (!add_statistics(&all_sizes, &means, &pct, final_sizes))
-      {
-        // ran out of time but timer should cancel everything
-        return finalize_probabilities();
-      }
-      {
-        if (Settings::surface())
-        {
-          runs_left = ignitionScenarios() - iterations_done;
-        }
-        else
-        {
-          runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
-          logging::note("Need another %d iterations", runs_left);
-        }
-      }
-      if (runs_left > 0)
-      {
-        if (reset_iter(iteration))
-        {
-          auto& scenarios = iteration.getScenarios();
-          for (auto s : scenarios)
-          {
-            threads.emplace_back(run_scenario, s, cur_iter, false);
-          }
-          ++cur_iter;
-          // loop around to start if required
-          cur_iter %= all_iterations.size();
-        }
-      }
-      else
-      {
-        // no runs required, so stop
-        return finalize_probabilities();
-      }
-    }
-    // everything should be done when this section ends
-  }
-  else
+    return result;
+  };
+  logging::debug("Created %d iterations to run concurrently", all_iterations.size());
+  size_t cur_iter = 0;
+  for (auto& iter : all_iterations)
   {
-    logging::note("Running in synchronous mode");
-    while (runs_left > 0)
+    if (reset_iter(iter))
     {
-      logging::note("Running iteration %d", iterations_done + 1);
+      auto& scenarios = iter.getScenarios();
+      for (auto s : scenarios)
+      {
+        threads.emplace_back(run_scenario, s, cur_iter, 0 == cur_iter);
+      }
+      ++cur_iter;
+    }
+  }
+  cur_iter = 0;
+  while (runs_left > 0)
+  {
+    // should have completed one iteration, so add it
+    auto& iteration = all_iterations[cur_iter];
+    // so now try to loop through and add iterations as they finish
+    // FIX: look at converting so that new threads get started as others complete
+    // - would have to have multiple Iterations so we keep the data from them separate?
+    size_t k = 0;
+    while (k < scenarios_per_iteration)
+    {
+      threads.front().join();
+      threads.pop_front();
+      ++k;
+    }
+    auto final_sizes = iteration.finalSizes();
+    ++iterations_done;
+    for (auto& kv : all_probabilities[cur_iter])
+    {
+      probabilities[kv.first]->addProbabilities(*kv.second);
+      // clear so we don't double count
+      kv.second->reset();
+    }
+    if (!add_statistics(&all_sizes, &means, &pct, final_sizes))
+    {
+      // ran out of time but timer should cancel everything
+      return finalize_probabilities();
+    }
+    {
+      runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
+      logging::note("Need another %d iterations", runs_left);
+    }
+    if (runs_left > 0)
+    {
       if (reset_iter(iteration))
       {
-        for (auto s : iteration.getScenarios())
+        auto& scenarios = iteration.getScenarios();
+        for (auto s : scenarios)
         {
-          s->run(&probabilities);
+          threads.emplace_back(run_scenario, s, cur_iter, false);
         }
-        ++iterations_done;
-        if (!add_statistics(&all_sizes, &means, &pct, iteration.finalSizes()))
-        {
-          // ran out of time but timer should cance everything
-          return finalize_probabilities();
-        }
-        if (Settings::surface())
-        {
-          runs_left = ignitionScenarios() - iterations_done;
-        }
-        else
-        {
-          runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
-          logging::note("Need another %d iterations", runs_left);
-        }
+        ++cur_iter;
+        // loop around to start if required
+        cur_iter %= all_iterations.size();
       }
     }
+    else
+    {
+      // no runs required, so stop
+      return finalize_probabilities();
+    }
   }
+  // everything should be done when this section ends
   return finalize_probabilities();
 }
 
@@ -1171,42 +1012,27 @@ Model::runScenarios(
   );
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
-  if (Settings::surface())
+  model.readWeather(yesterday, start_point.latitude(), weather_input);
+  if (model.wx_.empty())
   {
-    // yesterday should have constants to use
-    model.setWeather(yesterday, start_day);
-    model.year_ = start_time.tm_year + 1900;
+    logging::fatal("No weather provided");
   }
-  else
+  const auto& w = model.wx_.begin()->second;
+  logging::debug("Have weather from day %d to %d", w.minDate(), w.maxDate());
+  const auto numDays = (w.maxDate() - w.minDate() + 1);
+  const auto needDays = Settings::maxDateOffset();
+  if (numDays < needDays)
   {
-    model.readWeather(yesterday, start_point.latitude(), weather_input);
-    if (model.wx_.empty())
-    {
-      logging::fatal("No weather provided");
-    }
-    const auto& w = model.wx_.begin()->second;
-    logging::debug("Have weather from day %d to %d", w.minDate(), w.maxDate());
-    const auto numDays = (w.maxDate() - w.minDate() + 1);
-    const auto needDays = Settings::maxDateOffset();
-    if (numDays < needDays)
-    {
-      logging::fatal(
-        "Not enough weather to proceed - have %d days but looking for %d",
-        numDays,
-        needDays
-      );
-    }
-    // want to output internal representation of weather to file
-#ifdef DEBUG_WEATHER
-    if (!Settings::surface())
-    {
-      model.outputWeather();
-    }
-#endif
-    // want to check that start time is in the range of the weather data we have
-    logging::check_fatal(start < w.minDate(), "Start time is before weather streams start");
-    logging::check_fatal(start > w.maxDate(), "Start time is after weather streams end");
+    logging::fatal(
+      "Not enough weather to proceed - have %d days but looking for %d",
+      numDays,
+      needDays
+    );
   }
+  // want to output internal representation of weather to file
+  // want to check that start time is in the range of the weather data we have
+  logging::check_fatal(start < w.minDate(), "Start time is before weather streams start");
+  logging::check_fatal(start > w.maxDate(), "Start time is after weather streams end");
   logging::note(
     "Simulation start time of %f is %s",
     start,

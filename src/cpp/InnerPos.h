@@ -65,7 +65,7 @@ public:
   using BoundedPoint<DistanceSize, -1, 1, -1, 1>::BoundedPoint;
 };
 
-using ROSOffset = std::tuple<IntensitySize, ROSSize, Direction, Offset>;
+using ROSOffset = std::tuple<Offset>;
 using OffsetSet = vector<ROSOffset>;
 
 /**
@@ -84,7 +84,7 @@ class XYPos : public BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>
 public:
   using BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
 
-  constexpr Location
+  CONSTEXPR Location
   location() const
   {
     // HACK: Location is (row, column) and this is (x, y)
@@ -100,7 +100,7 @@ class CellPos : public BoundedPoint<Idx, 0, MAX_COLUMNS, 0, MAX_ROWS>
 public:
   using BoundedPoint<Idx, 0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
 
-  constexpr Location
+  CONSTEXPR Location
   location() const
   {
     // HACK: Location is (row, column) and this is (x, y)

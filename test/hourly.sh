@@ -43,10 +43,10 @@ echo "DAYS=${DAYS}"
   USE_TIME="/usr/bin/time -v"
 # fi
 
-opts="--ascii"
+opts=""
 # opts="--sim-area"
-# intensity=""
-intensity="-i"
+intensity=""
+# intensity="-i"
 # intensity="--no-intensity"
 
 # HACK: original latitude is giving 1ha fire in current fuel grids

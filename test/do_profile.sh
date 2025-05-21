@@ -20,7 +20,7 @@ NUM_PADDED=`printf "%04g" $(($NUM + 0))`
 echo $REV
 echo $MSG
 
-opts="--ascii"
+opts=""
 intensity=""
 # intensity="-i"
 # intensity="--no-intensity"

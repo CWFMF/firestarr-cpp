@@ -19,9 +19,7 @@ IntensityMap::IntensityMap(
 ) noexcept
   : model_(model),
     intensity_max_(model.environment().makeMap<IntensitySize>(false)),
-    rate_of_spread_at_max_(model.environment().makeMap<MathSize>(false)),
-    direction_of_spread_at_max_(model.environment().makeMap<DegreesSize>(false)),
-    is_burned_{model.environment().unburnable()}
+    is_burned_(model.environment().unburnable())
 {
 }
 
@@ -32,8 +30,6 @@ IntensityMap::IntensityMap(
   : IntensityMap(rhs.model_)
 {
   intensity_max_ = rhs.intensity_max_;
-  rate_of_spread_at_max_ = rhs.rate_of_spread_at_max_;
-  direction_of_spread_at_max_ = rhs.direction_of_spread_at_max_;
   is_burned_ = rhs.is_burned_;
 }
 
@@ -102,59 +98,20 @@ IntensityMap::ignite(
   const Location& location
 )
 {
-  burn(location, 1, 0, fs::Direction::Invalid);
+  burn(location);
 }
 
 void
 IntensityMap::burn(
-  const Location& location,
-  IntensitySize intensity,
-  MathSize ros,
-  fs::Direction raz
+  const Location& location
 )
 {
   lock_guard<mutex> lock(mutex_);
   if (!is_burned_.at(location.hash()))
   {
-    intensity_max_.set(location, intensity);
-    rate_of_spread_at_max_.set(location, ros);
-    direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees()));
+    intensity_max_.set(location, 1);
     is_burned_.set(location.hash());
   }
-  else
-  {
-    const auto intensity_old = intensity_max_.at(location);
-    if (intensity_old < intensity)
-    {
-      intensity_max_.set(location, intensity);
-    }
-    // update ros and direction if higher ros
-    const auto ros_old = rate_of_spread_at_max_.at(location);
-    if (ros_old < ros)
-    {
-      rate_of_spread_at_max_.set(location, ros);
-      direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees()));
-    }
-  }
-}
-
-FileList
-IntensityMap::save(
-  const string_view dir,
-  const string_view base_name
-) const
-{
-  lock_guard<mutex> lock(mutex_);
-  const auto name_intensity = string(base_name) + "_intensity";
-  const auto name_ros = string(base_name) + "_ros";
-  const auto name_raz = string(base_name) + "_raz";
-  // FIX: already done in IntensityObserver?
-  auto files = intensity_max_.saveToFile(dir, name_intensity);
-  // // HACK: writing a double to a tiff seems to not work?
-  // double is way too much precision for outputs
-  files.append_range(rate_of_spread_at_max_.saveToFile<float>(dir, name_ros));
-  files.append_range(direction_of_spread_at_max_.saveToFile(dir, name_raz));
-  return files;
 }
 
 MathSize

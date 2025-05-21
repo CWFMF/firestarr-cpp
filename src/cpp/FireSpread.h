@@ -56,9 +56,10 @@ public:
     int nd,
     const ptr<const FwiWeather> weather
   );
-  constexpr SpreadInfo(SpreadInfo&& rhs) noexcept = default;
+  CONSTEXPR
+  SpreadInfo(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo(const SpreadInfo& rhs) noexcept = default;
-  constexpr SpreadInfo&
+  CONSTEXPR SpreadInfo&
   operator=(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo&
   operator=(const SpreadInfo& rhs) noexcept = default;
@@ -134,6 +135,7 @@ public:
   [[nodiscard]] constexpr ptr<const FwiWeather>
   weather() const
   {
+    // HACK: use pointer so constexpr works
     return weather_;
   }
 
@@ -442,7 +444,7 @@ private:
   /**
    * \brief FwiWeather determining spread
    */
-  ptr<const FwiWeather> weather_ = nullptr;
+  const ptr<const FwiWeather> weather_ = nullptr;
   /**
    * \brief Time that spread is occurring
    */

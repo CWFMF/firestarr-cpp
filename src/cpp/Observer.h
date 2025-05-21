@@ -180,59 +180,6 @@ public:
   [[nodiscard]] DurationSize
   getValue(const Event& event) const noexcept override;
 };
-
-/**
- * \brief Tracks source Cell that fire arrived in Cell from.
- */
-class SourceObserver final : public MapObserver<CellIndex>
-{
-public:
-  ~SourceObserver() override = default;
-  SourceObserver(const SourceObserver& rhs) = delete;
-  SourceObserver(SourceObserver&& rhs) = delete;
-  SourceObserver&
-  operator=(const SourceObserver& rhs) = delete;
-  SourceObserver&
-  operator=(SourceObserver&& rhs) = delete;
-  /**
-   * \brief Constructor
-   * \param scenario Scenario to track
-   */
-  explicit SourceObserver(const Scenario& scenario);
-  [[nodiscard]] CellIndex
-  getValue(const Event& event) const noexcept override;
-};
-
-/**
- * \brief Tracks the intensity that Cells burn at.
- */
-class IntensityObserver final : public MapObserver<IntensitySize>
-{
-public:
-  ~IntensityObserver() override = default;
-  IntensityObserver(const IntensityObserver& rhs) = delete;
-  IntensityObserver(IntensityObserver&& rhs) = delete;
-  IntensityObserver&
-  operator=(const IntensityObserver& rhs) = delete;
-  IntensityObserver&
-  operator=(IntensityObserver&& rhs) = delete;
-  /**
-   * \brief Constructor
-   * \param scenario Scenario to observe
-   * \param suffix Suffix to append to output file
-   */
-  explicit IntensityObserver(const Scenario& scenario) noexcept;
-  [[nodiscard]] IntensitySize
-  getValue(const Event& event) const noexcept override;
-  /**
-   * \brief Save observations
-   * \param dir Directory to save to
-   * \param base_name Base file name to save to
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  save(const string_view dir, const string_view base_name) const override;
-};
 }
 
 #endif
