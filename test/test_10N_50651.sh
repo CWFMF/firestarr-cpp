@@ -30,9 +30,9 @@ fi
 
 opts=""
 # opts="--sim-area"
-# intensity=""
+intensity=""
 # intensity="-i"
-intensity="--no-intensity"
+# intensity="--no-intensity"
 
 DAYS="$1"
 if [ "" == "${DAYS}" ]; then
