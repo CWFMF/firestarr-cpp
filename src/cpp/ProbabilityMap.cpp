@@ -124,9 +124,9 @@ ProbabilityMap::addProbability(
   lock_guard<mutex> lock(mutex_);
   std::for_each(for_time.cbegin(), for_time.cend(), [this](auto&& kv) {
     const auto k = kv.first;
-    const auto v = kv.second;
     all_.data[k] += 1;
 #ifndef MODE_BP_ONLY
+    const auto v = kv.second;
     if (Settings::saveIntensity())
     {
       if (v >= min_value_ && v <= low_max_)

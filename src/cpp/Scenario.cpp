@@ -398,8 +398,19 @@ Scenario::evaluate(
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
       points_.insert(
+#ifndef MODE_BP_ONLY
         p0,
-        SpreadData(event.time(), NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
+#endif
+        SpreadData(
+          event.time()
+#ifndef MODE_BP_ONLY
+            ,
+          NO_INTENSITY,
+          NO_ROS,
+          Direction::Invalid,
+          Direction::Invalid
+#endif
+        ),
         x,
         y
       );
@@ -747,8 +758,19 @@ Scenario::run(
       // log_verbose("Adding point (%d, %d)",
       log_verbose("Adding point (%f, %f)", x, y);
       points_.insert(
+#ifndef MODE_BP_ONLY
         p0,
-        SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
+#endif
+        SpreadData(
+          start_time_
+#ifndef MODE_BP_ONLY
+          ,
+          NO_INTENSITY,
+          NO_ROS,
+          Direction::Invalid,
+          Direction::Invalid
+#endif
+        ),
         x,
         y
       );
@@ -885,16 +907,27 @@ apply_offsets_spreadkey(
     offsets.cend(),
     offsets_after_duration.begin(),
     [&duration, &arrival_time](const ROSOffset& r_p) {
+#ifdef MODE_BP_ONLY
+      const auto& p = std::get<0>(r_p);
+#else
       const auto& intensity = std::get<0>(r_p);
       const auto& ros = std::get<1>(r_p);
       const auto& raz = std::get<2>(r_p);
       const auto& p = std::get<3>(r_p);
+#endif
       // logging::verbose("ros %f; x %f; y %f; duration %f;",
       //               ros,
       //               p.first,
       //               p.second,
       //               duration);
-      return ROSOffset(intensity, ros, raz, Offset(p.first * duration, p.second * duration));
+      return ROSOffset(
+#ifndef MODE_BP_ONLY
+        intensity,
+        ros,
+        raz,
+#endif
+        Offset(p.first * duration, p.second * duration)
+      );
     }
   );
   logging::verbose(
@@ -905,7 +938,9 @@ apply_offsets_spreadkey(
   logging::verbose("cell_pts_map has %ld items", cell_pts_map.size());
   for (auto& pts_for_cell : cell_pts_map)
   {
+#ifndef MODE_BP_ONLY
     const Location& location = std::get<0>(pts_for_cell);
+#endif
     CellPoints& cell_pts = std::get<1>(pts_for_cell);
 #ifdef DEBUG_CELLPOINTS
     logging::note("cell_pts for (%d, %d) has %ld items", src.column(), src.row(), cell_pts.size());
@@ -918,10 +953,15 @@ apply_offsets_spreadkey(
       continue;
     }
     auto& pts = cell_pts.pts_.points();
+#ifndef MODE_BP_ONLY
     auto& dirs = cell_pts.pts_.directions();
+#endif
     // combine point and direction that lead to it so we can get unique values
     // c++23 is where zip() gets implemented
     // auto pt_dirs = std::ranges::views::zip(pts, dirs);
+#ifdef MODE_BP_ONLY
+    for (const auto& pt : pts)
+#else
     std::array<std::pair<InnerPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
     for (size_t i = 0; i < pts.size(); ++i)
     {
@@ -931,10 +971,13 @@ apply_offsets_spreadkey(
     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
     auto it_pt_dirs = pt_dirs.cbegin();
     while (it_pt_dirs != it_pt_dirs_last)
+#endif
     {
+#ifndef MODE_BP_ONLY
       const auto& pt_dir = *it_pt_dirs;
       const auto& pt = std::get<0>(pt_dir);
       const auto& dir = std::get<1>(pt_dir);
+#endif
       const auto& cell_x = cell_pts.cell_x_y_.first;
       const auto& cell_y = cell_pts.cell_x_y_.second;
       // // FIX: HACK: recompose into XYPos
@@ -944,12 +987,17 @@ apply_offsets_spreadkey(
       // should be quicker to loop over offsets in inner loop
       for (const ROSOffset& r_p : offsets_after_duration)
       {
+#ifdef MODE_BP_ONLY
+        const auto& out = std::get<0>(r_p);
+#else
         const auto& intensity = std::get<0>(r_p);
         const auto& ros = std::get<1>(r_p);
         const auto& raz = std::get<2>(r_p);
         const auto& out = std::get<3>(r_p);
+#endif
         const auto& x_o = out.first;
         const auto& y_o = out.second;
+#ifndef MODE_BP_ONLY
         const auto dir_diff = abs(raz.asDegrees() - dir);
         // #ifdef DEBUG_CELLPOINTS
         logging::verbose(
@@ -991,9 +1039,11 @@ apply_offsets_spreadkey(
         // the normal to the direction it came from
         // //       - but if we exclude too much then it can change how things spread, even if it is
         // a more representative angle for the grids if (is_initial || MAX_DEGREES >= dir_diff)
+#endif
         {
           const auto new_x = x_o + pt.first + cell_x;
           const auto new_y = y_o + pt.second + cell_y;
+#ifndef MODE_BP_ONLY
           logging::verbose(
             "(%d, %d): %f: [%f => (%f, %f)] + [%f => (%f, %f)] = [%f => (%f, %f)]",
             cell_x,
@@ -1009,9 +1059,21 @@ apply_offsets_spreadkey(
             new_x,
             new_y
           );
+#endif
           r1.insert(
+#ifndef MODE_BP_ONLY
             src,
-            SpreadData(arrival_time, intensity, ros, raz, Direction(dir, false)),
+#endif
+            SpreadData(
+              arrival_time
+#ifndef MODE_BP_ONLY
+              ,
+              intensity,
+              ros,
+              raz,
+              Direction(dir, false)
+#endif
+            ),
             new_x,
             new_y
           );
@@ -1020,7 +1082,9 @@ apply_offsets_spreadkey(
 #endif
         }
       }
+#ifndef MODE_BP_ONLY
       ++it_pt_dirs;
+#endif
     }
   }
   return r1;
