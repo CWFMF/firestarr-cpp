@@ -22,6 +22,7 @@ Iteration::Iteration(
   : scenarios_(std::move(scenarios))
 {
 }
+#ifndef MODE_BP_ONLY
 Iteration*
 Iteration::reset_with_new_start(
   const shared_ptr<topo::Cell>& start_cell
@@ -46,6 +47,7 @@ Iteration::reset_with_new_start(
   }
   return this;
 }
+#endif
 Iteration*
 Iteration::reset(
   mt19937* mt_extinction,

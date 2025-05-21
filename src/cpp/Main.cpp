@@ -392,6 +392,7 @@ main(
     register_setter<SlopeSize>(slope, "--slope", "Constant slope", false, &parse_value<SlopeSize>);
     register_setter<
       AspectSize>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
+#ifndef MODE_BP_ONLY
     register_setter<size_t>(
       &Settings::setStaticCuring,
       "--curing",
@@ -411,9 +412,11 @@ main(
       "--force-no-greenup",
       "Force no green up for all fires"
     );
+#endif
   }
   else
   {
+#ifndef MODE_BP_ONLY
     register_flag(&Settings::setSaveIndividual, true, "-i", "Save individual maps for simulations");
     register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
     register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
@@ -424,12 +427,14 @@ main(
       "--no-intensity",
       "Do not output intensity grids"
     );
+#endif
     register_flag(
       &Settings::setSaveProbability,
       false,
       "--no-probability",
       "Do not output probability grids"
     );
+#ifndef MODE_BP_ONLY
     register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
     register_flag(
       &Settings::setSaveSimulationArea,
@@ -437,6 +442,7 @@ main(
       "--sim-area",
       "Output simulation area grids"
     );
+#endif
     register_setter<const char*>(
       &Settings::setRasterRoot,
       "--raster-root",
@@ -451,6 +457,7 @@ main(
       false,
       &parse_raw
     );
+#ifndef MODE_BP_ONLY
     register_setter<size_t>(
       &Settings::setStaticCuring,
       "--curing",
@@ -470,7 +477,9 @@ main(
       "--force-no-greenup",
       "Force no green up for all fires"
     );
+#endif
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
+#ifndef MODE_BP_ONLY
     if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
     {
       fs::logging::note("Running in probability surface mode");
@@ -495,13 +504,16 @@ main(
     }
     else
     {
+#endif
       register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
+#ifndef MODE_BP_ONLY
       register_flag(
         &Settings::setDeterministic,
         true,
         "--deterministic",
         "Run deterministically (100% chance of spread & survival)"
       );
+#endif
       register_setter<
         ThresholdSize>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
@@ -516,7 +528,9 @@ main(
         "Startup precipitation between 1200 yesterday and start of hourly weather",
         false
       );
+#ifndef MODE_BP_ONLY
     }
+#endif
     register_setter<const char*>(
       &Settings::setOutputDateOffsets,
       "--output_date_offsets",

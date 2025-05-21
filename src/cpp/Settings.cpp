@@ -157,6 +157,7 @@ public:
   {
     return default_percent_dead_fir_;
   }
+#ifndef MODE_BP_ONLY
   /**
    * \brief The maximum fire intensity for the 'low' range of intensity (kW/m)
    * \return The maximum fire intensity for the 'low' range of intensity (kW/m)
@@ -175,6 +176,7 @@ public:
   {
     return intensity_max_moderate_;
   }
+#endif
   /**
    * \brief Confidence required before simulation stops (% / 100)
    * \return Confidence required before simulation stops (% / 100)
@@ -209,6 +211,7 @@ public:
   {
     fuel_lookup_table_file_ = filename;
   }
+#ifndef MODE_BP_ONLY
   /**
    * \brief Static curing value
    * \return Static curing value
@@ -235,6 +238,7 @@ public:
     static_curing_ = value;
     force_curing = true;
   }
+#endif
   /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used
    * (s)
@@ -691,6 +695,7 @@ Settings::fuelLookup() noexcept
 {
   return SettingsImplementation::instance().fuelLookup();
 }
+#ifndef MODE_BP_ONLY
 bool
 Settings::saveIndividual() noexcept
 {
@@ -775,6 +780,7 @@ Settings::setSaveIntensity(
 {
   SettingsImplementation::instance().save_intensity = value;
 }
+#endif
 bool
 Settings::saveProbability() noexcept
 {
@@ -787,6 +793,7 @@ Settings::setSaveProbability(
 {
   SettingsImplementation::instance().save_probability = value;
 }
+#ifndef MODE_BP_ONLY
 bool
 Settings::saveOccurrence() noexcept
 {
@@ -852,6 +859,7 @@ Settings::setStaticCuring(
 {
   SettingsImplementation::instance().setStaticCuring(value);
 }
+#endif
 MathSize
 Settings::minimumRos() noexcept
 {
@@ -899,6 +907,7 @@ Settings::defaultPercentDeadFir() noexcept
 {
   return SettingsImplementation::instance().defaultPercentDeadFir();
 }
+#ifndef MODE_BP_ONLY
 int
 Settings::intensityMaxLow() noexcept
 {
@@ -909,6 +918,7 @@ Settings::intensityMaxModerate() noexcept
 {
   return SettingsImplementation::instance().intensityMaxModerate();
 }
+#endif
 ThresholdSize
 Settings::confidenceLevel() noexcept
 {

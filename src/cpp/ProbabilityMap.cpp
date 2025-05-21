@@ -24,23 +24,30 @@ ProbabilityMap::ProbabilityMap(
   const string dir_out,
   const DurationSize time,
   const DurationSize start_time,
+#ifndef MODE_BP_ONLY
+
   const int min_value,
   const int low_max,
   const int med_max,
   const int max_value,
+#endif
   const data::GridBase& grid_info
 )
   : dir_out_(dir_out),
     all_(data::GridMap<size_t>(grid_info, 0)),
+#ifndef MODE_BP_ONLY
     high_(data::GridMap<size_t>(grid_info, 0)),
     med_(data::GridMap<size_t>(grid_info, 0)),
     low_(data::GridMap<size_t>(grid_info, 0)),
+#endif
     time_(time),
     start_time_(start_time),
+#ifndef MODE_BP_ONLY
     min_value_(min_value),
     max_value_(max_value),
     low_max_(low_max),
     med_max_(med_max),
+#endif
     perimeter_(nullptr)
 {
 }
@@ -51,10 +58,12 @@ ProbabilityMap::copyEmpty() const
     dir_out_,
     time_,
     start_time_,
+#ifndef MODE_BP_ONLY
     min_value_,
     low_max_,
     med_max_,
     max_value_,
+#endif
     all_
   );
 }
@@ -73,12 +82,15 @@ ProbabilityMap::addProbabilities(
 #ifndef DEBUG_PROBABILITY
   logging::check_fatal(rhs.time_ != time_, "Wrong time");
   logging::check_fatal(rhs.start_time_ != start_time_, "Wrong start time");
+#ifndef MODE_BP_ONLY
   logging::check_fatal(rhs.min_value_ != min_value_, "Wrong min value");
   logging::check_fatal(rhs.max_value_ != max_value_, "Wrong max value");
   logging::check_fatal(rhs.low_max_ != low_max_, "Wrong low max value");
   logging::check_fatal(rhs.med_max_ != med_max_, "Wrong med max value");
 #endif
+#endif
   lock_guard<mutex> lock(mutex_);
+#ifndef MODE_BP_ONLY
   if (Settings::saveIntensity())
   {
     for (auto&& kv : rhs.low_.data)
@@ -94,6 +106,7 @@ ProbabilityMap::addProbabilities(
       high_.data[kv.first] += kv.second;
     }
   }
+#endif
   for (auto&& kv : rhs.all_.data)
   {
     all_.data[kv.first] += kv.second;
@@ -113,6 +126,7 @@ ProbabilityMap::addProbability(
     const auto k = kv.first;
     const auto v = kv.second;
     all_.data[k] += 1;
+#ifndef MODE_BP_ONLY
     if (Settings::saveIntensity())
     {
       if (v >= min_value_ && v <= low_max_)
@@ -132,6 +146,7 @@ ProbabilityMap::addProbability(
         logging::fatal("Value %d doesn't fit into any range", v);
       }
     }
+#endif
   });
   const auto size = for_time.fireSize();
   static_cast<void>(util::insert_sorted(&sizes_, size));
@@ -174,7 +189,7 @@ ProbabilityMap::record_if_interim(
 {
   lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
   logging::verbose("Checking if %s is interim", filename);
-  if (NULL != strstr(filename, "interim_"))
+  if (nullptr != strstr(filename, "interim_"))
   {
     logging::verbose("Recording %s as interim", filename);
     // is an interim file, so keep path for later deleting
@@ -263,8 +278,10 @@ ProbabilityMap::saveAll(
     auto text = (is_interim ? "interim_" : "") + prefix;
     return make_string(text.c_str(), t, day);
   };
+#ifndef MODE_BP_ONLY
   if (sim::Settings::runAsync())
   {
+#endif
     vector<std::future<void>> results{};
     if (Settings::saveProbability())
     {
@@ -276,6 +293,7 @@ ProbabilityMap::saveAll(
         is_interim
       ));
     }
+#ifndef MODE_BP_ONLY
     if (Settings::saveOccurrence())
     {
       results.push_back(
@@ -294,11 +312,13 @@ ProbabilityMap::saveAll(
         async(launch::async, &ProbabilityMap::saveHigh, this, fix_string("intensity_H"))
       );
     }
+#endif
     results.push_back(async(launch::async, &ProbabilityMap::saveSizes, this, fix_string("sizes")));
     for (auto& result : results)
     {
       result.wait();
     }
+#ifndef MODE_BP_ONLY
   }
   else
   {
@@ -318,6 +338,7 @@ ProbabilityMap::saveAll(
     }
     saveSizes(fix_string("sizes"));
   }
+#endif
 }
 void
 ProbabilityMap::saveTotal(
@@ -344,6 +365,7 @@ ProbabilityMap::saveTotalCount(
 {
   saveToProbabilityFile<uint32_t>(all_, dir_out_, base_name, 1);
 }
+#ifndef MODE_BP_ONLY
 void
 ProbabilityMap::saveHigh(
   const string& base_name
@@ -365,13 +387,16 @@ ProbabilityMap::saveLow(
 {
   saveToProbabilityFile<float>(low_, dir_out_, base_name, static_cast<float>(numSizes()));
 }
+#endif
 void
 ProbabilityMap::reset()
 {
   all_.clear();
+#ifndef MODE_BP_ONLY
   low_.clear();
   med_.clear();
   high_.clear();
+#endif
   sizes_.clear();
 }
 }

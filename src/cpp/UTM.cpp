@@ -23,7 +23,7 @@ normalized_context(
 )
 {
   // FIX: this is WGS84, but do we need to support more than that for lat/long
-  PJ* P = proj_create_crs_to_crs(C, proj4_from.c_str(), proj4_to.c_str(), NULL);
+  PJ* P = proj_create_crs_to_crs(C, proj4_from.c_str(), proj4_to.c_str(), nullptr);
   fs::logging::check_fatal(0 == P, "Failed to create transformation object");
   // This will ensure that the order of coordinates for the input CRS
   // will be longitude, latitude, whereas EPSG:4326 mandates latitude,

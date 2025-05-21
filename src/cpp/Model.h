@@ -183,7 +183,7 @@ public:
    */
   [[nodiscard]]
 #ifdef NDEBUG
-  constexpr
+  CONSTEXPR
 #endif
     topo::Cell
     cell(
@@ -350,11 +350,14 @@ public:
   [[nodiscard]] ProbabilityMap*
   makeProbabilityMap(
     DurationSize time,
-    DurationSize start_time,
+    DurationSize start_time
+#ifndef MODE_BP_ONLY
+    ,
     int min_value,
     int low_max,
     int med_max,
     int max_value
+#endif
   ) const;
   ~Model() = default;
   /**
@@ -468,11 +471,13 @@ private:
    */
   map<DurationSize, ProbabilityMap*>
   runIterations(const topo::StartPoint& start_point, DurationSize start, Day start_day);
+#ifndef MODE_BP_ONLY
   /**
    * \brief Find all Cell(s) that can burn in entire Environment
    */
   void
   findAllStarts();
+#endif
   /**
    * Save probability rasters
    */

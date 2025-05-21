@@ -45,10 +45,12 @@ public:
     const string dir_out,
     DurationSize time,
     DurationSize start_time,
+#ifndef MODE_BP_ONLY
     int min_value,
     int low_max,
     int med_max,
     int max_value,
+#endif
     const data::GridBase& grid_info
   );
   /**
@@ -124,6 +126,7 @@ public:
    */
   void
   saveTotalCount(const string& base_name) const;
+#ifndef MODE_BP_ONLY
   /**
    * \brief Save map representing high intensities
    * \param base_name Base file name to save to
@@ -142,6 +145,7 @@ public:
    */
   void
   saveLow(const string& base_name) const;
+#endif
   /**
    * \brief Clear maps and return to initial state
    */
@@ -183,6 +187,7 @@ private:
    * \brief Map representing all intensities
    */
   data::GridMap<size_t> all_;
+#ifndef MODE_BP_ONLY
   /**
    * \brief Map representing high intensities
    */
@@ -195,6 +200,7 @@ private:
    * \brief Map representing low intensities
    */
   data::GridMap<size_t> low_;
+#endif
   /**
    * \brief List of sizes for perimeters that have been added
    */
@@ -211,6 +217,7 @@ private:
    * \brief Mutex for parallel access
    */
   mutable mutex mutex_;
+#ifndef MODE_BP_ONLY
   /**
    * \brief Lower bound of 'low' intensity range
    */
@@ -227,6 +234,7 @@ private:
    * \brief Upper bound of 'moderate' intensity range
    */
   const IntensitySize med_max_;
+#endif
   /**
    * \brief Initial ignition grid to apply to outputs
    */

@@ -423,6 +423,7 @@ Model::findStarts(
     logging::info("\t%d, %d", s->row(), s->column());
   }
 }
+#ifndef MODE_BP_ONLY
 void
 Model::findAllStarts()
 {
@@ -444,6 +445,7 @@ Model::findAllStarts()
   //   logging::debug("\t%d, %d", s->row(), s->column());
   // }
 }
+#endif
 void
 Model::makeStarts(
   Coordinates coordinates,
@@ -503,12 +505,14 @@ Model::makeStarts(
       logging::note("Using fire perimeter results in empty fire - changing to use point");
       perimeter_ = nullptr;
     }
+#ifndef MODE_BP_ONLY
     if (Settings::surface())
     {
       findAllStarts();
     }
     else
     {
+#endif
       logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
       //    if (0 == size && fuel::is_null_fuel(cell(location.hash())))
       if (0 == size && fuel::is_null_fuel(cell(location)))
@@ -519,7 +523,9 @@ Model::makeStarts(
       {
         starts_.push_back(make_shared<topo::Cell>(cell(location)));
       }
+#ifndef MODE_BP_ONLY
     }
+#endif
   }
   // if (nullptr != perimeter_)
   // {
@@ -544,15 +550,23 @@ Model::readScenarios(
   // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
   auto saves = Settings::outputDateOffsets();
+#ifndef MODE_BP_ONLY
   // logging::note("Should be setting up %ld offsets", saves.size());
   auto save_individual = Settings::saveIndividual();
-  const auto setup_scenario = [&result, save_individual, &saves](Scenario* scenario) {
+#endif
+  const auto setup_scenario = [&result,
+#ifndef MODE_BP_ONLY
+                               save_individual,
+#endif
+                               &saves](Scenario* scenario) {
+#ifndef MODE_BP_ONLY
     if (save_individual)
     {
       scenario->registerObserver(new IntensityObserver(*scenario));
       scenario->registerObserver(new ArrivalObserver(*scenario));
       scenario->registerObserver(new SourceObserver(*scenario));
     }
+#endif
     // FIX: this should be relative to the start date, not the weather start date
     for (const auto& i : saves)
     {
@@ -561,6 +575,7 @@ Model::readScenarios(
     // logging::note("Ended up with %ld save points initially", scenario->savePoints().size());
     result.push_back(scenario);
   };
+#ifndef MODE_BP_ONLY
   if (Settings::surface())
   {
     // logging::note("Setting up scenario for surface where wx_.size() is %ld", wx_.size());
@@ -578,6 +593,7 @@ Model::readScenarios(
   }
   else
   {
+#endif
     for (const auto& kv : wx_)
     {
       const auto id = kv.first;
@@ -617,7 +633,9 @@ Model::readScenarios(
         }
       }
     }
+#ifndef MODE_BP_ONLY
   }
+#endif
   return Iteration(result);
 }
 [[nodiscard]] std::chrono::seconds
@@ -630,7 +648,11 @@ Model::runTime() const
 bool
 Model::shouldStop() const noexcept
 {
-  return !Settings::surface() && (isOutOfTime() || isOverSimulationCountLimit());
+  return
+#ifndef MODE_BP_ONLY
+    !Settings::surface() &&
+#endif
+    (isOutOfTime() || isOverSimulationCountLimit());
 }
 bool
 Model::isOutOfTime() const noexcept
@@ -650,14 +672,27 @@ Model::isOverSimulationCountLimit() const noexcept
 ProbabilityMap*
 Model::makeProbabilityMap(
   const DurationSize time,
-  const DurationSize start_time,
+  const DurationSize start_time
+#ifndef MODE_BP_ONLY
+  ,
   const int min_value,
   const int low_max,
   const int med_max,
   const int max_value
+#endif
 ) const
 {
-  return env_->makeProbabilityMap(time, start_time, min_value, low_max, med_max, max_value);
+  return env_->makeProbabilityMap(
+    time,
+    start_time
+#ifndef MODE_BP_ONLY
+    ,
+    min_value,
+    low_max,
+    med_max,
+    max_value
+#endif
+  );
 }
 static void
 show_probabilities(
@@ -673,11 +708,14 @@ map<DurationSize, ProbabilityMap*>
 make_prob_map(
   const Model& model,
   const vector<DurationSize>& saves,
-  const DurationSize started,
+  const DurationSize started
+#ifndef MODE_BP_ONLY
+  ,
   const int min_value,
   const int low_max,
   const int med_max,
   const int max_value
+#endif
 )
 {
   map<DurationSize, ProbabilityMap*> result{};
@@ -685,7 +723,17 @@ make_prob_map(
   {
     result.emplace(
       time,
-      model.makeProbabilityMap(time, started, min_value, low_max, med_max, max_value)
+      model.makeProbabilityMap(
+        time,
+        started
+#ifndef MODE_BP_ONLY
+        ,
+        min_value,
+        low_max,
+        med_max,
+        max_value
+#endif
+      )
     );
   }
   return result;
@@ -721,10 +769,12 @@ Model::add_statistics(
   {
     static_cast<void>(util::insert_sorted(all_sizes, size));
   }
+#ifndef MODE_BP_ONLY
   if (Settings::surface())
   {
     return true;
   }
+#endif
   is_over_simulation_count_ = all_sizes->size() >= Settings::maximumCountSimulations();
   if (isOverSimulationCountLimit())
   {
@@ -766,11 +816,13 @@ runs_required(
   const Model& model
 )
 {
+#ifndef MODE_BP_ONLY
   if (Settings::deterministic())
   {
     logging::note("Stopping after iteration %ld because running in deterministic mode", i);
     return 0;
   }
+#endif
   if (model.isOverSimulationCountLimit())
   {
     logging::note(
@@ -897,21 +949,27 @@ Model::runIterations(
   auto probabilities = make_prob_map(
     *this,
     saves,
-    started,
+    started
+#ifndef MODE_BP_ONLY
+    ,
     0,
     Settings::intensityMaxLow(),
     Settings::intensityMaxModerate(),
     numeric_limits<int>::max()
+#endif
   );
   vector<map<DurationSize, ProbabilityMap*>> all_probabilities{};
   all_probabilities.push_back(make_prob_map(
     *this,
     saves,
-    started,
+    started
+#ifndef MODE_BP_ONLY
+    ,
     0,
     Settings::intensityMaxLow(),
     Settings::intensityMaxModerate(),
     numeric_limits<int>::max()
+#endif
   ));
   logging::verbose("Setting up initial intensity map with perimeter");
   auto runs_left = 1;
@@ -1022,6 +1080,7 @@ Model::runIterations(
   // HACK: just do this here so that we know it happened
   // iterations.reset(&mt_extinction, &mt_spread);
   auto reset_iter = [&cur_start, this, &mt_extinction, &mt_spread](Iteration& iter) {
+#ifndef MODE_BP_ONLY
     if (Settings::surface())
     {
       if (cur_start >= starts_.size())
@@ -1041,13 +1100,16 @@ Model::runIterations(
       ++cur_start;
     }
     else
+#endif
     {
       iter.reset(&mt_extinction, &mt_spread);
     }
     return true;
   };
+#ifndef MODE_BP_ONLY
   if (Settings::runAsync())
   {
+#endif
     // FIX: I think we can just have 2 Iteration objects and roll through starting
     // threads in the second one as the first one finishes?
     // const auto MAX_THREADS = static_cast<size_t>(std::thread::hardware_concurrency() * PCT_CPU);
@@ -1082,11 +1144,14 @@ Model::runIterations(
       all_probabilities.push_back(make_prob_map(
         *this,
         saves,
-        started,
+        started
+#ifndef MODE_BP_ONLY
+        ,
         0,
         Settings::intensityMaxLow(),
         Settings::intensityMaxModerate(),
         numeric_limits<int>::max()
+#endif
       ));
     }
     auto run_scenario = [this,
@@ -1180,11 +1245,13 @@ Model::runIterations(
       }
       // if (iterations_done >= MIN_ITERATIONS_BEFORE_CHECK)
       {
+#ifndef MODE_BP_ONLY
         if (Settings::surface())
         {
           runs_left = ignitionScenarios() - iterations_done;
         }
         else
+#endif
         {
           runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
           // runs_left = runs_required(iterations_done, &means, &pct, *this);
@@ -1211,7 +1278,8 @@ Model::runIterations(
         return finalize_probabilities();
       }
     }
-    // everything should be done when this section ends
+// everything should be done when this section ends
+#ifndef MODE_BP_ONLY
   }
   else
   {
@@ -1244,6 +1312,7 @@ Model::runIterations(
       }
     }
   }
+#endif
   return finalize_probabilities();
 }
 int
@@ -1310,6 +1379,7 @@ Model::runScenarios(
   );
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
+#ifndef MODE_BP_ONLY
   if (Settings::surface())
   {
     // yesterday should have constants to use
@@ -1318,6 +1388,7 @@ Model::runScenarios(
     // model.yesterday_ = yesterday;
   }
   else
+#endif
   {
     model.readWeather(yesterday, start_point.latitude(), weather_input);
     if (model.wx_.empty())
