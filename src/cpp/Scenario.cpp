@@ -540,6 +540,7 @@ Scenario::saveObservers(
   sxprintf(buffer, "%03zu_%06ld_%03d", id(), simulation(), static_cast<int>(time));
   saveObservers(string(buffer));
 }
+#ifndef MODE_BP_ONLY
 void
 Scenario::saveIntensity(
   const string& dir,
@@ -548,6 +549,7 @@ Scenario::saveIntensity(
 {
   intensity_->save(dir, base_name);
 }
+#endif
 bool
 Scenario::ran() const noexcept
 {
@@ -644,7 +646,15 @@ Scenario::burn(
 #endif
   // Observers only care about cells burning so do it here
   notify(event);
-  intensity_->burn(event.cell(), event.intensity(), event.ros(), event.raz());
+  intensity_->burn(
+    event.cell()
+#ifndef MODE_BP_ONLY
+      ,
+    event.intensity(),
+    event.ros(),
+    event.raz()
+#endif
+  );
 #ifdef DEBUG_GRIDS
   log_check_fatal(!intensity_->hasBurned(event.cell()), "Wasn't marked as burned after burn");
 #endif
@@ -763,8 +773,15 @@ Scenario::run(
     // would be burned already if perimeter applied
     if (canBurn(location))
     {
-      const auto
-        fake_event = Event::makeFireSpread(start_time_, 0, 0, Direction::Invalid, location);
+      const auto fake_event = Event::makeFireSpread(
+        start_time_,
+#ifndef MODE_BP_ONLY
+        0,
+        0,
+        Direction::Invalid,
+#endif
+        location
+      );
       burn(fake_event);
     }
   }
@@ -1198,14 +1215,21 @@ Scenario::scheduleFireSpread(
       // HACK: just use the first cell as the source
       // FIX: HACK: only output spread within for now
       // const auto& spread = pts.spread_internal_;
+#ifndef MODE_BP_ONLY
       const auto& spread = pts.spread_arrival_;
+#endif
       const auto fake_event = Event::makeFireSpread(
         new_time,
+#ifndef MODE_BP_ONLY
         spread.intensity(),
         spread.ros(),
         spread.direction(),
-        for_cell,
+#endif
+        for_cell
+#ifndef MODE_BP_ONLY
+        ,
         pts.sources()
+#endif
       );
       burn(fake_event);
     }

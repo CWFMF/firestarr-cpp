@@ -166,6 +166,7 @@ public:
   [[nodiscard]] DurationSize
   getValue(const Event& event) const noexcept override;
 };
+#ifndef MODE_BP_ONLY
 /**
  * \brief Tracks source Cell that fire arrived in Cell from.
  */
@@ -216,6 +217,7 @@ public:
   void
   save(const string& dir, const string& base_name) const override;
 };
+#endif
 }
 }
 #endif

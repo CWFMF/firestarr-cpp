@@ -47,6 +47,7 @@ ArrivalObserver::getValue(
 #endif
   return event.time();
 }
+#ifndef MODE_BP_ONLY
 SourceObserver::SourceObserver(
   const Scenario& scenario
 )
@@ -84,4 +85,5 @@ IntensityObserver::save(
   // FIX: save what scenario is tracking for now, but should be converted
   scenario_.saveIntensity(dir, base_name);
 }
+#endif
 }

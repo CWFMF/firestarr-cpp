@@ -139,18 +139,38 @@ public:
    * \param raz Spread azimuth for ros
    */
   void
-  burn(const Location& location, IntensitySize intensity, MathSize ros, fs::wx::Direction raz);
+  burn(
+    const Location& location
+#ifndef MODE_BP_ONLY
+    ,
+    IntensitySize intensity,
+    MathSize ros,
+    fs::wx::Direction raz
+#endif
+  );
   template <class P>
   void
   burn(
-    const Position<P>& position,
+    const Position<P>& position
+#ifndef MODE_BP_ONLY
+    ,
     const IntensitySize intensity,
     const MathSize ros,
     const fs::wx::Direction& raz
+#endif
   )
   {
-    burn(Location{position.hash()}, intensity, ros, raz);
+    burn(
+      Location{position.hash()}
+#ifndef MODE_BP_ONLY
+      ,
+      intensity,
+      ros,
+      raz
+#endif
+    );
   }
+#ifndef MODE_BP_ONLY
   /**
    * \brief Save contents to an ASCII file
    * \param dir Directory to save to
@@ -158,6 +178,7 @@ public:
    */
   void
   save(const string& dir, const string& base_name) const;
+#endif
   /**
    * \brief Size of the fire represented by this
    * \return Size of the fire represented by this
@@ -185,12 +206,14 @@ private:
    * \brief Map of intensity that cells have burned  at
    */
   unique_ptr<data::GridMap<IntensitySize>> intensity_max_;
+#ifndef MODE_BP_ONLY
   // HACK: just add ROS/RAZ into this object for now
   /**
    * \brief Map of rate of spread/direction that cells have burned with at max ros
    */
   unique_ptr<data::GridMap<MathSize>> rate_of_spread_at_max_;
   unique_ptr<data::GridMap<DegreesSize>> direction_of_spread_at_max_;
+#endif
   /**
    * \brief bitset denoting cells that can no longer burn
    */
