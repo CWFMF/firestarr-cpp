@@ -61,29 +61,15 @@ EnvironmentInfo::loadInfo(
   const string& in_elevation
 )
 {
-#ifndef MODE_BP_ONLY
-  if (sim::Settings::runAsync())
-  {
-#endif
-    auto fuel_async = async(launch::async, [in_fuel]() {
-      return data::read_header(in_fuel);
-    });
-    auto elevation_async = async(launch::async, [in_elevation]() {
-      return data::read_header(in_elevation);
-    });
-    const auto
-      e = new EnvironmentInfo(in_fuel, in_elevation, fuel_async.get(), elevation_async.get());
-    return unique_ptr<EnvironmentInfo>(e);
-#ifndef MODE_BP_ONLY
-  }
-  const auto e = new EnvironmentInfo(
-    in_fuel,
-    in_elevation,
-    data::read_header(in_fuel),
-    data::read_header(in_elevation)
-  );
+  auto fuel_async = async(launch::async, [in_fuel]() {
+    return data::read_header(in_fuel);
+  });
+  auto elevation_async = async(launch::async, [in_elevation]() {
+    return data::read_header(in_elevation);
+  });
+  const auto
+    e = new EnvironmentInfo(in_fuel, in_elevation, fuel_async.get(), elevation_async.get());
   return unique_ptr<EnvironmentInfo>(e);
-#endif
 }
 Environment
 EnvironmentInfo::load(

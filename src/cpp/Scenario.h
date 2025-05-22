@@ -29,16 +29,6 @@ class Event;
 using topo::Location;
 using topo::Position;
 using PointSet = vector<InnerPos>;
-#ifndef MODE_BP_ONLY
-/**
- * \brief Deleter for IObserver to get around incomplete class with unique_ptr
- */
-struct IObserver_deleter
-{
-  void
-  operator()(IObserver*) const;
-};
-#endif
 /**
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
  */
@@ -481,27 +471,6 @@ public:
   template <class V>
   void
   addSave(V time);
-#ifndef MODE_BP_ONLY
-  /**
-   * \brief Tell Observers to save their data with base file name
-   * \param base_name Base file name
-   */
-  void
-  saveObservers(const string& base_name) const;
-  /**
-   * \brief Tell Observers to save their data for the given time
-   * \param time Time to save data for
-   */
-  void
-  saveObservers(DurationSize time) const;
-  /**
-   * \brief Save burn intensity information
-   * \param dir Directory to save to
-   * \param base_name Base file name
-   */
-  void
-  saveIntensity(const string& dir, const string& base_name) const;
-#endif
   /**
    * \brief Whether or not this Scenario has run already
    * \return Whether or not this Scenario has run already
@@ -522,13 +491,6 @@ public:
     const DurationSize time_at_location
   ) const
   {
-#ifndef MODE_BP_ONLY
-    if (Settings::deterministic())
-    {
-      // always survive if deterministic
-      return true;
-    }
-#endif
     try
     {
       const auto fire_wx = weather_;
@@ -568,20 +530,6 @@ public:
    */
   void
   saveStats(DurationSize time) const;
-#ifndef MODE_BP_ONLY
-  /**
-   * \brief Register an IObserver that will be notified when Cells burn
-   * \param observer Observer to add to notification list
-   */
-  void
-  registerObserver(IObserver* observer);
-  /**
-   * \brief Notify IObservers that a Cell has burned
-   * \param event Event to notify IObservers of
-   */
-  void
-  notify(const Event& event) const;
-#endif
   /**
    * \brief Take whatever steps are necessary to process the given Event
    * \param event Event to process
@@ -620,12 +568,6 @@ protected:
     Day start_day,
     Day last_date
   );
-#ifndef MODE_BP_ONLY
-  /**
-   * \brief Observers to be notified when cells burn
-   */
-  list<unique_ptr<IObserver, IObserver_deleter>> observers_{};
-#endif
   /**
    * \brief List of times to save simulation
    */

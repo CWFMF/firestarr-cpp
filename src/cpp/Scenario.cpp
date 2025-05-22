@@ -55,15 +55,6 @@ do_par(
 {
   std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
 }
-#ifndef MODE_BP_ONLY
-void
-IObserver_deleter::operator()(
-  IObserver* ptr
-) const
-{
-  delete ptr;
-}
-#endif
 void
 Scenario::clear() noexcept
 {
@@ -73,12 +64,7 @@ Scenario::clear() noexcept
   arrival_ = {};
   //  points_.clear();
   points_ = {};
-#ifndef MODE_BP_ONLY
-  if (!Settings::surface())
-#endif
-  {
-    spread_info_ = {};
-  }
+  spread_info_ = {};
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
@@ -260,12 +246,6 @@ Scenario::reset_with_new_start(
   final_sizes_ = final_sizes;
   ran_ = false;
   clear();
-#ifndef MODE_BP_ONLY
-  for (const auto& o : observers_)
-  {
-    o->reset();
-  }
-#endif
   current_time_ = start_time_ - 1;
   points_ = {};
   intensity_ = make_unique<IntensityMap>(model());
@@ -336,12 +316,6 @@ Scenario::reset(
   // std::fill(extinction_thresholds_.begin(), extinction_thresholds_.end(), 0.5);
   //  std::fill(spread_thresholds_by_ros_.begin(), spread_thresholds_by_ros_.end(),
   //  SpreadInfo::calculateRosFromThreshold(0.5));
-#ifndef MODE_BP_ONLY
-  for (const auto& o : observers_)
-  {
-    o->reset();
-  }
-#endif
   current_time_ = start_time_ - 1;
   points_ = {};
   // don't do this until we run so that we don't allocate memory too soon
@@ -396,25 +370,12 @@ Scenario::evaluate(
       scheduleFireSpread(event);
       break;
     case Event::SAVE:
-#ifndef MODE_BP_ONLY
-      saveObservers(event.time());
-#endif
       saveStats(event.time());
       break;
     case Event::NEW_FIRE:
-#ifndef MODE_BP_ONLY
-      log_point(step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER);
-#endif
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
-      points_.insert(
-#ifndef MODE_BP_ONLY
-        p0,
-        SpreadData(event.time(), NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
-#endif
-        x,
-        y
-      );
+      points_.insert(x, y);
       if (fuel::is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -501,9 +462,6 @@ Scenario::Scenario(
     "No weather for last save time %s",
     make_timestamp(model->year(), last_save).c_str()
   );
-#ifndef MODE_BP_ONLY
-  init_log_points(model_->outputDirectory(), Settings::savePoints(), id_, start_time_);
-#endif
 }
 void
 Scenario::saveStats(
@@ -516,52 +474,6 @@ Scenario::saveStats(
     final_sizes_->addValue(intensity_->fireSize());
   }
 }
-#ifndef MODE_BP_ONLY
-void
-Scenario::registerObserver(
-  IObserver* observer
-)
-{
-  observers_.push_back(unique_ptr<IObserver, IObserver_deleter>(observer));
-}
-void
-Scenario::notify(
-  const Event& event
-) const
-{
-  for (const auto& o : observers_)
-  {
-    o->handleEvent(event);
-  }
-}
-void
-Scenario::saveObservers(
-  const string& base_name
-) const
-{
-  for (const auto& o : observers_)
-  {
-    o->save(model_->outputDirectory(), base_name);
-  }
-}
-void
-Scenario::saveObservers(
-  const DurationSize time
-) const
-{
-  char buffer[64]{0};
-  sxprintf(buffer, "%03zu_%06ld_%03d", id(), simulation(), static_cast<int>(time));
-  saveObservers(string(buffer));
-}
-void
-Scenario::saveIntensity(
-  const string& dir,
-  const string& base_name
-) const
-{
-  intensity_->save(dir, base_name);
-}
-#endif
 bool
 Scenario::ran() const noexcept
 {
@@ -570,11 +482,7 @@ Scenario::ran() const noexcept
 Scenario::Scenario(
   Scenario&& rhs
 ) noexcept
-  :
-#ifndef MODE_BP_ONLY
-    observers_(std::move(rhs.observers_)),
-#endif
-    save_points_(std::move(rhs.save_points_)),
+  : save_points_(std::move(rhs.save_points_)),
     extinction_thresholds_(std::move(rhs.extinction_thresholds_)),
     spread_thresholds_by_ros_(std::move(rhs.spread_thresholds_by_ros_)),
     current_time_(rhs.current_time_),
@@ -610,9 +518,6 @@ Scenario::operator=(
 {
   if (this != &rhs)
   {
-#ifndef MODE_BP_ONLY
-    observers_ = std::move(rhs.observers_);
-#endif
     save_points_ = std::move(rhs.save_points_);
     extinction_thresholds_ = std::move(rhs.extinction_thresholds_);
     spread_thresholds_by_ros_ = std::move(rhs.spread_thresholds_by_ros_);
@@ -662,18 +567,7 @@ Scenario::burn(
   );
 #endif
   // Observers only care about cells burning so do it here
-#ifndef MODE_BP_ONLY
-  notify(event);
-#endif
-  intensity_->burn(
-    event.cell()
-#ifndef MODE_BP_ONLY
-      ,
-    event.intensity(),
-    event.ros(),
-    event.raz()
-#endif
-  );
+  intensity_->burn(event.cell());
 #ifdef DEBUG_GRIDS
   log_check_fatal(!intensity_->hasBurned(event.cell()), "Wasn't marked as burned after burn");
 #endif
@@ -765,14 +659,7 @@ Scenario::run(
       const XYPos p0{x, y};
       // log_verbose("Adding point (%d, %d)",
       log_verbose("Adding point (%f, %f)", x, y);
-      points_.insert(
-#ifndef MODE_BP_ONLY
-        p0,
-        SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
-#endif
-        x,
-        y
-      );
+      points_.insert(x, y);
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
       // log_check_fatal(!e.second,
       //                 "Excepted to add point to new cell but (%ld, %ld) is already in map",
@@ -794,15 +681,7 @@ Scenario::run(
     // would be burned already if perimeter applied
     if (canBurn(location))
     {
-      const auto fake_event = Event::makeFireSpread(
-        start_time_,
-#ifndef MODE_BP_ONLY
-        0,
-        0,
-        Direction::Invalid,
-#endif
-        location
-      );
+      const auto fake_event = Event::makeFireSpread(start_time_, location);
       burn(fake_event);
     }
   }
@@ -825,31 +704,8 @@ Scenario::run(
   const auto completed = ++COMPLETED;
   // const auto count = Settings::surface() ? model_->ignitionScenarios() : (+COUNT);
   // HACK: use + to pull value out of atomic
-  const auto count =
-#ifndef MODE_BP_ONLY
-    Settings::surface() ? model_->scenarioCount() :
-#endif
-                        (+COUNT);
+  const auto count = (+COUNT);
   const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
-#ifndef MODE_BP_ONLY
-  if (Settings::surface())
-  {
-    const auto ratio_done = static_cast<MathSize>(completed) / count;
-    const auto s = model_->runTime().count();
-    const auto r = static_cast<size_t>(s / ratio_done) - s;
-    log_output(
-      log_level,
-      "[% d of % d] (%0.2f%%) <%lds : %lds remaining> Completed with final size % 0.1f ha",
-      completed,
-      count,
-      100 * ratio_done,
-      s,
-      r,
-      currentFireSize()
-    );
-  }
-  else
-#endif
   {
 #ifdef NDEBUG
     log_output(
@@ -906,27 +762,13 @@ apply_offsets_spreadkey(
     offsets.cend(),
     offsets_after_duration.begin(),
     [&duration, &arrival_time](const ROSOffset& r_p) {
-#ifdef MODE_BP_ONLY
       const auto& p = std::get<0>(r_p);
-#else
-      const auto& intensity = std::get<0>(r_p);
-      const auto& ros = std::get<1>(r_p);
-      const auto& raz = std::get<2>(r_p);
-      const auto& p = std::get<3>(r_p);
-#endif
       // logging::verbose("ros %f; x %f; y %f; duration %f;",
       //               ros,
       //               p.first,
       //               p.second,
       //               duration);
-      return ROSOffset(
-#ifndef MODE_BP_ONLY
-        intensity,
-        ros,
-        raz,
-#endif
-        Offset(p.first * duration, p.second * duration)
-      );
+      return ROSOffset(Offset(p.first * duration, p.second * duration));
     }
   );
   logging::verbose(
@@ -937,9 +779,6 @@ apply_offsets_spreadkey(
   logging::verbose("cell_pts_map has %ld items", cell_pts_map.size());
   for (auto& pts_for_cell : cell_pts_map)
   {
-#ifndef MODE_BP_ONLY
-    const Location& location = std::get<0>(pts_for_cell);
-#endif
     CellPoints& cell_pts = std::get<1>(pts_for_cell);
 #ifdef DEBUG_CELLPOINTS
     logging::note("cell_pts for (%d, %d) has %ld items", src.column(), src.row(), cell_pts.size());
@@ -952,31 +791,11 @@ apply_offsets_spreadkey(
       continue;
     }
     auto& pts = cell_pts.pts_.points();
-#ifndef MODE_BP_ONLY
-    auto& dirs = cell_pts.pts_.directions();
-#endif
     // combine point and direction that lead to it so we can get unique values
     // c++23 is where zip() gets implemented
     // auto pt_dirs = std::ranges::views::zip(pts, dirs);
-#ifdef MODE_BP_ONLY
     for (const auto& pt : pts)
-#else
-    std::array<std::pair<InnerPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
-    for (size_t i = 0; i < pts.size(); ++i)
     {
-      pt_dirs[i] = {pts[i], dirs[i]};
-    }
-    std::sort(pt_dirs.begin(), pt_dirs.end());
-    const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
-    auto it_pt_dirs = pt_dirs.cbegin();
-    while (it_pt_dirs != it_pt_dirs_last)
-#endif
-    {
-#ifndef MODE_BP_ONLY
-      const auto& pt_dir = *it_pt_dirs;
-      const auto& pt = std::get<0>(pt_dir);
-      const auto& dir = std::get<1>(pt_dir);
-#endif
       const auto& cell_x = cell_pts.cell_x_y_.first;
       const auto& cell_y = cell_pts.cell_x_y_.second;
       // // FIX: HACK: recompose into XYPos
@@ -986,95 +805,18 @@ apply_offsets_spreadkey(
       // should be quicker to loop over offsets in inner loop
       for (const ROSOffset& r_p : offsets_after_duration)
       {
-#ifdef MODE_BP_ONLY
         const auto& out = std::get<0>(r_p);
-#else
-        const auto& intensity = std::get<0>(r_p);
-        const auto& ros = std::get<1>(r_p);
-        const auto& raz = std::get<2>(r_p);
-        const auto& out = std::get<3>(r_p);
-#endif
         const auto& x_o = out.first;
         const auto& y_o = out.second;
-#ifndef MODE_BP_ONLY
-        const auto dir_diff = abs(raz.asDegrees() - dir);
-        // #ifdef DEBUG_CELLPOINTS
-        logging::verbose(
-          "location.x %d; location.y %d;"
-          "cell_x %d; cell_y %d;"
-          " ros %f; x %f; y %f; duration %f;\n",
-          location.column(),
-          location.row(),
-          cell_x,
-          cell_y,
-          ros,
-          pt.first,
-          pt.second,
-          duration
-        );
-        // #endif
-        // // initial burn will have an invalid direction, so needs to burn everywhere
-        // const auto is_initial = Direction::Invalid.asDegrees() == dir;
-        // // if (Direction::Invalid == raz)
-        // // {
-        // //   logging::warning("Invalid raz detected");
-        // // }
-        // // if (Direction::Invalid.asDegrees() == dir)
-        // // {
-        // //   logging::warning("Invalid direction detected");
-        // // }
-        // // if (INVALID_DIRECTION == raz.asDegrees() || (5.0 * MAX_SPREAD_ANGLE) >= dir_diff)
-        // // only spread in a direction that's in front of the normal to the angle it came from
-        // // i.e. the 90 degrees on either side of the raz
-        // const auto MAX_DEGREES = 90.0;
-        // // const auto MAX_DEGREES = 45.0;
-        // // const auto MAX_DEGREES = (5.0 * MAX_SPREAD_ANGLE);
-        // // FIX: this is causing reduced growth - think we need to consider if we're just
-        // initially in a cell and the raz is from the previous
-        // // could also only update the spread direction if the angles are good, but spread
-        // regardless?
-        // // const auto MAX_DEGREES = (2.0 * MAX_SPREAD_ANGLE);
-        // // NOTE: there should be no change in the extent of the fire if we exclude things behind
-        // the normal to the direction it came from
-        // //       - but if we exclude too much then it can change how things spread, even if it is
-        // a more representative angle for the grids if (is_initial || MAX_DEGREES >= dir_diff)
-#endif
         {
           const auto new_x = x_o + pt.first + cell_x;
           const auto new_y = y_o + pt.second + cell_y;
-#ifndef MODE_BP_ONLY
-          logging::verbose(
-            "(%d, %d): %f: [%f => (%f, %f)] + [%f => (%f, %f)] = [%f => (%f, %f)]",
-            cell_x,
-            cell_y,
-            dir_diff,
-            dir,
-            x_o,
-            y_o,
-            raz.asDegrees(),
-            pt.first,
-            pt.second,
-            raz.asDegrees(),
-            new_x,
-            new_y
-          );
-#endif
-          r1.insert(
-#ifndef MODE_BP_ONLY
-            src,
-            SpreadData(arrival_time, intensity, ros, raz, Direction(dir, false)),
-#endif
-            new_x,
-            new_y
-          );
+          r1.insert(new_x, new_y);
 #ifdef DEBUG_CELLPOINTS
           logging::note("r1 is now %ld items", r1.size());
 #endif
         }
       }
-#ifndef MODE_BP_ONLY
-      ++it_pt_dirs;
-#endif
     }
   }
   return r1;
@@ -1093,16 +835,8 @@ Scenario::scheduleFireSpread(
   // const auto wx_time = Settings::surface() ?
   // util::to_time(util::time_index(static_cast<Day>(time), 16)) : util::to_time(this_time); const
   // auto wx_time = util::to_time(this_time);
-  const auto wx =
-#ifndef MODE_BP_ONLY
-    Settings::surface() ? model_->yesterday() :
-#endif
-                        weather(time);
-  const auto wx_daily =
-#ifndef MODE_BP_ONLY
-    Settings::surface() ? model_->yesterday() :
-#endif
-                        weather_daily(time);
+  const auto wx = weather(time);
+  const auto wx_daily = weather_daily(time);
   // note("time is %f", time);
   current_time_ = time;
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
@@ -1132,9 +866,6 @@ Scenario::scheduleFireSpread(
     current_time_index_ = this_time;
     // seemed like it would be good to keep offsets but max_ros_ needs to reset or things slow to a
     // crawl?
-#ifndef MODE_BP_ONLY
-    if (!Settings::surface())
-#endif
     {
       spread_info_ = {};
     }
@@ -1168,7 +899,7 @@ Scenario::scheduleFireSpread(
         {
           max_ros_ = max(max_ros_, ros);
           // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace(loc, std::move(it->second));
+          to_spread[key].emplace_back(loc, std::move(it->second));
           it = points_.map_.erase(it);
 #ifdef DEBUG_CELLPOINTS
           auto& v = to_spread[key];
@@ -1254,14 +985,11 @@ Scenario::scheduleFireSpread(
     const auto max_intensity = (spread_info_.end() == seek_spread)
                                ? 0
                                : seek_spread->second.maxIntensity();
-// // if we don't have empty cells anymore then intensity should always be >0?
-// logging::check_fatal(max_intensity <= 0,
-//                      "Expected max_intensity to be > 0 but got %f",
-//                      max_intensity);
-// HACK: just use side-effect to log and check bounds
-#ifndef MODE_BP_ONLY
-    log_points(step_, STAGE_SPREAD, new_time, pts);
-#endif
+    // // if we don't have empty cells anymore then intensity should always be >0?
+    // logging::check_fatal(max_intensity <= 0,
+    //                      "Expected max_intensity to be > 0 but got %f",
+    //                      max_intensity);
+    // HACK: just use side-effect to log and check bounds
     if (canBurn(for_cell) && max_intensity > 0)
     {
       // // HACK: make sure it can't round down to 0
@@ -1271,22 +999,7 @@ Scenario::scheduleFireSpread(
       // HACK: just use the first cell as the source
       // FIX: HACK: only output spread within for now
       // const auto& spread = pts.spread_internal_;
-#ifndef MODE_BP_ONLY
-      const auto& spread = pts.spread_arrival_;
-#endif
-      const auto fake_event = Event::makeFireSpread(
-        new_time,
-#ifndef MODE_BP_ONLY
-        spread.intensity(),
-        spread.ros(),
-        spread.direction(),
-#endif
-        for_cell
-#ifndef MODE_BP_ONLY
-        ,
-        pts.sources()
-#endif
-      );
+      const auto fake_event = Event::makeFireSpread(new_time, for_cell);
       burn(fake_event);
     }
     if (!(*unburnable_)[for_cell.hash()]
@@ -1294,9 +1007,6 @@ Scenario::scheduleFireSpread(
         && ((survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
         ))
     {
-#ifndef MODE_BP_ONLY
-      log_points(step_, STAGE_CONDENSE, new_time, pts);
-#endif
       const auto r = for_cell.row();
       const auto c = for_cell.column();
       const Location loc{r, c};

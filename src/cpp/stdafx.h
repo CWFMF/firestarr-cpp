@@ -5,7 +5,6 @@
 #ifndef FS_STDAFX_H
 #define FS_STDAFX_H
 
-#define MODE_BP_ONLY 1
 #if __cplusplus >= 202211L   // C++23
 #define CPP23
 #endif

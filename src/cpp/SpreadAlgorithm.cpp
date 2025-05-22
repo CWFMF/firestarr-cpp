@@ -61,21 +61,11 @@ OriginalSpreadAlgorithm::calculate_offsets(
       return false;
     }
     const auto ros_cell = ros / cell_size_;
-#ifndef MODE_BP_ONLY
-    const auto intensity = fuel::fire_intensity(tfc, ros);
-#endif
     // spreading, so figure out offset from current point
-    offsets.emplace_back(
-#ifndef MODE_BP_ONLY
-      intensity,
-      ros,
-      Direction(direction, true),
-#endif
-      Offset{
-        static_cast<DistanceSize>(ros_cell * _sin(direction)),
-        static_cast<DistanceSize>(ros_cell * _cos(direction))
-      }
-    );
+    offsets.emplace_back(Offset{
+      static_cast<DistanceSize>(ros_cell * _sin(direction)),
+      static_cast<DistanceSize>(ros_cell * _cos(direction))
+    });
     return true;
   };
   // if not over spread threshold then don't spread
@@ -181,21 +171,11 @@ WidestEllipseAlgorithm::calculate_offsets(
       return false;
     }
     const auto ros_cell = ros / cell_size_;
-#ifndef MODE_BP_ONLY
-    const auto intensity = fuel::fire_intensity(tfc, ros);
-#endif
     // spreading, so figure out offset from current point
-    offsets.emplace_back(
-#ifndef MODE_BP_ONLY
-      intensity,
-      ros,
-      Direction(direction, true),
-#endif
-      Offset{
-        static_cast<DistanceSize>(ros_cell * _sin(direction)),
-        static_cast<DistanceSize>(ros_cell * _cos(direction))
-      }
-    );
+    offsets.emplace_back(Offset{
+      static_cast<DistanceSize>(ros_cell * _sin(direction)),
+      static_cast<DistanceSize>(ros_cell * _cos(direction))
+    });
     // // HACK: avoid bounds check
     // offsets.emplace_back(ros_cell * _sin(direction), ros_cell * _cos(direction), false);
 #ifdef DEBUG_POINTS
