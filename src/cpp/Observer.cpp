@@ -6,6 +6,7 @@
 #include "Observer.h"
 namespace fs::sim
 {
+#ifndef MODE_BP_ONLY
 string
 IObserver::makeName(
   const string& base_name,
@@ -47,7 +48,6 @@ ArrivalObserver::getValue(
 #endif
   return event.time();
 }
-#ifndef MODE_BP_ONLY
 SourceObserver::SourceObserver(
   const Scenario& scenario
 )

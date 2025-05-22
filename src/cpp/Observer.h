@@ -14,6 +14,7 @@ namespace fs
 {
 namespace sim
 {
+#ifndef MODE_BP_ONLY
 class Event;
 class Scenario;
 /**
@@ -166,7 +167,6 @@ public:
   [[nodiscard]] DurationSize
   getValue(const Event& event) const noexcept override;
 };
-#ifndef MODE_BP_ONLY
 /**
  * \brief Tracks source Cell that fire arrived in Cell from.
  */

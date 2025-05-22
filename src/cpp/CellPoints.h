@@ -249,8 +249,8 @@ public:
   //   const array_pts points() const;
   bool
   empty() const;
-  SpreadData spread_arrival_;
 #ifndef MODE_BP_ONLY
+  SpreadData spread_arrival_;
   SpreadData spread_internal_;
   SpreadData spread_exit_;
 #endif
