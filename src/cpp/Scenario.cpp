@@ -410,17 +410,8 @@ Scenario::evaluate(
       points_.insert(
 #ifndef MODE_BP_ONLY
         p0,
+        SpreadData(event.time(), NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
 #endif
-        SpreadData(
-          event.time()
-#ifndef MODE_BP_ONLY
-            ,
-          NO_INTENSITY,
-          NO_ROS,
-          Direction::Invalid,
-          Direction::Invalid
-#endif
-        ),
         x,
         y
       );
@@ -777,17 +768,8 @@ Scenario::run(
       points_.insert(
 #ifndef MODE_BP_ONLY
         p0,
+        SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
 #endif
-        SpreadData(
-          start_time_
-#ifndef MODE_BP_ONLY
-          ,
-          NO_INTENSITY,
-          NO_ROS,
-          Direction::Invalid,
-          Direction::Invalid
-#endif
-        ),
         x,
         y
       );
@@ -1080,17 +1062,8 @@ apply_offsets_spreadkey(
           r1.insert(
 #ifndef MODE_BP_ONLY
             src,
+            SpreadData(arrival_time, intensity, ros, raz, Direction(dir, false)),
 #endif
-            SpreadData(
-              arrival_time
-#ifndef MODE_BP_ONLY
-              ,
-              intensity,
-              ros,
-              raz,
-              Direction(dir, false)
-#endif
-            ),
             new_x,
             new_y
           );
@@ -1195,7 +1168,7 @@ Scenario::scheduleFireSpread(
         {
           max_ros_ = max(max_ros_, ros);
           // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(loc, std::move(it->second));
+          to_spread[key].emplace(loc, std::move(it->second));
           it = points_.map_.erase(it);
 #ifdef DEBUG_CELLPOINTS
           auto& v = to_spread[key];
