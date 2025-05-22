@@ -5,6 +5,7 @@
 
 namespace fs::sim
 {
+#ifndef MODE_BP_ONLY
 // FIX: clean this up but for now just hide the details from outside
 class LogPoints
 {
@@ -225,4 +226,5 @@ log_points(
 {
   fct_log_points(step, stage, time, points);
 }
+#endif
 }
