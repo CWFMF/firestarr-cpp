@@ -87,8 +87,8 @@ Model::Model(
   const auto nd_for_point = calculate_nd_ref_for_point(env->elevation(), start_point);
   for (auto day = 0; day < MAX_DAYS; ++day)
   {
-    nd_.at(static_cast<size_t>(day)) = static_cast<int>(abs(day - nd_for_point));
-    logging::verbose(
+    nd_.at(static_cast<size_t>(day)) = static_cast<int>(day - nd_for_point);
+    logging::info(
       "Day %d has nd %d, is%s green, %d%% curing",
       day,
       nd_.at(static_cast<size_t>(day)),
