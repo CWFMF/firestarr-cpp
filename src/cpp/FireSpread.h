@@ -257,9 +257,10 @@ public:
    */
   [[nodiscard]] static constexpr double
   foliarMoisture(
-    const int nd
+    int nd
   )
   {
+    nd = abs(nd);
     // don't need to check  `&& nd < 50` in second part because of reordering
     return nd >= 50 ? 120.0
          : nd >= 30 ? 32.9 + 3.17 * nd - 0.0288 * nd * nd
