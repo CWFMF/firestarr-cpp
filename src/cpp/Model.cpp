@@ -88,7 +88,7 @@ Model::Model(
   for (auto day = 0; day < MAX_DAYS; ++day)
   {
     nd_.at(static_cast<size_t>(day)) = static_cast<int>(day - nd_for_point);
-    logging::info(
+    logging::debug(
       "Day %d has nd %d, is%s green, %d%% curing",
       day,
       nd_.at(static_cast<size_t>(day)),
