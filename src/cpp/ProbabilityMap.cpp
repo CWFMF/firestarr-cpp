@@ -14,6 +14,11 @@ static constexpr size_t VALUE_PROCESSED = 4;
  */
 static set<string> PATHS_INTERIM{};
 static mutex PATHS_INTERIM_MUTEX{};
+ProbabilityMap::~ProbabilityMap()
+{
+  // make sure we don't delete if still locked
+  lock_guard<mutex> lock(mutex_);
+}
 ProbabilityMap::ProbabilityMap(
   const DurationSize time,
   const DurationSize start_time,
@@ -32,7 +37,11 @@ ProbabilityMap* ProbabilityMap::copyEmpty() const
 {
   return new ProbabilityMap(time_, start_time_, min_value_, low_max_, med_max_, max_value_, all_);
 }
-void ProbabilityMap::setPerimeter(const Perimeter* const perimeter) { perimeter_ = perimeter; }
+void ProbabilityMap::setPerimeter(const Perimeter* const perimeter)
+{
+  lock_guard<mutex> lock(mutex_);
+  perimeter_ = perimeter;
+}
 void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
 {
 #ifndef DEBUG_PROBABILITY
@@ -44,6 +53,8 @@ void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
   logging::check_fatal(rhs.med_max_ != med_max_, "Wrong med max value");
 #endif
   lock_guard<mutex> lock(mutex_);
+  // need to lock both maps
+  lock_guard<mutex> lock_rhs(rhs.mutex_);
   if (Settings::saveIntensity())
   {
     for (auto&& kv : rhs.low_.data)
@@ -103,6 +114,7 @@ Statistics ProbabilityMap::getStatistics() const { return Statistics{getSizes()}
 size_t ProbabilityMap::numSizes() const noexcept { return sizes_.size(); }
 void ProbabilityMap::show() const
 {
+  lock_guard<mutex> lock(mutex_);
   // even if we only ran the actuals we'll still have multiple scenarios
   // with different randomThreshold values
   const auto day = static_cast<int>(time_ - floor(start_time_));
@@ -116,27 +128,34 @@ void ProbabilityMap::show() const
     s.median()
   );
 }
-FileList ProbabilityMap::record_if_interim(FileList&& files) const
+[[nodiscard]] FileList ProbabilityMap::record_if_interim(FileList&& files) const
 {
-  lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
+  lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
   for (const auto& f : files)
   {
     const auto filename = f.c_str();
     logging::verbose("Checking if %s is interim", filename);
     if (nullptr != strstr(filename, "interim_"))
     {
-      logging::verbose("Recording %s as interim", filename);
-      // is an interim file, so keep path for later deleting
-      PATHS_INTERIM.emplace(filename);
-      logging::check_fatal(
-        !PATHS_INTERIM.contains(filename), "Expected %s to be in interim files list", filename
-      );
+      const auto filename = f.c_str();
+      logging::verbose("Checking if %s is interim", filename);
+      if (nullptr != strstr(filename, "interim_"))
+      {
+        logging::verbose("Recording %s as interim", filename);
+        // is an interim file, so keep path for later deleting
+        PATHS_INTERIM.emplace(filename);
+        logging::check_fatal(
+          !PATHS_INTERIM.contains(filename), "Expected %s to be in interim files list", filename
+        );
+      }
     }
   }
   return files;
 }
-FileList ProbabilityMap::saveSizes(const string_view output_directory, const string_view base_name)
-  const
+[[nodiscard]] FileList ProbabilityMap::saveSizes(
+  const string_view output_directory,
+  const string_view base_name
+) const
 {
   const auto filename = string(output_directory) + string(base_name) + ".csv";
   ofstream out{filename};
@@ -162,7 +181,7 @@ string make_string(const char* name, const tm& t, const int day)
 };
 void ProbabilityMap::deleteInterim()
 {
-  lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
+  lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
   for (const auto& path : PATHS_INTERIM)
   {
     logging::debug("Removing interim file %s", path.c_str());
@@ -184,7 +203,7 @@ void ProbabilityMap::deleteInterim()
     }
   }
 }
-FileList ProbabilityMap::saveAll(
+[[nodiscard]] FileList ProbabilityMap::saveAll(
   const string_view output_directory,
   const tm& start_time,
   const DurationSize time,
@@ -271,7 +290,7 @@ FileList ProbabilityMap::saveAll(
   }
   return files;
 }
-FileList ProbabilityMap::saveTotal(
+[[nodiscard]] FileList ProbabilityMap::saveTotal(
   const string_view output_directory,
   const string_view base_name,
   const bool is_interim
@@ -291,7 +310,7 @@ FileList ProbabilityMap::saveTotal(
     with_perim, output_directory, base_name, static_cast<float>(numSizes())
   );
 }
-FileList ProbabilityMap::saveTotalCount(
+[[nodiscard]] FileList ProbabilityMap::saveTotalCount(
   const string_view output_directory,
   const string_view base_name
 ) const
@@ -323,6 +342,7 @@ FileList ProbabilityMap::saveLow(const string_view output_directory, const strin
 }
 void ProbabilityMap::reset()
 {
+  lock_guard<mutex> lock(mutex_);
   all_.clear();
   low_.clear();
   med_.clear();
