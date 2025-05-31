@@ -24,7 +24,7 @@ class ProbabilityMap
 {
 public:
   ProbabilityMap() = delete;
-  ~ProbabilityMap() = default;
+  ~ProbabilityMap();
   ProbabilityMap(const ProbabilityMap& rhs) noexcept = delete;
   ProbabilityMap(ProbabilityMap&& rhs) noexcept = delete;
   ProbabilityMap&
@@ -51,12 +51,6 @@ public:
     const GridBase& grid_info
   );
   /**
-   * \brief Create a copy of this that is empty
-   * \return New empty Probability with same range bounds and times
-   */
-  ProbabilityMap*
-  copyEmpty() const;
-  /**
    * \brief Assign perimeter to use for marking cells as initial perimeter
    * \param perimeter Ignition grid to store for marking in outputs
    */
@@ -76,6 +70,41 @@ public:
   void
   addProbability(const IntensityMap& for_time);
   /**
+   * \brief Output Statistics to log
+   */
+  void
+  show() const;
+  /**
+   * \brief Save total, low, moderate, and high maps, and output information to log
+   * \param start_time Start time of simulation
+   * \param time Time for these maps
+   */
+  [[nodiscard]] FileList
+  saveAll(
+    string_view output_directory,
+    const tm& start_time,
+    DurationSize time,
+    const bool is_interim
+  ) const;
+  /**
+   * \brief Clear maps and return to initial state
+   */
+  void
+  reset();
+  /**
+   * Delete interim output files
+   */
+  static void
+  deleteInterim();
+
+private:
+  /**
+   * \brief Create a copy of this that is empty
+   * \return New empty Probability with same range bounds and times
+   */
+  ProbabilityMap*
+  copyEmpty() const;
+  /**
    * \brief List of sizes of IntensityMaps that have been added
    * \return List of sizes of IntensityMaps that have been added
    */
@@ -94,11 +123,6 @@ public:
   [[nodiscard]] size_t
   numSizes() const noexcept;
   /**
-   * \brief Output Statistics to log
-   */
-  void
-  show() const;
-  /**
    * \brief Save list of sizes
    * \param output_directory Directory to save to
    * \param base_name Base name of file to save into
@@ -106,21 +130,6 @@ public:
    */
   [[nodiscard]] FileList
   saveSizes(const string_view output_directory, const string_view base_name) const;
-  /**
-   * \brief Save total, low, moderate, and high maps, and output information to log
-   * \param output_directory Directory to save to
-   * \param start_time Start time of simulation
-   * \param time Time for these maps
-   * \param start_day Day that simulation started
-   * \return FileList of file names saved to
-   */
-  [[nodiscard]] FileList
-  saveAll(
-    const string_view output_directory,
-    const tm& start_time,
-    DurationSize time,
-    const bool is_interim
-  ) const;
   /**
    * \brief Save map representing all intensities
    * \param output_directory Directory to save to
@@ -162,22 +171,12 @@ public:
    */
   [[nodiscard]] FileList
   saveLow(const string_view output_directory, const string_view base_name) const;
-  /**
-   * \brief Clear maps and return to initial state
-   */
-  void
-  reset();
-  /**
-   * Delete interim output files
-   */
-  static void
-  deleteInterim();
 
 private:
   /**
    * \brief Make note of any interim files for later deletion
    */
-  FileList
+  [[nodiscard]] FileList
   record_if_interim(FileList&& files) const;
 
   /**
@@ -185,7 +184,7 @@ private:
    * \return Path for file that was written
    */
   template <class R>
-  FileList
+  [[nodiscard]] FileList
   saveToProbabilityFile(
     const GridMap<size_t>& grid,
     const string_view dir,
