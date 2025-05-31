@@ -547,7 +547,7 @@ make_prob_map(
   return result;
 }
 
-bool
+void
 Model::add_statistics(
   vector<MathSize>* all_sizes,
   vector<MathSize>* means,
@@ -567,25 +567,6 @@ Model::add_statistics(
     static_cast<void>(insert_sorted(all_sizes, size));
   }
   is_over_simulation_count_ = all_sizes->size() >= Settings::maximumCountSimulations();
-  if (isOverSimulationCountLimit())
-  {
-    logging::note(
-      "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
-      all_sizes->size(),
-      Settings::maximumCountSimulations()
-    );
-    return false;
-  }
-  if (isOutOfTime())
-  {
-    logging::note(
-      "Stopping after %d iterations. Time limit of %d seconds has been reached.",
-      pct->size(),
-      Settings::maximumTimeSeconds()
-    );
-    return false;
-  }
-  return true;
 }
 
 /*!
@@ -966,15 +947,9 @@ Model::runIterations(
       // clear so we don't double count
       kv.second->reset();
     }
-    if (!add_statistics(&all_sizes, &means, &pct, final_sizes))
-    {
-      // ran out of time but timer should cancel everything
-      return finalize_probabilities();
-    }
-    {
-      runs_left = runs_required(iterations_done_, &all_sizes, &means, &pct, *this);
-      logging::note("Need another %d iterations", runs_left);
-    }
+    add_statistics(&all_sizes, &means, &pct, final_sizes);
+    runs_left = runs_required(iterations_done_, &all_sizes, &means, &pct, *this);
+    logging::note("Need another %d iterations", runs_left);
     if (runs_left > 0)
     {
       if (reset_iter(iteration))
@@ -988,11 +963,6 @@ Model::runIterations(
         // loop around to start if required
         cur_iter %= all_iterations.size();
       }
-    }
-    else
-    {
-      // no runs required, so stop
-      return finalize_probabilities();
     }
   }
   // everything should be done when this section ends

@@ -446,7 +446,7 @@ private:
    * \param pct 95th percentile sizes per iteration
    * \param cur_sizes Sizes to add to statistics
    */
-  [[nodiscard]] bool
+  void
   add_statistics(
     vector<MathSize>* all_sizes,
     vector<MathSize>* means,
