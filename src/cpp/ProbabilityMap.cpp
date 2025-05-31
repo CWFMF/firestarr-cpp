@@ -20,6 +20,12 @@ static constexpr size_t VALUE_PROCESSED = 4;
 static set<string> PATHS_INTERIM{};
 static mutex PATHS_INTERIM_MUTEX{};
 
+ProbabilityMap::~ProbabilityMap()
+{
+  // make sure we don't delete if still locked
+  lock_guard<mutex> lock(mutex_);
+}
+
 ProbabilityMap::ProbabilityMap(
   const string dir_out,
   const DurationSize time,
@@ -43,6 +49,7 @@ ProbabilityMap::setPerimeter(
   const topo::Perimeter* const perimeter
 )
 {
+  lock_guard<mutex> lock(mutex_);
   perimeter_ = perimeter;
 }
 void
@@ -55,6 +62,8 @@ ProbabilityMap::addProbabilities(
   logging::check_fatal(rhs.start_time_ != start_time_, "Wrong start time");
 #endif
   lock_guard<mutex> lock(mutex_);
+  // need to lock both maps
+  lock_guard<mutex> lock_rhs(rhs.mutex_);
   for (auto&& kv : rhs.all_.data)
   {
     all_.data[kv.first] += kv.second;
@@ -95,6 +104,7 @@ ProbabilityMap::numSizes() const noexcept
 void
 ProbabilityMap::show() const
 {
+  lock_guard<mutex> lock(mutex_);
   // even if we only ran the actuals we'll still have multiple scenarios
   // with different randomThreshold values
   const auto day = static_cast<int>(time_ - floor(start_time_));
@@ -113,7 +123,7 @@ ProbabilityMap::record_if_interim(
   const char* filename
 ) const
 {
-  lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
+  lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
   logging::verbose("Checking if %s is interim", filename);
   if (nullptr != strstr(filename, "interim_"))
   {
@@ -165,7 +175,7 @@ make_string(
 void
 ProbabilityMap::deleteInterim()
 {
-  lock_guard<mutex> lock(PATHS_INTERIM_MUTEX);
+  lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
   for (const auto& path : PATHS_INTERIM)
   {
     logging::debug("Removing interim file %s", path.c_str());
@@ -245,6 +255,7 @@ ProbabilityMap::saveTotalCount(
 void
 ProbabilityMap::reset()
 {
+  lock_guard<mutex> lock(mutex_);
   all_.clear();
   sizes_.clear();
 }
