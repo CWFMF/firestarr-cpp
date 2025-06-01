@@ -9,10 +9,6 @@
 
 namespace fs
 {
-static constexpr size_t VALUE_UNPROCESSED = 2;
-static constexpr size_t VALUE_PROCESSING = 3;
-static constexpr size_t VALUE_PROCESSED = 4;
-
 /**
  * \brief List of interim files that were saved
  */
@@ -220,11 +216,12 @@ ProbabilityMap::saveAll(
   const string_view output_directory,
   const tm& start_time,
   const DurationSize time,
-  const bool is_interim
+  const ProcessingStatus processing_status
 ) const
 {
   lock_guard<mutex> lock(mutex_);
   FileList files{};
+  const auto is_interim = processed != processing_status;
   auto t = start_time;
   auto ticks = mktime(&t);
   const auto day = static_cast<int>(round(time));
@@ -243,7 +240,7 @@ ProbabilityMap::saveAll(
       this,
       output_directory,
       fix_string("probability"),
-      is_interim
+      processing_status
     ));
   }
   results.push_back(
@@ -261,7 +258,7 @@ ProbabilityMap::saveAll(
 ProbabilityMap::saveTotal(
   const string_view output_directory,
   const string_view base_name,
-  const bool is_interim
+  const ProcessingStatus processing_status
 ) const
 {
   // FIX: do this for other outputs too
@@ -271,15 +268,13 @@ ProbabilityMap::saveTotal(
     for (auto loc : perimeter_->burned())
     {
       // multiply initial perimeter cells so that probability shows processing status
-      with_perim.data[loc] *= (is_interim ? VALUE_PROCESSING : VALUE_PROCESSED);
+      // HACK: value is 0 if nothing is saved yet
+      with_perim.data[loc] = max(static_cast<size_t>(1), with_perim.data[loc]) * processing_status;
     }
   }
-  return saveToProbabilityFile<float>(
-    with_perim,
-    output_directory,
-    base_name,
-    static_cast<float>(numSizes())
-  );
+  // HACK: numSize() is going to be 0 if nothing saved yet
+  const auto divisor = max(static_cast<float>(1.0), static_cast<float>(numSizes()));
+  return saveToProbabilityFile<float>(with_perim, output_directory, base_name, divisor);
 }
 
 [[nodiscard]] FileList

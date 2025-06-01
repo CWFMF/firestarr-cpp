@@ -271,6 +271,16 @@ public:
   }
 
   /**
+   * \brief Time between generating interim outputs (s)
+   * \return Time between generating interim outputs (s)
+   */
+  [[nodiscard]] constexpr Clock::duration
+  interimTimeLimit() const
+  {
+    return interim_save_interval_;
+  }
+
+  /**
    * \brief Whether or not simulation has exceeded any limits that mean it should stop
    * \return Whether or not simulation has exceeded any limits that mean it should stop
    */
@@ -344,6 +354,12 @@ public:
    */
   [[nodiscard]] std::chrono::seconds
   runTime() const;
+  /**
+   * \brief Time since last interim save
+   * \return std::chrono::seconds  Time since last interim save
+   */
+  [[nodiscard]] std::chrono::seconds
+  timeSinceLastSave() const;
   /**
    * \brief Create a ProbabilityMap with the same extent as this
    * \param time Time in simulation this ProbabilityMap represents
@@ -490,6 +506,14 @@ private:
    */
   Clock::duration time_limit_;
   /**
+   * \brief Time of last interim save
+   */
+  Clock::time_point no_interim_save_since_;
+  /**
+   * \briefTime between generating interim outputs
+   */
+  Clock::duration interim_save_interval_;
+  /**
    * \brief Perimeter to use for initializing simulations
    */
   shared_ptr<Perimeter> perimeter_ = nullptr;
@@ -520,6 +544,38 @@ private:
    */
   bool is_out_of_time_ = false;
   /**
+   * \brief If simulation is past the time interval between interim outputs
+   */
+  bool should_output_interim_ = false;
+  /**
+   * \brief If simulation is being cancelled
+   */
+  bool is_being_cancelled_ = false;
+  /**
+   * \brief How many scenarios have been completed
+   */
+  atomic<size_t> scenarios_done_ = 0;
+  /**
+   * \brief How many scenarios out of first iteration have been completed
+   */
+  atomic<size_t> scenarios_required_done_ = 0;
+  /**
+   * \brief Scenarios completed at time of last interim save
+   */
+  atomic<size_t> scenarios_last_save_ = 0;
+  /**
+   * \brief Number of scenarios per iteration
+   */
+  size_t scenarios_per_iteration_ = 0;
+  /**
+   * \brief How many iterations have been completed
+   */
+  size_t iterations_done_ = 0;
+  /**
+   * \brief If interim outputs are different than last time they were saved
+   */
+  bool interim_changed_ = true;
+  /**
    * \brief If simulation is over max simulation count
    */
   bool is_over_simulation_count_ = false;
@@ -540,6 +596,9 @@ private:
    * \brief Longitude to use for any calcualtions
    */
   MathSize longitude_;
+
+private:
+  mutex mutex_;
 };
 }
 #endif

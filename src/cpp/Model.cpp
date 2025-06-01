@@ -33,6 +33,8 @@ Model::Model(
     start_time_(start_time),
     running_since_(Clock::now()),
     time_limit_(Settings::maximumTimeSeconds()),
+    no_interim_save_since_(Clock::now()),
+    interim_save_interval_(Settings::interimOutputIntervalSeconds()),
     env_(env),
     latitude_(start_point.latitude()),
     longitude_(start_point.longitude())
@@ -486,6 +488,12 @@ Model::runTime() const
   return run_time_seconds;
 }
 
+[[nodiscard]] std::chrono::seconds
+Model::timeSinceLastSave() const
+{
+  return std::chrono::duration_cast<std::chrono::seconds>(last_checked_ - no_interim_save_since_);
+}
+
 bool
 Model::shouldStop() const noexcept
 {
@@ -653,27 +661,74 @@ Model::saveProbabilities(
   const bool is_interim
 )
 {
+  lock_guard<mutex> lock(mutex_);
   auto final_time = numeric_limits<DurationSize>::min();
-  for (const auto& by_time : probabilities)
+  const ProcessingStatus processing_status = !is_interim
+                                             ? processed
+                                             : (0 == scenarios_done_ ? unprocessed : processing);
+  if ((processing_status == processing) && (scenarios_last_save_ == scenarios_done_))
   {
-    const auto time = by_time.first;
-    final_time = max(final_time, time);
-    const auto prob = by_time.second;
-    logging::debug("Setting perimeter");
-    prob->setPerimeter(this->perimeter_.get());
-    std::ignore = prob->saveAll(outputDirectory(), this->start_time_, time, is_interim);
-    const auto day = static_cast<int>(round(time));
-    const auto n = nd(day);
-    logging::note(
-      "Fuels for day %d are %s green-up and grass has %d%% curing",
-      day - static_cast<int>(start_day),
-      calculate_is_green(n) ? "after" : "before",
-      calculate_grass_curing(n)
-    );
+    logging::error("No change since last call to saveProbabilities");
   }
-  if (!is_interim)
+  else if ((processing_status != processing) || should_output_interim_)
   {
-    ProbabilityMap::deleteInterim();
+    // HACK: use max as "never saved" and replace with 0 on first save
+    if (is_being_cancelled_)
+    {
+      logging::info(
+        "Saving%s results for (%ld of %ld) required scenarios%s",
+        is_interim ? " interim" : "",
+        +scenarios_required_done_,
+        +scenarios_per_iteration_,
+        is_being_cancelled_ ? " because cancelling" : ""
+      );
+    }
+    else
+    {
+      logging::info(
+        "Saving%s results for %ld scenarios (%ld new in %lds since last save)",
+        is_interim ? " interim" : "",
+        +scenarios_done_,
+        +scenarios_done_ - scenarios_last_save_,
+        timeSinceLastSave().count()
+      );
+    }
+    for (const auto& by_time : probabilities)
+    {
+      const auto time = by_time.first;
+      final_time = max(final_time, time);
+      const auto prob = by_time.second;
+      logging::debug("Setting perimeter");
+      prob->setPerimeter(this->perimeter_.get());
+      std::ignore = prob->saveAll(outputDirectory(), this->start_time_, time, processing_status);
+      if (processing_status == processed)
+      {
+        const auto day = static_cast<int>(round(time));
+        const auto n = nd(day);
+        logging::note(
+          "Fuels for day %d are %s green-up and grass has %d%% curing",
+          day - static_cast<int>(start_day),
+          calculate_is_green(n) ? "after" : "before",
+          calculate_grass_curing(n)
+        );
+      }
+    }
+    logging::debug("Done saving proabability grids");
+    interim_changed_ = false;
+    should_output_interim_ = false;
+    scenarios_last_save_ = +scenarios_done_;
+    if (!is_interim)
+    {
+      ProbabilityMap::deleteInterim();
+    }
+    else
+    {
+      no_interim_save_since_ = Clock::now();
+    }
+  }
+  else
+  {
+    interim_changed_ = true;
   }
   return final_time;
 }
@@ -712,15 +767,12 @@ Model::runIterations(
   vector<MathSize> all_sizes{};
   vector<MathSize> means{};
   vector<MathSize> pct{};
-  size_t iterations_done = 0;
-  size_t scenarios_done = 0;
-  size_t scenarios_required_done = 0;
   vector<Iteration> all_iterations{};
   logging::verbose("Reading scenarios");
   all_iterations.push_back(readScenarios(start_point, start, start_day, last_date));
   // HACK: reference from vector so timer can cancel everything in vector
   auto& iteration = all_iterations[0];
-  const auto scenarios_per_iteration = iteration.size();
+  scenarios_per_iteration_ = iteration.size();
   // put probability maps into map
   logging::verbose("Setting save points");
   const auto saves = iteration.savePoints();
@@ -730,77 +782,71 @@ Model::runIterations(
   all_probabilities.push_back(make_prob_map(*this, saves, started));
   logging::verbose("Setting up initial intensity map with perimeter");
   auto runs_left = 1;
-  bool is_being_cancelled = false;
+  is_being_cancelled_ = false;
   // HACK: use initial value for type
-  auto timer = std::thread([this,
-                            &scenarios_per_iteration,
-                            &scenarios_required_done,
-                            &scenarios_done,
-                            &all_probabilities,
-                            &iterations_done,
-                            &runs_left,
-                            &all_sizes,
-                            &all_iterations,
-                            &is_being_cancelled,
-                            &probabilities,
-                            &start_day]() {
-    constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
-    do
-    {
-      this->last_checked_ = Clock::now();
-      // think we need to check regularly instead of just sleeping so that we can see
-      // if we've done enough runs and need to stop for that reason
-      std::this_thread::sleep_for(CHECK_INTERVAL);
-      // set bool so other things don't need to check clock
-      is_out_of_time_ = runTime().count() >= timeLimit().count();
-      logging::verbose("Checking clock [%ld of %ld]", runTime(), timeLimit());
-    }
-    while (runs_left > 0 && !shouldStop());
-    if (isOutOfTime())
-    {
-      logging::warning("Ran out of time - cancelling simulations");
-    }
-    if (0 == iterations_done)
-    {
-      logging::warning(
-        "Ran out of time, but haven't finished any iterations, so cancelling all but first"
+  auto timer = std::thread(
+    [this, &all_probabilities, &runs_left, &all_sizes, &all_iterations, &probabilities, &start_day](
+    ) {
+      constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
+      do
+      {
+        this->last_checked_ = Clock::now();
+        // think we need to check regularly instead of just sleeping so that we can see
+        // if we've done enough runs and need to stop for that reason
+        std::this_thread::sleep_for(CHECK_INTERVAL);
+        // set bool so other things don't need to check clock
+        is_out_of_time_ = runTime().count() >= timeLimit().count();
+        should_output_interim_ = timeSinceLastSave().count() >= interimTimeLimit().count();
+        if (should_output_interim_ && interim_changed_)
+        {
+          saveProbabilities(all_probabilities[0], start_day, true);
+        }
+        logging::verbose("Checking clock [%ld of %ld]", runTime(), timeLimit());
+      }
+      while (runs_left > 0 && !shouldStop());
+      if (isOutOfTime())
+      {
+        logging::warning("Ran out of time - cancelling simulations");
+      }
+      if (0 == iterations_done_)
+      {
+        logging::warning(
+          "Ran out of time, but haven't finished any iterations, so cancelling all but first"
+        );
+      }
+      size_t i = 0;
+      for (auto& iter : all_iterations)
+      {
+        // don't cancel first iteration if no iterations are done
+        if (0 != iterations_done_ || 0 != i)
+        {
+          // if not over limit then just did all the runs so no warning
+          iter.cancel(shouldStop());
+        }
+        ++i;
+      }
+      if (0 == iterations_done_)
+      {
+        is_being_cancelled_ = true;
+        if (scenarios_required_done_ > 0)
+        {
+          saveProbabilities(all_probabilities[0], start_day, true);
+        }
+      }
+      const auto run_time_seconds = runTime().count();
+      const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds;
+      logging::debug(
+        "Ending timer after %ld seconds with %ld seconds left",
+        run_time_seconds,
+        time_left
       );
     }
-    size_t i = 0;
-    for (auto& iter : all_iterations)
-    {
-      // don't cancel first iteration if no iterations are done
-      if (0 != iterations_done || 0 != i)
-      {
-        // if not over limit then just did all the runs so no warning
-        iter.cancel(shouldStop());
-      }
-      ++i;
-    }
-    if (0 == iterations_done)
-    {
-      is_being_cancelled = true;
-      if (scenarios_required_done > 0)
-      {
-        logging::info(
-          "Saving interim results for (%ld of %ld) scenarios in timer thread",
-          scenarios_required_done,
-          scenarios_per_iteration
-        );
-        saveProbabilities(all_probabilities[0], start_day, true);
-      }
-    }
-    const auto run_time_seconds = runTime().count();
-    const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds;
-    logging::debug(
-      "Ending timer after %ld seconds with %ld seconds left",
-      run_time_seconds,
-      time_left
-    );
-  });
+  );
+  // HACK: save immediately to get "unprocessed" version of grids
+  saveProbabilities(all_probabilities[0], start_day, true);
   auto threads = list<std::thread>{};
   const auto finalize_probabilities =
-    [this, &start_day, &all_sizes, &is_being_cancelled, &threads, &timer, &probabilities]() {
+    [this, &start_day, &all_sizes, &threads, &timer, &probabilities]() {
       // assume timer is cancelling everything
       for (auto& t : threads)
       {
@@ -825,35 +871,38 @@ Model::runIterations(
   };
   const auto HARDWARE_THREADS = static_cast<size_t>(std::thread::hardware_concurrency());
   // maybe a bit slower but prefer to run all scenarios at the same time
-  const auto MAX_THREADS = max(HARDWARE_THREADS, scenarios_per_iteration);
+  const auto MAX_THREADS = max(HARDWARE_THREADS, scenarios_per_iteration_);
   if (MAX_THREADS > HARDWARE_THREADS)
   {
     logging::note(
       "Increasing to use at least one thread for each of %ld scenarios",
-      scenarios_per_iteration
+      scenarios_per_iteration_
     );
     Model::task_limiter.set_limit(MAX_THREADS);
   }
-  // no point in running multiple iterations if deterministic
-  const auto concurrent_iterations = 1;
+  const auto less_than_scenario = (Settings::maximumCountSimulations() <= scenarios_per_iteration_);
+  const auto MAX_CONCURRENT = std::max<size_t>(MAX_THREADS, 1);
+  const auto MIN_CONCURRENT = 2;
+  const auto concurrent_iterations = less_than_scenario
+                                     ? 1
+                                     : std::max<size_t>(
+                                         MAX_CONCURRENT / all_iterations[0].getScenarios().size(),
+                                         MIN_CONCURRENT
+                                       );
   for (size_t x = 1; x < concurrent_iterations; ++x)
   {
     all_iterations.push_back(readScenarios(start_point, start, start_day, last_date));
     all_probabilities.push_back(make_prob_map(*this, saves, started));
   }
   auto run_scenario = [this,
-                       &is_being_cancelled,
-                       &scenarios_per_iteration,
-                       &scenarios_required_done,
-                       &scenarios_done,
                        &all_probabilities,
                        &all_iterations,
                        &start_day](Scenario* s, size_t i, bool is_required) {
     auto result = s->run(&all_probabilities[i]);
-    ++scenarios_done;
+    ++scenarios_done_;
     logging::extensive(
       "Done %ld scenarios in iteration %ld which %s required",
-      scenarios_done,
+      +scenarios_done_,
       i,
       (is_required ? "is" : "is not")
     );
@@ -861,30 +910,22 @@ Model::runIterations(
     {
       logging::verbose(
         "Done %ld scenarios in iteration %ld which %s required",
-        scenarios_done,
+        +scenarios_done_,
         i,
         (is_required ? "is" : "is not")
       );
-      ++scenarios_required_done;
-      logging::debug(
-        "Have (%ld of %ld) scenarios and %s being cancelled",
-        scenarios_required_done,
-        scenarios_per_iteration,
-        (is_being_cancelled ? "is" : "not")
-      );
-      if (is_being_cancelled)
-      {
-        // no point in saving interim if final is done
-        if (scenarios_per_iteration != scenarios_required_done)
-        {
-          logging::info(
-            "Saving interim results for (%ld of %ld) scenarios",
-            scenarios_required_done,
-            scenarios_per_iteration
-          );
-          saveProbabilities(all_probabilities[0], start_day, true);
-        }
-      }
+      ++scenarios_required_done_;
+    }
+    logging::debug(
+      "Have (%ld of %ld) scenarios and %s being cancelled",
+      +scenarios_required_done_,
+      +scenarios_per_iteration_,
+      (is_being_cancelled_ ? "is" : "not")
+    );
+    // no point in saving interim if final is done
+    if (!(is_being_cancelled_ && scenarios_per_iteration_ == scenarios_required_done_))
+    {
+      saveProbabilities(all_probabilities[0], start_day, true);
     }
     return result;
   };
@@ -911,14 +952,14 @@ Model::runIterations(
     // FIX: look at converting so that new threads get started as others complete
     // - would have to have multiple Iterations so we keep the data from them separate?
     size_t k = 0;
-    while (k < scenarios_per_iteration)
+    while (k < scenarios_per_iteration_)
     {
       threads.front().join();
       threads.pop_front();
       ++k;
     }
     auto final_sizes = iteration.finalSizes();
-    ++iterations_done;
+    ++iterations_done_;
     for (auto& kv : all_probabilities[cur_iter])
     {
       probabilities[kv.first]->addProbabilities(*kv.second);
@@ -931,7 +972,7 @@ Model::runIterations(
       return finalize_probabilities();
     }
     {
-      runs_left = runs_required(iterations_done, &all_sizes, &means, &pct, *this);
+      runs_left = runs_required(iterations_done_, &all_sizes, &means, &pct, *this);
       logging::note("Need another %d iterations", runs_left);
     }
     if (runs_left > 0)

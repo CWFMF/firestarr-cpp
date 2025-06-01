@@ -14,6 +14,16 @@
 
 namespace fs
 {
+/**
+ * \brief The code to burn into probability maps where the perimeter is to represent the status of
+ * the sims
+ */
+enum ProcessingStatus : size_t
+{
+  unprocessed = 2,
+  processing = 3,
+  processed = 4,
+};
 class Model;
 class IntensityMap;
 
@@ -70,13 +80,14 @@ public:
    * \brief Save total, low, moderate, and high maps, and output information to log
    * \param start_time Start time of simulation
    * \param time Time for these maps
+   * \param processing_status Stage in processing for simulations
    */
   [[nodiscard]] FileList
   saveAll(
     string_view output_directory,
     const tm& start_time,
     DurationSize time,
-    const bool is_interim
+    const ProcessingStatus processing_status
   ) const;
   /**
    * \brief Clear maps and return to initial state
@@ -129,8 +140,11 @@ private:
    * \return FileList of file names saved to
    */
   [[nodiscard]] FileList
-  saveTotal(const string_view output_directory, const string_view base_name, const bool is_interim)
-    const;
+  saveTotal(
+    const string_view output_directory,
+    const string_view base_name,
+    const ProcessingStatus processing_status
+  ) const;
   /**
    * \brief Save map representing all intensities occurrence
    * \param output_directory Directory to save to
