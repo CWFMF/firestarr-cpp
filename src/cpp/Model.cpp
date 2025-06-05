@@ -937,6 +937,8 @@ Model::runIterations(
       );
     }
   );
+  // HACK: save immediately to get "unprocessed" version of grids
+  saveProbabilities(all_probabilities[0], start_day, true);
   auto threads = list<std::thread>{};
   // const auto finalize_probabilities = [&threads, &timer, &probabilities](bool do_cancel) {
   const auto finalize_probabilities =
