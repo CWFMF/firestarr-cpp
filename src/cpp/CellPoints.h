@@ -80,6 +80,10 @@ class CellPointArrays : public array_cellpts
 {
 public:
   using array_cellpts::array_cellpts;
+  CellPointArrays(const InnerPos& p0);
+  CellPointArrays(const InnerSize x, const InnerSize y);
+  CellPointArrays&
+  insert(const InnerSize x, const InnerSize y);
   inline const array_dists&
   distances() const
   {
@@ -101,6 +105,12 @@ public:
     return std::get<1>(*this);
   }
 };
+void
+insert_pt(const InnerPos& p0, CellPointArrays& pts) noexcept;
+void
+insert_pt(const InnerSize x, const InnerSize y, CellPointArrays& pts) noexcept;
+void
+insert_pt(const XYSize x, const XYSize y, const CellPos& cell_x_y, CellPointArrays& pts) noexcept;
 /**
  * Points in a cell furthest in each direction
  */
@@ -125,23 +135,6 @@ public:
   insert(const XYSize x, const XYSize y) noexcept;
   CellPoints&
   insert(const InnerPos& p) noexcept;
-  //   template <class _ForwardIterator>
-  //   CellPoints& insert(_ForwardIterator begin, _ForwardIterator end)
-  //   {
-  //     // don't do anything if empty
-  //     if (end != begin)
-  //     {
-  //       auto it = begin;
-  //       while (end != it)
-  //       {
-  //          (*it);
-  //         ++it;
-  //       }
-  //     }
-  //     return *this;
-  //   }
-  CellPoints&
-  merge(const CellPoints& rhs);
   set<XYPos>
   unique() const noexcept;
   bool
@@ -177,17 +170,8 @@ class CellPointsMap
 {
 public:
   CellPointsMap();
-  // CellPoints& insert(
-  //   const DurationSize& arrival_time,
-  //   const IntensitySize intensity,
-  //   const ROSSize& ros,
-  //   const Direction& raz,
-  //   const XYSize x,
-  //   const XYSize y) noexcept;
   CellPoints&
   insert(const XYSize x, const XYSize y) noexcept;
-  CellPointsMap&
-  merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
   set<XYPos>
   unique() const noexcept;
 #ifdef DEBUG_CELLPOINTS
