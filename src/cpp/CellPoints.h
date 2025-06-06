@@ -78,6 +78,10 @@ class CellPointArrays : public array_cellpts
 {
 public:
   using array_cellpts::array_cellpts;
+  CellPointArrays(const InnerPos& p0);
+  CellPointArrays(const InnerSize x, const InnerSize y);
+  CellPointArrays&
+  insert(const InnerSize x, const InnerSize y);
 
   inline const array_dists&
   distances() const
@@ -104,6 +108,13 @@ public:
   }
 };
 
+void
+insert_pt(const InnerPos& p0, CellPointArrays& pts) noexcept;
+void
+insert_pt(const InnerSize x, const InnerSize y, CellPointArrays& pts) noexcept;
+void
+insert_pt(const XYSize x, const XYSize y, const CellPos& cell_x_y, CellPointArrays& pts) noexcept;
+
 /**
  * Points in a cell furthest in each direction
  */
@@ -125,8 +136,6 @@ public:
   insert(const XYSize x, const XYSize y) noexcept;
   CellPoints&
   insert(const InnerPos& p) noexcept;
-  CellPoints&
-  merge(const CellPoints& rhs);
   set<XYPos>
   unique() const noexcept;
   bool
@@ -161,8 +170,6 @@ public:
   CellPointsMap();
   CellPoints&
   insert(const XYSize x, const XYSize y) noexcept;
-  CellPointsMap&
-  merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept;
   set<XYPos>
   unique() const noexcept;
 #ifdef DEBUG_CELLPOINTS

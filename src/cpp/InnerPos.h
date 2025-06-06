@@ -28,18 +28,6 @@ public:
   {
   }
 
-  S
-  x() const
-  {
-    return std::get<0>(*this);
-  }
-
-  S
-  y() const
-  {
-    return std::get<1>(*this);
-  }
-
   /**
    * \brief Add offset to position and return result
    */
@@ -50,6 +38,18 @@ public:
   ) const noexcept
   {
     return static_cast<T>(class_type(this->first + o.first, this->second + o.second));
+  }
+
+  inline auto&
+  x() const
+  {
+    return this->first;
+  }
+
+  inline auto&
+  y() const
+  {
+    return this->second;
   }
 };
 
