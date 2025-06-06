@@ -61,6 +61,12 @@ unhash_column(
   return static_cast<Idx>(hash & ColumnMask);
 }
 
+template <class V>
+class Position;
+class Location;
+Location
+make_location(const Idx& row, const Idx& column);
+
 /**
  * \brief A Position with a row and column.
  */
@@ -300,16 +306,16 @@ public:
   explicit constexpr Location(
     const Idx,
     const Idx,
-    const HashSize hash
+    const HashSize hash_value
   ) noexcept
 #else
   explicit Location(
     const Idx row,
     const Idx column,
-    const HashSize hash
+    const HashSize hash_value
   ) noexcept
 #endif
-    : Location(hash & HashMask)
+    : Location(hash_value & HashMask)
   {
 #ifdef DEBUG_GRIDS
     logging::check_fatal(
@@ -373,18 +379,6 @@ public:
     const HashSize& hash_size
   ) noexcept
     : Position(static_cast<HashSize>(hash_size))
-  {
-  }
-
-  /**
-   * \brief Construct with given hash that may contain data from subclasses
-   * \param hash_size Hash to store
-   */
-  template <class P>
-  explicit constexpr Location(
-    const Position<P>& position
-  ) noexcept
-    : Position(static_cast<HashSize>(position.hash()))
   {
   }
 };

@@ -51,28 +51,29 @@ IntensityMap::applyPerimeter(
 
 bool
 IntensityMap::canBurn(
-  const Location& location
+  const HashSize hash_value
 ) const
 {
-  return !hasBurned(location);
+  return !hasBurned(hash_value);
 }
 
 bool
 IntensityMap::hasBurned(
-  const Location& location
+  const HashSize hash_value
 ) const
 {
   lock_guard<mutex> lock(mutex_);
-  return is_burned_.at(location.hash());
+  return is_burned_.at(hash_value);
 }
 
 bool
 IntensityMap::isSurrounded(
-  const Location& location
+  const HashSize hash_value
 ) const
 {
   // implement here so we can just lock once
   lock_guard<mutex> lock(mutex_);
+  const Location location{hash_value};
   const auto x = location.column();
   const auto y = location.row();
   const auto min_row = static_cast<Idx>(max(y - 1, 0));
@@ -95,22 +96,22 @@ IntensityMap::isSurrounded(
 
 void
 IntensityMap::ignite(
-  const Location& location
+  const HashSize hash_value
 )
 {
-  burn(location);
+  burn(hash_value);
 }
 
 void
 IntensityMap::burn(
-  const Location& location
+  const HashSize hash_value
 )
 {
   lock_guard<mutex> lock(mutex_);
-  if (!is_burned_.at(location.hash()))
+  if (!is_burned_.at(hash_value))
   {
-    intensity_max_.set(location, 1);
-    is_burned_.set(location.hash());
+    intensity_max_.set(hash_value, 1);
+    is_burned_.set(hash_value);
   }
 }
 
@@ -121,13 +122,13 @@ IntensityMap::fireSize() const
   return intensity_max_.fireSize();
 }
 
-map<Location, IntensitySize>::const_iterator
+map<HashSize, IntensitySize>::const_iterator
 IntensityMap::cend() const noexcept
 {
   return intensity_max_.data.cend();
 }
 
-map<Location, IntensitySize>::const_iterator
+map<HashSize, IntensitySize>::const_iterator
 IntensityMap::cbegin() const noexcept
 {
   return intensity_max_.data.cbegin();

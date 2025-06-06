@@ -174,17 +174,15 @@ Environment::makeCells(
   logging::check_equal(fuel.yllcorner(), elevation.yllcorner(), "yllcorner");
   static Cell nodata{};
   auto values = vector<Cell>{fuel.data.size()};
-  vector<HashSize> hashes{};
   for (Idx r = 0; r < fuel.rows(); ++r)
   {
     for (Idx c = 0; c < fuel.columns(); ++c)
     {
-      const auto h = hashes.emplace_back(Location(r, c).hash());
-      const Location loc{r, c, h};
+      const auto hash_value = Location(r, c).hash();
       if (r >= 0 && r < fuel.rows() && c >= 0 && c < fuel.columns())
       {
         // NOTE: this needs to translate to internal codes?
-        const auto f = FuelType::safeCode(fuel.at(loc));
+        const auto f = FuelType::safeCode(fuel.at(hash_value));
         auto s = static_cast<SlopeSize>(INVALID_SLOPE);
         auto a = static_cast<AspectSize>(INVALID_ASPECT);
         // HACK: don't calculate for outside box of cells
@@ -200,7 +198,7 @@ Environment::makeCells(
               auto actual_row = static_cast<Idx>(r - i);
               auto actual_column = static_cast<Idx>(c + j);
               auto cur_loc = Location{actual_row, actual_column};
-              const auto v = elevation.at(cur_loc);
+              const auto v = elevation.at(cur_loc.hash());
               // can't calculate slope & aspect if any surrounding cell is nodata
               if (elevation.nodataValue() == v)
               {
@@ -248,13 +246,13 @@ Environment::makeCells(
             a = static_cast<AspectSize>(round(aspect_azimuth));
           }
         }
-        const auto cell = Cell{h, s, a, f};
-        values.at(h) = cell;
+        const auto cell = Cell{r, c, s, a, f};
+        values.at(cell.hash()) = cell;
 #ifdef DEBUG_GRIDS
 #ifndef VLD_RPTHOOK_INSTALL
         logging::check_equal(cell.row(), r, "Cell row");
         logging::check_equal(cell.column(), c, "Cell column");
-        const auto v = values.at(h);
+        const auto v = values.at(hash_value);
         logging::check_equal(v.row(), r, "Row");
         logging::check_equal(v.column(), c, "Column");
         if (!(INVALID_SLOPE == cell.slope() || INVALID_ASPECT == cell.aspect()
@@ -315,11 +313,19 @@ Environment::Environment(
 )
   : Environment(
       makeCells(fuel, elevation),
-      elevation.at(Location(*elevation.findCoordinates(point, false).get()))
+      elevation.at(Location(*elevation.findCoordinates(point, false).get()).hash())
     )
 {
   // take elevation at point so that if max grid size changes elevation doesn't
   logging::note("Start elevation is %d", elevation_);
+}
+
+Cell
+Environment::cell(
+  const HashSize hash_value
+) const
+{
+  return cells_.at(hash_value);
 }
 
 string_view
@@ -358,7 +364,7 @@ Environment::cell(
   const Idx column
 ) const
 {
-  return cells_.at(Location(row, column));
+  return cells_.at(Location(row, column).hash());
 }
 
 Cell
@@ -369,7 +375,7 @@ Environment::offset(
 ) const
 {
   const auto& p = event.cell();
-  return cell(Location(p.row() + row, p.column() + column));
+  return cell(Location(p.row() + row, p.column() + column).hash());
 }
 
 Environment::Environment(

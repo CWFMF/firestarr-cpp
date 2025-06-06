@@ -74,66 +74,27 @@ public:
    * \return Whether or not the Cell with the given hash can burn
    */
   [[nodiscard]] bool
-  canBurn(const Location& location) const;
-
-  template <class P>
-  [[nodiscard]] bool
-  canBurn(
-    const Position<P>& position
-  ) const
-  {
-    return canBurn(Location{position.hash()});
-  }
-
+  canBurn(const HashSize hash_value) const;
   /**
    * \brief Whether or not the Location with the given hash can burn
    * \param hash Hash for Location to check
    * \return Whether or not the Location with the given hash can burn
    */
   [[nodiscard]] bool
-  hasBurned(const Location& location) const;
-
-  template <class P>
-  [[nodiscard]] bool
-  hasBurned(
-    const Position<P>& position
-  ) const
-  {
-    return hasBurned(Location{position.hash()});
-  }
-
+  hasBurned(const HashSize hash_value) const;
   /**
    * \brief Whether or not all Locations surrounding the given Location are burned
    * \param location Location to check
    * \return Whether or not all Locations surrounding the given Location are burned
    */
   [[nodiscard]] bool
-  isSurrounded(const Location& location) const;
-
-  template <class P>
-  [[nodiscard]] bool
-  isSurrounded(
-    const Position<P>& position
-  ) const
-  {
-    return isSurrounded(Location{position.hash()});
-  }
-
+  isSurrounded(const HashSize hash_value) const;
   /**
    * \brief Mark given location as burned
    * \param location Location to burn
    */
   void
-  ignite(const Location& location);
-
-  template <class P>
-  void
-  ignite(
-    const Position<P>& position
-  )
-  {
-    ignite(Location{position.hash()});
-  }
+  ignite(const HashSize hash_value);
 
 public:
   /**
@@ -144,17 +105,7 @@ public:
    * \param raz Spread azimuth for ros
    */
   void
-  burn(const Location& location);
-
-  template <class P>
-  void
-  burn(
-    const Position<P>& position
-  )
-  {
-    burn(Location{position.hash()});
-  }
-
+  burn(const HashSize hash_value);
   /**
    * \brief Size of the fire represented by this
    * \return Size of the fire represented by this
@@ -165,13 +116,13 @@ public:
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
    */
-  [[nodiscard]] map<Location, IntensitySize>::const_iterator
+  [[nodiscard]] map<HashSize, IntensitySize>::const_iterator
   cbegin() const noexcept;
   /**
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
    */
-  [[nodiscard]] map<Location, IntensitySize>::const_iterator
+  [[nodiscard]] map<HashSize, IntensitySize>::const_iterator
   cend() const noexcept;
 
 private:

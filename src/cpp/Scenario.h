@@ -89,7 +89,7 @@ public:
     size_t id,
     ptr<const FireWeather> weather,
     DurationSize start_time,
-    const shared_ptr<Cell>& start_cell,
+    const HashSize start_cell,
     const StartPoint& start_point,
     Day start_day,
     Day last_date
@@ -135,7 +135,7 @@ public:
     const ptr<const FireWeather> weather,
     const ptr<const FireWeather> weather_daily,
     DurationSize start_time,
-    const shared_ptr<Cell>& start_cell,
+    const HashSize start_cell,
     const StartPoint& start_point,
     Day start_day,
     Day last_date
@@ -154,7 +154,7 @@ public:
    * \return This
    */
   [[nodiscard]] Scenario*
-  reset_with_new_start(const shared_ptr<Cell>& start_cell, ptr<SafeVector> final_sizes);
+  reset_with_new_start(const HashSize start_cell, ptr<SafeVector> final_sizes);
   /**
    * \brief Reset thresholds and set SafeVector to output results to
    * \param mt_extinction Used for extinction random numbers
@@ -195,18 +195,12 @@ public:
     return model_->cell(row, column);
   }
 
-  /**
-   * \brief Get Cell for given Location
-   * \param location Location
-   * \return Cell for given Location
-   */
-  template <class P>
   [[nodiscard]] constexpr Cell
   cell(
-    const Position<P>& position
+    const HashSize hash_value
   ) const
   {
-    return model_->cell(position);
+    return model_->cell(hash_value);
   }
 
   /**
@@ -409,17 +403,7 @@ public:
    * \return Whether or not the given Location is surrounded by cells that are burnt
    */
   [[nodiscard]] bool
-  isSurrounded(const Location& location) const;
-
-  template <class P>
-  [[nodiscard]] bool
-  isSurrounded(
-    const Position<P>& position
-  ) const
-  {
-    return isSurrounded(Location{position.hash()});
-  }
-
+  isSurrounded(const HashSize hash_value) const;
   /**
    * \brief Cell that InnerPos falls within
    * \param p InnerPos
@@ -452,24 +436,14 @@ public:
    * \return Whether or not a Cell can burn
    */
   [[nodiscard]] bool
-  canBurn(const Cell& location) const;
+  canBurn(const HashSize hash_value) const;
   /**
    * \brief Whether or not Location has burned already
    * \param location Location to check
    * \return Whether or not Location has burned already
    */
   [[nodiscard]] bool
-  hasBurned(const Location& location) const;
-
-  template <class P>
-  [[nodiscard]] bool
-  hasBurned(
-    const Position<P>& position
-  ) const
-  {
-    return hasBurned(Location{position.hash()});
-  }
-
+  hasBurned(const HashSize hash_value) const;
   /**
    * \brief Add an Event to the queue
    * \param event Event to add
@@ -587,7 +561,7 @@ protected:
     const ptr<const FireWeather> weather_daily,
     DurationSize start_time,
     const shared_ptr<Perimeter>& perimeter,
-    const shared_ptr<Cell>& start_cell,
+    const std::optional<HashSize> start_cell,
     StartPoint start_point,
     Day start_day,
     Day last_date
@@ -635,7 +609,7 @@ protected:
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
-  map<Cell, DurationSize> arrival_{};
+  map<HashSize, DurationSize> arrival_{};
   /**
    * \brief Maximum rate of spread for current time
    */
@@ -643,7 +617,7 @@ protected:
   /**
    * \brief Cell that the Scenario starts from if no Perimeter
    */
-  shared_ptr<Cell> start_cell_{nullptr};
+  std::optional<HashSize> start_cell_{};
   /**
    * \brief Hourly weather to use for this Scenario
    */

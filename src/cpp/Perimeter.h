@@ -34,40 +34,29 @@ public:
    * \param size Size of Perimeter to create
    * \param env Environment to apply Perimeter to
    */
-  Perimeter(const Location& location, size_t size, const Environment& env);
-
-  template <class P>
-  Perimeter(
-    const Position<P>& position,
-    size_t size,
-    const Environment& env
-  )
-    : Perimeter(Location{position.hash()}, size, env)
-  {
-  }
-
+  Perimeter(const HashSize hash_value, size_t size, const Environment& env);
   /**
    * \brief List of all burned Locations
    * \return All Locations burned by this Perimeter
    */
-  [[nodiscard]] const list<Location>&
+  [[nodiscard]] const list<HashSize>&
   burned() const noexcept;
   /**
    * \brief List of all Locations along the edge of this Perimeter
    * \return All Locations along the edge of this Perimeter
    */
-  [[nodiscard]] const list<Location>&
+  [[nodiscard]] const list<HashSize>&
   edge() const noexcept;
 
 private:
   /**
    * \brief List of all burned Locations
    */
-  list<Location> burned_;
+  list<HashSize> burned_;
   /**
    * \brief List of all Locations along the edge of this Perimeter
    */
-  list<Location> edge_;
+  list<HashSize> edge_;
 };
 }
 #endif

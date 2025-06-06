@@ -113,7 +113,7 @@ public:
     const Event& event
   ) override
   {
-    map_.set(event.cell(), getValue(event));
+    map_.set(event.cell().hash(), getValue(event));
   }
 
   /**

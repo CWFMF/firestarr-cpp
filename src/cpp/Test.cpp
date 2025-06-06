@@ -56,7 +56,7 @@ public:
    */
   TestScenario(
     Model* model,
-    const shared_ptr<Cell>& start_cell,
+    const HashSize start_cell,
     const StartPoint& start_point,
     const int start_date,
     const DurationSize end_date,
@@ -239,11 +239,12 @@ run_test(
   }};
   const Location start_location(static_cast<Idx>(MAX_ROWS / 2), static_cast<Idx>(MAX_COLUMNS / 2));
   Model model(start_time, output_directory, ForPoint, &env);
-  const auto start_cell = make_shared<Cell>(model.cell(start_location));
+  const auto start_cell = model.cell(start_location.hash());
   FireWeather weather(fuel, start_date, dc, dmc, ffmc, wind);
-  TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather, final_sizes);
+  TestScenario
+    scenario(&model, start_cell.hash(), ForPoint, start_date, end_date, &weather, final_sizes);
   const auto w = weather.at(start_date);
-  auto info = SpreadInfo(scenario, start_date, start_cell->key(), model.nd(start_date), w);
+  auto info = SpreadInfo(scenario, start_date, start_cell.key(), model.nd(start_date), w);
   showSpread(info, w, fuel);
   map<DurationSize, shared_ptr<ProbabilityMap>> probabilities{};
   logging::debug("Starting simulation");
