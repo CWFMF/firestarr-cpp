@@ -387,4 +387,12 @@ Environment::Environment(
     elevation_(elevation)
 {
 }
+
+bool
+Environment::isUnburnable(
+  const HashSize hash_value
+) const
+{
+  return not_burnable_.at(hash_value);
+}
 }

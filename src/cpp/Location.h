@@ -278,21 +278,6 @@ operator>=(
   return !(lhs < rhs);
 }
 
-#ifdef DEBUG_DIRECTIONS
-// FIX: seems like there must be something with enum type that would be better?
-static const map<CellIndex, const char*> DIRECTION_NAMES{
-  {DIRECTION_NONE, "NONE"},
-  {DIRECTION_W, "W"},
-  {DIRECTION_E, "E"},
-  {DIRECTION_S, "S"},
-  {DIRECTION_N, "N"},
-  {DIRECTION_SW, "SW"},
-  {DIRECTION_NE, "NE"},
-  {DIRECTION_NW, "NW"},
-  {DIRECTION_SE, "SE"}
-};
-#endif
-
 class Location : public Position<HashSize>
 {
 public:

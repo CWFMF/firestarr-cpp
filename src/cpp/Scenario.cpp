@@ -7,7 +7,6 @@
 #include "Scenario.h"
 
 #include "Cell.h"
-#include "CellPoints.h"
 #include "FuelLookup.h"
 #include "FuelType.h"
 #include "IntensityMap.h"
@@ -51,10 +50,7 @@ do_par(
 void
 Scenario::clear() noexcept
 {
-  unburnable_.clear();
   scheduler_ = set<Event, EventCompare>();
-  arrival_ = {};
-  points_ = {};
   spread_info_ = {};
   extinction_thresholds_.clear();
   spread_thresholds_by_ros_.clear();
@@ -257,18 +253,16 @@ Scenario::reset_with_new_start(
   ptr<SafeVector> final_sizes
 )
 {
-  unburnable_.clear();
   start_cell_ = start_cell;
   cancelled_ = false;
   current_time_ = start_time_;
-  intensity_ = nullptr;
+  intensity_new_ = nullptr;
   probabilities_ = nullptr;
   final_sizes_ = final_sizes;
   ran_ = false;
   clear();
   current_time_ = start_time_ - 1;
-  points_ = {};
-  intensity_ = make_unique<IntensityMap>(model());
+  intensity_new_ = make_unique<IntensityMap>(model());
   // HACK: never reset these if using a surface
   {
     current_time_index_ = numeric_limits<size_t>::max();
@@ -289,10 +283,9 @@ Scenario::reset(
   ptr<SafeVector> final_sizes
 )
 {
-  unburnable_.clear();
   cancelled_ = false;
   current_time_ = start_time_;
-  intensity_ = nullptr;
+  intensity_new_ = nullptr;
   probabilities_ = nullptr;
   final_sizes_ = final_sizes;
   ran_ = false;
@@ -318,10 +311,8 @@ Scenario::reset(
     );
   }
   current_time_ = start_time_ - 1;
-  points_ = {};
-  intensity_ = make_unique<IntensityMap>(model());
+  intensity_new_ = make_unique<IntensityMap>(model());
   spread_info_ = {};
-  arrival_ = {};
   max_ros_ = 0;
   current_time_index_ = numeric_limits<size_t>::max();
   ++COUNT;
@@ -367,7 +358,7 @@ Scenario::evaluate(
     case Event::NEW_FIRE:
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
-      points_.insert(x, y);
+      points_new_.insert(*intensity_new_, p0);
       if (is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -392,7 +383,7 @@ Scenario::evaluate(
         // HACK: we still want the fire to have existed, so set the intensity of the origin
       }
       // fires start with intensity of 1
-      burn(event);
+      intensity_new_->ignite(event.cell().hash());
       scheduleFireSpread(event);
       break;
     case Event::END_SIMULATION:
@@ -417,8 +408,7 @@ Scenario::Scenario(
   const Day last_date
 )
   : current_time_(start_time),
-    unburnable_{},
-    intensity_(nullptr),
+    intensity_new_(nullptr),
     perimeter_(perimeter),
     max_ros_(0),
     start_cell_{start_cell},
@@ -457,10 +447,10 @@ Scenario::saveStats(
   const DurationSize time
 ) const
 {
-  probabilities_->at(time)->addProbability(*intensity_);
+  probabilities_->at(time)->addProbability(*intensity_new_);
   if (time == last_save_)
   {
-    final_sizes_->addValue(intensity_->fireSize());
+    final_sizes_->addValue(intensity_new_->fireSize());
   }
 }
 
@@ -477,13 +467,11 @@ Scenario::Scenario(
     extinction_thresholds_(std::move(rhs.extinction_thresholds_)),
     spread_thresholds_by_ros_(std::move(rhs.spread_thresholds_by_ros_)),
     current_time_(rhs.current_time_),
-    points_(std::move(rhs.points_)),
-    unburnable_(std::move(rhs.unburnable_)),
+    points_new_(std::move(rhs.points_new_)),
     scheduler_(std::move(rhs.scheduler_)),
-    intensity_(std::move(rhs.intensity_)),
+    intensity_new_(std::move(rhs.intensity_new_)),
     perimeter_(std::move(rhs.perimeter_)),
     spread_info_(std::move(rhs.spread_info_)),
-    arrival_(std::move(rhs.arrival_)),
     max_ros_(rhs.max_ros_),
     start_cell_(std::move(rhs.start_cell_)),
     weather_(rhs.weather_),
@@ -512,10 +500,10 @@ Scenario::operator=(
     save_points_ = std::move(rhs.save_points_);
     extinction_thresholds_ = std::move(rhs.extinction_thresholds_);
     spread_thresholds_by_ros_ = std::move(rhs.spread_thresholds_by_ros_);
-    points_ = std::move(rhs.points_);
+    points_new_ = std::move(rhs.points_new_);
     current_time_ = rhs.current_time_;
     scheduler_ = std::move(rhs.scheduler_);
-    intensity_ = std::move(rhs.intensity_);
+    intensity_new_ = std::move(rhs.intensity_new_);
     perimeter_ = std::move(rhs.perimeter_);
     start_cell_ = std::move(rhs.start_cell_);
     weather_ = rhs.weather_;
@@ -535,42 +523,12 @@ Scenario::operator=(
   return *this;
 }
 
-void
-Scenario::burn(
-  const Event& event
-)
-{
-  const auto hash_value = event.cell().hash();
-#ifdef DEBUG_SIMULATION
-  log_check_fatal(
-    intensity_->hasBurned(hash_value),
-    "Re-burning cell (%d, %d)",
-    event.cell().column(),
-    event.cell().row()
-  );
-#endif
-#ifdef DEBUG_POINTS
-  log_check_fatal(
-    (*unburnable_)[hash_value],
-    "Burning unburnable cell (%d, %d)",
-    event.cell().column(),
-    event.cell().row()
-  );
-#endif
-  // Observers only care about cells burning so do it here
-  intensity_->burn(hash_value);
-#ifdef DEBUG_GRIDS
-  log_check_fatal(!intensity_->hasBurned(hash_value), "Wasn't marked as burned after burn");
-#endif
-  arrival_[hash_value] = event.time();
-}
-
 bool
 Scenario::isSurrounded(
   const HashSize hash_value
 ) const
 {
-  return intensity_->isSurrounded(hash_value);
+  return intensity_new_->isSurrounded(hash_value);
 }
 
 Cell
@@ -578,7 +536,7 @@ Scenario::cell(
   const InnerPos& p
 ) const noexcept
 {
-  return cell(p.second, p.first);
+  return cell(p.y(), p.x());
 }
 
 string
@@ -620,7 +578,6 @@ Scenario::run(
   log_verbose("Starting");
   CriticalSection _(Model::task_limiter);
   logging::debug("Concurrent Scenario limit is %d", Model::task_limiter.limit());
-  unburnable_ = model_->environment().unburnable();
   probabilities_ = probabilities;
   log_verbose("Setting save points");
   for (auto time : save_points_)
@@ -635,7 +592,7 @@ Scenario::run(
   else
   {
     log_verbose("Applying perimeter");
-    intensity_->applyPerimeter(*perimeter_);
+    intensity_new_->applyPerimeter(*perimeter_);
     log_verbose("Perimeter applied");
     const auto& env = model().environment();
     log_verbose("Igniting points");
@@ -648,9 +605,9 @@ Scenario::run(
       const auto x = cell.column() + CELL_CENTER;
       const auto y = cell.row() + CELL_CENTER;
       const XYPos p0{x, y};
-      // log_verbose("Adding point (%d, %d)",
-      log_verbose("Adding point (%f, %f)", x, y);
-      points_.insert(x, y);
+      // log_extensive("Adding point (%d, %d)",
+      log_extensive("Adding point (%f, %f)", x, y);
+      points_new_.insert(*intensity_new_, p0);
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
@@ -660,15 +617,14 @@ Scenario::run(
   log_verbose("Creating simulation end event for %f", last_save_);
   addEvent(Event::makeEnd(last_save_));
   // mark all original points as burned at start
-  for (auto& kv : points_.map_)
+  for (const auto hash_value : points_new_.keys())
   {
-    const auto hash_value = kv.first;
     const auto& location = cell(hash_value);
     // would be burned already if perimeter applied
-    if (canBurn(hash_value))
+    if (intensity_new_->canBurn(hash_value))
     {
       const auto fake_event = Event::makeFireSpread(start_time_, location);
-      burn(fake_event);
+      intensity_new_->burn(fake_event);
     }
   }
   while (!cancelled_ && !scheduler_.empty())
@@ -676,7 +632,6 @@ Scenario::run(
     evaluateNextEvent();
   }
   ++TOTAL_STEPS;
-  unburnable_.clear();
   if (cancelled_)
   {
     return nullptr;
@@ -718,24 +673,17 @@ Scenario::run(
   return this;
 }
 
-vector<XYPos>
+void
 apply_offsets_spreadkey(
-  const BurnedData& unburnable,
+  PtMap& points_new,
+  spreading_points_new::mapped_type& pts_spreading_new,
+  const Scenario& scenario,
   const DurationSize& arrival_time,
   const DurationSize& duration,
-  const OffsetSet& offsets,
-  spreading_points::mapped_type& cell_pts_map
+  const OffsetSet& offsets
 )
 {
-  // NOTE: really tried to do this in parallel, but not enough points
-  // in a cell for it to work well
-  vector<XYPos> r1{};
   OffsetSet offsets_after_duration{};
-  logging::verbose("Applying %ld offsets", offsets.size());
-  // std::transform(
-  //   offsets.cbegin(),
-  //   offsets.cend(),
-  //   std::back_inserter(offsets_after_duration),
   offsets_after_duration.resize(offsets.size());
   std::transform(
     offsets.cbegin(),
@@ -743,57 +691,35 @@ apply_offsets_spreadkey(
     offsets_after_duration.begin(),
     [&duration, &arrival_time](const ROSOffset& r_p) {
       const auto& p = std::get<0>(r_p);
-      return ROSOffset(Offset(p.first * duration, p.second * duration));
+      return ROSOffset(Offset(p.x() * duration, p.y() * duration));
     }
   );
-  logging::verbose(
-    "Calculated %ld offsets after duration %f",
-    offsets_after_duration.size(),
-    duration
-  );
-  logging::verbose("cell_pts_map has %ld items", cell_pts_map.size());
-  for (auto& kv : cell_pts_map)
+  size_t i = 0;
+  for (auto& kv : pts_spreading_new)
   {
-    CellPoints& cell_pts = std::get<1>(kv);
-#ifdef DEBUG_CELLPOINTS
-    logging::note("cell_pts for (%d, %d) has %ld items", src.column(), src.row(), cell_pts.size());
-#endif
+    ++i;
+    auto& cell_pts = kv.second;
     if (cell_pts.empty())
     {
-#ifdef DEBUG_CELLPOINTS
-      logging::note("Cell (%d, %d) ignored because empty", src.column(), src.row());
-#endif
       continue;
     }
-    auto& pts = cell_pts.pts_.points();
+    auto& pts = cell_pts;
     for (const auto& pt : pts)
     {
-      const auto& cell_x = cell_pts.cell_x_y_.first;
-      const auto& cell_y = cell_pts.cell_x_y_.second;
-      const XYPos src{pt.first + cell_x, pt.second + cell_y};
-      // apply offsets to point
-      // should be quicker to loop over offsets in inner loop
       for (const ROSOffset& r_p : offsets_after_duration)
       {
         const auto& out = std::get<0>(r_p);
-        const auto& x_o = out.first;
-        const auto& y_o = out.second;
+        const auto& x_o = out.x();
+        const auto& y_o = out.y();
         {
-          const auto new_x = x_o + pt.first + cell_x;
-          const auto new_y = y_o + pt.second + cell_y;
-          const HashSize hash_value = Location(new_y, new_x).hash();
-          if (!unburnable.at(hash_value))
-          {
-            r1.emplace_back(new_x, new_y);
-          }
-#ifdef DEBUG_CELLPOINTS
-          logging::note("r1 is now %ld items", r1.size());
-#endif
+          const auto new_x = x_o + pt.x();
+          const auto new_y = y_o + pt.y();
+          const XYPos p0{new_x, new_y};
+          points_new.insert(*scenario.intensity_new_, p0);
         }
       }
     }
   }
-  return r1;
 }
 
 void
@@ -830,43 +756,34 @@ Scenario::scheduleFireSpread(
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  spreading_points to_spread{};
+  spreading_points_new to_spread_new{};
   // make block to prevent it being visible beyond use
   {
     // if we use an iterator this way we don't need to copy keys to erase things
-    auto it = points_.map_.begin();
-    while (it != points_.map_.end())
+    auto it = points_new_.map_.begin();
+    while (it != points_new_.map_.end())
     {
       const HashSize& hash_value = it->first;
       const Location loc{hash_value};
       const auto& for_cell = cell(hash_value);
       const auto key = for_cell.key();
+      ROSSize ros = 0;
       {
-        const SpreadInfo tmp{*this, time, key, nd(time), wx};
-        const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
-        // any cell that has the same fuel, slope, and aspect has the same spread
-        const auto& origin = origin_inserted.first->second;
-        // filter out things not spreading fast enough here so they get copied if they aren't
-        // isNotSpreading() had better be true if ros is lower than minimum
-        const auto ros = origin.headRos();
+        {
+          const auto& origin_inserted = spread_info_
+                                          .try_emplace(key, *this, time, key, nd(time), wx);
+          // any cell that has the same fuel, slope, and aspect has the same spread
+          const auto& origin = origin_inserted.first->second;
+          // filter out things not spreading fast enough here so they get copied if they aren't
+          // isNotSpreading() had better be true if ros is lower than minimum
+          ros = origin.headRos();
+        }
         if (ros >= ros_min)
         {
           max_ros_ = max(max_ros_, ros);
           // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(hash_value, std::move(it->second));
-          it = points_.map_.erase(it);
-#ifdef DEBUG_CELLPOINTS
-          auto& v = to_spread[key];
-          const auto n = v.size();
-          const auto& p = v[n - 1].second;
-          logging::note(
-            "added %ld items to to_spread[%d][(%d, %d)]",
-            p.size(),
-            key,
-            loc.column(),
-            loc.row()
-          );
-#endif
+          to_spread_new[key].emplace_back(hash_value, it->second.unique());
+          it = points_new_.map_.erase(it);
         }
         else
         {
@@ -876,7 +793,7 @@ Scenario::scheduleFireSpread(
     }
   }
   // if nothing in to_spread then nothing is spreading
-  if (to_spread.empty())
+  if (to_spread_new.empty())
   {
     // if no spread then we left everything back in points_ still
     log_verbose("Waiting until %f", max_time);
@@ -887,28 +804,39 @@ Scenario::scheduleFireSpread(
     ((max_ros_ > 0) ? min(max_duration, Settings::maximumSpreadDistance() * cellSize() / max_ros_)
                     : max_duration);
   const auto new_time = time + duration / DAY_MINUTES;
-  CellPointsMap cell_pts{};
-  for (spreading_points::value_type& kv0 : to_spread)
+  PtMap cell_pts_new{};
+  for (auto& kv0 : to_spread_new)
   {
     auto& key = kv0.first;
     const auto& offsets = spread_info_[key].offsets();
-    spreading_points::mapped_type& pts = kv0.second;
+    spreading_points_new::mapped_type& pts_spreading_new = kv0.second;
     // FIX: just decomposing for now
-    auto r = apply_offsets_spreadkey(unburnable_, new_time, duration, offsets, pts);
-    for (XYPos& p : r)
+    // auto r =
+    apply_offsets_spreadkey(cell_pts_new, pts_spreading_new, *this, new_time, duration, offsets);
+  }
+  // check after inserting new points since cells that didn't spread could be surrounded now
+  for (auto& p : points_new_.unique())
+  {
+    cell_pts_new.insert(*intensity_new_, p);
+  }
+  points_new_ = cell_pts_new;
+  // if we move everything out of points_ we can parallelize this check?
+  {
+    // indent to keep keys local
+    auto keys = points_new_.keys();
+    for (auto hash_value : keys)
     {
-      cell_pts.insert(p.x(), p.y());
+      if (intensity_new_->unburnable_.at(hash_value) || intensity_new_->isSurrounded(hash_value))
+      {
+        points_new_.erase(hash_value);
+      }
     }
   }
-  for (auto& p : points_.unique())
+  auto it = points_new_.map_.begin();
+  while (it != points_new_.map_.end())
   {
-    cell_pts.insert(p.x(), p.y());
-  }
-  points_ = cell_pts;
-  // if we move everything out of points_ we can parallelize this check?
-  do_each(points_.map_, [this, &new_time](pair<const HashSize, CellPoints>& kv) {
+    auto& kv = *it;
     const auto hash_value = kv.first;
-    CellPoints& pts = kv.second;
     const auto for_cell = cell(hash_value);
     // ******************* CHECK THIS BECAUSE IF SOMETHING IS IN HERE SHOULD IT ALWAYS HAVE
     // SPREAD????? *****************8
@@ -917,51 +845,37 @@ Scenario::scheduleFireSpread(
                                ? 0
                                : seek_spread->second.maxIntensity();
     // HACK: just use side-effect to log and check bounds
-    if (canBurn(hash_value) && max_intensity > 0)
+    if (intensity_new_->hasNotBurned(hash_value)
+        // !isUnburnable(hash_value)
+        && max_intensity > 0)
     {
       const auto fake_event = Event::makeFireSpread(new_time, for_cell);
-      burn(fake_event);
+      intensity_new_->burn(fake_event);
     }
-    if (!unburnable_.at(hash_value)
-        // && canBurn(for_cell)
+    if (!(intensity_new_->cannotSpread(hash_value))
+        // && hasNotBurned(for_cell)
         && ((
-          survives(new_time, for_cell, new_time - arrival_[hash_value]) && !isSurrounded(hash_value)
+          survives(new_time, for_cell, new_time - intensity_new_->arrival_[hash_value])
+          && !intensity_new_->isSurrounded(hash_value)
         )))
     {
-      std::swap(points_.map_[hash_value], pts);
+      // keep points because they could go somewhere
+      ++it;
     }
     else
     {
-      // just inserted false, so make sure unburnable gets updated
-      // whether it went out or is surrounded just mark it as unburnable
-      unburnable_.set(for_cell.hash());
+      it = points_new_.map_.erase(it);
+      intensity_new_->unburnable_.set(hash_value);
       // not swapping means these points get dropped
     }
-  });
-  log_extensive("Spreading %d cells until %f", points_.map_.size(), new_time);
+  }
   addEvent(Event::makeFireSpread(new_time));
 }
 
 MathSize
 Scenario::currentFireSize() const
 {
-  return intensity_->fireSize();
-}
-
-bool
-Scenario::canBurn(
-  const HashSize hash_value
-) const
-{
-  return intensity_->canBurn(hash_value);
-}
-
-bool
-Scenario::hasBurned(
-  const HashSize hash_value
-) const
-{
-  return intensity_->hasBurned(hash_value);
+  return intensity_new_->fireSize();
 }
 
 void

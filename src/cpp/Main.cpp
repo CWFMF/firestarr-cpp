@@ -287,6 +287,8 @@ main(
   const char* const argv[]
 )
 {
+  // HACK: not seeing log messagee on fatal error
+  setvbuf(stdout, nullptr, _IONBF, 0);
 #ifdef _WIN32
   printf("FireSTARR windows-testing\n\n");
 #else

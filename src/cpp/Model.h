@@ -423,6 +423,13 @@ public:
   [[nodiscard]] Iteration
   readScenarios(const StartPoint& start_point, DurationSize start, Day start_day, Day last_date);
   /**
+   * \brief Whether or not a Cell can burn
+   * \param location Cell
+   * \return Whether or not a Cell can burn
+   */
+  [[nodiscard]] bool
+  isUnburnable(const HashSize hash_value) const;
+  /**
    * \brief Semaphore used to limit how many things run at once
    */
   static Semaphore task_limiter;

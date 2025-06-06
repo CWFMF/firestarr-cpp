@@ -7,7 +7,6 @@
 #include "stdafx.h"
 
 #include "Cell.h"
-#include "CellPoints.h"
 #include "InnerPos.h"
 #include "Location.h"
 

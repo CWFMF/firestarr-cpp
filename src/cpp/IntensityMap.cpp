@@ -19,6 +19,8 @@ IntensityMap::IntensityMap(
 ) noexcept
   : model_(model),
     intensity_max_(model.environment().makeMap<IntensitySize>(false)),
+    unburnable_(model.environment().unburnable()),
+    arrival_({}),
     is_burned_(model.environment().unburnable())
 {
 }
@@ -30,6 +32,8 @@ IntensityMap::IntensityMap(
   : IntensityMap(rhs.model_)
 {
   intensity_max_ = rhs.intensity_max_;
+  arrival_ = rhs.arrival_;
+  unburnable_ = rhs.unburnable_;
   is_burned_ = rhs.is_burned_;
 }
 
@@ -99,20 +103,49 @@ IntensityMap::ignite(
   const HashSize hash_value
 )
 {
-  burn(hash_value);
-}
-
-void
-IntensityMap::burn(
-  const HashSize hash_value
-)
-{
-  lock_guard<mutex> lock(mutex_);
   if (!is_burned_.at(hash_value))
   {
     intensity_max_.set(hash_value, 1);
     is_burned_.set(hash_value);
   }
+}
+
+bool
+IntensityMap::cannotSpread(
+  const HashSize hash_value
+) const
+{
+  return unburnable_.at(hash_value);
+}
+
+void
+IntensityMap::burn(
+  const Event& event
+)
+{
+  lock_guard<mutex> lock(mutex_);
+  const auto hash_value = event.cell().hash();
+#ifdef DEBUG_SIMULATION
+  logging::check_fatal(
+    hasBurned(hash_value),
+    "Re-burning cell (%d, %d)",
+    event.cell().column(),
+    event.cell().row()
+  );
+#endif
+#ifdef DEBUG_POINTS
+  logging::check_fatal(
+    cannotSpread(hash_value),
+    "Burning unburnable cell (%d, %d)",
+    event.cell().column(),
+    event.cell().row()
+  );
+#endif
+  ignite(hash_value);
+#ifdef DEBUG_GRIDS
+  logging::check_fatal(hasBurned(hash_value), "Wasn't marked as burned after burn");
+#endif
+  arrival_[hash_value] = event.time();
 }
 
 MathSize
@@ -132,5 +165,21 @@ map<HashSize, IntensitySize>::const_iterator
 IntensityMap::cbegin() const noexcept
 {
   return intensity_max_.data.cbegin();
+}
+
+bool
+IntensityMap::hasNotBurned(
+  const HashSize hash_value
+) const
+{
+  return canBurn(hash_value);
+}
+
+bool
+IntensityMap::isUnburnable(
+  const HashSize hash_value
+) const
+{
+  return model_.isUnburnable(hash_value);
 }
 }

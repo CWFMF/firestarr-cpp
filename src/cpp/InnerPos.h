@@ -13,7 +13,7 @@
 namespace fs
 {
 template <class S, int XMin, int XMax, int YMin, int YMax>
-class BoundedPoint : public pair<S, S>
+class BoundedPoint
 {
 protected:
   using class_type = BoundedPoint<S, XMin, XMax, YMin, YMax>;
@@ -21,11 +21,40 @@ protected:
   static constexpr auto INVALID_Y = YMin - 1;
 
 public:
-  using pair<S, S>::pair;
+  constexpr BoundedPoint(
+    const S& x,
+    const S& y
+  )
+    : xy_(x, y)
+  {
+  }
+
+  constexpr BoundedPoint(
+    const class_type* p
+  )
+    : BoundedPoint(p->x(), p->y())
+  {
+  }
+
+  constexpr BoundedPoint(
+    const class_type& p
+  )
+    : BoundedPoint(p.x(), p.y())
+  {
+  }
 
   constexpr BoundedPoint() noexcept
     : BoundedPoint(XMin - 1, YMin - 1)
   {
+  }
+
+  constexpr class_type&
+  operator=(
+    const class_type& rhs
+  )
+  {
+    xy_ = rhs.xy_;
+    return *this;
   }
 
   /**
@@ -37,26 +66,26 @@ public:
     const O& o
   ) const noexcept
   {
-    return static_cast<T>(class_type(this->first + o.first, this->second + o.second));
+    return static_cast<T>(class_type(xy_.first + o.xy_.first, xy_.second + o.xy_.second));
   }
 
   inline auto&
   x() const
   {
-    return this->first;
+    return xy_.first;
   }
 
   inline auto&
   y() const
   {
-    return this->second;
+    return xy_.second;
   }
 
   CONSTEXPR Location
   location() const
   {
     // HACK: Location is (row, column) and this is (x, y)
-    return {static_cast<Idx>(this->second), static_cast<Idx>(this->first)};
+    return {static_cast<Idx>(xy_.second), static_cast<Idx>(xy_.first)};
   }
 
   CONSTEXPR HashSize
@@ -64,6 +93,32 @@ public:
   {
     return location().hash();
   }
+
+  template <class T, int _XMin, int _XMax, int _YMin, int _YMax>
+  bool
+  operator<(
+    const BoundedPoint<T, _XMin, _XMax, _YMin, _YMax>& rhs
+  ) const
+  {
+    if (static_cast<S>(xy_.first) == static_cast<S>(rhs.xy_.first))
+    {
+      return static_cast<S>(xy_.second) < static_cast<S>(rhs.xy_.second);
+    }
+    return (static_cast<S>(xy_.first) < static_cast<S>(rhs.xy_.first));
+  }
+
+  template <class T, int _XMin, int _XMax, int _YMin, int _YMax>
+  bool
+  operator==(
+    const BoundedPoint<T, _XMin, _XMax, _YMin, _YMax>& rhs
+  ) const
+  {
+    return static_cast<S>(xy_.first) == static_cast<S>(rhs.xy_.first)
+        && static_cast<S>(xy_.second) == static_cast<S>(rhs.xy_.second);
+  }
+
+private:
+  pair<S, S> xy_;
 };
 
 /**
@@ -96,6 +151,19 @@ class XYPos : public BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>
 {
 public:
   using BoundedPoint<XYSize, 0, MAX_COLUMNS, 0, MAX_ROWS>::BoundedPoint;
+
+  XYPos(
+    const Idx x0,
+    const Idx y0,
+    const InnerSize x1,
+    const InnerSize y1
+  )
+    : XYPos(
+        static_cast<XYSize>(x0) + static_cast<XYSize>(x1),
+        static_cast<XYSize>(y0) + static_cast<XYSize>(y1)
+      )
+  {
+  }
 };
 
 /**

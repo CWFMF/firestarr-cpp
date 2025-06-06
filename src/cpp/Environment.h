@@ -175,6 +175,14 @@ public:
   const BurnedData&
   unburnable() const;
 
+  /**
+   * \brief Whether or not the Cell with the given hash can't burn
+   * \param hash Hash for Cell to check
+   * \return Whether or not the Cell with the given hash can't burn
+   */
+  [[nodiscard]] bool
+  isUnburnable(const HashSize hash_value) const;
+
 protected:
   /**
    * \brief Combine rasters into CellGrid

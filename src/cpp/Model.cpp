@@ -23,6 +23,14 @@ constexpr auto FMT_OUT =
 constexpr MathSize PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 
+bool
+Model::isUnburnable(
+  const HashSize hash_value
+) const
+{
+  return environment().isUnburnable(hash_value);
+}
+
 Model::Model(
   const tm& start_time,
   const string_view output_directory,
@@ -854,26 +862,7 @@ Model::runIterations(
     }
     return true;
   };
-  const auto HARDWARE_THREADS = static_cast<size_t>(std::thread::hardware_concurrency());
-  // maybe a bit slower but prefer to run all scenarios at the same time
-  const auto MAX_THREADS = max(HARDWARE_THREADS, scenarios_per_iteration_);
-  if (MAX_THREADS > HARDWARE_THREADS)
-  {
-    logging::note(
-      "Increasing to use at least one thread for each of %ld scenarios",
-      scenarios_per_iteration_
-    );
-    Model::task_limiter.set_limit(MAX_THREADS);
-  }
-  const auto less_than_scenario = (Settings::maximumCountSimulations() <= scenarios_per_iteration_);
-  const auto MAX_CONCURRENT = std::max<size_t>(MAX_THREADS, 1);
-  const auto MIN_CONCURRENT = 2;
-  const auto concurrent_iterations = less_than_scenario
-                                     ? 1
-                                     : std::max<size_t>(
-                                         MAX_CONCURRENT / all_iterations[0].getScenarios().size(),
-                                         MIN_CONCURRENT
-                                       );
+  const auto concurrent_iterations = 1;
   for (size_t x = 1; x < concurrent_iterations; ++x)
   {
     all_iterations.push_back(readScenarios(start_point, start, start_day, last_date));

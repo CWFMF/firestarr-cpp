@@ -1,0 +1,242 @@
+/* SPDX-FileCopyrightText: 2005, 2021 Jordan Evens */
+/* SPDX-FileCopyrightText: 2020 Queen's Printer for Ontario */
+/* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+#include "pts.h"
+
+#include "Location.h"
+#include "Log.h"
+#include "Scenario.h"
+
+namespace fs
+{
+constexpr InnerSize DIST_22_5 = static_cast<InnerSize>(
+  0.2071067811865475244008443621048490392848359376884740365883398689
+);
+constexpr InnerSize P_0_5 = static_cast<InnerSize>(0.5) + DIST_22_5;
+constexpr InnerSize M_0_5 = static_cast<InnerSize>(0.5) - DIST_22_5;
+// not sure what's going on with this and wondering if it doesn't keep number exactly
+// shouldn't be any way to be further than twice the entire width of the area
+static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
+static const XYPos INVALID_XY_POSITION{};
+static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, INVALID_XY_POSITION};
+static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.x();
+static const InnerPos INVALID_INNER_POSITION{};
+static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
+static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
+using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
+#define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
+constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
+  D_PTS(0.5, 1.0),
+  // north-northeast is closest to point (0.5 + 0.207, 1.0)
+  D_PTS(P_0_5, 1.0),
+  // northeast is closest to point (1.0, 1.0)
+  D_PTS(1.0, 1.0),
+  // east-northeast is closest to point (1.0, 0.5 + 0.207)
+  D_PTS(1.0, P_0_5),
+  // east is closest to point (1.0, 0.5)
+  D_PTS(1.0, 0.5),
+  // east-southeast is closest to point (1.0, 0.5 - 0.207)
+  D_PTS(1.0, M_0_5),
+  // southeast is closest to point (1.0, 0.0)
+  D_PTS(1.0, 0.0),
+  // south-southeast is closest to point (0.5 + 0.207, 0.0)
+  D_PTS(P_0_5, 0.0),
+  // south is closest to point (0.5, 0.0)
+  D_PTS(0.5, 0.0),
+  // south-southwest is closest to point (0.5 - 0.207, 0.0)
+  D_PTS(M_0_5, 0.0),
+  // southwest is closest to point (0.0, 0.0)
+  D_PTS(0.0, 0.0),
+  // west-southwest is closest to point (0.0, 0.5 - 0.207)
+  D_PTS(0.0, M_0_5),
+  // west is closest to point (0.0, 0.5)
+  D_PTS(0.0, 0.5),
+  // west-northwest is closest to point (0.0, 0.5 + 0.207)
+  D_PTS(0.0, P_0_5),
+  // northwest is closest to point (0.0, 1.0)
+  D_PTS(0.0, 1.0),
+  // north-northwest is closest to point (0.5 - 0.207, 1.0)
+  D_PTS(M_0_5, 1.0)
+};
+
+constexpr inline auto
+dist_line(
+  const auto& a,
+  const auto& b
+)
+{
+  return ((a - b) * (a - b));
+}
+
+Pts::Pts()
+  : cell_x_y_(INVALID_INDEX, INVALID_INDEX)
+{
+  std::fill_n(&(distances()[0]), NUM_DIRECTIONS, INVALID_DISTANCE);
+  std::fill_n(&(points()[0]), NUM_DIRECTIONS, INVALID_INNER_POSITION);
+}
+
+Pts::Pts(
+  const IntensityMap& intensity_map,
+  const XYPos p
+)
+  : Pts()
+{
+  cell_x_y_ = {static_cast<Idx>(p.x()), static_cast<Idx>(p.y())};
+  // HACK: assign value of first item if burnable
+  if (!intensity_map.unburnable_.at(p.hash()))
+  {
+    distances()[0] = INVALID_DISTANCE - 1;
+  }
+  insert(p);
+}
+
+Pts&
+Pts::insert(
+  const XYSize x,
+  const XYSize y
+)
+{
+  if (canBurn())
+  {
+    XYSize integral;
+    // need to calculate distances, but we know everything is the same point
+    const auto x0 = static_cast<DistanceSize>(modf(x, &integral));
+    const auto y0 = static_cast<DistanceSize>(modf(y, &integral));
+    const InnerPos p0{x0, y0};
+    auto& dists = distances();
+    auto& pts = points();
+    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+    {
+      const auto& p1 = POINTS_OUTER[i];
+      const auto& x1 = p1.first;
+      const auto& y1 = p1.second;
+      const auto d = dist_line(x0, x1) + dist_line(y0, y1);
+      auto& p_d = dists[i];
+      auto& p_p = pts[i];
+      p_p = (d < p_d) ? p0 : p_p;
+      p_d = (d < p_d) ? d : p_d;
+    }
+  }
+  return *this;
+}
+
+inline bool
+Pts::canBurn() const
+{
+  return (INVALID_DISTANCE != distances()[0]);
+}
+
+bool
+Pts::empty() const
+{
+  return !canBurn();
+}
+
+Pts&
+PtMap::insert(
+  const IntensityMap& intensity_map,
+  const XYPos p0
+)
+{
+  auto p = map_.try_emplace(p0.hash(), intensity_map, p0);
+  auto& pts = p.first->second;
+  if (!p.second)
+  {
+    pts.insert(p0);
+  }
+  return pts;
+}
+
+set<XYPos>
+Pts::unique() const noexcept
+{
+  set<XYPos> r{};
+  Location loc{cell_x_y_.hash()};
+  add_unique(loc, r);
+  return r;
+}
+
+void
+Pts::add_unique(
+  const Location&,
+  set<XYPos>& into
+) const noexcept
+{
+  // if any point is invalid then they all have to be
+  if (canBurn())
+  {
+    const auto& pts = points();
+    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+    {
+      const auto& p = pts[i];
+      into.insert({cell_x_y_.x(), cell_x_y_.y(), p.x(), p.y()});
+    }
+  }
+}
+
+set<XYPos>
+PtMap::unique(
+  const HashSize hash_value
+) const noexcept
+{
+  set<XYPos> r{};
+  for (auto& kv : map_)
+  {
+    if (kv.first == hash_value)
+    {
+      const auto& loc = Location{kv.first};
+      auto& pts = kv.second;
+      pts.add_unique(loc, r);
+    }
+  }
+  return r;
+}
+
+set<XYPos>
+PtMap::unique() const noexcept
+{
+  set<XYPos> r{};
+  add_unique(r);
+  return r;
+}
+
+void
+PtMap::add_unique(
+  set<XYPos>& into
+) const noexcept
+{
+  for (auto& kv : map_)
+  {
+    const auto& loc = Location{kv.first};
+    auto& pts = kv.second;
+    pts.add_unique(loc, into);
+  }
+}
+
+set<HashSize>
+PtMap::keys() const noexcept
+{
+  set<HashSize> r{};
+  for (auto& kv : map_)
+  {
+    r.insert(kv.first);
+  }
+  return r;
+}
+
+size_t
+PtMap::size() const noexcept
+{
+  return unique().size();
+}
+
+size_t
+PtMap::erase(
+  const HashSize hash_value
+) noexcept
+{
+  return map_.erase(hash_value);
+}
+}

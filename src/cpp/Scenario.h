@@ -7,7 +7,6 @@
 
 #include "stdafx.h"
 
-#include "CellPoints.h"
 #include "EventCompare.h"
 #include "FireSpread.h"
 #include "FireWeather.h"
@@ -15,6 +14,7 @@
 #include "IntensityMap.h"
 #include "LogPoints.h"
 #include "Model.h"
+#include "pts.h"
 #include "Settings.h"
 #include "StartPoint.h"
 
@@ -164,12 +164,6 @@ public:
    */
   [[nodiscard]] Scenario*
   reset(mt19937* mt_extinction, mt19937* mt_spread, ptr<SafeVector> final_sizes);
-  /**
-   * \brief Burn cell that Event takes place in
-   * \param event Event with cell location
-   */
-  void
-  burn(const Event& event);
   /**
    * Mark as cancelled so it stops computing on next event.
    * \param Whether to log a warning about this being cancelled
@@ -431,20 +425,6 @@ public:
   [[nodiscard]] MathSize
   currentFireSize() const;
   /**
-   * \brief Whether or not a Cell can burn
-   * \param location Cell
-   * \return Whether or not a Cell can burn
-   */
-  [[nodiscard]] bool
-  canBurn(const HashSize hash_value) const;
-  /**
-   * \brief Whether or not Location has burned already
-   * \param location Location to check
-   * \return Whether or not Location has burned already
-   */
-  [[nodiscard]] bool
-  hasBurned(const HashSize hash_value) const;
-  /**
    * \brief Add an Event to the queue
    * \param event Event to add
    */
@@ -585,11 +565,12 @@ protected:
   /**
    * \brief Map of Cells to the PointSets within them
    */
-  CellPointsMap points_;
+  PtMap points_new_;
   /**
    * \brief Contains information on cells that are not burnable
    */
-  BurnedData unburnable_{};
+
+public:
   /**
    * \brief Event scheduler used for ordering events
    */
@@ -597,7 +578,7 @@ protected:
   /**
    * \brief Map of what intensity each cell has burned at
    */
-  unique_ptr<IntensityMap> intensity_{nullptr};
+  unique_ptr<IntensityMap> intensity_new_{nullptr};
   /**
    * \brief Perimeter used to start Scenario from
    */
@@ -606,10 +587,6 @@ protected:
    * \brief Calculated SpreadInfo for SpreadKey for current time
    */
   map<SpreadKey, SpreadInfo> spread_info_{};
-  /**
-   * \brief Map of when Cell had first Point arrive in it
-   */
-  map<HashSize, DurationSize> arrival_{};
   /**
    * \brief Maximum rate of spread for current time
    */

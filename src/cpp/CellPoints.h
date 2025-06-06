@@ -7,7 +7,7 @@
 #define FS_CELLPOINTS_H
 
 #include "stdafx.h"
-
+#ifdef USE_OLD_SPREAD
 #include "InnerPos.h"
 #include "IntensityMap.h"
 
@@ -68,6 +68,24 @@ static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
   MASK_NW,
   MASK_NW
 };
+static constexpr std::array<const char*, NUM_DIRECTIONS> DIRECTION_NAMES{
+  "N",
+  "NNE",
+  "NE",
+  "ENE",
+  "E",
+  "ESE",
+  "SE",
+  "SSE",
+  "S",
+  "SSW",
+  "SW",
+  "WSW",
+  "W",
+  "WNW",
+  "NW",
+  "NNW"
+};
 
 class CellPointsMap;
 using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
@@ -78,10 +96,6 @@ class CellPointArrays : public array_cellpts
 {
 public:
   using array_cellpts::array_cellpts;
-  CellPointArrays(const InnerPos& p0);
-  CellPointArrays(const InnerSize x, const InnerSize y);
-  CellPointArrays&
-  insert(const InnerSize x, const InnerSize y);
 
   inline const array_dists&
   distances() const
@@ -125,7 +139,16 @@ public:
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
-  CellPoints(const XYSize x, const XYSize y) noexcept;
+  CellPoints(
+    // const HashSize hash_uninit,
+    // const bool can_burn_uninit,
+    const bool can_burn_unburnable,
+    const bool can_burn_non_fuel,
+    const bool can_burn_has_not_burned,
+    const bool can_burn,
+    CellPos cell
+  ) noexcept;
+  CellPoints(const IntensityMap& intensity_map, const XYPos p) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
   CellPoints&
@@ -133,9 +156,7 @@ public:
   CellPoints&
   operator=(const CellPoints& rhs) noexcept = default;
   CellPoints&
-  insert(const XYSize x, const XYSize y) noexcept;
-  CellPoints&
-  insert(const InnerPos& p) noexcept;
+  insert(const XYPos& p) noexcept;
   set<XYPos>
   unique() const noexcept;
   bool
@@ -144,24 +165,28 @@ public:
   operator==(const CellPoints& rhs) const noexcept;
   [[nodiscard]] Location
   location() const noexcept;
-  void
-  clear();
   bool
   empty() const;
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD)
+  size_t
+  size() const noexcept;
+#endif
   // FIX: just access directly for now
 
 public:
+  bool can_burn_;
+  bool can_burn_has_not_burned_;
+  bool can_burn_non_fuel_;
+  bool can_burn_unburnable_;
   CellPointArrays pts_;
   // use Idx instead of Location so it can be negative (invalid)
   CellPos cell_x_y_;
 
 private:
-  CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
-  CellPoints(const XYPos& p) noexcept;
+  CellPoints(const IntensityMap& intensity_map, const CellPos& cell) noexcept;
 };
 
 using spreading_points = CellPoints::spreading_points;
-class Scenario;
 
 // map that merges items when try_emplace doesn't insert
 class CellPointsMap
@@ -169,10 +194,12 @@ class CellPointsMap
 public:
   CellPointsMap();
   CellPoints&
-  insert(const XYSize x, const XYSize y) noexcept;
+  insert(const IntensityMap& intensity_map, const XYPos p) noexcept;
   set<XYPos>
   unique() const noexcept;
-#ifdef DEBUG_CELLPOINTS
+  set<XYPos>
+  unique(const HashSize hash_value) const noexcept;
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD)
   size_t
   size() const noexcept;
 #endif
@@ -183,5 +210,41 @@ public:
   // private:
   map<HashSize, CellPoints> map_;
 };
+
+template <class P, class T, class S = std::set<P>>
+static void
+show_points(
+  const S& s,
+  const char* format,
+  ...
+)
+{
+  va_list args;
+  va_start(args, format);
+  auto msg = fs::logging::format_log_message("", format, &args);
+  printf(msg.c_str());
+  va_end(args);
+  const P& p = *(s.cbegin());
+  const auto fmt = typeid(p.x()) == typeid(size_t)
+                   ? "(%ld, %ld)"
+                   : ((std::numeric_limits<T>::is_integer) ? "(%d, %d)" : "(%f, %f)");
+  printf("\n>>>>>>>>>>>>>>>>>>>>>>>>\n");
+  size_t i = 0;
+  for (const auto& p : s)
+  {
+    printf(fmt, p.x(), p.y());
+    ++i;
+  }
+  if (0 == i)
+  {
+    printf("\nEmpty set\n");
+  }
+  else
+  {
+    printf("\n%ld points total", i);
+  }
+  printf("\n<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 }
+}
+#endif
 #endif

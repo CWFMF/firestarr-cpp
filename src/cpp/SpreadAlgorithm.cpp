@@ -4,7 +4,6 @@
 
 #include "SpreadAlgorithm.h"
 
-#include "CellPoints.h"
 #include "unstable.h"
 #include "Util.h"
 
