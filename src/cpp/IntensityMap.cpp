@@ -124,38 +124,39 @@ IntensityMap::applyPerimeter(
     }
   );
 }
-// bool IntensityMap::canBurn(const HashSize hash) const
+// bool IntensityMap::canBurn(const HashSize hash_value) const
 //{
 //   return !hasBurned(hash);
 // }
 bool
 IntensityMap::canBurn(
-  const Location& location
+  const HashSize hash_value
 ) const
 {
-  return !hasBurned(location);
+  return !hasBurned(hash_value);
 }
 bool
 IntensityMap::hasBurned(
-  const Location& location
+  const HashSize hash_value
 ) const
 {
   lock_guard<mutex> lock(mutex_);
-  return (*is_burned_)[location.hash()];
+  return (*is_burned_)[hash_value];
   //  return hasBurned(location.hash());
 }
-// bool IntensityMap::hasBurned(const HashSize hash) const
+// bool IntensityMap::hasBurned(const HashSize hash_value) const
 //{
 //   lock_guard<mutex> lock(mutex_);
 //   return (*is_burned_)[hash];
 // }
 bool
 IntensityMap::isSurrounded(
-  const Location& location
+  const HashSize hash_value
 ) const
 {
   // implement here so we can just lock once
   lock_guard<mutex> lock(mutex_);
+  const Location location{hash_value};
   const auto x = location.column();
   const auto y = location.row();
   const auto min_row = static_cast<Idx>(max(y - 1, 0));
@@ -180,14 +181,14 @@ IntensityMap::isSurrounded(
 }
 void
 IntensityMap::ignite(
-  const Location& location
+  const HashSize hash_value
 )
 {
-  burn(location);
+  burn(hash_value);
 }
 void
 IntensityMap::burn(
-  const Location& location
+  const HashSize hash_value
 )
 {
   lock_guard<mutex> lock(mutex_);
@@ -210,10 +211,10 @@ IntensityMap::burn(
   //   logging::check_fatal(0 >= intensity, "Negative or 0 intensity given: %d", intensity);
   //   logging::check_fatal(0 >= ros, "Negative or 0 ros given: %f", ros);
   // }
-  if (!(*is_burned_)[location.hash()])
+  if (!(*is_burned_)[hash_value])
   {
-    intensity_max_->set(location, 1);
-    (*is_burned_).set(location.hash());
+    intensity_max_->set(hash_value, 1);
+    (*is_burned_).set(hash_value);
   }
 }
 MathSize
@@ -222,12 +223,12 @@ IntensityMap::fireSize() const
   lock_guard<mutex> lock(mutex_);
   return intensity_max_->fireSize();
 }
-map<Location, IntensitySize>::const_iterator
+map<HashSize, IntensitySize>::const_iterator
 IntensityMap::cend() const noexcept
 {
   return intensity_max_->data.cend();
 }
-map<Location, IntensitySize>::const_iterator
+map<HashSize, IntensitySize>::const_iterator
 IntensityMap::cbegin() const noexcept
 {
   return intensity_max_->data.cbegin();

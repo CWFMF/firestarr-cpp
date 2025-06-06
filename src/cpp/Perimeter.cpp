@@ -61,10 +61,10 @@ public:
       {
         const auto loc = env.cell(r, c);
         const Location fixed_loc(static_cast<Idx>(r + offset_y), static_cast<Idx>(c + offset_x));
-        const auto value = perim_grid.at(fixed_loc);
+        const auto value = perim_grid.at(fixed_loc.hash());
         if (value != perim_grid.nodataValue() && !fuel::is_null_fuel(loc))
         {
-          this->GridMap<unsigned char, unsigned char>::set(loc, value);
+          this->GridMap<unsigned char, unsigned char>::set(loc.hash(), value);
           // logging::debug("(%d, %d) = (%d)", fixed_loc.column(), fixed_loc.row(), value);
           ++count;
         }
@@ -102,11 +102,12 @@ Perimeter::Perimeter(
 #endif
 }
 Perimeter::Perimeter(
-  const Location& location,
+  const HashSize hash_value,
   const size_t size,
   const Environment& env
 )
 {
+  const Location location{hash_value};
   // NOTE: FwiWeather is unused but could change this to try doing length to breadth ratio
   auto perim_grid = env.makeMap<unsigned char>(0);
   // want to find cells in the area that fill up the size we're looking for
@@ -114,7 +115,7 @@ Perimeter::Perimeter(
   // convert into number of cells
   const auto num_cells = size / (100.0 * 100.0 / (perim_grid->cellSize() * perim_grid->cellSize()));
   auto max_distance = sqrt(num_cells / M_PI);
-  perim_grid->set(location, 1);
+  perim_grid->set(hash_value, 1);
   ++count;
   // HACK: assume fuel for origin matches the rest of the fire
   while (num_cells > count)
@@ -130,9 +131,10 @@ Perimeter::Perimeter(
           const auto r = static_cast<Idx>(location.row() + x);
           const auto c = static_cast<Idx>(location.column() + y);
           const auto loc = env.cell(r, c);
-          if (1 != perim_grid->at(loc) && !fuel::is_null_fuel(loc))
+          const auto hash_value = loc.hash();
+          if (1 != perim_grid->at(hash_value) && !fuel::is_null_fuel(loc))
           {
-            perim_grid->set(loc, 1);
+            perim_grid->set(hash_value, 1);
             ++count;
           }
         }
@@ -149,12 +151,12 @@ Perimeter::Perimeter(
 // {
 //   return burned_map_;
 // }
-[[nodiscard]] const list<Location>&
+[[nodiscard]] const list<HashSize>&
 Perimeter::burned() const noexcept
 {
   return burned_;
 }
-[[nodiscard]] const list<Location>&
+[[nodiscard]] const list<HashSize>&
 Perimeter::edge() const noexcept
 {
   return edge_;

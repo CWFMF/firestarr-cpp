@@ -198,20 +198,19 @@ public:
    * \param location Location to get Cell for
    * \return Cell at the given Location
    */
-  template <class P>
   [[nodiscard]] constexpr topo::Cell
   cell(
-    const Position<P>& position
+    const HashSize hash_value
   ) const
   {
-    return env_->cell(position);
+    return env_->cell(hash_value);
   }
   /**
    * \brief Cell at the Location represented by the given hash
    * \param hash_size Hash size for Location to get Cell for
    * \return Cell at the Location represented by the given hash
    */
-  //  [[nodiscard]] constexpr topo::Cell cell(const HashSize hash_size) const
+  //  [[nodiscard]] constexpr topo::Cell cell(const HashSize hash_value_size) const
   //  {
   //    return env_->cell(hash_size);
   //  }
@@ -506,7 +505,7 @@ private:
   /**
    * \brief Cell(s) that can burn closest to start Location
    */
-  vector<shared_ptr<topo::Cell>> starts_{};
+  vector<HashSize> starts_{};
   /**
    * \brief Time to use for simulation start
    */

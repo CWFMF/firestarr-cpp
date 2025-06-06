@@ -206,7 +206,7 @@ Scenario::Scenario(
   wx::FireWeather* weather,
   wx::FireWeather* weather_daily,
   const DurationSize start_time,
-  const shared_ptr<Cell>& start_cell,
+  const HashSize start_cell,
   const StartPoint& start_point,
   const Day start_day,
   const Day last_date
@@ -219,7 +219,7 @@ Scenario::Scenario(
       start_time,
       // make_unique<IntensityMap>(*model, nullptr),
       nullptr,
-      start_cell,
+      make_shared<HashSize>(start_cell),
       start_point,
       start_day,
       last_date
@@ -229,7 +229,7 @@ Scenario::Scenario(
 // HACK: just set next start point here for surface right now
 Scenario*
 Scenario::reset_with_new_start(
-  const shared_ptr<Cell>& start_cell,
+  const shared_ptr<HashSize>& start_cell,
   util::SafeVector* final_sizes
 )
 {
@@ -420,7 +420,7 @@ Scenario::Scenario(
   const DurationSize start_time,
   //  const shared_ptr<IntensityMap>& initial_intensity,
   const shared_ptr<Perimeter>& perimeter,
-  const shared_ptr<Cell>& start_cell,
+  const shared_ptr<HashSize>& start_cell,
   StartPoint start_point,
   const Day start_day,
   const Day last_date
@@ -550,9 +550,10 @@ Scenario::burn(
   const Event& event
 )
 {
+  const auto hash_value = event.cell().hash();
 #ifdef DEBUG_SIMULATION
   log_check_fatal(
-    intensity_->hasBurned(event.cell()),
+    intensity_->hasBurned(hash_value),
     "Re-burning cell (%d, %d)",
     event.cell().column(),
     event.cell().row()
@@ -560,26 +561,26 @@ Scenario::burn(
 #endif
 #ifdef DEBUG_POINTS
   log_check_fatal(
-    (*unburnable_)[event.cell().hash()],
+    (*unburnable_)[hash_value],
     "Burning unburnable cell (%d, %d)",
     event.cell().column(),
     event.cell().row()
   );
 #endif
   // Observers only care about cells burning so do it here
-  intensity_->burn(event.cell());
+  intensity_->burn(hash_value);
 #ifdef DEBUG_GRIDS
-  log_check_fatal(!intensity_->hasBurned(event.cell()), "Wasn't marked as burned after burn");
+  log_check_fatal(!intensity_->hasBurned(hash_value), "Wasn't marked as burned after burn");
 #endif
-  arrival_[event.cell()] = event.time();
+  arrival_[hash_value] = event.time();
   // scheduleFireSpread(event);
 }
 bool
 Scenario::isSurrounded(
-  const Location& location
+  const HashSize hash_value
 ) const
 {
-  return intensity_->isSurrounded(location);
+  return intensity_->isSurrounded(hash_value);
 }
 Cell
 Scenario::cell(
@@ -676,10 +677,11 @@ Scenario::run(
   // mark all original points as burned at start
   for (auto& kv : points_.map_)
   {
-    const auto& location = cell(kv.first);
+    const auto hash_value = kv.first;
+    const auto& location = cell(hash_value);
     // const auto& location = kv.first;
     // would be burned already if perimeter applied
-    if (canBurn(location))
+    if (canBurn(hash_value))
     {
       const auto fake_event = Event::makeFireSpread(start_time_, location);
       burn(fake_event);
@@ -702,12 +704,11 @@ Scenario::run(
     return nullptr;
   }
   const auto completed = ++COMPLETED;
-  // const auto count = Settings::surface() ? model_->ignitionScenarios() : (+COUNT);
-  // HACK: use + to pull value out of atomic
-  const auto count = (+COUNT);
   const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
   {
 #ifdef NDEBUG
+    // HACK: use + to pull value out of atomic
+    const auto count = (+COUNT);
     log_output(
       log_level,
       "[% d of % d] Completed with final size % 0.1f ha",
@@ -740,6 +741,7 @@ Scenario::run(
 }
 vector<XYPos>
 apply_offsets_spreadkey(
+  const BurnedData& unburnable,
   const DurationSize& arrival_time,
   const DurationSize& duration,
   const OffsetSet& offsets,
@@ -777,9 +779,9 @@ apply_offsets_spreadkey(
     duration
   );
   logging::verbose("cell_pts_map has %ld items", cell_pts_map.size());
-  for (auto& pts_for_cell : cell_pts_map)
+  for (auto& kv : cell_pts_map)
   {
-    CellPoints& cell_pts = std::get<1>(pts_for_cell);
+    CellPoints& cell_pts = std::get<1>(kv);
 #ifdef DEBUG_CELLPOINTS
     logging::note("cell_pts for (%d, %d) has %ld items", src.column(), src.row(), cell_pts.size());
 #endif
@@ -811,7 +813,11 @@ apply_offsets_spreadkey(
         {
           const auto new_x = x_o + pt.first + cell_x;
           const auto new_y = y_o + pt.second + cell_y;
-          r1.emplace_back(new_x, new_y);
+          const HashSize hash_value = Location(new_y, new_x).hash();
+          if (!unburnable[hash_value])
+          {
+            r1.emplace_back(new_x, new_y);
+          }
 #ifdef DEBUG_CELLPOINTS
           logging::note("r1 is now %ld items", r1.size());
 #endif
@@ -880,8 +886,9 @@ Scenario::scheduleFireSpread(
     auto it = points_.map_.begin();
     while (it != points_.map_.end())
     {
-      const Location& loc = it->first;
-      const Cell for_cell = cell(loc);
+      const HashSize& hash_value = it->first;
+      const Location loc{hash_value};
+      const auto& for_cell = cell(hash_value);
       const auto key = for_cell.key();
       // HACK: need to lookup before emplace since might try to create Cell without fuel
       // if (!fuel::is_null_fuel(loc))
@@ -889,6 +896,7 @@ Scenario::scheduleFireSpread(
       // if (!(*unburnable_)[h])
       // if (canBurn(for_cell))
       {
+        const SpreadInfo tmp{*this, time, key, nd(time), wx};
         const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
         // any cell that has the same fuel, slope, and aspect has the same spread
         const auto& origin = origin_inserted.first->second;
@@ -899,7 +907,7 @@ Scenario::scheduleFireSpread(
         {
           max_ros_ = max(max_ros_, ros);
           // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(loc, std::move(it->second));
+          to_spread[key].emplace_back(hash_value, std::move(it->second));
           it = points_.map_.erase(it);
 #ifdef DEBUG_CELLPOINTS
           auto& v = to_spread[key];
@@ -944,61 +952,38 @@ Scenario::scheduleFireSpread(
     const auto& offsets = spread_info_[key].offsets();
     spreading_points::mapped_type& pts = kv0.second;
     // FIX: just decomposing for now
-    auto r = apply_offsets_spreadkey(new_time, duration, offsets, pts);
+    auto r = apply_offsets_spreadkey(*unburnable_, new_time, duration, offsets, pts);
     for (XYPos& p : r)
     {
       cell_pts.insert(p.x(), p.y());
     }
   }
-  // auto spread = std::views::transform(
-  //   to_spread,
-  //   [this, &duration, &new_time](
-  //     spreading_points::value_type& kv0) -> CellPointsMap {
-  //     auto& key = kv0.first;
-  //     const auto& offsets = spread_info_[key].offsets();
-  //     spreading_points::mapped_type& cell_pts = kv0.second;
-  //     auto r = apply_offsets_spreadkey(new_time, duration, offsets, cell_pts);
-  //     return r;
-  //   });
-  // auto it = spread.begin();
-  // while (spread.end() != it)
+  // cell_pts.remove_if(
+  //   [this](
+  //     const pair<HashSize, CellPoints>& kv) {
+  //     const auto hash_value = kv.first;
+  //     const Location location{hash_value};
+  //     // clear out if unburnable
+  //     const auto do_clear = (*unburnable_)[hash_value];
+  //     if (do_clear)
   // {
-  //   const CellPointsMap& cell_pts_cur = *it;
-  //   // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not
-  //   adding
-  //   // const auto h = cell_pts.location().hash();
-  //   // if (!unburnable[h])
-  //   // {
-  //   cell_pts.merge(*unburnable_, cell_pts_cur);
-  //   // }
-  //   ++it;
+  //       logging::error(
+  //         "Shouldn't have unburnable cell (%d, %d)",
+  //         location.column(),
+  //         location.row());
   // }
-#ifdef DEBUG_CELLPOINTS
-  const auto n_c = cell_pts.size();
-#endif
-  cell_pts.remove_if([this](const pair<Location, CellPoints>& kv) {
-    const auto& location = kv.first;
-    const auto h = location.hash();
-    // clear out if unburnable
-    const auto do_clear = (*unburnable_)[h];
-    return do_clear;
-  });
-#ifdef DEBUG_CELLPOINTS
-  logging::note("%ld cell_pts before remove_if() and %ld after", n_c, cell_pts.size());
-#endif
-  // need to merge new points back into cells that didn't spread
-  // points_.merge(
-  //   *unburnable_,
-  //   cell_pts);
+  //     return do_clear;
+  //   });
   for (auto& p : points_.unique())
   {
     cell_pts.insert(p.x(), p.y());
   }
   points_ = cell_pts;
   // if we move everything out of points_ we can parallelize this check?
-  do_each(points_.map_, [this, &new_time](pair<const Location, CellPoints>& kv) {
-    const auto for_cell = cell(kv.first);
+  do_each(points_.map_, [this, &new_time](pair<const HashSize, CellPoints>& kv) {
+    const auto hash_value = kv.first;
     CellPoints& pts = kv.second;
+    const auto for_cell = cell(hash_value);
     // logging::check_fatal(pts.empty(), "Empty points for some reason");
     // ******************* CHECK THIS BECAUSE IF SOMETHING IS IN HERE SHOULD IT ALWAYS HAVE
     // SPREAD????? *****************8
@@ -1011,7 +996,7 @@ Scenario::scheduleFireSpread(
     //                      "Expected max_intensity to be > 0 but got %f",
     //                      max_intensity);
     // HACK: just use side-effect to log and check bounds
-    if (canBurn(for_cell) && max_intensity > 0)
+    if (canBurn(hash_value) && max_intensity > 0)
     {
       // // HACK: make sure it can't round down to 0
       // const auto intensity = static_cast<IntensitySize>(max(
@@ -1023,15 +1008,16 @@ Scenario::scheduleFireSpread(
       const auto fake_event = Event::makeFireSpread(new_time, for_cell);
       burn(fake_event);
     }
-    if (!(*unburnable_)[for_cell.hash()]
+    if (!(*unburnable_)[hash_value]
         // && canBurn(for_cell)
-        && ((survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
-        ))
+        && ((
+          survives(new_time, for_cell, new_time - arrival_[hash_value]) && !isSurrounded(hash_value)
+        )))
     {
-      const auto r = for_cell.row();
-      const auto c = for_cell.column();
-      const Location loc{r, c};
-      std::swap(points_.map_[loc], pts);
+      // const auto r = for_cell.row();
+      // const auto c = for_cell.column();
+      // const Location loc{r, c};
+      std::swap(points_.map_[hash_value], pts);
     }
     else
     {
@@ -1051,26 +1037,18 @@ Scenario::currentFireSize() const
 }
 bool
 Scenario::canBurn(
-  const Cell& location
+  const HashSize hash_value
 ) const
 {
-  return intensity_->canBurn(location);
+  return intensity_->canBurn(hash_value);
 }
-// bool Scenario::canBurn(const HashSize hash) const
-//{
-//   return intensity_->canBurn(hash);
-// }
 bool
 Scenario::hasBurned(
-  const Location& location
+  const HashSize hash_value
 ) const
 {
-  return intensity_->hasBurned(location);
+  return intensity_->hasBurned(hash_value);
 }
-// bool Scenario::hasBurned(const HashSize hash) const
-//{
-//   return intensity_->hasBurned(hash);
-// }
 void
 Scenario::endSimulation() noexcept
 {

@@ -24,7 +24,7 @@ using topo::Position;
  * \tparam V Type of data used as an input when initializing.
  */
 template <class T, class V = T>
-class GridMap : public GridData<T, V, map<Location, T>>
+class GridMap : public GridData<T, V, map<HashSize, T>>
 {
 public:
   /**
@@ -34,18 +34,10 @@ public:
    */
   [[nodiscard]] bool
   contains(
-    const Location& location
+    const HashSize hash_value
   ) const
   {
-    return this->data.end() != this->data.find(location);
-  }
-  template <class P>
-  [[nodiscard]] bool
-  contains(
-    const Position<P>& position
-  ) const
-  {
-    return contains(Location{position.hash()});
+    return this->data.end() != this->data.find(hash_value);
   }
   /**
    * \brief Retrieve value at Location
@@ -54,23 +46,15 @@ public:
    */
   [[nodiscard]] T
   at(
-    const Location& location
+    const HashSize hash_value
   ) const override
   {
-    const auto value = this->data.find(location);
+    const auto value = this->data.find(hash_value);
     if (value == this->data.end())
     {
       return this->nodataValue();
     }
     return get<1>(*value);
-  }
-  template <class P>
-  [[nodiscard]] T
-  at(
-    const Position<P>& position
-  ) const
-  {
-    return at(Location{position.hash()});
   }
   /**
    * \brief Set value at Location
@@ -79,21 +63,12 @@ public:
    */
   void
   set(
-    const Location& location,
+    const HashSize hash_value,
     const T value
   ) override
   {
-    this->data[location] = value;
-    assert(at(location) == value);
-  }
-  template <class P>
-  void
-  set(
-    const Position<P>& position,
-    const T value
-  )
-  {
-    return set(Location{position.hash()}, value);
+    this->data[hash_value] = value;
+    assert(at(hash_value) == value);
   }
   ~GridMap() = default;
   /**
@@ -121,7 +96,7 @@ public:
     const MathSize yurcorner,
     string&& proj4
   )
-    : GridData<T, V, map<Location, T>>(
+    : GridData<T, V, map<HashSize, T>>(
         cell_size,
         rows,
         columns,
@@ -132,7 +107,7 @@ public:
         xurcorner,
         yurcorner,
         std::forward<string>(proj4),
-        map<Location, T>()
+        map<HashSize, T>()
       )
   {
     constexpr auto max_hash = numeric_limits<HashSize>::max();
@@ -208,7 +183,7 @@ public:
   GridMap(
     GridMap&& rhs
   ) noexcept
-    : GridData<T, V, map<Location, T>>(std::move(rhs))
+    : GridData<T, V, map<HashSize, T>>(std::move(rhs))
   {
     this->data = std::move(rhs.data);
   }
@@ -219,7 +194,7 @@ public:
   GridMap(
     const GridMap& rhs
   )
-    : GridData<T, V, map<Location, T>>(rhs)
+    : GridData<T, V, map<HashSize, T>>(rhs)
   {
     this->data = rhs.data;
   }
@@ -275,8 +250,9 @@ protected:
     Idx max_column = 0;
     for (const auto& kv : this->data)
     {
-      const Idx r = kv.first.row();
-      const Idx c = kv.first.column();
+      const Location location{kv.first};
+      const Idx r = location.row();
+      const Idx c = location.column();
       min_row = min(min_row, r);
       max_row = max(max_row, r);
       min_column = min(min_column, c);
@@ -330,13 +306,13 @@ public:
    * \brief Make a list of all Locations that are on the edge of cells with a value
    * \return A list of all Locations that are on the edge of cells with a value
    */
-  [[nodiscard]] list<Location>
+  [[nodiscard]] list<HashSize>
   makeEdge() const
   {
-    list<Location> edge{};
+    list<HashSize> edge{};
     for (const auto& kv : this->data)
     {
-      auto loc = kv.first;
+      const Location loc{kv.first};
       auto on_edge = false;
       for (Idx r = -1; !on_edge && r <= 1; ++r)
       {
@@ -347,7 +323,7 @@ public:
           {
             const Idx col_index = loc.column() + c;
             if (!(col_index < 0 || col_index >= this->columns())
-                && this->data.find(Location(row_index, col_index)) == this->data.end())
+                && this->data.find(Location(row_index, col_index).hash()) == this->data.end())
             {
               on_edge = true;
             }
@@ -356,7 +332,7 @@ public:
       }
       if (on_edge)
       {
-        edge.push_back(loc);
+        edge.push_back(loc.hash());
       }
     }
     logging::info(
@@ -369,19 +345,11 @@ public:
    * \brief Make a list of all Locations that have a value
    * \return A list of all Locations that have a value
    */
-  [[nodiscard]] list<Location>
+  [[nodiscard]] list<HashSize>
   makeList() const
   {
-    list<Location> result{this->data.size()};
-    std::transform(
-      this->data.begin(),
-      this->data.end(),
-      result.begin(),
-      [](const pair<const Location, const T>& kv) {
-        return kv.first;
-      }
-    );
-    return result;
+    auto ks = std::views::keys(this->data);
+    return {ks.begin(), ks.end()};
   }
 };
 }
