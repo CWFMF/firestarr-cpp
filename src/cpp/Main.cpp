@@ -278,6 +278,8 @@ main(
   const char* const argv[]
 )
 {
+  // HACK: not seeing log messagee on fatal error
+  setvbuf(stdout, NULL, _IONBF, 0);
   // FILE* out_adj = fopen("horizontal_adjustment.csv", "w");
   // fprintf(
   //   out_adj,

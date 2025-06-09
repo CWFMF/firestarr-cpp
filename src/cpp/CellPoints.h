@@ -68,6 +68,24 @@ static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
   MASK_NW,
   MASK_NW
 };
+static constexpr std::array<const char*, NUM_DIRECTIONS> DIRECTION_NAMES{
+  "N",
+  "NNE",
+  "NE",
+  "ENE",
+  "E",
+  "ESE",
+  "SE",
+  "SSE",
+  "S",
+  "SSW",
+  "SW",
+  "WSW",
+  "W",
+  "WNW",
+  "NW",
+  "NNW"
+};
 
 class CellPointsMap;
 // using dist_pt = pair<DistanceSize, InnerPos>;
@@ -124,15 +142,15 @@ public:
   CellPoints(const CellPoints* rhs) noexcept;
   //   CellPoints(const vector<InnerPos>& pts) noexcept;
   CellPoints(
-    const HashSize hash_uninit,
-    const bool can_burn_uninit,
+    // const HashSize hash_uninit,
+    // const bool can_burn_uninit,
     const bool can_burn_unburnable,
     const bool can_burn_non_fuel,
     const bool can_burn_has_not_burned,
     const bool can_burn,
     const CellPos& cell
   ) noexcept;
-  CellPoints(const Scenario& scenario, const XYSize x, const XYSize y) noexcept;
+  CellPoints(const Scenario& scenario, const XYPos p) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
   CellPoints&
@@ -140,9 +158,7 @@ public:
   CellPoints&
   operator=(const CellPoints& rhs) noexcept = default;
   CellPoints&
-  insert(const XYSize x, const XYSize y) noexcept;
-  CellPoints&
-  insert(const InnerPos& p) noexcept;
+  insert(const XYPos& p) noexcept;
   set<XYPos>
   unique() const noexcept;
   bool
@@ -155,6 +171,10 @@ public:
   //   const array_pts points() const;
   bool
   empty() const;
+#ifdef DEBUG_CELLPOINTS
+  size_t
+  size() const noexcept;
+#endif
   // DurationSize arrival_time_;
   // IntensitySize intensity_at_arrival_;
   // ROSSize ros_at_arrival_;
@@ -166,11 +186,11 @@ public:
   bool can_burn_has_not_burned_;
   bool can_burn_non_fuel_;
   bool can_burn_unburnable_;
-  bool can_burn_uninit_;
+  // bool can_burn_uninit_;
   CellPointArrays pts_;
   // use Idx instead of Location so it can be negative (invalid)
   CellPos cell_x_y_;
-  HashSize hash_uninit_;
+  // HashSize hash_uninit_;
 private:
   CellPoints(const Scenario& scenario, const CellPos& cell) noexcept;
 };
@@ -183,9 +203,11 @@ class CellPointsMap
 public:
   CellPointsMap();
   CellPoints&
-  insert(const Scenario& scenario, const XYSize x, const XYSize y) noexcept;
+  insert(const Scenario& scenario, const XYPos p) noexcept;
   set<XYPos>
   unique() const noexcept;
+  set<XYPos>
+  unique(const HashSize hash_value) const noexcept;
 #ifdef DEBUG_CELLPOINTS
   size_t
   size() const noexcept;
@@ -197,5 +219,40 @@ public:
   // private:
   map<HashSize, CellPoints> map_;
 };
+template <class P, class T, class S = std::set<P>>
+static void
+show_points(
+  const S& s,
+  const char* format,
+  ...
+)
+{
+  va_list args;
+  va_start(args, format);
+  // logging::output(logging::LOG_VERBOSE, format, &args);
+  auto msg = fs::logging::format_log_message("VERBOSE", format, &args);
+  va_end(args);
+  const P& p = *(s.cbegin());
+  const T& x = p.x();
+  const auto fmt = typeid(T) == typeid(size_t)
+                   ? "(%ld, %ld)"
+                   : ((std::numeric_limits<T>::is_integer) ? "(%d, %d)" : "(%f, %f)");
+  logging::output(logging::LOG_VERBOSE, "\n>>>>>>>>>>>>>>>>>>>>>>>>\n");
+  size_t i = 0;
+  for (const auto& p : s)
+  {
+    printf(fmt, p.x(), p.y());
+    ++i;
+  }
+  if (0 == i)
+  {
+    printf("\nEmpty set\n");
+  }
+  else
+  {
+    printf("\n%ld points total", i);
+  }
+  printf("\n<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+}
 }
 #endif

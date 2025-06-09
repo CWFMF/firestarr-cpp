@@ -197,7 +197,9 @@ check_equal(
   noexcept
 #endif
 {
-  logging::check_fatal(lhs != rhs, "Expected %s to be %d but got %d", name, rhs, lhs);
+  const auto fmt = typeid(lhs) == typeid(size_t) ? "Expected %s to be %ld but got %ld"
+                                                 : "Expected %s to be %d but got %d";
+  logging::check_fatal(lhs != rhs, fmt, name, rhs, lhs);
 }
 /**
  * \brief Log with FATAL level and exit
@@ -246,6 +248,7 @@ fatal(
   // format message and then output so we don't parse args twice and can use for error
   auto msg = format_log_message("", format, args);
   output(LOG_FATAL, msg.c_str());
+  fflush(stdout);
   Log::closeLogFile();
 #ifdef NDEBUG
   exit(EXIT_FAILURE);
@@ -279,7 +282,7 @@ fatal(
 }
 class SelfLogger
 {
-protected:
+public:
   virtual string
   add_log(const char* format) const noexcept = 0;
   void
