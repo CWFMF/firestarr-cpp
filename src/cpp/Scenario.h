@@ -14,6 +14,9 @@
 #include "InnerPos.h"
 #include "FireSpread.h"
 #include "CellPoints.h"
+#ifdef DEBUG_NEW_SPREAD
+#include "pts.h"
+#endif
 
 namespace fs::sim
 {
@@ -494,10 +497,15 @@ protected:
    * \brief Map of Cells to the PointSets within them
    */
   CellPointsMap points_;
+#ifdef DEBUG_NEW_SPREAD
+  PtMap points_new_;
+#endif
   /**
    * \brief Contains information on cells that are not burnable
    */
+public:
   BurnedData* unburnable_;
+  BurnedData* unburnable_new_;
   /**
    * \brief Event scheduler used for ordering events
    */
@@ -506,6 +514,7 @@ protected:
    * \brief Map of what intensity each cell has burned at
    */
   unique_ptr<IntensityMap> intensity_;
+  unique_ptr<IntensityMap> intensity_new_;
   // /**
   //  * @brief Initial intensity map based off perimeter
   //  */
