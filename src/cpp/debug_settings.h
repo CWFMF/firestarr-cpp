@@ -14,6 +14,9 @@
 #define DEBUG_PROBABILITY
 #define DEBUG_SIMULATION
 #define DEBUG_STATISTICS
+#define DEBUG_CELLPOINTS
+#define DEBUG_NEW_SPREAD
+#define DEBUG_NEW_SPREAD_VERBOSE
 // #define DEBUG_WEATHER
 // // use this for trying to troubleshoot specific problems short-term
 // #define DEBUG_TEMPORARY
@@ -29,8 +32,10 @@
 #undef DEBUG_SIMULATION
 #undef DEBUG_STATISTICS
 #undef DEBUG_WEATHER
-
 #endif
+#undef DEBUG_CELLPOINTS
+#undef DEBUG_NEW_SPREAD
+#undef DEBUG_NEW_SPREAD_VERBOSE
 
 #if not(defined(NDEBUG)) || defined(DEBUG_DIRECTIONS) || defined(DEBUG_FUEL_VARIABLE) || defined(DEBUG_FWI_WEATHER) || defined(DEBUG_GRIDS) || defined(DEBUG_POINTS) || defined(DEBUG_PROBABILITY) || defined(DEBUG_SIMULATION) || defined(DEBUG_STATISTICS) || defined(DEBUG_WEATHER)
 #define DEBUG_ANY

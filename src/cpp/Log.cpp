@@ -73,31 +73,43 @@ string format_log_message(const char* prefix, const char* format, va_list* args)
 #endif
   // try to make output consistent if in debug mode
   iss << prefix;
-  {
-    lock_guard<mutex> lock(mutex_);
-    static char buffer[1024]{0};
-    vsnprintf(buffer, std::size(buffer), format, *args);
-    iss << buffer;
-    return iss.str();
-  }
+  static char buffer[1024]{0};
+  vsnprintf(buffer, std::size(buffer), format, *args);
+  iss << buffer;
+  return iss.str();
 }
 void output(const int log_level, const char* format, va_list* args)
 #ifdef NDEBUG
   noexcept
 #endif
 {
+#ifdef NDEBUG
   if (Log::getLogLevel() > log_level)
   {
     return;
   }
+#endif
   try
   {
+    lock_guard<mutex> lock(mutex_);
     auto msg = format_log_message(LOG_LABELS[log_level], format, args);
-    printf("%s\n", msg.c_str());
-    if (nullptr != out_)
+#ifndef NDEBUG
+    // if debugging then output everything to log file but not necessarily stdout
+    if (log_level >= Log::getLogLevel())
+#endif
     {
-      fprintf(out_, "%s\n", msg.c_str());
-      fflush(out_);
+      printf("%s\n", msg.c_str());
+    }
+#ifndef NDEBUG
+    // if debugging then output everything to log file but not necessarily stdout
+    if (log_level >= LOG_VERBOSE)
+#endif
+    {   // fflush(stdout);
+      if (nullptr != out_)
+      {
+        fprintf(out_, "%s\n", msg.c_str());
+        fflush(out_);
+      }
     }
   }
   catch (const std::exception& ex)
@@ -203,7 +215,7 @@ void fatal(const char* format, ...)
   va_start(args, format);
   fatal(format, &args);
   // cppcheck-suppress va_end_missing
-  // va_end(args);
+  va_end(args);
 }
 void fatal(const std::exception& ex)
 {
