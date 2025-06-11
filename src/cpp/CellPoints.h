@@ -123,6 +123,7 @@ public:
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
   //   CellPoints(const vector<InnerPos>& pts) noexcept;
+  CellPoints(const bool can_burn, const Idx cell_x, const Idx cell_y) noexcept;
   CellPoints(const BurnedData& unburnable, const XYSize x, const XYSize y) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
