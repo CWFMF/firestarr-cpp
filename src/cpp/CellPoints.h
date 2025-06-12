@@ -132,12 +132,7 @@ public:
     const bool can_burn,
     const CellPos& cell
   ) noexcept;
-  CellPoints(
-    const BurnedData& unburnable,
-    const Scenario& scenario,
-    const XYSize x,
-    const XYSize y
-  ) noexcept;
+  CellPoints(const Scenario& scenario, const XYSize x, const XYSize y) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
   CellPoints&
@@ -177,7 +172,7 @@ public:
   CellPos cell_x_y_;
   HashSize hash_uninit_;
 private:
-  CellPoints(const BurnedData& unburnable, const Scenario& scenario, const CellPos& cell) noexcept;
+  CellPoints(const Scenario& scenario, const CellPos& cell) noexcept;
 };
 
 using spreading_points = CellPoints::spreading_points;
@@ -188,12 +183,7 @@ class CellPointsMap
 public:
   CellPointsMap();
   CellPoints&
-  insert(
-    const BurnedData& unburnable,
-    const Scenario& scenario,
-    const XYSize x,
-    const XYSize y
-  ) noexcept;
+  insert(const Scenario& scenario, const XYSize x, const XYSize y) noexcept;
   set<XYPos>
   unique() const noexcept;
 #ifdef DEBUG_CELLPOINTS
