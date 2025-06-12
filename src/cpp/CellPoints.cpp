@@ -29,6 +29,7 @@ static const SpreadData INVALID_SPREAD_DATA{INVALID_TIME};
 set<XYPos>
 CellPoints::unique() const noexcept
 {
+  logging::check_equal(INVALID_DISTANCE != pts_.distances()[0], can_burn_, "can_burn_");
   // // if any point is invalid then they all have to be
   if (
     // !can_burn_ ||
@@ -52,15 +53,19 @@ CellPoints::size() const noexcept
 }
 #endif
 CellPoints::CellPoints(
+  const HashSize hash_uninit,
+  const bool can_burn_uninit,
   const bool can_burn,
-  const Idx cell_x,
-  const Idx cell_y
+  const CellPos& cell
 ) noexcept
   : can_burn_(can_burn),
+    can_burn_uninit_(can_burn_uninit),
     pts_(),
-    cell_x_y_(cell_x, cell_y)
+    cell_x_y_(cell),
+    hash_uninit_(hash_uninit)
 
 {
+  // logging::check_equal(hash_uninit_, cell_x_y_.hash(), "hash_uninit");
   // if (can_burn_)
   {
     std::fill(pts_.distances().begin(), pts_.distances().end(), INVALID_DISTANCE);
@@ -73,11 +78,19 @@ CellPoints::CellPoints(
 }
 CellPoints::CellPoints(
   const BurnedData& unburnable,
-  const Idx cell_x,
-  const Idx cell_y
+  const CellPos& cell
 ) noexcept
-  : CellPoints(!unburnable[cell_x_y_.hash()], cell_x, cell_y)
+  // : CellPoints(!unburnable[cell_x_y_.hash()], cell)
+  : CellPoints(cell_x_y_.hash(), !unburnable[cell_x_y_.hash()], !unburnable[cell.hash()], cell)
 {
+  // logging::check_equal(
+  //   unburnable[hash_uninit_],
+  //   unburnable[cell_x_y_.hash()],
+  //   "unburnable[hash_uninit]");
+  // logging::check_equal(
+  //   !unburnable[hash_uninit_],
+  //   can_burn_,
+  //   "unburnable[hash_uninit]");
 }
 CellPoints::CellPoints() noexcept
   : CellPoints(false, INVALID_INDEX, INVALID_INDEX)
@@ -96,7 +109,7 @@ CellPoints::CellPoints(
   const XYSize x,
   const XYSize y
 ) noexcept
-  : CellPoints(unburnable, static_cast<Idx>(x), static_cast<Idx>(y))
+  : CellPoints(unburnable, CellPos(static_cast<Idx>(x), static_cast<Idx>(y)))
 {
   insert(x, y);
 }
@@ -144,7 +157,7 @@ CellPoints::insert(
   const XYSize y
 ) noexcept
 {
-  // if (can_burn_)
+  if (can_burn_)
   {
     insert_pt(x, y, cell_x_y_, pts_);
   }
@@ -264,6 +277,7 @@ CellPoints::operator==(
 bool
 CellPoints::empty() const
 {
+  logging::check_equal(INVALID_DISTANCE != pts_.distances()[0], can_burn_, "can_burn_");
   // NOTE: if anything is invalid then everything must be
   return (
     // !can_burn_ ||

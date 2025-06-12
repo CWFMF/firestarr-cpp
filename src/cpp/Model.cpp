@@ -70,6 +70,13 @@ Model::releaseBurnedVector(
     std::terminate();
   }
 }
+bool
+Model::isUnburnable(
+  const HashSize hash_value
+) const
+{
+  return environment().isUnburnable(hash_value);
+}
 Model::Model(
   const string dir_out,
   const topo::StartPoint& start_point,

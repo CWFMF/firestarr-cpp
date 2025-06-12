@@ -123,7 +123,12 @@ public:
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
   //   CellPoints(const vector<InnerPos>& pts) noexcept;
-  CellPoints(const bool can_burn, const Idx cell_x, const Idx cell_y) noexcept;
+  CellPoints(
+    const HashSize hash_uninit,
+    const bool can_burn_uninit,
+    const bool can_burn,
+    const CellPos& cell
+  ) noexcept;
   CellPoints(const BurnedData& unburnable, const XYSize x, const XYSize y) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
@@ -155,11 +160,13 @@ public:
   // FIX: just access directly for now
 public:
   bool can_burn_;
+  bool can_burn_uninit_;
   CellPointArrays pts_;
   // use Idx instead of Location so it can be negative (invalid)
   CellPos cell_x_y_;
+  HashSize hash_uninit_;
 private:
-  CellPoints(const BurnedData& unburnable, const Idx cell_x, const Idx cell_y) noexcept;
+  CellPoints(const BurnedData& unburnable, const CellPos& cell) noexcept;
 };
 
 using spreading_points = CellPoints::spreading_points;

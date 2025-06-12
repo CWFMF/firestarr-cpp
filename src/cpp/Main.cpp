@@ -370,6 +370,9 @@ main(
   // if they want to specify -v and -q then that's fine
   register_argument("-q", "Decrease output level", false, &Log::decreaseLogLevel);
   auto result = -1;
+  // Log::increaseLogLevel();
+  // Log::increaseLogLevel();
+  // Log::increaseLogLevel();
   MODE mode = SIMULATION;
   if (ARGC > 1 && 0 == strcmp(ARGV[1], "test"))
   {

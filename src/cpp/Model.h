@@ -427,6 +427,13 @@ public:
   void
   releaseBurnedVector(BurnedData* has_burned) const noexcept;
   /**
+   * \brief Whether or not a Cell can burn
+   * \param location Cell
+   * \return Whether or not a Cell can burn
+   */
+  [[nodiscard]] bool
+  isUnburnable(const HashSize hash_value) const;
+  /**
    * \brief Semaphore used to limit how many things run at once
    */
   static Semaphore task_limiter;
