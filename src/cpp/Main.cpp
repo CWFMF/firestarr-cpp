@@ -286,6 +286,9 @@ int main(const int argc, const char* const argv[])
   // if they want to specify -v and -q then that's fine
   register_argument("-q", "Decrease output level", false, &Log::decreaseLogLevel);
   auto result = -1;
+  // Log::increaseLogLevel();
+  // Log::increaseLogLevel();
+  // Log::increaseLogLevel();
   MODE mode = SIMULATION;
   if (ARGC > 1 && 0 == strcmp(ARGV[1], "test"))
   {
@@ -423,7 +426,9 @@ int main(const int argc, const char* const argv[])
       output_directory += '/';
     }
     const char* dir_out = output_directory.c_str();
-    struct stat info{};
+    struct stat info
+    {
+    };
     if (stat(dir_out, &info) != 0 || !(info.st_mode & S_IFDIR))
     {
       fs::util::make_directory_recursive(dir_out);
