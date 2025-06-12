@@ -375,7 +375,7 @@ Scenario::evaluate(
     case Event::NEW_FIRE:
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
-      points_.insert(*unburnable_, x, y);
+      points_.insert(*unburnable_, *this, x, y);
       if (fuel::is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -660,7 +660,7 @@ Scenario::run(
       const XYPos p0{x, y};
       // log_verbose("Adding point (%d, %d)",
       log_verbose("Adding point (%f, %f)", x, y);
-      points_.insert(*unburnable_, x, y);
+      points_.insert(*unburnable_, *this, x, y);
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
       // log_check_fatal(!e.second,
       //                 "Excepted to add point to new cell but (%ld, %ld) is already in map",
@@ -743,6 +743,7 @@ void
 apply_offsets_spreadkey(
   CellPointsMap& points,
   const BurnedData& unburnable,
+  const Scenario& scenario,
   const DurationSize& arrival_time,
   const DurationSize& duration,
   const OffsetSet& offsets,
@@ -814,7 +815,7 @@ apply_offsets_spreadkey(
         {
           const auto new_x = x_o + pt.first + cell_x;
           const auto new_y = y_o + pt.second + cell_y;
-          points.insert(unburnable, new_x, new_y);
+          points.insert(unburnable, scenario, new_x, new_y);
 #ifdef DEBUG_CELLPOINTS
           logging::note("r1 is now %ld items", r1.size());
 #endif
@@ -950,7 +951,7 @@ Scenario::scheduleFireSpread(
     spreading_points::mapped_type& pts = kv0.second;
     // FIX: just decomposing for now
     // auto r =
-    apply_offsets_spreadkey(cell_pts, *unburnable_, new_time, duration, offsets, pts);
+    apply_offsets_spreadkey(cell_pts, *unburnable_, *this, new_time, duration, offsets, pts);
     // for (XYPos& p : r)
     // {
     //   // cell_pts.insert(p.x(), p.y());
@@ -973,7 +974,7 @@ Scenario::scheduleFireSpread(
   });
   for (auto& p : points_.unique())
   {
-    cell_pts.insert(*unburnable_, p.x(), p.y());
+    cell_pts.insert(*unburnable_, *this, p.x(), p.y());
   }
   points_ = cell_pts;
   // if we move everything out of points_ we can parallelize this check?
