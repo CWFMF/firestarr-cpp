@@ -68,7 +68,7 @@ CellPoints::unique() const noexcept
     return ret;
   }
 }
-#ifdef DEBUG_CELLPOINTS
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD)
 size_t
 CellPoints::size() const noexcept
 {
@@ -264,10 +264,12 @@ insert_pt(
     const auto d = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
     auto& p_d = pts.distances()[i];
     auto& p_p = pts.points()[i];
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
     if (d < p_d)
     {
       logging::verbose("CellPoints: Inserting as %s: (%f, %f)", DIRECTION_NAMES[i], p0.x(), p0.y());
     }
+#endif
     p_p = (d < p_d) ? p0 : p_p;
     p_d = (d < p_d) ? d : p_d;
   }
@@ -383,7 +385,7 @@ CellPointsMap::insert(
   const XYPos p
 ) noexcept
 {
-#ifdef DEBUG_CELLPOINTS
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD)
   const auto n0 = size();
   logging::verbose("Adding (%f, %f) to %ld points", p.x(), p.y(), n0);
 #endif
@@ -391,13 +393,36 @@ CellPointsMap::insert(
   CellPoints& cell_pts = e.first->second;
   if (!e.second)
   {
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
+    show_points<XYPos, XYSize, std::set<XYPos>>(
+      cell_pts.unique(),
+      "Pts: Adding (%f, %f) to %ld points",
+      p.x(),
+      p.y(),
+      n0
+    );
+#endif
     // FIX: should use max of whatever ROS has entered during this time and not just first ros
     // tried to add new CellPoints but already there
     cell_pts.insert(p);
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
+    show_points<XYPos, XYSize, std::set<XYPos>>(
+      cell_pts.unique(),
+      "Pts: Adding (%f, %f) to %ld points gives %ld points",
+      p.x(),
+      p.y(),
+      n0,
+      cell_pts.size()
+    );
+#endif
   }
 #ifdef DEBUG_CELLPOINTS
   const auto n1 = size();
   logging::verbose("Adding (%f, %f) to %ld points gives %ld", p.x(), p.y(), n0, n1);
+#endif
+#ifdef DEBUG_NEW_SPREAD
+  const auto n2 = cell_pts.size();
+  logging::verbose("Adding (%f, %f) to %ld points gives %ld", p.x(), p.y(), n0, n2);
 #endif
   return cell_pts;
 }
@@ -450,7 +475,7 @@ CellPointsMap::unique(
   }
   return r;
 }
-#ifdef DEBUG_CELLPOINTS
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD)
 size_t
 CellPointsMap::size() const noexcept
 {

@@ -347,6 +347,7 @@ Scenario::reset(
   }
   return this;
 }
+#ifdef USE_NEW_SPREAD
 #ifdef DEBUG_NEW_SPREAD
 template <class V>
 int
@@ -364,9 +365,11 @@ compare_pts(
   const set<XYPos>& pts_new
 )
 {
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
   show_points<XYPos, XYSize, std::set<XYPos>>(pts_old, "%s Old points are", msg.c_str());
   show_points<XYPos, XYSize, std::set<XYPos>>(pts_new, "%s New points are", msg.c_str());
-#ifdef DEBUG_NEW_SPREAD
+#endif
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
   logging::verbose(
     "Comparing %s %ld old points to %ld new points",
     msg.c_str(),
@@ -379,6 +382,17 @@ compare_pts(
   if (n_new != n_old)
   {
     logging::error("Have %ld old points and %ld new points", pts_old.size(), pts_new.size());
+    show_points<XYPos, XYSize, std::set<XYPos>>(pts_old, "Old points for %s", msg.c_str());
+    show_points<XYPos, XYSize, std::set<XYPos>>(pts_new, "New points for %s", msg.c_str());
+    vector<XYPos> diff{};
+    std::set_difference(
+      pts_old.begin(),
+      pts_old.end(),
+      pts_new.begin(),
+      pts_new.end(),
+      std::back_inserter(diff)
+    );
+    show_points<XYPos, XYSize, vector<XYPos>>(diff, "Difference %s", msg.c_str());
     return compare(n_old, n_new);
   }
   else
@@ -500,8 +514,13 @@ check_pts(
   B pts_new
 )
 {
-  logging::check_fatal(0 != compare_pts(msg, pts_old, pts_new), msg.c_str());
+  logging::check_fatal(
+    0 != compare_pts(msg, pts_old, pts_new),
+    "Points are different for %s",
+    msg.c_str()
+  );
 }
+#endif
 #endif
 void
 Scenario::evaluate(
@@ -547,8 +566,10 @@ Scenario::evaluate(
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
       points_.insert(*this, p0);
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
       points_new_.insert(*unburnable_new_, p0);
+#endif
+#ifdef DEBUG_NEW_SPREAD_CHECK
       check_pts("NEW_FIRE", points_.unique(), points_new_.unique());
 #endif
       if (fuel::is_null_fuel(event.cell()))
@@ -849,7 +870,7 @@ Scenario::run(
       // log_extensive("Adding point (%d, %d)",
       log_extensive("Adding point (%f, %f)", x, y);
       points_.insert(*this, p0);
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
       points_new_.insert(*unburnable_new_, p0);
 #endif
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
@@ -879,7 +900,7 @@ Scenario::run(
       burn(fake_event);
     }
   }
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
   // mark all original points as burned at start
   for (const auto hash_value : points_new_.keys())
   {
@@ -952,8 +973,10 @@ Scenario::run(
 }
 void
 apply_offsets_spreadkey(
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
   PtMap& points_new,
+#endif
+#ifdef DEBUG_NEW_SPREAD
   spreading_points_new::mapped_type& pts_spreading_new,
 #endif
   CellPointsMap& points,
@@ -1003,6 +1026,8 @@ apply_offsets_spreadkey(
   );
   logging::debug("pts_spreading has %ld items", pts_spreading.size());
   logging::debug("pts_spreading_new has %ld items", pts_spreading_new.size());
+#endif
+#ifdef DEBUG_NEW_SPREAD_CHECK
   check_pts("pts_spreading old vs new", pts_spreading, pts_spreading_new);
 #endif
   size_t i = 0;
@@ -1059,7 +1084,7 @@ apply_offsets_spreadkey(
           const auto new_x = x_o + pt.x();
           const auto new_y = y_o + pt.y();
           const XYPos p0{new_x, new_y};
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_CHECK
           {
             auto u_all0 = points.unique();
             auto u_hash0 = points.unique(hash_value);
@@ -1077,7 +1102,7 @@ apply_offsets_spreadkey(
           }
 #endif
           points.insert(scenario, p0);
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
           points_new.insert(*(scenario.unburnable_new_), p0);
 #endif
 #ifdef DEBUG_CELLPOINTS
@@ -1092,7 +1117,7 @@ apply_offsets_spreadkey(
           check_pts(msg, points.unique(), points_new.unique());
 #endif
 #endif
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_CHECK
           auto u_all0 = points.unique();
           auto u_hash0 = points.unique(hash_value);
           auto u_all1 = points_new.unique();
@@ -1108,7 +1133,7 @@ apply_offsets_spreadkey(
           check_pts("apply_offsets_spreadkey after insert 2.5", u_hash0, u_hash1);
 #endif
         }
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_CHECK
         auto u_all0 = points.unique();
         auto u_all1 = points_new.unique();
         auto u_hash0 = points.unique(hash_value);
@@ -1124,7 +1149,7 @@ apply_offsets_spreadkey(
         check_pts("apply_offsets_spreadkey after insert 3.5", u_hash0, u_hash1);
 #endif
       }
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_CHECK
       auto u_all0 = points.unique();
       auto u_hash0 = points.unique(hash_value);
       auto u_all1 = points_new.unique();
@@ -1140,7 +1165,7 @@ apply_offsets_spreadkey(
       check_pts("apply_offsets_spreadkey after offset loop 4.5", u_hash0, u_hash1);
 #endif
     }
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_CHECK
     auto u_all0 = points.unique();
     auto u_hash0 = points.unique(hash_value);
     auto u_all1 = points_new.unique();
@@ -1156,7 +1181,7 @@ apply_offsets_spreadkey(
     check_pts("apply_offsets_spreadkey after points loop 5.5", u_hash0, u_hash1);
 #endif
   }
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_CHECK
   check_pts("apply_offsets_spreadkey end", points.unique(), points_new.unique());
 #endif
   // return r1;
@@ -1213,8 +1238,10 @@ Scenario::scheduleFireSpread(
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
   spreading_points_new to_spread_new{};
+#endif
+#ifdef DEBUG_NEW_SPREAD
   log_info("Finding spreading points");
 #endif
   spreading_points to_spread{};
@@ -1262,12 +1289,12 @@ Scenario::scheduleFireSpread(
         {
           max_ros_ = max(max_ros_, ros);
           // NOTE: shouldn't be Cell if we're looking up by just Location later
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
           to_spread_new[key].emplace_back(hash_value, it->second.unique());
           points_new_.erase(hash_value);
 #endif
           to_spread[key].emplace_back(hash_value, std::move(it->second));
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_CHECK
           check_pts("emplace into to_spread", to_spread, to_spread_new);
 #endif
           it = points_.map_.erase(it);
@@ -1294,7 +1321,7 @@ Scenario::scheduleFireSpread(
 #ifdef CELLPOINTS
         check_pts("during making to_spread 1", to_spread, to_spread_new);
 #endif
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
         check_pts("points during making to_spread 1", points_.unique(), points_new_.unique());
 #endif
 #ifdef DEBUG_NEW_SPREAD
@@ -1323,7 +1350,7 @@ Scenario::scheduleFireSpread(
   // note("Spreading for %f minutes", duration);
   const auto new_time = time + duration / DAY_MINUTES;
   CellPointsMap cell_pts{};
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
   PtMap cell_pts_new{};
 #endif
   for (spreading_points::value_type& kv0 : to_spread)
@@ -1333,6 +1360,8 @@ Scenario::scheduleFireSpread(
     spreading_points::mapped_type& pts = kv0.second;
 #ifdef DEBUG_NEW_SPREAD
     spreading_points_new::mapped_type& pts_spreading_new = to_spread_new[key];
+#endif
+#ifdef DEBUG_NEW_SPREAD_CHECK
     check_pts("looping through to_spread start", to_spread, to_spread_new);
     check_pts("pts vs pts_spreading_new", pts, pts_spreading_new);
     check_pts("cell_pts vs new", cell_pts.unique(), cell_pts_new.unique());
@@ -1340,8 +1369,10 @@ Scenario::scheduleFireSpread(
     // FIX: just decomposing for now
     // auto r =
     apply_offsets_spreadkey(
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
       cell_pts_new,
+#endif
+#ifdef DEBUG_NEW_SPREAD
       pts_spreading_new,
 #endif
       cell_pts,
@@ -1363,6 +1394,16 @@ Scenario::scheduleFireSpread(
   }
   points_ = cell_pts;
   // check after inserting new points since cells that didn't spread could be surrounded now
+#ifdef USE_NEW_SPREAD
+  for (auto& p : points_new_.unique())
+  {
+    cell_pts_new.insert(*unburnable_new_, p);
+  }
+  points_new_ = cell_pts_new;
+#endif
+#ifdef DEBUG_NEW_SPREAD_CHECK
+  check_pts("pts before remove surrounded", points_.unique(), points_new_.unique());
+#endif
   points_.remove_if([this](const pair<HashSize, CellPoints>& kv) {
     const auto hash_value = kv.first;
     const Location location{hash_value};
@@ -1377,22 +1418,40 @@ Scenario::scheduleFireSpread(
     // }
     return do_clear;
   });
-#ifdef DEBUG_NEW_SPREAD
-  for (auto& p : points_new_.unique())
-  {
-    cell_pts_new.insert(*unburnable_new_, p);
-  }
-  points_new_ = cell_pts_new;
-#endif
   // if we move everything out of points_ we can parallelize this check?
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_CHECK
   check_pts("spreading before burning cells", to_spread, to_spread_new);
+#endif
+#ifdef USE_NEW_SPREAD
+  {
+    // indent to keep keys local
+    auto keys = points_new_.keys();
+    for (auto hash_value : keys)
+    {
+      if (cannotSpread(hash_value) || isSurrounded(hash_value))
+      {
+        points_new_.erase(hash_value);
+      }
+    }
+  }
+#endif
+#ifdef DEBUG_NEW_SPREAD_CHECK
   check_pts("pts before burning cells", points_.unique(), points_new_.unique());
 #endif
-  do_each(points_.map_, [this, &new_time](pair<const HashSize, CellPoints>& kv) {
+  auto it = points_.map_.begin();
+  while (it != points_.map_.end())
+  {
+    auto& kv = *it;
     CellPoints& pts = kv.second;
     const auto hash_value = kv.first;
     const auto for_cell = cell(hash_value);
+#ifdef DEBUG_TEMPORARY
+    const auto h_target = Location{2081, 1962}.hash();
+    if (h_target == hash_value)
+    {
+      logging::info("Looking at cell (%d, %d)", kv.second.cell_x_y_.x(), kv.second.cell_x_y_.y());
+    }
+#endif
     // logging::check_fatal(pts.empty(), "Empty points for some reason");
     // ******************* CHECK THIS BECAUSE IF SOMETHING IS IN HERE SHOULD IT ALWAYS HAVE
     // SPREAD????? *****************8
@@ -1428,20 +1487,24 @@ Scenario::scheduleFireSpread(
       // const auto r = for_cell.row();
       // const auto c = for_cell.column();
       // const Location loc{r, c};
+      // This is supposed to be ensuring the points are in the active points list?
+      // but isn't it just swapping the mapped entry with itself?
       std::swap(points_.map_[hash_value], pts);
+      ++it;
     }
     else
     {
       // just inserted false, so make sure unburnable gets updated
       // whether it went out or is surrounded just mark it as unburnable
-      (*unburnable_)[for_cell.hash()] = true;
-#ifdef DEBUG_NEW_SPREAD
-      points_new_.erase(for_cell.hash());
-      (*unburnable_new_)[for_cell.hash()] = true;
+      (*unburnable_)[hash_value] = true;
+      it = points_.map_.erase(it);
+#ifdef USE_NEW_SPREAD
+      points_new_.erase(hash_value);
+      (*unburnable_new_)[hash_value] = true;
 #endif
       // not swapping means these points get dropped
     }
-  });
+  }
 #ifdef DEBUG_NEW_SPREAD
   check_pts("pts after burning cells", points_.unique(), points_new_.unique());
 #endif

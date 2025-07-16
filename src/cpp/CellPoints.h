@@ -171,7 +171,7 @@ public:
   //   const array_pts points() const;
   bool
   empty() const;
-#ifdef DEBUG_CELLPOINTS
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD)
   size_t
   size() const noexcept;
 #endif
@@ -208,7 +208,7 @@ public:
   unique() const noexcept;
   set<XYPos>
   unique(const HashSize hash_value) const noexcept;
-#ifdef DEBUG_CELLPOINTS
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD)
   size_t
   size() const noexcept;
 #endif
@@ -230,14 +230,15 @@ show_points(
   va_list args;
   va_start(args, format);
   // logging::output(logging::LOG_VERBOSE, format, &args);
-  auto msg = fs::logging::format_log_message("VERBOSE", format, &args);
+  auto msg = fs::logging::format_log_message("", format, &args);
+  printf(msg.c_str());
   va_end(args);
   const P& p = *(s.cbegin());
   const T& x = p.x();
   const auto fmt = typeid(T) == typeid(size_t)
                    ? "(%ld, %ld)"
                    : ((std::numeric_limits<T>::is_integer) ? "(%d, %d)" : "(%f, %f)");
-  logging::output(logging::LOG_VERBOSE, "\n>>>>>>>>>>>>>>>>>>>>>>>>\n");
+  printf("\n>>>>>>>>>>>>>>>>>>>>>>>>\n");
   size_t i = 0;
   for (const auto& p : s)
   {

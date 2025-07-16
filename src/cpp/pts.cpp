@@ -4,7 +4,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "pts.h"
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
 #include "Log.h"
 #include "Location.h"
 #include "Scenario.h"
@@ -77,7 +77,7 @@ Pts::Pts()
 {
   // // actually only need to set first value to denote empty
   // distances()[0] = INVALID_DIRECTION;
-  std::fill_n(&(distances()[0]), NUM_DIRECTIONS, INVALID_DIRECTION);
+  std::fill_n(&(distances()[0]), NUM_DIRECTIONS, INVALID_DISTANCE);
   std::fill_n(&(points()[0]), NUM_DIRECTIONS, INVALID_INNER_POSITION);
 }
 Pts::Pts(
@@ -92,7 +92,9 @@ Pts::Pts(
   {
     distances()[0] = INVALID_DISTANCE - 1;
   }
+  logging::check_equal(canBurn(), !unburnable[p.hash()], "can burn");
   insert(p);
+  logging::check_equal(canBurn() ? 1 : 0, unique().size(), "Initial size");
   // if (!unburnable[p.hash()])
   // {
   //   XYSize integral;
@@ -147,7 +149,7 @@ Pts::insert(
     const auto x0 = static_cast<DistanceSize>(modf(x, &integral));
     const auto y0 = static_cast<DistanceSize>(modf(y, &integral));
     const InnerPos p0{x0, y0};
-    std::fill_n(&(points()[0]), NUM_DIRECTIONS, p0);
+    // std::fill_n(&(points()[0]), NUM_DIRECTIONS, p0);
     auto& dists = distances();
     auto& pts = points();
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
@@ -158,6 +160,7 @@ Pts::insert(
       const auto d = dist_line(x0, x1) + dist_line(y0, y1);
       auto& p_d = dists[i];
       auto& p_p = pts[i];
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
       if (d < p_d)
       {
         logging::verbose(
@@ -171,6 +174,7 @@ Pts::insert(
           p0.y()
         );
       }
+#endif
       p_p = (d < p_d) ? p0 : p_p;
       p_d = (d < p_d) ? d : p_d;
     }
@@ -210,28 +214,49 @@ PtMap::insert(
   const XYPos p0
 )
 {
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
   logging::verbose(
     "Pts::insert: (%f, %f) %s burn",
     p0.x(),
     p0.y(),
-    unburnable[p0.hash()] ? "can" : "cannot"
+    !unburnable[p0.hash()] ? "can" : "cannot"
   );
+#endif
   auto p = map_.try_emplace(p0.hash(), unburnable, p0);
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
   logging::verbose("Pts::insert: %s (%f, %f)", p.second ? "emplaced" : "inserting", p0.x(), p0.y());
+#endif
   auto& pts = p.first->second;
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
+  const set<XYPos> u0 = unique();
+  const auto n0 = u0.size();
+  show_points<XYPos, XYSize, std::set<XYPos>>(
+    u0,
+    "Pts: Adding (%f, %f) to %ld points",
+    p0.x(),
+    p0.y(),
+    n0
+  );
+#endif
+  // HACK: insert the same thing twice should do nothing?
+  // if (!p.second)
+  // {
+  //   logging::info("already existed");
+  // }
   if (!p.second)
   {
     pts.insert(p0);
   }
-#ifdef DEBUG_CELLPOINTS
-  const auto n1 = size();
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD_VERBOSE)
   {
-    const set<XYPos> u = unique();
+    const auto n1 = size();
+    const set<XYPos> u1 = unique();
     show_points<XYPos, XYSize, std::set<XYPos>>(
-      u,
-      "Pts: Adding (%f, %f) gives %ld points",
+      u1,
+      "Pts: Adding (%f, %f) to %ld points gives %ld points",
       p0.x(),
       p0.y(),
+      n0,
       n1
     );
   }
@@ -244,9 +269,11 @@ Pts::unique() const noexcept
   set<XYPos> r{};
   Location loc{cell_x_y_.hash()};
   add_unique(loc, r);
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
   {
     show_points<XYPos, XYSize, std::set<XYPos>>(r, "Generated unique points as:");
   }
+#endif
   return r;
 }
 void
@@ -257,23 +284,31 @@ Pts::add_unique(
 {
   logging::check_equal(loc.column(), cell_x_y_.x(), "Pts::add_unique: x");
   logging::check_equal(loc.row(), cell_x_y_.y(), "Pts::add_unique: y");
-  // if any point is invalid then they all have to be
+// if any point is invalid then they all have to be
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
   logging::verbose(
     "Pts::add_unique: (%d, %d) %s burn",
     cell_x_y_.x(),
     cell_x_y_.y(),
     canBurn() ? "can" : "cannot"
   );
+#endif
   if (canBurn())
   {
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
     logging::verbose("Pts::add_unique: starting with %ld points", into.size());
+#endif
     const auto& pts = points();
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
       const auto& p = pts[i];
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
       logging::verbose("Pts::add_unique: (%f, %f) as %s", p.x(), p.y(), DIRECTION_NAMES[i]);
+#endif
       into.insert({cell_x_y_.x(), cell_x_y_.y(), p.x(), p.y()});
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
       logging::verbose("Pts::add_unique: now %ld points", into.size());
+#endif
     }
     // std::transform(
     //   points().cbegin(),

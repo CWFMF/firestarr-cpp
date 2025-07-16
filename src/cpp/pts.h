@@ -3,11 +3,20 @@
 /* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
+#ifndef FS_PTS_H
+#define FS_PTS_H
+
 #include "stdafx.h"
+#define USE_NEW_SPREAD
+#ifndef USE_NEW_SPREAD
+#undef DEBUG_NEW_SPREAD
+#undef DEBUG_NEW_SPREAD_CHECK
+#undef DEBUG_NEW_SPREAD_VERBOSE
+#endif
 #include "CellPoints.h"
 #include "InnerPos.h"
 #include "IntensityMap.h"
-#ifdef DEBUG_NEW_SPREAD
+#ifdef USE_NEW_SPREAD
 namespace fs::sim
 {
 using spreading_points_new = map<SpreadKey, vector<pair<HashSize, set<XYPos>>>>;
@@ -104,4 +113,5 @@ private:
   map<HashSize, Pts> map_;
 };
 }
+#endif
 #endif
