@@ -21,8 +21,8 @@ constexpr auto FMT_OUT =
 // constexpr MathSize PCT_CPU = 0.8;
 // HACK: assume using half the CPUs probably means that faster cores are being used?
 constexpr MathSize PCT_CPU = 0.5;
-// Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
-Semaphore Model::task_limiter{0};
+Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
+// Semaphore Model::task_limiter{0};
 BurnedData*
 Model::getBurnedVector() const noexcept
 {
