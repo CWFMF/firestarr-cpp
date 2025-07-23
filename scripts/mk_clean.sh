@@ -3,6 +3,13 @@
 DIR_ROOT="$(realpath $(dirname $(realpath "$0"))/..)"
 DIR_BUILD="${DIR_ROOT}/build"
 VARIANT="${1}"
+ASAN_ARGS=
+if ( [ "Debug" == "${VARIANT}" ] || [ "Test" == "${VARIANT}" ] ); then
+  ASAN_ARGS=-DASAN_ARGS:STRING="-fsanitize=address;-fsanitize=undefined"
+fi
+if [ "Test" == "${VARIANT}" ]; then
+  VARIANT="Release"
+fi
 if ( [ -z "${VARIANT}" ] || ( [ "Release" != "${VARIANT}" ] && [ "Debug" != ${VARIANT} ] ) ); then
   # assume that argument is an arg to pass to cmake
   VARIANT="Release"
@@ -13,6 +20,7 @@ else
 fi
 echo "${@}"
 echo Set VARIANT=${VARIANT}
+echo Set ASAN_ARGS=${ASAN_ARGS}
 rm -rf ${DIR_BUILD} \
-  && /usr/bin/cmake --no-warn-unused-cli "${@}" -DCMAKE_BUILD_TYPE:STRING=${VARIANT} -S${DIR_ROOT} -B${DIR_BUILD} -G "Unix Makefiles" \
+  && /usr/bin/cmake --no-warn-unused-cli ${ASAN_ARGS} "${@}" -DCMAKE_BUILD_TYPE:STRING=${VARIANT} -S${DIR_ROOT} -B${DIR_BUILD} -G "Unix Makefiles" \
   && /usr/bin/cmake --build ${DIR_BUILD} --config ${VARIANT} --target all -j 50 --
