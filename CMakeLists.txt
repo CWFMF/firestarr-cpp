@@ -68,6 +68,26 @@ else()
         "$<$<CONFIG:RELEASE>:-O3;>"
         "$<$<CONFIG:DEBUG>:-O0;-fno-omit-frame-pointer;-g;>"
     )
+    if(USE_ASAN)
+        set(ASAN_ARGS
+            address pointer-compare leak
+            # thread
+            # float-cast-overflow
+            undefined shift-exponent shift-base integer-divide-by-zero unreachable
+            vla-bound null return signed-integer-overflow bounds bounds-strict
+            alignment object-size float-divide-by-zero nonnull-attribute
+            returns-nonnull-attribute bool enum vptr pointer-overflow builtin)
+        list(TRANSFORM ASAN_ARGS REPLACE "([^ ]+)" "-fsanitize=\\1")
+        set(ASAN_ARGS
+            ${ASAN_ARGS}
+            -fsanitize-address-use-after-scope
+            -Og
+            -fno-omit-frame-pointer
+            -fno-ipa-icf
+            -fno-optimize-sibling-calls)
+        # message("${ASAN_ARGS}")
+        add_compile_options(${ASAN_ARGS})
+    endif()
 endif()
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
@@ -123,6 +143,9 @@ if (WIN32)
 
     find_package(PROJ REQUIRED CONFIG)
     target_link_libraries(${PROJECT_NAME} PUBLIC geotiff tiff PROJ::proj)
+    if (ASAN_ARGS)
+        target_link_options(${PROJECT_NAME} BEFORE PUBLIC ${ASAN_ARGS})
+    endif()
 endif()
 
 add_custom_command(TARGET ${PROJECT_NAME}
