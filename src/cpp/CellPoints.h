@@ -7,6 +7,7 @@
 #define FS_CELLPOINTS_H
 
 #include "stdafx.h"
+#ifdef USE_OLD_SPREAD
 #include "InnerPos.h"
 #include "IntensityMap.h"
 
@@ -26,7 +27,6 @@ public:
     return std::get<0>(*this);
   }
 };
-class Scenario;
 static constexpr size_t FURTHEST_N = 0;
 static constexpr size_t FURTHEST_NNE = 1;
 static constexpr size_t FURTHEST_NE = 2;
@@ -150,7 +150,7 @@ public:
     const bool can_burn,
     const CellPos& cell
   ) noexcept;
-  CellPoints(const Scenario& scenario, const XYPos p) noexcept;
+  CellPoints(const IntensityMap& intensity_map, const XYPos p) noexcept;
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
   CellPoints&
@@ -192,18 +192,17 @@ public:
   CellPos cell_x_y_;
   // HashSize hash_uninit_;
 private:
-  CellPoints(const Scenario& scenario, const CellPos& cell) noexcept;
+  CellPoints(const IntensityMap& intensity_map, const CellPos& cell) noexcept;
 };
 
 using spreading_points = CellPoints::spreading_points;
-class Scenario;
 // map that merges items when try_emplace doesn't insert
 class CellPointsMap
 {
 public:
   CellPointsMap();
   CellPoints&
-  insert(const Scenario& scenario, const XYPos p) noexcept;
+  insert(const IntensityMap& intensity_map, const XYPos p) noexcept;
   set<XYPos>
   unique() const noexcept;
   set<XYPos>
@@ -234,8 +233,8 @@ show_points(
   printf(msg.c_str());
   va_end(args);
   const P& p = *(s.cbegin());
-  const T& x = p.x();
-  const auto fmt = typeid(T) == typeid(size_t)
+  // const T& x = p.x();
+  const auto fmt = typeid(p.x()) == typeid(size_t)
                    ? "(%ld, %ld)"
                    : ((std::numeric_limits<T>::is_integer) ? "(%d, %d)" : "(%f, %f)");
   printf("\n>>>>>>>>>>>>>>>>>>>>>>>>\n");
@@ -256,4 +255,5 @@ show_points(
   printf("\n<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 }
 }
+#endif
 #endif

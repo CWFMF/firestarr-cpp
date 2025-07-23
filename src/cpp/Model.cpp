@@ -979,7 +979,7 @@ Model::runIterations(
     }
     return true;
   };
-  const auto MAX_THREADS = 1;
+  // const auto MAX_THREADS = 1;
   const auto concurrent_iterations = 1;
   // HACK: just set max of 4 for now
   // constexpr auto MIN_ITERATIONS_BEFORE_CHECK = 4;

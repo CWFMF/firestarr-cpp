@@ -26,8 +26,9 @@ static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.x();
 static const InnerPos INVALID_INNER_POSITION{};
 static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
 static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
+#ifdef USE_OLD_SPREAD
 static const SpreadData INVALID_SPREAD_DATA{INVALID_TIME};
-
+#endif
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
 #define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
 constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
@@ -81,21 +82,25 @@ Pts::Pts()
   std::fill_n(&(points()[0]), NUM_DIRECTIONS, INVALID_INNER_POSITION);
 }
 Pts::Pts(
-  const BurnedData& unburnable,
+  const IntensityMap& intensity_map,
   const XYPos p
 )
   : Pts()
 {
   cell_x_y_ = {static_cast<Idx>(p.x()), static_cast<Idx>(p.y())};
   // HACK: assign value of first item if burnable
-  if (!unburnable[p.hash()])
+  if (!(*intensity_map.unburnable_)[p.hash()])
   {
     distances()[0] = INVALID_DISTANCE - 1;
   }
-  logging::check_equal(canBurn(), !unburnable[p.hash()], "can burn");
+#ifdef DEBUG_NEW_SPREAD
+  logging::check_equal(canBurn(), !(*intensity_map.unburnable_)[p.hash()], "can burn");
+#endif
   insert(p);
-  logging::check_equal(canBurn() ? 1 : 0, unique().size(), "Initial size");
-  // if (!unburnable[p.hash()])
+#ifdef DEBUG_NEW_SPREAD_CHECK
+  logging::check_equal(static_cast<size_t>(canBurn() ? 1 : 0), unique().size(), "Initial size");
+#endif
+  // if (!intensity_map.unburnable_[p.hash()])
   // {
   //   XYSize integral;
   //   // need to calculate distances, but we know everything is the same point
@@ -136,12 +141,14 @@ Pts::insert(
     show_points<XYPos, XYSize, std::set<XYPos>>(u, "Pts: Adding (%f, %f) to %ld points", x, y, n0);
   }
 #endif
+#ifdef DEBUG_NEW_SPREAD
   logging::verbose(
     "Pts: (%d, %d) %s burn",
     cell_x_y_.x(),
     cell_x_y_.y(),
     canBurn() ? "can" : "cannot"
   );
+#endif
   if (canBurn())
   {
     XYSize integral;
@@ -210,7 +217,7 @@ Pts::empty() const
 
 Pts&
 PtMap::insert(
-  const BurnedData& unburnable,
+  const IntensityMap& intensity_map,
   const XYPos p0
 )
 {
@@ -219,10 +226,10 @@ PtMap::insert(
     "Pts::insert: (%f, %f) %s burn",
     p0.x(),
     p0.y(),
-    !unburnable[p0.hash()] ? "can" : "cannot"
+    !intensity_map.unburnable_[p0.hash()] ? "can" : "cannot"
   );
 #endif
-  auto p = map_.try_emplace(p0.hash(), unburnable, p0);
+  auto p = map_.try_emplace(p0.hash(), intensity_map, p0);
 #ifdef DEBUG_NEW_SPREAD_VERBOSE
   logging::verbose("Pts::insert: %s (%f, %f)", p.second ? "emplaced" : "inserting", p0.x(), p0.y());
 #endif
@@ -278,12 +285,18 @@ Pts::unique() const noexcept
 }
 void
 Pts::add_unique(
-  const Location& loc,
+  const Location&
+#ifdef DEBUG_NEW_SPREAD
+    loc
+#endif
+  ,
   set<XYPos>& into
 ) const noexcept
 {
+#ifdef DEBUG_NEW_SPREAD
   logging::check_equal(loc.column(), cell_x_y_.x(), "Pts::add_unique: x");
   logging::check_equal(loc.row(), cell_x_y_.y(), "Pts::add_unique: y");
+#endif
 // if any point is invalid then they all have to be
 #ifdef DEBUG_NEW_SPREAD_VERBOSE
   logging::verbose(
@@ -321,7 +334,9 @@ Pts::add_unique(
     //       p.x(),
     //       p.y()};
     //   });
+#ifdef DEBUG_NEW_SPREAD
     logging::check_fatal(0 == into.size(), "Pts::add_unique: Can burn but no points");
+#endif
     // logging::note(
     //   "Pts: Have %ld points",
     //   into.size());
@@ -342,11 +357,13 @@ Pts::add_unique(
   //     return p;
   //   });
 }
+#ifdef DEBUG_NEW_SPREAD
 size_t
 Pts::size() const noexcept
 {
   return unique().size();
 }
+#endif
 set<XYPos>
 PtMap::unique(
   const HashSize hash_value
@@ -358,7 +375,9 @@ PtMap::unique(
     if (kv.first == hash_value)
     {
       const auto& loc = Location{kv.first};
+#ifdef DEBUG_NEW_SPREAD
       logging::verbose("PtMap::unique: Adding unique for cell (%d, %d)", loc.column(), loc.row());
+#endif
       auto& pts = kv.second;
       pts.add_unique(loc, r);
     }

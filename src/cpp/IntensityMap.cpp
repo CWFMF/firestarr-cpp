@@ -81,6 +81,8 @@ IntensityMap::IntensityMap(
 ) noexcept
   : model_(model),
     intensity_max_(CacheIntensitySize.acquire_map(model)),
+    unburnable_(model.getBurnedVector()),
+    arrival_({}),
     is_burned_(model.getBurnedVector())
 {
 }
@@ -92,6 +94,8 @@ IntensityMap::IntensityMap(
   : IntensityMap(rhs.model_)
 {
   *intensity_max_ = *rhs.intensity_max_;
+  arrival_ = rhs.arrival_;
+  *unburnable_ = *rhs.unburnable_;
   is_burned_ = rhs.is_burned_;
 }
 
@@ -104,8 +108,12 @@ IntensityMap::IntensityMap(
 
 IntensityMap::~IntensityMap() noexcept
 {
-  model_.releaseBurnedVector(is_burned_);
   CacheIntensitySize.release_map(std::move(intensity_max_));
+  model_.releaseBurnedVector(is_burned_);
+  model_.releaseBurnedVector(unburnable_);
+  is_burned_ = nullptr;
+  intensity_max_ = nullptr;
+  unburnable_ = nullptr;
 }
 void
 IntensityMap::applyPerimeter(
@@ -184,14 +192,42 @@ IntensityMap::ignite(
   const HashSize hash_value
 )
 {
-  burn(hash_value);
+  if (!(*is_burned_)[hash_value])
+  {
+    intensity_max_->set(hash_value, 1);
+    (*is_burned_).set(hash_value);
+  }
+}
+bool
+IntensityMap::cannotSpread(
+  const HashSize hash_value
+) const
+{
+  return (*unburnable_)[hash_value];
 }
 void
 IntensityMap::burn(
-  const HashSize hash_value
+  const Event& event
 )
 {
   lock_guard<mutex> lock(mutex_);
+  const auto hash_value = event.cell().hash();
+#ifdef DEBUG_SIMULATION
+  logging::check_fatal(
+    hasBurned(hash_value),
+    "Re-burning cell (%d, %d)",
+    event.cell().column(),
+    event.cell().row()
+  );
+#endif
+#ifdef DEBUG_POINTS
+  logging::check_fatal(
+    cannotSpread(hash_value),
+    "Burning unburnable cell (%d, %d)",
+    event.cell().column(),
+    event.cell().row()
+  );
+#endif
   // const auto is_new = !(*is_burned_)[location.hash()];
   // if (is_new || intensity_max_->at(location) < intensity)
   // {
@@ -211,11 +247,12 @@ IntensityMap::burn(
   //   logging::check_fatal(0 >= intensity, "Negative or 0 intensity given: %d", intensity);
   //   logging::check_fatal(0 >= ros, "Negative or 0 ros given: %f", ros);
   // }
-  if (!(*is_burned_)[hash_value])
-  {
-    intensity_max_->set(hash_value, 1);
-    (*is_burned_).set(hash_value);
-  }
+  ignite(hash_value);
+#ifdef DEBUG_GRIDS
+  logging::check_fatal(hasBurned(hash_value), "Wasn't marked as burned after burn");
+#endif
+  arrival_[hash_value] = event.time();
+  // scheduleFireSpread(event);
 }
 MathSize
 IntensityMap::fireSize() const
@@ -232,5 +269,20 @@ map<HashSize, IntensitySize>::const_iterator
 IntensityMap::cbegin() const noexcept
 {
   return intensity_max_->data.cbegin();
+}
+bool
+IntensityMap::hasNotBurned(
+  const HashSize hash_value
+) const
+{
+  return canBurn(hash_value);
+  // return !isUnburnable(hash_value);
+}
+bool
+IntensityMap::isUnburnable(
+  const HashSize hash_value
+) const
+{
+  return model_.isUnburnable(hash_value);
 }
 }

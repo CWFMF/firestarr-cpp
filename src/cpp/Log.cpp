@@ -361,6 +361,26 @@ check_equal(
   logging::check_fatal(0 != strcmp(lhs, rhs), "Expected %s to be %s got %s", name, rhs, lhs);
 }
 void
+check_equal(
+  const bool lhs,
+  const bool rhs,
+  const char* name
+)
+#ifdef NDEBUG
+  noexcept
+#endif
+{
+  bool a = lhs ? true : false;
+  bool b = rhs ? true : false;
+  logging::check_fatal(
+    a != b,
+    "Expected %s to be %s but got %s",
+    name,
+    a ? "true" : "false",
+    b ? "true" : "false"
+  );
+}
+void
 SelfLogger::log_output(
   const int level,
   const char* format,

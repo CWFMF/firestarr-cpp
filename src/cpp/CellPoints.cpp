@@ -4,10 +4,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "CellPoints.h"
+#ifdef USE_OLD_SPREAD
 #include "Log.h"
 #include "Location.h"
-#include "Scenario.h"
-
+#include "IntensityMap.h"
 namespace fs::sim
 {
 constexpr InnerSize DIST_22_5 = static_cast<InnerSize>(
@@ -29,7 +29,13 @@ static const SpreadData INVALID_SPREAD_DATA{INVALID_TIME};
 set<XYPos>
 CellPoints::unique() const noexcept
 {
-  logging::check_equal(INVALID_DISTANCE != pts_.distances()[0], can_burn_, "can_burn_");
+#ifdef DEBUG_NEW_SPREAD_CHECK
+  logging::check_equal(
+    static_cast<bool>(INVALID_DISTANCE != pts_.distances()[0]),
+    can_burn_,
+    "can_burn_"
+  );
+#endif
 #ifdef DEBUG_CELLPOINTS
   auto first_valid = (INVALID_DISTANCE != pts_.distances()[0]);
   logging::check_equal(can_burn_, first_valid, "Distance should be invalid if can't burn");
@@ -113,21 +119,21 @@ CellPoints::CellPoints(
   }
 }
 CellPoints::CellPoints(
-  const Scenario& scenario,
+  const IntensityMap& intensity_map,
   const CellPos& cell
 ) noexcept
   // : CellPoints(!unburnable[cell_x_y_.hash()], cell)
   : CellPoints(
       // cell_x_y_.hash(),
-      // !scenario.cannotSpread(cell_x_y_.hash()),
-      !scenario.cannotSpread(cell.hash()),
-      scenario.hasNotBurned(cell.hash()),
-      scenario.hasNotBurned(cell.hash()),
-      !scenario.cannotSpread(cell.hash()),
-      // scenario.hasNotBurned(cell.hash()),
-      // !scenario.isUnburnable(cell.hash()),
+      // !intensity_map.cannotSpread(cell_x_y_.hash()),
+      !intensity_map.cannotSpread(cell.hash()),
+      intensity_map.hasNotBurned(cell.hash()),
+      intensity_map.hasNotBurned(cell.hash()),
+      !intensity_map.cannotSpread(cell.hash()),
+      // intensity_map.hasNotBurned(cell.hash()),
+      // !intensity_map.isUnburnable(cell.hash()),
       // // !unburnable[cell.hash()],
-      // !scenario.isUnburnable(cell.hash()),
+      // !intensity_map.isUnburnable(cell.hash()),
       cell
     )
 {
@@ -156,10 +162,10 @@ CellPoints::CellPoints(
   *this = *rhs;
 }
 CellPoints::CellPoints(
-  const Scenario& scenario,
+  const IntensityMap& intensity_map,
   const XYPos p
 ) noexcept
-  : CellPoints(scenario, CellPos(static_cast<Idx>(p.x()), static_cast<Idx>(p.y())))
+  : CellPoints(intensity_map, CellPos(static_cast<Idx>(p.x()), static_cast<Idx>(p.y())))
 {
   // #ifdef DEBUG_CELLPOINTS
   //   // HACK: checking for this so need to do it before insert
@@ -381,15 +387,15 @@ CellPointsMap::CellPointsMap()
 }
 CellPoints&
 CellPointsMap::insert(
-  const Scenario& scenario,
+  const IntensityMap& intensity_map,
   const XYPos p
 ) noexcept
 {
-#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD)
+#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD_VERBOSE)
   const auto n0 = size();
   logging::verbose("Adding (%f, %f) to %ld points", p.x(), p.y(), n0);
 #endif
-  auto e = map_.try_emplace(p.hash(), scenario, p);
+  auto e = map_.try_emplace(p.hash(), intensity_map, p);
   CellPoints& cell_pts = e.first->second;
   if (!e.second)
   {
@@ -420,7 +426,7 @@ CellPointsMap::insert(
   const auto n1 = size();
   logging::verbose("Adding (%f, %f) to %ld points gives %ld", p.x(), p.y(), n0, n1);
 #endif
-#ifdef DEBUG_NEW_SPREAD
+#ifdef DEBUG_NEW_SPREAD_VERBOSE
   const auto n2 = cell_pts.size();
   logging::verbose("Adding (%f, %f) to %ld points gives %ld", p.x(), p.y(), n0, n2);
 #endif
@@ -483,3 +489,4 @@ CellPointsMap::size() const noexcept
 }
 #endif
 }
+#endif

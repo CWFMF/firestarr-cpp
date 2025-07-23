@@ -180,6 +180,12 @@ check_equal(const char* lhs, const char* rhs, const char* name)
   noexcept
 #endif
   ;
+void
+check_equal(const bool lhs, const bool rhs, const char* name)
+#ifdef NDEBUG
+  noexcept
+#endif
+  ;
 /**
  * \brief Check if items are not equal and log and exit if true
  * \param lhs first value
