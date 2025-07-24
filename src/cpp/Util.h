@@ -596,5 +596,39 @@ ellipse_angle(
 {
   return (util::fix_radians(atan2(sin(theta) / length_to_breadth, cos(theta))));
 }
+// make a set of shared pointers that compares the underlying objects
+template <class T>
+struct sp_less
+{
+  bool
+  operator()(
+    const std::shared_ptr<T>& lhs,
+    const std::shared_ptr<T>& rhs
+  ) const
+  {
+    if (!lhs || !rhs)
+    {
+      return !lhs && rhs;
+    }
+    return *lhs < *rhs;
+  }
+};
+// template <class T>
+// using sp_set = std::set<T, sp_less<T>>;
+template <class T>
+class sp_set : public std::set<shared_ptr<T>, sp_less<T>>
+{
+  using base = std::set<shared_ptr<T>, sp_less<T>>;
+public:
+  template <class... Args>
+  auto
+  sp_emplace(
+    Args&&... args
+  )
+  {
+    // make it so emplace will work on object type and not shared_ptr
+    return base::emplace(new T(std::forward<Args>(args)...));
+  }
+};
 }
 #endif

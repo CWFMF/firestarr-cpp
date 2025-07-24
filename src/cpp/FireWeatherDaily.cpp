@@ -462,9 +462,9 @@ make_wx(
   const int hour
 )
 {
-  static set<FwiWeather> all_weather{};
+  static sp_set<FwiWeather> all_weather{};
   // HACK: assign rain to noon only
-  const FwiWeather result(
+  auto wx_inserted = all_weather.sp_emplace(
     wx.temp(),
     wx.rh(),
     Wind(wx.wind().direction(), speed),
@@ -473,9 +473,8 @@ make_wx(
     wx.dmc(),
     wx.dc()
   );
-  const auto& wx_inserted = all_weather.insert(result);
   // doesn't matter if was already there or just inserted
-  return &(*(wx_inserted.first));
+  return wx_inserted.first->get();
 }
 static const FwiWeather*
 make_wx(
