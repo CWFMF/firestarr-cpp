@@ -17,7 +17,6 @@ namespace fs::wx
 FireWeather::~FireWeather()
 {
   delete weather_by_hour_by_day_;
-  delete survival_probability_;
 }
 static unique_ptr<SurvivalMap> make_survival(
   const set<const fuel::FuelType*>& used_fuels,
@@ -45,7 +44,7 @@ static unique_ptr<SurvivalMap> make_survival(
           const auto i = util::time_index(day, h, min_date);
           by_fuel.at(i) = static_cast<float>(nullptr != wx
                                                ? (
-                                                   in_fuel->survivalProbability(*wx))
+                                                 in_fuel->survivalProbability(*wx))
                                                : 0.0);
         }
       }
