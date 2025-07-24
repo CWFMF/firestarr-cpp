@@ -433,7 +433,7 @@ public:
    * \return This
    */
   Scenario*
-  run(map<DurationSize, ProbabilityMap*>* probabilities);
+  run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities);
   /**
    * \brief Schedule a fire spread Event
    * \param event Event to schedule
@@ -659,7 +659,7 @@ protected:
   /**
    * \brief Map of ProbabilityMaps by time snapshot for them was taken
    */
-  map<DurationSize, ProbabilityMap*>* probabilities_{nullptr};
+  map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities_{nullptr};
   /**
    * \brief Where to append the final size of this Scenario when run is complete
    */

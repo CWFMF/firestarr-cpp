@@ -33,10 +33,10 @@ ProbabilityMap::ProbabilityMap(
 {
 }
 
-ProbabilityMap*
+shared_ptr<ProbabilityMap>
 ProbabilityMap::copyEmpty() const
 {
-  return new ProbabilityMap(time_, start_time_, all_);
+  return make_shared<ProbabilityMap>(time_, start_time_, all_);
 }
 
 void

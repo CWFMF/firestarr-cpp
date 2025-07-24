@@ -512,7 +512,7 @@ Model::isOverSimulationCountLimit() const noexcept
   return is_over_simulation_count_;
 }
 
-ProbabilityMap*
+shared_ptr<ProbabilityMap>
 Model::makeProbabilityMap(
   const DurationSize time,
   const DurationSize start_time
@@ -523,7 +523,7 @@ Model::makeProbabilityMap(
 
 static void
 show_probabilities(
-  const map<ThresholdSize, ProbabilityMap*>& probabilities
+  const map<ThresholdSize, shared_ptr<ProbabilityMap>>& probabilities
 )
 {
   for (const auto& kv : probabilities)
@@ -532,14 +532,14 @@ show_probabilities(
   }
 }
 
-map<DurationSize, ProbabilityMap*>
+map<DurationSize, shared_ptr<ProbabilityMap>>
 make_prob_map(
   const Model& model,
   const vector<DurationSize>& saves,
   const DurationSize started
 )
 {
-  map<DurationSize, ProbabilityMap*> result{};
+  map<DurationSize, shared_ptr<ProbabilityMap>> result{};
   for (const auto& time : saves)
   {
     result.emplace(time, model.makeProbabilityMap(time, started));
@@ -637,7 +637,7 @@ runs_required(
 
 DurationSize
 Model::saveProbabilities(
-  map<DurationSize, ProbabilityMap*>& probabilities,
+  map<DurationSize, shared_ptr<ProbabilityMap>>& probabilities,
   const Day start_day,
   const bool is_interim
 )
@@ -714,7 +714,7 @@ Model::saveProbabilities(
   return final_time;
 }
 
-map<DurationSize, ProbabilityMap*>
+map<DurationSize, shared_ptr<ProbabilityMap>>
 Model::runIterations(
   const StartPoint& start_point,
   const DurationSize start,
@@ -759,7 +759,7 @@ Model::runIterations(
   const auto saves = iteration.savePoints();
   const auto started = iteration.startTime();
   auto probabilities = make_prob_map(*this, saves, started);
-  vector<map<DurationSize, ProbabilityMap*>> all_probabilities{};
+  vector<map<DurationSize, shared_ptr<ProbabilityMap>>> all_probabilities{};
   all_probabilities.push_back(make_prob_map(*this, saves, started));
   logging::verbose("Setting up initial intensity map with perimeter");
   auto runs_left = 1;
@@ -1066,10 +1066,6 @@ Model::runScenarios(
   // HACK: update last checked time to use in calculation
   model.last_checked_ = Clock::now();
   logging::note("Total simulation time was %ld seconds", model.runTime());
-  for (const auto& kv : probabilities)
-  {
-    delete kv.second;
-  }
   return 0;
 }
 #ifdef DEBUG_WEATHER

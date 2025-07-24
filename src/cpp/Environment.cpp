@@ -34,13 +34,13 @@ Environment::load(
   return Environment(fuel.get(), elevation.get(), point);
 }
 
-ProbabilityMap*
+shared_ptr<ProbabilityMap>
 Environment::makeProbabilityMap(
   const DurationSize time,
   const DurationSize start_time
 ) const
 {
-  return new ProbabilityMap(time, start_time, cells_);
+  return make_shared<ProbabilityMap>(time, start_time, cells_);
 }
 
 Environment

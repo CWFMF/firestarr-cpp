@@ -160,7 +160,7 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \return ProbabilityMap with the same extent as this
    */
-  [[nodiscard]] ProbabilityMap*
+  [[nodiscard]] shared_ptr<ProbabilityMap>
   makeProbabilityMap(DurationSize time, DurationSize start_time) const;
 
   /**
