@@ -24,18 +24,17 @@ make_constant_weather(
   wx->resize(static_cast<size_t>(YEAR_HOURS));
   std::generate(wx->begin(), wx->end(), [&wind, &ffmc, &dmc, &dc, &bui]() {
     return make_unique<wx::FwiWeather>(
-             TEMP,
-             RH,
-             wind,
-             PREC,
-             ffmc,
-             dmc,
-             dc,
-             wx::Isi(wind.speed(), ffmc),
-             bui,
-             wx::Fwi(wx::Isi(wind.speed(), ffmc), bui)
-    )
-      .release();
+      TEMP,
+      RH,
+      wind,
+      PREC,
+      ffmc,
+      dmc,
+      dc,
+      wx::Isi(wind.speed(), ffmc),
+      bui,
+      wx::Fwi(wx::Isi(wind.speed(), ffmc), bui)
+    );
   });
   return wx;
 }

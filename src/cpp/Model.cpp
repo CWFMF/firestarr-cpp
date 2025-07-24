@@ -242,7 +242,7 @@ Model::readWeather(
           }
         }
         logging::verbose("for_time == %d", for_time);
-        const wx::FwiWeather* w = new wx::FwiWeather(&iss, &str);
+        auto w = make_shared<const FwiWeather>(&iss, &str);
         s->at(for_time) = w;
         logging::check_fatal(
           0 > w->prec().asValue(),

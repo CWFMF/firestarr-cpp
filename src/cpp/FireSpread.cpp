@@ -85,7 +85,7 @@ SpreadInfo::SpreadInfo(
   const DurationSize time,
   const topo::SpreadKey& key,
   const int nd,
-  const wx::FwiWeather* weather
+  FireWeather::wx_type weather
 )
   : SpreadInfo(scenario, time, key, nd, weather, scenario.weather_daily(time))
 {
@@ -171,8 +171,8 @@ SpreadInfo::SpreadInfo(
   const DurationSize time,
   const topo::SpreadKey& key,
   const int nd,
-  const wx::FwiWeather* weather,
-  const wx::FwiWeather* weather_daily
+  FireWeather::wx_type weather,
+  FireWeather::wx_type weather_daily
 )
   : SpreadInfo(
       time,
@@ -216,7 +216,7 @@ SpreadInfo::SpreadInfo(
   const SlopeSize slope,
   const AspectSize aspect,
   const char* fuel_name,
-  const wx::FwiWeather* weather
+  FireWeather::wx_type weather
 )
   : SpreadInfo(
       util::to_tm(year, month, day, hour, minute),
@@ -238,7 +238,7 @@ SpreadInfo::SpreadInfo(
   const SlopeSize slope,
   const AspectSize aspect,
   const char* fuel_name,
-  const wx::FwiWeather* weather
+  FireWeather::wx_type weather
 )
   : SpreadInfo(
       util::to_time(start_date),
@@ -260,7 +260,7 @@ SpreadInfo::SpreadInfo(
   const AspectSize aspect,
   const char* fuel_name,
   const int nd,
-  const wx::FwiWeather* weather
+  FireWeather::wx_type weather
 )
   : SpreadInfo(time, min_ros, cell_size, make_key(slope, aspect, fuel_name), nd, weather, weather)
 {
@@ -271,7 +271,7 @@ SpreadInfo::SpreadInfo(
   const MathSize cell_size,
   const topo::SpreadKey& key,
   const int nd,
-  const wx::FwiWeather* weather
+  FireWeather::wx_type weather
 )
   : SpreadInfo(time, min_ros, cell_size, key, nd, weather, weather)
 {
@@ -282,13 +282,13 @@ SpreadInfo::SpreadInfo(
   const MathSize cell_size,
   const topo::SpreadKey& key,
   const int nd,
-  const wx::FwiWeather* weather,
-  const wx::FwiWeather* weather_daily
+  FireWeather::wx_type weather,
+  FireWeather::wx_type weather_daily
 )
   : offsets_({}),
     max_intensity_(INVALID_INTENSITY),
     key_(key),
-    weather_(weather),
+    weather_(weather.get()),
     time_(time),
     head_ros_(INVALID_ROS),
     cfb_(-1),

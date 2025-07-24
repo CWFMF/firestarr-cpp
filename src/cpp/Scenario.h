@@ -28,6 +28,7 @@ class IObserver;
 class Event;
 using topo::Location;
 using topo::Position;
+using wx::FwiWeather;
 using PointSet = vector<InnerPos>;
 /**
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
@@ -288,14 +289,14 @@ public:
    * \param time Time to get weather for (decimal days)
    * \return FwiWeather for given time
    */
-  [[nodiscard]] const wx::FwiWeather*
+  [[nodiscard]] FireWeather::wx_type
   weather(
     const DurationSize time
   ) const
   {
     return weather_->at(time);
   }
-  [[nodiscard]] const wx::FwiWeather*
+  [[nodiscard]] FireWeather::wx_type
   weather_daily(
     const DurationSize time
   ) const
