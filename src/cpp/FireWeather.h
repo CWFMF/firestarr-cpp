@@ -102,7 +102,7 @@ public:
    * \brief Weather by hour by day
    * \return Weather by hour by day
    */
-  [[nodiscard]] const vector<const FwiWeather*>*
+  [[nodiscard]] const shared_ptr<vector<const wx::FwiWeather*>>
   getWeather()
   {
     return weather_by_hour_by_day_;
@@ -119,13 +119,13 @@ public:
     const set<const fuel::FuelType*>& used_fuels,
     Day min_date,
     Day max_date,
-    vector<const FwiWeather*>* weather_by_hour_by_day
+    shared_ptr<vector<const wx::FwiWeather*>> weather_by_hour_by_day
   );
 private:
   /**
    * \brief FwiWeather by hour by Day
    */
-  const vector<const FwiWeather*>* weather_by_hour_by_day_;
+  const shared_ptr<vector<const wx::FwiWeather*>> weather_by_hour_by_day_;
   /**
    * \brief Probability of survival for fuels fuel at each time
    */

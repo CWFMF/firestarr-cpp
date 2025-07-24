@@ -500,14 +500,14 @@ make_wx(
 {
   return make_wx(wx, wx, ffmc, hour);
 }
-unique_ptr<vector<const FwiWeather*>>
+shared_ptr<vector<const FwiWeather*>>
 make_vector(
   map<Day, FwiWeather> data
 )
 {
   const auto min_date = data.begin()->first;
   const auto max_date = data.rbegin()->first;
-  auto r = make_unique<vector<const FwiWeather*>>((max_date - min_date + 2) * DAY_HOURS);
+  auto r = make_shared<vector<const FwiWeather*>>((max_date - min_date + 2) * DAY_HOURS);
   // HACK: just approximate last day
   for (const auto& kv : data)
   {
@@ -646,7 +646,7 @@ FireWeatherDaily::FireWeatherDaily(
   const set<const fuel::FuelType*>& used_fuels,
   const map<Day, FwiWeather>& data
 )
-  : FireWeather(used_fuels, data.begin()->first, data.rbegin()->first, make_vector(data).release())
+  : FireWeather(used_fuels, data.begin()->first, data.rbegin()->first, make_vector(data))
 {
 }
 }

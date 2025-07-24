@@ -126,7 +126,7 @@ Model::readWeather(
   const string& filename
 )
 {
-  map<size_t, vector<const wx::FwiWeather*>*> wx{};
+  map<size_t, shared_ptr<vector<const wx::FwiWeather*>>> wx{};
   map<size_t, map<Day, wx::FwiWeather>> wx_daily{};
   map<Day, struct tm> dates{};
   Day min_date = numeric_limits<Day>::max();
@@ -187,7 +187,7 @@ Model::readWeather(
         if (wx.find(cur) == wx.end())
         {
           logging::debug("Loading scenario %d...", cur);
-          wx.emplace(cur, new vector<const wx::FwiWeather*>());
+          wx.emplace(cur, make_shared<vector<const wx::FwiWeather*>>());
           prev_time = std::numeric_limits<time_t>::min();
           logging::check_fatal(
             wx_daily.find(cur) != wx_daily.end(),

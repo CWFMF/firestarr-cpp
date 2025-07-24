@@ -7,7 +7,7 @@
 
 namespace fs::sim
 {
-static vector<const wx::FwiWeather*>*
+static shared_ptr<vector<const wx::FwiWeather*>>
 make_constant_weather(
   const wx::Dc& dc,
   const wx::Dmc& dmc,
@@ -19,7 +19,8 @@ make_constant_weather(
   static constexpr wx::RelativeHumidity RH(30.0);
   static constexpr wx::Precipitation PREC(0.0);
   const auto bui = wx::Bui(dmc, dc);
-  auto wx = new vector<const wx::FwiWeather*>{static_cast<size_t>(YEAR_HOURS)};
+  auto wx = make_shared<vector<const wx::FwiWeather*>>();
+  wx->resize(static_cast<size_t>(YEAR_HOURS));
   std::generate(wx->begin(), wx->end(), [&wind, &ffmc, &dmc, &dc, &bui]() {
     return make_unique<wx::FwiWeather>(
              TEMP,
