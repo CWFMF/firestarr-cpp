@@ -619,7 +619,7 @@ saveProbabilities(
 #endif
 Scenario*
 Scenario::run(
-  map<DurationSize, ProbabilityMap*>* probabilities
+  map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities
 )
 {
 #ifdef DEBUG_SIMULATION

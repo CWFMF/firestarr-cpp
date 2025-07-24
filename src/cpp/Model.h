@@ -362,7 +362,7 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \return ProbabilityMap with the same extent as this
    */
-  [[nodiscard]] ProbabilityMap*
+  [[nodiscard]] shared_ptr<ProbabilityMap>
   makeProbabilityMap(DurationSize time, DurationSize start_time) const;
   ~Model() = default;
   /**
@@ -474,14 +474,14 @@ private:
    * \param start_day Start day for simulation
    * \return Map of times to ProbabilityMap for that time
    */
-  map<DurationSize, ProbabilityMap*>
+  map<DurationSize, shared_ptr<ProbabilityMap>>
   runIterations(const topo::StartPoint& start_point, DurationSize start, Day start_day);
   /**
    * Save probability rasters
    */
   DurationSize
   saveProbabilities(
-    map<DurationSize, ProbabilityMap*>& probabilities,
+    map<DurationSize, shared_ptr<ProbabilityMap>>& probabilities,
     const Day start_day,
     const bool is_interim
   );

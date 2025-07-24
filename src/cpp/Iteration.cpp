@@ -37,7 +37,7 @@ Iteration::reset(
   return this;
 }
 //
-// Iteration* Iteration::run(map<DurationSize, ProbabilityMap*>* probabilities)
+// Iteration* Iteration::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities)
 //{
 //  // sort in run so that they still get the same extinction thresholds as when unsorted
 //		std::sort(scenarios_.begin(),
@@ -51,7 +51,7 @@ Iteration::reset(
 //  {
 //    vector<future<Scenario*>> results{};
 //    // make a local copy so that we don't have mutex competition with other Iterations
-//    map<DurationSize, ProbabilityMap*> local_probabilities{};
+//    map<DurationSize, shared_ptr<ProbabilityMap>> local_probabilities{};
 //    for (auto& kv : *probabilities)
 //    {
 //      local_probabilities[kv.first] = kv.second->copyEmpty();

@@ -104,7 +104,7 @@ private:
    * \brief Create a copy of this that is empty
    * \return New empty Probability with same range bounds and times
    */
-  ProbabilityMap*
+  shared_ptr<ProbabilityMap>
   copyEmpty() const;
   /**
    * \brief List of sizes of IntensityMaps that have been added

@@ -41,13 +41,13 @@ Environment::load(
     point
   );
 }
-sim::ProbabilityMap*
+shared_ptr<ProbabilityMap>
 Environment::makeProbabilityMap(
   const DurationSize time,
   const DurationSize start_time
 ) const
 {
-  return new sim::ProbabilityMap(dir_out_, time, start_time, *cells_);
+  return make_shared<sim::ProbabilityMap>(dir_out_, time, start_time, *cells_);
 }
 Environment
 Environment::loadEnvironment(
