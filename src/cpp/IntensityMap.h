@@ -36,7 +36,7 @@ public:
    */
   explicit IntensityMap(const Model& model) noexcept;
   ~IntensityMap() noexcept = default;
-  IntensityMap(const IntensityMap& rhs);
+  IntensityMap(const IntensityMap& rhs) = delete;
   IntensityMap(IntensityMap&& rhs) = delete;
   IntensityMap&
   operator=(const IntensityMap& rhs) = delete;

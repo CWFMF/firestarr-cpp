@@ -170,7 +170,7 @@ Scenario::Scenario(
   const size_t id,
   const ptr<const FireWeather> weather,
   const DurationSize start_time,
-  const shared_ptr<Perimeter>& perimeter,
+  const Perimeter* perimeter,
   const StartPoint& start_point,
   const Day start_day,
   const Day last_date
@@ -199,7 +199,7 @@ Scenario::Scenario(
   ptr<const FireWeather> weather,
   ptr<const FireWeather> weather_daily,
   const DurationSize start_time,
-  const shared_ptr<Perimeter>& perimeter,
+  const Perimeter* perimeter,
   const StartPoint& start_point,
   const Day start_day,
   const Day last_date
@@ -253,6 +253,11 @@ Scenario::reset_with_new_start(
   ptr<SafeVector> final_sizes
 )
 {
+  logging::check_fatal(
+    nullptr != perimeter_,
+    "Resetting start cell to %d when perimeter exists",
+    start_cell
+  );
   start_cell_ = start_cell;
   cancelled_ = false;
   current_time_ = start_time_;
@@ -401,7 +406,7 @@ Scenario::Scenario(
   const ptr<const FireWeather> weather,
   const ptr<const FireWeather> weather_daily,
   const DurationSize start_time,
-  const shared_ptr<Perimeter>& perimeter,
+  const ptr<const Perimeter> perimeter,
   const std::optional<HashSize> start_cell,
   StartPoint start_point,
   const Day start_day,
@@ -596,7 +601,7 @@ Scenario::run(
     log_verbose("Perimeter applied");
     const auto& env = model().environment();
     log_verbose("Igniting points");
-    for (const auto& location : perimeter_->edge())
+    for (const auto& location : perimeter_->edge)
     {
       const auto cell = env.cell(location);
 #ifdef DEBUG_SIMULATION

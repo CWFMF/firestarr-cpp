@@ -24,28 +24,20 @@ ProbabilityMap::~ProbabilityMap()
 ProbabilityMap::ProbabilityMap(
   const DurationSize time,
   const DurationSize start_time,
-  const GridBase& grid_info
+  const GridBase& grid_info,
+  const std::optional<Perimeter>& perimeter
 )
   : all_(GridMap<size_t>(grid_info, 0)),
     time_(time),
     start_time_(start_time),
-    perimeter_(nullptr)
+    perimeter_(perimeter)
 {
 }
 
 shared_ptr<ProbabilityMap>
 ProbabilityMap::copyEmpty() const
 {
-  return make_shared<ProbabilityMap>(time_, start_time_, all_);
-}
-
-void
-ProbabilityMap::setPerimeter(
-  const Perimeter* const perimeter
-)
-{
-  lock_guard<mutex> lock(mutex_);
-  perimeter_ = perimeter;
+  return make_shared<ProbabilityMap>(time_, start_time_, all_, perimeter_);
 }
 
 void
@@ -263,9 +255,9 @@ ProbabilityMap::saveTotal(
 {
   // FIX: do this for other outputs too
   auto with_perim = all_;
-  if (nullptr != perimeter_)
+  if (perimeter_.has_value())
   {
-    for (auto loc : perimeter_->burned())
+    for (auto loc : perimeter_->burned)
     {
       // multiply initial perimeter cells so that probability shows processing status
       // HACK: value is 0 if nothing is saved yet

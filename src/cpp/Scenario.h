@@ -67,7 +67,7 @@ public:
     size_t id,
     const ptr<const FireWeather> weather,
     DurationSize start_time,
-    const shared_ptr<Perimeter>& perimeter,
+    const Perimeter* perimeter,
     const StartPoint& start_point,
     Day start_day,
     Day last_date
@@ -112,7 +112,7 @@ public:
     ptr<const FireWeather> weather,
     ptr<const FireWeather> weather_daily,
     DurationSize start_time,
-    const shared_ptr<Perimeter>& perimeter,
+    const Perimeter* perimeter,
     const StartPoint& start_point,
     Day start_day,
     Day last_date
@@ -540,7 +540,7 @@ protected:
     const ptr<const FireWeather> weather,
     const ptr<const FireWeather> weather_daily,
     DurationSize start_time,
-    const shared_ptr<Perimeter>& perimeter,
+    const ptr<const Perimeter> perimeter,
     const std::optional<HashSize> start_cell,
     StartPoint start_point,
     Day start_day,
@@ -582,7 +582,7 @@ public:
   /**
    * \brief Perimeter used to start Scenario from
    */
-  shared_ptr<Perimeter> perimeter_{nullptr};
+  ptr<const Perimeter> perimeter_{nullptr};
   /**
    * \brief Calculated SpreadInfo for SpreadKey for current time
    */

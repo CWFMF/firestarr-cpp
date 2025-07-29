@@ -25,28 +25,17 @@ IntensityMap::IntensityMap(
 {
 }
 
-IntensityMap::IntensityMap(
-  const IntensityMap& rhs
-)
-  // : IntensityMap(rhs.model_, nullptr)
-  : IntensityMap(rhs.model_)
-{
-  intensity_max_ = rhs.intensity_max_;
-  arrival_ = rhs.arrival_;
-  unburnable_ = rhs.unburnable_;
-  is_burned_ = rhs.is_burned_;
-}
-
 void
 IntensityMap::applyPerimeter(
   const Perimeter& perimeter
 ) noexcept
 {
   logging::verbose("Applying burned cells");
+  // NOTE: this breaks if burned is a vector and not a list
   std::for_each(
     std::execution::par_unseq,
-    perimeter.burned().begin(),
-    perimeter.burned().end(),
+    perimeter.burned.cbegin(),
+    perimeter.burned.cend(),
     [this](const auto& location) {
       ignite(location);
     }

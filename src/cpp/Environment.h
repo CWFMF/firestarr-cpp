@@ -73,6 +73,7 @@ public:
    */
   [[nodiscard]] static Environment
   load(const Point& point, const string_view in_fuel, const string_view in_elevation);
+  ~Environment() = default;
   /**
    * \brief Determine Coordinates in the grid for the Point
    * \param point Point to find Coordinates for
@@ -155,7 +156,11 @@ public:
    * \return ProbabilityMap with the same extent as this
    */
   [[nodiscard]] shared_ptr<ProbabilityMap>
-  makeProbabilityMap(DurationSize time, DurationSize start_time) const;
+  makeProbabilityMap(
+    const DurationSize time,
+    const DurationSize start_time,
+    const std::optional<Perimeter>& perimeter
+  ) const;
 
   /**
    * \brief Create a GridMap<Other> covering this Environment
@@ -169,7 +174,7 @@ public:
     const Other nodata
   ) const
   {
-    return GridMap<Other>(cells_, nodata);
+    return GridMap<Other>{cells_, nodata};
   }
 
   const BurnedData&
@@ -210,7 +215,7 @@ private:
   /**
    * \brief Cells representing Environment
    */
-  CellGrid cells_{};
+  CellGrid cells_;
   /**
    * \brief Cells that are not burnable
    */

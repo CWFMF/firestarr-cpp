@@ -51,13 +51,12 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \param grid_info GridBase to use for extent of this
    */
-  ProbabilityMap(DurationSize time, DurationSize start_time, const GridBase& grid_info);
-  /**
-   * \brief Assign perimeter to use for marking cells as initial perimeter
-   * \param perimeter Ignition grid to store for marking in outputs
-   */
-  void
-  setPerimeter(const Perimeter* const perimeter);
+  ProbabilityMap(
+    DurationSize time,
+    DurationSize start_time,
+    const GridBase& grid_info,
+    const std::optional<Perimeter>& perimeter
+  );
   /**
    * \brief Combine results from another ProbabilityMap into this one
    * \param rhs ProbabilityMap to combine from
@@ -200,7 +199,7 @@ private:
   /**
    * \brief Initial ignition grid to apply to outputs
    */
-  const Perimeter* perimeter_{nullptr};
+  const std::optional<Perimeter>& perimeter_;
 };
 }
 

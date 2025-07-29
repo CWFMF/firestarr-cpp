@@ -522,7 +522,7 @@ private:
   /**
    * \brief Perimeter to use for initializing simulations
    */
-  shared_ptr<Perimeter> perimeter_ = nullptr;
+  std::optional<Perimeter> perimeter_{};
   /**
    * \brief Environment to use for Model
    */

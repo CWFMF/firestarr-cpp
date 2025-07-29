@@ -37,10 +37,11 @@ Environment::load(
 shared_ptr<ProbabilityMap>
 Environment::makeProbabilityMap(
   const DurationSize time,
-  const DurationSize start_time
+  const DurationSize start_time,
+  const std::optional<Perimeter>& perimeter
 ) const
 {
-  return make_shared<ProbabilityMap>(time, start_time, cells_);
+  return make_shared<ProbabilityMap>(time, start_time, cells_, perimeter);
 }
 
 Environment
@@ -267,11 +268,7 @@ Environment::makeCells(
           }
           else
           {
-            logging::check_equal(
-              cell.aspect(),
-              static_cast<AspectSize>(a),
-              "Cell aspect when slope is 0"
-            );
+            logging::check_equal(cell.aspect(), a, "Cell aspect when slope is 0");
             logging::check_equal(v.aspect(), static_cast<AspectSize>(0), "Aspect when slope is 0");
           }
           logging::check_equal(v.fuelCode(), f, "Fuel");
@@ -304,6 +301,16 @@ Environment::makeCells(
     string(fuel.proj4()),
     std::move(values)
   );
+}
+
+Environment::Environment(
+  CellGrid&& cells,
+  const ElevationSize elevation
+) noexcept
+  : cells_(std::move(cells)),
+    not_burnable_(cells_),
+    elevation_(elevation)
+{
 }
 
 Environment::Environment(
@@ -376,16 +383,6 @@ Environment::offset(
 {
   const auto& p = event.cell();
   return cell(Location(p.row() + row, p.column() + column).hash());
-}
-
-Environment::Environment(
-  CellGrid&& cells,
-  const ElevationSize elevation
-) noexcept
-  : cells_(cells),
-    not_burnable_{cells_},
-    elevation_(elevation)
-{
 }
 
 bool
