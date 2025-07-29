@@ -407,9 +407,9 @@ void Model::makeStarts(Coordinates coordinates,
   if (!perim.empty())
   {
     logging::note("Initializing from perimeter %s", perim.c_str());
-    perimeter_ = make_shared<topo::Perimeter>(perim, point, *env_);
+    perimeter_.emplace(perim, point, *env_);
     // HACK: if perimeter is only one cell then use position not perimeter so it can bounce if non-fuel
-    const auto burned = perimeter_->burned();
+    const auto& burned = perimeter_->burned;
     const auto s = burned.size();
     if (1 >= s)
     {
@@ -428,29 +428,26 @@ void Model::makeStarts(Coordinates coordinates,
   if (size > 0)
   {
     logging::note("Initializing from size %d ha", size);
-    perimeter_ = make_shared<topo::Perimeter>(
-      hash_value,
-      size,
-      *env_);
+    perimeter_.emplace(hash_value, size, *env_);
   }
   // figure out where the fire can exist
-  if (nullptr != perimeter_ && !perimeter_->burned().empty())
+  if (perimeter_.has_value() && !perimeter_->burned.empty())
   {
     logging::check_fatal(size != 0 && !perim.empty(), "Can't specify size and perimeter");
     // we have a perimeter to start from
     // HACK: make sure this isn't empty
     starts_.push_back(hash_value);
     logging::note("Fire starting with size %0.1f ha",
-                  perimeter_->burned().size() * env_->cellSize() / 100.0);
+                  perimeter_->burned.size() * env_->cellSize() / 100.0);
   }
   else
   {
-    if (nullptr != perimeter_)
+    if (perimeter_.has_value())
     {
-      logging::check_fatal(!perimeter_->burned().empty(),
+      logging::check_fatal(!perimeter_->burned.empty(),
                            "Not using perimeter so it should be empty");
       logging::note("Using fire perimeter results in empty fire - changing to use point");
-      perimeter_ = nullptr;
+      perimeter_.reset();
     }
     logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
     //    if (0 == size && fuel::is_null_fuel(cell(location.hash())))
@@ -463,7 +460,7 @@ void Model::makeStarts(Coordinates coordinates,
       starts_.push_back(hash_value);
     }
   }
-  // if (nullptr != perimeter_)
+  // if (perimeter_.has_value())
   // {
   //   initial_intensity_ = make_shared<IntensityMap>(*this, &(*perimeter_));
   // }
@@ -496,33 +493,36 @@ Iteration Model::readScenarios(const topo::StartPoint& start_point,
     const auto id = kv.first;
     const auto cur_wx = kv.second.get();
     const auto cur_daily = wx_daily_.at(id).get();
-    if (nullptr != perimeter_)
+    if (perimeter_.has_value())
     {
-      setup_scenario(new Scenario(this,
-                                  id,
-                                  cur_wx,
-                                  cur_daily,
-                                  start,
-                                  // initial_intensity_,
-                                  perimeter_,
-                                  start_point,
-                                  start_day,
-                                  last_date));
+      setup_scenario(
+        new Scenario(
+          this,
+          id,
+          cur_wx,
+          cur_daily,
+          start,
+          &(*perimeter_),
+          start_point,
+          start_day,
+          last_date));
     }
     else
     {
       for (const auto& cur_start : starts_)
       {
         // should always have at least the day before the fire in the weather stream
-        setup_scenario(new Scenario(this,
-                                    id,
-                                    cur_wx,
-                                    cur_daily,
-                                    start,
-                                    cur_start,
-                                    start_point,
-                                    start_day,
-                                    last_date));
+        setup_scenario(
+          new Scenario(
+            this,
+            id,
+            cur_wx,
+            cur_daily,
+            start,
+            cur_start,
+            start_point,
+            start_day,
+            last_date));
       }
     }
   }
@@ -556,11 +556,14 @@ bool Model::isOverSimulationCountLimit() const noexcept
 {
   return is_over_simulation_count_;
 }
-shared_ptr<ProbabilityMap> Model::makeProbabilityMap(const DurationSize time,
-                                                     const DurationSize start_time) const
+shared_ptr<ProbabilityMap> Model::makeProbabilityMap(
+  const DurationSize time,
+  const DurationSize start_time) const
 {
-  return env_->makeProbabilityMap(time,
-                                  start_time);
+  return env_->makeProbabilityMap(
+    time,
+    start_time,
+    perimeter_);
 }
 static void show_probabilities(const map<ThresholdSize, shared_ptr<ProbabilityMap>>& probabilities)
 {
@@ -717,8 +720,6 @@ DurationSize Model::saveProbabilities(map<DurationSize, shared_ptr<ProbabilityMa
       const auto time = by_time.first;
       final_time = max(final_time, time);
       const auto prob = by_time.second;
-      logging::debug("Setting perimeter");
-      prob->setPerimeter(this->perimeter_.get());
       prob->saveAll(this->start_time_, time, processing_status);
       if (processing_status == processed)
       {
