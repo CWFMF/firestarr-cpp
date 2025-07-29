@@ -5,11 +5,11 @@
 #ifndef FS_PROBABILITYMAP_H
 #define FS_PROBABILITYMAP_HFS__H
 
-#include <string>
-#include <vector>
+#include "stdafx.h"
 #include "GridMap.h"
 #include "Statistics.h"
 #include "Perimeter.h"
+
 namespace fs
 {
 namespace sim
@@ -55,14 +55,9 @@ public:
     const string dir_out,
     DurationSize time,
     DurationSize start_time,
-    const data::GridBase& grid_info
+    const data::GridBase& grid_info,
+    const std::optional<topo::Perimeter>& perimeter
   );
-  /**
-   * \brief Assign perimeter to use for marking cells as initial perimeter
-   * \param perimeter Ignition grid to store for marking in outputs
-   */
-  void
-  setPerimeter(const topo::Perimeter* const perimeter);
   /**
    * \brief Combine results from another ProbabilityMap into this one
    * \param rhs ProbabilityMap to combine from
@@ -192,7 +187,7 @@ private:
   /**
    * \brief Initial ignition grid to apply to outputs
    */
-  const topo::Perimeter* perimeter_;
+  const std::optional<topo::Perimeter>& perimeter_;
 };
 }
 }

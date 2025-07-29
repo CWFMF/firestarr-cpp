@@ -5,18 +5,12 @@
 #ifndef FS_MODEL_H
 #define FS_MODEL_H
 
-#include <condition_variable>
-#include <cstdio>
-#include <future>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <string>
-#include <thread>
-#include <vector>
+#include "stdafx.h"
 #include "Environment.h"
-#include "Iteration.h"
 #include "FireWeather.h"
+#include "Iteration.h"
+#include "Perimeter.h"
+
 namespace fs
 {
 namespace topo
@@ -536,7 +530,7 @@ private:
   /**
    * \brief Perimeter to use for initializing simulations
    */
-  shared_ptr<topo::Perimeter> perimeter_ = nullptr;
+  std::optional<topo::Perimeter> perimeter_{};
   /**
    * \brief Environment to use for Model
    */

@@ -231,7 +231,11 @@ public:
    * \return ProbabilityMap with the same extent as this
    */
   [[nodiscard]] shared_ptr<ProbabilityMap>
-  makeProbabilityMap(DurationSize time, DurationSize start_time) const;
+  makeProbabilityMap(
+    const DurationSize time,
+    const DurationSize start_time,
+    const std::optional<topo::Perimeter>& perimeter
+  ) const;
   /**
    * \brief Create a GridMap<Other> covering this Environment
    * \tparam Other Type of GridMap

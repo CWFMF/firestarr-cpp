@@ -123,10 +123,11 @@ IntensityMap::applyPerimeter(
   // logging::verbose("Attaining lock");
   // lock_guard<mutex> lock(mutex_);
   logging::verbose("Applying burned cells");
+  // NOTE: this breaks if burned is a vector and not a list
   std::for_each(
     std::execution::par_unseq,
-    perimeter.burned().begin(),
-    perimeter.burned().end(),
+    perimeter.burned.cbegin(),
+    perimeter.burned.cend(),
     [this](const auto& location) {
       ignite(location);
     }

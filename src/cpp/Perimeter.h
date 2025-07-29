@@ -5,10 +5,10 @@
 #ifndef FS_PERIMETER_H
 #define FS_PERIMETER_H
 
-#include <list>
-#include <string>
+#include "Environment.h"
 #include "Location.h"
 #include "Point.h"
+
 namespace fs
 {
 namespace wx
@@ -18,6 +18,20 @@ class FwiWeather;
 namespace topo
 {
 class Environment;
+/**
+ * \brief A map of locations which have burned in a Scenario.
+ * Use this class so that we can filter by fuel cells but not expose the members
+ */
+class BurnedMap final : public data::GridMap<unsigned char>
+{
+public:
+  /**
+   * \brief Constructor
+   * \param perim_grid Grid representing Perimeter to initialize from
+   * \param env Environment to use as base
+   */
+  BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const Environment& env);
+};
 /**
  * \brief Perimeter for an existing fire to initialize a simulation with.
  */
@@ -37,38 +51,17 @@ public:
    * \param size Size of Perimeter to create
    * \param env Environment to apply Perimeter to
    */
-  Perimeter(const HashSize hash_value, size_t size, const Environment& env);
-  // /**
-  //  * \brief Map of all burned Locations
-  //  * \return All Locations burned by this Perimeter
-  //  */
-  // [[nodiscard]] const BurnedMap& burned_map() const noexcept;
+  Perimeter(const HashSize hash_value, const size_t size, const Environment& env);
   /**
    * \brief List of all burned Locations
-   * \return All Locations burned by this Perimeter
    */
-  [[nodiscard]] const list<HashSize>&
-  burned() const noexcept;
+  const list<HashSize> burned;
   /**
    * \brief List of all Locations along the edge of this Perimeter
-   * \return All Locations along the edge of this Perimeter
    */
-  [[nodiscard]] const list<HashSize>&
-  edge() const noexcept;
+  const list<HashSize> edge;
 private:
-  // /**
-  //  * @brief Map of burned cells
-  //  *
-  //  */
-  // const BurnedMap burned_map_;
-  // /**
-  //  * \brief List of all burned Locations
-  //  */
-  list<HashSize> burned_;
-  /**
-   * \brief List of all Locations along the edge of this Perimeter
-   */
-  list<HashSize> edge_;
+  Perimeter(const BurnedMap& burned_map);
 };
 }
 }

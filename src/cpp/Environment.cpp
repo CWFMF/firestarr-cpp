@@ -44,10 +44,11 @@ Environment::load(
 shared_ptr<ProbabilityMap>
 Environment::makeProbabilityMap(
   const DurationSize time,
-  const DurationSize start_time
+  const DurationSize start_time,
+  const std::optional<topo::Perimeter>& perimeter
 ) const
 {
-  return make_shared<sim::ProbabilityMap>(dir_out_, time, start_time, *cells_);
+  return make_shared<sim::ProbabilityMap>(dir_out_, time, start_time, *cells_, perimeter);
 }
 Environment
 Environment::loadEnvironment(

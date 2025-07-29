@@ -173,8 +173,7 @@ Scenario::Scenario(
   wx::FireWeather* weather,
   wx::FireWeather* weather_daily,
   const DurationSize start_time,
-  //  const shared_ptr<IntensityMap>& initial_intensity,
-  const shared_ptr<Perimeter>& perimeter,
+  const Perimeter* perimeter,
   const StartPoint& start_point,
   const Day start_day,
   const Day last_date
@@ -187,7 +186,7 @@ Scenario::Scenario(
       start_time,
       //  initial_intensity,
       perimeter,
-      nullptr,
+      std::optional<HashSize>(),
       start_point,
       start_day,
       last_date
@@ -213,7 +212,7 @@ Scenario::Scenario(
       start_time,
       // make_unique<IntensityMap>(*model, nullptr),
       nullptr,
-      make_shared<HashSize>(start_cell),
+      std::optional<HashSize>(start_cell),
       start_point,
       start_day,
       last_date
@@ -223,10 +222,15 @@ Scenario::Scenario(
 // HACK: just set next start point here for surface right now
 Scenario*
 Scenario::reset_with_new_start(
-  const shared_ptr<HashSize>& start_cell,
+  const HashSize start_cell,
   util::SafeVector* final_sizes
 )
 {
+  logging::check_fatal(
+    nullptr != perimeter_,
+    "Resetting start cell to %d when perimeter exists",
+    start_cell
+  );
   start_cell_ = start_cell;
   // FIX: remove duplicated code
   // logging::extensive("Set cell; resetting");
@@ -406,8 +410,8 @@ Scenario::Scenario(
   wx::FireWeather* weather_daily,
   const DurationSize start_time,
   //  const shared_ptr<IntensityMap>& initial_intensity,
-  const shared_ptr<Perimeter>& perimeter,
-  const shared_ptr<HashSize>& start_cell,
+  const Perimeter* perimeter,
+  const std::optional<HashSize> start_cell,
   StartPoint start_point,
   const Day start_day,
   const Day last_date
@@ -601,7 +605,7 @@ Scenario::run(
     log_verbose("Perimeter applied");
     const auto& env = model().environment();
     log_verbose("Igniting points");
-    for (const auto& location : perimeter_->edge())
+    for (const auto& location : perimeter_->edge)
     {
       //      const auto cell = env.cell(location.hash());
       const auto cell = env.cell(location);
