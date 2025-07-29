@@ -74,7 +74,7 @@ public:
            wx::FireWeather* weather_daily,
            DurationSize start_time,
            //  const shared_ptr<IntensityMap>& initial_intensity,
-           const shared_ptr<topo::Perimeter>& perimeter,
+           const topo::Perimeter* perimeter,
            const topo::StartPoint& start_point,
            Day start_day,
            Day last_date);
@@ -119,8 +119,9 @@ public:
    * \param final_sizes SafeVector to output results to
    * \return This
    */
-  [[nodiscard]] Scenario* reset_with_new_start(const shared_ptr<HashSize>& start_cell,
-                                               util::SafeVector* final_sizes);
+  [[nodiscard]] Scenario* reset_with_new_start(
+    const HashSize start_cell,
+    util::SafeVector* final_sizes);
   /**
    * \brief Reset thresholds and set SafeVector to output results to
    * \param mt_extinction Used for extinction random numbers
@@ -443,9 +444,8 @@ protected:
            wx::FireWeather* weather,
            wx::FireWeather* weather_daily,
            DurationSize start_time,
-           //  const shared_ptr<IntensityMap>& initial_intensity,
-           const shared_ptr<topo::Perimeter>& perimeter,
-           const shared_ptr<HashSize>& start_cell,
+           const topo::Perimeter* perimeter,
+           std::optional<HashSize> start_cell,
            topo::StartPoint start_point,
            Day start_day,
            Day last_date);
@@ -488,7 +488,7 @@ public:
   /**
    * \brief Perimeter used to start Scenario from
    */
-  shared_ptr<topo::Perimeter> perimeter_;
+  const topo::Perimeter* perimeter_;
   /**
    * \brief Calculated SpreadInfo for SpreadKey for current time
    */
@@ -504,7 +504,7 @@ public:
   /**
    * \brief Cell that the Scenario starts from if no Perimeter
    */
-  shared_ptr<HashSize> start_cell_;
+  std::optional<HashSize> start_cell_;
   /**
    * \brief Hourly weather to use for this Scenario
    */
