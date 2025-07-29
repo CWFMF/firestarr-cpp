@@ -3,7 +3,6 @@
 
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
-#include "stdafx.h"
 #include "ProbabilityMap.h"
 #include "FBP45.h"
 #include "IntensityMap.h"
@@ -23,28 +22,27 @@ ProbabilityMap::~ProbabilityMap()
   lock_guard<mutex> lock(mutex_);
 }
 
-ProbabilityMap::ProbabilityMap(const string dir_out,
-                               const DurationSize time,
-                               const DurationSize start_time,
-                               const data::GridBase& grid_info)
+ProbabilityMap::ProbabilityMap(
+  const string dir_out,
+  const DurationSize time,
+  const DurationSize start_time,
+  const data::GridBase& grid_info,
+  const std::optional<topo::Perimeter>& perimeter)
   : dir_out_(dir_out),
     all_(data::GridMap<size_t>(grid_info, 0)),
     time_(time),
     start_time_(start_time),
-    perimeter_(nullptr)
+    perimeter_(perimeter)
 {
 }
 shared_ptr<ProbabilityMap> ProbabilityMap::copyEmpty() const
 {
-  return make_shared<ProbabilityMap>(dir_out_,
-                                     time_,
-                                     start_time_,
-                                     all_);
-}
-void ProbabilityMap::setPerimeter(const topo::Perimeter* const perimeter)
-{
-  lock_guard<mutex> lock(mutex_);
-  perimeter_ = perimeter;
+  return make_shared<ProbabilityMap>(
+    dir_out_,
+    time_,
+    start_time_,
+    all_,
+    perimeter_);
 }
 void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
 {
@@ -213,9 +211,9 @@ void ProbabilityMap::saveTotal(const string& base_name, const ProcessingStatus p
 {
   // FIX: do this for other outputs too
   auto with_perim = all_;
-  if (nullptr != perimeter_)
+  if (perimeter_.has_value())
   {
-    for (auto loc : perimeter_->burned())
+    for (auto loc : perimeter_->burned)
     {
       // multiply initial perimeter cells so that probability shows processing status
       // HACK: value is 0 if nothing is saved yet

@@ -111,8 +111,8 @@ void IntensityMap::applyPerimeter(const topo::Perimeter& perimeter) noexcept
   logging::verbose("Applying burned cells");
   std::for_each(
     std::execution::par_unseq,
-    perimeter.burned().begin(),
-    perimeter.burned().end(),
+    perimeter.burned.begin(),
+    perimeter.burned.end(),
     [this](const auto& location) { ignite(location); });
 }
 // bool IntensityMap::canBurn(const HashSize hash_value) const
