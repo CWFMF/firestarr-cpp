@@ -270,9 +270,9 @@ public:
    * \brief Make a list of all Locations that are on the edge of cells with a value
    * \return A list of all Locations that are on the edge of cells with a value
    */
-  [[nodiscard]] list<HashSize> makeEdge() const
+  [[nodiscard]] vector<HashSize> makeEdge() const
   {
-    list<HashSize> edge{};
+    vector<HashSize> edge{};
     for (const auto& kv : this->data)
     {
       const Location loc{kv.first};
@@ -306,7 +306,7 @@ public:
    * \brief Make a list of all Locations that have a value
    * \return A list of all Locations that have a value
    */
-  [[nodiscard]] list<HashSize> makeList() const
+  [[nodiscard]] vector<HashSize> makeList() const
   {
     auto ks = std::views::keys(this->data);
     return {ks.begin(), ks.end()};
