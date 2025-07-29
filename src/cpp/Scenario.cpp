@@ -705,9 +705,6 @@ apply_offsets_spreadkey(
   // in a cell for it to work well
   // vector<XYPos> r1{};
   OffsetSet offsets_after_duration{};
-#ifdef DEBUG_CELLPOINTS
-  logging::verbose("Applying %ld offsets", offsets.size());
-#endif
   // // offsets_after_duration.resize(offsets.size());
   // std::transform(
   //   offsets.cbegin(),
@@ -728,28 +725,14 @@ apply_offsets_spreadkey(
       return ROSOffset(Offset(p.x() * duration, p.y() * duration));
     }
   );
-#ifdef DEBUG_CELLPOINTS
-  logging::debug(
-    "Calculated %ld offsets after duration %f",
-    offsets_after_duration.size(),
-    duration
-  );
-#endif
   size_t i = 0;
   for (auto& kv : pts_spreading_new)
   {
     ++i;
     auto& cell_pts = kv.second;
     // auto cell_pts_new = points_new.map_.at(hash_value);
-#ifdef DEBUG_CELLPOINTS
-    scenario
-      .log_verbose("cell_pts for (%d, %d) has %ld items", src.column(), src.row(), cell_pts.size());
-#endif
     if (cell_pts.empty())
     {
-#ifdef DEBUG_CELLPOINTS
-      scenario.log_verbose("Cell (%d, %d) ignored because empty", src.column(), src.row());
-#endif
       continue;
     }
     auto& pts = cell_pts;
@@ -765,9 +748,6 @@ apply_offsets_spreadkey(
           const auto new_y = y_o + pt.y();
           const XYPos p0{new_x, new_y};
           points_new.insert(*scenario.intensity_new_, p0);
-#ifdef DEBUG_CELLPOINTS
-          scenario.log_verbose("points is now %ld items", points.size());
-#endif
         }
       }
     }
@@ -860,29 +840,11 @@ Scenario::scheduleFireSpread(
           // NOTE: shouldn't be Cell if we're looking up by just Location later
           to_spread_new[key].emplace_back(hash_value, it->second.unique());
           it = points_new_.map_.erase(it);
-#ifdef DEBUG_CELLPOINTS
-          auto& v = to_spread[key];
-          const auto n = v.size();
-          const auto& p = v[n - 1].second;
-          log_verbose(
-            "added %ld items to to_spread[%d][(%d, %d)] when spreading",
-            p.size(),
-            key,
-            loc.column(),
-            loc.row()
-          );
-#endif
         }
         else
         {
           ++it;
-#ifdef DEBUG_CELLPOINTS
-          log_extensive("not spreading[%d][(%d, %d)]", key, loc.column(), loc.row());
-#endif
         }
-#ifdef DEBUG_CELLPOINTS
-        check_pts("during making to_spread 1", to_spread, to_spread_new);
-#endif
       }
     }
   }
@@ -987,15 +949,6 @@ Scenario::scheduleFireSpread(
     }
     else
     {
-#ifdef DEBUG_CELLPOINTS
-      logging::info(
-        "Removing %ld points because: cannot_spread=%d; does_survive=%d; is_surrounded=%d",
-        it->second.unique().size(),
-        cannotSpread(hash_value),
-        survives(new_time, for_cell, new_time - arrival_[hash_value]),
-        isSurrounded(hash_value)
-      );
-#endif
       // just inserted false, so make sure unburnable gets updated
       // whether it went out or is surrounded just mark it as unburnable
       // ++it;
