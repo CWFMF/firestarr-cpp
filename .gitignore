@@ -3,4 +3,5 @@ firestarr
 **/log*.txt
 **/build
 **/src/cpp/version.cpp
-**/test
+**/test/10N_50651
+**/test/flamegraphs
