@@ -5,7 +5,7 @@
 #include "SpreadAlgorithm.h"
 #include "Util.h"
 #include "unstable.h"
-#include "CellPoints.h"
+
 namespace fs
 {
 HorizontalAdjustment

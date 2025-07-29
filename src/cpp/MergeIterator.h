@@ -5,7 +5,6 @@
 #include "Location.h"
 #include "Cell.h"
 #include "InnerPos.h"
-#include "CellPoints.h"
 
 namespace fs::sim
 {

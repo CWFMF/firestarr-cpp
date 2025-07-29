@@ -7,15 +7,11 @@
 #define FS_PTS_H
 
 #include "stdafx.h"
-#ifdef USE_OLD_SPREAD
-#include "CellPoints.h"
-#endif
 #include "InnerPos.h"
 #include "IntensityMap.h"
-#ifdef USE_NEW_SPREAD
+
 namespace fs::sim
 {
-#ifndef USE_OLD_SPREAD
 using topo::SpreadKey;
 static constexpr size_t FURTHEST_N = 0;
 static constexpr size_t FURTHEST_NNE = 1;
@@ -79,7 +75,6 @@ static constexpr std::array<const char*, NUM_DIRECTIONS> DIRECTION_NAMES{
 using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
 using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
 using array_cellpts = std::tuple<array_dists, array_pts>;
-#endif
 using spreading_points_new = map<SpreadKey, vector<pair<HashSize, set<XYPos>>>>;
 class Pts
 {
@@ -109,10 +104,6 @@ public:
   add_unique(const Location& loc, set<XYPos>& into) const noexcept;
   bool
   empty() const;
-#ifdef DEBUG_NEW_SPREAD
-  size_t
-  size() const noexcept;
-#endif
   inline const array_dists&
   distances() const
   {
@@ -176,5 +167,4 @@ public:
   map<HashSize, Pts> map_;
 };
 }
-#endif
 #endif

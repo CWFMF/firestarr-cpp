@@ -4,7 +4,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 #include "pts.h"
-#ifdef USE_NEW_SPREAD
 #include "Log.h"
 #include "Location.h"
 #include "Scenario.h"
@@ -26,9 +25,6 @@ static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.x();
 static const InnerPos INVALID_INNER_POSITION{};
 static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
 static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
-#ifdef USE_OLD_SPREAD
-static const SpreadData INVALID_SPREAD_DATA{INVALID_TIME};
-#endif
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
 #define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
 constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
@@ -93,13 +89,7 @@ Pts::Pts(
   {
     distances()[0] = INVALID_DISTANCE - 1;
   }
-#ifdef DEBUG_NEW_SPREAD
-  logging::check_equal(canBurn(), !(*intensity_map.unburnable_)[p.hash()], "can burn");
-#endif
   insert(p);
-#ifdef DEBUG_NEW_SPREAD_CHECK
-  logging::check_equal(static_cast<size_t>(canBurn() ? 1 : 0), unique().size(), "Initial size");
-#endif
   // if (!intensity_map.unburnable_[p.hash()])
   // {
   //   XYSize integral;
@@ -141,14 +131,6 @@ Pts::insert(
     show_points<XYPos, XYSize, std::set<XYPos>>(u, "Pts: Adding (%f, %f) to %ld points", x, y, n0);
   }
 #endif
-#ifdef DEBUG_NEW_SPREAD
-  logging::verbose(
-    "Pts: (%d, %d) %s burn",
-    cell_x_y_.x(),
-    cell_x_y_.y(),
-    canBurn() ? "can" : "cannot"
-  );
-#endif
   if (canBurn())
   {
     XYSize integral;
@@ -167,21 +149,6 @@ Pts::insert(
       const auto d = dist_line(x0, x1) + dist_line(y0, y1);
       auto& p_d = dists[i];
       auto& p_p = pts[i];
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-      if (d < p_d)
-      {
-        logging::verbose(
-          "Pts: Inserting (%f, %f) into (%d, %d) as %s: (%f, %f)",
-          x,
-          y,
-          cell_x_y_.x(),
-          cell_x_y_.y(),
-          DIRECTION_NAMES[i],
-          p0.x(),
-          p0.y()
-        );
-      }
-#endif
       p_p = (d < p_d) ? p0 : p_p;
       p_d = (d < p_d) ? d : p_d;
     }
@@ -221,53 +188,12 @@ PtMap::insert(
   const XYPos p0
 )
 {
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-  logging::verbose(
-    "Pts::insert: (%f, %f) %s burn",
-    p0.x(),
-    p0.y(),
-    !intensity_map.unburnable_[p0.hash()] ? "can" : "cannot"
-  );
-#endif
   auto p = map_.try_emplace(p0.hash(), intensity_map, p0);
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-  logging::verbose("Pts::insert: %s (%f, %f)", p.second ? "emplaced" : "inserting", p0.x(), p0.y());
-#endif
   auto& pts = p.first->second;
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-  const set<XYPos> u0 = unique();
-  const auto n0 = u0.size();
-  show_points<XYPos, XYSize, std::set<XYPos>>(
-    u0,
-    "Pts: Adding (%f, %f) to %ld points",
-    p0.x(),
-    p0.y(),
-    n0
-  );
-#endif
-  // HACK: insert the same thing twice should do nothing?
-  // if (!p.second)
-  // {
-  //   logging::info("already existed");
-  // }
   if (!p.second)
   {
     pts.insert(p0);
   }
-#if defined(DEBUG_CELLPOINTS) || defined(DEBUG_NEW_SPREAD_VERBOSE)
-  {
-    const auto n1 = size();
-    const set<XYPos> u1 = unique();
-    show_points<XYPos, XYSize, std::set<XYPos>>(
-      u1,
-      "Pts: Adding (%f, %f) to %ld points gives %ld points",
-      p0.x(),
-      p0.y(),
-      n0,
-      n1
-    );
-  }
-#endif
   return pts;
 }
 set<XYPos>
@@ -276,94 +202,25 @@ Pts::unique() const noexcept
   set<XYPos> r{};
   Location loc{cell_x_y_.hash()};
   add_unique(loc, r);
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-  {
-    show_points<XYPos, XYSize, std::set<XYPos>>(r, "Generated unique points as:");
-  }
-#endif
   return r;
 }
 void
 Pts::add_unique(
-  const Location&
-#ifdef DEBUG_NEW_SPREAD
-    loc
-#endif
-  ,
+  const Location&,
   set<XYPos>& into
 ) const noexcept
 {
-#ifdef DEBUG_NEW_SPREAD
-  logging::check_equal(loc.column(), cell_x_y_.x(), "Pts::add_unique: x");
-  logging::check_equal(loc.row(), cell_x_y_.y(), "Pts::add_unique: y");
-#endif
-// if any point is invalid then they all have to be
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-  logging::verbose(
-    "Pts::add_unique: (%d, %d) %s burn",
-    cell_x_y_.x(),
-    cell_x_y_.y(),
-    canBurn() ? "can" : "cannot"
-  );
-#endif
+  // if any point is invalid then they all have to be
   if (canBurn())
   {
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-    logging::verbose("Pts::add_unique: starting with %ld points", into.size());
-#endif
     const auto& pts = points();
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
       const auto& p = pts[i];
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-      logging::verbose("Pts::add_unique: (%f, %f) as %s", p.x(), p.y(), DIRECTION_NAMES[i]);
-#endif
       into.insert({cell_x_y_.x(), cell_x_y_.y(), p.x(), p.y()});
-#ifdef DEBUG_NEW_SPREAD_VERBOSE
-      logging::verbose("Pts::add_unique: now %ld points", into.size());
-#endif
     }
-    // std::transform(
-    //   points().cbegin(),
-    //   points().cend(),
-    //   std::insert_iterator(into, end(into)),
-    //   [this](auto& p) -> XYPos {
-    //     return {
-    //       cell_x_y_.x(),
-    //       cell_x_y_.y(),
-    //       p.x(),
-    //       p.y()};
-    //   });
-#ifdef DEBUG_NEW_SPREAD
-    logging::check_fatal(0 == into.size(), "Pts::add_unique: Can burn but no points");
-#endif
-    // logging::note(
-    //   "Pts: Have %ld points",
-    //   into.size());
   }
-  // const auto pts = unique();
-  // //   logging::verbose("Have %ld points", pts.size());
-  // //   for (auto& p : pts)
-  // //   {
-  // //     logging::verbose("(%f, %f)", p.x(), p.y());
-  // //   }
-  // std::transform(
-  //   pts.cbegin(),
-  //   pts.cend(),
-  //   std::insert_iterator(into, end(into)),
-  //   [loc](auto& p1) -> XYPos {
-  //     XYPos p{loc.column(), loc.row(), p1.x(), p1.y()};
-  //     //   logging::verbose("generated point is (%f, %f)", p.x(), p.y());
-  //     return p;
-  //   });
 }
-#ifdef DEBUG_NEW_SPREAD
-size_t
-Pts::size() const noexcept
-{
-  return unique().size();
-}
-#endif
 set<XYPos>
 PtMap::unique(
   const HashSize hash_value
@@ -375,9 +232,6 @@ PtMap::unique(
     if (kv.first == hash_value)
     {
       const auto& loc = Location{kv.first};
-#ifdef DEBUG_NEW_SPREAD
-      logging::verbose("PtMap::unique: Adding unique for cell (%d, %d)", loc.column(), loc.row());
-#endif
       auto& pts = kv.second;
       pts.add_unique(loc, r);
     }
@@ -426,4 +280,3 @@ PtMap::erase(
   return map_.erase(hash_value);
 }
 }
-#endif

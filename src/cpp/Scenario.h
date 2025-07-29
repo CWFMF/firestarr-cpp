@@ -19,7 +19,6 @@
 #include "StartPoint.h"
 #include "InnerPos.h"
 #include "FireSpread.h"
-#include "CellPoints.h"
 #include "pts.h"
 
 namespace fs::sim
@@ -538,15 +537,10 @@ protected:
    * \brief Current time for this Scenario
    */
   DurationSize current_time_;
-/**
- * \brief Map of Cells to the PointSets within them
- */
-#ifdef USE_OLD_SPREAD
-  CellPointsMap points_;
-#endif
-#ifdef USE_NEW_SPREAD
+  /**
+   * \brief Map of Cells to the PointSets within them
+   */
   PtMap points_new_;
-#endif
   /**
    * \brief Contains information on cells that are not burnable
    */
@@ -555,15 +549,10 @@ public:
    * \brief Event scheduler used for ordering events
    */
   set<Event, EventCompare> scheduler_;
-/**
- * \brief Map of what intensity each cell has burned at
- */
-#ifdef USE_OLD_SPREAD
-  unique_ptr<IntensityMap> intensity_;
-#endif
-#ifdef USE_NEW_SPREAD
+  /**
+   * \brief Map of what intensity each cell has burned at
+   */
   unique_ptr<IntensityMap> intensity_new_;
-#endif
   // /**
   //  * @brief Initial intensity map based off perimeter
   //  */
