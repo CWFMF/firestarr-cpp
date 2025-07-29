@@ -120,18 +120,6 @@ Pts::Pts(const IntensityMap& intensity_map, const XYPos p)
 Pts& Pts::insert(const XYSize x,
                  const XYSize y)
 {
-#ifdef DEBUG_CELLPOINTS
-  const auto n0 = size();
-  {
-    const set<XYPos> u = unique();
-    show_points<XYPos, XYSize, std::set<XYPos>>(
-      u,
-      "Pts: Adding (%f, %f) to %ld points",
-      x,
-      y,
-      n0);
-  }
-#endif
   if (canBurn())
   {
     XYSize integral;
@@ -154,19 +142,6 @@ Pts& Pts::insert(const XYSize x,
       p_d = (d < p_d) ? d : p_d;
     }
   }
-#ifdef DEBUG_CELLPOINTS
-  const auto n1 = size();
-  {
-    const set<XYPos> u = unique();
-    show_points<XYPos, XYSize, std::set<XYPos>>(
-      u,
-      "Pts: Adding (%f, %f) to %ld points gives %ld",
-      x,
-      y,
-      n0,
-      n1);
-  }
-#endif
   return *this;
 }
 inline bool Pts::canBurn() const
