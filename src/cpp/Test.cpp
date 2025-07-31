@@ -227,7 +227,7 @@ string run_test(
   const auto w = weather.at(start_date);
   auto info = SpreadInfo(scenario, start_date, start_cell->key(), model.nd(start_date), w);
   showSpread(info, w, fuel);
-  map<DurationSize, shared_ptr<ProbabilityMap>> probabilities{};
+  vector<shared_ptr<ProbabilityMap>> probabilities{};
   logging::debug("Starting simulation");
   // NOTE: don't want to reset first because TestScenabuirio handles what that does
   scenario.run(&probabilities);

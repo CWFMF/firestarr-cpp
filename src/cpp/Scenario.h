@@ -335,7 +335,7 @@ public:
    * \param probabilities map to update ProbabilityMap for times base on Scenario results
    * \return This
    */
-  Scenario* run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities);
+  Scenario* run(vector<shared_ptr<ProbabilityMap>>* probabilities);
   /**
    * \brief Schedule a fire spread Event
    * \param event Event to schedule
@@ -584,7 +584,7 @@ protected:
   /**
    * \brief Map of ProbabilityMaps by time snapshot for them was taken
    */
-  map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities_{nullptr};
+  vector<shared_ptr<ProbabilityMap>>* probabilities_{nullptr};
   /**
    * \brief Where to append the final size of this Scenario when run is complete
    */

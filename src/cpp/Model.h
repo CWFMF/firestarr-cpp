@@ -351,7 +351,7 @@ private:
    * \param start_day Start day for simulation
    * \return Map of times to ProbabilityMap for that time
    */
-  map<DurationSize, shared_ptr<ProbabilityMap>> runIterations(
+  vector<shared_ptr<ProbabilityMap>> runIterations(
     const StartPoint& start_point,
     DurationSize start,
     Day start_day
@@ -364,7 +364,7 @@ private:
    * Save probability rasters
    */
   DurationSize saveProbabilities(
-    map<DurationSize, shared_ptr<ProbabilityMap>>& probabilities,
+    vector<shared_ptr<ProbabilityMap>>& probabilities,
     const Day start_day,
     const bool is_interim
   );
@@ -486,6 +486,9 @@ private:
    * \brief Longitude to use for any calcualtions
    */
   MathSize longitude_;
+
+private:
+  mutex mutex_;
 };
 }
 #endif

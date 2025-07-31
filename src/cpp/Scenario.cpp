@@ -398,7 +398,13 @@ Scenario::Scenario(
 }
 void Scenario::saveStats(const DurationSize time) const
 {
-  probabilities_->at(time)->addProbability(*intensity_);
+  size_t i = 0;
+  while (i < save_points_.size() && save_points_[i] < time)
+  {
+    ++i;
+  }
+  logging::check_fatal(i >= save_points_.size(), "Invalid save time %f is out of bounds", time);
+  probabilities_->at(i)->addProbability(*intensity_);
   if (time == last_save_)
   {
     final_sizes_->addValue(intensity_->fireSize());
@@ -491,14 +497,14 @@ void Scenario::burn(const Event& event)
     event.cell().row()
   );
 #endif
-#ifdef DEBUG_POINTS
-  log_check_fatal(
-    (*unburnable_)[event.cell().hash()],
-    "Burning unburnable cell (%d, %d)",
-    event.cell().column(),
-    event.cell().row()
-  );
-#endif
+  // #ifdef DEBUG_POINTS
+  //   log_check_fatal(
+  //     (*unburnable_)[event.cell().hash()],
+  //     "Burning unburnable cell (%d, %d)",
+  //     event.cell().column(),
+  //     event.cell().row()
+  //   );
+  // #endif
   //  Observers only care about cells burning so do it here
   notify(event);
   intensity_->burn(event.cell(), event.intensity(), event.ros(), event.raz());
@@ -536,7 +542,7 @@ void saveProbabilities(
   out.close();
 }
 #endif
-Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities)
+Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
 {
 #ifdef DEBUG_SIMULATION
   log_check_fatal(ran(), "Scenario has already run");
