@@ -48,7 +48,7 @@ Environment::makeProbabilityMap(
   const std::optional<topo::Perimeter>& perimeter
 ) const
 {
-  return make_shared<sim::ProbabilityMap>(dir_out_, time, start_time, *cells_, perimeter);
+  return make_shared<ProbabilityMap>(dir_out_, time, start_time, *cells_, perimeter);
 }
 Environment
 Environment::loadEnvironment(

@@ -26,6 +26,7 @@
 #include <cerrno>
 #include <chrono>
 #include <cmath>
+#include <compare>
 #include <cstdarg>
 #include <cstdint>
 #include <cstdio>

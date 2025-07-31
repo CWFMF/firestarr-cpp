@@ -36,53 +36,6 @@ Iteration::reset(
   }
   return this;
 }
-//
-// Iteration* Iteration::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities)
-//{
-//  // sort in run so that they still get the same extinction thresholds as when unsorted
-//		std::sort(scenarios_.begin(),
-//			scenarios_.end(),
-//			[](Scenario* lhs, Scenario* rhs) noexcept
-//		{
-//			// sort so that scenarios with highest DSRs are at the front
-//		  //return lhs->weightedDsr() > rhs->weightedDsr();
-//		});
-//	if (Settings::runAsync())
-//  {
-//    vector<future<Scenario*>> results{};
-//    // make a local copy so that we don't have mutex competition with other Iterations
-//    map<DurationSize, shared_ptr<ProbabilityMap>> local_probabilities{};
-//    for (auto& kv : *probabilities)
-//    {
-//      local_probabilities[kv.first] = kv.second->copyEmpty();
-//    }
-//    for (auto& scenario : scenarios_)
-//    {
-//      results.push_back(async(launch::async,
-//                              &Scenario::run,
-//                              scenario,
-//                              &local_probabilities));
-//    }
-//    for (auto& scenario : results)
-//    {
-//      auto s = scenario.get();
-//      s->clear();
-//    }
-//    for (auto& kv : *probabilities)
-//    {
-//      kv.second->addProbabilities(*local_probabilities[kv.first]);
-//      delete local_probabilities[kv.first];
-//    }
-//  }
-//  else
-//  {
-//    for (auto& scenario : scenarios_)
-//    {
-//      scenario->run(probabilities);
-//    }
-//  }
-//  return this;
-//}
 vector<DurationSize>
 Iteration::savePoints() const
 {

@@ -458,7 +458,13 @@ Scenario::saveStats(
   const DurationSize time
 ) const
 {
-  probabilities_->at(time)->addProbability(*intensity_new_);
+  size_t i = 0;
+  while (i < save_points_.size() && save_points_[i] < time)
+  {
+    ++i;
+  }
+  logging::check_fatal(i >= save_points_.size(), "Invalid save time %f is out of bounds", time);
+  probabilities_->at(i)->addProbability(*intensity_new_);
   if (time == last_save_)
   {
     final_sizes_->addValue(intensity_new_->fireSize());
@@ -578,7 +584,7 @@ saveProbabilities(
 #endif
 Scenario*
 Scenario::run(
-  map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities
+  vector<shared_ptr<ProbabilityMap>>* probabilities
 )
 {
 #ifdef DEBUG_SIMULATION
