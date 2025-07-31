@@ -1,0 +1,5 @@
+firestarr
+**/log*.txt
+**/build
+**/src/cpp/version.cpp
+**/test
