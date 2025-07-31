@@ -40,7 +40,7 @@ shared_ptr<ProbabilityMap> Environment::makeProbabilityMap(
   const DurationSize start_time,
   const std::optional<topo::Perimeter>& perimeter) const
 {
-  return make_shared<sim::ProbabilityMap>(
+  return make_shared<ProbabilityMap>(
     dir_out_,
     time,
     start_time,
