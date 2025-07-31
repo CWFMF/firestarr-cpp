@@ -30,25 +30,16 @@ ProbabilityMap::ProbabilityMap(
   const std::optional<topo::Perimeter>& perimeter)
   : dir_out_(dir_out),
     all_(data::GridMap<size_t>(grid_info, 0)),
-    time_(time),
-    start_time_(start_time),
+    time(time),
+    start_time(start_time),
     perimeter_(perimeter)
 {
-}
-shared_ptr<ProbabilityMap> ProbabilityMap::copyEmpty() const
-{
-  return make_shared<ProbabilityMap>(
-    dir_out_,
-    time_,
-    start_time_,
-    all_,
-    perimeter_);
 }
 void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
 {
 #ifndef DEBUG_PROBABILITY
-  logging::check_fatal(rhs.time_ != time_, "Wrong time");
-  logging::check_fatal(rhs.start_time_ != start_time_, "Wrong start time");
+  logging::check_fatal(rhs.time != time, "Wrong time");
+  logging::check_fatal(rhs.start_time != start_time, "Wrong start time");
 #endif
   lock_guard<mutex> lock(mutex_);
   // need to lock both maps
@@ -92,7 +83,7 @@ void ProbabilityMap::show() const
   lock_guard<mutex> lock(mutex_);
   // even if we only ran the actuals we'll still have multiple scenarios
   // with different randomThreshold values
-  const auto day = static_cast<int>(time_ - floor(start_time_));
+  const auto day = static_cast<int>(time - floor(start_time));
   const auto s = getStatistics();
   logging::note(
     "Fire size at end of day %d: %0.1f ha - %0.1f ha (mean %0.1f ha, median %0.1f ha)",

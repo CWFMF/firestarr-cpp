@@ -565,26 +565,25 @@ shared_ptr<ProbabilityMap> Model::makeProbabilityMap(
     start_time,
     perimeter_);
 }
-static void show_probabilities(const map<ThresholdSize, shared_ptr<ProbabilityMap>>& probabilities)
+static void show_probabilities(const vector<shared_ptr<ProbabilityMap>>& probabilities)
 {
-  for (const auto& kv : probabilities)
+  for (const auto& p : probabilities)
   {
-    kv.second->show();
+    p->show();
   }
 }
-map<DurationSize, shared_ptr<ProbabilityMap>> make_prob_map(const Model& model,
-                                                            const vector<DurationSize>& saves,
-                                                            const DurationSize started)
+vector<shared_ptr<ProbabilityMap>> make_prob_map(const Model& model,
+                                                 const vector<DurationSize>& saves,
+                                                 const DurationSize started)
 {
-  map<DurationSize, shared_ptr<ProbabilityMap>> result{};
-  for (const auto& time : saves)
-  {
-    result.emplace(
-      time,
-      model.makeProbabilityMap(time,
-                               started));
-  }
-  return result;
+  auto it = std::views::transform(
+    saves,
+    [&started, &model](auto& time) -> shared_ptr<ProbabilityMap> {
+      return model.makeProbabilityMap(
+        time,
+        started);
+    });
+  return {it.begin(), it.end()};
 }
 map<DurationSize, util::SafeVector*> make_size_map(const vector<DurationSize>& saves)
 {
@@ -676,7 +675,7 @@ size_t runs_required(const size_t i,
     runs_for_sizes);
   return left;
 }
-DurationSize Model::saveProbabilities(map<DurationSize, shared_ptr<ProbabilityMap>>& probabilities, const Day start_day, const bool is_interim)
+DurationSize Model::saveProbabilities(vector<shared_ptr<ProbabilityMap>>& probabilities, const Day start_day, const bool is_interim)
 {
   lock_guard<mutex> lock(mutex_);
   auto final_time = numeric_limits<DurationSize>::min();
@@ -715,11 +714,10 @@ DurationSize Model::saveProbabilities(map<DurationSize, shared_ptr<ProbabilityMa
         scenarios_done_ - scenarios_last_save_,
         timeSinceLastSave().count());
     }
-    for (const auto& by_time : probabilities)
+    for (const auto& prob : probabilities)
     {
-      const auto time = by_time.first;
+      const auto time = prob->time;
       final_time = max(final_time, time);
-      const auto prob = by_time.second;
       prob->saveAll(this->start_time_, time, processing_status);
       if (processing_status == processed)
       {
@@ -750,9 +748,10 @@ DurationSize Model::saveProbabilities(map<DurationSize, shared_ptr<ProbabilityMa
   }
   return final_time;
 }
-map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(const topo::StartPoint& start_point,
-                                                                   const DurationSize start,
-                                                                   const Day start_day)
+vector<shared_ptr<ProbabilityMap>> Model::runIterations(
+  const topo::StartPoint& start_point,
+  const DurationSize start,
+  const Day start_day)
 {
   auto last_date = start_day;
   for (const auto& i : Settings::outputDateOffsets())
@@ -787,10 +786,12 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(const topo::S
   auto probabilities = make_prob_map(*this,
                                      saves,
                                      started);
-  vector<map<DurationSize, shared_ptr<ProbabilityMap>>> all_probabilities{};
-  all_probabilities.push_back(make_prob_map(*this,
-                                            saves,
-                                            started));
+  vector<vector<shared_ptr<ProbabilityMap>>> all_probabilities{};
+  all_probabilities.push_back(
+    make_prob_map(
+      *this,
+      saves,
+      started));
   logging::verbose("Setting up initial intensity map with perimeter");
   auto runs_left = 1;
   // // set up a timer to mark when simulation is out of time
@@ -865,8 +866,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(const topo::S
   // HACK: save immediately to get "unprocessed" version of grids
   saveProbabilities(all_probabilities[0], start_day, true);
   auto threads = list<std::thread>{};
-  // const auto finalize_probabilities = [&threads, &timer, &probabilities](bool do_cancel) {
-  const auto finalize_probabilities = [this, &start_day, &all_sizes, &threads, &timer, &probabilities]() {
+  const auto finalize_probabilities = [this, &start_day, &all_sizes, &threads, &timer]() {
     // assume timer is cancelling everything
     for (auto& t : threads)
     {
@@ -879,7 +879,6 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(const topo::S
     {
       timer.join();
     }
-    return probabilities;
   };
   // if using surface just run each start through in a loop here
   size_t cur_start = 0;
@@ -966,11 +965,13 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(const topo::S
     }
     auto final_sizes = iteration.finalSizes();
     ++iterations_done_;
-    for (auto& kv : all_probabilities[cur_iter])
+    auto& cur_probs = all_probabilities[cur_iter];
+    for (size_t i_time = 0; i_time < cur_probs.size(); ++i_time)
     {
-      probabilities[kv.first]->addProbabilities(*kv.second);
+      auto& cur_prob = cur_probs[i_time];
+      probabilities[i_time]->addProbabilities(*cur_prob);
       // clear so we don't double count
-      kv.second->reset();
+      cur_prob.reset();
     }
     add_statistics(&all_sizes, &means, &pct, final_sizes);
     runs_left = runs_required(iterations_done_, &all_sizes, &means, &pct, *this);
@@ -995,7 +996,9 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(const topo::S
     }
   }
   // everything should be done when this section ends
-  return finalize_probabilities();
+  finalize_probabilities();
+  // HACK: copy for return
+  return {probabilities.begin(), probabilities.end()};
 }
 int Model::runScenarios(const string dir_out,
                         const char* const weather_input,
