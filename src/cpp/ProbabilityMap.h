@@ -36,11 +36,11 @@ public:
   ProbabilityMap() = delete;
   ~ProbabilityMap();
   ProbabilityMap(const ProbabilityMap& rhs) noexcept = delete;
-  ProbabilityMap(ProbabilityMap&& rhs) noexcept = delete;
+  ProbabilityMap(ProbabilityMap&& rhs) noexcept = default;
   ProbabilityMap&
   operator=(const ProbabilityMap& rhs) noexcept = delete;
   ProbabilityMap&
-  operator=(ProbabilityMap&& rhs) noexcept = delete;
+  operator=(ProbabilityMap&& rhs) noexcept = default;
   /**
    * \brief Constructor
    * \param time Time in simulation this ProbabilityMap represents
@@ -100,12 +100,6 @@ public:
   deleteInterim();
 
 private:
-  /**
-   * \brief Create a copy of this that is empty
-   * \return New empty Probability with same range bounds and times
-   */
-  shared_ptr<ProbabilityMap>
-  copyEmpty() const;
   /**
    * \brief List of sizes of IntensityMaps that have been added
    * \return List of sizes of IntensityMaps that have been added
@@ -168,12 +162,12 @@ private:
   [[nodiscard]] FileList
   saveToProbabilityFile(
     const GridMap<size_t>& grid,
-    const string_view dir,
+    const string_view output_directory,
     const string_view base_name,
     const R divisor
   ) const
   {
-    return record_if_interim(grid.saveToProbabilityFile(dir, base_name, divisor));
+    return record_if_interim(grid.saveToProbabilityFile(output_directory, base_name, divisor));
   };
 
   /**
@@ -184,14 +178,18 @@ private:
    * \brief List of sizes for perimeters that have been added
    */
   vector<MathSize> sizes_{};
+
+public:
   /**
    * \brief Time in simulation this ProbabilityMap represents
    */
-  const DurationSize time_;
+  const DurationSize time;
   /**
    * \brief Start time of simulation
    */
-  const DurationSize start_time_;
+  const DurationSize start_time;
+
+private:
   /**
    * \brief Mutex for parallel access
    */
