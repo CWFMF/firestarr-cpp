@@ -3,10 +3,12 @@ DIR_TEST="$(dirname $(realpath "$0"))"
 DIR_FLAMEGRAPHS="${DIR_TEST}/flamegraphs"
 DIR="${DIR_TEST}/10N_50651"
 
-name_out="$1"
-if [ -z "${name_out}" ]; then
-    name_out="Flame Graph"
-fi
+REV=`git log --oneline -1 | sed "s/ .*//g"`
+MSG=`git log --oneline -1 | sed "s/[^ ]* \(.*\)/\1/g"`
+
+echo $REV
+echo $MSG
+name_out="fg_${REV}"
 
 opts=""
 intensity=""
@@ -36,7 +38,8 @@ mkdir -p "${dir_out}"
 duration=`grep "Total simulation time" ${dir_out}/firestarr.log | sed "s/.* was \(.*\) seconds/\1/"`
 
 mkdir -p "${DIR_FLAMEGRAPHS}"
-sed -i "s/Flame Graph/${name_out} - ${duration}s/" flame.html
+sed -i "s/Flame Graph/${REV} - ${duration}s/" flame.html
+sed -i "/id=\"details\"/{s/> </>${MSG}</g}" flame.html
 # just copies into directory if no argument but renames if there is one
-cp flame.html "${DIR_FLAMEGRAPHS}/${name_out}.html"
+mv flame.html "${DIR_FLAMEGRAPHS}/${name_out}.html"
 popd
