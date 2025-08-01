@@ -94,21 +94,63 @@ message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
 add_definitions(-D_POSIX_C_SOURCE=200809L)
 
-# add version to version.cpp from environment variable so C++ can compile it in
+set(FMT_TIME "%Y-%m-%dT%H:%M:%SZ")
+
 set(VERSION $ENV{VERSION})
 if ("${VERSION}" STREQUAL "")
     message(WARNING "VERSION IS NOT SET")
-    file(STRINGS ../.env CONFIG REGEX "^[ ]*[A-Za-z0-9_]+[ ]*=")
-    list(TRANSFORM CONFIG STRIP)
-    list(TRANSFORM CONFIG REPLACE "([^=]+)=[ ]*(.*)" "set(\\1 \"\\2\")\n")
-    message(${CONFIG})
-    cmake_language(EVAL CODE ${CONFIG})
-    message("Parsed config")
+    # HACK: look for version in parent folder .env
+    if(EXISTS "../.env")
+        file(STRINGS "../.env" CONFIG REGEX "^[ ]*[A-Za-z0-9_]+[ ]*=")
+        list(TRANSFORM CONFIG STRIP)
+        list(TRANSFORM CONFIG REPLACE "([^=]+)=[ ]*(.*)" "set(\\1 \"\\2\")\n")
+        message(${CONFIG})
+        cmake_language(EVAL CODE ${CONFIG})
+        message("Parsed config")
+    else()
+        # no version set
+        set(VERSION "?.?.?.?")
+    endif()
 endif()
+
+execute_process(COMMAND git rev-parse --short --verify HEAD OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HASH)
+execute_process(COMMAND git diff-index --quiet HEAD RESULT_VARIABLE GIT_CHANGED)
+set(MODIFIED_TIME "")
+
+# is anything in git changed?
+if ("${GIT_CHANGED}" STREQUAL "0")
+    # use time from git commit since nothing is different
+    execute_process(COMMAND git log -1 --pretty=%ad --date=format:${FMT_TIME} OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE MODIFIED_TIME)
+else()
+    # either changed or git didn't work
+    if (NOT "" STREQUAL "${HASH}")
+        # add + to hash if modified from committed version
+        set(HASH "${HASH}+")
+    endif()
+    # if modified from committed version then look at file timestamps
+    file(GLOB FILES_USED src/cpp/*.cpp src/cpp/*.h CMakeLists.txt)
+    list(FILTER FILES_USED EXCLUDE REGEX version*)
+    foreach(file_path IN LISTS FILES_USED)
+        file(TIMESTAMP "${file_path}" LAST_MOD_TIME "${FMT_TIME}")
+        if ("${LAST_MOD_TIME}" STRGREATER "${MODIFIED_TIME}")
+            set(MODIFIED_TIME "${LAST_MOD_TIME}")
+        endif()
+    endforeach()
+endif()
+
+string(TIMESTAMP COMPILE_TIME "${FMT_TIME}" UTC)
+
+message("HASH = ${HASH}")
+message("MODIFIED_TIME = ${MODIFIED_TIME}")
 message("VERSION = ${VERSION}")
-string(TIMESTAMP COMPILE_DATE "%Y-%m-%dT%H:%MZ" UTC)
-message("COMPILE_DATE = ${COMPILE_DATE}")
-set(VERSION_CODE "const char* VERSION = \"${VERSION}\";\nconst char* COMPILE_DATE = \"${COMPILE_DATE}\";\n")
+message("COMPILE_TIME = ${COMPILE_TIME}")
+
+if (NOT "" STREQUAL "${HASH}")
+    set(HASH "[${HASH}]")
+endif()
+set (SPECIFIC_REVISION "v${VERSION} ${HASH} <${MODIFIED_TIME}>")
+message("${SPECIFIC_REVISION}")
+set(VERSION_CODE "const char* SPECIFIC_REVISION = \"${SPECIFIC_REVISION}\";\n")
 if(EXISTS src/cpp/version.cpp)
     file(READ src/cpp/version.cpp VERSION_CODE_OLD)
 else()

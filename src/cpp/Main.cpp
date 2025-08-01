@@ -232,7 +232,7 @@ int main(const int argc, const char* const argv[])
 #ifdef _WIN32
   printf("FireSTARR windows-testing\n\n");
 #else
-  printf("FireSTARR %s <%s>\n\n", VERSION, COMPILE_DATE);
+  printf("FireSTARR %s\n\n", SPECIFIC_REVISION);
 #endif
   fs::debug::show_debug_settings();
   ARGC = argc;
