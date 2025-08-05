@@ -78,7 +78,7 @@ duration=`grep "Total simulation time" ${dir_out}/firestarr.log | sed "s/.* was 
 
 mkdir -p "${DIR_FLAMEGRAPHS}"
 sed -i "s/Flame Graph/${NUM_PADDED} - ${REV} - ${DAYS} days - ${duration}s/" flame.html
-sed -i "/id=\"details\"/{s/> </>${MSG}</g}" flame.html
+sed -i "/id=\"details\"/{s/> </>${MSG//\//\\\/}</g}" flame.html
 # just copies into directory if no argument but renames if there is one
 file_out="${DIR_FLAMEGRAPHS}/${name_out}.html"
 mv flame.html "${file_out}"
