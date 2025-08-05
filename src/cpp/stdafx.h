@@ -38,7 +38,6 @@
 #include <ranges>
 #include <set>
 #include <sstream>
-#include <stdfloat>
 #include <string_view>
 #include <string>
 #include <unordered_map>
@@ -86,7 +85,6 @@ using std::async;
 using std::atomic;
 using std::endl;
 using std::fixed;
-using std::float16_t;
 using std::function;
 using std::future;
 using std::get;
@@ -178,12 +176,12 @@ using IntensitySize = uint16_t;
 /**
  * \brief Type used for storing distances within cells
  */
-using DistanceSize = float16_t;
+using DistanceSize = _Float16;
 /**
  * \brief Type used for storing locations within cells
  */
 // FIX: results in "Invalid fuel type in fuel map"
-// using InnerSize = float16_t;
+// using InnerSize = _Float16;
 using InnerSize = double;
 /**
  * \brief Type used for probability thresholds
