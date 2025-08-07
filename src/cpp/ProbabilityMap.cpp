@@ -23,13 +23,11 @@ ProbabilityMap::~ProbabilityMap()
 }
 
 ProbabilityMap::ProbabilityMap(
-  const string& dir_out,
   const DurationSize time,
   const DurationSize start_time,
   const data::GridBase& grid_info,
   const std::optional<topo::Perimeter>& perimeter)
-  : dir_out_(dir_out),
-    all_(data::GridMap<size_t>(grid_info, 0)),
+  : all_(data::GridMap<size_t>(grid_info, 0)),
     time(time),
     start_time(start_time),
     perimeter_(perimeter)
@@ -109,10 +107,12 @@ bool ProbabilityMap::record_if_interim(const char* filename) const
   }
   return false;
 }
-void ProbabilityMap::saveSizes(const string& base_name) const
+void ProbabilityMap::saveSizes(
+  const string& output_directory,
+  const string& base_name) const
 {
   ofstream out;
-  string filename = dir_out_ + base_name + ".csv";
+  string filename = output_directory + base_name + ".csv";
   record_if_interim(filename.c_str());
   out.open(filename.c_str());
   auto sizes = getSizes();
@@ -165,9 +165,11 @@ void ProbabilityMap::deleteInterim()
     }
   }
 }
-void ProbabilityMap::saveAll(const tm& start_time,
-                             const DurationSize time,
-                             const ProcessingStatus processing_status) const
+void ProbabilityMap::saveAll(
+  const string& output_directory,
+  const tm& start_time,
+  const DurationSize time,
+  const ProcessingStatus processing_status) const
 {
   lock_guard<mutex> lock(mutex_);
   const auto is_interim = processed != processing_status;
@@ -186,19 +188,24 @@ void ProbabilityMap::saveAll(const tm& start_time,
     results.push_back(async(launch::async,
                             &ProbabilityMap::saveTotal,
                             this,
+                            output_directory,
                             fix_string("probability"),
                             processing_status));
   }
   results.push_back(async(launch::async,
                           &ProbabilityMap::saveSizes,
                           this,
+                          output_directory,
                           fix_string("sizes")));
   for (auto& result : results)
   {
     result.wait();
   }
 }
-void ProbabilityMap::saveTotal(const string& base_name, const ProcessingStatus processing_status) const
+void ProbabilityMap::saveTotal(
+  const string& output_directory,
+  const string& base_name,
+  const ProcessingStatus processing_status) const
 {
   // FIX: do this for other outputs too
   auto with_perim = all_;
@@ -215,13 +222,15 @@ void ProbabilityMap::saveTotal(const string& base_name, const ProcessingStatus p
   const auto divisor = max(static_cast<float>(1.0), static_cast<float>(numSizes()));
   saveToProbabilityFile<float>(
     with_perim,
-    dir_out_,
+    output_directory,
     base_name,
     divisor);
 }
-void ProbabilityMap::saveTotalCount(const string& base_name) const
+void ProbabilityMap::saveTotalCount(
+  const string& output_directory,
+  const string& base_name) const
 {
-  saveToProbabilityFile<uint32_t>(all_, dir_out_, base_name, 1);
+  saveToProbabilityFile<uint32_t>(all_, output_directory, base_name, 1);
 }
 void ProbabilityMap::reset()
 {

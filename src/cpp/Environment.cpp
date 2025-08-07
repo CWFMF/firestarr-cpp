@@ -21,7 +21,6 @@ Environment::~Environment()
   delete cells_;
 }
 Environment Environment::load(
-  const string& dir_out,
   const Point& point,
   const string& in_fuel,
   const string& in_elevation)
@@ -31,10 +30,10 @@ Environment Environment::load(
   auto fuel = async(launch::async, [&in_fuel, &point]() { return FuelGrid::readTiff(in_fuel, point, sim::Settings::fuelLookup()); });
   auto elevation = async(launch::async, [&in_elevation, &point]() { return ElevationGrid::readTiff(in_elevation, point); });
   logging::debug("Waiting for grids");
-  return Environment(dir_out,
-                     *unique_ptr<FuelGrid>(fuel.get()),
-                     *unique_ptr<ElevationGrid>(elevation.get()),
-                     point);
+  return Environment(
+    *unique_ptr<FuelGrid>(fuel.get()),
+    *unique_ptr<ElevationGrid>(elevation.get()),
+    point);
 }
 shared_ptr<ProbabilityMap> Environment::makeProbabilityMap(
   const DurationSize time,
@@ -42,14 +41,12 @@ shared_ptr<ProbabilityMap> Environment::makeProbabilityMap(
   const std::optional<topo::Perimeter>& perimeter) const
 {
   return make_shared<ProbabilityMap>(
-    dir_out_,
     time,
     start_time,
     *cells_,
     perimeter);
 }
 Environment Environment::loadEnvironment(
-  const string& dir_out,
   const string& path,
   const Point& point,
   const string& perimeter,
@@ -146,7 +143,7 @@ Environment Environment::loadEnvironment(
     point.longitude(),
     env_info->proj4().c_str());
   // envInfo should get deleted automatically because it uses unique_ptr
-  return env_info->load(dir_out, point);
+  return env_info->load(point);
 }
 unique_ptr<Coordinates> Environment::findCoordinates(const Point& point,
                                                      const bool flipped) const

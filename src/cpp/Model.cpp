@@ -719,7 +719,7 @@ DurationSize Model::saveProbabilities(vector<shared_ptr<ProbabilityMap>>& probab
     {
       const auto time = prob->time;
       final_time = max(final_time, time);
-      prob->saveAll(this->start_time_, time, processing_status);
+      prob->saveAll(dir_out_, this->start_time_, time, processing_status);
       if (processing_status == processed)
       {
         const auto day = static_cast<int>(round(time));
@@ -1017,11 +1017,11 @@ int Model::runScenarios(
                     start_time.tm_mday,
                     start_time.tm_hour,
                     start_time.tm_min);
-  auto env = topo::Environment::loadEnvironment(dir_out,
-                                                raster_root,
-                                                start_point,
-                                                perimeter,
-                                                start_time.tm_year);
+  auto env = topo::Environment::loadEnvironment(
+    raster_root,
+    start_point,
+    perimeter,
+    start_time.tm_year);
   logging::debug("Environment loaded");
   // don't flip for Environment because that already happened
   const auto position = env.findCoordinates(start_point, false);
