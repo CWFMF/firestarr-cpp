@@ -30,6 +30,10 @@ TIFF* GeoTiffOpen(const char* const filename, const char* const mode)
 }
 int sxprintf(char* buffer, size_t N, const char* format, va_list* args)
 {
+  if (nullptr == format)
+  {
+    return 0;
+  }
   // printf("int sxprintf(char* buffer, size_t N, const char* format, va_list* args)\n");
   auto r = vsnprintf(buffer, N, format, *args);
   if (!(r < static_cast<int>(N)))
