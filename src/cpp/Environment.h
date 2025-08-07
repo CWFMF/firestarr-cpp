@@ -73,7 +73,7 @@ public:
     const Point& point,
     const string& in_fuel,
     const string& in_elevation);
-  ~Environment();
+  ~Environment() = default;
   /**
    * \brief Determine Coordinates in the grid for the Point
    * \param point Point to find Coordinates for
@@ -111,7 +111,7 @@ public:
    */
   [[nodiscard]] constexpr const string& proj4() const
   {
-    return cells_->proj4();
+    return cells_.proj4();
   }
   /**
    * \brief Number of rows in grid
@@ -119,7 +119,7 @@ public:
    */
   [[nodiscard]] constexpr Idx rows() const
   {
-    return cells_->rows();
+    return cells_.rows();
   }
   /**
    * \brief Number of columns in grid
@@ -127,7 +127,7 @@ public:
    */
   [[nodiscard]] constexpr Idx columns() const
   {
-    return cells_->columns();
+    return cells_.columns();
   }
   /**
    * \brief Cell width and height (m)
@@ -135,7 +135,7 @@ public:
    */
   [[nodiscard]] constexpr MathSize cellSize() const
   {
-    return cells_->cellSize();
+    return cells_.cellSize();
   }
   /**
    * \brief Elevation of the origin Point
@@ -158,7 +158,7 @@ public:
     Cell
     cell(const Idx row, const Idx column) const
   {
-    return cells_->at(Location(row, column).hash());
+    return cells_.at(Location(row, column).hash());
   }
   /**
    * \brief Cell at given Location
@@ -167,7 +167,7 @@ public:
    */
   [[nodiscard]] constexpr Cell cell(const HashSize hash_value) const
   {
-    return cells_->at(hash_value);
+    return cells_.at(hash_value);
   }
   /**
    * \brief Cell at Location with given hash
@@ -176,7 +176,7 @@ public:
    */
   //  [[nodiscard]] constexpr Cell cell(const HashSize hash_value_size) const
   //  {
-  //    return cells_->at(hash_size);
+  //    return cells_.at(hash_size);
   //  }
   /**
    * \brief Cell at Location with offset of row and column from Location of Event
@@ -222,7 +222,7 @@ public:
   template <class Other>
   [[nodiscard]] unique_ptr<data::GridMap<Other>> makeMap(const Other nodata) const
   {
-    return make_unique<data::GridMap<Other>>(*cells_, nodata);
+    return make_unique<data::GridMap<Other>>(cells_, nodata);
   }
   /**
    * \brief Whether or not the Cell with the given hash can't burn
@@ -259,7 +259,7 @@ protected:
    * \param elevation Elevation raster
    * \return
    */
-  [[nodiscard]] static CellGrid* makeCells(
+  [[nodiscard]] static CellGrid makeCells(
     const FuelGrid& fuel,
     const ElevationGrid& elevation)
   {
@@ -376,7 +376,7 @@ protected:
         //      });
       }
     }
-    return new topo::CellGrid(
+    return topo::CellGrid(
       fuel.cellSize(),
       fuel.rows(),
       fuel.columns(),
@@ -426,10 +426,10 @@ protected:
    * \param elevation Elevation at origin Point
    */
   Environment(
-    CellGrid* cells,
+    CellGrid&& cells,
     const ElevationSize elevation) noexcept
-    : cells_(cells),
-      not_burnable_(initializeNotBurnable(*cells)),
+    : cells_(std::move(cells)),
+      not_burnable_(initializeNotBurnable(cells_)),
       elevation_(elevation)
   {
     //    try
@@ -462,7 +462,7 @@ private:
   /**
    * \brief Cells representing Environment
    */
-  CellGrid* cells_;
+  CellGrid cells_;
   /**
    * \brief BurnedData of cells that are not burnable
    */

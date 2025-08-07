@@ -16,10 +16,6 @@ namespace fs
 namespace topo
 {
 using util::sq;
-Environment::~Environment()
-{
-  delete cells_;
-}
 Environment Environment::load(
   const Point& point,
   const string& in_fuel,
@@ -43,7 +39,7 @@ shared_ptr<ProbabilityMap> Environment::makeProbabilityMap(
   return make_shared<ProbabilityMap>(
     time,
     start_time,
-    *cells_,
+    cells_,
     perimeter);
 }
 Environment Environment::loadEnvironment(
@@ -148,7 +144,7 @@ Environment Environment::loadEnvironment(
 unique_ptr<Coordinates> Environment::findCoordinates(const Point& point,
                                                      const bool flipped) const
 {
-  return cells_->findCoordinates(point, flipped);
+  return cells_.findCoordinates(point, flipped);
 }
 }
 }
