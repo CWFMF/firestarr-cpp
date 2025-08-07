@@ -2,11 +2,10 @@
 /* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
-#include "stdafx.h"
 #include "Util.h"
 #include "Log.h"
+// HACK: complains when importing otherwise
 #include <regex>
-#include <filesystem>
 #ifdef _WIN32
 #include <direct.h>
 #endif
