@@ -23,7 +23,7 @@ constexpr auto FMT_OUT =
 constexpr MathSize PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 // Semaphore Model::task_limiter{0};
-BurnedData*
+unique_ptr<BurnedData>
 Model::getBurnedVector() const noexcept
 {
   try
@@ -34,13 +34,13 @@ Model::getBurnedVector() const noexcept
       // check again once we have the mutex
       if (!vectors_.empty())
       {
-        const auto v = std::move(vectors_.back()).release();
+        auto v = std::move(vectors_.back());
         vectors_.pop_back();
         // this is already reset before it was given back
         return v;
       }
     }
-    auto result = environment().makeBurnedData().release();
+    auto result = environment().makeBurnedData();
     //    environment().resetBurnedData(result);
     return result;
   }
@@ -52,7 +52,7 @@ Model::getBurnedVector() const noexcept
 }
 void
 Model::releaseBurnedVector(
-  BurnedData* has_burned
+  unique_ptr<BurnedData> has_burned
 ) const noexcept
 {
   if (nullptr == has_burned)
@@ -61,9 +61,9 @@ Model::releaseBurnedVector(
   }
   try
   {
-    environment().resetBurnedData(has_burned);
+    environment().resetBurnedData(*has_burned);
     lock_guard<mutex> lock(vector_mutex_);
-    vectors_.push_back(unique_ptr<BurnedData>(has_burned));
+    vectors_.push_back(std::move(has_burned));
   }
   catch (const std::exception& ex)
   {

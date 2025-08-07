@@ -412,14 +412,14 @@ public:
    * \brief Acquire a BurnedData that has already burnt cells set
    * \return A BurnedData that has already burnt cells set
    */
-  [[nodiscard]] BurnedData*
+  [[nodiscard]] unique_ptr<BurnedData>
   getBurnedVector() const noexcept;
   /**
    * \brief Return a BurnedData so it can be used in the future
    * \param has_burned BurnedData to return to pool
    */
   void
-  releaseBurnedVector(BurnedData* has_burned) const noexcept;
+  releaseBurnedVector(unique_ptr<BurnedData> has_burned) const noexcept;
   /**
    * \brief Whether or not a Cell can burn
    * \param location Cell
