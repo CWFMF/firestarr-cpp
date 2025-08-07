@@ -73,11 +73,10 @@ EnvironmentInfo::loadInfo(
 }
 Environment
 EnvironmentInfo::load(
-  const string& dir_out,
   const Point& point
 ) const
 {
-  return Environment::load(dir_out, point, in_fuel_, in_elevation_);
+  return Environment::load(point, in_fuel_, in_elevation_);
 }
 unique_ptr<Coordinates>
 EnvironmentInfo::findCoordinates(

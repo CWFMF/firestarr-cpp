@@ -42,7 +42,6 @@ public:
   operator=(ProbabilityMap&& rhs) noexcept = default;
   /**
    * \brief Constructor
-   * \param dir_out Directory to save outputs to
    * \param time Time in simulation this ProbabilityMap represents
    * \param start_time Start time of simulation
    * \param min_value Lower bound of 'low' intensity range
@@ -52,7 +51,6 @@ public:
    * \param grid_info GridBase to use for extent of this
    */
   ProbabilityMap(
-    const string& dir_out,
     DurationSize time,
     DurationSize start_time,
     const data::GridBase& grid_info,
@@ -83,7 +81,12 @@ public:
    * \param processing_status Stage in processing for simulations
    */
   void
-  saveAll(const tm& start_time, DurationSize time, const ProcessingStatus processing_status) const;
+  saveAll(
+    const string& output_directory,
+    const tm& start_time,
+    DurationSize time,
+    const ProcessingStatus processing_status
+  ) const;
   /**
    * \brief Clear maps and return to initial state
    */
@@ -118,20 +121,24 @@ private:
    * \param base_name Base name of file to save into
    */
   void
-  saveSizes(const string& base_name) const;
+  saveSizes(const string& output_directory, const string& base_name) const;
   /**
    * \brief Save map representing all intensities
    * \param base_name Base file name to save to
    * \param processing_status Stage in processing for simulations
    */
   void
-  saveTotal(const string& base_name, const ProcessingStatus processing_status) const;
+  saveTotal(
+    const string& output_directory,
+    const string& base_name,
+    const ProcessingStatus processing_status
+  ) const;
   /**
    * \brief Save map representing all intensities occurrence
    * \param base_name Base file name to save to
    */
   void
-  saveTotalCount(const string& base_name) const;
+  saveTotalCount(const string& output_directory, const string& base_name) const;
   /**
    * \brief Make note of any interim files for later deletion
    */
@@ -145,19 +152,15 @@ private:
   string
   saveToProbabilityFile(
     const data::GridMap<size_t>& grid,
-    const string& dir,
+    const string& output_directory,
     const string& base_name,
     const R divisor
   ) const
   {
-    const string filename = grid.saveToProbabilityFile(dir, base_name, divisor);
+    const string filename = grid.saveToProbabilityFile(output_directory, base_name, divisor);
     record_if_interim(filename.c_str());
     return filename;
   };
-  /**
-   * \brief Directory to write outputs to
-   */
-  const string dir_out_;
   /**
    * \brief Map representing all intensities
    */

@@ -22,14 +22,12 @@ ProbabilityMap::~ProbabilityMap()
 }
 
 ProbabilityMap::ProbabilityMap(
-  const string& dir_out,
   const DurationSize time,
   const DurationSize start_time,
   const data::GridBase& grid_info,
   const std::optional<topo::Perimeter>& perimeter
 )
-  : dir_out_(dir_out),
-    all_(data::GridMap<size_t>(grid_info, 0)),
+  : all_(data::GridMap<size_t>(grid_info, 0)),
     time(time),
     start_time(start_time),
     perimeter_(perimeter)
@@ -124,11 +122,12 @@ ProbabilityMap::record_if_interim(
 }
 void
 ProbabilityMap::saveSizes(
+  const string& output_directory,
   const string& base_name
 ) const
 {
   ofstream out;
-  string filename = dir_out_ + base_name + ".csv";
+  string filename = output_directory + base_name + ".csv";
   record_if_interim(filename.c_str());
   out.open(filename.c_str());
   auto sizes = getSizes();
@@ -182,6 +181,7 @@ ProbabilityMap::deleteInterim()
 }
 void
 ProbabilityMap::saveAll(
+  const string& output_directory,
   const tm& start_time,
   const DurationSize time,
   const ProcessingStatus processing_status
@@ -205,11 +205,14 @@ ProbabilityMap::saveAll(
       launch::async,
       &ProbabilityMap::saveTotal,
       this,
+      output_directory,
       fix_string("probability"),
       processing_status
     ));
   }
-  results.push_back(async(launch::async, &ProbabilityMap::saveSizes, this, fix_string("sizes")));
+  results.push_back(
+    async(launch::async, &ProbabilityMap::saveSizes, this, output_directory, fix_string("sizes"))
+  );
   for (auto& result : results)
   {
     result.wait();
@@ -217,6 +220,7 @@ ProbabilityMap::saveAll(
 }
 void
 ProbabilityMap::saveTotal(
+  const string& output_directory,
   const string& base_name,
   const ProcessingStatus processing_status
 ) const
@@ -234,14 +238,15 @@ ProbabilityMap::saveTotal(
   }
   // HACK: numSize() is going to be 0 if nothing saved yet
   const auto divisor = max(static_cast<float>(1.0), static_cast<float>(numSizes()));
-  saveToProbabilityFile<float>(with_perim, dir_out_, base_name, divisor);
+  saveToProbabilityFile<float>(with_perim, output_directory, base_name, divisor);
 }
 void
 ProbabilityMap::saveTotalCount(
+  const string& output_directory,
   const string& base_name
 ) const
 {
-  saveToProbabilityFile<uint32_t>(all_, dir_out_, base_name, 1);
+  saveToProbabilityFile<uint32_t>(all_, output_directory, base_name, 1);
 }
 void
 ProbabilityMap::reset()

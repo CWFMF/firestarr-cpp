@@ -789,7 +789,7 @@ Model::saveProbabilities(
     {
       const auto time = prob->time;
       final_time = max(final_time, time);
-      prob->saveAll(this->start_time_, time, processing_status);
+      prob->saveAll(dir_out_, this->start_time_, time, processing_status);
       if (processing_status == processed)
       {
         const auto day = static_cast<int>(round(time));
@@ -1107,7 +1107,6 @@ Model::runScenarios(
     start_time.tm_min
   );
   auto env = topo::Environment::loadEnvironment(
-    dir_out,
     raster_root,
     start_point,
     perimeter,

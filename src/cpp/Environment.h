@@ -57,7 +57,6 @@ class Environment
 public:
   /**
    * \brief Load from rasters in folder that have same projection as Perimeter
-   * \param dir_out Folder to save outputs to
    * \param path Folder to read rasters from
    * \param point Origin point
    * \param perimeter Perimeter to use projection from
@@ -65,13 +64,7 @@ public:
    * \return Environment
    */
   [[nodiscard]] static Environment
-  loadEnvironment(
-    const string& dir_out,
-    const string& path,
-    const Point& point,
-    const string& perimeter,
-    int year
-  );
+  loadEnvironment(const string& path, const Point& point, const string& perimeter, int year);
   /**
    * \brief Load from rasters
    * \param point Origin point
@@ -80,12 +73,7 @@ public:
    * \return Environment
    */
   [[nodiscard]] static Environment
-  load(
-    const string& dir_out,
-    const Point& point,
-    const string& in_fuel,
-    const string& in_elevation
-  );
+  load(const Point& point, const string& in_fuel, const string& in_elevation);
   ~Environment();
   /**
    * \brief Determine Coordinates in the grid for the Point
@@ -479,12 +467,10 @@ protected:
    * \param elevation Elevation at origin Point
    */
   Environment(
-    const string& dir_out,
     CellGrid* cells,
     const ElevationSize elevation
   ) noexcept
-    : dir_out_(dir_out),
-      cells_(cells),
+    : cells_(cells),
       not_burnable_(initializeNotBurnable(*cells)),
       elevation_(elevation)
   {
@@ -503,13 +489,11 @@ protected:
    * \param elevation Elevation raster
    */
   Environment(
-    const string& dir_out,
     const FuelGrid& fuel,
     const ElevationGrid& elevation,
     const Point& point
   )
     : Environment(
-        dir_out,
         makeCells(fuel, elevation),
         elevation.at(Location(*elevation.findCoordinates(point, false).get()).hash())
       )
@@ -518,10 +502,6 @@ protected:
     logging::note("Start elevation is %d", elevation_);
   }
 private:
-#ifdef CPP23
-  const
-#endif
-    string dir_out_;
   /**
    * \brief Cells representing Environment
    */
