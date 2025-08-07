@@ -75,9 +75,9 @@ public:
   }
   ~ConstantGrid() = default;
   ConstantGrid(const ConstantGrid& rhs) noexcept = delete;
-  ConstantGrid(ConstantGrid&& rhs) noexcept = delete;
+  ConstantGrid(ConstantGrid&& rhs) noexcept = default;
   ConstantGrid& operator=(const ConstantGrid& rhs) noexcept = delete;
-  ConstantGrid& operator=(ConstantGrid&& rhs) noexcept = delete;
+  ConstantGrid& operator=(ConstantGrid&& rhs) noexcept = default;
   /**
    * \brief Constructor
    * \param cell_size Cell width and height (m)
