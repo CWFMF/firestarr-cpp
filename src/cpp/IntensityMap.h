@@ -138,17 +138,17 @@ private:
    * \brief Map of intensity that cells have burned  at
    */
   unique_ptr<data::GridMap<IntensitySize>> intensity_max_;
+public:
+  unique_ptr<BurnedData> unburnable_;
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
-public:
-  BurnedData* unburnable_;
   map<HashSize, DurationSize> arrival_;
 private:
   /**
    * \brief bitset denoting cells that can no longer burn
    */
-  BurnedData* is_burned_;
+  unique_ptr<BurnedData> is_burned_;
 };
 }
 }
