@@ -770,8 +770,8 @@ Model::saveProbabilities(
       logging::info(
         "Saving%s results for (%ld of %ld) required scenarios%s",
         is_interim ? " interim" : "",
-        scenarios_required_done_,
-        scenarios_per_iteration_,
+        +scenarios_required_done_,
+        +scenarios_per_iteration_,
         is_being_cancelled_ ? " because cancelling" : ""
       );
     }
@@ -780,8 +780,8 @@ Model::saveProbabilities(
       logging::info(
         "Saving%s results for %ld scenarios (%ld new in %lds since last save)",
         is_interim ? " interim" : "",
-        scenarios_done_,
-        scenarios_done_ - scenarios_last_save_,
+        +scenarios_done_,
+        +scenarios_done_ - scenarios_last_save_,
         timeSinceLastSave().count()
       );
     }
@@ -805,7 +805,7 @@ Model::saveProbabilities(
     logging::debug("Done saving proabability grids");
     interim_changed_ = false;
     should_output_interim_ = false;
-    scenarios_last_save_ = scenarios_done_;
+    scenarios_last_save_ = +scenarios_done_;
     if (!is_interim)
     {
       ProbabilityMap::deleteInterim();
@@ -996,7 +996,7 @@ Model::runIterations(
     ++scenarios_done_;
     logging::extensive(
       "Done %ld scenarios in iteration %ld which %s required",
-      scenarios_done_,
+      +scenarios_done_,
       i,
       (is_required ? "is" : "is not")
     );
@@ -1004,7 +1004,7 @@ Model::runIterations(
     {
       logging::verbose(
         "Done %ld scenarios in iteration %ld which %s required",
-        scenarios_done_,
+        +scenarios_done_,
         i,
         (is_required ? "is" : "is not")
       );
@@ -1012,8 +1012,8 @@ Model::runIterations(
     }
     logging::debug(
       "Have (%ld of %ld) scenarios and %s being cancelled",
-      scenarios_required_done_,
-      scenarios_per_iteration_,
+      +scenarios_required_done_,
+      +scenarios_per_iteration_,
       (is_being_cancelled_ ? "is" : "not")
     );
     // no point in saving interim if final is done

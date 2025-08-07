@@ -568,11 +568,11 @@ private:
   /**
    * \brief How many scenarios have been completed
    */
-  size_t scenarios_done_ = 0;
+  atomic<size_t> scenarios_done_ = 0;
   /**
    * \brief How many scenarios out of first iteration have been completed
    */
-  size_t scenarios_required_done_ = 0;
+  atomic<size_t> scenarios_required_done_ = 0;
   /**
    * \brief Scenarios completed at time of last interim save
    */
