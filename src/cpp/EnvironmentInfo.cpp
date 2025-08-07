@@ -49,9 +49,9 @@ unique_ptr<EnvironmentInfo> EnvironmentInfo::loadInfo(const string& in_fuel,
                                      elevation_async.get());
   return unique_ptr<EnvironmentInfo>(e);
 }
-Environment EnvironmentInfo::load(const string& dir_out, const Point& point) const
+Environment EnvironmentInfo::load(const Point& point) const
 {
-  return Environment::load(dir_out, point, in_fuel_, in_elevation_);
+  return Environment::load(point, in_fuel_, in_elevation_);
 }
 unique_ptr<Coordinates> EnvironmentInfo::findCoordinates(
   const Point& point,
