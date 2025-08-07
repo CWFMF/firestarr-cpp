@@ -702,8 +702,8 @@ DurationSize Model::saveProbabilities(vector<shared_ptr<ProbabilityMap>>& probab
       logging::info(
         "Saving%s results for (%ld of %ld) required scenarios%s",
         is_interim ? " interim" : "",
-        scenarios_required_done_,
-        scenarios_per_iteration_,
+        +scenarios_required_done_,
+        +scenarios_per_iteration_,
         is_being_cancelled_ ? " because cancelling" : "");
     }
     else
@@ -711,8 +711,8 @@ DurationSize Model::saveProbabilities(vector<shared_ptr<ProbabilityMap>>& probab
       logging::info(
         "Saving%s results for %ld scenarios (%ld new in %lds since last save)",
         is_interim ? " interim" : "",
-        scenarios_done_,
-        scenarios_done_ - scenarios_last_save_,
+        +scenarios_done_,
+        +scenarios_done_ - scenarios_last_save_,
         timeSinceLastSave().count());
     }
     for (const auto& prob : probabilities)
@@ -733,7 +733,7 @@ DurationSize Model::saveProbabilities(vector<shared_ptr<ProbabilityMap>>& probab
     logging::debug("Done saving proabability grids");
     interim_changed_ = false;
     should_output_interim_ = false;
-    scenarios_last_save_ = scenarios_done_;
+    scenarios_last_save_ = +scenarios_done_;
     if (!is_interim)
     {
       ProbabilityMap::deleteInterim();
@@ -914,15 +914,15 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
   auto run_scenario = [this, &all_probabilities, &all_iterations, &start_day](Scenario* s, size_t i, bool is_required) {
     auto result = s->run(&all_probabilities[i]);
     ++scenarios_done_;
-    logging::extensive("Done %ld scenarios in iteration %ld which %s required", scenarios_done_, i, (is_required ? "is" : "is not"));
+    logging::extensive("Done %ld scenarios in iteration %ld which %s required", +scenarios_done_, i, (is_required ? "is" : "is not"));
     if (is_required)
     {
-      logging::verbose("Done %ld scenarios in iteration %ld which %s required", scenarios_done_, i, (is_required ? "is" : "is not"));
+      logging::verbose("Done %ld scenarios in iteration %ld which %s required", +scenarios_done_, i, (is_required ? "is" : "is not"));
       ++scenarios_required_done_;
     }
     logging::debug("Have (%ld of %ld) scenarios and %s being cancelled",
-                   scenarios_required_done_,
-                   scenarios_per_iteration_,
+                   +scenarios_required_done_,
+                   +scenarios_per_iteration_,
                    (is_being_cancelled_ ? "is" : "not"));
     // no point in saving interim if final is done
     if (!(is_being_cancelled_
