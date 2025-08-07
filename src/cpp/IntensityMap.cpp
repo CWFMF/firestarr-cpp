@@ -78,15 +78,54 @@ IntensityMap::IntensityMap(const Model& model) noexcept
 {
 }
 
-IntensityMap::IntensityMap(const IntensityMap& rhs)
-  // : IntensityMap(rhs.model_, nullptr)
-  : IntensityMap(rhs.model_)
-{
-  *intensity_max_ = *rhs.intensity_max_;
-  arrival_ = rhs.arrival_;
-  *unburnable_ = *rhs.unburnable_;
-  *is_burned_ = *rhs.is_burned_;
-}
+// IntensityMap::IntensityMap(const IntensityMap& rhs)
+//   : IntensityMap(rhs.model_)
+// {
+//   *intensity_max_ = *rhs.intensity_max_;
+//   *unburnable_ = *rhs.unburnable_;
+//   arrival_ = rhs.arrival_;
+//   *is_burned_ = *rhs.is_burned_;
+// }
+
+// IntensityMap::IntensityMap(IntensityMap&& rhs)
+//   : model_(rhs.model_),
+//     intensity_max_(std::move(rhs.intensity_max_)),
+//     unburnable_(std::move(rhs.unburnable_)),
+//     arrival_(std::move(rhs.arrival_)),
+//     is_burned_(std::move(rhs.is_burned_))
+// {
+// }
+
+// IntensityMap& IntensityMap::operator=(const IntensityMap& rhs)
+// {
+//   // HACK: there should be no way we have multiple Models
+//   logging::check_equal(
+//     &model_,
+//     &rhs.model_,
+//     "model");
+//   *intensity_max_ = *rhs.intensity_max_;
+//   *unburnable_ = *rhs.unburnable_;
+//   arrival_ = rhs.arrival_;
+//   *is_burned_ = *rhs.is_burned_;
+//   return *this;
+// }
+
+// IntensityMap& IntensityMap::operator=(IntensityMap&& rhs) noexcept
+// {
+//   // HACK: there should be no way we have multiple Models
+//   logging::check_equal(
+//     &model_,
+//     &rhs.model_,
+//     "model");
+//   CacheIntensitySize.release_map(std::move(intensity_max_));
+//   model_.releaseBurnedVector(std::move(is_burned_));
+//   model_.releaseBurnedVector(std::move(unburnable_));
+//   intensity_max_ = std::move(rhs.intensity_max_);
+//   arrival_ = std::move(rhs.arrival_);
+//   unburnable_ = std::move(rhs.unburnable_);
+//   is_burned_ = std::move(rhs.is_burned_);
+//   return *this;
+// }
 
 // IntensityMap::IntensityMap(IntensityMap&& rhs)
 //   : IntensityMap(rhs.model_)
