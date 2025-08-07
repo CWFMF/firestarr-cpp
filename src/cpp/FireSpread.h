@@ -39,7 +39,7 @@ public:
              DurationSize time,
              const topo::SpreadKey& key,
              int nd,
-             FireWeather::wx_type weather);
+             const wx::FwiWeather* weather);
   /**
    * \brief Calculate fire spread for time and place
    * \param scenario Scenario this is spreading in
@@ -52,8 +52,8 @@ public:
              DurationSize time,
              const topo::SpreadKey& key,
              int nd,
-             FireWeather::wx_type weather,
-             FireWeather::wx_type weather_daily);
+             const wx::FwiWeather* weather,
+             const wx::FwiWeather* weather_daily);
   CONSTEXPR SpreadInfo(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo(const SpreadInfo& rhs) noexcept = default;
   CONSTEXPR SpreadInfo& operator=(SpreadInfo&& rhs) noexcept = default;
@@ -276,7 +276,7 @@ public:
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
-    FireWeather::wx_type weather);
+    const wx::FwiWeather* weather);
   SpreadInfo(
     const tm& start_date,
     const MathSize latitude,
@@ -285,7 +285,7 @@ public:
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
-    FireWeather::wx_type weather);
+    const wx::FwiWeather* weather);
   MathSize crownFractionBurned() const
   {
     return cfb_;
@@ -317,20 +317,20 @@ private:
              const AspectSize aspect,
              const char* fuel_name,
              int nd,
-             FireWeather::wx_type weather);
+             const wx::FwiWeather* weather);
   SpreadInfo(DurationSize time,
              MathSize min_ros,
              MathSize cell_size,
              const topo::SpreadKey& key,
              int nd,
-             FireWeather::wx_type weather);
+             const wx::FwiWeather* weather);
   SpreadInfo(DurationSize time,
              MathSize min_ros,
              MathSize cell_size,
              const topo::SpreadKey& key,
              int nd,
-             FireWeather::wx_type weather,
-             FireWeather::wx_type weather_daily);
+             const wx::FwiWeather* weather,
+             const wx::FwiWeather* weather_daily);
   /**
    * Do initial spread calculations
    * \return Initial head ros calculation (-1 for none)
