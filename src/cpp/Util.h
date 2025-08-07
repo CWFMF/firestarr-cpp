@@ -5,10 +5,6 @@
 
 #pragma once
 #include "stdafx.h"
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 #ifndef TIFFTAG_GDAL_NODATA
 #define TIFFTAG_GDAL_NODATA 42113
