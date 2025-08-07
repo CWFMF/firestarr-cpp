@@ -40,7 +40,7 @@ public:
   // IntensityMap(const Model& model, topo::Perimeter* perimeter) noexcept;
   explicit IntensityMap(const Model& model) noexcept;
   ~IntensityMap() noexcept;
-  IntensityMap(const IntensityMap& rhs);
+  IntensityMap(const IntensityMap& rhs) = delete;
   IntensityMap(IntensityMap&& rhs) = delete;
   // IntensityMap(IntensityMap&& rhs);
   IntensityMap& operator=(const IntensityMap& rhs) = delete;
