@@ -14,16 +14,6 @@ namespace fs::sim
 constexpr InnerSize DIST_22_5 = static_cast<InnerSize>(0.2071067811865475244008443621048490392848359376884740365883398689);
 constexpr InnerSize P_0_5 = static_cast<InnerSize>(0.5) + DIST_22_5;
 constexpr InnerSize M_0_5 = static_cast<InnerSize>(0.5) - DIST_22_5;
-//   static constexpr auto INVALID_DISTANCE = std::numeric_limits<InnerSize>::max();
-// not sure what's going on with this and wondering if it doesn't keep number exactly
-// shouldn't be any way to be further than twice the entire width of the area
-static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
-static const XYPos INVALID_XY_POSITION{};
-static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, INVALID_XY_POSITION};
-static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.x();
-static const InnerPos INVALID_INNER_POSITION{};
-static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
-static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
 #define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
 static constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
@@ -63,22 +53,14 @@ constexpr inline auto dist_line(const auto& a, const auto& b)
 {
   return ((a - b) * (a - b));
 }
-Pts::Pts()
-  : cell_x_y_(INVALID_INDEX, INVALID_INDEX)
+static constexpr InnerPos to_inner(const XYSize x, const XYSize y)
 {
-  // // actually only need to set first value to denote empty
-  // distances()[0] = INVALID_DIRECTION;
-  std::fill_n(
-    &(distances()[0]),
-    NUM_DIRECTIONS,
-    INVALID_DISTANCE);
-  std::fill_n(
-    &(points()[0]),
-    NUM_DIRECTIONS,
-    INVALID_INNER_POSITION);
+  XYSize integral;
+  const auto x0 = static_cast<DistanceSize>(modf(x, &integral));
+  const auto y0 = static_cast<DistanceSize>(modf(y, &integral));
+  return {x0, y0};
 }
 Pts::Pts(const bool is_unburnable, const XYPos p)
-  : Pts()
 {
   cell_x_y_ =
     {static_cast<Idx>(p.x()),
@@ -87,58 +69,38 @@ Pts::Pts(const bool is_unburnable, const XYPos p)
   // if (!(*intensity_map.unburnable_)[p.hash()])
   if (!is_unburnable)
   {
-    distances()[0] = INVALID_DISTANCE - 1;
-  }
-  insert(p);
-  // if (!intensity_map.unburnable_[p.hash()])
-  // {
-  //   XYSize integral;
-  //   // need to calculate distances, but we know everything is the same point
-  //   const auto x0 = static_cast<DistanceSize>(modf(p.x(), &integral));
-  //   const auto y0 = static_cast<DistanceSize>(modf(p.y(), &integral));
-  //   const InnerPos p0{x0, y0};
-  //   auto& pts = points();
-  //   auto& dists = distances();
-  //   std::fill_n(&(pts[0]), NUM_DIRECTIONS, p0);
-  //   for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
-  //   {
-  //     const auto& p1 = POINTS_OUTER[i];
-  //     const auto& x1 = p1.first;
-  //     const auto& y1 = p1.second;
-  //     dists[i] = dist_line(x0, x1) + dist_line(y0, y1);
-  //   }
-  // }
-  // // else
-  // // {
-  // //   // actually only need to set first value
-  // //   distances()[0] = INVALID_DIRECTION;
-  // //   // std::fill_n(
-  // //   //   &(distances()[0]),
-  // //   //   NUM_DIRECTIONS,
-  // //   //   INVALID_DIRECTION);
-  // // }
-}
-Pts& Pts::insert(const XYSize x,
-                 const XYSize y)
-{
-  if (canBurn())
-  {
-    XYSize integral;
-    // need to calculate distances, but we know everything is the same point
-    const auto x0 = static_cast<DistanceSize>(modf(x, &integral));
-    const auto y0 = static_cast<DistanceSize>(modf(y, &integral));
-    const InnerPos p0{x0, y0};
-    // std::fill_n(&(points()[0]), NUM_DIRECTIONS, p0);
-    auto& dists = distances();
-    auto& pts = points();
+    const auto p0 = to_inner(p.x(), p.y());
+    const auto& x0 = p0.x();
+    const auto& y0 = p0.y();
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
       const auto& p1 = POINTS_OUTER[i];
       const auto& x1 = p1.first;
       const auto& y1 = p1.second;
       const auto d = dist_line(x0, x1) + dist_line(y0, y1);
-      auto& p_d = dists[i];
-      auto& p_p = pts[i];
+      auto& p_d = distances_[i];
+      auto& p_p = points_[i];
+      p_p = p0;
+      p_d = (d < p_d) ? d : p_d;
+    }
+  }
+}
+Pts& Pts::insert(const XYSize x,
+                 const XYSize y)
+{
+  if (canBurn())
+  {
+    // need to calculate distances, but we know everything is the same point
+    const InnerPos p0 = to_inner(x, y);
+    // std::fill_n(&(points()[0]), NUM_DIRECTIONS, p0);
+    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+    {
+      const auto& p1 = POINTS_OUTER[i];
+      const auto& x1 = p1.first;
+      const auto& y1 = p1.second;
+      const auto d = dist_line(p0.x(), x1) + dist_line(p0.y(), y1);
+      auto& p_d = distances_[i];
+      auto& p_p = points_[i];
       p_p = (d < p_d) ? p0 : p_p;
       p_d = (d < p_d) ? d : p_d;
     }
