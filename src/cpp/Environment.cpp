@@ -20,10 +20,11 @@ Environment::~Environment()
 {
   delete cells_;
 }
-Environment Environment::load(const string dir_out,
-                              const Point& point,
-                              const string& in_fuel,
-                              const string& in_elevation)
+Environment Environment::load(
+  const string& dir_out,
+  const Point& point,
+  const string& in_fuel,
+  const string& in_elevation)
 {
   logging::note("Fuel raster is %s", in_fuel.c_str());
   logging::debug("Loading grids async");
@@ -47,11 +48,12 @@ shared_ptr<ProbabilityMap> Environment::makeProbabilityMap(
     *cells_,
     perimeter);
 }
-Environment Environment::loadEnvironment(const string dir_out,
-                                         const string& path,
-                                         const Point& point,
-                                         const string& perimeter,
-                                         const int year)
+Environment Environment::loadEnvironment(
+  const string& dir_out,
+  const string& path,
+  const Point& point,
+  const string& perimeter,
+  const int year)
 {
   logging::note("Using ignition point (%f, %f)", point.latitude(), point.longitude());
   logging::info("Running using inputs directory '%s'", path.c_str());
