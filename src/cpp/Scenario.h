@@ -243,11 +243,11 @@ public:
    * \param time Time to get weather for (decimal days)
    * \return FwiWeather for given time
    */
-  [[nodiscard]] FireWeather::wx_type weather(const DurationSize time) const
+  [[nodiscard]] const wx::FwiWeather* weather(const DurationSize time) const
   {
     return weather_->at(time);
   }
-  [[nodiscard]] FireWeather::wx_type weather_daily(const DurationSize time) const
+  [[nodiscard]] const wx::FwiWeather* weather_daily(const DurationSize time) const
   {
     return weather_daily_->at(time);
   }
