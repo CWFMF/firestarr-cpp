@@ -249,11 +249,11 @@ public:
    * \brief Reset with known non-fuel cells
    * \param data BurnedData to reset
    */
-  void resetBurnedData(sim::BurnedData* data) const noexcept
+  void resetBurnedData(sim::BurnedData& data) const noexcept
   {
     // setting to {} probably makes a bitset of the same size on the stack?
     // *data = {};
-    *data = *not_burnable_;
+    data = *not_burnable_;
   }
 protected:
   /**
@@ -394,12 +394,12 @@ protected:
   /**
    * \brief Creates a map of areas that are not burnable either because of fuel or the initial perimeter.
    */
-  shared_ptr<sim::BurnedData> initializeNotBurnable(const CellGrid& cells) const
+  unique_ptr<sim::BurnedData> initializeNotBurnable(const CellGrid& cells) const
   {
     // shared_ptr<sim::BurnedData> result{};
     //     std::fill(not_burnable_.begin(), not_burnable_.end(), false);
     //  make a template we can copy to reset things
-    auto result = make_shared<sim::BurnedData>();
+    auto result = make_unique<sim::BurnedData>();
     for (Idx r = 0; r < rows(); ++r)
     {
       for (Idx c = 0; c < columns(); ++c)
@@ -474,7 +474,7 @@ private:
   /**
    * \brief BurnedData of cells that are not burnable
    */
-  shared_ptr<const sim::BurnedData> not_burnable_;
+  unique_ptr<const sim::BurnedData> not_burnable_;
   /**
    * \brief Elevation at StartPoint
    */
