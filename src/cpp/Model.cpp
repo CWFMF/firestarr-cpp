@@ -71,9 +71,10 @@ bool Model::isUnburnable(const HashSize hash_value) const
 {
   return environment().isUnburnable(hash_value);
 }
-Model::Model(const string dir_out,
-             const topo::StartPoint& start_point,
-             topo::Environment* env)
+Model::Model(
+  const string& dir_out,
+  const topo::StartPoint& start_point,
+  topo::Environment* env)
   : dir_out_(dir_out),
     start_time_(tm()),
     running_since_(Clock::now()),
@@ -1000,14 +1001,15 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
   // HACK: copy for return
   return {probabilities.begin(), probabilities.end()};
 }
-int Model::runScenarios(const string dir_out,
-                        const char* const weather_input,
-                        const wx::FwiWeather& yesterday,
-                        const char* const raster_root,
-                        const topo::StartPoint& start_point,
-                        const tm& start_time,
-                        const string& perimeter,
-                        const size_t size)
+int Model::runScenarios(
+  const string& dir_out,
+  const char* const weather_input,
+  const wx::FwiWeather& yesterday,
+  const char* const raster_root,
+  const topo::StartPoint& start_point,
+  const tm& start_time,
+  const string& perimeter,
+  const size_t size)
 {
   fs::logging::note("Simulation start time at start of runScenarios() is %d-%02d-%02d %02d:%02d",
                     start_time.tm_year + 1900,

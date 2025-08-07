@@ -140,14 +140,15 @@ public:
    * \param size Size to start fire at if no Perimeter
    * \return
    */
-  [[nodiscard]] static int runScenarios(const string dir_out,
-                                        const char* weather_input,
-                                        const wx::FwiWeather& yesterday,
-                                        const char* raster_root,
-                                        const topo::StartPoint& start_point,
-                                        const tm& start_time,
-                                        const string& perimeter,
-                                        size_t size);
+  [[nodiscard]] static int runScenarios(
+    const string& dir_out,
+    const char* weather_input,
+    const wx::FwiWeather& yesterday,
+    const char* raster_root,
+    const topo::StartPoint& start_point,
+    const tm& start_time,
+    const string& perimeter,
+    size_t size);
   /**
    * \brief Cell at the given row and column
    * \param row Row
@@ -319,9 +320,10 @@ public:
    * \param start_point StartPoint to use for sunrise/sunset times
    * \param env Environment to run simulations in
    */
-  Model(const string dir_out,
-        const topo::StartPoint& start_point,
-        topo::Environment* env);
+  Model(
+    const string& dir_out,
+    const topo::StartPoint& start_point,
+    topo::Environment* env);
   Model(Model&& rhs) noexcept = delete;
   Model(const Model& rhs) = delete;
   Model& operator=(Model&& rhs) noexcept = delete;

@@ -49,7 +49,7 @@ public:
    * \param grid_info GridBase to use for extent of this
    */
   ProbabilityMap(
-    const string dir_out,
+    const string& dir_out,
     DurationSize time,
     DurationSize start_time,
     const data::GridBase& grid_info,
