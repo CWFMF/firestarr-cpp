@@ -118,7 +118,7 @@ bool Pts::empty() const
   return !canBurn();
 }
 
-Pts& PtMap::insert(const bool is_unburnable, const XYPos p0)
+void PtMap::insert(const bool is_unburnable, const XYPos p0)
 {
   auto p = map_.try_emplace(
     p0.hash(),
@@ -129,7 +129,6 @@ Pts& PtMap::insert(const bool is_unburnable, const XYPos p0)
   {
     pts.insert(p0);
   }
-  return pts;
 }
 set<XYPos> Pts::unique() const noexcept
 {
