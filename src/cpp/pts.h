@@ -178,16 +178,16 @@ public:
   operator=(const PtMap& rhs) noexcept = default;
   PtMap&
   operator=(PtMap&& rhs) noexcept = default;
-  Pts&
+  void
   insert(const bool is_unburnable, const XYPos p0);
-  Pts&
+  void
   insert(
     const bool is_unburnable,
     const XYSize x,
     const XYSize y
   )
   {
-    return insert(is_unburnable, XYPos{x, y});
+    insert(is_unburnable, XYPos{x, y});
   }
   set<XYPos>
   unique(const HashSize hash_value) const noexcept;
