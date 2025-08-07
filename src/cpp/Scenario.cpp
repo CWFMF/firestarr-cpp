@@ -363,7 +363,7 @@ Scenario::evaluate(
     case Event::NEW_FIRE:
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
-      points_new_.insert(*intensity_new_, p0);
+      points_new_.insert(intensity_new_->unburnable_.at(p.hash()), p0);
       if (is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -618,7 +618,7 @@ Scenario::run(
       const XYPos p0{x, y};
       // log_extensive("Adding point (%d, %d)",
       log_extensive("Adding point (%f, %f)", x, y);
-      points_new_.insert(*intensity_new_, p0);
+      points_new_.insert(intensity_new_->unburnable_.at(p0.hash()), p0);
     }
     addEvent(Event::makeFireSpread(start_time_));
   }
@@ -726,7 +726,7 @@ apply_offsets_spreadkey(
           const auto new_x = x_o + pt.x();
           const auto new_y = y_o + pt.y();
           const XYPos p0{new_x, new_y};
-          points_new.insert(*scenario.intensity_new_, p0);
+          points_new.insert(scenario.intensity_new_->unburnable_.at(p0.hash()), p0);
         }
       }
     }
@@ -828,7 +828,7 @@ Scenario::scheduleFireSpread(
   // check after inserting new points since cells that didn't spread could be surrounded now
   for (auto& p : points_new_.unique())
   {
-    cell_pts_new.insert(*intensity_new_, p);
+    cell_pts_new.insert(intensity_new_->unburnable_.at(p.hash()), p);
   }
   points_new_ = cell_pts_new;
   // if we move everything out of points_ we can parallelize this check?
