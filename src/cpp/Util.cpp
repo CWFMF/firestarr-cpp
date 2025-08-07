@@ -3,11 +3,13 @@
 
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
-#include "stdafx.h"
 #include "Util.h"
 #include "Log.h"
+// HACK: complains when importing otherwise
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #include <regex>
-#include <filesystem>
+#pragma GCC diagnostic pop
 #ifdef _WIN32
 #include <direct.h>
 #endif
