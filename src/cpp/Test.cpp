@@ -26,8 +26,9 @@ public:
    * \param dir_out Folder to save outputs to
    * \param cells Constant cells
    */
-  explicit TestEnvironment(const string dir_out,
-                           topo::CellGrid* cells) noexcept
+  explicit TestEnvironment(
+    const string& dir_out,
+    topo::CellGrid* cells) noexcept
     : Environment(dir_out, cells, 0)
   {
   }
@@ -176,16 +177,17 @@ string generate_test_name(
            wind.speed().asValue());
   return string(&(out[0]));
 };
-string run_test(const string base_directory,
-                const string& fuel_name,
-                const SlopeSize slope,
-                const AspectSize aspect,
-                const DurationSize num_hours,
-                const wx::Dc& dc,
-                const wx::Dmc& dmc,
-                const wx::Ffmc& ffmc,
-                const wx::Wind& wind,
-                const bool ignore_existing)
+string run_test(
+  const string& base_directory,
+  const string& fuel_name,
+  const SlopeSize slope,
+  const AspectSize aspect,
+  const DurationSize num_hours,
+  const wx::Dc& dc,
+  const wx::Dmc& dmc,
+  const wx::Ffmc& ffmc,
+  const wx::Wind& wind,
+  const bool ignore_existing)
 {
   string test_name = generate_test_name(
     fuel_name,
@@ -268,7 +270,7 @@ string run_test(const string base_directory,
   return output_directory;
 }
 string run_test_ignore_existing(
-  const string output_directory,
+  const string& output_directory,
   const string& fuel_name,
   const SlopeSize slope,
   const AspectSize aspect,
