@@ -13,10 +13,6 @@
 namespace fs::topo
 {
 using util::sq;
-Environment::~Environment()
-{
-  delete cells_;
-}
 Environment
 Environment::load(
   const Point& point,
@@ -46,7 +42,7 @@ Environment::makeProbabilityMap(
   const std::optional<topo::Perimeter>& perimeter
 ) const
 {
-  return make_shared<ProbabilityMap>(time, start_time, *cells_, perimeter);
+  return make_shared<ProbabilityMap>(time, start_time, cells_, perimeter);
 }
 Environment
 Environment::loadEnvironment(
@@ -159,6 +155,6 @@ Environment::findCoordinates(
   const bool flipped
 ) const
 {
-  return cells_->findCoordinates(point, flipped);
+  return cells_.findCoordinates(point, flipped);
 }
 }

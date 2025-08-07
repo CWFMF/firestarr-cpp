@@ -25,9 +25,9 @@ public:
    * \param cells Constant cells
    */
   explicit TestEnvironment(
-    topo::CellGrid* cells
+    topo::CellGrid&& cells
   ) noexcept
-    : Environment(cells, 0)
+    : Environment(std::move(cells), 0)
   {
   }
 };
@@ -222,7 +222,7 @@ run_test(
     }
   }
   const topo::Cell cell_nodata{};
-  const auto cells = new topo::CellGrid{
+  TestEnvironment env(topo::CellGrid{
     TEST_GRID_SIZE,
     MAX_ROWS,
     MAX_COLUMNS,
@@ -234,8 +234,7 @@ run_test(
     TEST_YLLCORNER + TEST_GRID_SIZE * MAX_ROWS,
     TEST_PROJ4,
     std::move(values)
-  };
-  TestEnvironment env(cells);
+  });
   const Location start_location(static_cast<Idx>(MAX_ROWS / 2), static_cast<Idx>(MAX_COLUMNS / 2));
   Model model(output_directory, ForPoint, &env);
   const auto start_cell = model.cell(start_location.hash());
