@@ -27,7 +27,7 @@ static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {
 static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
 #define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
-constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
+static constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
   D_PTS(0.5, 1.0),
   // north-northeast is closest to point (0.5 + 0.207, 1.0)
   D_PTS(P_0_5, 1.0),
@@ -180,15 +180,6 @@ Pts::unique() const noexcept
 {
   set<XYPos> r{};
   Location loc{cell_x_y_.hash()};
-  add_unique(loc, r);
-  return r;
-}
-void
-Pts::add_unique(
-  const Location&,
-  set<XYPos>& into
-) const noexcept
-{
   // if any point is invalid then they all have to be
   if (canBurn())
   {
@@ -196,9 +187,10 @@ Pts::add_unique(
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
       const auto& p = pts[i];
-      into.insert({cell_x_y_.x(), cell_x_y_.y(), p.x(), p.y()});
+      r.insert({cell_x_y_.x(), cell_x_y_.y(), p.x(), p.y()});
     }
   }
+  return r;
 }
 set<XYPos>
 PtMap::unique(
@@ -210,9 +202,9 @@ PtMap::unique(
   {
     if (kv.first == hash_value)
     {
-      const auto& loc = Location{kv.first};
       auto& pts = kv.second;
-      pts.add_unique(loc, r);
+      auto u = pts.unique();
+      r.insert(u.begin(), u.end());
     }
   }
   return r;
@@ -221,30 +213,19 @@ set<XYPos>
 PtMap::unique() const noexcept
 {
   set<XYPos> r{};
-  add_unique(r);
-  return r;
-}
-void
-PtMap::add_unique(
-  set<XYPos>& into
-) const noexcept
-{
   for (auto& kv : map_)
   {
-    const auto& loc = Location{kv.first};
     auto& pts = kv.second;
-    pts.add_unique(loc, into);
+    auto u = pts.unique();
+    r.insert(u.begin(), u.end());
   }
+  return r;
 }
 set<HashSize>
 PtMap::keys() const noexcept
 {
-  set<HashSize> r{};
-  for (auto& kv : map_)
-  {
-    r.insert(kv.first);
-  }
-  return r;
+  auto k = std::views::keys(map_);
+  return {k.begin(), k.end()};
 }
 size_t
 PtMap::size() const noexcept
