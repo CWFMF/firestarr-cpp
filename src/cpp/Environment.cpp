@@ -19,7 +19,7 @@ Environment::~Environment()
 }
 Environment
 Environment::load(
-  const string dir_out,
+  const string& dir_out,
   const Point& point,
   const string& in_fuel,
   const string& in_elevation
@@ -52,7 +52,7 @@ Environment::makeProbabilityMap(
 }
 Environment
 Environment::loadEnvironment(
-  const string dir_out,
+  const string& dir_out,
   const string& path,
   const Point& point,
   const string& perimeter,

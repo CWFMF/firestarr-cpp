@@ -72,7 +72,7 @@ public:
    * \return
    */
   [[nodiscard]] Environment
-  load(const string dir_out, const Point& point) const;
+  load(const string& dir_out, const Point& point) const;
   /**
    * \brief Number of rows in grid
    * \return Number of rows in grid

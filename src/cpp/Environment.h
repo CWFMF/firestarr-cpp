@@ -66,7 +66,7 @@ public:
    */
   [[nodiscard]] static Environment
   loadEnvironment(
-    const string dir_out,
+    const string& dir_out,
     const string& path,
     const Point& point,
     const string& perimeter,
@@ -80,7 +80,12 @@ public:
    * \return Environment
    */
   [[nodiscard]] static Environment
-  load(const string dir_out, const Point& point, const string& in_fuel, const string& in_elevation);
+  load(
+    const string& dir_out,
+    const Point& point,
+    const string& in_fuel,
+    const string& in_elevation
+  );
   ~Environment();
   /**
    * \brief Determine Coordinates in the grid for the Point
@@ -474,7 +479,7 @@ protected:
    * \param elevation Elevation at origin Point
    */
   Environment(
-    const string dir_out,
+    const string& dir_out,
     CellGrid* cells,
     const ElevationSize elevation
   ) noexcept
@@ -498,7 +503,7 @@ protected:
    * \param elevation Elevation raster
    */
   Environment(
-    const string dir_out,
+    const string& dir_out,
     const FuelGrid& fuel,
     const ElevationGrid& elevation,
     const Point& point

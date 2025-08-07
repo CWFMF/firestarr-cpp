@@ -73,7 +73,7 @@ EnvironmentInfo::loadInfo(
 }
 Environment
 EnvironmentInfo::load(
-  const string dir_out,
+  const string& dir_out,
   const Point& point
 ) const
 {

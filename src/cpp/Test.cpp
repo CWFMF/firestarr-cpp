@@ -25,7 +25,7 @@ public:
    * \param cells Constant cells
    */
   explicit TestEnvironment(
-    const string dir_out,
+    const string& dir_out,
     topo::CellGrid* cells
   ) noexcept
     : Environment(dir_out, cells, 0)
@@ -174,7 +174,7 @@ generate_test_name(
 };
 string
 run_test(
-  const string base_directory,
+  const string& base_directory,
   const string& fuel_name,
   const SlopeSize slope,
   const AspectSize aspect,
@@ -255,7 +255,7 @@ run_test(
 }
 string
 run_test_ignore_existing(
-  const string output_directory,
+  const string& output_directory,
   const string& fuel_name,
   const SlopeSize slope,
   const AspectSize aspect,

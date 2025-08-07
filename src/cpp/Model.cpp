@@ -79,7 +79,7 @@ Model::isUnburnable(
   return environment().isUnburnable(hash_value);
 }
 Model::Model(
-  const string dir_out,
+  const string& dir_out,
   const topo::StartPoint& start_point,
   topo::Environment* env
 )
@@ -1088,7 +1088,7 @@ Model::runIterations(
 }
 int
 Model::runScenarios(
-  const string dir_out,
+  const string& dir_out,
   const char* const weather_input,
   const wx::FwiWeather& yesterday,
   const char* const raster_root,

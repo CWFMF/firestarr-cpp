@@ -160,7 +160,7 @@ public:
    */
   [[nodiscard]] static int
   runScenarios(
-    const string dir_out,
+    const string& dir_out,
     const char* weather_input,
     const wx::FwiWeather& yesterday,
     const char* raster_root,
@@ -363,7 +363,7 @@ public:
    * \param start_point StartPoint to use for sunrise/sunset times
    * \param env Environment to run simulations in
    */
-  Model(const string dir_out, const topo::StartPoint& start_point, topo::Environment* env);
+  Model(const string& dir_out, const topo::StartPoint& start_point, topo::Environment* env);
   Model(Model&& rhs) noexcept = delete;
   Model(const Model& rhs) = delete;
   Model&

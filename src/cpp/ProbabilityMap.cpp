@@ -22,7 +22,7 @@ ProbabilityMap::~ProbabilityMap()
 }
 
 ProbabilityMap::ProbabilityMap(
-  const string dir_out,
+  const string& dir_out,
   const DurationSize time,
   const DurationSize start_time,
   const data::GridBase& grid_info,
