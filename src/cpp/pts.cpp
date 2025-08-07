@@ -16,15 +16,6 @@ constexpr InnerSize DIST_22_5 = static_cast<InnerSize>(
 );
 constexpr InnerSize P_0_5 = static_cast<InnerSize>(0.5) + DIST_22_5;
 constexpr InnerSize M_0_5 = static_cast<InnerSize>(0.5) - DIST_22_5;
-// not sure what's going on with this and wondering if it doesn't keep number exactly
-// shouldn't be any way to be further than twice the entire width of the area
-static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
-static const XYPos INVALID_XY_POSITION{};
-static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, INVALID_XY_POSITION};
-static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.x();
-static const InnerPos INVALID_INNER_POSITION{};
-static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
-static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
 using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
 #define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
 static constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
@@ -70,26 +61,42 @@ dist_line(
   return ((a - b) * (a - b));
 }
 
-Pts::Pts()
-  : cell_x_y_(INVALID_INDEX, INVALID_INDEX)
+static constexpr InnerPos
+to_inner(
+  const XYSize x,
+  const XYSize y
+)
 {
-  std::fill_n(&(distances()[0]), NUM_DIRECTIONS, INVALID_DISTANCE);
-  std::fill_n(&(points()[0]), NUM_DIRECTIONS, INVALID_INNER_POSITION);
+  XYSize integral;
+  const auto x0 = static_cast<DistanceSize>(modf(x, &integral));
+  const auto y0 = static_cast<DistanceSize>(modf(y, &integral));
+  return {x0, y0};
 }
 
 Pts::Pts(
   const bool is_unburnable,
   const XYPos p
 )
-  : Pts()
 {
   cell_x_y_ = {static_cast<Idx>(p.x()), static_cast<Idx>(p.y())};
   // HACK: assign value of first item if burnable
   if (!is_unburnable)
   {
-    distances()[0] = INVALID_DISTANCE - 1;
+    const auto p0 = to_inner(p.x(), p.y());
+    const auto& x0 = p0.x();
+    const auto& y0 = p0.y();
+    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+    {
+      const auto& p1 = POINTS_OUTER[i];
+      const auto& x1 = p1.first;
+      const auto& y1 = p1.second;
+      const auto d = dist_line(x0, x1) + dist_line(y0, y1);
+      auto& p_d = distances_[i];
+      auto& p_p = points_[i];
+      p_p = p0;
+      p_d = (d < p_d) ? d : p_d;
+    }
   }
-  insert(p);
 }
 
 Pts&
@@ -100,21 +107,16 @@ Pts::insert(
 {
   if (canBurn())
   {
-    XYSize integral;
     // need to calculate distances, but we know everything is the same point
-    const auto x0 = static_cast<DistanceSize>(modf(x, &integral));
-    const auto y0 = static_cast<DistanceSize>(modf(y, &integral));
-    const InnerPos p0{x0, y0};
-    auto& dists = distances();
-    auto& pts = points();
+    const InnerPos p0 = to_inner(x, y);
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
       const auto& p1 = POINTS_OUTER[i];
       const auto& x1 = p1.first;
       const auto& y1 = p1.second;
-      const auto d = dist_line(x0, x1) + dist_line(y0, y1);
-      auto& p_d = dists[i];
-      auto& p_p = pts[i];
+      const auto d = dist_line(p0.x(), x1) + dist_line(p0.y(), y1);
+      auto& p_d = distances_[i];
+      auto& p_p = points_[i];
       p_p = (d < p_d) ? p0 : p_p;
       p_d = (d < p_d) ? d : p_d;
     }
@@ -134,7 +136,7 @@ Pts::empty() const
   return !canBurn();
 }
 
-Pts&
+void
 PtMap::insert(
   const bool is_unburnable,
   const XYPos p0
@@ -146,7 +148,6 @@ PtMap::insert(
   {
     pts.insert(p0);
   }
-  return pts;
 }
 
 set<XYPos>

@@ -74,13 +74,52 @@ static constexpr std::array<const char*, NUM_DIRECTIONS> DIRECTION_NAMES{
 };
 using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
 using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
-using array_cellpts = std::tuple<array_dists, array_pts>;
 using spreading_points_new = map<SpreadKey, vector<pair<HashSize, set<XYPos>>>>;
+static constexpr const DistanceSize INVALID_DISTANCE = static_cast<DistanceSize>(
+  MAX_ROWS * MAX_ROWS
+);
+// not sure what's going on with this and wondering if it doesn't keep number exactly
+// shouldn't be any way to be further than twice the entire width of the area
+static const XYPos INVALID_XY_POSITION{};
+static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, INVALID_XY_POSITION};
+static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.x();
+static constexpr const InnerPos INVALID_INNER_POSITION{};
+static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
+static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.x();
+
+// HACK: fill with default values
+template <class T>
+constexpr std::array<T, NUM_DIRECTIONS>
+make_filled(
+  const T& value
+)
+{
+  std::array<T, NUM_DIRECTIONS> r{};
+  r.fill(value);
+  return r;
+}
+
+static constexpr array_dists INVALID_DISTANCES = make_filled(INVALID_DISTANCE);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[0]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[1]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[2]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[3]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[4]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[5]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[6]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[7]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[8]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[9]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[10]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[11]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[12]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[13]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[14]);
+static_assert(INVALID_DISTANCE == INVALID_DISTANCES[15]);
 
 class Pts
 {
 public:
-  Pts();
   Pts(const bool is_unburnable, const XYPos p);
 
   Pts(
@@ -110,33 +149,34 @@ public:
   inline const array_dists&
   distances() const
   {
-    return std::get<0>(cell_pts_);
+    return distances_;
   }
 
   inline const array_pts&
   points() const
   {
-    return std::get<1>(cell_pts_);
+    return points_;
   }
 
   inline array_dists&
   distances()
   {
-    return std::get<0>(cell_pts_);
+    return distances_;
   }
 
   inline array_pts&
   points()
   {
-    return std::get<1>(cell_pts_);
+    return points_;
   }
 
   bool
   canBurn() const;
 
 private:
-  array_cellpts cell_pts_;
-  CellPos cell_x_y_;
+  array_dists distances_ = INVALID_DISTANCES;
+  array_pts points_{};
+  CellPos cell_x_y_{INVALID_INDEX, INVALID_INDEX};
 };
 
 class PtMap
@@ -149,17 +189,17 @@ public:
   operator=(const PtMap& rhs) noexcept = default;
   PtMap&
   operator=(PtMap&& rhs) noexcept = default;
-  Pts&
+  void
   insert(const bool is_unburnable, const XYPos p0);
 
-  Pts&
+  void
   insert(
     const bool is_unburnable,
     const XYSize x,
     const XYSize y
   )
   {
-    return insert(is_unburnable, XYPos{x, y});
+    insert(is_unburnable, XYPos{x, y});
   }
 
   set<XYPos>
