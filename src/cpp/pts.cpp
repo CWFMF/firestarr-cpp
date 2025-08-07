@@ -77,14 +77,15 @@ Pts::Pts()
     NUM_DIRECTIONS,
     INVALID_INNER_POSITION);
 }
-Pts::Pts(const IntensityMap& intensity_map, const XYPos p)
+Pts::Pts(const bool is_unburnable, const XYPos p)
   : Pts()
 {
   cell_x_y_ =
     {static_cast<Idx>(p.x()),
      static_cast<Idx>(p.y())};
   // HACK: assign value of first item if burnable
-  if (!(*intensity_map.unburnable_)[p.hash()])
+  // if (!(*intensity_map.unburnable_)[p.hash()])
+  if (!is_unburnable)
   {
     distances()[0] = INVALID_DISTANCE - 1;
   }
@@ -155,11 +156,11 @@ bool Pts::empty() const
   return !canBurn();
 }
 
-Pts& PtMap::insert(const IntensityMap& intensity_map, const XYPos p0)
+Pts& PtMap::insert(const bool is_unburnable, const XYPos p0)
 {
   auto p = map_.try_emplace(
     p0.hash(),
-    intensity_map,
+    is_unburnable,
     p0);
   auto& pts = p.first->second;
   if (!p.second)
