@@ -84,7 +84,7 @@ public:
 void
 showSpread(
   const SpreadInfo& spread,
-  FireWeather::wx_type w,
+  const wx::FwiWeather* w,
   const fuel::FuelType* fuel
 )
 {
