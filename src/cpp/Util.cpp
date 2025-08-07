@@ -70,7 +70,7 @@ void read_directory(const bool for_files, const string& name, vector<string>* v,
 {
   string full_match = ".*/" + match;
   logging::verbose(("Matching '" + full_match + "'").c_str());
-  static const std::regex re(full_match, std::regex_constants::icase);
+  const std::regex re(full_match, std::regex_constants::icase);
   for (const auto& entry : std::filesystem::directory_iterator(name))
   {
     logging::verbose(("Checking if file: " + entry.path().string()).c_str());
