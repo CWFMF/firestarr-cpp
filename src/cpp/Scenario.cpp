@@ -325,7 +325,7 @@ void Scenario::evaluate(const Event& event)
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
       points_new_.insert(
-        *intensity_new_,
+        (*intensity_new_->unburnable_)[p.hash()],
         p0);
       if (fuel::is_null_fuel(event.cell()))
       {
@@ -556,7 +556,7 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
                     x,
                     y);
       points_new_.insert(
-        *intensity_new_,
+        (*intensity_new_->unburnable_)[p0.hash()],
         p0);
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
       // log_check_fatal(!e.second,
@@ -696,7 +696,7 @@ void apply_offsets_spreadkey(
           const auto new_y = y_o + pt.y();
           const XYPos p0{new_x, new_y};
           points_new.insert(
-            *scenario.intensity_new_,
+            (*scenario.intensity_new_->unburnable_)[p0.hash()],
             p0);
         }
       }
@@ -833,7 +833,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   // check after inserting new points since cells that didn't spread could be surrounded now
   for (auto& p : points_new_.unique())
   {
-    cell_pts_new.insert(*intensity_new_, p);
+    cell_pts_new.insert((*intensity_new_->unburnable_)[p.hash()], p);
   }
   points_new_ = cell_pts_new;
   // if we move everything out of points_ we can parallelize this check?
