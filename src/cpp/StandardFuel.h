@@ -199,9 +199,9 @@ public:
   {
     return (0 < bui)
            ? exp(
-               50.0
-               * log_q_.asValue()
-               * ((1.0 / bui) - (1.0 / bui0())))
+             50.0
+             * log_q_.asValue()
+             * ((1.0 / bui) - (1.0 / bui0())))
            : 1.0;
   }
 protected:
