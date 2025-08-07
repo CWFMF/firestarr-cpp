@@ -78,13 +78,13 @@ class Pts
 public:
   Pts();
   Pts(
-    const IntensityMap& intensity_map,
+    const bool is_unburnable,
     const XYPos p);
   Pts(
-    const IntensityMap& intensity_map,
+    const bool is_unburnable,
     const XYSize x,
     const XYSize y)
-    : Pts(intensity_map, XYPos{x, y})
+    : Pts(is_unburnable, XYPos{x, y})
   {
   }
   Pts& insert(const XYPos p0)
@@ -125,14 +125,14 @@ public:
   PtMap& operator=(const PtMap& rhs) noexcept = default;
   PtMap& operator=(PtMap&& rhs) noexcept = default;
   Pts& insert(
-    const IntensityMap& intensity_map,
+    const bool is_unburnable,
     const XYPos p0);
   Pts& insert(
-    const IntensityMap& intensity_map,
+    const bool is_unburnable,
     const XYSize x,
     const XYSize y)
   {
-    return insert(intensity_map, XYPos{x, y});
+    return insert(is_unburnable, XYPos{x, y});
   }
   set<XYPos> unique(const HashSize hash_value) const noexcept;
   set<XYPos> unique() const noexcept;
