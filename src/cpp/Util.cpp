@@ -104,9 +104,9 @@ vector<string> find_rasters(const string& dir, const int year)
   const auto raster_root = directory_exists(for_year.c_str())
                            ? for_year
                            : (
-                               directory_exists(for_default.c_str())
-                                 ? for_default
-                                 : dir);
+                             directory_exists(for_default.c_str())
+                               ? for_default
+                               : dir);
   vector<string> results{};
   try
   {
@@ -121,12 +121,16 @@ vector<string> find_rasters(const string& dir, const int year)
 }
 bool directory_exists(const char* dir) noexcept
 {
-  struct stat dir_info{};
+  struct stat dir_info
+  {
+  };
   return stat(dir, &dir_info) == 0 && dir_info.st_mode & S_IFDIR;
 }
 bool file_exists(const char* path) noexcept
 {
-  struct stat path_info{};
+  struct stat path_info
+  {
+  };
   // FIX: check that this works on symlinks
   return stat(path, &path_info) == 0 && path_info.st_mode & S_IFREG;
 }
@@ -138,7 +142,9 @@ void make_directory(const char* dir) noexcept
   if (-1 == mkdir(dir, 0777) && errno != EEXIST)
 #endif
   {
-    struct stat dir_info{};
+    struct stat dir_info
+    {
+    };
     if (stat(dir, &dir_info) != 0)
     {
       logging::fatal("Cannot create directory %s", dir);
