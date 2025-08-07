@@ -52,12 +52,12 @@ public:
    * \param time Time to get weather for
    * \return FwiWeather for given time
    */
-  [[nodiscard]] FireWeather::wx_type at(const DurationSize time) const
+  [[nodiscard]] const wx::FwiWeather* at(const DurationSize time) const
   {
 #ifdef DEBUG_FWI_WEATHER
     logging::check_fatal(time < 0 || time >= MAX_DAYS, "Invalid weather time %f", time);
 #endif
-    return weather_by_hour_by_day_->at(util::time_index(time, min_date_));
+    return weather_by_hour_by_day_->at(util::time_index(time, min_date_)).get();
   }
   /**
    * \brief Probability of survival in given fuel at given time
