@@ -104,8 +104,6 @@ public:
   insert(const XYSize x, const XYSize y);
   set<XYPos>
   unique() const noexcept;
-  void
-  add_unique(const Location& loc, set<XYPos>& into) const noexcept;
   bool
   empty() const;
 
@@ -168,8 +166,6 @@ public:
   unique(const HashSize hash_value) const noexcept;
   set<XYPos>
   unique() const noexcept;
-  void
-  add_unique(set<XYPos>& into) const noexcept;
   set<HashSize>
   keys() const noexcept;
   size_t
