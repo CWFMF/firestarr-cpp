@@ -94,7 +94,6 @@ public:
   Pts& insert(const XYSize x,
               const XYSize y);
   set<XYPos> unique() const noexcept;
-  void add_unique(const Location& loc, set<XYPos>& into) const noexcept;
   bool empty() const;
   inline const array_dists& distances() const
   {
@@ -137,7 +136,6 @@ public:
   }
   set<XYPos> unique(const HashSize hash_value) const noexcept;
   set<XYPos> unique() const noexcept;
-  void add_unique(set<XYPos>& into) const noexcept;
   set<HashSize> keys() const noexcept;
   size_t size() const noexcept;
   size_t erase(const HashSize hash_value) noexcept;
