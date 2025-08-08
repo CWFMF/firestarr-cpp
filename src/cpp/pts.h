@@ -79,7 +79,7 @@ struct CellPoints
   CellPoints(CellPoints&& rhs) = default;
   CellPoints& operator=(const CellPoints& rhs) = default;
   CellPoints& operator=(CellPoints&& rhs) = default;
-  CellPoints(const bool is_unburnable, const XYSize x, const XYSize y);
+  CellPoints(const IntensityMap& intensity_map, const XYSize x, const XYSize y);
   void insert(const XYSize x, const XYSize y);
   bool isUnburnable() const;
   set<XYPos> unique(const HashSize hash_value) const;
@@ -95,7 +95,7 @@ public:
   Points& operator=(const Points& rhs) noexcept = default;
   Points& operator=(Points&& rhs) noexcept = default;
   void insert(
-    const bool is_unburnable,
+    const IntensityMap& intensity_map,
     const XYSize x,
     const XYSize y);
   set<XYPos> unique(const HashSize hash_value) const noexcept;
