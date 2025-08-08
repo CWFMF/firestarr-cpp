@@ -90,7 +90,7 @@ protected:
   const array_dists& distances() const;
   const array_pts& points() const;
 private:
-  unique_ptr<array_cellpts> cellpts_ = nullptr;
+  const unique_ptr<array_cellpts> cellpts_ = nullptr;
 };
 class Points
 {

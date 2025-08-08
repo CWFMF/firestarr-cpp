@@ -61,10 +61,13 @@ static constexpr InnerPos to_inner(const XYSize x, const XYSize y)
   return {x0, y0};
 }
 CellPoints::CellPoints(const IntensityMap& intensity_map, const XYSize x, const XYSize y)
+  : cellpts_(
+    intensity_map.cannotSpread(x, y)
+      ? nullptr
+      : make_unique<array_cellpts>())
 {
-  if (!intensity_map.cannotSpread(x, y))
+  if (nullptr != cellpts_)
   {
-    cellpts_ = make_unique<array_cellpts>();
     auto& pts = points();
     auto& dists = distances();
     auto p1 = to_inner(x, y);
