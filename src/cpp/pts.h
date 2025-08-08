@@ -105,7 +105,7 @@ protected:
   points() const;
 
 private:
-  unique_ptr<array_cellpts> cellpts_ = nullptr;
+  const unique_ptr<array_cellpts> cellpts_ = nullptr;
 };
 
 class Points

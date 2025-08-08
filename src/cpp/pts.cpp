@@ -78,10 +78,10 @@ CellPoints::CellPoints(
   const XYSize x,
   const XYSize y
 )
+  : cellpts_(intensity_map.cannotSpread(x, y) ? nullptr : make_unique<array_cellpts>())
 {
-  if (!intensity_map.cannotSpread(x, y))
+  if (nullptr != cellpts_)
   {
-    cellpts_ = make_unique<array_cellpts>();
     auto& pts = points();
     auto& dists = distances();
     auto p1 = to_inner(x, y);
