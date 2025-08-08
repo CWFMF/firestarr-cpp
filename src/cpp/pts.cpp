@@ -60,131 +60,113 @@ static constexpr InnerPos to_inner(const XYSize x, const XYSize y)
   const auto y0 = static_cast<DistanceSize>(modf(y, &integral));
   return {x0, y0};
 }
-Pts::Pts(const bool is_unburnable, const XYPos p)
+CellPoints::CellPoints(const bool is_unburnable, const XYSize x, const XYSize y)
 {
-  cell_x_y_ =
-    {static_cast<Idx>(p.x()),
-     static_cast<Idx>(p.y())};
-  // HACK: assign value of first item if burnable
-  // if (!(*intensity_map.unburnable_)[p.hash()])
   if (!is_unburnable)
   {
-    const auto p0 = to_inner(p.x(), p.y());
-    const auto& x0 = p0.x();
-    const auto& y0 = p0.y();
+    points = make_unique<array_pts>();
+    distances = make_unique<array_dists>();
+    auto p1 = to_inner(x, y);
+    std::fill(points->begin(), points->end(), p1);
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
-      const auto& p1 = POINTS_OUTER[i];
-      const auto& x1 = p1.first;
-      const auto& y1 = p1.second;
-      const auto d = dist_line(x0, x1) + dist_line(y0, y1);
-      auto& p_d = distances_[i];
-      auto& p_p = points_[i];
-      p_p = p0;
-      p_d = (d < p_d) ? d : p_d;
+      const auto& p2 = POINTS_OUTER[i];
+      const auto& x2 = p2.first;
+      const auto& y2 = p2.second;
+      (*distances)[i] = dist_line(p1.x(), x2) + dist_line(p1.y(), y2);
     }
   }
 }
-Pts& Pts::insert(const XYSize x,
-                 const XYSize y)
+void CellPoints::insert(const XYSize x, const XYSize y)
 {
-  if (canBurn())
+  if (isUnburnable())
   {
-    // need to calculate distances, but we know everything is the same point
-    const InnerPos p0 = to_inner(x, y);
-    // std::fill_n(&(points()[0]), NUM_DIRECTIONS, p0);
-    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
-    {
-      const auto& p1 = POINTS_OUTER[i];
-      const auto& x1 = p1.first;
-      const auto& y1 = p1.second;
-      const auto d = dist_line(p0.x(), x1) + dist_line(p0.y(), y1);
-      auto& p_d = distances_[i];
-      auto& p_p = points_[i];
-      p_p = (d < p_d) ? p0 : p_p;
-      p_d = (d < p_d) ? d : p_d;
-    }
+    return;
   }
-  return *this;
+  const InnerPos p1 = to_inner(x, y);
+  for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+  {
+    const auto& p2 = POINTS_OUTER[i];
+    const auto& x2 = p2.first;
+    const auto& y2 = p2.second;
+    const auto d = dist_line(p1.x(), x2) + dist_line(p1.y(), y2);
+    auto& p_d = (*distances)[i];
+    auto& p_p = (*points)[i];
+    p_p = (d < p_d) ? p1 : p_p;
+    p_d = (d < p_d) ? d : p_d;
+  }
 }
-inline bool Pts::canBurn() const
+bool CellPoints::isUnburnable() const
 {
-  return (INVALID_DISTANCE != distances()[0]);
+  return nullptr == distances;
 }
-bool Pts::empty() const
+set<XYPos> CellPoints::unique(
+  const HashSize hash_value) const
 {
-  // NOTE: if anything is invalid then everything must be
-  //   return (INVALID_DISTANCE == distances()[0]);
-  return !canBurn();
+  if (isUnburnable())
+  {
+    return {};
+  }
+  const auto [x1, y1] = Location::unhashXY(hash_value);
+  auto it = std::views::transform(
+    *points,
+    [x1, y1](const auto& p0) {
+      return XYPos(p0.x() + x1, p0.y() + y1);
+    });
+  return {it.begin(), it.end()};
 }
-
-void PtMap::insert(const bool is_unburnable, const XYPos p0)
+void Points::insert(
+  const bool is_unburnable,
+  const XYSize x,
+  const XYSize y)
 {
+  // HACK: try to insert nullptr and if that works modify
   auto p = map_.try_emplace(
-    p0.hash(),
+    Location::hashXY(x, y),
     is_unburnable,
-    p0);
-  auto& pts = p.first->second;
-  if (!p.second)
-  {
-    pts.insert(p0);
-  }
+    x,
+    y);
+  p.first->second.insert(x, y);
 }
-set<XYPos> Pts::unique() const noexcept
-{
-  set<XYPos> r{};
-  Location loc{cell_x_y_.hash()};
-  // if any point is invalid then they all have to be
-  if (canBurn())
-  {
-    const auto& pts = points();
-    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
-    {
-      const auto& p = pts[i];
-      r.insert(
-        {cell_x_y_.x(),
-         cell_x_y_.y(),
-         p.x(),
-         p.y()});
-    }
-  }
-  return r;
-}
-set<XYPos> PtMap::unique(const HashSize hash_value) const noexcept
+set<XYPos> Points::unique(const HashSize hash_value) const noexcept
 {
   set<XYPos> r{};
   for (auto& kv : map_)
   {
     if (kv.first == hash_value)
     {
-      auto& pts = kv.second;
-      auto u = pts.unique();
+      if (!kv.second.isUnburnable())
+      {
+        auto u = kv.second.unique(kv.first);
+        r.insert(u.begin(), u.end());
+      }
+    }
+  }
+  return r;
+}
+set<XYPos> Points::unique() const noexcept
+{
+  set<XYPos> r{};
+  for (auto& kv : map_)
+  {
+    if (!kv.second.isUnburnable())
+    {
+      auto u = kv.second.unique(kv.first);
       r.insert(u.begin(), u.end());
     }
   }
   return r;
 }
-set<XYPos> PtMap::unique() const noexcept
-{
-  set<XYPos> r{};
-  for (auto& kv : map_)
-  {
-    auto& pts = kv.second;
-    auto u = pts.unique();
-    r.insert(u.begin(), u.end());
-  }
-  return r;
-}
-set<HashSize> PtMap::keys() const noexcept
+set<HashSize> Points::keys() const noexcept
 {
   auto k = std::views::keys(map_);
   return {k.begin(), k.end()};
 }
-size_t PtMap::size() const noexcept
+size_t Points::size() const noexcept
 {
   return unique().size();
 }
-size_t PtMap::erase(const HashSize hash_value) noexcept
+size_t Points::erase(const HashSize hash_value) noexcept
 {
   return map_.erase(hash_value);
 }

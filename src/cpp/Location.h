@@ -193,6 +193,40 @@ protected:
   {
     return unhash_column(ColumnMask, hash);
   }
+public:
+  /**
+   * \brief X
+   * \param hash hash to extract X from
+   * \return X
+   */
+  [[nodiscard]] static constexpr Idx unhashX(const Topo hash) noexcept
+  {
+    return unhashColumn(hash);
+  }
+  /**
+   * \brief Y
+   * \param hash hash to extract Y from
+   * \return Y
+   */
+  [[nodiscard]] static constexpr Idx unhashY(const Topo hash) noexcept
+  {
+    return unhashRow(hash);
+  }
+  /**
+   * \brief XY
+   * \param hash hash to extract XY from
+   * \return XY
+   */
+  [[nodiscard]] static constexpr pair<Idx, Idx> unhashXY(const Topo hash) noexcept
+  {
+    return {unhashX(hash), unhashY(hash)};
+  }
+  [[nodiscard]] static constexpr HashSize hashXY(
+    const XYSize x,
+    const XYSize y) noexcept
+  {
+    return do_hash(XYBits, static_cast<Idx>(y), static_cast<Idx>(x));
+  }
 };
 template <class V>
 inline bool operator<(const Position<V>& lhs, const Position<V>& rhs)
