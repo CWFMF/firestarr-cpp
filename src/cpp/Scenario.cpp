@@ -324,7 +324,7 @@ void Scenario::evaluate(const Event& event)
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
       points_new_.insert(
-        intensity_new_->cannotSpread(x, y),
+        *intensity_new_,
         x,
         y);
       if (fuel::is_null_fuel(event.cell()))
@@ -555,7 +555,7 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
                     x,
                     y);
       points_new_.insert(
-        intensity_new_->cannotSpread(x, y),
+        *intensity_new_,
         x,
         y);
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
@@ -695,7 +695,7 @@ void apply_offsets_spreadkey(
           const auto new_x = x_o + pt.x();
           const auto new_y = y_o + pt.y();
           points_new.insert(
-            scenario.intensity_new_->cannotSpread(new_x, new_y),
+            *scenario.intensity_new_,
             new_x,
             new_y);
         }
@@ -843,7 +843,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   for (auto& p : points_new_.unique())
   {
     cell_pts_new.insert(
-      intensity_new_->cannotSpread(p.hash()),
+      *intensity_new_,
       p.x(),
       p.y());
   }
