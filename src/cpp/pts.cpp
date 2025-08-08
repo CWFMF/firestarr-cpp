@@ -64,18 +64,37 @@ CellPoints::CellPoints(const IntensityMap& intensity_map, const XYSize x, const 
 {
   if (!intensity_map.cannotSpread(x, y))
   {
-    points = make_unique<array_pts>();
-    distances = make_unique<array_dists>();
+    cellpts_ = make_unique<array_cellpts>();
+    auto& pts = points();
+    auto& dists = distances();
     auto p1 = to_inner(x, y);
-    std::fill(points->begin(), points->end(), p1);
+    std::fill(pts.begin(), pts.end(), p1);
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
       const auto& p2 = POINTS_OUTER[i];
       const auto& x2 = p2.first;
       const auto& y2 = p2.second;
-      (*distances)[i] = dist_line(p1.x(), x2) + dist_line(p1.y(), y2);
+      dists[i] = dist_line(p1.x(), x2) + dist_line(p1.y(), y2);
     }
   }
+}
+array_dists& CellPoints::distances()
+{
+  // NOTE: protected, since unsafe if we don't know this isn't unburnable
+  return std::get<0>(*cellpts_);
+}
+array_pts& CellPoints::points()
+{
+  // NOTE: protected, since unsafe if we don't know this isn't unburnable
+  return std::get<1>(*cellpts_);
+}
+const array_dists& CellPoints::distances() const
+{
+  return std::get<0>(*cellpts_);
+}
+const array_pts& CellPoints::points() const
+{
+  return std::get<1>(*cellpts_);
 }
 void CellPoints::insert(const XYSize x, const XYSize y)
 {
@@ -83,6 +102,8 @@ void CellPoints::insert(const XYSize x, const XYSize y)
   {
     return;
   }
+  auto& pts = points();
+  auto& dists = distances();
   const InnerPos p1 = to_inner(x, y);
   for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
   {
@@ -90,15 +111,15 @@ void CellPoints::insert(const XYSize x, const XYSize y)
     const auto& x2 = p2.first;
     const auto& y2 = p2.second;
     const auto d = dist_line(p1.x(), x2) + dist_line(p1.y(), y2);
-    auto& p_d = (*distances)[i];
-    auto& p_p = (*points)[i];
+    auto& p_d = dists[i];
+    auto& p_p = pts[i];
     p_p = (d < p_d) ? p1 : p_p;
     p_d = (d < p_d) ? d : p_d;
   }
 }
 bool CellPoints::isUnburnable() const
 {
-  return nullptr == distances;
+  return nullptr == cellpts_;
 }
 set<XYPos> CellPoints::unique(
   const HashSize hash_value) const
@@ -109,7 +130,7 @@ set<XYPos> CellPoints::unique(
   }
   const auto [x1, y1] = Location::unhashXY(hash_value);
   auto it = std::views::transform(
-    *points,
+    points(),
     [x1, y1](const auto& p0) {
       return XYPos(p0.x() + x1, p0.y() + y1);
     });
