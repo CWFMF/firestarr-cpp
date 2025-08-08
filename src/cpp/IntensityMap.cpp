@@ -107,6 +107,32 @@ IntensityMap::cannotSpread(
   return unburnable_.at(hash_value);
 }
 
+bool
+IntensityMap::cannotSpread(
+  const XYSize x,
+  const XYSize y
+) const
+{
+  return cannotSpread(Location::hashXY(x, y));
+}
+
+void
+IntensityMap::setUnburnable(
+  const HashSize hash_value
+)
+{
+  unburnable_.set(hash_value);
+}
+
+void
+IntensityMap::setUnburnable(
+  const XYSize x,
+  const XYSize y
+)
+{
+  setUnburnable(Location::hashXY(x, y));
+}
+
 void
 IntensityMap::burn(
   const Event& event

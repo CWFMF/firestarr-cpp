@@ -121,6 +121,12 @@ public:
   [[nodiscard]] bool
   cannotSpread(const HashSize hash_value) const;
   [[nodiscard]] bool
+  cannotSpread(const XYSize x, const XYSize y) const;
+  void
+  setUnburnable(const HashSize hash_value);
+  void
+  setUnburnable(const XYSize x, const XYSize y);
+  [[nodiscard]] bool
   hasNotBurned(const HashSize hash_value) const;
   /**
    * \brief Whether or not Cell with the given hash can burn
