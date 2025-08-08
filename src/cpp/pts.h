@@ -71,6 +71,7 @@ static constexpr std::array<const char*, NUM_DIRECTIONS> DIRECTION_NAMES{
   "NNW"};
 using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
 using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
+using array_cellpts = std::pair<array_dists, array_pts>;
 using spreading_points_new = map<SpreadKey, vector<pair<HashSize, set<XYPos>>>>;
 struct CellPoints
 {
@@ -83,8 +84,13 @@ struct CellPoints
   void insert(const XYSize x, const XYSize y);
   bool isUnburnable() const;
   set<XYPos> unique(const HashSize hash_value) const;
-  unique_ptr<array_dists> distances = nullptr;
-  unique_ptr<array_pts> points = nullptr;
+protected:
+  array_dists& distances();
+  array_pts& points();
+  const array_dists& distances() const;
+  const array_pts& points() const;
+private:
+  unique_ptr<array_cellpts> cellpts_ = nullptr;
 };
 class Points
 {
