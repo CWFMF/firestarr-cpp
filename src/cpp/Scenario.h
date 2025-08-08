@@ -468,7 +468,7 @@ protected:
   /**
    * \brief Map of Cells to the PointSets within them
    */
-  PtMap points_new_;
+  Points points_new_;
   /**
    * \brief Contains information on cells that are not burnable
    */

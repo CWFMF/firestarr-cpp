@@ -216,6 +216,18 @@ bool IntensityMap::cannotSpread(const HashSize hash_value) const
 {
   return (*unburnable_)[hash_value];
 }
+bool IntensityMap::cannotSpread(const XYSize x, const XYSize y) const
+{
+  return cannotSpread(Location::hashXY(x, y));
+}
+void IntensityMap::setUnburnable(const HashSize hash_value)
+{
+  (*unburnable_)[hash_value] = true;
+}
+void IntensityMap::setUnburnable(const XYSize x, const XYSize y)
+{
+  setUnburnable(Location::hashXY(x, y));
+}
 void IntensityMap::burn(const Event& event)
 {
   lock_guard<mutex> lock(mutex_);
