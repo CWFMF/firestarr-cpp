@@ -365,7 +365,7 @@ Scenario::evaluate(
     case Event::NEW_FIRE:
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
-      points_new_.insert(intensity_new_->cannotSpread(x, y), x, y);
+      points_new_.insert(*intensity_new_, x, y);
       if (fuel::is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -621,7 +621,7 @@ Scenario::run(
       const auto y = cell.row() + CELL_CENTER;
       // log_extensive("Adding point (%d, %d)",
       log_extensive("Adding point (%f, %f)", x, y);
-      points_new_.insert(intensity_new_->cannotSpread(x, y), x, y);
+      points_new_.insert(*intensity_new_, x, y);
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
       // log_check_fatal(!e.second,
       //                 "Excepted to add point to new cell but (%ld, %ld) is already in map",
@@ -754,7 +754,7 @@ apply_offsets_spreadkey(
         {
           const auto new_x = x_o + pt.x();
           const auto new_y = y_o + pt.y();
-          points_new.insert(scenario.intensity_new_->cannotSpread(new_x, new_y), new_x, new_y);
+          points_new.insert(*scenario.intensity_new_, new_x, new_y);
         }
       }
     }
@@ -898,7 +898,7 @@ Scenario::scheduleFireSpread(
   // check after inserting new points since cells that didn't spread could be surrounded now
   for (auto& p : points_new_.unique())
   {
-    cell_pts_new.insert(intensity_new_->cannotSpread(p.hash()), p.x(), p.y());
+    cell_pts_new.insert(*intensity_new_, p.x(), p.y());
   }
   points_new_ = std::move(cell_pts_new);
   // if we move everything out of points_ we can parallelize this check?

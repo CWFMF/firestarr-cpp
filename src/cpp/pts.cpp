@@ -71,12 +71,12 @@ to_inner(
   return {x0, y0};
 }
 CellPoints::CellPoints(
-  const bool is_unburnable,
+  const IntensityMap& intensity_map,
   const XYSize x,
   const XYSize y
 )
 {
-  if (!is_unburnable)
+  if (!intensity_map.cannotSpread(x, y))
   {
     points = make_unique<array_pts>();
     distances = make_unique<array_dists>();
@@ -136,13 +136,13 @@ CellPoints::unique(
 }
 void
 Points::insert(
-  const bool is_unburnable,
+  const IntensityMap& intensity_map,
   const XYSize x,
   const XYSize y
 )
 {
-  // HACK: try to insert nullptr and if that works modify
-  auto p = map_.try_emplace(Location::hashXY(x, y), is_unburnable, x, y);
+  // No need to look up value in intensity_map if emplace doesn't happen
+  auto p = map_.try_emplace(Location::hashXY(x, y), intensity_map, x, y);
   p.first->second.insert(x, y);
 }
 set<XYPos>
