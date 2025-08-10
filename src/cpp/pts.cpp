@@ -53,7 +53,7 @@ constexpr inline auto dist_line(const auto& a, const auto& b)
 {
   return ((a - b) * (a - b));
 }
-static constexpr InnerPos to_inner(const XYSize x, const XYSize y)
+static constexpr std::pair<DistanceSize, DistanceSize> to_inner(const XYSize x, const XYSize y)
 {
   XYSize integral;
   const auto x0 = static_cast<DistanceSize>(modf(x, &integral));
@@ -70,14 +70,14 @@ CellPoints::CellPoints(const IntensityMap& intensity_map, const XYPos& p0)
   {
     auto& pts = points();
     auto& dists = distances();
-    auto p1 = to_inner(p0.x(), p0.y());
+    auto [x1, y1] = to_inner(p0.x(), p0.y());
     std::fill(pts.begin(), pts.end(), p0);
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
       const auto& p2 = POINTS_OUTER[i];
       const auto& x2 = p2.first;
       const auto& y2 = p2.second;
-      dists[i] = dist_line(p1.x(), x2) + dist_line(p1.y(), y2);
+      dists[i] = dist_line(x1, x2) + dist_line(y1, y2);
     }
   }
 }
@@ -107,13 +107,13 @@ void CellPoints::insert(const XYPos& p0)
   }
   auto& pts = points();
   auto& dists = distances();
-  const InnerPos p1 = to_inner(p0.x(), p0.y());
+  const auto [x1, y1] = to_inner(p0.x(), p0.y());
   for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
   {
     const auto& p2 = POINTS_OUTER[i];
     const auto& x2 = p2.first;
     const auto& y2 = p2.second;
-    const auto d = dist_line(p1.x(), x2) + dist_line(p1.y(), y2);
+    const auto d = dist_line(x1, x2) + dist_line(y1, y2);
     auto& p_d = dists[i];
     auto& p_p = pts[i];
     p_p = (d < p_d) ? p0 : p_p;
