@@ -142,6 +142,19 @@ set<XYPos> CellPoints::unique() const
   // std::set<XYPos> r = {pts.begin(), end};
   // return r;
 }
+void CellPoints::merge(const CellPoints& rhs)
+{
+  auto& p0 = points();
+  auto& d0 = distances();
+  auto& p1 = rhs.points();
+  auto& d1 = rhs.distances();
+  // same cell, so merge
+  for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+  {
+    p0[i] = (d0[i] < d1[i]) ? p0[i] : p1[i];
+    d0[i] = (d0[i] < d1[i]) ? d0[i] : d1[i];
+  }
+}
 void Points::insert(
   const IntensityMap& intensity_map,
   const XYPos& p0)
@@ -181,6 +194,78 @@ set<XYPos> Points::unique() const noexcept
     }
   }
   return r;
+}
+void Points::merge(Points&& rhs)
+{
+  // auto added = std::views::filter(
+  //   rhs.map_,
+  //   [this](map<HashSize, CellPoints>::value_type& kv1) {
+  //     return !map_.contains(kv1.first);
+  //   });
+  auto dupes = std::views::filter(
+    rhs.map_,
+    [this](map<HashSize, CellPoints>::value_type& kv1) {
+      return map_.contains(kv1.first);
+    });
+  auto it = dupes.begin();
+  while (dupes.end() != it)
+  {
+    auto hash_value = it->first;
+    map_.at(hash_value).merge(std::move(it->second));
+    ++it;
+    rhs.map_.erase(hash_value);
+  }
+  map_.merge(rhs.map_);
+  // // auto it0 = map_.begin();
+  // // auto it1 = rhs.map_.begin();
+  // while (map_.end() != it0 && rhs.map_.end() != it1)
+  // {
+  //   auto& kv0 = *it0;
+  //   auto& kv1 = *it1;
+  //   auto h0 = kv0.first;
+  //   auto h1 = kv1.first;
+  //   while (map_.end() != it0 && it0->first < it1->first)
+  //   {
+  //     // iterate through lhs until the same or higher
+  //     ++it0;
+  //   }
+  //   if (h0 == h1)
+  //   {
+  //     // same cell
+  //     kv0.second.merge(kv1.second);
+  //     ++it0;
+  //     // ++it1;
+  //     // erase and then increment
+  //     rhs.map_.erase(it1++);
+  //   }
+  //   else
+  //   {
+  //     // rhs is before lhs
+  //     // map_.emplace_hint(it0, h1, it1->second);
+  //     // map_.insert(h1, it1->second);
+  //     auto current = it1++;
+  //     map_.insert(rhs.map_.extract(current));
+  //   }
+  // }
+  // // if at end of rhs then done, otherwise append
+  // if (rhs.map_.end() != it1)
+  // {
+  //   // map_.insert(std::move_iterator(it1), std::move_iterator(rhs.map_.end()));
+  //   // // map_.insert(it1, rhs.map_.end());
+  //   while (rhs.map_.end() != it1)
+  //   {
+  //     map_.insert(rhs.map_.extract(it1++));
+  //     // map_.emplace_hint(map_.end(), it1->first, std::move(it1->second));
+  //     // ++it1;
+  //   }
+  // }
+  // // else
+  // // {
+  // //   logging::check_equal(
+  // //     map_.end(),
+  // //     it0,
+  // //     "Iterator on merge");
+  // // }
 }
 size_t Points::size() const noexcept
 {
