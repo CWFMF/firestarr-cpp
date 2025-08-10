@@ -487,10 +487,6 @@ bool Scenario::isSurrounded(const HashSize hash_value) const
 {
   return intensity_new_->isSurrounded(hash_value);
 }
-Cell Scenario::cell(const InnerPos& p) const noexcept
-{
-  return cell(p.y(), p.x());
-}
 string Scenario::add_log(const char* format) const noexcept
 {
   const string tmp;

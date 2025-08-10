@@ -94,14 +94,6 @@ using OffsetSet = vector<ROSOffset>;
 namespace fs::sim
 {
 /**
- * \brief The position within a Cell that a spreading point has.
- */
-class InnerPos
-  : public BoundedPoint<InnerSize, 0, 1, 0, 1>
-{
-  using BoundedPoint<InnerSize, 0, 1, 0, 1>::BoundedPoint;
-};
-/**
  * \brief The position within the Environment that a spreading point has.
  */
 class XYPos

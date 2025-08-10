@@ -23,7 +23,6 @@ class Event;
 using topo::Location;
 using topo::Position;
 using wx::FwiWeather;
-using PointSet = vector<InnerPos>;
 /**
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
  */
@@ -304,12 +303,6 @@ public:
    * \return Whether or not the given Location is surrounded by cells that are burnt
    */
   [[nodiscard]] bool isSurrounded(const HashSize hash_value) const;
-  /**
-   * \brief Cell that InnerPos falls within
-   * \param p InnerPos
-   * \return Cell that InnerPos falls within
-   */
-  [[nodiscard]] topo::Cell cell(const InnerPos& p) const noexcept;
   /**
    * \brief Run the Scenario
    * \param probabilities map to update ProbabilityMap for times base on Scenario results
