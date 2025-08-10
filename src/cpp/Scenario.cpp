@@ -841,29 +841,17 @@ void Scenario::scheduleFireSpread(const Event& event)
       {p.x(), p.y()});
   }
   points_new_ = std::move(cell_pts_new);
-  // if we move everything out of points_ we can parallelize this check?
-  {
-    // indent to keep keys local
-    auto it = points_new_.begin();
-    while (points_new_.end() != it)
-    {
-      const auto& kv = *it;
-      const auto hash_value = kv.first;
-      if (intensity_new_->cannotSpread(hash_value) || intensity_new_->isSurrounded(hash_value))
-      {
-        it = points_new_.erase(it);
-      }
-      else
-      {
-        ++it;
-      }
-    }
-  }
   auto it = points_new_.begin();
   while (it != points_new_.end())
   {
+    const auto& kv = *it;
+    const auto hash_value = kv.first;
     CellPoints& pts = it->second;
-    if (pts.isUnburnable())
+    if (intensity_new_->cannotSpread(hash_value) || intensity_new_->isSurrounded(hash_value))
+    {
+      it = points_new_.erase(it);
+    }
+    else if (pts.isUnburnable())
     {
       it = points_new_.erase(it);
     }
