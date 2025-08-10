@@ -566,8 +566,9 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
   log_verbose("Creating simulation end event for %f", last_save_);
   addEvent(Event::makeEnd(last_save_));
   // mark all original points as burned at start
-  for (const auto hash_value : points_new_.keys())
+  for (const auto& kv : points_new_)
   {
+    const auto hash_value = kv.first;
     const auto& location = cell(hash_value);
     // const auto& location = kv.first;
     // would be burned already if perimeter applied
@@ -843,12 +844,18 @@ void Scenario::scheduleFireSpread(const Event& event)
   // if we move everything out of points_ we can parallelize this check?
   {
     // indent to keep keys local
-    auto keys = points_new_.keys();
-    for (auto hash_value : keys)
+    auto it = points_new_.begin();
+    while (points_new_.end() != it)
     {
+      const auto& kv = *it;
+      const auto hash_value = kv.first;
       if (intensity_new_->cannotSpread(hash_value) || intensity_new_->isSurrounded(hash_value))
       {
-        points_new_.erase(hash_value);
+        it = points_new_.erase(it);
+      }
+      else
+      {
+        ++it;
       }
     }
   }

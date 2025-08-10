@@ -182,17 +182,8 @@ set<XYPos> Points::unique() const noexcept
   }
   return r;
 }
-set<HashSize> Points::keys() const noexcept
-{
-  auto k = std::views::keys(map_);
-  return {k.begin(), k.end()};
-}
 size_t Points::size() const noexcept
 {
   return unique().size();
-}
-size_t Points::erase(const HashSize hash_value) noexcept
-{
-  return map_.erase(hash_value);
 }
 }
