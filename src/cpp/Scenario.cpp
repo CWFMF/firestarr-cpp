@@ -833,14 +833,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     //   points_.insert(p.x(), p.y());
     // }
   }
-  // check after inserting new points since cells that didn't spread could be surrounded now
-  for (auto& p : points_.unique())
-  {
-    cell_pts_new.insert(
-      *intensity_new_,
-      {p.x(), p.y()});
-  }
-  points_ = std::move(cell_pts_new);
+  points_.merge(std::move(cell_pts_new));
   auto it = points_.begin();
   while (it != points_.end())
   {

@@ -84,6 +84,7 @@ struct CellPoints
   void insert(const XYPos& p0);
   bool isUnburnable() const;
   set<XYPos> unique() const;
+  void merge(const CellPoints& rhs);
 protected:
   array_dists& distances();
   array_pts& points();
@@ -105,6 +106,7 @@ public:
     const XYPos& p0);
   set<XYPos> unique(const HashSize hash_value) const noexcept;
   set<XYPos> unique() const noexcept;
+  void merge(Points&& rhs);
   size_t size() const noexcept;
   /**
    * \brief Iterator for underlying GridMap
