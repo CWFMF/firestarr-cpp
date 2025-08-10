@@ -1,6 +1,7 @@
 .vscode
 firestarr
-**/log*.txt
+**/*diff*
+**/*log*
 **/build
 **/src/cpp/version.cpp
 **/test/10N_50651
