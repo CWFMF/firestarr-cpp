@@ -105,9 +105,7 @@ public:
     const XYPos& p0);
   set<XYPos> unique(const HashSize hash_value) const noexcept;
   set<XYPos> unique() const noexcept;
-  set<HashSize> keys() const noexcept;
   size_t size() const noexcept;
-  size_t erase(const HashSize hash_value) noexcept;
   /**
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
