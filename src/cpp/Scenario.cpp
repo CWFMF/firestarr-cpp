@@ -323,7 +323,7 @@ void Scenario::evaluate(const Event& event)
     case Event::NEW_FIRE:
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
-      points_new_.insert(
+      points_.insert(
         *intensity_new_,
         XYPos{x, y});
       if (fuel::is_null_fuel(event.cell()))
@@ -429,7 +429,7 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     extinction_thresholds_(std::move(rhs.extinction_thresholds_)),
     spread_thresholds_by_ros_(std::move(rhs.spread_thresholds_by_ros_)),
     current_time_(rhs.current_time_),
-    points_new_(std::move(rhs.points_new_)),
+    points_(std::move(rhs.points_)),
     scheduler_(std::move(rhs.scheduler_)),
     intensity_new_(std::move(rhs.intensity_new_)),
     // initial_intensity_(std::move(rhs.initial_intensity_)),
@@ -459,7 +459,7 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
     save_points_ = std::move(rhs.save_points_);
     extinction_thresholds_ = std::move(rhs.extinction_thresholds_);
     spread_thresholds_by_ros_ = std::move(rhs.spread_thresholds_by_ros_);
-    points_new_ = std::move(rhs.points_new_);
+    points_ = std::move(rhs.points_);
     current_time_ = rhs.current_time_;
     scheduler_ = std::move(rhs.scheduler_);
     intensity_new_ = std::move(rhs.intensity_new_);
@@ -549,7 +549,7 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
       log_extensive("Adding point (%f, %f)",
                     x,
                     y);
-      points_new_.insert(
+      points_.insert(
         *intensity_new_,
         XYPos{x, y});
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
@@ -566,7 +566,7 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
   log_verbose("Creating simulation end event for %f", last_save_);
   addEvent(Event::makeEnd(last_save_));
   // mark all original points as burned at start
-  for (const auto& kv : points_new_)
+  for (const auto& kv : points_)
   {
     const auto hash_value = kv.first;
     const auto& location = cell(hash_value);
@@ -748,13 +748,13 @@ void Scenario::scheduleFireSpread(const Event& event)
   // make block to prevent it being visible beyond use
   {
     // if we use an iterator this way we don't need to copy keys to erase things
-    auto it = points_new_.begin();
-    while (it != points_new_.end())
+    auto it = points_.begin();
+    while (it != points_.end())
     {
       const auto& pts = it->second;
       if (pts.isUnburnable())
       {
-        it = points_new_.erase(it);
+        it = points_.erase(it);
       }
       else
       {
@@ -785,7 +785,7 @@ void Scenario::scheduleFireSpread(const Event& event)
             auto u = pts.unique();
             // NOTE: shouldn't be Cell if we're looking up by just Location later
             to_spread_new[key].emplace_back(hash_value, u);
-            it = points_new_.erase(it);
+            it = points_.erase(it);
           }
           else
           {
@@ -834,26 +834,26 @@ void Scenario::scheduleFireSpread(const Event& event)
     // }
   }
   // check after inserting new points since cells that didn't spread could be surrounded now
-  for (auto& p : points_new_.unique())
+  for (auto& p : points_.unique())
   {
     cell_pts_new.insert(
       *intensity_new_,
       {p.x(), p.y()});
   }
-  points_new_ = std::move(cell_pts_new);
-  auto it = points_new_.begin();
-  while (it != points_new_.end())
+  points_ = std::move(cell_pts_new);
+  auto it = points_.begin();
+  while (it != points_.end())
   {
     const auto& kv = *it;
     const auto hash_value = kv.first;
     CellPoints& pts = it->second;
     if (intensity_new_->cannotSpread(hash_value) || intensity_new_->isSurrounded(hash_value))
     {
-      it = points_new_.erase(it);
+      it = points_.erase(it);
     }
     else if (pts.isUnburnable())
     {
-      it = points_new_.erase(it);
+      it = points_.erase(it);
     }
     else
     {
@@ -898,7 +898,7 @@ void Scenario::scheduleFireSpread(const Event& event)
         // just inserted false, so make sure unburnable gets updated
         // whether it went out or is surrounded just mark it as unburnable
         // ++it;
-        it = points_new_.erase(it);
+        it = points_.erase(it);
         intensity_new_->setUnburnable(hash_value);
         // not swapping means these points get dropped
       }
