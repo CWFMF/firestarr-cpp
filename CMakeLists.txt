@@ -92,8 +92,6 @@ else()
 endif()
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
-add_definitions(-D_POSIX_C_SOURCE=200809L)
-
 set(FMT_TIME "%Y-%m-%dT%H:%M:%SZ")
 
 set(VERSION $ENV{VERSION})
@@ -167,7 +165,7 @@ if(NOT WIN32)
 endif()
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
 if (WIN32)
     find_package(GeoTIFF CONFIG REQUIRED)
     find_package(PROJ CONFIG REQUIRED)
