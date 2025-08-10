@@ -325,8 +325,7 @@ void Scenario::evaluate(const Event& event)
       // HACK: insert point as originating from itself
       points_new_.insert(
         *intensity_new_,
-        x,
-        y);
+        XYPos{x, y});
       if (fuel::is_null_fuel(event.cell()))
       {
         log_fatal("Trying to start a fire in non-fuel");
@@ -556,8 +555,7 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
                     y);
       points_new_.insert(
         *intensity_new_,
-        x,
-        y);
+        XYPos{x, y});
       // auto e = points_.try_emplace(cell, cell.column() + CELL_CENTER, cell.row() + CELL_CENTER);
       // log_check_fatal(!e.second,
       //                 "Excepted to add point to new cell but (%ld, %ld) is already in map",
@@ -696,8 +694,7 @@ void apply_offsets_spreadkey(
           const auto new_y = y_o + pt.y();
           points_new.insert(
             *scenario.intensity_new_,
-            new_x,
-            new_y);
+            XYPos{new_x, new_y});
         }
       }
     }
@@ -788,7 +785,7 @@ void Scenario::scheduleFireSpread(const Event& event)
           if (ros >= ros_min)
           {
             max_ros_ = max(max_ros_, ros);
-            auto u = pts.unique(hash_value);
+            auto u = pts.unique();
             // NOTE: shouldn't be Cell if we're looking up by just Location later
             to_spread_new[key].emplace_back(hash_value, u);
             it = points_new_.erase(it);
@@ -844,8 +841,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   {
     cell_pts_new.insert(
       *intensity_new_,
-      p.x(),
-      p.y());
+      {p.x(), p.y()});
   }
   points_new_ = std::move(cell_pts_new);
   // if we move everything out of points_ we can parallelize this check?

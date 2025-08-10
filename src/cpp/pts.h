@@ -70,7 +70,7 @@ static constexpr std::array<const char*, NUM_DIRECTIONS> DIRECTION_NAMES{
   "NW",
   "NNW"};
 using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
-using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
+using array_pts = std::array<XYPos, NUM_DIRECTIONS>;
 using array_cellpts = std::pair<array_dists, array_pts>;
 using spreading_points_new = map<SpreadKey, vector<pair<HashSize, set<XYPos>>>>;
 struct CellPoints
@@ -80,10 +80,10 @@ struct CellPoints
   CellPoints(CellPoints&& rhs) = default;
   CellPoints& operator=(const CellPoints& rhs) = default;
   CellPoints& operator=(CellPoints&& rhs) = default;
-  CellPoints(const IntensityMap& intensity_map, const XYSize x, const XYSize y);
-  void insert(const XYSize x, const XYSize y);
+  CellPoints(const IntensityMap& intensity_map, const XYPos& p0);
+  void insert(const XYPos& p0);
   bool isUnburnable() const;
-  set<XYPos> unique(const HashSize hash_value) const;
+  set<XYPos> unique() const;
 protected:
   array_dists& distances();
   array_pts& points();
@@ -102,8 +102,7 @@ public:
   Points& operator=(Points&& rhs) noexcept = default;
   void insert(
     const IntensityMap& intensity_map,
-    const XYSize x,
-    const XYSize y);
+    const XYPos& p0);
   set<XYPos> unique(const HashSize hash_value) const noexcept;
   set<XYPos> unique() const noexcept;
   set<HashSize> keys() const noexcept;
