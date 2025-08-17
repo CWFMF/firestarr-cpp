@@ -3,17 +3,15 @@
 /* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "CellPoints.h"
-#include "ConvexHull.h"
 #include "Location.h"
 #include "Log.h"
 #include "Scenario.h"
 namespace fs
 {
-static const double MIN_X = std::numeric_limits<double>::min();
-static const double MAX_X = std::numeric_limits<double>::max();
-constexpr double DIST_22_5 = 0.2071067811865475244008443621048490392848359376884740365883398689;
-constexpr double P_0_5 = 0.5 + DIST_22_5;
-constexpr double M_0_5 = 0.5 - DIST_22_5;
+constexpr InnerSize DIST_22_5 =
+  static_cast<InnerSize>(0.2071067811865475244008443621048490392848359376884740365883398689);
+constexpr InnerSize P_0_5 = static_cast<InnerSize>(0.5) + DIST_22_5;
+constexpr InnerSize M_0_5 = static_cast<InnerSize>(0.5) - DIST_22_5;
 // not sure what's going on with this and wondering if it doesn't keep number exactly
 // shouldn't be any way to be further than twice the entire width of the area
 static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
@@ -27,17 +25,17 @@ inline void assert_all_equal(
   const InnerSize y
 )
 {
-  for (size_t i = 0; i < pts.size(); ++i)
+  for (size_t i = 0; i < pts.second.size(); ++i)
   {
-    logging::check_equal(pts[i].second.x(), x, "point x");
-    logging::check_equal(pts[i].second.y(), y, "point y");
+    logging::check_equal(pts.second[i].x(), x, "point x");
+    logging::check_equal(pts.second[i].y(), y, "point y");
   }
 }
 inline void assert_all_invalid(const CellPoints::array_dist_pts& pts)
 {
-  for (size_t i = 0; i < pts.size(); ++i)
+  for (size_t i = 0; i < pts.first.size(); ++i)
   {
-    logging::check_equal(INVALID_DISTANCE, pts[i].first, "distances");
+    logging::check_equal(INVALID_DISTANCE, pts.first[i], "distances");
   }
   assert_all_equal(pts, INVALID_LOCATION, INVALID_LOCATION);
 }
@@ -133,7 +131,7 @@ CellPoints& CellPoints::insert(const InnerSize x, const InnerSize y) noexcept
   }
   else
   {
-    for (size_t i = 0; i < pts_.size(); ++i)
+    for (size_t i = 0; i < pts_.first.size(); ++i)
     {
       logging::check_fatal(
         INVALID_DISTANCE == pts_.first[i], "Invalid distance at position %ld", i
@@ -166,7 +164,7 @@ CellPoints& CellPoints::insert(const InnerPos& p) noexcept
   }
   else
   {
-    for (size_t i = 0; i < pts_.size(); ++i)
+    for (size_t i = 0; i < pts_.first.size(); ++i)
     {
       logging::check_fatal(
         INVALID_DISTANCE == pts_.first[i], "Invalid distance at position %ld", i
@@ -176,38 +174,40 @@ CellPoints& CellPoints::insert(const InnerPos& p) noexcept
 #endif
   return *this;
 }
-constexpr std::array<pair<double, double>, NUM_DIRECTIONS> POINTS_OUTER{
-  pair<double, double>{0.5, 1.0},
+using DISTANCE_PAIR = pair<DistanceSize, DistanceSize>;
+#define D_PTS(x, y) (DISTANCE_PAIR{static_cast<DistanceSize>(x), static_cast<DistanceSize>(y)})
+constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
+  D_PTS(0.5, 1.0),
   // north-northeast is closest to point (0.5 + 0.207, 1.0)
-  pair<double, double>{P_0_5, 1.0},
+  D_PTS(P_0_5, 1.0),
   // northeast is closest to point (1.0, 1.0)
-  pair<double, double>{1.0, 1.0},
+  D_PTS(1.0, 1.0),
   // east-northeast is closest to point (1.0, 0.5 + 0.207)
-  pair<double, double>{1.0, P_0_5},
+  D_PTS(1.0, P_0_5),
   // east is closest to point (1.0, 0.5)
-  pair<double, double>{1.0, 0.5},
+  D_PTS(1.0, 0.5),
   // east-southeast is closest to point (1.0, 0.5 - 0.207)
-  pair<double, double>{1.0, M_0_5},
+  D_PTS(1.0, M_0_5),
   // southeast is closest to point (1.0, 0.0)
-  pair<double, double>{1.0, 0.0},
+  D_PTS(1.0, 0.0),
   // south-southeast is closest to point (0.5 + 0.207, 0.0)
-  pair<double, double>{P_0_5, 0.0},
+  D_PTS(P_0_5, 0.0),
   // south is closest to point (0.5, 0.0)
-  pair<double, double>{0.5, 0.0},
+  D_PTS(0.5, 0.0),
   // south-southwest is closest to point (0.5 - 0.207, 0.0)
-  pair<double, double>{M_0_5, 0.0},
+  D_PTS(M_0_5, 0.0),
   // southwest is closest to point (0.0, 0.0)
-  pair<double, double>{0.0, 0.0},
+  D_PTS(0.0, 0.0),
   // west-southwest is closest to point (0.0, 0.5 - 0.207)
-  pair<double, double>{0.0, M_0_5},
+  D_PTS(0.0, M_0_5),
   // west is closest to point (0.0, 0.5)
-  pair<double, double>{0.0, 0.5},
+  D_PTS(0.0, 0.5),
   // west-northwest is closest to point (0.0, 0.5 + 0.207)
-  pair<double, double>{0.0, P_0_5},
+  D_PTS(0.0, P_0_5),
   // northwest is closest to point (0.0, 1.0)
-  pair<double, double>{0.0, 1.0},
+  D_PTS(0.0, 1.0),
   // north-northwest is closest to point (0.5 - 0.207, 1.0)
-  pair<double, double>{M_0_5, 1.0}
+  D_PTS(M_0_5, 1.0)
 };
 CellPoints::array_dists CellPoints::find_distances(const InnerSize p_x, const InnerSize p_y)
   const noexcept
@@ -226,19 +226,15 @@ CellPoints::array_dists CellPoints::find_distances(const InnerSize p_x, const In
   logging::check_fatal(x < 0 || x > 1, "x %f is out of cell (%f, %f)", x, 0, 1);
   logging::check_fatal(y < 0 || y > 1, "y %f is out of cell (%f, %f)", y, 0, 1);
 #endif
-#ifdef DEBUG_POINTS
-  const auto dist_self = DISTANCE(x, y);
-  logging::check_equal(0, dist_self, "distance to self");
-  logging::check_equal(p_x, x, "x from distance to self");
-  logging::check_equal(p_y, y, "y from distance to self");
-#endif
+  const auto x0 = static_cast<DistanceSize>(x);
+  const auto y0 = static_cast<DistanceSize>(y);
   array_dists d{};
   for (size_t i = 0; i < d.size(); ++i)
   {
     const auto& p = POINTS_OUTER[i];
-    const auto& x0 = p.first;
-    const auto& y0 = p.second;
-    d[i] = ((x - x0) * (x - x0) + (y - y0) * (y - y0));
+    const auto& x1 = p.first;
+    const auto& y1 = p.second;
+    d[i] = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
   }
   return d;
 #undef DISTANCE_1D
