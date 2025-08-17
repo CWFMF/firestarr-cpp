@@ -17,6 +17,7 @@ public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
   using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
   using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
+  using array_dist_pts = pair<CellPoints::array_dists, CellPoints::array_pts>;
   CellPoints() noexcept;
   // HACK: so we can emplace with nullptr
   CellPoints(const CellPoints* rhs) noexcept;
