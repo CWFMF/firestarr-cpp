@@ -12,20 +12,20 @@ namespace fs
 /**
  * \brief Maximum slope that affects ISI - everything after this is the same factor
  */
-static constexpr auto MAX_SLOPE_FOR_FACTOR = 60;
+static constexpr auto MAX_SLOPE_FOR_FACTOR = 69;
 SlopeTableArray make_slope_table() noexcept
 {
   // HACK: slope can be infinite, but anything > max is the same as max
   // ST-X-3 Eq. 39 - Calculate Spread Factor
+  // GLC-X-10 39a/b increase to 70% limit
   SlopeTableArray result{};
   for (size_t i = 0; i <= MAX_SLOPE_FOR_FACTOR; ++i)
   {
     result.at(i) = exp(3.533 * pow(i / 100.0, 1.2));
   }
   constexpr auto MAX_SLOPE = MAX_SLOPE_FOR_FACTOR + 1;
-  // anything >= max is same as max
-  const auto max_factor = result[MAX_SLOPE_FOR_FACTOR];
-  std::fill(&(result[MAX_SLOPE]), &(result[MAX_SLOPE_FOR_DISTANCE]), max_factor);
+  // anything >=70 is just 10
+  std::fill(&(result[MAX_SLOPE]), &(result[MAX_SLOPE_FOR_DISTANCE]), 10.0);
   // if we ask for result of invalid slope it should be invalid
   std::fill(&(result[MAX_SLOPE_FOR_DISTANCE + 1]), &(result[INVALID_SLOPE]), -1);
   static_assert(result.size() == INVALID_SLOPE + 1);

@@ -202,9 +202,9 @@ protected:
    *
    * Aspect is calculated to be in degrees, so 0 - 359.
    *
-   * Slope is truncated to 0 - 60 because that's the range that affects effective wind
-   * speed for slopes, but there's an issue with this when it tries to calculate the
-   * horizontal rate of spread since then the slope has been truncated and the distance
+   * Slope is truncated to 0 - 70 for slope effect calculations speed for slopes,
+   * but keep higher range because there's an issue with this when it tries to calculate the
+   * horizontal rate of spread if the slope has been truncated and the distance
    * calculated will be wrong.
    */
   /**
