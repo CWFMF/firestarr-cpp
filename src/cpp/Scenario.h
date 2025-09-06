@@ -443,11 +443,6 @@ protected:
     Day last_date
   );
   /**
-   * \brief Condense set of points down to a smaller number
-   * \param a Set of points to condense
-   */
-  inline void checkCondense(PointSet& a);
-  /**
    * \brief Observers to be notified when cells burn
    */
   list<unique_ptr<IObserver, IObserver_deleter>> observers_{};
