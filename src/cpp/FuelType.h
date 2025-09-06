@@ -271,7 +271,8 @@ public:
   [[nodiscard]] MathSize crownFractionBurned(const MathSize rss, const MathSize rso)
     const noexcept override
   {
-    return max(0.0, 1.0 - exp(-0.230 * (rss - rso)));
+    // can't burn crown if it doesn't exist
+    return cfl() > 0 ? max(0.0, 1.0 - exp(-0.230 * (rss - rso))) : 0.0;
   }
   /**
    * \brief Calculate probability of burning [Anderson eq 1]
