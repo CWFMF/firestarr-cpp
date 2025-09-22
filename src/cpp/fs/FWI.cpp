@@ -217,7 +217,7 @@ static MathSize calculate_ffmc(
 ) noexcept
 {
   //'''/* 1  '*/
-  auto mo = 147.2 * (101.0 - ffmc_previous.asValue()) / (59.5 + ffmc_previous.asValue());
+  auto mo = ffmc_to_moisture(ffmc_previous);
   if (rain.asValue() > 0.5)
   {
     //'''/* 2  '*/
@@ -237,7 +237,7 @@ static MathSize calculate_ffmc(
   }
   const auto m = find_m(temperature, rh, wind, mo);
   //'''/* 10 '*/
-  return (59.5 * (250.0 - m) / (147.2 + m));
+  return moisture_to_ffmc(m);
 }
 Ffmc::Ffmc(
   const Temperature& temperature,
@@ -359,8 +359,9 @@ Dc::Dc(
 { }
 MathSize ffmc_effect(const Ffmc& ffmc) noexcept
 {
-  const auto v = ffmc.asValue();
-  const auto mc = 147.2 * (101.0 - v) / (59.5 + v);
+  //'''/* 1   '*/
+  const auto mc = ffmc_to_moisture(ffmc);
+  //'''/* 25  '*/
   return 91.9 * exp(-0.1386 * mc) * (1 + pow(mc, 5.31) / 49300000.0);
 }
 //******************************************************************************************
@@ -374,10 +375,7 @@ static MathSize calculate_isi(const Speed& wind, const Ffmc& ffmc) noexcept
 {
   //'''/* 24  '*/
   const auto f_wind = exp(0.05039 * wind.asValue());
-  //'''/* 1   '*/
-  const auto m = 147.2 * (101 - ffmc.asValue()) / (59.5 + ffmc.asValue());
-  //'''/* 25  '*/
-  const auto f_f = 91.9 * exp(-0.1386 * m) * (1.0 + pow(m, 5.31) / 49300000.0);
+  const auto f_f = ffmc_effect(ffmc);
   //'''/* 26  '*/
   return (0.208 * f_wind * f_f);
 }
@@ -581,8 +579,7 @@ FwiWeather::FwiWeather(
   : Weather(temp, rh, wind, prec), ffmc_(ffmc), dmc_(dmc), dc_(dc),
     // HACK: recalculate so that we can check that things are within tolerances
     isi_(Isi(isi.asValue(), wind.speed(), ffmc)), bui_(Bui(bui.asValue(), dmc, dc)),
-    fwi_(Fwi(fwi.asValue(), isi, bui)),
-    mc_ffmc_pct_(147.2 * (101 - ffmc.asValue()) / (59.5 + ffmc.asValue())),
+    fwi_(Fwi(fwi.asValue(), isi, bui)), mc_ffmc_pct_(ffmc_to_moisture(ffmc)),
     mc_dmc_pct_(exp((dmc.asValue() - 244.72) / -43.43) + 20), ffmc_effect_(ffmc_effect(ffmc))
 { }
 FwiWeather::FwiWeather(

@@ -478,5 +478,19 @@ private:
 {
   return !(lhs != rhs);
 }
+constexpr auto FFMC_MOISTURE_CONSTANT = 250.0 * 59.5 / 101.0;
+constexpr MathSize ffmc_to_moisture(const MathSize ffmc) noexcept
+{
+  return FFMC_MOISTURE_CONSTANT * (101.0 - ffmc) / (59.5 + ffmc);
+}
+constexpr MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept
+{
+  return ffmc_to_moisture(ffmc.asValue());
+}
+constexpr MathSize moisture_to_ffmc(const MathSize m) noexcept
+{
+  return (59.5 * (250.0 - m) / (FFMC_MOISTURE_CONSTANT + m));
+}
+constexpr Ffmc ffmc_from_moisture(const MathSize m) noexcept { return Ffmc(moisture_to_ffmc(m)); }
 }
 #endif
