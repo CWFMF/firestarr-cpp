@@ -11,6 +11,8 @@
 namespace fs
 {
 using std::cout;
+using CellPts = tuple<Cell, const PointSet>;
+using CellPair = pair<const SpreadKey, vector<CellPts>>;
 constexpr auto CELL_CENTER = 0.5;
 constexpr auto PRECISION = 0.001;
 static atomic<size_t> COUNT = 0;
@@ -135,8 +137,26 @@ public:
       });
     });
   }
-  PointSourceMap(Scenario& scenario, const Cell location, auto& p_o) : PointSourceMap()
+  PointSourceMap(
+    Scenario& scenario,
+    const double duration,
+    const tuple<Cell, PointSet, const OffsetSet*>& t
+  )
+    : PointSourceMap()
   {
+    const auto& location = std::get<0>(t);
+    const auto& pts = std::get<1>(t);
+    const auto& offsets = *std::get<2>(t);
+    auto p_o = std::views::transform(
+      std::views::cartesian_product(
+        std::views::transform(offsets, [duration](const Offset& o) { return o.after(duration); }),
+        pts
+      ),
+      [](const pair<const Offset&, const InnerPos&>& o_p) {
+        const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
+        return InnerPos(pos);
+      }
+    );
     // no need to lock since this doesn't exist yet
     // were given a list of pairs that would go in a map
     // NOTE: could also sort and then check for key changing
@@ -170,6 +190,40 @@ public:
         s |= source;
       }
     );
+  }
+  PointSourceMap(
+    Scenario& scenario,
+    map<SpreadKey, SpreadInfo>& spread_info,
+    const double duration,
+    const CellPair& kv0
+  )
+  {
+    auto& key = kv0.first;
+    auto& offsets = spread_info[key].offsets();
+    auto points_and_sources = std::views::transform(
+      kv0.second,
+      [&scenario, &duration, &offsets](const tuple<Cell, PointSet> pts_for_cell) {
+        return PointSourceMap(
+          scenario,
+          duration,
+          std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
+        );
+      }
+    );
+    merge_list(*this, points_and_sources);
+  }
+  PointSourceMap(
+    Scenario& scenario,
+    map<SpreadKey, SpreadInfo>& spread_info,
+    const double duration,
+    const auto& to_spread
+  )
+  {
+    auto points_and_sources =
+      std::views::transform(to_spread, [&scenario, &duration, &spread_info](const CellPair& kv0) {
+        return PointSourceMap(scenario, spread_info, duration, kv0);
+      });
+    merge_list(*this, points_and_sources);
   }
   void final_merge_maps(
     map<Cell, PointSet>& points_out,
@@ -804,7 +858,6 @@ void Scenario::scheduleFireSpread(const Event& event)
   }
   // get once and keep
   const auto ros_min = Settings::minimumRos();
-  using CellPts = tuple<Cell, const PointSet>;
   map<SpreadKey, vector<CellPts>> to_spread{};
   // make block to prevent it being visible beyond use
   {
@@ -845,44 +898,7 @@ void Scenario::scheduleFireSpread(const Event& event)
                     : max_duration);
   map<Cell, CellIndex> sources{};
   const auto new_time = time + duration / DAY_MINUTES;
-  // for (auto& location : std::vector<Cell>(cells_old.begin(), cells_old.end()))
-  auto apply_offsets = [this, &new_time, &duration, &sources](
-                         //  const OffsetSet offsets,
-                         //  const Cell location,
-                         //  const PointSet pts
-                         const tuple<Cell, PointSet, const OffsetSet*>& t
-                       ) {
-    const auto& location = std::get<0>(t);
-    const auto& pts = std::get<1>(t);
-    const auto& offsets = *std::get<2>(t);
-    auto p_o = std::views::transform(
-      std::views::cartesian_product(
-        std::views::transform(offsets, [duration](const Offset& o) { return o.after(duration); }),
-        pts
-      ),
-      [this, &new_time](const pair<const Offset&, const InnerPos&>& o_p) {
-        const auto pos = std::get<1>(o_p).add(std::get<0>(o_p));
-        return InnerPos(pos);
-      }
-    );
-    return PointSourceMap(*this, location, p_o);
-  };
-  using CellPair = pair<const SpreadKey, vector<CellPts>>;
-  auto apply_spread = [this, &apply_offsets, &sources](const CellPair& kv0) {
-    auto& key = kv0.first;
-    auto& offsets = spread_info_[key].offsets();
-    auto points_and_sources = std::views::transform(
-      kv0.second,
-      [&apply_offsets, &offsets](const tuple<Cell, PointSet> pts_for_cell) {
-        return apply_offsets(
-          std::tuple(std::get<0>(pts_for_cell), std::get<1>(pts_for_cell), &offsets)
-        );
-      }
-    );
-    return PointSourceMap(points_and_sources);
-  };
-  auto points_and_sources = std::views::transform(to_spread, apply_spread);
-  auto result = PointSourceMap(points_and_sources);
+  auto result = PointSourceMap(*this, spread_info_, duration, to_spread);
   result.final_merge_maps(points_, sources, unburnable_);
   map<Cell, PointSet> points_cur{};
   std::swap(points_, points_cur);
