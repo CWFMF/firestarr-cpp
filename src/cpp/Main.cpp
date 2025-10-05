@@ -392,6 +392,8 @@ main(
       false,
       &parse_raw
     );
+    register_setter<
+      DurationSize>(&Settings::setUtcOffset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
     {

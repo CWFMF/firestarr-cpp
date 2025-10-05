@@ -291,8 +291,7 @@ public:
     const int day,
     const int hour,
     const int minute,
-    const double latitude,
-    const double longitude,
+    const Point& start_point,
     const ElevationSize elevation,
     const SlopeSize slope,
     const AspectSize aspect,
@@ -301,8 +300,7 @@ public:
   );
   SpreadInfo(
     const tm& start_date,
-    const double latitude,
-    const double longitude,
+    const Point& start_point,
     const ElevationSize elevation,
     const SlopeSize slope,
     const AspectSize aspect,

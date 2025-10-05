@@ -77,6 +77,7 @@ ${USE_TIME} \
     -v \
     --wx "${FILE_WX}" \
     --output_date_offsets "${dates}" \
+    --tz -7 \
     --perim "${FILE_PERIM}" ${@}
 RET=$?
 RESULT=0

@@ -215,8 +215,7 @@ SpreadInfo::SpreadInfo(
   const int day,
   const int hour,
   const int minute,
-  const double latitude,
-  const double longitude,
+  const Point& start_point,
   const ElevationSize elevation,
   const SlopeSize slope,
   const AspectSize aspect,
@@ -225,8 +224,7 @@ SpreadInfo::SpreadInfo(
 )
   : SpreadInfo(
       to_tm(year, month, day, hour, minute),
-      latitude,
-      longitude,
+      start_point,
       elevation,
       slope,
       aspect,
@@ -238,8 +236,7 @@ SpreadInfo::SpreadInfo(
 
 SpreadInfo::SpreadInfo(
   const tm& start_date,
-  const double latitude,
-  const double longitude,
+  const Point& start_point,
   const ElevationSize elevation,
   const SlopeSize slope,
   const AspectSize aspect,
@@ -253,7 +250,7 @@ SpreadInfo::SpreadInfo(
       slope,
       aspect,
       fuel_name,
-      calculate_nd_for_point(start_date.tm_yday, elevation, Point(latitude, longitude)),
+      calculate_nd_for_point(start_date.tm_yday, elevation, start_point),
       weather
     )
 {

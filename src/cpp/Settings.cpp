@@ -134,6 +134,28 @@ public:
   }
 
   /**
+   * \brief Set offset from UTC to use for entire simulation (hours)
+   * \param v Offset from UTC to use for entire simulation (hours)
+   */
+  void
+  setUtcOffset(
+    const DurationSize v
+  ) noexcept
+  {
+    utc_offset_ = v;
+  }
+
+  /**
+   * \brief Offset from UTC to use for entire simulation (hours)
+   * \return Offset from UTC to use for entire simulation (hours)
+   */
+  [[nodiscard]] constexpr DurationSize
+  utcOffset() const noexcept
+  {
+    return utc_offset_;
+  }
+
+  /**
    * \brief Offset from sunrise at which the day is considered to start (hours)
    * \return Offset from sunrise at which the day is considered to start (hours)
    */
@@ -386,6 +408,10 @@ private:
    * \brief Minimum Fine Fuel Moisture Code required for spread during the night
    */
   MathSize minimum_ffmc_at_night_;
+  /**
+   * \brief Offset from UTC to use for entire simulation (hours)
+   */
+  DurationSize utc_offset_;
   /**
    * \brief Offset from sunrise at which the day is considered to start (hours)
    */
@@ -884,6 +910,20 @@ MathSize
 Settings::minimumFfmcAtNight() noexcept
 {
   return SettingsImplementation::instance().minimumFfmcAtNight();
+}
+
+void
+Settings::setUtcOffset(
+  const DurationSize v
+) noexcept
+{
+  SettingsImplementation::instance().setUtcOffset(v);
+}
+
+DurationSize
+Settings::utcOffset() noexcept
+{
+  return SettingsImplementation::instance().utcOffset();
 }
 
 DurationSize

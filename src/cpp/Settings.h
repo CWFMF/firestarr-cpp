@@ -222,6 +222,18 @@ public:
   [[nodiscard]] static MathSize
   minimumFfmcAtNight() noexcept;
   /**
+   * \brief Set offset from UTC to use for entire simulation (hours)
+   * \param v Offset from UTC to use for entire simulation (hours)
+   */
+  static void
+  setUtcOffset(const DurationSize v) noexcept;
+  /**
+   * \brief Offset from UTC to use for entire simulation (hours)
+   * \return Offset from UTC to use for entire simulation (hours)
+   */
+  [[nodiscard]] static DurationSize
+  utcOffset() noexcept;
+  /**
    * \brief Offset from sunrise at which the day is considered to start (hours)
    * \return Offset from sunrise at which the day is considered to start (hours)
    */

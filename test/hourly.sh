@@ -83,6 +83,7 @@ ${USE_TIME} \
     --apcp_prev 0 \
     -v \
     --wx "${FILE_WX}" \
+    --tz -5 \
     $*
 RET=$?
 RESULT=0

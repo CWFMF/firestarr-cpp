@@ -2,9 +2,12 @@
 /* SPDX-FileCopyrightText: 2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
+#include "stdafx.h"
+
 #include "StartPoint.h"
 
 #include "Settings.h"
+#include "unstable.h"
 #include "Util.h"
 
 namespace fs
@@ -46,72 +49,56 @@ fix_hours(
   return fix_range(value, 0.0, 24.0);
 }
 
-static DurationSize
+/**
+ * Sunrise/sunset time for UTC at location for julian day
+ */
+static std::pair<DurationSize, DurationSize>
 sunrise_sunset(
   const int jd,
   const MathSize latitude,
-  const MathSize longitude,
-  const bool for_sunrise
+  const MathSize longitude
 ) noexcept
 {
   static const auto Zenith = to_radians(96);
-  static const auto LocalOffset = -5;
-  const auto t_hour = for_sunrise ? 6 : 18;
-  // http://edwilliams.org/sunrise_sunset_algorithm.htm
   const auto lng_hour = longitude / 15;
-  const auto t = jd + (t_hour - lng_hour) / 24;
-  const auto m = 0.9856 * t - 3.289;
-  const auto l = fix_degrees(
-    m + 1.916 * sin(to_radians(m)) + 0.020 * sin(to_radians(2 * m)) + 282.634
-  );
-  auto ra = fix_degrees(to_degrees(atan(0.91764 * tan(to_radians(l)))));
-  const auto l_quadrant = floor(l / 90) * 90;
-  const auto ra_quadrant = floor(ra / 90) * 90;
-  ra += l_quadrant - ra_quadrant;
-  ra /= 15;
-  const auto sin_dec = 0.39782 * sin(to_radians(l));
-  const auto cos_dec = cos(asin(sin_dec));
-  const auto cos_h = (cos(Zenith) - sin_dec * sin(to_radians(latitude)))
-                   / (cos_dec * cos(to_radians(latitude)));
-  if (cos_h > 1)
-  {
-    // sun never rises
-    return for_sunrise ? -1 : 25;
-  }
-  if (cos_h < -1)
-  {
-    // sun never sets
-    return for_sunrise ? 25 : -1;
-  }
-  auto h = to_degrees(acos(cos_h));
-  if (for_sunrise)
-  {
-    h = 360 - h;
-  }
-  h /= 15;
-  const auto mean_t = h + ra - 0.06571 * t - 6.622;
-  const auto ut = mean_t - lng_hour;
-  return fix_hours(ut + LocalOffset);
-}
-
-static DurationSize
-sunrise(
-  const int jd,
-  const MathSize latitude,
-  const MathSize longitude
-) noexcept
-{
-  return sunrise_sunset(jd, latitude, longitude, true);
-}
-
-static DurationSize
-sunset(
-  const int jd,
-  const MathSize latitude,
-  const MathSize longitude
-) noexcept
-{
-  return sunrise_sunset(jd, latitude, longitude, false);
+  auto find_time = [=](const bool for_sunrise) -> DurationSize {
+    const auto t_hour = for_sunrise ? 6 : 18;
+    // http://edwilliams.org/sunrise_sunset_algorithm.htm
+    const auto t = jd + (t_hour - lng_hour) / 24;
+    const auto m = 0.9856 * t - 3.289;
+    const auto l = fix_degrees(
+      m + 1.916 * sin(to_radians(m)) + 0.020 * sin(to_radians(2 * m)) + 282.634
+    );
+    auto ra = fix_degrees(to_degrees(atan(0.91764 * tan(to_radians(l)))));
+    const auto l_quadrant = floor(l / 90) * 90;
+    const auto ra_quadrant = floor(ra / 90) * 90;
+    ra += l_quadrant - ra_quadrant;
+    ra /= 15;
+    const auto sin_dec = 0.39782 * sin(to_radians(l));
+    const auto cos_dec = cos(asin(sin_dec));
+    const auto cos_h = (cos(Zenith) - sin_dec * sin(to_radians(latitude)))
+                     / (cos_dec * cos(to_radians(latitude)));
+    MathSize h = to_degrees(acos(cos_h));
+    if (cos_h > 1)
+    {
+      // sun never rises
+      return for_sunrise ? -1 : 25;
+    }
+    if (cos_h < -1)
+    {
+      // sun never sets
+      return for_sunrise ? 25 : -1;
+    }
+    if (for_sunrise)
+    {
+      h = 360 - h;
+    }
+    h /= 15;
+    const auto mean_t = h + ra - 0.06571 * t - 6.622;
+    const auto ut = mean_t - lng_hour;
+    return fix_hours(ut);
+  };
+  return {find_time(true), find_time(false)};
 }
 
 static array<tuple<DurationSize, DurationSize>, MAX_DAYS>
@@ -124,9 +111,10 @@ make_days(
   array<DurationSize, MAX_DAYS> day_length_hours{};
   for (size_t i = 0; i < day_length_hours.size(); ++i)
   {
+    const auto [sunrise, sunset] = sunrise_sunset(static_cast<int>(i), latitude, longitude);
     days[i] = make_tuple(
-      fix_hours(sunrise(static_cast<int>(i), latitude, longitude) + Settings::offsetSunrise()),
-      fix_hours(sunset(static_cast<int>(i), latitude, longitude) - Settings::offsetSunset())
+      fix_hours(sunrise + Settings::utcOffset() + Settings::offsetSunrise()),
+      fix_hours(sunset + Settings::utcOffset() - Settings::offsetSunset())
     );
     day_length_hours[i] = get<1>(days[i]) - get<0>(days[i]);
   }
