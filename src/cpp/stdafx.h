@@ -58,9 +58,10 @@
 #include <geotiff.h>
 #include <geovalues.h>
 #include <sys/stat.h>
-#include <tiff.h>
 #include <tiffio.h>
 #include <xtiffio.h>
+#include "tiff.h"
+#include "unstable.h"
 namespace fs
 {
 using std::abs;
@@ -130,6 +131,10 @@ using sptr = shared_ptr<T>;
  * \brief Size of a calendar year
  */
 using YearSize = int;
+/**
+ * \brief Difference minimum for MathSizes to be considered the same
+ */
+static const MathSize COMPARE_LIMIT = 1.0E-20f;
 /**
  * \brief Size of the hash of a Cell
  */
@@ -260,7 +265,7 @@ static constexpr FuelSize INVALID_FUEL_CODE = 0;
 /**
  * \brief Number of all possible fuels in simulation
  */
-static constexpr auto NUMBER_OF_FUELS = 56;
+static constexpr auto NUMBER_OF_FUELS = 141;
 /**
  * \brief 2*pi
  */
@@ -337,25 +342,5 @@ using FullCoordinates = tuple<FullIdx, FullIdx, SubSize, SubSize>;
  * \brief Type of clock to use for times
  */
 using Clock = std::chrono::steady_clock;
-/**
- * \brief Offset from a position
- */
-struct Offset
-{
-public:
-  /**
-   * \brief Offset in the x direction (column)
-   */
-  const double x;
-  /**
-   * \brief Offset in the y direction (row)
-   */
-  const double y;
-  Offset(const double a, const double b) : x(a), y(b) { }
-};
-/**
- * \brief Collection of Offsets
- */
-using OffsetSet = vector<Offset>;
 }
 #endif

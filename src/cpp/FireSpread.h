@@ -6,6 +6,7 @@
 #include "stdafx.h"
 #include "Cell.h"
 #include "FWI.h"
+#include "InnerPos.h"
 #include "Point.h"
 namespace fs
 {

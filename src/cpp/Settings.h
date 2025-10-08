@@ -8,10 +8,6 @@
 namespace fs
 {
 /**
- * \brief Difference minimum for MathSizes to be considered the same
- */
-static const MathSize COMPARE_LIMIT = 1.0E-20f;
-/**
  * \brief Reads and provides access to settings for the simulation.
  */
 class Settings

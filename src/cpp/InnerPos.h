@@ -5,9 +5,28 @@
 #define FS_INNERPOS_H
 #include "stdafx.h"
 #include "Log.h"
-#include "Settings.h"
 namespace fs
 {
+/**
+ * \brief Offset from a position
+ */
+struct Offset
+{
+public:
+  /**
+   * \brief Offset in the x direction (column)
+   */
+  const double x;
+  /**
+   * \brief Offset in the y direction (row)
+   */
+  const double y;
+  constexpr Offset(const double a, const double b) noexcept : x(a), y(b) { }
+};
+/**
+ * \brief Collection of Offsets
+ */
+using OffsetSet = vector<Offset>;
 /**
  * \brief The position within a Cell that a spreading point has.
  */
