@@ -3,14 +3,17 @@ TIMEOUT="36000s"
 FILE_TODO=".git/rebase-merge/git-rebase-todo"
 DIR_OUT=test/output
 TEST_ONE="test/both_one.sh"
+# TEST_ONE="test/both_all.sh"
 TEST_ALL="test/both_all.sh"
 TEST_MAXIMUM="${TEST_ALL}"
-# TEST_MINIMUM="${TEST_ALL}"
-TEST_MINIMUM="${TEST_ONE}"
+TEST_MINIMUM="${TEST_ALL}"
+# TEST_MINIMUM="${TEST_ONE}"
 # HACK: only test one for now
 # TEST_ALL="${TEST_ONE}"
 TEST=${TEST_MINIMUM}
-IS_FIRST=1
+# undefine this to not check first run fully
+# IS_FIRST=1
+IS_FIRST=
 v=0
 while [ $v -eq 0 ]
 do
@@ -110,7 +113,7 @@ do
                 # git add "${DIR_OUT}"
                 # # fails diff on initial commit, but that's good
                 # HACK: check for deleted files in TEST_ONE folder
-                if [ "${TEST}" == "${TEST_ONE}" ]; then
+                if [ "${TEST}" != "${TEST_ALL}" ]; then
                     TEST_FOLDER=$(ls -d1 "${DIR_OUT}")
                     if [ $(echo "${TEST_FILES}" | wc -l) -ne 1 ]; then
                         echo "ERROR: EXPECTED EXACTLY ONE TEST FOLDER"
