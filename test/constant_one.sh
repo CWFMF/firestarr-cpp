@@ -13,6 +13,9 @@ DIR_ROOT=$(dirname "${DIR_TEST}")
 DIR_SUB=constant
 DIR_IN="${DIR_TEST}/input/${DIR_SUB}"
 DIR_OUT="${DIR_TEST}/output/${DIR_SUB}"
+# HACK: specifically use this so other constant outputs don't get deleted
+DIR_OUT_SUB="${DIR_TEST}/output/${DIR_SUB}/C2_S000_A000_WD180.0_WS020.0"
+
 # make it so release is required if anything is specified
 
 VARIANT="$1"
@@ -38,18 +41,17 @@ fi
 #   shift;
 # fi
 
-
 pushd ${DIR_ROOT}
 
 scripts/build.sh ${VARIANT}
 
-rm -rf "${DIR_OUT}"
-# mkdir -p "${DIR_OUT}"
+rm -rf "${DIR_OUT_SUB}"
+mkdir -p "${DIR_OUT}"
 
 opts="--ascii"
 
 # /usr/bin/time -v \
-    ${DIR_ROOT}/firestarr test ${DIR_OUT} --hours ${HOURS} ${opts}
+    ${DIR_ROOT}/firestarr test "${DIR_OUT}" --hours ${HOURS} ${opts}
 RET=$?
 RESULT=0
 if [ "0" -ne "${RET}" ]; then

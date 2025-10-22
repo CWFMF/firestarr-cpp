@@ -44,12 +44,12 @@ pushd ${DIR_ROOT}
 scripts/build.sh ${VARIANT}
 
 rm -rf "${DIR_OUT}"
-# mkdir -p "${DIR_OUT}"
+mkdir -p "${DIR_OUT}"
 
 opts="--ascii"
 
 # /usr/bin/time -v \
-    ${DIR_ROOT}/firestarr test ${DIR_OUT} all --hours ${HOURS} ${opts}
+    ${DIR_ROOT}/firestarr test "${DIR_OUT}" all --hours ${HOURS} ${opts}
 RET=$?
 RESULT=0
 if [ "0" -ne "${RET}" ]; then

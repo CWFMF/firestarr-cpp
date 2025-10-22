@@ -26,6 +26,18 @@ else
   shift;
 fi
 
+DAYS="$1"
+if ( [ -z "${DAYS}" ] || ( [[ "${DAYS}" != +([0-9]) ]] ) ); then
+  # assume that argument is an arg to pass to cmake
+  DAYS=1
+  echo "${@}"
+  # don't shift because $1 wasn't the variant
+else
+  shift;
+fi
+
+echo "DAYS=${DAYS}"
+
 # USE_TIME=
 # if [ "Release" == "${VARIANT}" ]; then
   USE_TIME="/usr/bin/time -v"
@@ -37,7 +49,6 @@ opts="--ascii"
 intensity="-i"
 # intensity="--no-intensity"
 
-DAYS=14
 # HACK: original latitude is giving 1ha fire in current fuel grids
 # NOTE: could be how random numbers are generated from location
 # latitude=52.01
@@ -55,7 +66,9 @@ sed -i "s/MAXIMUM_TIME = .*/MAXIMUM_TIME = 0/g" settings.ini
 dates="[$(seq -s, ${DAYS})]"
 
 FILE_WX="${DIR_IN}/wx_daily_in.csv"
-find "${DIR_OUT}" -type f -print -delete
+
+rm -rf "${DIR_OUT}"
+mkdir -p "${DIR_OUT}"
 
 ${USE_TIME} \
   ./firestarr "${DIR_OUT}" \
@@ -85,6 +98,7 @@ else
   #   find . -type f -printf '%P\n' | xargs -I {} mv {} "${FIX}/${FIX}_{}"
   #   # ${DIR_OUT}/C2_S000_A000_WD180.0_WS020.0_arrival.tif
   # fi
+  find "${DIR_OUT}" -name "interim*" -delete
   TEST_FOLDER=$(ls -d1 ${DIR_OUT})
   if [ $(echo "${TEST_FILES}" | wc -l) -ne 1 ]; then
       echo "ERROR: EXPECTED EXACTLY ONE TEST FOLDER"
