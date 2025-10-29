@@ -17,7 +17,7 @@ MathSize FuelD1::isfD1(const SpreadInfo& spread, const MathSize ros_multiplier, 
  */
 [[nodiscard]] static MathSize calculate_surface_fuel_consumption_c1(const MathSize ffmc) noexcept
 {
-  return max(0.0, 0.75 + ((ffmc > 84) ? 0.75 : -0.75) * sqrt(1 - exp(-0.23 * (ffmc - 84))));
+  return max(0.0, 0.75 + ((ffmc > 84) ? 0.75 : -0.75) * sqrt(1 - exp(-0.23 * abs(ffmc - 84))));
 }
 /**
  * \brief Surface Fuel Consumption (SFC) (kg/m^2) [GLC-X-10 eq 9a/9b]
