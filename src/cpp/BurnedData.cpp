@@ -67,7 +67,9 @@ uptr<BurnedData::dtype> BurnedData::from_grid(auto& grid, auto fct)
     for (Idx c = 0; c < grid.columns(); ++c)
     {
       const Location location(r, c);
-      (*result)[location.hash()] = (nullptr == fct(grid.at(location)));
+      // HACK: just mark outside edge as unburnable so we never need to check
+      bool is_outer = 0 == r || 0 == c || (grid.rows() - 1) == r || (grid.columns() - 1) == c;
+      (*result)[location.hash()] = is_outer || (nullptr == fct(grid.at(location)));
     }
   }
   return result;

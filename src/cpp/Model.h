@@ -190,6 +190,14 @@ public:
    */
   [[nodiscard]] constexpr Clock::duration timeLimit() const { return time_limit_; }
   /**
+   * \brief Time between generating interim outputs (s)
+   * \return Time between generating interim outputs (s)
+   */
+  [[nodiscard]] constexpr Clock::duration interimTimeLimit() const
+  {
+    return interim_save_interval_;
+  }
+  /**
    * \brief Whether or not simulation has exceeded any limits that mean it should stop
    * \return Whether or not simulation has exceeded any limits that mean it should stop
    */
@@ -234,6 +242,7 @@ public:
    * \return std::chrono::seconds  Duration model has been running for
    */
   [[nodiscard]] std::chrono::seconds runTime() const;
+  [[nodiscard]] std::chrono::seconds timeSinceLastSave() const;
   /**
    * \brief Create a ProbabilityMap with the same extent as this
    * \param time Time in simulation this ProbabilityMap represents
@@ -244,7 +253,7 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \return ProbabilityMap with the same extent as this
    */
-  [[nodiscard]] ProbabilityMap* makeProbabilityMap(
+  [[nodiscard]] shared_ptr<ProbabilityMap> makeProbabilityMap(
     DurationSize time,
     DurationSize start_time,
     int min_value,
@@ -342,7 +351,7 @@ private:
    * \param start_day Start day for simulation
    * \return Map of times to ProbabilityMap for that time
    */
-  map<DurationSize, ProbabilityMap*> runIterations(
+  map<DurationSize, shared_ptr<ProbabilityMap>> runIterations(
     const StartPoint& start_point,
     DurationSize start,
     Day start_day
@@ -355,7 +364,7 @@ private:
    * Save probability rasters
    */
   DurationSize saveProbabilities(
-    map<DurationSize, ProbabilityMap*>& probabilities,
+    map<DurationSize, shared_ptr<ProbabilityMap>>& probabilities,
     const Day start_day,
     const bool is_interim
   );
@@ -389,6 +398,14 @@ private:
    */
   Clock::duration time_limit_;
   /**
+   * \brief Time of last interim save
+   */
+  Clock::time_point no_interim_save_since_;
+  /**
+   * \briefTime between generating interim outputs
+   */
+  Clock::duration interim_save_interval_;
+  /**
    * \brief Perimeter to use for initializing simulations
    */
   shared_ptr<Perimeter> perimeter_ = nullptr;
@@ -416,6 +433,38 @@ private:
    * \brief If simulation is out of time and should stop
    */
   bool is_out_of_time_ = false;
+  /**
+   * \brief If simulation is past the time interval between interim outputs
+   */
+  bool should_output_interim_ = false;
+  /**
+   * \brief If simulation is being cancelled
+   */
+  bool is_being_cancelled_ = false;
+  /**
+   * \brief How many scenarios have been completed
+   */
+  atomic<size_t> scenarios_done_ = 0;
+  /**
+   * \brief How many scenarios out of first iteration have been completed
+   */
+  atomic<size_t> scenarios_required_done_ = 0;
+  /**
+   * \brief Scenarios completed at time of last interim save
+   */
+  atomic<size_t> scenarios_last_save_ = 0;
+  /**
+   * \brief Number of scenarios per iteration
+   */
+  size_t scenarios_per_iteration_ = 0;
+  /**
+   * \brief How many iterations have been completed
+   */
+  size_t iterations_done_ = 0;
+  /**
+   * \brief If interim outputs are different than last time they were saved
+   */
+  bool interim_changed_ = true;
   /**
    * \brief If simulation is over max simulation count
    */

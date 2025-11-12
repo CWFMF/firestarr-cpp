@@ -536,7 +536,7 @@ void saveProbabilities(
   out.close();
 }
 #endif
-Scenario* Scenario::run(map<DurationSize, ProbabilityMap*>* probabilities)
+Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities)
 {
 #ifdef DEBUG_SIMULATION
   log_check_fatal(ran(), "Scenario has already run");

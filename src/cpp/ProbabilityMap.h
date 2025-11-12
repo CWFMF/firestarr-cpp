@@ -10,6 +10,16 @@
 #include "Util.h"
 namespace fs
 {
+/**
+ * \brief The code to burn into probability maps where the perimeter is to represent the status of
+ * the sims
+ */
+enum ProcessingStatus : size_t
+{
+  unprocessed = 2,
+  processing = 3,
+  processed = 4,
+};
 class Model;
 class IntensityMap;
 /**
@@ -21,9 +31,9 @@ public:
   ProbabilityMap() = delete;
   ~ProbabilityMap();
   ProbabilityMap(const ProbabilityMap& rhs) noexcept = delete;
-  ProbabilityMap(ProbabilityMap&& rhs) noexcept = delete;
+  ProbabilityMap(ProbabilityMap&& rhs) noexcept = default;
   ProbabilityMap& operator=(const ProbabilityMap& rhs) noexcept = delete;
-  ProbabilityMap& operator=(ProbabilityMap&& rhs) noexcept = delete;
+  ProbabilityMap& operator=(ProbabilityMap&& rhs) noexcept = default;
   /**
    * \brief Constructor
    * \param time Time in simulation this ProbabilityMap represents
@@ -35,19 +45,15 @@ public:
    * \param grid_info GridBase to use for extent of this
    */
   ProbabilityMap(
-    DurationSize time,
-    DurationSize start_time,
-    int min_value,
-    int low_max,
-    int med_max,
-    int max_value,
-    const GridBase& grid_info
+    const DurationSize time,
+    const DurationSize start_time,
+    const int min_value,
+    const int low_max,
+    const int med_max,
+    const int max_value,
+    const GridBase& grid_info,
+    const shared_ptr<Perimeter> perimeter
   );
-  /**
-   * \brief Assign perimeter to use for marking cells as initial perimeter
-   * \param perimeter Ignition grid to store for marking in outputs
-   */
-  void setPerimeter(const Perimeter* const perimeter);
   /**
    * \brief Combine results from another ProbabilityMap into this one
    * \param rhs ProbabilityMap to combine from
@@ -67,12 +73,13 @@ public:
    * \brief Save total, low, moderate, and high maps, and output information to log
    * \param start_time Start time of simulation
    * \param time Time for these maps
+   * \param processing_status Stage in processing for simulations
    */
   [[nodiscard]] FileList saveAll(
     string_view output_directory,
     const tm& start_time,
     DurationSize time,
-    const bool is_interim
+    const ProcessingStatus processing_status
   ) const;
   /**
    * \brief Clear maps and return to initial state
@@ -84,11 +91,6 @@ public:
   static void deleteInterim();
 
 private:
-  /**
-   * \brief Create a copy of this that is empty
-   * \return New empty Probability with same range bounds and times
-   */
-  ProbabilityMap* copyEmpty() const;
   /**
    * \brief List of sizes of IntensityMaps that have been added
    * \return List of sizes of IntensityMaps that have been added
@@ -110,8 +112,11 @@ private:
    * \param base_name Base name of file to save into
    * \return FileList of file names saved to
    */
-  [[nodiscard]] FileList saveSizes(const string_view output_directory, const string_view base_name)
-    const;
+  [[nodiscard]] FileList saveSizes(
+    const string_view output_directory,
+    const string_view base_name,
+    const ProcessingStatus processing_status
+  ) const;
   /**
    * \brief Save map representing all intensities
    * \param output_directory Directory to save to
@@ -121,7 +126,7 @@ private:
   [[nodiscard]] FileList saveTotal(
     const string_view output_directory,
     const string_view base_name,
-    const bool is_interim
+    const ProcessingStatus processing_status
   ) const;
   /**
    * \brief Save map representing all intensities occurrence
@@ -131,7 +136,8 @@ private:
    */
   [[nodiscard]] FileList saveTotalCount(
     const string_view output_directory,
-    const string_view base_name
+    const string_view base_name,
+    const ProcessingStatus processing_status
   ) const;
   /**
    * \brief Save map representing high intensities
@@ -139,8 +145,11 @@ private:
    * \param base_name Base file name to save to
    * \return FileList of file names saved to
    */
-  [[nodiscard]] FileList saveHigh(const string_view output_directory, const string_view base_name)
-    const;
+  [[nodiscard]] FileList saveHigh(
+    const string_view output_directory,
+    const string_view base_name,
+    const ProcessingStatus processing_status
+  ) const;
   /**
    * \brief Save map representing moderate intensities
    * \param output_directory Directory to save to
@@ -149,7 +158,8 @@ private:
    */
   [[nodiscard]] FileList saveModerate(
     const string_view output_directory,
-    const string_view base_name
+    const string_view base_name,
+    const ProcessingStatus processing_status
   ) const;
   /**
    * \brief Save map representing low intensities
@@ -157,14 +167,20 @@ private:
    * \param base_name Base file name to save to
    * \return FileList of file names saved to
    */
-  [[nodiscard]] FileList saveLow(const string_view output_directory, const string_view base_name)
-    const;
+  [[nodiscard]] FileList saveLow(
+    const string_view output_directory,
+    const string_view base_name,
+    const ProcessingStatus processing_status
+  ) const;
 
 private:
   /**
    * \brief Make note of any interim files for later deletion
    */
-  [[nodiscard]] FileList record_if_interim(FileList&& files) const;
+  [[nodiscard]] FileList record_if_interim(
+    FileList&& files,
+    const ProcessingStatus processing_status
+  ) const;
   /**
    * \brief Save probability file and record filename if interim
    * \return Path for file that was written
@@ -172,12 +188,15 @@ private:
   template <class R>
   [[nodiscard]] FileList saveToProbabilityFile(
     const GridMap<size_t>& grid,
-    const string_view dir,
+    const string_view output_directory,
     const string_view base_name,
-    const R divisor
+    const R divisor,
+    const ProcessingStatus processing_status
   ) const
   {
-    return record_if_interim(grid.saveToProbabilityFile(dir, base_name, divisor));
+    return record_if_interim(
+      grid.saveToProbabilityFile(output_directory, base_name, divisor), processing_status
+    );
   };
   /**
    * \brief Map representing all intensities
@@ -199,14 +218,18 @@ private:
    * \brief List of sizes for perimeters that have been added
    */
   vector<MathSize> sizes_{};
+
+public:
   /**
    * \brief Time in simulation this ProbabilityMap represents
    */
-  const DurationSize time_;
+  const DurationSize time;
   /**
    * \brief Start time of simulation
    */
-  const DurationSize start_time_;
+  const DurationSize start_time;
+
+private:
   /**
    * \brief Mutex for parallel access
    */
@@ -230,7 +253,7 @@ private:
   /**
    * \brief Initial ignition grid to apply to outputs
    */
-  const Perimeter* perimeter_{nullptr};
+  const shared_ptr<Perimeter> perimeter_;
 };
 }
 #endif

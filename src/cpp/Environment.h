@@ -137,13 +137,14 @@ public:
    * \param max_value Upper bound of 'high' intensity range
    * \return ProbabilityMap with the same extent as this
    */
-  [[nodiscard]] ProbabilityMap* makeProbabilityMap(
+  [[nodiscard]] shared_ptr<ProbabilityMap> makeProbabilityMap(
     DurationSize time,
     DurationSize start_time,
     int min_value,
     int low_max,
     int med_max,
-    int max_value
+    int max_value,
+    const shared_ptr<Perimeter> perimeter
   ) const;
   /**
    * \brief Create a GridMap<Other> covering this Environment
