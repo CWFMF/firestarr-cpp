@@ -38,16 +38,19 @@ Environment Environment::load(
     point
   );
 }
-ProbabilityMap* Environment::makeProbabilityMap(
+shared_ptr<ProbabilityMap> Environment::makeProbabilityMap(
   const DurationSize time,
   const DurationSize start_time,
   const int min_value,
   const int low_max,
   const int med_max,
-  const int max_value
+  const int max_value,
+  const shared_ptr<Perimeter> perimeter
 ) const
 {
-  return new ProbabilityMap(time, start_time, min_value, low_max, med_max, max_value, cells_);
+  return make_shared<ProbabilityMap>(
+    time, start_time, min_value, low_max, med_max, max_value, cells_, perimeter
+  );
 }
 Environment Environment::loadEnvironment(
   const string_view path,

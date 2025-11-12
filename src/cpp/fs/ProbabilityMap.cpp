@@ -4,9 +4,6 @@
 #include "IntensityMap.h"
 namespace fs
 {
-static constexpr size_t VALUE_UNPROCESSED = 2;
-static constexpr size_t VALUE_PROCESSING = 3;
-static constexpr size_t VALUE_PROCESSED = 4;
 /**
  * \brief List of interim files that were saved
  */
@@ -24,27 +21,19 @@ ProbabilityMap::ProbabilityMap(
   const int low_max,
   const int med_max,
   const int max_value,
-  const GridBase& grid_info
+  const GridBase& grid_info,
+  const shared_ptr<Perimeter> perimeter
 )
   : all_(GridMap<size_t>(grid_info, 0)), high_(GridMap<size_t>(grid_info, 0)),
-    med_(GridMap<size_t>(grid_info, 0)), low_(GridMap<size_t>(grid_info, 0)), time_(time),
-    start_time_(start_time), min_value_(min_value), max_value_(max_value), low_max_(low_max),
-    med_max_(med_max), perimeter_(nullptr)
+    med_(GridMap<size_t>(grid_info, 0)), low_(GridMap<size_t>(grid_info, 0)), time(time),
+    start_time(start_time), min_value_(min_value), max_value_(max_value), low_max_(low_max),
+    med_max_(med_max), perimeter_(perimeter)
 { }
-ProbabilityMap* ProbabilityMap::copyEmpty() const
-{
-  return new ProbabilityMap(time_, start_time_, min_value_, low_max_, med_max_, max_value_, all_);
-}
-void ProbabilityMap::setPerimeter(const Perimeter* const perimeter)
-{
-  lock_guard<mutex> lock(mutex_);
-  perimeter_ = perimeter;
-}
 void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
 {
 #ifndef DEBUG_PROBABILITY
-  logging::check_fatal(rhs.time_ != time_, "Wrong time");
-  logging::check_fatal(rhs.start_time_ != start_time_, "Wrong start time");
+  logging::check_fatal(rhs.time != time, "Wrong time");
+  logging::check_fatal(rhs.start_time != start_time, "Wrong start time");
   logging::check_fatal(rhs.min_value_ != min_value_, "Wrong min value");
   logging::check_fatal(rhs.max_value_ != max_value_, "Wrong max value");
   logging::check_fatal(rhs.low_max_ != low_max_, "Wrong low max value");
@@ -115,7 +104,7 @@ void ProbabilityMap::show() const
   lock_guard<mutex> lock(mutex_);
   // even if we only ran the actuals we'll still have multiple scenarios
   // with different randomThreshold values
-  const auto day = static_cast<int>(time_ - floor(start_time_));
+  const auto day = static_cast<int>(time - floor(start_time));
   const auto s = getStatistics();
   logging::note(
     "Fire size at end of day %d: %0.1f ha - %0.1f ha (mean %0.1f ha, median %0.1f ha)",
@@ -126,33 +115,31 @@ void ProbabilityMap::show() const
     s.median()
   );
 }
-[[nodiscard]] FileList ProbabilityMap::record_if_interim(FileList&& files) const
+[[nodiscard]] FileList ProbabilityMap::record_if_interim(
+  FileList&& files,
+  const ProcessingStatus processing_status
+) const
 {
-  lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
-  for (const auto& f : files)
+  if (processed == processing_status)
   {
-    const auto filename = f.c_str();
-    logging::verbose("Checking if %s is interim", filename);
-    if (nullptr != strstr(filename, "interim_"))
-    {
-      const auto filename = f.c_str();
-      logging::verbose("Checking if %s is interim", filename);
-      if (nullptr != strstr(filename, "interim_"))
-      {
-        logging::verbose("Recording %s as interim", filename);
-        // is an interim file, so keep path for later deleting
-        PATHS_INTERIM.emplace(filename);
-        logging::check_fatal(
-          !PATHS_INTERIM.contains(filename), "Expected %s to be in interim files list", filename
-        );
-      }
-    }
+    return files;
+  }
+  lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
+  for (const auto& filename : files)
+  {
+    logging::verbose("Recording %s as interim", filename.c_str());
+    // is an interim file, so keep path for later deleting
+    PATHS_INTERIM.emplace(filename);
+    logging::check_fatal(
+      !PATHS_INTERIM.contains(filename), "Expected %s to be in interim files list", filename.c_str()
+    );
   }
   return files;
 }
 [[nodiscard]] FileList ProbabilityMap::saveSizes(
   const string_view output_directory,
-  const string_view base_name
+  const string_view base_name,
+  const ProcessingStatus processing_status
 ) const
 {
   const auto filename = string(output_directory) + string(base_name) + ".csv";
@@ -168,7 +155,7 @@ void ProbabilityMap::show() const
     out << s << "\n";
   }
   out.close();
-  return record_if_interim({filename});
+  return record_if_interim({filename}, processing_status);
 }
 string make_string(const char* name, const tm& t, const int day)
 {
@@ -205,11 +192,12 @@ void ProbabilityMap::deleteInterim()
   const string_view output_directory,
   const tm& start_time,
   const DurationSize time,
-  const bool is_interim
+  const ProcessingStatus processing_status
 ) const
 {
   lock_guard<mutex> lock(mutex_);
   FileList files{};
+  const auto is_interim = processed != processing_status;
   auto t = start_time;
   auto ticks = mktime(&t);
   const auto day = static_cast<int>(round(time));
@@ -230,7 +218,7 @@ void ProbabilityMap::deleteInterim()
         this,
         output_directory,
         fix_string("probability"),
-        is_interim
+        processing_status
       ));
     }
     if (Settings::saveOccurrence())
@@ -240,28 +228,45 @@ void ProbabilityMap::deleteInterim()
         &ProbabilityMap::saveTotalCount,
         this,
         output_directory,
-        fix_string("occurrence")
+        fix_string("occurrence"),
+        processing_status
       ));
     }
     if (Settings::saveIntensity())
     {
       results.push_back(async(
-        launch::async, &ProbabilityMap::saveLow, this, output_directory, fix_string("intensity_L")
+        launch::async,
+        &ProbabilityMap::saveLow,
+        this,
+        output_directory,
+        fix_string("intensity_L"),
+        processing_status
       ));
       results.push_back(async(
         launch::async,
         &ProbabilityMap::saveModerate,
         this,
         output_directory,
-        fix_string("intensity_M")
+        fix_string("intensity_M"),
+        processing_status
       ));
       results.push_back(async(
-        launch::async, &ProbabilityMap::saveHigh, this, output_directory, fix_string("intensity_H")
+        launch::async,
+        &ProbabilityMap::saveHigh,
+        this,
+        output_directory,
+        fix_string("intensity_H"),
+        processing_status
       ));
     }
-    results.push_back(
-      async(launch::async, &ProbabilityMap::saveSizes, this, output_directory, fix_string("sizes"))
-    );
+    results.push_back(async(
+      launch::async,
+      &ProbabilityMap::saveSizes,
+      this,
+      output_directory,
+      fix_string("sizes"),
+      processing_status
+    ));
     for (auto& result : results)
     {
       result.wait();
@@ -272,26 +277,30 @@ void ProbabilityMap::deleteInterim()
   {
     if (Settings::saveProbability())
     {
-      files.append_range(saveTotal(output_directory, fix_string("probability"), is_interim));
+      files.append_range(saveTotal(output_directory, fix_string("probability"), processing_status));
     }
     if (Settings::saveOccurrence())
     {
-      files.append_range(saveTotalCount(output_directory, fix_string("occurrence")));
+      files.append_range(
+        saveTotalCount(output_directory, fix_string("occurrence"), processing_status)
+      );
     }
     if (Settings::saveIntensity())
     {
-      files.append_range(saveLow(output_directory, fix_string("intensity_L")));
-      files.append_range(saveModerate(output_directory, fix_string("intensity_M")));
-      files.append_range(saveHigh(output_directory, fix_string("intensity_H")));
+      files.append_range(saveLow(output_directory, fix_string("intensity_L"), processing_status));
+      files.append_range(
+        saveModerate(output_directory, fix_string("intensity_M"), processing_status)
+      );
+      files.append_range(saveHigh(output_directory, fix_string("intensity_H"), processing_status));
     }
-    files.append_range(saveSizes(output_directory, fix_string("sizes")));
+    files.append_range(saveSizes(output_directory, fix_string("sizes"), processing_status));
   }
   return files;
 }
 [[nodiscard]] FileList ProbabilityMap::saveTotal(
   const string_view output_directory,
   const string_view base_name,
-  const bool is_interim
+  const ProcessingStatus processing_status
 ) const
 {
   // FIX: do this for other outputs too
@@ -301,41 +310,49 @@ void ProbabilityMap::deleteInterim()
     for (auto loc : perimeter_->burned())
     {
       // multiply initial perimeter cells so that probability shows processing status
-      with_perim.data[loc] *= (is_interim ? VALUE_PROCESSING : VALUE_PROCESSED);
+      with_perim.data[loc] = max(static_cast<size_t>(1), with_perim.data[loc]) * processing_status;
     }
   }
   return saveToProbabilityFile<float>(
-    with_perim, output_directory, base_name, static_cast<float>(numSizes())
+    with_perim, output_directory, base_name, static_cast<float>(numSizes()), processing_status
   );
 }
 [[nodiscard]] FileList ProbabilityMap::saveTotalCount(
   const string_view output_directory,
-  const string_view base_name
+  const string_view base_name,
+  const ProcessingStatus processing_status
 ) const
 {
-  return saveToProbabilityFile<uint32_t>(all_, output_directory, base_name, 1);
+  return saveToProbabilityFile<uint32_t>(all_, output_directory, base_name, 1, processing_status);
 }
-FileList ProbabilityMap::saveHigh(const string_view output_directory, const string_view base_name)
-  const
+FileList ProbabilityMap::saveHigh(
+  const string_view output_directory,
+  const string_view base_name,
+  const ProcessingStatus processing_status
+) const
 {
   return saveToProbabilityFile<float>(
-    high_, output_directory, base_name, static_cast<float>(numSizes())
+    high_, output_directory, base_name, static_cast<float>(numSizes()), processing_status
   );
 }
 FileList ProbabilityMap::saveModerate(
   const string_view output_directory,
-  const string_view base_name
+  const string_view base_name,
+  const ProcessingStatus processing_status
 ) const
 {
   return saveToProbabilityFile<float>(
-    med_, output_directory, base_name, static_cast<float>(numSizes())
+    med_, output_directory, base_name, static_cast<float>(numSizes()), processing_status
   );
 }
-FileList ProbabilityMap::saveLow(const string_view output_directory, const string_view base_name)
-  const
+FileList ProbabilityMap::saveLow(
+  const string_view output_directory,
+  const string_view base_name,
+  const ProcessingStatus processing_status
+) const
 {
   return saveToProbabilityFile<float>(
-    low_, output_directory, base_name, static_cast<float>(numSizes())
+    low_, output_directory, base_name, static_cast<float>(numSizes()), processing_status
   );
 }
 void ProbabilityMap::reset()

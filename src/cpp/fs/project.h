@@ -1,12 +1,16 @@
+#ifndef FS_PROJECT_H
+#define FS_PROJECT_H
 #include "stdafx.h"
 #include <proj.h>
 #include <stdio.h>
 #include "Point.h"
+namespace fs
+{
 using fs::FullCoordinates;
 using fs::MathSize;
 unique_ptr<FullCoordinates> to_proj4(
   const string& proj4,
-  const Point& point,
+  const fs::Point& point,
   MathSize* x,
   MathSize* y
 )
@@ -60,3 +64,5 @@ unique_ptr<FullCoordinates> to_proj4(
   proj_context_destroy(C); /* may be omitted in the single threaded case */
   return {};
 }
+}
+#endif

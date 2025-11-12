@@ -66,12 +66,12 @@ public:
    * \param fuel Fuel
    */
   constexpr Cell(
-    const HashSize hash,
+    const HashSize hash_value,
     const SlopeSize slope,
     const AspectSize aspect,
     const FuelCodeSize& fuel
   ) noexcept
-    : Position<Topo>(static_cast<Topo>(hash & HashMask) | hashCell(slope, aspect, fuel))
+    : Position<Topo>(static_cast<Topo>(hash_value & HashMask) | hashCell(slope, aspect, fuel))
   { }
   /**
    * \brief Constructor
