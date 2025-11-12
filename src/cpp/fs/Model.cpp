@@ -345,7 +345,7 @@ void Model::makeStarts(
     perimeter_ = make_shared<Perimeter>(perim, point, *env_);
     // HACK: if perimeter is only one cell then use position not perimeter so it can bounce if
     // non-fuel
-    const auto burned = perimeter_->burned();
+    const auto& burned = perimeter_->burned;
     const auto s = burned.size();
     if (1 >= s)
     {
@@ -364,17 +364,17 @@ void Model::makeStarts(
   if (size > 0)
   {
     logging::note("Initializing from size %d ha", size);
-    perimeter_ = make_shared<Perimeter>(cell(location), size, *env_);
+    perimeter_ = make_shared<Perimeter>(location, size, *env_);
   }
   // figure out where the fire can exist
-  if (nullptr != perimeter_ && !perimeter_->burned().empty())
+  if (nullptr != perimeter_ && !perimeter_->burned.empty())
   {
     logging::check_fatal(size != 0 && !perim.empty(), "Can't specify size and perimeter");
     // we have a perimeter to start from
     // HACK: make sure this isn't empty
     starts_.push_back(make_shared<Cell>(cell(location)));
     logging::note(
-      "Fire starting with size %0.1f ha", perimeter_->burned().size() * env_->cellSize() / 100.0
+      "Fire starting with size %0.1f ha", perimeter_->burned.size() * env_->cellSize() / 100.0
     );
   }
   else
@@ -382,7 +382,7 @@ void Model::makeStarts(
     if (nullptr != perimeter_)
     {
       logging::check_fatal(
-        !perimeter_->burned().empty(), "Not using perimeter so it should be empty"
+        !perimeter_->burned.empty(), "Not using perimeter so it should be empty"
       );
       logging::note("Using fire perimeter results in empty fire - changing to use point");
       perimeter_ = nullptr;
