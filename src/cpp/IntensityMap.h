@@ -94,14 +94,6 @@ public:
   }
 
 public:
-  /**
-   * \brief Update Location with specified values
-   * \param location Location to burn
-   * \param intensity Intensity to burn with (kW/m)
-   * \param ros Rate of spread to check against maximu (m/min)
-   * \param raz Spread azimuth for ros
-   */
-  void burn(const Location& location, IntensitySize intensity, MathSize ros, fs::Direction raz);
   template <class P>
   void burn(
     const Position<P>& position,
@@ -113,7 +105,15 @@ public:
     burn(Location{position.hash()}, intensity, ros, raz);
   }
   /**
-   * \brief Save contents to an ASCII file
+   * \brief Update Location with specified values
+   * \param location Location to burn
+   * \param intensity Intensity to burn with (kW/m)
+   * \param ros Rate of spread to check against maximu (m/min)
+   * \param raz Spread azimuth for ros
+   */
+  void burn(const Location& location, IntensitySize intensity, MathSize ros, fs::Direction raz);
+  /**
+   * \brief Save contents to file
    * \param dir Directory to save to
    * \param base_name Base file name to save to
    * \return FileList of file names saved to

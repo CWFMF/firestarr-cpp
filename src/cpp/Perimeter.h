@@ -4,12 +4,26 @@
 #ifndef FS_PERIMETER_H
 #define FS_PERIMETER_H
 #include "stdafx.h"
-#include "Location.h"
+#include "GridMap.h"
 #include "Point.h"
 namespace fs
 {
 class FwiWeather;
 class Environment;
+/**
+ * \brief A map of locations which have burned in a Scenario.
+ * Use this class so that we can filter by fuel cells but not expose the members
+ */
+class BurnedMap final : public GridMap<unsigned char>
+{
+public:
+  /**
+   * \brief Constructor
+   * \param perim_grid Grid representing Perimeter to initialize from
+   * \param env Environment to use as base
+   */
+  BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const Environment& env);
+};
 /**
  * \brief Perimeter for an existing fire to initialize a simulation with.
  */
@@ -29,31 +43,18 @@ public:
    * \param size Size of Perimeter to create
    * \param env Environment to apply Perimeter to
    */
-  Perimeter(const Location& location, size_t size, const Environment& env);
-  template <class P>
-  Perimeter(const Position<P>& position, size_t size, const Environment& env)
-    : Perimeter(Location{position.hash()}, size, env)
-  { }
+  Perimeter(const Location& location, const size_t size, const Environment& env);
   /**
    * \brief List of all burned Locations
-   * \return All Locations burned by this Perimeter
    */
-  [[nodiscard]] const list<Location>& burned() const noexcept;
+  const list<Location> burned;
   /**
    * \brief List of all Locations along the edge of this Perimeter
-   * \return All Locations along the edge of this Perimeter
    */
-  [[nodiscard]] const list<Location>& edge() const noexcept;
+  const list<Location> edge;
 
 private:
-  /**
-   * \brief List of all burned Locations
-   */
-  list<Location> burned_;
-  /**
-   * \brief List of all Locations along the edge of this Perimeter
-   */
-  list<Location> edge_;
+  Perimeter(const BurnedMap& burned_map);
 };
 }
 #endif

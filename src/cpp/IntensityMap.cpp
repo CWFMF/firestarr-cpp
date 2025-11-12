@@ -30,8 +30,8 @@ void IntensityMap::applyPerimeter(const Perimeter& perimeter) noexcept
   logging::verbose("Applying burned cells");
   std::for_each(
     std::execution::par_unseq,
-    perimeter.burned().begin(),
-    perimeter.burned().end(),
+    perimeter.burned.cbegin(),
+    perimeter.burned.cend(),
     [this](const auto& location) { ignite(location); }
   );
 }

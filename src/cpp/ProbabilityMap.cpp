@@ -309,7 +309,7 @@ void ProbabilityMap::deleteInterim()
   auto with_perim = all_;
   if (nullptr != perimeter_)
   {
-    for (auto loc : perimeter_->burned())
+    for (auto loc : perimeter_->burned)
     {
       // multiply initial perimeter cells so that probability shows processing status
       with_perim.data[loc] = max(static_cast<size_t>(1), with_perim.data[loc]) * processing_status;

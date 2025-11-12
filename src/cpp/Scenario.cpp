@@ -563,7 +563,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
     log_verbose("Perimeter applied");
     const auto& env = model().environment();
     log_verbose("Igniting points");
-    for (const auto& location : perimeter_->edge())
+    for (const auto& location : perimeter_->edge)
     {
       const auto cell = env.cell(location);
 #ifdef DEBUG_SIMULATION
