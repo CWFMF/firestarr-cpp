@@ -11,8 +11,8 @@ else
   # set -e
   DIR_TEST="$(dirname $(realpath "$0"))"
 fi
-# TEST_SH=${DIR_TEST}/10N_50651.sh
-TEST_SH=${DIR_TEST}/slow.sh
+TEST_SH=${DIR_TEST}/10N_50651.sh
+# TEST_SH=${DIR_TEST}/slow.sh
 
 DAYS=14
 if [ "" != "$1" ]; then
