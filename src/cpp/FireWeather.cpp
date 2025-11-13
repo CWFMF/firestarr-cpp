@@ -448,7 +448,7 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
     const auto ln_x = log(x);
     const auto exp_x = exp(x);
     const auto exp_neg_x = exp(-x);
-    const auto add_wx = [&r, &day, &wx, &min_date](const int hour, const Ffmc& ffmc) {
+    const auto add_wx = [&](const int hour, const Ffmc& ffmc) {
       r.at(time_index(day, hour, min_date)) = make_wx(wx, ffmc, hour);
     };
     add_wx(12, ffmc_1200(x, x_sq, x_cu, rt_x, exp_neg_x));
@@ -464,7 +464,7 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
   // just use high curve for last day
   const auto& wx_last = data.at(max_date);
   const auto x_last = wx_last.mcFfmcPct();
-  const auto add_last = [&r, &max_date, &min_date, &wx_last](const int hour, const Ffmc& ffmc) {
+  const auto add_last = [&](const int hour, const Ffmc& ffmc) {
     r.at(time_index(max_date + 1, hour, min_date)) = make_wx(wx_last, ffmc, hour);
   };
   add_last(6, ffmc_0600_high(x_last));
@@ -495,7 +495,7 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
     const auto diff_high = abs(for1200 - for1100_high);
     const auto diff_med = abs(for1200 - for1100_med);
     const auto diff_low = abs(for1200 - for1100_low);
-    const auto add_wx = [&r, &day, &wx_wind, &wx, &min_date](const int hour, const Ffmc& ffmc) {
+    const auto add_wx = [&](const int hour, const Ffmc& ffmc) {
       r.at(time_index(day + 1, hour, min_date)) = make_wx(wx_wind, wx, ffmc, hour);
     };
     // don't want to have 1100 be higher than 1200 but maybe that can happen
@@ -539,18 +539,15 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
     const auto wind_at_2000 = r.at(time_index(day, 20, min_date))->wind().speed().asValue();
     // need linear interpolation between 2000 and 0600
     const auto wind_slope = (wind_at_0600 - wind_at_2000) / 10.0;
-    const auto add_wx =
-      [&r, &day, &wx, &min_date, &wind_at_2000, &ffmc_at_2000, &wind_slope, &ffmc_slope](
-        const Day day_offset, const int hour, const int offset
-      ) {
-        const auto i = time_index(day + day_offset, hour, min_date);
-        r.at(i) = make_wx(
-          Speed(wind_at_2000 + wind_slope * offset),
-          wx,
-          Ffmc(ffmc_at_2000 + ffmc_slope * offset),
-          hour
-        );
-      };
+    const auto add_wx = [&](const Day day_offset, const int hour, const int offset) {
+      const auto i = time_index(day + day_offset, hour, min_date);
+      r.at(i) = make_wx(
+        Speed(wind_at_2000 + wind_slope * offset),
+        wx,
+        Ffmc(ffmc_at_2000 + ffmc_slope * offset),
+        hour
+      );
+    };
     add_wx(0, 21, 1);
     add_wx(0, 22, 2);
     add_wx(0, 23, 3);
@@ -630,7 +627,7 @@ static vector<ptr<const FwiWeather>> make_constant_weather(
   static constexpr Precipitation PREC(0.0);
   const auto bui = Bui(dmc, dc);
   vector<ptr<const FwiWeather>> wx{static_cast<size_t>(YEAR_HOURS)};
-  std::generate(wx.begin(), wx.end(), [&wind, &ffmc, &dmc, &dc, &bui]() {
+  std::generate(wx.begin(), wx.end(), [&]() {
     return make_wx(FwiWeather{
       TEMP,
       RH,

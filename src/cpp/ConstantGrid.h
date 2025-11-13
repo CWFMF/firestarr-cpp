@@ -375,12 +375,9 @@ public:
     std::function<T(V, V)> convert
   )
   {
-    return with_tiff<ConstantGrid<T, V>>(
-      filename,
-      [&filename, &convert, &point](TIFF* tif, GTIF* gtif) {
-        return readTiff(filename, tif, gtif, point, convert);
-      }
-    );
+    return with_tiff<ConstantGrid<T, V>>(filename, [&](TIFF* tif, GTIF* gtif) {
+      return readTiff(filename, tif, gtif, point, convert);
+    });
   }
   /**
    * \brief Read a section of a TIFF into a ConstantGrid

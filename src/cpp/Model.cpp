@@ -423,9 +423,9 @@ Iteration Model::readScenarios(
 {
   // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
-  auto saves = Settings::outputDateOffsets();
-  auto save_individual = Settings::saveIndividual();
-  const auto setup_scenario = [&result, save_individual, &saves](Scenario* scenario) {
+  const auto saves = Settings::outputDateOffsets();
+  const auto save_individual = Settings::saveIndividual();
+  const auto setup_scenario = [&, save_individual](Scenario* scenario) {
     if (save_individual)
     {
       scenario->registerObserver(new IntensityObserver(*scenario));
@@ -831,25 +831,24 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
     );
   });
   auto threads = list<std::thread>{};
-  const auto finalize_probabilities =
-    [this, &start_day, &all_sizes, &is_being_cancelled, &threads, &timer, &probabilities]() {
-      // assume timer is cancelling everything
-      for (auto& t : threads)
+  const auto finalize_probabilities = [&]() {
+    // assume timer is cancelling everything
+    for (auto& t : threads)
+    {
+      if (t.joinable())
       {
-        if (t.joinable())
-        {
-          t.join();
-        }
+        t.join();
       }
-      if (timer.joinable())
-      {
-        timer.join();
-      }
-      return probabilities;
-    };
+    }
+    if (timer.joinable())
+    {
+      timer.join();
+    }
+    return probabilities;
+  };
   // if using surface just run each start through in a loop here
   size_t cur_start = 0;
-  auto reset_iter = [&cur_start, this, &mt_extinction, &mt_spread](Iteration& iter) {
+  auto reset_iter = [&](Iteration& iter) {
     if (Settings::surface())
     {
       if (cur_start >= starts_.size())
@@ -894,7 +893,7 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
       ));
     }
     auto run_scenario = [&](Scenario* s, size_t i, bool is_required) {
-      auto result = s->run(&all_probabilities[i]);
+      const auto result = s->run(&all_probabilities[i]);
       ++scenarios_done_;
       logging::extensive(
         "Done %ld scenarios in iteration %ld which %s required",
