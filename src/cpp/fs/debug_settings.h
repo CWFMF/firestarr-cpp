@@ -41,7 +41,7 @@
 #undef DEBUG_NEW_SPREAD_CHECK
 #undef DEBUG_NEW_SPREAD_VERBOSE
 #endif
-#if not(defined(NDEBUG)) || defined(DEBUG_DIRECTIONS) || defined(DEBUG_FUEL_VARIABLE)              \
+#if !defined(NDEBUG) || defined(DEBUG_DIRECTIONS) || defined(DEBUG_FUEL_VARIABLE)                  \
   || defined(DEBUG_FWI_WEATHER) || defined(DEBUG_GRIDS) || defined(DEBUG_POINTS)                   \
   || defined(DEBUG_PROBABILITY) || defined(DEBUG_SIMULATION) || defined(DEBUG_STATISTICS)          \
   || defined(DEBUG_WEATHER)
