@@ -581,8 +581,7 @@ FwiWeather::FwiWeather(
   : Weather(temp, rh, wind, prec), ffmc_(ffmc), dmc_(dmc), dc_(dc),
     // HACK: recalculate so that we can check that things are within tolerances
     isi_(Isi(isi.asValue(), wind.speed(), ffmc)), bui_(Bui(bui.asValue(), dmc, dc)),
-    fwi_(Fwi(fwi.asValue(), isi, bui)), mc_ffmc_pct_(ffmc_to_moisture(ffmc)),
-    mc_dmc_pct_(exp((dmc.asValue() - 244.72) / -43.43) + 20), ffmc_effect_(ffmc_effect(ffmc))
+    fwi_(Fwi(fwi.asValue(), isi, bui))
 { }
 FwiWeather::FwiWeather(
   const FwiWeather& yesterday,
@@ -653,4 +652,12 @@ FwiWeather::FwiWeather(
 ) noexcept
   : FwiWeather(temp, rh, wind, prec, ffmc, dmc, dc, Isi(wind.speed(), ffmc), Bui(dmc, dc))
 { }
+[[nodiscard]] MathSize FwiWeather::ffmcEffect() const { return ffmc_effect(ffmc_); }
+[[nodiscard]] MathSize FwiWeather::mcDmc() const { return mcDmcPct() / 100.0; }
+[[nodiscard]] MathSize FwiWeather::mcFfmc() const { return mcFfmcPct() / 100.0; }
+[[nodiscard]] MathSize FwiWeather::mcFfmcPct() const { return ffmc_to_moisture(ffmc_); }
+[[nodiscard]] MathSize FwiWeather::mcDmcPct() const
+{
+  return exp((dmc_.asValue() - 244.72) / -43.43) + 20;
+}
 }
