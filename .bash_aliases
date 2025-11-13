@@ -5,7 +5,7 @@ alias gd='git diff'
 alias gap='git add -p'
 alias vg='valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose'
 
-
+alias tc='./test_cloc.sh'
 alias fcc='./fcc.sh'
 alias fs='./find_shortest.sh'
 alias gp='./grep_prev.sh'
