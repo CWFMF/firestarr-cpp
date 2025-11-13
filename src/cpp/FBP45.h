@@ -1200,7 +1200,7 @@ public:
    */
   [[nodiscard]] MathSize grass_curing(const int nd, const FwiWeather& wx) const override
   {
-    return compare_by_season(*this, [&nd, &wx](const FuelType& fuel) {
+    return compare_by_season(*this, [&](const FuelType& fuel) {
       return fuel.grass_curing(nd, wx);
     });
   }

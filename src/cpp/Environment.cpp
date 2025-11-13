@@ -23,12 +23,11 @@ Environment Environment::load(
   if (Settings::runAsync())
   {
     logging::debug("Loading grids async");
-    auto fuel = async(launch::async, [&in_fuel, &point]() {
+    auto fuel = async(launch::async, [&]() {
       return FuelGrid::readTiff(in_fuel, point, Settings::fuelLookup());
     });
-    auto elevation = async(launch::async, [&in_elevation, &point]() {
-      return ElevationGrid::readTiff(in_elevation, point);
-    });
+    auto elevation =
+      async(launch::async, [&]() { return ElevationGrid::readTiff(in_elevation, point); });
     logging::debug("Waiting for grids");
     return Environment(fuel.get(), elevation.get(), point);
   }
@@ -329,13 +328,13 @@ void Environment::saveToFile(const string& output_directory) const
   {
     logging::debug("Saving simulation area");
     const auto lookup = Settings::fuelLookup();
-    auto convert_to_slope = [&elevation](const Cell& v) -> SlopeSize { return v.slope(); };
-    auto convert_to_aspect = [&elevation](const Cell& v) -> AspectSize { return v.aspect(); };
-    auto convert_to_area = [&elevation](const ElevationSize v) -> ElevationSize {
+    auto convert_to_slope = [](const Cell& v) -> SlopeSize { return v.slope(); };
+    auto convert_to_aspect = [](const Cell& v) -> AspectSize { return v.aspect(); };
+    auto convert_to_area = [&](const ElevationSize v) -> ElevationSize {
       // need to still be nodata if it was
       return (v == elevation.nodataValue()) ? v : 3;
     };
-    auto convert_to_fuelcode = [&lookup](const FuelType* const value) -> FuelSize {
+    auto convert_to_fuelcode = [&](const FuelType* const value) -> FuelSize {
       return lookup.fuelToCode(value);
     };
     fuel.saveToFile<FuelSize>(output_directory, "fuel", convert_to_fuelcode);
