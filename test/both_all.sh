@@ -20,7 +20,7 @@ else
   if [ "0" -ne "${RET}" ]; then
     RESULT=$RET
   fi
-  test/10N_50561.sh
+  test/10N_50651.sh
   RET=$?
   if [ "0" -ne "${RET}" ]; then
     RESULT=$RET
