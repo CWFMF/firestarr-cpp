@@ -167,7 +167,7 @@ public:
   ) const
   {
     const auto re = relative_error / (1 + relative_error);
-    const std::function<MathSize(size_t)> fct = [this](const size_t i) noexcept {
+    const std::function<MathSize(size_t)> fct = [&](const size_t i) noexcept {
       return T_VALUES[std::min(T_VALUES.size(), i) - 1] * sqrt(sampleVariance() / i) / abs(mean());
     };
     const auto cur_runs = n();

@@ -154,7 +154,7 @@ void register_setter(
   std::function<T()> fct
 )
 {
-  register_argument(v, help, required, [fct_set, fct] { fct_set(fct()); });
+  register_argument(v, help, required, [=] { fct_set(fct()); });
 }
 template <class T>
 void register_setter(T& variable, string v, string help, bool required, std::function<T()> fct)
@@ -163,18 +163,16 @@ void register_setter(T& variable, string v, string help, bool required, std::fun
 }
 void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help)
 {
-  register_argument(v, help, false, [not_inverse, fct] { fct(parse_flag(not_inverse)); });
+  register_argument(v, help, false, [=] { fct(parse_flag(not_inverse)); });
 }
 void register_flag(bool& variable, bool not_inverse, string v, string help)
 {
-  register_argument(v, help, false, [not_inverse, &variable] {
-    variable = parse_flag(not_inverse);
-  });
+  register_argument(v, help, false, [=, &variable] { variable = parse_flag(not_inverse); });
 }
 template <class T>
 void register_index(T& index, string v, string help, bool required)
 {
-  register_argument(v, help, required, [&index] { index = parse_index<T>(); });
+  register_argument(v, help, required, [&] { index = parse_index<T>(); });
 }
 int main(const int argc, const char* const argv[])
 {
@@ -413,10 +411,8 @@ int main(const int argc, const char* const argv[])
     // parse positional arguments
     // output directory is always the first thing
     size_t cur_arg = 0;
-    auto has_positional = [&cur_arg, &positional_args]() {
-      return (cur_arg < positional_args.size());
-    };
-    auto get_positional = [&cur_arg, &positional_args, &has_positional]() {
+    auto has_positional = [&]() { return (cur_arg < positional_args.size()); };
+    auto get_positional = [&]() {
       if (!has_positional())
       {
         fs::logging::error("Not enough positional arguments");
@@ -425,7 +421,7 @@ int main(const int argc, const char* const argv[])
       // return from front and advance to next
       return positional_args[cur_arg++];
     };
-    auto done_positional = [&cur_arg, &positional_args]() {
+    auto done_positional = [&]() {
       // should be exactly at size since increments after getting argument
       if (positional_args.size() != cur_arg)
       {

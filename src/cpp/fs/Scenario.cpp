@@ -688,7 +688,7 @@ CellPointsMap apply_offsets_spreadkey(
     offsets.cbegin(),
     offsets.cend(),
     offsets_after_duration.begin(),
-    [&duration, &arrival_time](const ROSOffset& r_p) {
+    [&](const ROSOffset& r_p) {
       const auto& intensity = std::get<0>(r_p);
       const auto& ros = std::get<1>(r_p);
       const auto& raz = std::get<2>(r_p);
@@ -876,16 +876,14 @@ void Scenario::scheduleFireSpread(const Event& event)
                     : max_duration);
   const auto new_time = time + duration / DAY_MINUTES;
   CellPointsMap cell_pts{};
-  auto spread = std::views::transform(
-    to_spread,
-    [this, &duration, &new_time](spreading_points::value_type& kv0) -> CellPointsMap {
+  auto spread =
+    std::views::transform(to_spread, [&](spreading_points::value_type& kv0) -> CellPointsMap {
       auto& key = kv0.first;
       const auto& offsets = spread_info_[key].offsets();
       spreading_points::mapped_type& cell_pts = kv0.second;
       auto r = apply_offsets_spreadkey(new_time, duration, offsets, cell_pts);
       return r;
-    }
-  );
+    });
   auto it = spread.begin();
   while (spread.end() != it)
   {
@@ -912,7 +910,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   // need to merge new points back into cells that didn't spread
   points_.merge(unburnable_, cell_pts);
   // if we move everything out of points_ we can parallelize this check?
-  do_each(points_.map_, [this, &new_time](pair<const Location, CellPoints>& kv) {
+  do_each(points_.map_, [&](pair<const Location, CellPoints>& kv) {
     const auto for_cell = cell(kv.first);
     CellPoints& pts = kv.second;
     // ******************* CHECK THIS BECAUSE IF SOMETHING IS IN HERE SHOULD IT ALWAYS HAVE

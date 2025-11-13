@@ -16,10 +16,10 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   }
   const auto b_semi = cos(atan(slope / 100.0));
   const auto slope_radians = to_radians(slope_azimuth);
-  const auto do_correction = [b_semi, slope_radians](const MathSize theta) noexcept {
+  const auto do_correction = [=](const MathSize theta) noexcept {
     // never gets called if isInvalid() so don't check
     // figure out how far the ground distance is in map distance horizontally
-    auto angle_unrotated = theta - slope_radians;
+    const auto angle_unrotated = theta - slope_radians;
     // if (to_degrees(angle_unrotated) == 270 || to_degrees(angle_unrotated) == 90)
     // {
     //   // CHECK: if we're going directly across the slope then horizontal distance is same as
@@ -46,7 +46,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets, tfc](const MathSize direction, const MathSize ros) {
+  const auto add_offset = [&, tfc](const MathSize direction, const MathSize ros) {
     if (ros < min_ros_)
     {
       return false;
@@ -78,9 +78,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   const auto flank_ros_sq = flank_ros * flank_ros;
   const auto a_sq_sub_c_sq = a_sq - (c * c);
   const auto ac = a * c;
-  const auto calculate_ros = [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](
-                               const MathSize theta
-                             ) noexcept {
+  const auto calculate_ros = [=](const MathSize theta) noexcept {
     const auto cos_t = cos(theta);
     const auto cos_t_sq = cos_t * cos_t;
     const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
@@ -95,9 +93,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       / cos_t
     );
   };
-  const auto add_offsets = [this, &correction_factor, &add_offset, head_raz](
-                             const MathSize angle_radians, const MathSize ros_flat
-                           ) {
+  const auto add_offsets = [&, head_raz](const MathSize angle_radians, const MathSize ros_flat) {
     if (ros_flat < min_ros_)
     {
       return false;
@@ -110,7 +106,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     added |= add_offset(direction, ros_flat * correction_factor(direction));
     return added;
   };
-  const auto add_offsets_calc_ros = [&add_offsets, &calculate_ros](const MathSize angle_radians) {
+  const auto add_offsets_calc_ros = [&](const MathSize angle_radians) {
     return add_offsets(angle_radians, calculate_ros(angle_radians));
   };
   bool added = add_offset(head_raz, head_ros);
@@ -152,7 +148,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [this, &offsets, tfc](const MathSize direction, const MathSize ros) {
+  const auto add_offset = [&, tfc](const MathSize direction, const MathSize ros) {
 #ifdef DEBUG_POINTS
     const auto s0 = offsets.size();
 #endif
@@ -197,9 +193,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   const auto flank_ros_sq = flank_ros * flank_ros;
   const auto a_sq_sub_c_sq = a_sq - (c * c);
   const auto ac = a * c;
-  const auto calculate_ros = [a, c, ac, flank_ros, a_sq, flank_ros_sq, a_sq_sub_c_sq](
-                               const MathSize theta
-                             ) noexcept {
+  const auto calculate_ros = [=](const MathSize theta) noexcept {
     const auto cos_t = cos(theta);
     const auto cos_t_sq = cos_t * cos_t;
     const auto f_sq_cos_t_sq = flank_ros_sq * cos_t_sq;
@@ -212,9 +206,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       / cos_t
     );
   };
-  const auto add_offsets = [this, &correction_factor, &add_offset, head_raz](
-                             const MathSize angle_radians, const MathSize ros_flat
-                           ) {
+  const auto add_offsets = [&, head_raz](const MathSize angle_radians, const MathSize ros_flat) {
     if (ros_flat < min_ros_)
     {
       return false;
@@ -227,7 +219,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     added |= add_offset(direction, ros_flat * correction_factor(direction));
     return added;
   };
-  const auto add_offsets_calc_ros = [&add_offsets, &calculate_ros](const MathSize angle_radians) {
+  const auto add_offsets_calc_ros = [&](const MathSize angle_radians) {
     return add_offsets(angle_radians, calculate_ros(angle_radians));
   };
   bool added = true;

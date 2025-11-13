@@ -228,7 +228,7 @@ public:
     const R divisor
   ) const
   {
-    auto div = [divisor](T value) -> R { return static_cast<R>(value / divisor); };
+    auto div = [=](T value) -> R { return static_cast<R>(value / divisor); };
     return this->template saveToFile<R>(dir, base_name, div);
   }
   /**

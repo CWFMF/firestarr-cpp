@@ -203,8 +203,8 @@ void ProbabilityMap::deleteInterim()
   const auto day = static_cast<int>(round(time));
   ticks += (static_cast<size_t>(day) - t.tm_yday - 1) * DAY_SECONDS;
   t = *localtime(&ticks);
-  auto fix_string = [&t, &day, &is_interim](string prefix) {
-    auto text = (is_interim ? "interim_" : "") + prefix;
+  auto fix_string = [=](const string prefix) {
+    const auto text = (is_interim ? "interim_" : "") + prefix;
     return make_string(text.c_str(), t, day);
   };
   if (Settings::runAsync())
