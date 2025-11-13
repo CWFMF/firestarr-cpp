@@ -357,27 +357,27 @@ public:
    * \brief Moisture content (%) based on Ffmc
    * \return Moisture content (%) based on Ffmc
    */
-  [[nodiscard]] constexpr MathSize mcFfmcPct() const { return mc_ffmc_pct_; }
+  [[nodiscard]] MathSize mcFfmcPct() const;
   /**
    * \brief Moisture content (%) based on Dmc
    * \return Moisture content (%) based on Dmc
    */
-  [[nodiscard]] constexpr MathSize mcDmcPct() const { return mc_dmc_pct_; }
+  [[nodiscard]] MathSize mcDmcPct() const;
   /**
    * \brief Moisture content (ratio) based on Ffmc
    * \return Moisture content (ratio) based on Ffmc
    */
-  [[nodiscard]] constexpr MathSize mcFfmc() const { return mcFfmcPct() / 100.0; }
+  [[nodiscard]] MathSize mcFfmc() const;
   /**
    * \brief Moisture content (ratio) based on Dmc
    * \return Moisture content (ratio) based on Dmc
    */
-  [[nodiscard]] constexpr MathSize mcDmc() const { return mcDmcPct() / 100.0; }
+  [[nodiscard]] MathSize mcDmc() const;
   /**
    * \brief Ffmc effect used for spread
    * \return Ffmc effect used for spread
    */
-  [[nodiscard]] constexpr MathSize ffmcEffect() const { return ffmc_effect_; }
+  [[nodiscard]] MathSize ffmcEffect() const;
 
 private:
   /**
@@ -419,18 +419,6 @@ private:
    * \brief Fire Weather Index
    */
   Fwi fwi_;
-  /**
-   * \brief Moisture content (ratio) based on Ffmc
-   */
-  MathSize mc_ffmc_pct_;
-  /**
-   * \brief Moisture content (ratio) based on Dmc
-   */
-  MathSize mc_dmc_pct_;
-  /**
-   * \brief Ffmc effect used for spread
-   */
-  MathSize ffmc_effect_;
 };
 [[nodiscard]] constexpr bool operator<(const FwiWeather& lhs, const FwiWeather& rhs)
 {
