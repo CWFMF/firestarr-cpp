@@ -104,7 +104,7 @@ else()
         "$<$<CONFIG:MinSizeRel>:-Os;>"
         "$<$<CONFIG:Debug>:-O0;>")
     add_compile_options(
-        "$<$<CONFIG:Debug,RelWithDebInfo>:-g;-fno-omit-frame-pointer;>")
+        "$<$<CONFIG:Debug,RelWithDebInfo>:-ltcmalloc;-g;-fno-omit-frame-pointer;>")
     if(USE_ASAN)
         message("Using ASAN")
         set(ASAN_ARGS
