@@ -215,7 +215,10 @@ void write_ascii_header(
     const auto cell_height = y - adf_coefficient[5];
     logging::check_fatal(cell_width != -cell_height, "Can only use grids with square pixels");
     logging::debug("Cell size is %f", cell_width);
-    auto proj4_char = unique_ptr<char>(GTIFGetProj4Defn(&definition));
+    // HACK: GTIFGetProj4Defn uses malloc
+    std::unique_ptr<char, decltype(std::free)*> proj4_char{
+      GTIFGetProj4Defn(&definition), std::free
+    };
     auto proj4 = string(proj4_char.get());
     const auto xurcorner = xllcorner + cell_width * columns;
     const auto yurcorner = yllcorner + cell_width * rows;
