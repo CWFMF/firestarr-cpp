@@ -5,5 +5,5 @@ mkdir -p ${dir_out}
 git log --oneline -n1 | tee -a ${f}
 echo "Outputting to ${f}" | tee ${f}
 cloc src/cpp | tee -a ${f}
-test/10N_50651.sh 7 2>&1 | tee -a ${f}
+perf stat test/10N_50651.sh 7 2>&1 | tee -a ${f}
 git restore test/output

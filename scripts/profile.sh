@@ -1,4 +1,5 @@
 sudo sysctl -w kernel.perf_event_paranoid=1
+sudo sysctl -w kernel.kptr_restrict=0
 IS_PASTED=
 if [[ "$0" =~ "/bash" ]]; then
   DIR_TEST=`realpath test`
