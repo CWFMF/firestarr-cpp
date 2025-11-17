@@ -87,7 +87,7 @@ MathSize SpreadInfo::initial(
   // needs to be non-const so that we can update if slopeEffect changes direction
   MathSize raz = spread.wind().heading();
   const auto isz = 0.208 * ffmc_effect;
-  wsv = spread.wind().speed().asValue();
+  wsv = spread.wind().speed.value;
   if (!has_no_slope)
   {
     const auto isf1 = fuel->calculateIsf(spread, isz);
@@ -248,7 +248,7 @@ SpreadInfo::SpreadInfo(
 )
   : offsets_({}), max_intensity_(INVALID_INTENSITY), key_(key), weather_(weather), time_(time),
     head_ros_(INVALID_ROS), cfb_(-1), cfc_(-1), tfc_(-1), sfc_(-1), is_crown_(false),
-    raz_(fs::Direction::Invalid), nd_(nd)
+    raz_(fs::Direction::Invalid()), nd_(nd)
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
   const auto slope_azimuth = Cell::aspect(key_);
@@ -267,7 +267,7 @@ SpreadInfo::SpreadInfo(
     heading_cos = cos(heading);
   }
   // HACK: only use BUI from hourly weather for both calculations
-  const auto _bui = bui().asValue();
+  const auto _bui = bui().value;
   const auto bui_eff = fuel->buiEffect(_bui);
   // FIX: gets calculated when not necessary sometimes
   const auto critical_surface_intensity = fuel->criticalSurfaceIntensity(*this);
@@ -353,7 +353,7 @@ SpreadInfo::SpreadInfo(
     tfc_ = -1;
     sfc_ = -1;
     is_crown_ = false;
-    raz_ = fs::Direction::Invalid;
+    raz_ = fs::Direction::Invalid();
   }
 }
 }
