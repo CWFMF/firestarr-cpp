@@ -8,7 +8,6 @@
 #include "Util.h"
 namespace fs
 {
-#ifndef MODE_BP_ONLY
 // FIX: clean this up but for now just hide the details from outside
 LogPoints::~LogPoints()
 {
@@ -121,5 +120,4 @@ void LogPoints::log_unchecked(
   );
 }
 bool LogPoints::isLogging() const noexcept { return nullptr != log_points_; }
-#endif
 }

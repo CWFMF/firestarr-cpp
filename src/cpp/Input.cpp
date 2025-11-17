@@ -2,6 +2,7 @@
 /* SPDX-FileCopyrightText: 2021-2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Input.h"
+#include "FWI.h"
 #include "Log.h"
 #include "Util.h"
 namespace fs
@@ -42,13 +43,13 @@ FwiWeather read_fwi_weather(istringstream* iss, string* str)
   const Dc dc(stod(str));
   getline(iss, str, ',');
   logging::extensive("ISI is %s", str->c_str());
-  const Isi isi(stod(str), ws, ffmc);
+  const Isi isi{check_isi(stod(str), ws, ffmc)};
   getline(iss, str, ',');
   logging::extensive("BUI is %s", str->c_str());
-  const Bui bui(stod(str), dmc, dc);
+  const Bui bui{check_bui(stod(str), dmc, dc)};
   getline(iss, str, ',');
   logging::extensive("FWI is %s", str->c_str());
-  const Fwi fwi(stod(str), isi, bui);
+  const Fwi fwi{check_fwi(stod(str), isi, bui)};
   return {temp, rh, wind, prec, ffmc, dmc, dc, isi, bui, fwi};
 }
 FwiWeather read_weather(istringstream* iss, string* str)
@@ -74,6 +75,14 @@ FwiWeather read_weather(istringstream* iss, string* str)
   logging::extensive("WD is %s", str->c_str());
   const Direction wd(stod(str), false);
   const Wind wind(wd, ws);
-  return {temp, rh, wind, prec, Ffmc::Zero, Dmc::Zero, Dc::Zero, Isi::Zero, Bui::Zero, Fwi::Zero};
+  return {
+    {.temperature = temp, .rh = rh, .wind = wind, .prec = prec},
+    Ffmc::Zero(),
+    Dmc::Zero(),
+    Dc::Zero(),
+    Isi::Zero(),
+    Bui::Zero(),
+    Fwi::Zero()
+  };
 }
 }
