@@ -9,6 +9,8 @@
  */
 #include "stdafx.h"
 #include "debug_settings.h"
+#include "FWI.h"
+#include "FwiReference.h"
 #include "Log.h"
 #include "Model.h"
 #include "Settings.h"
@@ -204,11 +206,11 @@ int main(const int argc, const char* const argv[])
   size_t size = 0;
   // ffmc, dmc, dc are required for simulation & surface mode, so no indication of it not being
   // provided
-  Ffmc ffmc = Ffmc::Invalid;
-  Dmc dmc = Dmc::Invalid;
-  Dc dc = Dc::Invalid;
-  auto wind_direction = Direction::Invalid.asValue();
-  auto wind_speed = Speed::Invalid.asValue();
+  Ffmc ffmc{Ffmc::Invalid()};
+  Dmc dmc{Dmc::Invalid()};
+  Dc dc{Dc::Invalid()};
+  auto wind_direction = Direction::Invalid().value;
+  auto wind_speed{Speed::Invalid().value};
   auto slope = static_cast<SlopeSize>(INVALID_SLOPE);
   auto aspect = static_cast<AspectSize>(INVALID_ASPECT);
   size_t SKIPPED_ARGS = 0;
@@ -529,20 +531,20 @@ int main(const int argc, const char* const argv[])
         fs::logging::warning(
           "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
         );
-        apcp_prev = Precipitation::Zero;
+        apcp_prev = Precipitation::Zero();
       }
       // HACK: ISI for yesterday really doesn't matter so just use any wind
       // HACK: it's basically wrong to assign this precip to yesterday's object,
       // but don't want to add another argument right now
-      const auto yesterday = FwiWeather(
-        Temperature::Zero,
-        RelativeHumidity::Zero,
-        Wind(Direction(wind_direction, false), Speed(wind_speed)),
-        Precipitation(apcp_prev),
+      const FwiWeather yesterday{
+        {.temperature = Temperature::Zero(),
+         .rh = RelativeHumidity::Zero(),
+         .wind = {.direction = {wind_direction, false}, .speed = {wind_speed}},
+         .prec = {apcp_prev}},
         ffmc,
         dmc,
         dc
-      );
+      };
       fs::fix_tm(&start_date);
       fs::logging::note(
         "Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
@@ -583,15 +585,15 @@ int main(const int argc, const char* const argv[])
         test_all = true;
       }
       done_positional();
-      const auto wx = FwiWeather(
-        Temperature::Zero,
-        RelativeHumidity::Zero,
-        Wind(Direction(wind_direction, false), Speed(wind_speed)),
-        Precipitation::Zero,
+      const FwiWeather wx{
+        {.temperature = Temperature::Zero(),
+         .rh = RelativeHumidity::Zero(),
+         .wind = {.direction = {wind_direction, false}, .speed = {wind_speed}},
+         .prec = Precipitation::Zero()},
         ffmc,
         dmc,
         dc
-      );
+      };
       show_args();
       result = fs::test(output_directory, hours, &wx, fuel_name, slope, aspect, test_all);
     }
@@ -613,6 +615,8 @@ int main(const int argc, const char* const argv[])
   // FIX: this was used to compare to the old template version, but doesn't work now
   //      left for reference for now so idea could be used for more tests
   constexpr auto fct_main = fs::duff::test_duff;
+#elif TEST_FWI
+  constexpr auto fct_main = fs::fwireference::test_fwi;
 #else
   constexpr auto fct_main = fs::main;
 #endif

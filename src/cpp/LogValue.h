@@ -10,12 +10,9 @@ namespace fs
 /**
  * \brief A result of calling log(x) for some value of x, pre-calculated at compile time.
  */
-class LogValue : public Index<LogValue>
+struct LogValue : public Index<LogValue>
 {
-public:
-  //! @cond Doxygen_Suppress
-  using Index::Index;
-  //! @endcond
+  auto operator<=>(const LogValue& rhs) const = default;
 };
 static constexpr LogValue LOG_0_70{-0.35667494393873245};
 static constexpr LogValue LOG_0_75{-0.2876820724517809};
@@ -33,11 +30,11 @@ static constexpr LogValue LOG_0_80_CALC{log(0.8)};
 static constexpr LogValue LOG_0_85_CALC{log(0.85)};
 static constexpr LogValue LOG_0_90_CALC{log(0.9)};
 static constexpr LogValue LOG_1_00_CALC{log(1.0)};
-static_assert(abs((LOG_0_70 - LOG_0_70_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
-static_assert(abs((LOG_0_75 - LOG_0_75_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
-static_assert(abs((LOG_0_80 - LOG_0_80_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
-static_assert(abs((LOG_0_90 - LOG_0_90_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
-static_assert(abs((LOG_1_00 - LOG_1_00_CALC).asValue()) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_70 - LOG_0_70_CALC).value) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_75 - LOG_0_75_CALC).value) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_80 - LOG_0_80_CALC).value) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_90 - LOG_0_90_CALC).value) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_1_00 - LOG_1_00_CALC).value) < numeric_limits<MathSize>::epsilon());
 #endif
 #endif
 }

@@ -6,6 +6,7 @@
 #include <memory>
 #include "FBP45.h"
 #include "FireWeather.h"
+#include "FWI.h"
 #include "Input.h"
 #include "Log.h"
 #include "Observer.h"
@@ -54,23 +55,13 @@ void Model::setWeather(const FwiWeather& weather, const Day start_day)
   wx_.emplace(
     0,
     FireWeather{
-      f,
-      static_cast<Day>(start_day - 1),
-      weather.dc(),
-      weather.dmc(),
-      weather.ffmc(),
-      weather.wind()
+      f, static_cast<Day>(start_day - 1), weather.dc, weather.dmc, weather.ffmc, weather.wind
     }
   );
   wx_daily_.emplace(
     0,
     FireWeather{
-      f,
-      static_cast<Day>(start_day - 1),
-      weather.dc(),
-      weather.dmc(),
-      weather.ffmc(),
-      weather.wind()
+      f, static_cast<Day>(start_day - 1), weather.dc, weather.dmc, weather.ffmc, weather.wind
     }
   );
 }
@@ -113,7 +104,7 @@ void Model::readWeather(
     );
     auto prev = &yesterday;
     // HACK: adding to original object if we don't do this?
-    auto apcp_24h = yesterday.prec().asValue();
+    auto apcp_24h = yesterday.prec.value;
     while (getline(in, str))
     {
       istringstream iss(str);
@@ -150,9 +141,9 @@ void Model::readWeather(
           wx_daily.emplace(cur, map<Day, FwiWeather>());
           prev = &yesterday;
           logging::extensive(
-            "Resetting new scenario precip to %f from %f", yesterday.prec().asValue(), apcp_24h
+            "Resetting new scenario precip to %f from %f", yesterday.prec.value, apcp_24h
           );
-          apcp_24h = yesterday.prec().asValue();
+          apcp_24h = yesterday.prec.value;
         }
         auto& s = wx.at(cur);
         struct tm t{};
@@ -192,11 +183,11 @@ void Model::readWeather(
         FwiWeather w{read_fwi_weather(&iss, &str)};
         s.at(for_time) = w;
         logging::check_fatal(
-          0 > w.prec().asValue(), "Hourly weather precip %f is negative", w.prec().asValue()
+          0 > w.prec.value, "Hourly weather precip %f is negative", w.prec.value
         );
-        apcp_24h += w.prec().asValue();
+        apcp_24h += w.prec.value;
         logging::extensive(
-          "Adding %f to precip results in accumulation of %f", w.prec().asValue(), apcp_24h
+          "Adding %f to precip results in accumulation of %f", w.prec.value, apcp_24h
         );
         if (12 == t.tm_hour)
         {
@@ -206,8 +197,7 @@ void Model::readWeather(
           logging::check_fatal(s_daily.find(day) != s_daily.end(), "Day already exists");
           const auto month = t.tm_mon + 1;
           s_daily.emplace(
-            day,
-            FwiWeather(*prev, month, latitude, w.temp(), w.rh(), w.wind(), Precipitation(apcp_24h))
+            day, FwiWeather{*prev, month, latitude, w.temperature, w.rh, w.wind, {apcp_24h}}
           );
           // new 24 hour period
           logging::extensive("Resetting daily precip to %f from %f", 0.0, apcp_24h);
@@ -225,17 +215,17 @@ void Model::readWeather(
           t.tm_hour,
           t.tm_min,
           t.tm_sec,
-          w.prec().asValue(),
-          w.temp().asValue(),
-          w.rh().asValue(),
-          w.wind().speed().asValue(),
-          w.wind().direction().asValue(),
-          w.ffmc().asValue(),
-          w.dmc().asValue(),
-          w.dc().asValue(),
-          w.isi().asValue(),
-          w.bui().asValue(),
-          w.fwi().asValue() ""
+          w.prec.value,
+          w.temperature.value,
+          w.rh.value,
+          w.wind.speed.value,
+          w.wind.direction.value,
+          w.ffmc.value,
+          w.dmc.value,
+          w.dc.value,
+          w.isi.value,
+          w.bui.value,
+          w.fwi.value ""
         );
         fprintf(
           out,
@@ -247,17 +237,17 @@ void Model::readWeather(
           t.tm_hour,
           t.tm_min,
           t.tm_sec,
-          w.prec().asValue(),
-          w.temp().asValue(),
-          w.rh().asValue(),
-          w.wind().speed().asValue(),
-          w.wind().direction().asValue(),
-          w.ffmc().asValue(),
-          w.dmc().asValue(),
-          w.dc().asValue(),
-          w.isi().asValue(),
-          w.bui().asValue(),
-          w.fwi().asValue() "\r\n"
+          w.prec.value,
+          w.temperature.value,
+          w.rh.value,
+          w.wind.speed.value,
+          w.wind.direction.value,
+          w.ffmc.value,
+          w.dmc.value,
+          w.dc.value,
+          w.isi.value,
+          w.bui.value,
+          w.fwi.value "\r\n"
         );
 #endif
       }
@@ -1193,17 +1183,17 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
           static_cast<uint8_t>(hour - day * DAY_HOURS),
           0,
           0,
-          8prec().asValue(),
-          w->temp().asValue(),
-          w->rh().asValue(),
-          w->wind().speed().asValue(),
-          w->wind().direction().asValue(),
-          w->ffmc().asValue(),
-          w->dmc().asValue(),
-          w->dc().asValue(),
-          w->isi().asValue(),
-          w->bui().asValue(),
-          w->fwi().asValue(),
+          w->prec.value,
+          w->temp.value,
+          w->rh.value,
+          w->wind.speed.value,
+          w->wind.direction.value,
+          w->ffmc.value,
+          w->dmc.value,
+          w->dc.value,
+          w->isi.value,
+          w->bui.value,
+          w->fwi.value,
           "\r\n"
         );
         SlopeSize SLOPE_MAX = MAX_SLOPE_FOR_DISTANCE;
@@ -1246,17 +1236,17 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
                 static_cast<uint8_t>(hour - day * DAY_HOURS),
                 0,
                 0,
-                w->prec().asValue(),
-                w->temp().asValue(),
-                w->rh().asValue(),
-                w->wind().speed().asValue(),
-                w->wind().direction().asValue(),
-                w->ffmc().asValue(),
-                w->dmc().asValue(),
-                w->dc().asValue(),
-                w->isi().asValue(),
-                w->bui().asValue(),
-                w->fwi().asValue(),
+                w->prec.value,
+                w->temp.value,
+                w->rh.value,
+                w->wind.speed.value,
+                w->wind.direction.value,
+                w->ffmc.value,
+                w->dmc.value,
+                w->dc.value,
+                w->isi.value,
+                w->bui.value,
+                w->fwi.value,
                 spread.crownFractionBurned(),
                 spread.crownFuelConsumption(),
                 spread.fireDescription(),
@@ -1277,17 +1267,17 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
                 static_cast<uint8_t>(hour - day * DAY_HOURS),
                 0,
                 0,
-                w->prec().asValue(),
-                w->temp().asValue(),
-                w->rh().asValue(),
-                w->wind().speed().asValue(),
-                w->wind().direction().asValue(),
-                w->ffmc().asValue(),
-                w->dmc().asValue(),
-                w->dc().asValue(),
-                w->isi().asValue(),
-                w->bui().asValue(),
-                w->fwi().asValue(),
+                w->prec.value,
+                w->temp.value,
+                w->rh.value,
+                w->wind.speed.value,
+                w->wind.direction.value,
+                w->ffmc.value,
+                w->dmc.value,
+                w->dc.value,
+                w->isi.value,
+                w->bui.value,
+                w->fwi.value,
                 spread.crownFractionBurned(),
                 spread.crownFuelConsumption(),
                 spread.fireDescription(),

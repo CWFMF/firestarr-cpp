@@ -5,7 +5,6 @@
 #define FS_SCENARIO_H
 #include "stdafx.h"
 #include "CellPoints.h"
-#include "EventCompare.h"
 #include "FireSpread.h"
 #include "FireWeather.h"
 #include "InnerPos.h"
@@ -544,7 +543,7 @@ protected:
   /**
    * \brief Event scheduler used for ordering events
    */
-  set<Event, EventCompare> scheduler_;
+  set<Event> scheduler_;
   /**
    * \brief Map of what intensity each cell has burned at
    */
@@ -633,12 +632,10 @@ protected:
    * \brief How many times point spread event has happened
    */
   size_t step_;
-#ifndef MODE_BP_ONLY
   /**
    * \brief Point logging
    */
   LogPoints points_log_{};
-#endif
   /**
    * \brief How many times this scenario tried to spread out of bounds
    */

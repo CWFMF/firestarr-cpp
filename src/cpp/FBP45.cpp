@@ -29,11 +29,11 @@ MathSize FuelD1::isfD1(const SpreadInfo& spread, const MathSize ros_multiplier, 
 static LookupTable<&calculate_surface_fuel_consumption_c1> SURFACE_FUEL_CONSUMPTION_C1{};
 MathSize FuelC1::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
-  return SURFACE_FUEL_CONSUMPTION_C1(spread.ffmc().asValue());
+  return SURFACE_FUEL_CONSUMPTION_C1(spread.ffmc().value);
 }
 MathSize FuelC2::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
-  return SURFACE_FUEL_CONSUMPTION_MIXED_OR_C2(spread.bui().asValue());
+  return SURFACE_FUEL_CONSUMPTION_MIXED_OR_C2(spread.bui().value);
 }
 MathSize FuelC6::finalRos(
   const SpreadInfo& spread,
@@ -78,8 +78,8 @@ static LookupTable<&calculate_surface_fuel_consumption_c7_ffmc> SURFACE_FUEL_CON
 static LookupTable<&calculate_surface_fuel_consumption_c7_bui> SURFACE_FUEL_CONSUMPTION_C7_BUI{};
 MathSize FuelC7::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
-  return SURFACE_FUEL_CONSUMPTION_C7_FFMC(spread.ffmc().asValue())
-       + SURFACE_FUEL_CONSUMPTION_C7_BUI(spread.bui().asValue());
+  return SURFACE_FUEL_CONSUMPTION_C7_FFMC(spread.ffmc().value)
+       + SURFACE_FUEL_CONSUMPTION_C7_BUI(spread.bui().value);
 }
 [[nodiscard]] static constexpr MathSize calculate_surface_fuel_consumption_d2(const MathSize bui
 ) noexcept
@@ -89,10 +89,10 @@ MathSize FuelC7::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 static LookupTable<&calculate_surface_fuel_consumption_d2> SURFACE_FUEL_CONSUMPTION_D2{};
 MathSize FuelD2::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
-  return SURFACE_FUEL_CONSUMPTION_D2(spread.bui().asValue());
+  return SURFACE_FUEL_CONSUMPTION_D2(spread.bui().value);
 }
 MathSize FuelD2::calculateRos(const int, const FwiWeather& wx, const MathSize isi) const noexcept
 {
-  return (wx.bui().asValue() >= 80) ? rosBasic(isi) : 0.0;
+  return (wx.bui.value >= 80) ? rosBasic(isi) : 0.0;
 }
 }

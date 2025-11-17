@@ -99,27 +99,27 @@ public:
    * \brief Wind used for spread
    * \return Wind used for spread
    */
-  [[nodiscard]] constexpr const Wind& wind() const { return weather()->wind(); }
+  [[nodiscard]] constexpr const Wind& wind() const { return weather()->wind; }
   /**
    * \brief Fine Fuel Moisture Code used for spread
    * \return Fine Fuel Moisture Code used for spread
    */
-  [[nodiscard]] constexpr const Ffmc& ffmc() const { return weather()->ffmc(); }
+  [[nodiscard]] constexpr const Ffmc& ffmc() const { return weather()->ffmc; }
   /**
    * \brief Build-up Index used for spread
    * \return Build-up Index used for spread
    */
-  [[nodiscard]] constexpr const Bui& bui() const { return weather()->bui(); }
+  [[nodiscard]] constexpr const Bui& bui() const { return weather()->bui; }
   /**
    * \brief Duff Moisture Code used for spread
    * \return Duff Moisture Code used for spread
    */
-  [[nodiscard]] constexpr const Dmc& dmc() const { return weather()->dmc(); }
+  [[nodiscard]] constexpr const Dmc& dmc() const { return weather()->dmc; }
   /**
    * \brief Drought Code used for spread
    * \return Drought Code used for spread
    */
-  [[nodiscard]] constexpr const Dc& dc() const { return weather()->dc(); }
+  [[nodiscard]] constexpr const Dc& dc() const { return weather()->dc; }
   /**
    * \brief FFMC effect used for spread
    * \return FFMC effect used for spread
@@ -316,7 +316,7 @@ private:
   /**
    * \brief Head fire spread direction
    */
-  Direction raz_{Direction::Invalid};
+  Direction raz_{Direction::Invalid()};
   /**
    * \brief Difference between date and the date of minimum foliar moisture content (from ST-X-3)
    */
