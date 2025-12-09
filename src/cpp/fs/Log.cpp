@@ -365,4 +365,25 @@ void SelfLogger::log_fatal(const char* format, ...) const
   va_end(args);
 }
 Log::~Log() noexcept { closeLogFile(); };
+void check_tolerance(
+  const MathSize epsilon,
+  const MathSize lhs,
+  const MathSize rhs,
+  const char* name
+)
+#ifdef NDEBUG
+  noexcept
+#endif
+{
+  const auto difference = abs(lhs - rhs);
+  logging::check_fatal(
+    difference >= epsilon,
+    "Difference too big for %s: (%g > %g) for %g vs %g",
+    name,
+    difference,
+    epsilon,
+    rhs,
+    lhs
+  );
+}
 }

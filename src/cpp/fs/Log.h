@@ -179,6 +179,23 @@ void check_equal(const V& lhs, const V& rhs, const char* name)
   logging::check_fatal(lhs != rhs, fmt, name, rhs, lhs);
 }
 /**
+ * \brief Check if items are not equal and log and exit if true
+ * \param epsilon difference between values tolerance
+ * \param lhs first value
+ * \param rhs second value
+ * \param name String for message describing what's being compared
+ */
+void check_tolerance(
+  const MathSize epsilon,
+  const MathSize lhs,
+  const MathSize rhs,
+  const char* name
+)
+#ifdef NDEBUG
+  noexcept
+#endif
+  ;
+/**
  * \brief Log with FATAL level and exit
  * \param format Format string for message
  * \param ... Arguments to format message with
