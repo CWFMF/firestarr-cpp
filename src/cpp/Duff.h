@@ -5,7 +5,7 @@
 #define FS_DUFF_H
 #include "stdafx.h"
 #include "LookupTable.h"
-namespace fs
+namespace fs::duff
 {
 /*! \page survival Probability of fire survival
  *
@@ -70,78 +70,7 @@ public:
    * \return Chance of survival (% / 100)
    */
   [[nodiscard]] virtual ThresholdSize probabilityOfSurvival(MathSize mc_pct) const noexcept = 0;
-  //  /**
-  //   * \brief Feather moss (upper) [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<172, 464, 139873, -3296, 4904, 568> FeatherMossUpper;
-  //  /**
-  //   * \brief Feather moss (lower) [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<191, 389, 132628, -1167, 3308, -2604> FeatherMossLower;
-  /**
-   * \brief Sphagnum (upper) [Frandsen table 2/3]
-   */
-  static const DuffType<124, 218, -88306, -608, 8095, 2735> SphagnumUpper;
-  //  /**
-  //   * \brief Sphagnum (lower) [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<567, 1190, 3273347, -37655, -87849, 26684> SphagnumLower;
-  /**
-   * \brief Feather [Frandsen table 3]
-   */
-  static const DuffType<181, 427, 90970, -1040, 1165, -646> FeatherMoss;
-  /**
-   * \brief Reindeer/feather [Frandsen table 2/3]
-   */
-  static const DuffType<261, 563, 80359, -393, -591, -340> Reindeer;
-  //  /**
-  //   * \brief Sedge meadow (upper) [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<233, 694, 398477, -1800, -3727, -1874> SedgeMeadowUpper;
-  //  /**
-  //   * \brief Sedge meadow (lower) [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<449, 915, 290818, -2059, -2319, -420> SedgeMeadowLower;
-  /**
-   * \brief White spruce duff [Frandsen table 2/3]
-   */
-  static const DuffType<359, 1220, 3325604, -12220, -21024, -12619> WhiteSpruce;
-  /**
-   * \brief Peat [Frandsen table 2/3]
-   */
-  static const DuffType<94, 2220, -198198, -1169, 10414, 782> Peat;
-  /**
-   * \brief Peat muck [Frandsen table 2/3]
-   */
-  static const DuffType<349, 2030, 372276, -1876, -2833, -951> PeatMuck;
-  //  /**
-  //   * \brief Sedge meadow (Seney) [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<354, 1830, 71813, -1413, -1253, 390> SedgeMeadowSeney;
-  /**
-   * \brief Pine duff (Seney) [Frandsen table 2/3]
-   */
-  static const DuffType<365, 1900, 451778, -3227, -3644, -362> PineSeney;
-  /**
-   * \brief Spruce/pine duff [Frandsen table 2/3]
-   */
-  static const DuffType<307, 1160, 586921, -2737, -5413, -1246> SprucePine;
-  //  /**
-  //   * \brief Grass/sedge marsh [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<352, 1200, 2362934, -8423, -25097, -4902> GrassSedgeMarsh;
-  //  /**
-  //   * \brief Southern pine duff [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<680, 1120, 586921, -2737, -5413, -1246> SouthernPine;
-  //  /**
-  //   * \brief Hardwood swamp (upper) [Frandsen table 2/3]
-  //   */
-  //  static const DuffType<182, 1380, 336907, -2946, -3002, -4040> HardwoodSwamp;
-  // coefficients aren't defined in the table these came from
-  // static const DuffType Pocosin;
-  // static const DuffType SwampForest;
-  // static const DuffType Flatwoods;
+
 protected:
   Duff() = default;
 };
@@ -224,5 +153,77 @@ private:
    */
   LookupTable<&duffFunction> probability_of_survival_{};
 };
+//  /**
+//   * \brief Feather moss (upper) [Frandsen table 2/3]
+//   */
+//  static const DuffType<172, 464, 139873, -3296, 4904, 568> FeatherMossUpper{};
+//  /**
+//   * \brief Feather moss (lower) [Frandsen table 2/3]
+//   */
+//  static const DuffType<191, 389, 132628, -1167, 3308, -2604> FeatherMossLower{};
+/**
+ * \brief Sphagnum (upper) [Frandsen table 2/3]
+ */
+static const DuffType<124, 218, -88306, -608, 8095, 2735> SphagnumUpper{};
+//  /**
+//   * \brief Sphagnum (lower) [Frandsen table 2/3]
+//   */
+//  static const DuffType<567, 1190, 3273347, -37655, -87849, 26684> SphagnumLower{};
+/**
+ * \brief Feather [Frandsen table 3]
+ */
+static const DuffType<181, 427, 90970, -1040, 1165, -646> FeatherMoss{};
+/**
+ * \brief Reindeer/feather [Frandsen table 2/3]
+ */
+static const DuffType<261, 563, 80359, -393, -591, -340> Reindeer{};
+//  /**
+//   * \brief Sedge meadow (upper) [Frandsen table 2/3]
+//   */
+//  static const DuffType<233, 694, 398477, -1800, -3727, -1874> SedgeMeadowUpper{};
+//  /**
+//   * \brief Sedge meadow (lower) [Frandsen table 2/3]
+//   */
+//  static const DuffType<449, 915, 290818, -2059, -2319, -420> SedgeMeadowLower{};
+/**
+ * \brief White spruce duff [Frandsen table 2/3]
+ */
+static const DuffType<359, 1220, 3325604, -12220, -21024, -12619> WhiteSpruce{};
+/**
+ * \brief Peat [Frandsen table 2/3]
+ */
+static const DuffType<94, 2220, -198198, -1169, 10414, 782> Peat{};
+/**
+ * \brief Peat muck [Frandsen table 2/3]
+ */
+static const DuffType<349, 2030, 372276, -1876, -2833, -951> PeatMuck{};
+//  /**
+//   * \brief Sedge meadow (Seney) [Frandsen table 2/3]
+//   */
+//  static const DuffType<354, 1830, 71813, -1413, -1253, 390> SedgeMeadowSeney{};
+/**
+ * \brief Pine duff (Seney) [Frandsen table 2/3]
+ */
+static const DuffType<365, 1900, 451778, -3227, -3644, -362> PineSeney{};
+/**
+ * \brief Spruce/pine duff [Frandsen table 2/3]
+ */
+static const DuffType<307, 1160, 586921, -2737, -5413, -1246> SprucePine{};
+//  /**
+//   * \brief Grass/sedge marsh [Frandsen table 2/3]
+//   */
+//  static const DuffType<352, 1200, 2362934, -8423, -25097, -4902> GrassSedgeMarsh{};
+//  /**
+//   * \brief Southern pine duff [Frandsen table 2/3]
+//   */
+//  static const DuffType<680, 1120, 586921, -2737, -5413, -1246> SouthernPine{};
+//  /**
+//   * \brief Hardwood swamp (upper) [Frandsen table 2/3]
+//   */
+//  static const DuffType<182, 1380, 336907, -2946, -3002, -4040> HardwoodSwamp{};
+// coefficients aren't defined in the table these came from
+// static const DuffType Pocosin;
+// static const DuffType SwampForest;
+// static const DuffType Flatwoods;
 }
 #endif

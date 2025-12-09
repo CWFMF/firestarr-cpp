@@ -4,6 +4,7 @@
 #include "FireSpread.h"
 #include "FuelLookup.h"
 #include "FuelType.h"
+#include "LookupTable.h"
 #include "Scenario.h"
 #include "Settings.h"
 #include "SpreadAlgorithm.h"
