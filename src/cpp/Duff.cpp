@@ -2,6 +2,6 @@
 /* SPDX-FileCopyrightText: 2025 Government of Canada */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Duff.h"
-namespace fs
+namespace fs::duff
 {
 }
