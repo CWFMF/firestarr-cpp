@@ -297,7 +297,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelD1(const FuelCodeSize& code) noexcept
-    : FuelNonMixed(code, "D-1", false, LOG_0_90, &Duff::Peat)
+    : FuelNonMixed(code, "D-1", false, LOG_0_90, &duff::Peat)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 25]
@@ -362,8 +362,8 @@ public:
         name,
         true,
         log_q,
-        &Duff::Peat,
-        &Duff::Peat
+        &duff::Peat,
+        &duff::Peat
       )
   { }
   /**
@@ -561,8 +561,8 @@ public:
         name,
         false,
         log_q,
-        &Duff::PeatMuck,
-        &Duff::PeatMuck
+        &duff::PeatMuck,
+        &duff::PeatMuck
       )
   { }
   /**
@@ -663,7 +663,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelC1(const FuelCodeSize& code) noexcept
-    : FuelConifer(code, "C-1", LOG_0_90, &Duff::Reindeer, &Duff::Peat)
+    : FuelConifer(code, "C-1", LOG_0_90, &duff::Reindeer, &duff::Peat)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [GLC-X-10 eq 9a/9b]
@@ -689,7 +689,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelC2(const FuelCodeSize& code) noexcept
-    : FuelConifer(code, "C-2", LOG_0_70, &Duff::SphagnumUpper)
+    : FuelConifer(code, "C-2", LOG_0_70, &duff::SphagnumUpper)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 10]
@@ -715,7 +715,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelC3(const FuelCodeSize& code) noexcept
-    : FuelJackpine(code, "C-3", LOG_0_75, &Duff::FeatherMoss, &Duff::PineSeney)
+    : FuelJackpine(code, "C-3", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
   { }
 };
 /**
@@ -735,7 +735,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelC4(const FuelCodeSize& code) noexcept
-    : FuelJackpine(code, "C-4", LOG_0_80, &Duff::PineSeney)
+    : FuelJackpine(code, "C-4", LOG_0_80, &duff::PineSeney)
   { }
 };
 /**
@@ -755,7 +755,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelC5(const FuelCodeSize& code) noexcept
-    : FuelPine(code, "C-5", LOG_0_80, &Duff::PineSeney)
+    : FuelPine(code, "C-5", LOG_0_80, &duff::PineSeney)
   { }
 };
 /**
@@ -775,7 +775,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelC6(const FuelCodeSize& code) noexcept
-    : FuelPine(code, "C-6", LOG_0_80, &Duff::PineSeney)
+    : FuelPine(code, "C-6", LOG_0_80, &duff::PineSeney)
   { }
 
 protected:
@@ -811,7 +811,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelC7(const FuelCodeSize& code) noexcept
-    : FuelConifer(code, "C-7", LOG_0_85, &Duff::SprucePine)
+    : FuelConifer(code, "C-7", LOG_0_85, &duff::SprucePine)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 15]
@@ -838,7 +838,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelD2(const FuelCodeSize& code) noexcept
-    : FuelNonMixed(code, "D-2", false, LOG_0_90, &Duff::Peat)
+    : FuelNonMixed(code, "D-2", false, LOG_0_90, &duff::Peat)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2)
@@ -1075,7 +1075,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelS1(const FuelCodeSize& code) noexcept
-    : FuelSlash(code, "S-1", LOG_0_75, &Duff::FeatherMoss, &Duff::PineSeney)
+    : FuelSlash(code, "S-1", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
   { }
 };
 /**
@@ -1095,7 +1095,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelS2(const FuelCodeSize& code) noexcept
-    : FuelSlash(code, "S-2", LOG_0_75, &Duff::FeatherMoss, &Duff::WhiteSpruce)
+    : FuelSlash(code, "S-2", LOG_0_75, &duff::FeatherMoss, &duff::WhiteSpruce)
   { }
 };
 /**
@@ -1115,7 +1115,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr FuelS3(const FuelCodeSize& code) noexcept
-    : FuelSlash(code, "S-3", LOG_0_75, &Duff::FeatherMoss, &Duff::PineSeney)
+    : FuelSlash(code, "S-3", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
   { }
 };
 template <class FuelSpring, class FuelSummer>
