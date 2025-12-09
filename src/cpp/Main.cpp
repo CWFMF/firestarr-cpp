@@ -9,7 +9,6 @@
  */
 #include "stdafx.h"
 #include "debug_settings.h"
-#include "DuffSimple.h"
 #include "Log.h"
 #include "Model.h"
 #include "Settings.h"
@@ -611,7 +610,9 @@ int main(const int argc, const char* const argv[])
 int main(const int argc, const char* const argv[])
 {
 #ifdef TEST_DUFF
-  constexpr auto fct_main = fs::duffsimple::test_duff;
+  // FIX: this was used to compare to the old template version, but doesn't work now
+  //      left for reference for now so idea could be used for more tests
+  constexpr auto fct_main = fs::duff::test_duff;
 #else
   constexpr auto fct_main = fs::main;
 #endif
