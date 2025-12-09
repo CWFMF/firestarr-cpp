@@ -8,7 +8,6 @@
 namespace fs
 {
 using duff::Duff;
-using duff::DuffType;
 // References
 // Forestry Canada
 // Development and Structure of the Canadian Forest Fire Behaviour Prediction System (ST-X-3)

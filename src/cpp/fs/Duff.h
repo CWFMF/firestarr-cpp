@@ -2,7 +2,10 @@
 #ifndef FS_DUFF_H
 #define FS_DUFF_H
 #include "stdafx.h"
-#include "LookupTable.h"
+#include "unstable.h"
+// FIX: this was used to compare to the old template version, but doesn't work now
+//      left for reference for now so idea could be used for more tests
+#undef TEST_DUFF
 namespace fs::duff
 {
 /*! \page survival Probability of fire survival
@@ -32,22 +35,56 @@ namespace fs::duff
  * International Journal of Wildland Fire 11, 163-172.
  * https://doi.org/10.1071/WF02001
  */
-template <int Ash, int Rho, int B0, int B1, int B2, int B3>
-class DuffType;
 /**
- * \brief Base class for DuffType.
+ * \brief A specific type of Duff layer, and the associated smouldering coefficients.
  */
-class Duff
+struct Duff
 {
-public:
-  virtual ~Duff() = default;
-  Duff(const Duff& rhs) noexcept = delete;
-  Duff(Duff&& rhs) noexcept = delete;
-  Duff& operator=(const Duff& rhs) noexcept = delete;
-  Duff& operator=(Duff&& rhs) noexcept = delete;
+  /**
+   * \brief Inorganic content, percentage oven dry weight
+   */
+  MathSize ash{};
+  /**
+   * \brief Organic bulk density (kg/m^3)
+   */
+  MathSize rho{};
+  /**
+   * \brief B_0 [table 2]
+   */
+  MathSize b0{};
+  /**
+   * \brief B_1 [table 2]
+   */
+  MathSize b1{};
+  /**
+   * \brief B_2 [table 2]
+   */
+  MathSize b2{};
+  /**
+   * \brief B_3 [table 2]
+   */
+  MathSize b3{};
+  /**
+   * \brief Probability of survival (% / 100) [eq Ig-1]
+   * \param mc_pct Moisture content, percentage dry oven weight
+   * \return Probability of survival (% / 100) [eq Ig-1]
+   */
+  [[nodiscard]] constexpr ThresholdSize probabilityOfSurvival(const MathSize mc_pct) const noexcept
+  {
+    /**
+     * \brief Constant part of ignition probability equation [eq Ig-1]
+     */
+    const auto ConstantPart = b0 + b2 * ash + b3 * rho;
+    const auto d = 1 + exp(-(b1 * mc_pct + ConstantPart));
+    if (0 == d)
+    {
+      return 1.0;
+    }
+    return 1.0 / d;
+  }
   /**
    * \brief Equality operator
-   * \param rhs Duff to compare to
+   * \param rhs DuffSimple to compare to
    * \return Whether or not these are identical
    */
   [[nodiscard]] constexpr bool operator==(const Duff& rhs) const
@@ -57,171 +94,85 @@ public:
   }
   /**
    * \brief Inequality operator
-   * \param rhs Duff to compare to
+   * \param rhs DuffSimple to compare to
    * \return Whether or not these are not identical
    */
   [[nodiscard]] constexpr bool operator!=(const Duff& rhs) const { return !operator==(rhs); }
-  /**
-   * \brief Survival probability calculated using probability of ony survival based on multiple
-   * formulae
-   * \param mc_pct Moisture content (%)
-   * \return Chance of survival (% / 100)
-   */
-  [[nodiscard]] virtual ThresholdSize probabilityOfSurvival(MathSize mc_pct) const noexcept = 0;
-
-protected:
-  Duff() = default;
 };
-/**
- * \brief A specific type of Duff layer, and the associated smouldering coefficients.
- */
-template <int Ash, int Rho, int B0, int B1, int B2, int B3>
-class DuffType final : public Duff
-{
-public:
-  DuffType() = default;
-  ~DuffType() override = default;
-  DuffType(const DuffType& rhs) noexcept = delete;
-  DuffType(DuffType&& rhs) noexcept = delete;
-  DuffType& operator=(const DuffType& rhs) noexcept = delete;
-  DuffType& operator=(DuffType&& rhs) noexcept = delete;
-  /**
-   * \brief Probability of survival (% / 100) [eq Ig-1]
-   * \param mc_pct Moisture content, percentage dry oven weight
-   * \return Probability of survival (% / 100) [eq Ig-1]
-   */
-  [[nodiscard]] ThresholdSize probabilityOfSurvival(const MathSize mc_pct) const noexcept override
-  {
-    return probability_of_survival_(mc_pct);
-  }
-  /**
-   * \brief Inorganic content, percentage oven dry weight
-   * \return Inorganic content, percentage oven dry weight
-   */
-  [[nodiscard]] static constexpr MathSize ash() { return Ash / 10.0; }
-  /**
-   * \brief Organic bulk density (kg/m^3)
-   * \return Organic bulk density (kg/m^3)
-   */
-  [[nodiscard]] static constexpr MathSize rho() { return Rho / 10.0; }
-  /**
-   * \brief B_0 [table 2]
-   * \return B_0 [table 2]
-   */
-  [[nodiscard]] static constexpr MathSize b0() { return B0 / 10000.0; }
-  /**
-   * \brief B_1 [table 2]
-   * \return B_1 [table 2]
-   */
-  [[nodiscard]] static constexpr MathSize b1() { return B1 / 10000.0; }
-  /**
-   * \brief B_2 [table 2]
-   * \return B_2 [table 2]
-   */
-  [[nodiscard]] static constexpr MathSize b2() { return B2 / 10000.0; }
-  /**
-   * \brief B_3 [table 2]
-   * \return B_3 [table 2]
-   */
-  [[nodiscard]] static constexpr MathSize b3() { return B3 / 10000.0; }
-
-private:
-  /**
-   * \brief Constant part of ignition probability equation [eq Ig-1]
-   */
-  static constexpr auto ConstantPart = b0() + b2() * ash() + b3() * rho();
-  /**
-   * \brief Ignition Probability (% / 100) [eq Ig-1]
-   * \param mc_pct Moisture content, percentage dry oven weight
-   * \return Ignition Probability (% / 100) [eq Ig-1]
-   */
-  [[nodiscard]] static constexpr ThresholdSize duffFunction(const MathSize mc_pct) noexcept
-  {
-    const auto d = 1 + exp(-(b1() * mc_pct + ConstantPart));
-    if (0 == d)
-    {
-      return 1.0;
-    }
-    return 1.0 / d;
-  }
-  /**
-   * \brief Ignition Probability (% / 100) [eq Ig-1]
-   * \param mc_pct Moisture content, percentage dry oven weight
-   * \return Ignition Probability (% / 100) [eq Ig-1]
-   */
-  LookupTable<&duffFunction> probability_of_survival_{};
-};
-//  /**
-//   * \brief Feather moss (upper) [Frandsen table 2/3]
-//   */
-//  static const DuffType<172, 464, 139873, -3296, 4904, 568> FeatherMossUpper{};
-//  /**
-//   * \brief Feather moss (lower) [Frandsen table 2/3]
-//   */
-//  static const DuffType<191, 389, 132628, -1167, 3308, -2604> FeatherMossLower{};
+// /**
+//  * \brief Feather moss (upper) [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple FeatherMossUpper{17.2, 46.4, 13.9873, -0.3296, 0.4904, 0.0568};
+// /**
+//  * \brief Feather moss (lower) [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple FeatherMossLower{19.1, 38.9, 13.2628, -0.1167, 0.3308, -0.2604};
 /**
  * \brief Sphagnum (upper) [Frandsen table 2/3]
  */
-static const DuffType<124, 218, -88306, -608, 8095, 2735> SphagnumUpper{};
-//  /**
-//   * \brief Sphagnum (lower) [Frandsen table 2/3]
-//   */
-//  static const DuffType<567, 1190, 3273347, -37655, -87849, 26684> SphagnumLower{};
+static constexpr Duff SphagnumUpper{12.4, 21.8, -8.8306, -0.0608, 0.8095, 0.2735};
+// /**
+//  * \brief Sphagnum (lower) [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple SphagnumLower{56.7, 119.0, 327.3347, -3.7655, -8.7849, 2.6684};
 /**
  * \brief Feather [Frandsen table 3]
  */
-static const DuffType<181, 427, 90970, -1040, 1165, -646> FeatherMoss{};
+static constexpr Duff FeatherMoss{18.1, 42.7, 9.0970, -0.1040, 0.1165, -0.0646};
 /**
  * \brief Reindeer/feather [Frandsen table 2/3]
  */
-static const DuffType<261, 563, 80359, -393, -591, -340> Reindeer{};
-//  /**
-//   * \brief Sedge meadow (upper) [Frandsen table 2/3]
-//   */
-//  static const DuffType<233, 694, 398477, -1800, -3727, -1874> SedgeMeadowUpper{};
-//  /**
-//   * \brief Sedge meadow (lower) [Frandsen table 2/3]
-//   */
-//  static const DuffType<449, 915, 290818, -2059, -2319, -420> SedgeMeadowLower{};
+static constexpr Duff Reindeer{26.1, 56.3, 8.0359, -0.0393, -0.0591, -0.0340};
+// /**
+//  * \brief Sedge meadow (upper) [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple SedgeMeadowUpper{23.3, 69.4, 39.8477, -0.1800, -0.3727, -0.1874};
+// /**
+//  * \brief Sedge meadow (lower) [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple SedgeMeadowLower{44.9, 91.5, 29.0818, -0.2059, -0.2319, -0.0420};
 /**
  * \brief White spruce duff [Frandsen table 2/3]
  */
-static const DuffType<359, 1220, 3325604, -12220, -21024, -12619> WhiteSpruce{};
+static constexpr Duff WhiteSpruce{35.9, 122.0, 332.5604, -1.2220, -2.1024, -1.2619};
 /**
  * \brief Peat [Frandsen table 2/3]
  */
-static const DuffType<94, 2220, -198198, -1169, 10414, 782> Peat{};
+static constexpr Duff Peat{9.4, 222.0, -19.8198, -0.1169, 1.0414, 0.0782};
 /**
  * \brief Peat muck [Frandsen table 2/3]
  */
-static const DuffType<349, 2030, 372276, -1876, -2833, -951> PeatMuck{};
-//  /**
-//   * \brief Sedge meadow (Seney) [Frandsen table 2/3]
-//   */
-//  static const DuffType<354, 1830, 71813, -1413, -1253, 390> SedgeMeadowSeney{};
+static constexpr Duff PeatMuck{34.9, 203.0, 37.2276, -0.1876, -0.2833, -0.0951};
+// /**
+//  * \brief Sedge meadow (Seney) [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple SedgeMeadowSeney{35.4, 183.0, 71.813, -0.1413, -0.1253, 0.0390};
 /**
  * \brief Pine duff (Seney) [Frandsen table 2/3]
  */
-static const DuffType<365, 1900, 451778, -3227, -3644, -362> PineSeney{};
+static constexpr Duff PineSeney{36.5, 190.0, 45.1778, -0.3227, -0.3644, -0.0362};
 /**
  * \brief Spruce/pine duff [Frandsen table 2/3]
  */
-static const DuffType<307, 1160, 586921, -2737, -5413, -1246> SprucePine{};
-//  /**
-//   * \brief Grass/sedge marsh [Frandsen table 2/3]
-//   */
-//  static const DuffType<352, 1200, 2362934, -8423, -25097, -4902> GrassSedgeMarsh{};
-//  /**
-//   * \brief Southern pine duff [Frandsen table 2/3]
-//   */
-//  static const DuffType<680, 1120, 586921, -2737, -5413, -1246> SouthernPine{};
-//  /**
-//   * \brief Hardwood swamp (upper) [Frandsen table 2/3]
-//   */
-//  static const DuffType<182, 1380, 336907, -2946, -3002, -4040> HardwoodSwamp{};
+static constexpr Duff SprucePine{30.7, 116.0, 58.6921, -0.2737, -0.5413, -0.1246};
+// /**
+//  * \brief Grass/sedge marsh [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple GrassSedgeMarsh{35.2, 120.0, 236.2934, -0.8423, -2.5097, -0.4902};
+// /**
+//  * \brief Southern pine duff [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple SouthernPine{68.0, 112.0, 58.6921, -0.2737, -0.5413, -0.1246};
+// /**
+//  * \brief Hardwood swamp (upper) [Frandsen table 2/3]
+//  */
+// static constexpr DuffSimple HardwoodSwamp{18.2, 138.0, 33.6907, -0.2946, -0.3002, -0.4040};
 // coefficients aren't defined in the table these came from
-// static const DuffType Pocosin;
-// static const DuffType SwampForest;
-// static const DuffType Flatwoods;
+// static const DuffSimple Pocosin;
+// static const DuffSimple SwampForest;
+// static const DuffSimple Flatwoods;
+#ifdef TEST_DUFF
+int test_duff(const int argc, const char* const argv[]);
+#endif
 }
 #endif
