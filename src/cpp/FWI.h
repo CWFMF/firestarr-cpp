@@ -4,16 +4,26 @@
 #ifndef FS_FWI_H
 #define FS_FWI_H
 #include "stdafx.h"
-#include "Index.h"
 #include "Weather.h"
 namespace fs
 {
 /**
  * \brief Fine Fuel Moisture Code value.
  */
-struct Ffmc : public Index<Ffmc>
+class Ffmc : public Index<Ffmc>
 {
+public:
+  //! @cond Doxygen_Suppress
   using Index::Index;
+  //! @endcond
+  /**
+   * \brief Calculate Fine Fuel Moisture Code
+   * \param temperature Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param ws Wind Speed (km/h)
+   * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
+   * \param ffmc_previous Fine Fuel Moisture Code for previous day
+   */
   Ffmc(
     const Temperature& temperature,
     const RelativeHumidity& rh,
@@ -21,175 +31,330 @@ struct Ffmc : public Index<Ffmc>
     const Precipitation& prec,
     const Ffmc& ffmc_previous
   ) noexcept;
-  auto operator<=>(const Ffmc& rhs) const = default;
+  /**
+   * \brief Fine Fuel Moisture Code of 0
+   */
+  static const Ffmc Zero;
+  static const Ffmc Invalid;
 };
 /**
  * \brief Duff Moisture Code value.
  */
-struct Dmc : public Index<Dmc>
+class Dmc : public Index<Dmc>
 {
+public:
+  //! @cond Doxygen_Suppress
   using Index::Index;
+  //! @endcond
+  /**
+   * \brief Duff Moisture Code
+   * \param temperature Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
+   * \param dmc_previous Duff Moisture Code for previous day
+   * \param month Month to calculate for
+   * \param latitude Latitude to calculate for
+   */
   Dmc(
     const Temperature& temperature,
     const RelativeHumidity& rh,
     const Precipitation& prec,
     const Dmc& dmc_previous,
-    const int month,
-    const MathSize latitude
+    int month,
+    MathSize latitude
   ) noexcept;
-  auto operator<=>(const Dmc& rhs) const = default;
+  /**
+   * \brief Duff Moisture Code of 0
+   */
+  static const Dmc Zero;
+  static const Dmc Invalid;
 };
 /**
  * \brief Drought Code value.
  */
-struct Dc : public Index<Dc>
+class Dc : public Index<Dc>
 {
+public:
+  //! @cond Doxygen_Suppress
   using Index::Index;
+  //! @endcond
+  /**
+   * \brief Calculate Drought Code
+   * \param temperature Temperature (Celsius)
+   * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
+   * \param dc_previous Drought Code from the previous day
+   * \param month Month to calculate for
+   * \param latitude Latitude to calculate for
+   */
   Dc(
     const Temperature& temperature,
     const Precipitation& prec,
     const Dc& dc_previous,
-    const int month,
-    const MathSize latitude
+    int month,
+    MathSize latitude
   ) noexcept;
-  auto operator<=>(const Dc& rhs) const = default;
+  /**
+   * \brief Drought Code of 0
+   */
+  static const Dc Zero;
+  static const Dc Invalid;
 };
 /**
  * \brief Initial Spread Index value.
  */
-struct Isi : public Index<Isi>
+class Isi : public Index<Isi>
 {
-  using Index::Index;
+public:
+  /**
+   * \brief Calculate Initial Spread Index and verify previous value is within tolerance of
+   * calculated value
+   * \param value Value to check is within tolerance of calculated value
+   * \param ws Wind Speed (km/h)
+   * \param ffmc Fine Fuel Moisture Code
+   */
+  Isi(MathSize value, const Speed& ws, const Ffmc& ffmc) noexcept;
+  /**
+   * \brief Calculate Initial Spread Index
+   * \param ws Wind Speed (km/h)
+   * \param ffmc Fine Fuel Moisture Code
+   */
   Isi(const Speed& ws, const Ffmc& ffmc) noexcept;
-  auto operator<=>(const Isi& rhs) const = default;
+  /**
+   * \brief Initial Spread Index of 0
+   */
+  static const Isi Zero;
+  static const Isi Invalid;
+
+private:
+  //! @cond Doxygen_Suppress
+  using Index::Index;
+  //! @endcond
 };
-Isi check_isi(const MathSize value, const Speed& ws, const Ffmc& ffmc) noexcept;
 /**
  * \brief Build-up Index value.
  */
-struct Bui : public Index<Bui>
+class Bui : public Index<Bui>
 {
-  using Index::Index;
+public:
+  /**
+   * \brief Calculate Build-up Index and verify previous value is within tolerance of calculated
+   * value
+   * \param value Value to check is within tolerance of calculated value
+   * \param dmc Duff Moisture Code
+   * \param dc Drought Code
+   */
+  Bui(MathSize value, const Dmc& dmc, const Dc& dc) noexcept;
+  /**
+   * \brief Calculate Build-up Index
+   * \param dmc Duff Moisture Code
+   * \param dc Drought Code
+   */
   Bui(const Dmc& dmc, const Dc& dc) noexcept;
-  auto operator<=>(const Bui& rhs) const = default;
+  /**
+   * \brief Build-up Index of 0
+   */
+  static const Bui Zero;
+  static const Bui Invalid;
+
+private:
+  //! @cond Doxygen_Suppress
+  using Index::Index;
+  //! @endcond
 };
-Bui check_bui(const MathSize value, const Dmc& dmc, const Dc& dc) noexcept;
 /**
  * \brief Fire Weather Index value.
  */
-struct Fwi : public Index<Fwi>
+class Fwi : public Index<Fwi>
 {
-  using Index::Index;
+public:
+  /**
+   * \brief Calculate Fire Weather Index and verify previous value is within tolerance of calculated
+   * value
+   * \param value Value to check is within tolerance of calculated value
+   * \param isi Initial Spread Index
+   * \param bui Build-up Index
+   */
+  Fwi(MathSize value, const Isi& isi, const Bui& bui) noexcept;
+  /**
+   * \brief Calculate Fire Weather Index
+   * \param isi Initial Spread Index
+   * \param bui Build-up Index
+   */
   Fwi(const Isi& isi, const Bui& bui) noexcept;
-  auto operator<=>(const Fwi& rhs) const = default;
+  /**
+   * \brief Fire Weather Index of 0
+   */
+  static const Fwi Zero;
+  static const Fwi Invalid;
+
+private:
+  //! @cond Doxygen_Suppress
+  using Index::Index;
+  //! @endcond
 };
-Fwi check_fwi(const MathSize value, const Isi& isi, const Bui& bui) noexcept;
 /**
  * \brief Danger Severity Rating value.
  */
-struct Dsr : public Index<Dsr>
+class Dsr : public Index<Dsr>
 {
+public:
+  //! @cond Doxygen_Suppress
   using Index::Index;
-  Dsr(const Fwi& fwi) noexcept;
-  auto operator<=>(const Dsr& rhs) const = default;
+  //! @endcond
+  /**
+   * \brief Calculate Danger Severity Rating
+   * \param fwi Fire Weather Index
+   */
+  explicit Dsr(const Fwi& fwi) noexcept;
+  /**
+   * \brief Danger Severity Rating of 0
+   */
+  static const Dsr Zero;
+  static const Dsr Invalids;
 };
 /**
  * \brief A Weather value with calculated FWI indices.
  */
-struct FwiWeather : public Weather
+class FwiWeather : public Weather
 {
-  static consteval FwiWeather Zero() { return {}; }
-  static consteval FwiWeather Invalid()
-  {
-    return {
-      Weather::Invalid(),
-      Ffmc::Invalid(),
-      Dmc::Invalid(),
-      Dc::Invalid(),
-      Isi::Invalid(),
-      Bui::Invalid(),
-      Fwi::Invalid()
-    };
-  }
+public:
   /**
-   * \brief Fine Fuel Moisture Code
+   * \brief FwiWeather with 0 for all Indices
    */
-  Ffmc ffmc{};
+  static const FwiWeather Zero;
+  static const FwiWeather Invalid;
   /**
-   * \brief Duff Moisture Code
+   * \brief Construct with 0 for all values
    */
-  Dmc dmc{};
+  FwiWeather() noexcept;
   /**
-   * \brief Drought Code
+   * \brief construct by applying noon weather to yesterday's indices
+   * \param yesterday FwiWeather yesterday used for startup indices
+   * \param month Month to calculate for
+   * \param latitude Latitude to calculate for
+   * \param temp Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param wind Wind (km/h)
+   * \param prec Precipitation (24hr accumulated, noon-to-noon) (mm)
    */
-  Dc dc{};
-  /**
-   * \brief Initial Spread Index
-   */
-  Isi isi{};
-  /**
-   * \brief Build-up Index
-   */
-  Bui bui{};
-  /**
-   * \brief Fire Weather Index
-   */
-  Fwi fwi{};
-  constexpr FwiWeather() noexcept = default;
-  constexpr FwiWeather(
-    const Temperature temp,
-    const RelativeHumidity rh,
-    const Wind wind,
-    const Precipitation prec,
-    const Ffmc ffmc,
-    const Dmc dmc,
-    const Dc dc,
-    const Isi isi,
-    const Bui bui,
-    const Fwi fwi
-  ) noexcept
-    : Weather(temp, rh, wind, prec), ffmc{ffmc}, dmc{dmc}, dc{dc}, isi{isi}, bui{bui}, fwi{fwi}
-  { }
-  constexpr FwiWeather(
-    const Weather wx,
-    const Ffmc ffmc,
-    const Dmc dmc,
-    const Dc dc,
-    Isi isi = Isi::Invalid(),
-    Bui bui = Bui::Invalid(),
-    Fwi fwi = Fwi::Invalid()
-  ) noexcept
-    : Weather(wx), ffmc{ffmc}, dmc{dmc}, dc{dc},
-      isi{Isi::Invalid() == isi ? Isi{wind.speed, ffmc} : isi},
-      bui{Bui::Invalid() == bui ? Bui{dmc, dc} : bui},
-      fwi{Fwi::Invalid() == fwi ? Fwi{isi, bui} : fwi}
-  { }
-  constexpr FwiWeather(
+  FwiWeather(
     const FwiWeather& yesterday,
     const int month,
-    const MathSize latitude,
+    const double latitude,
+    const Temperature& temp,
+    const RelativeHumidity& rh,
+    const Wind& wind,
+    const Precipitation& prec
+  );
+  /**
+   * \brief Constructor
+   * \param temp Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param wind Wind (km/h)
+   * \param prec Precipitation (1hr accumulation) (mm)
+   * \param ffmc Fine Fuel Moisture Code
+   * \param dmc Duff Moisture Code
+   * \param dc Drought Code
+   * \param isi Initial Spread Index
+   * \param bui Build-up Index
+   * \param fwi Fire Weather Index
+   */
+  FwiWeather(
     const Temperature& temp,
     const RelativeHumidity& rh,
     const Wind& wind,
     const Precipitation& prec,
-    Ffmc ffmc = Ffmc::Invalid(),
-    Dmc dmc = Dmc::Invalid(),
-    Dc dc = Dc::Invalid(),
-    Isi isi = Isi::Invalid(),
-    Bui bui = Bui::Invalid(),
-    Fwi fwi = Fwi::Invalid()
-  ) noexcept
-    : FwiWeather(
-        {.temperature = temp, .rh = rh, .wind = wind, .prec = prec},
-        (Ffmc::Invalid() == ffmc) ? Ffmc{temp, rh, wind.speed, prec, yesterday.ffmc} : ffmc,
-        (Dmc::Invalid() == dmc) ? Dmc{temp, rh, prec, yesterday.dmc, month, latitude} : dmc,
-        (Dc::Invalid() == dc) ? Dc{temp, prec, yesterday.dc, month, latitude} : dc,
-        isi,
-        bui,
-        fwi
-      )
-  { }
-  auto operator<=>(const FwiWeather& rhs) const = default;
+    const Ffmc& ffmc,
+    const Dmc& dmc,
+    const Dc& dc,
+    const Isi& isi,
+    const Bui& bui,
+    const Fwi& fwi
+  ) noexcept;
+  /**
+   * \brief Construct by calculating FWI
+   * \param temp Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param wind Wind (km/h)
+   * \param prec Precipitation (1hr accumulation) (mm)
+   * \param ffmc Fine Fuel Moisture Code
+   * \param dmc Duff Moisture Code
+   * \param dc Drought Code
+   * \param isi Initial Spread Index
+   * \param bui Build-up Index
+   */
+  FwiWeather(
+    const Temperature& temp,
+    const RelativeHumidity& rh,
+    const Wind& wind,
+    const Precipitation& prec,
+    const Ffmc& ffmc,
+    const Dmc& dmc,
+    const Dc& dc,
+    const Isi& isi,
+    const Bui& bui
+  ) noexcept;
+  /**
+   * \brief Construct by calculating ISI, BUI, & FWI
+   * \param temp Temperature (Celsius)
+   * \param rh Relative Humidity (%)
+   * \param wind Wind (km/h)
+   * \param prec Precipitation (1hr accumulation) (mm)
+   * \param ffmc Fine Fuel Moisture Code
+   * \param dmc Duff Moisture Code
+   * \param dc Drought Code
+   */
+  FwiWeather(
+    const Temperature& temp,
+    const RelativeHumidity& rh,
+    const Wind& wind,
+    const Precipitation& prec,
+    const Ffmc& ffmc,
+    const Dmc& dmc,
+    const Dc& dc
+  ) noexcept;
+  /**
+   * \brief Construct by recalculating with different wind Speed and Ffmc
+   * \param wx Original weather values
+   * \param ws Wind Speed to use
+   * \param ffmc Fine Fuel Moisture Code to use
+   */
+  FwiWeather(const FwiWeather& wx, const Speed& ws, const Ffmc& ffmc) noexcept;
+  ~FwiWeather() override = default;
+  constexpr FwiWeather(FwiWeather&& rhs) noexcept = default;
+  constexpr FwiWeather(const FwiWeather& rhs) noexcept = default;
+  FwiWeather& operator=(FwiWeather&& rhs) noexcept = default;
+  FwiWeather& operator=(const FwiWeather& rhs) = default;
+  /**
+   * \brief Fine Fuel Moisture Code
+   * \return Fine Fuel Moisture Code
+   */
+  [[nodiscard]] constexpr const Ffmc& ffmc() const { return ffmc_; }
+  /**
+   * \brief Duff Moisture Code
+   * \return Duff Moisture Code
+   */
+  [[nodiscard]] constexpr const Dmc& dmc() const { return dmc_; }
+  /**
+   * \brief Drought Code
+   * \return Drought Code
+   */
+  [[nodiscard]] constexpr const Dc& dc() const { return dc_; }
+  /**
+   * \brief Initial Spread Index
+   * \return Initial Spread Index
+   */
+  [[nodiscard]] constexpr const Isi& isi() const { return isi_; }
+  /**
+   * \brief Build-up Index
+   * \return Build-up Index
+   */
+  [[nodiscard]] constexpr const Bui& bui() const { return bui_; }
+  /**
+   * \brief Fire Weather Index
+   * \return Fire Weather Index
+   */
+  [[nodiscard]] constexpr const Fwi& fwi() const { return fwi_; }
   /**
    * \brief Moisture content (%) based on Ffmc
    * \return Moisture content (%) based on Ffmc
@@ -215,7 +380,94 @@ struct FwiWeather : public Weather
    * \return Ffmc effect used for spread
    */
   [[nodiscard]] MathSize ffmcEffect() const;
+
+private:
+  /**
+   * \brief Calculate based on indices plus new Wind, Ffmc, and Isi
+   * \param wx FwiWeather to use most indices from
+   * \param wind Wind to override with
+   * \param ffmc Ffmc to override with
+   * \param isi Isi calculated from given Wind and Ffmc to override with
+   */
+  FwiWeather(const FwiWeather& wx, const Wind& wind, const Ffmc& ffmc, const Isi& isi) noexcept;
+  /**
+   * \brief Calculate based on indices plus new Wind and Ffmc
+   * \param wx FwiWeather to use most indices from
+   * \param wind Wind to override with
+   * \param ffmc Ffmc to override with
+   */
+  FwiWeather(const FwiWeather& wx, const Wind& wind, const Ffmc& ffmc) noexcept;
+  /**
+   * \brief Fine Fuel Moisture Code
+   */
+  Ffmc ffmc_;
+  /**
+   * \brief Duff Moisture Code
+   */
+  Dmc dmc_;
+  /**
+   * \brief Drought Code
+   */
+  Dc dc_;
+  /**
+   * \brief Initial Spread Index
+   */
+  Isi isi_;
+  /**
+   * \brief Build-up Index
+   */
+  Bui bui_;
+  /**
+   * \brief Fire Weather Index
+   */
+  Fwi fwi_;
 };
+[[nodiscard]] constexpr bool operator<(const FwiWeather& lhs, const FwiWeather& rhs)
+{
+  if (lhs.temp() == rhs.temp())
+  {
+    if (lhs.rh() == rhs.rh())
+    {
+      if (lhs.wind() == rhs.wind())
+      {
+        if (lhs.prec() == rhs.prec())
+        {
+          if (lhs.ffmc() == rhs.ffmc())
+          {
+            if (lhs.dmc() == rhs.dmc())
+            {
+              if (lhs.dc() == rhs.dc())
+              {
+                // HACK: these should be the same, but if we loaded from file may not be exact
+                // assert(lhs.isi() == rhs.isi());
+                // assert(lhs.bui() == rhs.bui());
+                // assert(lhs.fwi() == rhs.fwi());
+              }
+              return lhs.dc() < rhs.dc();
+            }
+            return lhs.dmc() < rhs.dmc();
+          }
+          return lhs.ffmc() < rhs.ffmc();
+        }
+        return lhs.prec() < rhs.prec();
+      }
+      return lhs.wind() < rhs.wind();
+    }
+    return lhs.rh() < rhs.rh();
+  }
+  return lhs.temp() < rhs.temp();
+}
+[[nodiscard]] constexpr bool operator!=(const FwiWeather& lhs, const FwiWeather& rhs)
+{
+  return lhs.temp() != rhs.temp() || lhs.rh() != rhs.rh() || lhs.wind() != rhs.wind()
+      || lhs.prec() != rhs.prec() || lhs.ffmc() != rhs.ffmc() || lhs.dmc() != rhs.dmc()
+      || lhs.dc() != rhs.dc() || lhs.isi() != rhs.isi() || lhs.bui() != rhs.bui()
+      || lhs.fwi() != rhs.fwi();
+}
+[[nodiscard]] constexpr bool operator==(const FwiWeather& lhs, const FwiWeather& rhs)
+{
+  return !(lhs != rhs);
+}
 constexpr auto FFMC_MOISTURE_CONSTANT = 250.0 * 59.5 / 101.0;
 constexpr MathSize ffmc_to_moisture(const MathSize ffmc) noexcept
 {
@@ -223,11 +475,11 @@ constexpr MathSize ffmc_to_moisture(const MathSize ffmc) noexcept
 }
 constexpr MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept
 {
-  return ffmc_to_moisture(ffmc.value);
+  return ffmc_to_moisture(ffmc.asValue());
 }
-constexpr Ffmc moisture_to_ffmc(const MathSize m) noexcept
+constexpr MathSize moisture_to_ffmc(const MathSize m) noexcept
 {
-  return Ffmc{(59.5 * (250.0 - m) / (FFMC_MOISTURE_CONSTANT + m))};
+  return (59.5 * (250.0 - m) / (FFMC_MOISTURE_CONSTANT + m));
 }
 constexpr Ffmc ffmc_from_moisture(const MathSize m) noexcept { return Ffmc(moisture_to_ffmc(m)); }
 }

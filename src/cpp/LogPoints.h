@@ -4,6 +4,7 @@
 #include "InnerPos.h"
 namespace fs
 {
+#ifndef MODE_BP_ONLY
 constexpr auto STAGE_CONDENSE = 'C';
 constexpr auto STAGE_NEW = 'N';
 constexpr auto STAGE_SPREAD = 'S';
@@ -71,4 +72,5 @@ private:
   FILE* log_points_{nullptr};
   FILE* log_stages_{nullptr};
 };
+#endif
 };

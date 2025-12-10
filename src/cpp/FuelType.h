@@ -326,7 +326,7 @@ public:
     const auto prob_ffmc_saturated = duffFfmcType()->probabilityOfSurvival(McFfmcSaturated * 100);
     const auto prob_ffmc_zero = duffFfmcType()->probabilityOfSurvival(McDmc);
     const auto prob_ffmc_weighted = (prob_ffmc - prob_ffmc_saturated) / prob_ffmc_zero;
-    const auto term_otway = exp(-3.11 + 0.12 * wx.dmc.value);
+    const auto term_otway = exp(-3.11 + 0.12 * wx.dmc().asValue());
     const auto prob_otway = term_otway / (1 + term_otway);
     const auto mc_pct = wx.mcDmcPct() * dmcRatio() + wx.mcFfmcPct() * ffmcRatio();
     const auto prob_weight_ffmc = duffFfmcType()->probabilityOfSurvival(mc_pct);

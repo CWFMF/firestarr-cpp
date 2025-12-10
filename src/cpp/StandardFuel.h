@@ -193,7 +193,7 @@ public:
    */
   [[nodiscard]] MathSize buiEffect(const MathSize bui) const noexcept override
   {
-    return (0 < bui) ? exp(50.0 * log_q_.value * ((1.0 / bui) - (1.0 / bui0()))) : 1.0;
+    return (0 < bui) ? exp(50.0 * log_q_.asValue() * ((1.0 / bui) - (1.0 / bui0()))) : 1.0;
   }
 
 protected:

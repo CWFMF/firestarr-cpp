@@ -156,7 +156,6 @@ static constexpr CellIndex DIRECTION_SW = 0b00010000;
 static constexpr CellIndex DIRECTION_NE = 0b00100000;
 static constexpr CellIndex DIRECTION_NW = 0b01000000;
 static constexpr CellIndex DIRECTION_SE = 0b10000000;
-static constexpr CellIndex INVALID_CELLINDEX = 254;
 /**
  * \brief A row or column index for a grid
  */

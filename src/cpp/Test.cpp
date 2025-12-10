@@ -66,7 +66,7 @@ public:
     registerObserver(new IntensityObserver(*this));
     registerObserver(new ArrivalObserver(*this));
     registerObserver(new SourceObserver(*this));
-    addEvent(Event{.time = end_date, .type = Event::Type::EndSimulation});
+    addEvent(Event::makeEnd(end_date));
     last_save_ = end_date;
     // cast to avoid warning
     std::ignore = reset(nullptr, nullptr, final_sizes);
@@ -103,17 +103,17 @@ void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelTyp
   };
   // HACK: just do individual calls for now
   // can we assign them to a lookup table if they're not all numbers?
-  print_col("PREC", w->prec.value);
-  print_col("TEMP", w->temperature.value);
-  print_col("RH", w->rh.value);
-  print_col("WS", w->wind.speed.value);
-  print_col("WD", w->wind.direction.value);
-  print_col("FFMC", w->ffmc.value);
-  print_col("DMC", w->dmc.value);
-  print_col("DC", w->dc.value);
-  print_col("ISI", w->isi.value);
-  print_col("BUI", w->bui.value);
-  print_col("FWI", w->fwi.value);
+  print_col("PREC", w->prec().asValue());
+  print_col("TEMP", w->temp().asValue());
+  print_col("RH", w->rh().asValue());
+  print_col("WS", w->wind().speed().asValue());
+  print_col("WD", w->wind().direction().asValue());
+  print_col("FFMC", w->ffmc().asValue());
+  print_col("DMC", w->dmc().asValue());
+  print_col("DC", w->dc().asValue());
+  print_col("ISI", w->isi().asValue());
+  print_col("BUI", w->bui().asValue());
+  print_col("FWI", w->fwi().asValue());
   print_col("GS", spread.percentSlope());
   print_col("SAZ", spread.slopeAzimuth());
   const auto simple_fuel = simplify_fuel_name(fuel->name());
@@ -151,8 +151,8 @@ string generate_test_name(
     simple_fuel_name.c_str(),
     slope,
     aspect,
-    wind.direction.asDegrees(),
-    wind.speed.value
+    wind.direction().asDegrees(),
+    wind.speed().asValue()
   );
   return string(&(out[0]));
 };
@@ -330,14 +330,16 @@ int test(
   // make sure all tests run regardless of how long it takes
   Settings::setMaximumTimeSeconds(numeric_limits<size_t>::max());
   const auto hours = INVALID_TIME == num_hours ? DEFAULT_HOURS : num_hours;
-  const auto ffmc = (fs::Ffmc::Invalid() == wx->ffmc) ? DEFAULT_FFMC : wx->ffmc;
-  const auto dmc = (fs::Dmc::Invalid() == wx->dmc) ? DEFAULT_DMC : wx->dmc;
-  const auto dc = (fs::Dc::Invalid() == wx->dc) ? DEFAULT_DC : wx->dc;
+  const auto ffmc = (fs::Ffmc::Invalid == wx->ffmc()) ? DEFAULT_FFMC : wx->ffmc();
+  const auto dmc = (fs::Dmc::Invalid == wx->dmc()) ? DEFAULT_DMC : wx->dmc();
+  const auto dc = (fs::Dc::Invalid == wx->dc()) ? DEFAULT_DC : wx->dc();
   // HACK: need to compare value and not object
-  const auto wind_direction =
-    (fs::Direction::Invalid() == wx->wind.direction) ? DEFAULT_WIND_DIRECTION : wx->wind.direction;
-  const auto wind_speed =
-    (fs::Speed::Invalid() == wx->wind.speed) ? DEFAULT_WIND_SPEED : wx->wind.speed;
+  const auto wind_direction = (fs::Direction::Invalid.asValue() == wx->wind().direction().asValue())
+                              ? DEFAULT_WIND_DIRECTION
+                              : wx->wind().direction();
+  const auto wind_speed = (fs::Speed::Invalid.asValue() == wx->wind().speed().asValue())
+                          ? DEFAULT_WIND_SPEED
+                          : wx->wind().speed();
   const auto wind = fs::Wind(wind_direction, wind_speed);
   const auto slope = (INVALID_SLOPE == constant_slope) ? DEFAULT_SLOPE : constant_slope;
   const auto aspect = (INVALID_ASPECT == constant_aspect) ? DEFAULT_ASPECT : constant_aspect;
@@ -386,7 +388,7 @@ int test(
         aspects.emplace_back(constant_aspect);
       }
       auto wind_directions = vector<int>();
-      if (fs::Direction::Invalid() == wx->wind.direction)
+      if (fs::Direction::Invalid == wx->wind().direction())
       {
         for (auto wind_direction = 0; wind_direction < 360; wind_direction += WD_INCREMENT)
         {
@@ -395,10 +397,10 @@ int test(
       }
       else
       {
-        wind_directions.emplace_back(static_cast<int>(wx->wind.direction.asDegrees()));
+        wind_directions.emplace_back(static_cast<int>(wx->wind().direction().asDegrees()));
       }
       auto wind_speeds = vector<int>();
-      if (fs::Speed::Invalid() == wx->wind.speed)
+      if (fs::Speed::Invalid == wx->wind().speed())
       {
         for (auto wind_speed = 0; wind_speed <= MAX_WIND; wind_speed += WS_INCREMENT)
         {
@@ -407,7 +409,7 @@ int test(
       }
       else
       {
-        wind_speeds.emplace_back(static_cast<int>(wx->wind.speed.value));
+        wind_speeds.emplace_back(static_cast<int>(wx->wind().speed().asValue()));
       }
       size_t values = 1;
       values *= fuel_names.size();
@@ -492,9 +494,9 @@ int test(
         "\tAspect:\t\t\t%d\n",
         fuel.c_str(),
         hours,
-        ffmc.value,
-        dmc.value,
-        dc.value,
+        ffmc.asValue(),
+        dmc.asValue(),
+        dc.asValue(),
         wind_speed,
         wind_direction,
         slope,
