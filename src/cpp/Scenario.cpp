@@ -323,7 +323,7 @@ void Scenario::evaluate(const Event& event)
       // HACK: insert point as originating from itself
       points_.insert(
         p0,
-        SpreadData(event.time, NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
+        SpreadData(event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
         x,
         y
       );
@@ -345,8 +345,8 @@ void Scenario::evaluate(const Event& event)
         log_info(
           "Didn't survive ignition in %s with weather %f, %f",
           FuelType::safeName(check_fuel(event.cell)),
-          wx->ffmc(),
-          wx->dmc()
+          wx->ffmc,
+          wx->dmc
         );
         // HACK: we still want the fire to have existed, so set the intensity of the origin
       }
@@ -582,7 +582,7 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
       log_verbose("Adding point (%f, %f)", x, y);
       points_.insert(
         p0,
-        SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
+        SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
         x,
         y
       );
@@ -806,7 +806,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto max_duration = (next_time - time) * DAY_MINUTES;
   const auto max_time = time + max_duration / DAY_MINUTES;
   // HACK: use the old ffmc for this check to be consistent with previous version
-  if (wx_daily->ffmc().value < minimumFfmcForSpread(time))
+  if (wx_daily->ffmc.value < minimumFfmcForSpread(time))
   {
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     log_extensive("Waiting until %f because of FFMC", max_time);

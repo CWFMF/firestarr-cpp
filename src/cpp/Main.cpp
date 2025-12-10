@@ -204,11 +204,11 @@ int main(const int argc, const char* const argv[])
   size_t size = 0;
   // ffmc, dmc, dc are required for simulation & surface mode, so no indication of it not being
   // provided
-  Ffmc ffmc = Ffmc::Invalid;
-  Dmc dmc = Dmc::Invalid;
-  Dc dc = Dc::Invalid;
-  auto wind_direction = Direction::Invalid.value;
-  auto wind_speed = Speed::Invalid.value;
+  Ffmc ffmc = Ffmc::Invalid();
+  Dmc dmc = Dmc::Invalid();
+  Dc dc = Dc::Invalid();
+  auto wind_direction = Direction::Invalid().value;
+  auto wind_speed = Speed::Invalid().value;
   auto slope = static_cast<SlopeSize>(INVALID_SLOPE);
   auto aspect = static_cast<AspectSize>(INVALID_ASPECT);
   size_t SKIPPED_ARGS = 0;
@@ -529,14 +529,14 @@ int main(const int argc, const char* const argv[])
         fs::logging::warning(
           "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
         );
-        apcp_prev = Precipitation::Zero;
+        apcp_prev = Precipitation::Zero();
       }
       // HACK: ISI for yesterday really doesn't matter so just use any wind
       // HACK: it's basically wrong to assign this precip to yesterday's object,
       // but don't want to add another argument right now
       const auto yesterday = FwiWeather(
-        Temperature::Zero,
-        RelativeHumidity::Zero,
+        Temperature::Zero(),
+        RelativeHumidity::Zero(),
         Wind(Direction(wind_direction, false), Speed(wind_speed)),
         Precipitation(apcp_prev),
         ffmc,
@@ -584,10 +584,10 @@ int main(const int argc, const char* const argv[])
       }
       done_positional();
       const auto wx = FwiWeather(
-        Temperature::Zero,
-        RelativeHumidity::Zero,
+        Temperature::Zero(),
+        RelativeHumidity::Zero(),
         Wind(Direction(wind_direction, false), Speed(wind_speed)),
-        Precipitation::Zero,
+        Precipitation::Zero(),
         ffmc,
         dmc,
         dc

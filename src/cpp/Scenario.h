@@ -632,12 +632,10 @@ protected:
    * \brief How many times point spread event has happened
    */
   size_t step_;
-#ifndef MODE_BP_ONLY
   /**
    * \brief Point logging
    */
   LogPoints points_log_{};
-#endif
   /**
    * \brief How many times this scenario tried to spread out of bounds
    */
