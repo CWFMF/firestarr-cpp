@@ -8,6 +8,7 @@
 #include "stdafx.h"
 #include "debug_settings.h"
 #include "FWI.h"
+#include "FwiReference.h"
 #include "Log.h"
 #include "Model.h"
 #include "Settings.h"
@@ -617,6 +618,8 @@ int main(const int argc, const char* const argv[])
   // FIX: this was used to compare to the old template version, but doesn't work now
   //      left for reference for now so idea could be used for more tests
   constexpr auto fct_main = fs::duff::test_duff;
+#elif TEST_FWI
+  constexpr auto fct_main = fs::fwireference::test_fwi;
 #else
   constexpr auto fct_main = fs::main;
 #endif
