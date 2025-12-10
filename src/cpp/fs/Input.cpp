@@ -72,6 +72,17 @@ FwiWeather read_weather(istringstream* iss, string* str)
   logging::extensive("WD is %s", str->c_str());
   const Direction wd(stod(str), false);
   const Wind wind(wd, ws);
-  return {temp, rh, wind, prec, Ffmc::Zero, Dmc::Zero, Dc::Zero, Isi::Zero, Bui::Zero, Fwi::Zero};
+  return {
+    temp,
+    rh,
+    wind,
+    prec,
+    Ffmc::Zero(),
+    Dmc::Zero(),
+    Dc::Zero(),
+    Isi::Zero(),
+    Bui::Zero(),
+    Fwi::Zero()
+  };
 }
 }

@@ -34,25 +34,10 @@ public:
    */
   [[nodiscard]] constexpr MathSize distanceFrom() const noexcept { return distance_from_; }
   /**
-   * \brief Fine Fuel Moisture Code
-   * \return Fine Fuel Moisture Code
-   */
-  [[nodiscard]] constexpr const Ffmc& ffmc() const noexcept { return ffmc_; }
-  /**
-   * \brief Duff Moisture Code
-   * \return Duff Moisture Code
-   */
-  [[nodiscard]] constexpr const Dmc& dmc() const noexcept { return dmc_; }
-  /**
-   * \brief Drought Code
-   * \return Drought Code
-   */
-  [[nodiscard]] constexpr const Dc& dc() const noexcept { return dc_; }
-  /**
    * \brief Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
    * \return Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
    */
-  [[nodiscard]] constexpr const Precipitation& apcpPrev() const noexcept { return apcp_prev_; }
+  [[nodiscard]] constexpr const Precipitation& apcpPrev() const noexcept { return apcp_prev; }
   /**
    * \brief Whether or not any Startup values were overridden
    * \return Whether or not any Startup values were overridden
@@ -104,22 +89,26 @@ private:
    * \brief Distance actual point for this is from represented Point (m)
    */
   MathSize distance_from_;
+
+public:
   /**
    * \brief Fine Fuel Moisture Code
    */
-  Ffmc ffmc_;
+  Ffmc ffmc;
   /**
    * \brief Duff Moisture Code
    */
-  Dmc dmc_;
+  Dmc dmc;
   /**
    * \brief Drought code
    */
-  Dc dc_;
+  Dc dc;
   /**
    * \brief Accumulated Precipitation from noon yesterday to start of hourly weather (mm)
    */
-  Precipitation apcp_prev_;
+  Precipitation apcp_prev;
+
+private:
   /**
    * \brief Whether or not any of the indices have been overridden
    */

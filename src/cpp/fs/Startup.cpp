@@ -14,7 +14,7 @@ Startup::Startup(
   const bool overridden
 ) noexcept
   : station_(std::move(station)), generated_(generated), point_(point),
-    distance_from_(distance_from), ffmc_(ffmc), dmc_(dmc), dc_(dc), apcp_prev_(apcp_prev),
+    distance_from_(distance_from), ffmc(ffmc), dmc(dmc), dc(dc), apcp_prev(apcp_prev),
     is_overridden_(overridden)
 { }
 }

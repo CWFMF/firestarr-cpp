@@ -39,44 +39,6 @@
 //******************************************************************************************
 namespace fs
 {
-const Ffmc Ffmc::Zero = Ffmc(0);
-const Dmc Dmc::Zero = Dmc(0);
-const Dc Dc::Zero = Dc(0);
-const Bui Bui::Zero = Bui(0);
-const Isi Isi::Zero = Isi(0);
-const Fwi Fwi::Zero = Fwi(0);
-// HACK: can't use the ::Zero fields for these because we don't know when they initialize
-const FwiWeather FwiWeather::Zero{
-  Temperature::Zero,
-  RelativeHumidity::Zero,
-  Wind::Zero,
-  Precipitation::Zero,
-  Ffmc::Zero,
-  Dmc::Zero,
-  Dc::Zero,
-  Isi::Zero,
-  Bui::Zero,
-  Fwi::Zero
-};
-const Ffmc Ffmc::Invalid = Ffmc(-1);
-const Dmc Dmc::Invalid = Dmc(-1);
-const Dc Dc::Invalid = Dc(-1);
-const Bui Bui::Invalid = Bui(-1);
-const Isi Isi::Invalid = Isi(-1);
-const Fwi Fwi::Invalid = Fwi(-1);
-// HACK: can't use the ::Invalid fields for these because we don't know when they initialize
-const FwiWeather FwiWeather::Invalid{
-  Temperature::Invalid,
-  RelativeHumidity::Invalid,
-  Wind::Invalid,
-  Precipitation::Invalid,
-  Ffmc::Invalid,
-  Dmc::Invalid,
-  Dc::Invalid,
-  Isi::Invalid,
-  Bui::Invalid,
-  Fwi::Invalid
-};
 // The following two functions refer to the MEA day length adjustment 'note'.
 //
 //******************************************************************************************
@@ -573,10 +535,10 @@ FwiWeather::FwiWeather(
   const Bui& bui,
   const Fwi& fwi
 ) noexcept
-  : Weather(temp, rh, wind, prec), ffmc_(ffmc), dmc_(dmc), dc_(dc),
+  : Weather(temp, rh, wind, prec), ffmc(ffmc), dmc(dmc), dc(dc),
     // HACK: recalculate so that we can check that things are within tolerances
-    isi_(Isi(isi.value, wind.speed(), ffmc)), bui_(Bui(bui.value, dmc, dc)),
-    fwi_(Fwi(fwi.value, isi, bui))
+    isi(Isi(isi.value, wind.speed, ffmc)), bui(Bui(bui.value, dmc, dc)),
+    fwi(Fwi(fwi.value, isi, bui))
 { }
 FwiWeather::FwiWeather(
   const FwiWeather& yesterday,
@@ -592,9 +554,9 @@ FwiWeather::FwiWeather(
       rh,
       wind,
       prec,
-      Ffmc(temp, rh, wind.speed(), prec, yesterday.ffmc()),
-      Dmc(temp, rh, prec, yesterday.dmc(), month, latitude),
-      Dc(temp, prec, yesterday.dc(), month, latitude)
+      Ffmc(temp, rh, wind.speed, prec, yesterday.ffmc),
+      Dmc(temp, rh, prec, yesterday.dmc, month, latitude),
+      Dc(temp, prec, yesterday.dc, month, latitude)
     )
 { }
 FwiWeather::FwiWeather(
@@ -604,25 +566,25 @@ FwiWeather::FwiWeather(
   const Isi& isi
 ) noexcept
   : FwiWeather(
-      wx.temp(),
-      wx.rh(),
+      wx.temperature,
+      wx.rh,
       wind,
-      wx.prec(),
+      wx.prec,
       ffmc,
-      wx.dmc(),
-      wx.dc(),
+      wx.dmc,
+      wx.dc,
       isi,
-      wx.bui(),
-      Fwi(isi, wx.bui())
+      wx.bui,
+      Fwi(isi, wx.bui)
     )
 { }
 FwiWeather::FwiWeather(const FwiWeather& wx, const Wind& wind, const Ffmc& ffmc) noexcept
-  : FwiWeather(wx, wind, ffmc, Isi(wind.speed(), ffmc))
+  : FwiWeather(wx, wind, ffmc, Isi(wind.speed, ffmc))
 { }
 FwiWeather::FwiWeather(const FwiWeather& wx, const Speed& ws, const Ffmc& ffmc) noexcept
-  : FwiWeather(wx, Wind(wx.wind().direction(), ws), ffmc)
+  : FwiWeather(wx, Wind(wx.wind.direction, ws), ffmc)
 { }
-FwiWeather::FwiWeather() noexcept : FwiWeather(Zero) { }
+FwiWeather::FwiWeather() noexcept : FwiWeather(Zero()) { }
 FwiWeather::FwiWeather(
   const Temperature& temp,
   const RelativeHumidity& rh,
@@ -645,14 +607,14 @@ FwiWeather::FwiWeather(
   const Dmc& dmc,
   const Dc& dc
 ) noexcept
-  : FwiWeather(temp, rh, wind, prec, ffmc, dmc, dc, Isi(wind.speed(), ffmc), Bui(dmc, dc))
+  : FwiWeather(temp, rh, wind, prec, ffmc, dmc, dc, Isi(wind.speed, ffmc), Bui(dmc, dc))
 { }
-[[nodiscard]] MathSize FwiWeather::ffmcEffect() const { return ffmc_effect(ffmc_); }
+[[nodiscard]] MathSize FwiWeather::ffmcEffect() const { return ffmc_effect(ffmc); }
 [[nodiscard]] MathSize FwiWeather::mcDmc() const { return mcDmcPct() / 100.0; }
 [[nodiscard]] MathSize FwiWeather::mcFfmc() const { return mcFfmcPct() / 100.0; }
-[[nodiscard]] MathSize FwiWeather::mcFfmcPct() const { return ffmc_to_moisture(ffmc_); }
+[[nodiscard]] MathSize FwiWeather::mcFfmcPct() const { return ffmc_to_moisture(ffmc); }
 [[nodiscard]] MathSize FwiWeather::mcDmcPct() const
 {
-  return exp((dmc_.value - 244.72) / -43.43) + 20;
+  return exp((dmc.value - 244.72) / -43.43) + 20;
 }
 }

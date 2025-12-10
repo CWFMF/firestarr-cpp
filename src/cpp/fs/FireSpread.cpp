@@ -81,11 +81,11 @@ MathSize SpreadInfo::initial(
   MathSize critical_surface_intensity
 )
 {
-  ffmc_effect = spread.ffmcEffect();
+  ffmc_effect = spread.weather->ffmcEffect();
   // needs to be non-const so that we can update if slopeEffect changes direction
-  MathSize raz = spread.wind().heading();
+  MathSize raz = spread.weather->wind.heading();
   const auto isz = 0.208 * ffmc_effect;
-  wsv = spread.wind().speed().value;
+  wsv = spread.weather->wind.speed.value;
   if (!has_no_slope)
   {
     const auto isf1 = fuel->calculateIsf(spread, isz);
@@ -96,11 +96,11 @@ MathSize SpreadInfo::initial(
         28.0 - log(1.0 - min(0.999 * 2.496 * ffmc_effect, isf1) / (2.496 * ffmc_effect)) / 0.0818;
     }
     const auto heading = to_heading(to_radians(static_cast<double>(Cell::aspect(spread.key_))));
-    const auto wsv_x = spread.wind().wsvX() + wse * cos(heading);
-    const auto wsv_y = spread.wind().wsvY() + wse * sin(heading);
+    const auto wsv_x = spread.weather->wind.wsvX() + wse * cos(heading);
+    const auto wsv_y = spread.weather->wind.wsvY() + wse * sin(heading);
     // // we know that at->raz is already set to be the wind heading
-    // const auto wsv_x = spread.wind().wsvX() + wse * heading_sin;
-    // const auto wsv_y = spread.wind().wsvY() + wse * heading_cos;
+    // const auto wsv_x = spread.weather->wind.wsvX() + wse * heading_sin;
+    // const auto wsv_y = spread.weather->wind.wsvY() + wse * heading_cos;
     wsv = sqrt(wsv_x * wsv_x + wsv_y * wsv_y);
     raz = (0 == wsv) ? 0 : acos(wsv_y / wsv);
     if (wsv_x < 0)
@@ -244,9 +244,9 @@ SpreadInfo::SpreadInfo(
   const ptr<const FwiWeather> weather,
   const ptr<const FwiWeather> weather_daily
 )
-  : offsets_({}), max_intensity_(INVALID_INTENSITY), key_(key), weather_(weather), time_(time),
+  : offsets_({}), max_intensity_(INVALID_INTENSITY), key_(key), weather(weather), time_(time),
     head_ros_(INVALID_ROS), cfb_(-1), cfc_(-1), tfc_(-1), sfc_(-1), is_crown_(false),
-    raz_(fs::Direction::Invalid), nd_(nd)
+    raz_(fs::Direction::Invalid()), nd_(nd)
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
   const auto slope_azimuth = Cell::aspect(key_);
@@ -265,7 +265,7 @@ SpreadInfo::SpreadInfo(
     heading_cos = cos(heading);
   }
   // HACK: only use BUI from hourly weather for both calculations
-  const auto _bui = bui().value;
+  const auto _bui = weather->bui.value;
   const auto bui_eff = fuel->buiEffect(_bui);
   // FIX: gets calculated when not necessary sometimes
   const auto critical_surface_intensity = fuel->criticalSurfaceIntensity(*this);
@@ -351,7 +351,7 @@ SpreadInfo::SpreadInfo(
     tfc_ = -1;
     sfc_ = -1;
     is_crown_ = false;
-    raz_ = fs::Direction::Invalid;
+    raz_ = fs::Direction::Invalid();
   }
 }
 }

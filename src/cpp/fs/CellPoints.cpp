@@ -22,8 +22,8 @@ static const SpreadData INVALID_SPREAD_DATA{
   INVALID_TIME,
   static_cast<IntensitySize>(0),
   INVALID_ROS,
-  Direction::Invalid,
-  Direction::Invalid
+  Direction::Invalid(),
+  Direction::Invalid()
 };
 set<XYPos> CellPoints::unique() const noexcept
 {
@@ -138,7 +138,7 @@ CellPoints& CellPoints::insert(
   else
   {
     // initial burn will have an invalid direction, so needs to burn everywhere
-    const auto is_initial = Direction::Invalid == spread_current.direction_previous();
+    const auto is_initial = Direction::Invalid() == spread_current.direction_previous();
     // only spread in a direction that's in front of the normal to the angle it came from
     // i.e. the 90 degrees on either side of the raz
     const auto dir_diff =

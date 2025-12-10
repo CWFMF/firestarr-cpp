@@ -404,13 +404,13 @@ static ptr<const FwiWeather> make_wx(
 )
 {
   return make_wx(FwiWeather{
-    wx.temp(),
-    wx.rh(),
-    Wind(wx.wind().direction(), speed),
-    12 == hour ? wx.prec() : Precipitation::Zero,
+    wx.temperature,
+    wx.rh,
+    Wind(wx.wind.direction, speed),
+    12 == hour ? wx.prec : Precipitation::Zero(),
     ffmc,
-    wx.dmc(),
-    wx.dc()
+    wx.dmc,
+    wx.dc
   });
 }
 static ptr<const FwiWeather> make_wx(
@@ -420,7 +420,7 @@ static ptr<const FwiWeather> make_wx(
   const int hour
 )
 {
-  return make_wx(Speed(wx_wind.wind().speed().value * wind_speed_adjustment(hour)), wx, ffmc, hour);
+  return make_wx(Speed(wx_wind.wind.speed.value * wind_speed_adjustment(hour)), wx, ffmc, hour);
 }
 static ptr<const FwiWeather> make_wx(const FwiWeather& wx, const Ffmc& ffmc, const int hour)
 {
@@ -451,7 +451,7 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
     add_wx(13, ffmc_1300(x, x_sq, x_cu, rt_x, ln_x));
     add_wx(14, ffmc_1400(x, x_sq, rt_x, ln_x, exp_x));
     add_wx(15, ffmc_1500(x, x_sq, x_cu, rt_x, ln_x));
-    add_wx(16, wx.ffmc());
+    add_wx(16, wx.ffmc);
     add_wx(17, ffmc_1700(x, x_sq, rt_x, ln_x, exp_neg_x));
     add_wx(18, ffmc_1800(x, x_sq, x_cu, rt_x, ln_x));
     add_wx(19, ffmc_1900(x, x_sq, rt_x, exp_x, exp_neg_x));
@@ -479,7 +479,7 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
     const auto x = wx.mcFfmcPct();
     const auto ln_x = log(x);
     const auto ln_x_sq = ln_x * ln_x;
-    const auto& at_1200 = r.at(time_index(day + 1, 12, min_date))->ffmc();
+    const auto& at_1200 = r.at(time_index(day + 1, 12, min_date))->ffmc;
     // figure out which is the closest match and use that curve
     const auto at_1100_high = ffmc_1100_high(ln_x, ln_x_sq);
     const auto at_1100_med = ffmc_1100_med(x);
@@ -527,12 +527,12 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
   {
     // use first day's weather for min date instead of all 0's
     const auto& wx = (day == min_date ? data.at(day + 1) : data.at(day));
-    const auto ffmc_at_0600 = r.at(time_index(day + 1, 6, min_date))->ffmc().value;
-    const auto ffmc_at_2000 = r.at(time_index(day, 20, min_date))->ffmc().value;
+    const auto ffmc_at_0600 = r.at(time_index(day + 1, 6, min_date))->ffmc.value;
+    const auto ffmc_at_2000 = r.at(time_index(day, 20, min_date))->ffmc.value;
     // need linear interpolation between 2000 and 0600
     const auto ffmc_slope = (ffmc_at_0600 - ffmc_at_2000) / 10.0;
-    const auto wind_at_0600 = r.at(time_index(day + 1, 6, min_date))->wind().speed().value;
-    const auto wind_at_2000 = r.at(time_index(day, 20, min_date))->wind().speed().value;
+    const auto wind_at_0600 = r.at(time_index(day + 1, 6, min_date))->wind.speed.value;
+    const auto wind_at_2000 = r.at(time_index(day, 20, min_date))->wind.speed.value;
     // need linear interpolation between 2000 and 0600
     const auto wind_slope = (wind_at_0600 - wind_at_2000) / 10.0;
     const auto add_wx = [&](const Day day_offset, const int hour, const int offset) {
@@ -632,9 +632,9 @@ static vector<ptr<const FwiWeather>> make_constant_weather(
       ffmc,
       dmc,
       dc,
-      Isi(wind.speed(), ffmc),
+      Isi(wind.speed, ffmc),
       bui,
-      Fwi(Isi(wind.speed(), ffmc), bui)
+      Fwi(Isi(wind.speed, ffmc), bui)
     });
   });
   return wx;

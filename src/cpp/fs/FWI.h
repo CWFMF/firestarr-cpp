@@ -32,8 +32,8 @@ public:
   /**
    * \brief Fine Fuel Moisture Code of 0
    */
-  static const Ffmc Zero;
-  static const Ffmc Invalid;
+  static constexpr Ffmc Zero() { return Ffmc{0}; };
+  static constexpr Ffmc Invalid() { return Ffmc{-1}; };
 };
 /**
  * \brief Duff Moisture Code value.
@@ -58,14 +58,14 @@ public:
     const RelativeHumidity& rh,
     const Precipitation& prec,
     const Dmc& dmc_previous,
-    int month,
-    MathSize latitude
+    const int month,
+    const MathSize latitude
   ) noexcept;
   /**
    * \brief Duff Moisture Code of 0
    */
-  static const Dmc Zero;
-  static const Dmc Invalid;
+  static constexpr Dmc Zero() { return Dmc{0}; };
+  static constexpr Dmc Invalid() { return Dmc{-1}; };
 };
 /**
  * \brief Drought Code value.
@@ -88,14 +88,14 @@ public:
     const Temperature& temperature,
     const Precipitation& prec,
     const Dc& dc_previous,
-    int month,
-    MathSize latitude
+    const int month,
+    const MathSize latitude
   ) noexcept;
   /**
    * \brief Drought Code of 0
    */
-  static const Dc Zero;
-  static const Dc Invalid;
+  static constexpr Dc Zero() { return Dc{0}; };
+  static constexpr Dc Invalid() { return Dc{-1}; };
 };
 /**
  * \brief Initial Spread Index value.
@@ -120,8 +120,8 @@ public:
   /**
    * \brief Initial Spread Index of 0
    */
-  static const Isi Zero;
-  static const Isi Invalid;
+  static constexpr Isi Zero() { return Isi{0}; };
+  static constexpr Isi Invalid() { return Isi{-1}; };
 
 private:
   //! @cond Doxygen_Suppress
@@ -151,8 +151,8 @@ public:
   /**
    * \brief Build-up Index of 0
    */
-  static const Bui Zero;
-  static const Bui Invalid;
+  static constexpr Bui Zero() { return Bui{0}; };
+  static constexpr Bui Invalid() { return Bui{-1}; };
 
 private:
   //! @cond Doxygen_Suppress
@@ -182,8 +182,8 @@ public:
   /**
    * \brief Fire Weather Index of 0
    */
-  static const Fwi Zero;
-  static const Fwi Invalid;
+  static constexpr Fwi Zero() { return Fwi{0}; };
+  static constexpr Fwi Invalid() { return Fwi{-1}; };
 
 private:
   //! @cond Doxygen_Suppress
@@ -207,8 +207,8 @@ public:
   /**
    * \brief Danger Severity Rating of 0
    */
-  static const Dsr Zero;
-  static const Dsr Invalids;
+  static constexpr Dsr Zero() { return Dsr{0}; };
+  static constexpr Dsr Invalid() { return Dsr{-1}; };
 };
 /**
  * \brief A Weather value with calculated FWI indices.
@@ -219,8 +219,36 @@ public:
   /**
    * \brief FwiWeather with 0 for all Indices
    */
-  static const FwiWeather Zero;
-  static const FwiWeather Invalid;
+  static constexpr FwiWeather Zero()
+  {
+    return FwiWeather{
+      Temperature::Zero(),
+      RelativeHumidity::Zero(),
+      Wind::Zero(),
+      Precipitation::Zero(),
+      Ffmc::Zero(),
+      Dmc::Zero(),
+      Dc::Zero(),
+      Isi::Zero(),
+      Bui::Zero(),
+      Fwi::Zero()
+    };
+  };
+  static constexpr FwiWeather Invalid()
+  {
+    return FwiWeather{
+      Temperature::Invalid(),
+      RelativeHumidity::Invalid(),
+      Wind::Invalid(),
+      Precipitation::Invalid(),
+      Ffmc::Invalid(),
+      Dmc::Invalid(),
+      Dc::Invalid(),
+      Isi::Invalid(),
+      Bui::Invalid(),
+      Fwi::Invalid()
+    };
+  };
   /**
    * \brief Construct with 0 for all values
    */
@@ -324,36 +352,6 @@ public:
   FwiWeather& operator=(FwiWeather&& rhs) noexcept = default;
   FwiWeather& operator=(const FwiWeather& rhs) = default;
   /**
-   * \brief Fine Fuel Moisture Code
-   * \return Fine Fuel Moisture Code
-   */
-  [[nodiscard]] constexpr const Ffmc& ffmc() const { return ffmc_; }
-  /**
-   * \brief Duff Moisture Code
-   * \return Duff Moisture Code
-   */
-  [[nodiscard]] constexpr const Dmc& dmc() const { return dmc_; }
-  /**
-   * \brief Drought Code
-   * \return Drought Code
-   */
-  [[nodiscard]] constexpr const Dc& dc() const { return dc_; }
-  /**
-   * \brief Initial Spread Index
-   * \return Initial Spread Index
-   */
-  [[nodiscard]] constexpr const Isi& isi() const { return isi_; }
-  /**
-   * \brief Build-up Index
-   * \return Build-up Index
-   */
-  [[nodiscard]] constexpr const Bui& bui() const { return bui_; }
-  /**
-   * \brief Fire Weather Index
-   * \return Fire Weather Index
-   */
-  [[nodiscard]] constexpr const Fwi& fwi() const { return fwi_; }
-  /**
    * \brief Moisture content (%) based on Ffmc
    * \return Moisture content (%) based on Ffmc
    */
@@ -395,72 +393,76 @@ private:
    * \param ffmc Ffmc to override with
    */
   FwiWeather(const FwiWeather& wx, const Wind& wind, const Ffmc& ffmc) noexcept;
+
+public:
   /**
    * \brief Fine Fuel Moisture Code
    */
-  Ffmc ffmc_;
+  Ffmc ffmc{};
   /**
    * \brief Duff Moisture Code
    */
-  Dmc dmc_;
+  Dmc dmc{};
   /**
    * \brief Drought Code
    */
-  Dc dc_;
+  Dc dc{};
   /**
    * \brief Initial Spread Index
    */
-  Isi isi_;
+  Isi isi{};
   /**
    * \brief Build-up Index
    */
-  Bui bui_;
+  Bui bui{};
   /**
    * \brief Fire Weather Index
    */
-  Fwi fwi_;
+  Fwi fwi{};
 };
 [[nodiscard]] constexpr bool operator<(const FwiWeather& lhs, const FwiWeather& rhs)
 {
-  if (lhs.temp() == rhs.temp())
+  if (lhs.temperature == rhs.temperature)
   {
-    if (lhs.rh() == rhs.rh())
+    if (lhs.rh == rhs.rh)
     {
-      if (lhs.wind() == rhs.wind())
+      if (lhs.wind == rhs.wind)
       {
-        if (lhs.prec() == rhs.prec())
+        if (lhs.prec == rhs.prec)
         {
-          if (lhs.ffmc() == rhs.ffmc())
+          if (lhs.ffmc == rhs.ffmc)
           {
-            if (lhs.dmc() == rhs.dmc())
+            if (lhs.dmc == rhs.dmc)
             {
-              if (lhs.dc() == rhs.dc())
+              if (lhs.dc == rhs.dc)
               {
                 // HACK: these should be the same, but if we loaded from file may not be exact
-                // assert(lhs.isi() == rhs.isi());
-                // assert(lhs.bui() == rhs.bui());
-                // assert(lhs.fwi() == rhs.fwi());
+                // assert(lhs.isi == rhs.isi);
+                // assert(lhs.bui == rhs.bui);
+                // assert(lhs.fwi == rhs.fwi);
               }
-              return lhs.dc() < rhs.dc();
+              return lhs.dc < rhs.dc;
             }
-            return lhs.dmc() < rhs.dmc();
+            return lhs.dmc < rhs.dmc;
           }
-          return lhs.ffmc() < rhs.ffmc();
+          return lhs.ffmc < rhs.ffmc;
         }
-        return lhs.prec() < rhs.prec();
+        return lhs.prec < rhs.prec;
       }
-      return lhs.wind() < rhs.wind();
+      return lhs.wind < rhs.wind;
     }
-    return lhs.rh() < rhs.rh();
+    return lhs.rh < rhs.rh;
   }
-  return lhs.temp() < rhs.temp();
+  return lhs.temperature < rhs.temperature;
 }
 [[nodiscard]] constexpr bool operator!=(const FwiWeather& lhs, const FwiWeather& rhs)
 {
-  return lhs.temp() != rhs.temp() || lhs.rh() != rhs.rh() || lhs.wind() != rhs.wind()
-      || lhs.prec() != rhs.prec() || lhs.ffmc() != rhs.ffmc() || lhs.dmc() != rhs.dmc()
-      || lhs.dc() != rhs.dc() || lhs.isi() != rhs.isi() || lhs.bui() != rhs.bui()
-      || lhs.fwi() != rhs.fwi();
+  return lhs.temperature != rhs.temperature || lhs.rh != rhs.rh || lhs.wind != rhs.wind
+      || lhs.prec != rhs.prec || lhs.ffmc != rhs.ffmc || lhs.dmc != rhs.dmc || lhs.dc != rhs.dc
+    // || lhs.isi != rhs.isi
+    // || lhs.bui != rhs.bui
+    // || lhs.fwi != rhs.fwi
+    ;
 }
 [[nodiscard]] constexpr bool operator==(const FwiWeather& lhs, const FwiWeather& rhs)
 {

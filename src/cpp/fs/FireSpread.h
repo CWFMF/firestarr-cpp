@@ -89,41 +89,6 @@ public:
    */
   [[nodiscard]] constexpr int nd() const { return nd_; }
   /**
-   * \brief FwiWeather used for spread
-   * \return FwiWeather used for spread
-   */
-  [[nodiscard]] constexpr ptr<const FwiWeather> weather() const { return weather_; }
-  /**
-   * \brief Wind used for spread
-   * \return Wind used for spread
-   */
-  [[nodiscard]] constexpr const Wind& wind() const { return weather()->wind(); }
-  /**
-   * \brief Fine Fuel Moisture Code used for spread
-   * \return Fine Fuel Moisture Code used for spread
-   */
-  [[nodiscard]] constexpr const Ffmc& ffmc() const { return weather()->ffmc(); }
-  /**
-   * \brief Build-up Index used for spread
-   * \return Build-up Index used for spread
-   */
-  [[nodiscard]] constexpr const Bui& bui() const { return weather()->bui(); }
-  /**
-   * \brief Duff Moisture Code used for spread
-   * \return Duff Moisture Code used for spread
-   */
-  [[nodiscard]] constexpr const Dmc& dmc() const { return weather()->dmc(); }
-  /**
-   * \brief Drought Code used for spread
-   * \return Drought Code used for spread
-   */
-  [[nodiscard]] constexpr const Dc& dc() const { return weather()->dc(); }
-  /**
-   * \brief FFMC effect used for spread
-   * \return FFMC effect used for spread
-   */
-  [[nodiscard]] constexpr MathSize ffmcEffect() const { return weather()->ffmcEffect(); }
-  /**
    * \brief Time used for spread
    * \return Time used for spread
    */
@@ -293,10 +258,14 @@ private:
    * \brief Attributes for Cell spread is occurring in
    */
   SpreadKey key_ = 0;
+
+public:
   /**
    * \brief FwiWeather determining spread
    */
-  ptr<const FwiWeather> weather_ = nullptr;
+  ptr<const FwiWeather> weather{nullptr};
+
+private:
   /**
    * \brief Time that spread is occurring
    */
@@ -311,10 +280,14 @@ private:
   MathSize tfc_ = -1;
   MathSize sfc_ = -1;
   bool is_crown_ = false;
+
+public:
   /**
    * \brief Head fire spread direction
    */
-  Direction raz_{Direction::Invalid};
+  Direction raz_{Direction::Invalid()};
+
+private:
   /**
    * \brief Difference between date and the date of minimum foliar moisture content (from ST-X-3)
    */
