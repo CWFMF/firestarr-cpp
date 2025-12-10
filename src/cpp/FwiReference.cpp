@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "Util.h"
 namespace fs::fwireference
 {
 using namespace std;
@@ -147,10 +148,8 @@ void FWIcalc(float R, float U, float& fwi)
   else                                          /*Eq. 30b*/
     fwi = B;
 }
-int test_fwi(const int argc, const char* const argv[])
+int test_fwi_file(const string file_in, const string file_out)
 {
-  std::ignore = argc;
-  std::ignore = argv;
   string line;
   float temp, rhum, wind, prcp, x, y;
   float ffmc, ffmc0, dmc, dmc0, dc, dc0, isi, bui, fwi;
@@ -160,17 +159,17 @@ int test_fwi(const int argc, const char* const argv[])
   dmc0 = 6.0;
   dc0 = 15.0;
   /* Open input and output files */
-  ifstream inputFile("test/input/fwi.txt");
+  ifstream inputFile(file_in.c_str());
   if (!inputFile.is_open())
   {
     cout << "Unable to open input data file";
-    return 0;
+    return -1;
   }
-  ofstream outputFile("test/output/fwioutput.txt");
+  ofstream outputFile(file_out.c_str());
   if (!outputFile.is_open())
   {
     cout << "Unable to open output data file";
-    return 0;
+    return 1;
   }
   /* Main loop for calculating indices */
   while (getline(inputFile, line))
@@ -186,10 +185,77 @@ int test_fwi(const int argc, const char* const argv[])
     ffmc0 = ffmc;
     dmc0 = dmc;
     dc0 = dc;
-    outputFile << ffmc << ' ' << dmc << ' ' << dc << ' ' << isi << ' ' << bui << ' ' << fwi << endl;
+    printf("%0.1f %0.1f %0.1f %0.1f %0.1f %0.1f\n", ffmc, dmc, dc, isi, bui, fwi);
+    outputFile << std::format(
+      "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}", ffmc, dmc, dc, isi, bui, fwi
+    ) << endl;
+    // outputFile << ffmc << ' ' << dmc << ' ' << dc << ' ' << isi << ' ' << bui << ' ' << fwi <<
+    // endl;
   }
   inputFile.close();
   outputFile.close();
   return 0;
+}
+int compare_files(const string file0, const string file1)
+{
+  printf("Comparing %s to %s\n", file0.c_str(), file1.c_str());
+  ifstream input0(file0.c_str());
+  if (!input0.is_open())
+  {
+    cout << "Unable to open input data file " << file0;
+    return -1;
+  }
+  ifstream input1(file1.c_str());
+  if (!input1.is_open())
+  {
+    cout << "Unable to open input data file " << file1;
+    return 1;
+  }
+  string line0;
+  string line1;
+  while (getline(input0, line0))
+  {
+    if (!getline(input1, line1))
+    {
+      return 1;
+    }
+    if (auto cmp = line0.compare(line1); 0 != cmp)
+    {
+      printf("\t%s\n!=\t%s\n", line0.c_str(), line1.c_str());
+      return cmp;
+    }
+    // printf("%s\n", line0.c_str());
+  }
+  if (getline(input1, line1))
+  {
+    return -1;
+  }
+  return 0;
+}
+int test_fwi_files(const string file_expected, const string file_in, const string file_out)
+{
+  // FIX: other tests use test/input but want to switch to test/data
+  if (auto ret = test_fwi_file(file_in, file_out); ret != 0)
+  {
+    printf("Generating %s from %s failed\n", file_out.c_str(), file_in.c_str());
+    return ret;
+  }
+  if (auto cmp = compare_files(file_expected, file_out); 0 != cmp)
+  {
+    printf(
+      "Comparison between files [%s, %s] gives %d\n", file_expected.c_str(), file_out.c_str(), cmp
+    );
+    return cmp;
+  }
+  return 0;
+}
+int test_fwi(const int argc, const char* const argv[])
+{
+  std::ignore = argc;
+  std::ignore = argv;
+  make_directory("test/output/fwi");
+  return test_fwi_files(
+    "test/data/fwi/fwi_out.txt", "test/data/fwi/fwi_in.txt", "test/output/fwi/fwi_out.txt"
+  );
 }
 }
