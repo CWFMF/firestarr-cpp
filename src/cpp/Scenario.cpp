@@ -806,7 +806,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto max_duration = (next_time - time) * DAY_MINUTES;
   const auto max_time = time + max_duration / DAY_MINUTES;
   // HACK: use the old ffmc for this check to be consistent with previous version
-  if (wx_daily->ffmc().asValue() < minimumFfmcForSpread(time))
+  if (wx_daily->ffmc().value < minimumFfmcForSpread(time))
   {
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     log_extensive("Waiting until %f because of FFMC", max_time);

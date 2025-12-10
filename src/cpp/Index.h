@@ -13,22 +13,21 @@ namespace fs
 template <class T>
 class Index
 {
+public:
   /**
    * \brief Value represented by this
    */
-  MathSize value_;
-
-public:
+  MathSize value{0};
   ~Index() = default;
   /**
    * \brief Construct with a value of 0
    */
-  constexpr Index() noexcept : value_(0) { }
+  constexpr Index() noexcept = default;
   /**
    * \brief Construct with given value
    * \param value Value to assign
    */
-  constexpr explicit Index(const MathSize value) noexcept : value_(value) { }
+  constexpr explicit Index(const MathSize value) noexcept : value(value) { }
   constexpr Index(Index<T>&& rhs) noexcept = default;
   constexpr Index(const Index<T>& rhs) noexcept = default;
   Index<T>& operator=(Index<T>&& rhs) noexcept = default;
@@ -40,7 +39,7 @@ public:
    */
   [[nodiscard]] constexpr bool operator==(const Index<T>& rhs) const noexcept
   {
-    return value_ == rhs.value_;
+    return value == rhs.value;
   }
   /**
    * \brief Not equals operator
@@ -52,16 +51,11 @@ public:
     return !(*this == rhs);
   }
   /**
-   * \brief Returns value as a MathSize
-   * \return MathSize value for Index
-   */
-  [[nodiscard]] constexpr MathSize asValue() const noexcept { return value_; }
-  /**
    * \brief Less than operator
    * \param rhs Index to compare to
    * \return Whether or not this is less than the provided Index
    */
-  constexpr bool operator<(const Index<T> rhs) const noexcept { return value_ < rhs.value_; }
+  constexpr bool operator<(const Index<T> rhs) const noexcept { return value < rhs.value; }
   /**
    * \brief Greater than operator
    * \param rhs Index to compare to
@@ -69,7 +63,7 @@ public:
    */
   [[nodiscard]] constexpr bool operator>(const Index<T> rhs) const noexcept
   {
-    return value_ > rhs.value_;
+    return value > rhs.value;
   }
   /**
    * \brief Less than or equal to operator
@@ -78,7 +72,7 @@ public:
    */
   [[nodiscard]] constexpr bool operator<=(const Index<T> rhs) const noexcept
   {
-    return value_ <= rhs.value_;
+    return value <= rhs.value;
   }
   /**
    * \brief Greater than or equal to operator
@@ -87,7 +81,7 @@ public:
    */
   [[nodiscard]] constexpr bool operator>=(const Index<T> rhs) const noexcept
   {
-    return value_ >= rhs.value_;
+    return value >= rhs.value;
   }
   /**
    * \brief Addition operator
@@ -96,7 +90,7 @@ public:
    */
   [[nodiscard]] constexpr Index<T> operator+(const Index<T> rhs) const noexcept
   {
-    return Index<T>(value_ + rhs.value_);
+    return Index<T>(value + rhs.value);
   }
   /**
    * \brief Subtraction operator
@@ -105,7 +99,7 @@ public:
    */
   [[nodiscard]] constexpr Index<T> operator-(const Index<T> rhs) const noexcept
   {
-    return Index<T>(value_ - rhs.value_);
+    return Index<T>(value - rhs.value);
   }
   /**
    * \brief Addition assignment operator
@@ -114,7 +108,7 @@ public:
    */
   constexpr Index<T>& operator+=(const Index<T> rhs) noexcept
   {
-    value_ += rhs.value_;
+    value += rhs.value;
     return *this;
   }
   /**
@@ -124,7 +118,7 @@ public:
    */
   constexpr Index<T>& operator-=(const Index<T> rhs) noexcept
   {
-    value_ -= rhs.value_;
+    value -= rhs.value;
     return *this;
   }
 };

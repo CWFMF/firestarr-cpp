@@ -172,29 +172,28 @@ MathSize find_m(
 ) noexcept
 {
   //'''/* 4  '*/
-  const auto ed = 0.942 * pow(rh.asValue(), 0.679) + 11.0 * exp((rh.asValue() - 100.0) / 10.0)
-                + 0.18 * (21.1 - temperature.asValue()) * (1.0 - exp(-0.115 * rh.asValue()));
+  const auto ed = 0.942 * pow(rh.value, 0.679) + 11.0 * exp((rh.value - 100.0) / 10.0)
+                + 0.18 * (21.1 - temperature.value) * (1.0 - exp(-0.115 * rh.value));
   if (mo > ed)
   {
     //'''/* 6a '*/
-    const auto ko = 0.424 * (1.0 - pow(rh.asValue() / 100.0, 1.7))
-                  + 0.0694 * sqrt(wind.asValue()) * (1.0 - pow_int<8>(rh.asValue() / 100.0));
+    const auto ko = 0.424 * (1.0 - pow(rh.value / 100.0, 1.7))
+                  + 0.0694 * sqrt(wind.value) * (1.0 - pow_int<8>(rh.value / 100.0));
     //'''/* 6b '*/
-    const auto kd = ko * 0.581 * exp(0.0365 * temperature.asValue());
+    const auto kd = ko * 0.581 * exp(0.0365 * temperature.value);
     //'''/* 8  '*/
     return ed + (mo - ed) * pow(10.0, -kd);
   }
   //'''/* 5  '*/
-  const auto ew = 0.618 * pow(rh.asValue(), 0.753) + 10.0 * exp((rh.asValue() - 100.0) / 10.0)
-                + 0.18 * (21.1 - temperature.asValue()) * (1.0 - exp(-0.115 * rh.asValue()));
+  const auto ew = 0.618 * pow(rh.value, 0.753) + 10.0 * exp((rh.value - 100.0) / 10.0)
+                + 0.18 * (21.1 - temperature.value) * (1.0 - exp(-0.115 * rh.value));
   if (mo < ew)
   {
     //'''/* 7a '*/
-    const auto kl =
-      0.424 * (1.0 - pow((100.0 - rh.asValue()) / 100.0, 1.7))
-      + 0.0694 * sqrt(wind.asValue()) * (1 - pow_int<8>((100.0 - rh.asValue()) / 100.0));
+    const auto kl = 0.424 * (1.0 - pow((100.0 - rh.value) / 100.0, 1.7))
+                  + 0.0694 * sqrt(wind.value) * (1 - pow_int<8>((100.0 - rh.value) / 100.0));
     //'''/* 7b '*/
-    const auto kw = kl * 0.581 * exp(0.0365 * temperature.asValue());
+    const auto kw = kl * 0.581 * exp(0.0365 * temperature.value);
     //'''/* 9  '*/
     return ew - (ew - mo) * pow(10.0, -kw);
   }
@@ -220,10 +219,10 @@ static MathSize calculate_ffmc(
 {
   //'''/* 1  '*/
   auto mo = ffmc_to_moisture(ffmc_previous);
-  if (rain.asValue() > 0.5)
+  if (rain.value > 0.5)
   {
     //'''/* 2  '*/
-    const auto rf = rain.asValue() - 0.5;
+    const auto rf = rain.value - 0.5;
     //'''/* 3a '*/
     auto mr = mo + 42.5 * rf * (exp(-100.0 / (251.0 - mo))) * (1 - exp(-6.93 / rf));
     if (mo > 150.0)
@@ -270,11 +269,11 @@ static MathSize calculate_dmc(
   const MathSize latitude
 ) noexcept
 {
-  auto previous = dmc_previous.asValue();
-  if (rain.asValue() > 1.5)
+  auto previous = dmc_previous.value;
+  if (rain.value > 1.5)
   {
     //'''/* 11  '*/
-    const auto re = 0.92 * rain.asValue() - 1.27;
+    const auto re = 0.92 * rain.value - 1.27;
     //'''/* 12  '*/
     //    const auto mo = 20.0 + exp(5.6348 - previous / 43.43)
     // Alteration to Eq. 12 to calculate more accurately
@@ -293,10 +292,9 @@ static MathSize calculate_dmc(
     const auto pr = 43.43 * (5.6348 - log(mr - 20));
     previous = max(pr, 0.0);
   }
-  const auto k = (temperature.asValue() > -1.1)
-                 ? 1.894 * (temperature.asValue() + 1.1) * (100.0 - rh.asValue())
-                     * day_length(latitude, month) * 0.0001
-                 : 0.0;
+  const auto k = (temperature.value > -1.1) ? 1.894 * (temperature.value + 1.1) * (100.0 - rh.value)
+                                                * day_length(latitude, month) * 0.0001
+                                            : 0.0;
   //'''/* 17  '*/
   return (previous + k);
 }
@@ -328,11 +326,11 @@ static MathSize calculate_dc(
   const MathSize latitude
 ) noexcept
 {
-  auto previous = dc_previous.asValue();
-  if (rain.asValue() > 2.8)
+  auto previous = dc_previous.value;
+  if (rain.value > 2.8)
   {
     //'/* 18  */
-    const auto rd = 0.83 * (rain.asValue()) - 1.27;
+    const auto rd = 0.83 * (rain.value) - 1.27;
     //'/* 19  */
     const auto qo = 800.0 * exp(-previous / 400.0);
     //'/* 20  */
@@ -343,8 +341,7 @@ static MathSize calculate_dc(
   }
   const auto lf = day_length_factor(latitude, month - 1);
   //'/* 22  */
-  const auto v =
-    max(0.0, (temperature.asValue() > -2.8) ? 0.36 * (temperature.asValue() + 2.8) + lf : lf);
+  const auto v = max(0.0, (temperature.value > -2.8) ? 0.36 * (temperature.value + 2.8) + lf : lf);
   //'/* 23  */
   const auto d = previous + 0.5 * v;
   // HACK: don't allow negative values
@@ -376,7 +373,7 @@ MathSize ffmc_effect(const Ffmc& ffmc) noexcept
 static MathSize calculate_isi(const Speed& wind, const Ffmc& ffmc) noexcept
 {
   //'''/* 24  '*/
-  const auto f_wind = exp(0.05039 * wind.asValue());
+  const auto f_wind = exp(0.05039 * wind.value);
   const auto f_f = ffmc_effect(ffmc);
   //'''/* 26  '*/
   return (0.208 * f_wind * f_f);
@@ -402,7 +399,7 @@ Isi::Isi(
   : Isi(value)
 {
 #ifdef CHECK_CALCULATION
-  const auto cmp = Isi(wind, ffmc).asValue();
+  const auto cmp = Isi(wind, ffmc).value;
 #endif
 #else
   : Isi(wind, ffmc)
@@ -413,11 +410,11 @@ Isi::Isi(
 #endif
 #ifdef CHECK_CALCULATION
   logging::check_fatal(
-    abs(asValue() - cmp) >= CHECK_EPSILON,
+    abs(isi.value - cmp) >= CHECK_EPSILON,
     "ISI is incorrect %f, %f => %f not %f",
-    wind.asValue(),
-    ffmc.asValue(),
-    asValue(),
+    wind.value,
+    ffmc.value,
+    isi.value,
     cmp
   );
 #endif
@@ -431,22 +428,22 @@ Isi::Isi(
 //******************************************************************************************
 static MathSize calculate_bui(const Dmc& dmc, const Dc& dc) noexcept
 {
-  if (dmc.asValue() <= 0.4 * dc.asValue())
+  if (dmc.value <= 0.4 * dc.value)
   {
     // HACK: this isn't normally part of it, but it's division by 0 without this
-    if (0 == dc.asValue())
+    if (0 == dc.value)
     {
       return 0;
     }
     //'''/* 27a '*/
-    return max(0.0, 0.8 * dmc.asValue() * dc.asValue() / (dmc.asValue() + 0.4 * dc.asValue()));
+    return max(0.0, 0.8 * dmc.value * dc.value / (dmc.value + 0.4 * dc.value));
   }
   //'''/* 27b '*/
   return max(
     0.0,
-    dmc.asValue()
-      - (1.0 - 0.8 * dc.asValue() / (dmc.asValue() + 0.4 * dc.asValue()))
-          * (0.92 + pow(0.0114 * dmc.asValue(), 1.7))
+    dmc.value
+      - (1.0 - 0.8 * dc.value / (dmc.value + 0.4 * dc.value))
+          * (0.92 + pow(0.0114 * dmc.value, 1.7))
   );
 }
 Bui::Bui(
@@ -469,7 +466,7 @@ Bui::Bui(
   : Bui(value)
 {
 #ifdef CHECK_CALCULATION
-  const auto cmp = Bui(dmc, dc).asValue();
+  const auto cmp = Bui(dmc, dc).value;
 #endif
 #else
   : Bui(dmc, dc)
@@ -480,11 +477,11 @@ Bui::Bui(
 #endif
 #ifdef CHECK_CALCULATION
   logging::check_fatal(
-    abs(asValue() - cmp) >= CHECK_EPSILON,
+    abs(bui.value - cmp) >= CHECK_EPSILON,
     "BUI is incorrect %f, %f => %f not %f",
-    dmc.asValue(),
-    dc.asValue(),
-    asValue(),
+    dmc.value,
+    dc.value,
+    bui.value,
     cmp
   );
 #endif
@@ -499,12 +496,12 @@ Bui::Bui(const Dmc& dmc, const Dc& dc) noexcept : Bui(calculate_bui(dmc, dc)) { 
 //******************************************************************************************
 static MathSize calculate_fwi(const Isi& isi, const Bui& bui) noexcept
 {
-  const auto f_d = (bui.asValue() <= 80.0) ?   //'''/* 28a '*/
-                     0.626 * pow(bui.asValue(), 0.809) + 2.0
-                                           :   //'''/* 28b '*/
-                     1000.0 / (25.0 + 108.64 * exp(-0.023 * bui.asValue()));
+  const auto f_d = (bui.value <= 80.0) ?   //'''/* 28a '*/
+                     0.626 * pow(bui.value, 0.809) + 2.0
+                                       :   //'''/* 28b '*/
+                     1000.0 / (25.0 + 108.64 * exp(-0.023 * bui.value));
   //'''/* 29  '*/
-  const auto b = 0.1 * isi.asValue() * f_d;
+  const auto b = 0.1 * isi.value * f_d;
   if (b > 1.0)
   {
     //'''/* 30a '*/
@@ -533,7 +530,7 @@ Fwi::Fwi(
   : Fwi(value)
 {
 #ifdef CHECK_CALCULATION
-  const auto cmp = Fwi(isi, bui).asValue();
+  const auto cmp = Fwi(isi, bui).value;
 #endif
 #else
   : Fwi(isi, bui)
@@ -544,11 +541,11 @@ Fwi::Fwi(
 #endif
 #ifdef CHECK_CALCULATION
   logging::check_fatal(
-    abs(asValue() - cmp) >= CHECK_EPSILON,
+    abs(fwi.value - cmp) >= CHECK_EPSILON,
     "FWI is incorrect %f, %f => %f not %f",
-    isi.asValue(),
-    bui.asValue(),
-    asValue(),
+    isi.value,
+    bui.value,
+    fwi.value,
     cmp
   );
 #endif
@@ -563,7 +560,7 @@ Fwi::Fwi(const Isi& isi, const Bui& bui) noexcept : Fwi(calculate_fwi(isi, bui))
 static MathSize calculate_dsr(const Fwi& fwi) noexcept
 {
   //'''/* 41 '*/
-  return (0.0272 * pow(fwi.asValue(), 1.77));
+  return (0.0272 * pow(fwi.value, 1.77));
 }
 Dsr::Dsr(const Fwi& fwi) noexcept : Dsr(calculate_dsr(fwi)) { }
 FwiWeather::FwiWeather(
@@ -580,8 +577,8 @@ FwiWeather::FwiWeather(
 ) noexcept
   : Weather(temp, rh, wind, prec), ffmc_(ffmc), dmc_(dmc), dc_(dc),
     // HACK: recalculate so that we can check that things are within tolerances
-    isi_(Isi(isi.asValue(), wind.speed(), ffmc)), bui_(Bui(bui.asValue(), dmc, dc)),
-    fwi_(Fwi(fwi.asValue(), isi, bui))
+    isi_(Isi(isi.value, wind.speed(), ffmc)), bui_(Bui(bui.value, dmc, dc)),
+    fwi_(Fwi(fwi.value, isi, bui))
 { }
 FwiWeather::FwiWeather(
   const FwiWeather& yesterday,
@@ -658,6 +655,6 @@ FwiWeather::FwiWeather(
 [[nodiscard]] MathSize FwiWeather::mcFfmcPct() const { return ffmc_to_moisture(ffmc_); }
 [[nodiscard]] MathSize FwiWeather::mcDmcPct() const
 {
-  return exp((dmc_.asValue() - 244.72) / -43.43) + 20;
+  return exp((dmc_.value - 244.72) / -43.43) + 20;
 }
 }

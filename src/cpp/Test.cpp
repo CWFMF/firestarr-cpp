@@ -103,17 +103,17 @@ void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelTyp
   };
   // HACK: just do individual calls for now
   // can we assign them to a lookup table if they're not all numbers?
-  print_col("PREC", w->prec().asValue());
-  print_col("TEMP", w->temp().asValue());
-  print_col("RH", w->rh().asValue());
-  print_col("WS", w->wind().speed().asValue());
-  print_col("WD", w->wind().direction().asValue());
-  print_col("FFMC", w->ffmc().asValue());
-  print_col("DMC", w->dmc().asValue());
-  print_col("DC", w->dc().asValue());
-  print_col("ISI", w->isi().asValue());
-  print_col("BUI", w->bui().asValue());
-  print_col("FWI", w->fwi().asValue());
+  print_col("PREC", w->prec().value);
+  print_col("TEMP", w->temp().value);
+  print_col("RH", w->rh().value);
+  print_col("WS", w->wind().speed().value);
+  print_col("WD", w->wind().direction().value);
+  print_col("FFMC", w->ffmc().value);
+  print_col("DMC", w->dmc().value);
+  print_col("DC", w->dc().value);
+  print_col("ISI", w->isi().value);
+  print_col("BUI", w->bui().value);
+  print_col("FWI", w->fwi().value);
   print_col("GS", spread.percentSlope());
   print_col("SAZ", spread.slopeAzimuth());
   const auto simple_fuel = simplify_fuel_name(fuel->name());
@@ -152,7 +152,7 @@ string generate_test_name(
     slope,
     aspect,
     wind.direction().asDegrees(),
-    wind.speed().asValue()
+    wind.speed().value
   );
   return string(&(out[0]));
 };
@@ -334,10 +334,10 @@ int test(
   const auto dmc = (fs::Dmc::Invalid == wx->dmc()) ? DEFAULT_DMC : wx->dmc();
   const auto dc = (fs::Dc::Invalid == wx->dc()) ? DEFAULT_DC : wx->dc();
   // HACK: need to compare value and not object
-  const auto wind_direction = (fs::Direction::Invalid.asValue() == wx->wind().direction().asValue())
+  const auto wind_direction = (fs::Direction::Invalid.value == wx->wind().direction().value)
                               ? DEFAULT_WIND_DIRECTION
                               : wx->wind().direction();
-  const auto wind_speed = (fs::Speed::Invalid.asValue() == wx->wind().speed().asValue())
+  const auto wind_speed = (fs::Speed::Invalid.value == wx->wind().speed().value)
                           ? DEFAULT_WIND_SPEED
                           : wx->wind().speed();
   const auto wind = fs::Wind(wind_direction, wind_speed);
@@ -409,7 +409,7 @@ int test(
       }
       else
       {
-        wind_speeds.emplace_back(static_cast<int>(wx->wind().speed().asValue()));
+        wind_speeds.emplace_back(static_cast<int>(wx->wind().speed().value));
       }
       size_t values = 1;
       values *= fuel_names.size();
@@ -494,9 +494,9 @@ int test(
         "\tAspect:\t\t\t%d\n",
         fuel.c_str(),
         hours,
-        ffmc.asValue(),
-        dmc.asValue(),
-        dc.asValue(),
+        ffmc.value,
+        dmc.value,
+        dc.value,
         wind_speed,
         wind_direction,
         slope,
