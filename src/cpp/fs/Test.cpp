@@ -64,7 +64,7 @@ public:
     registerObserver(new IntensityObserver(*this));
     registerObserver(new ArrivalObserver(*this));
     registerObserver(new SourceObserver(*this));
-    addEvent(Event::makeEnd(end_date));
+    addEvent(Event{.time = end_date, .type = Event::Type::EndSimulation});
     last_save_ = end_date;
     // cast to avoid warning
     std::ignore = reset(nullptr, nullptr, final_sizes);

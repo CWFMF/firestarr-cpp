@@ -39,7 +39,7 @@ void IObserver_deleter::operator()(IObserver* ptr) const
 void Scenario::clear() noexcept
 {
   unburnable_.clear();
-  scheduler_ = set<Event, EventCompare>();
+  scheduler_ = set<Event>();
   arrival_ = {};
   points_ = {};
   if (!Settings::surface())
@@ -291,41 +291,41 @@ void Scenario::evaluate(const Event& event)
 {
 #ifdef DEBUG_SIMULATION
   log_check_fatal(
-    event.time() < current_time_, "Expected time to be > %f but got %f", current_time_, event.time()
+    event.time < current_time_, "Expected time to be > %f but got %f", current_time_, event.time
   );
 #endif
-  const auto& p = event.cell();
+  const auto& p = event.cell;
   const auto x = p.column() + CELL_CENTER;
   const auto y = p.row() + CELL_CENTER;
   const XYPos p0{x, y};
-  switch (event.type())
+  switch (event.type)
   {
-    case Event::FIRE_SPREAD:
+    case Event::Type::FireSpread:
       ++step_;
 #ifdef DEBUG_POINTS
       {
-        const auto ymd = fs::make_timestamp(model().year(), event.time());
+        const auto ymd = fs::make_timestamp(model().year(), event.time);
       }
 #endif
       scheduleFireSpread(event);
       break;
-    case Event::SAVE:
-      std::ignore = saveObservers(model_->outputDirectory(), event.time());
-      saveStats(event.time());
+    case Event::Type::Save:
+      std::ignore = saveObservers(model_->outputDirectory(), event.time);
+      saveStats(event.time);
       break;
-    case Event::NEW_FIRE:
+    case Event::Type::NewFire:
       points_log_.log(
-        step_, STAGE_NEW, event.time(), p.column() + CELL_CENTER, p.row() + CELL_CENTER
+        step_, STAGE_NEW, event.time, p.column() + CELL_CENTER, p.row() + CELL_CENTER
       );
       // HACK: don't do this in constructor because scenario creates this in its constructor
       // HACK: insert point as originating from itself
       points_.insert(
         p0,
-        SpreadData(event.time(), NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
+        SpreadData(event.time, NO_INTENSITY, NO_ROS, Direction::Invalid, Direction::Invalid),
         x,
         y
       );
-      if (is_null_fuel(event.cell()))
+      if (is_null_fuel(event.cell))
       {
         log_fatal("Trying to start a fire in non-fuel");
       }
@@ -333,16 +333,16 @@ void Scenario::evaluate(const Event& event)
         "Starting fire at point (%f, %f) in fuel type %s at time %f",
         x,
         y,
-        FuelType::safeName(check_fuel(event.cell())),
-        event.time()
+        FuelType::safeName(check_fuel(event.cell)),
+        event.time
       );
-      if (!survives(event.time(), event.cell(), event.timeAtLocation()))
+      if (!survives(event.time, event.cell, event.time_at_location))
       {
         // HACK: show daily values since that's what survival uses
-        const auto wx = weather_daily(event.time());
+        const auto wx = weather_daily(event.time);
         log_info(
           "Didn't survive ignition in %s with weather %f, %f",
-          FuelType::safeName(check_fuel(event.cell())),
+          FuelType::safeName(check_fuel(event.cell)),
           wx->ffmc(),
           wx->dmc()
         );
@@ -352,8 +352,8 @@ void Scenario::evaluate(const Event& event)
       burn(event);
       scheduleFireSpread(event);
       break;
-    case Event::END_SIMULATION:
-      log_verbose("End simulation event reached at %f", event.time());
+    case Event::Type::EndSimulation:
+      log_verbose("End simulation event reached at %f", event.time);
       endSimulation();
       break;
     default:
@@ -489,27 +489,27 @@ void Scenario::burn(const Event& event)
 {
 #ifdef DEBUG_SIMULATION
   log_check_fatal(
-    intensity_->hasBurned(event.cell()),
+    intensity_->hasBurned(event.cell),
     "Re-burning cell (%d, %d)",
-    event.cell().column(),
-    event.cell().row()
+    event.cell.column(),
+    event.cell.row()
   );
 #endif
   // #ifdef DEBUG_POINTS
   //   log_check_fatal(
-  //     (*unburnable_)[event.cell().hash()],
+  //     (*unburnable_)[event.cell.hash()],
   //     "Burning unburnable cell (%d, %d)",
-  //     event.cell().column(),
-  //     event.cell().row()
+  //     event.cell.column(),
+  //     event.cell.row()
   //   );
   // #endif
   //  Observers only care about cells burning so do it here
   notify(event);
-  intensity_->burn(event.cell(), event.intensity(), event.ros(), event.raz());
+  intensity_->burn(event.cell, event.intensity, event.ros, event.raz);
 #ifdef DEBUG_GRIDS
-  log_check_fatal(!intensity_->hasBurned(event.cell()), "Wasn't marked as burned after burn");
+  log_check_fatal(!intensity_->hasBurned(event.cell), "Wasn't marked as burned after burn");
 #endif
-  arrival_[event.cell()] = event.time();
+  arrival_[event.cell] = event.time;
 }
 bool Scenario::isSurrounded(const Location& location) const
 {
@@ -554,11 +554,11 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
   for (auto time : save_points_)
   {
     // NOTE: these happen in this order because of the way they sort based on type
-    addEvent(Event::makeSave(static_cast<DurationSize>(time)));
+    addEvent(Event{.time = time, .type = Event::Type::Save});
   }
   if (nullptr == perimeter_)
   {
-    addEvent(Event::makeNewFire(start_time_, cell(*start_cell_)));
+    addEvent(Event{.time = start_time_, .type = Event::Type::NewFire, .cell = cell(*start_cell_)});
   }
   else
   {
@@ -585,13 +585,13 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
         y
       );
     }
-    addEvent(Event::makeFireSpread(start_time_));
+    addEvent(Event{.time = start_time_, .type = Event::Type::FireSpread});
   }
   // HACK: make a copy of the event so that it still exists after it gets processed
   // NOTE: sorted so that EventSaveASCII is always just before this
   // Only run until last time we asked for a save for
   log_verbose("Creating simulation end event for %f", last_save_);
-  addEvent(Event::makeEnd(last_save_));
+  addEvent(Event{.time = last_save_, .type = Event::Type::EndSimulation});
   // mark all original points as burned at start
   for (auto& kv : points_.map_)
   {
@@ -599,8 +599,7 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
     // would be burned already if perimeter applied
     if (canBurn(location))
     {
-      const auto fake_event =
-        Event::makeFireSpread(start_time_, 0, 0, Direction::Invalid, location);
+      const Event fake_event{.time = start_time_, .cell = location, .ros = 0.0};
       burn(fake_event);
     }
   }
@@ -794,7 +793,7 @@ CellPointsMap apply_offsets_spreadkey(
 }
 void Scenario::scheduleFireSpread(const Event& event)
 {
-  const auto time = event.time();
+  const auto time = event.time;
   const auto this_time = time_index(time);
   const auto wx = Settings::surface() ? model_->yesterday() : weather(time);
   const auto wx_daily = Settings::surface() ? model_->yesterday() : weather_daily(time);
@@ -807,7 +806,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   // HACK: use the old ffmc for this check to be consistent with previous version
   if (wx_daily->ffmc().asValue() < minimumFfmcForSpread(time))
   {
-    addEvent(Event::makeFireSpread(max_time));
+    addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     log_extensive("Waiting until %f because of FFMC", max_time);
     return;
   }
@@ -868,7 +867,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   {
     // if no spread then we left everything back in points_ still
     log_verbose("Waiting until %f", max_time);
-    addEvent(Event::makeFireSpread(max_time));
+    addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     return;
   }
   const auto duration =
@@ -923,9 +922,14 @@ void Scenario::scheduleFireSpread(const Event& event)
     if (canBurn(for_cell) && max_intensity > 0)
     {
       const auto& spread = pts.spread_arrival_;
-      const auto fake_event = Event::makeFireSpread(
-        new_time, spread.intensity(), spread.ros(), spread.direction(), for_cell, pts.sources()
-      );
+      const Event fake_event{
+        .time = new_time,
+        .cell = for_cell,
+        .ros = spread.ros(),
+        .intensity = spread.intensity(),
+        .raz = spread.direction(),
+        .source = pts.sources()
+      };
       burn(fake_event);
     }
     if (!unburnable_.at(for_cell.hash())
@@ -948,7 +952,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     }
   });
   log_extensive("Spreading %d cells until %f", points_.map_.size(), new_time);
-  addEvent(Event::makeFireSpread(new_time));
+  addEvent(Event{.time = new_time, .type = Event::Type::FireSpread});
 }
 MathSize Scenario::currentFireSize() const { return intensity_->fireSize(); }
 bool Scenario::canBurn(const Cell& location) const { return intensity_->canBurn(location); }
@@ -956,7 +960,7 @@ bool Scenario::hasBurned(const Location& location) const { return intensity_->ha
 void Scenario::endSimulation() noexcept
 {
   log_verbose("Ending simulation");
-  scheduler_ = set<Event, EventCompare>();
+  scheduler_ = set<Event>();
 }
 void Scenario::addSaveByOffset(const int offset)
 {

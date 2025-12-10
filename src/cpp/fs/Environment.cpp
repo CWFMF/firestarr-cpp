@@ -315,7 +315,7 @@ Cell Environment::cell(const Idx row, const Idx column) const
 }
 Cell Environment::offset(const Event& event, const Idx row, const Idx column) const
 {
-  const auto& p = event.cell();
+  const auto& p = event.cell;
   return cell(Location(p.row() + row, p.column() + column));
 }
 #ifdef FIX_THIS_LATER

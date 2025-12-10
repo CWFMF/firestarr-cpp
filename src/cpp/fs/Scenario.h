@@ -3,7 +3,6 @@
 #define FS_SCENARIO_H
 #include "stdafx.h"
 #include "CellPoints.h"
-#include "EventCompare.h"
 #include "FireSpread.h"
 #include "FireWeather.h"
 #include "InnerPos.h"
@@ -542,7 +541,7 @@ protected:
   /**
    * \brief Event scheduler used for ordering events
    */
-  set<Event, EventCompare> scheduler_;
+  set<Event> scheduler_;
   /**
    * \brief Map of what intensity each cell has burned at
    */

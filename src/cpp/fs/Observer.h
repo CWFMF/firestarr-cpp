@@ -82,7 +82,7 @@ public:
    * \brief Handle given event
    * \param event Event to handle
    */
-  void handleEvent(const Event& event) override { map_.set(event.cell(), getValue(event)); }
+  void handleEvent(const Event& event) override { map_.set(event.cell, getValue(event)); }
   /**
    * \brief Save observations
    * \param dir Directory to save to

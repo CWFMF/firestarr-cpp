@@ -13,6 +13,7 @@ using SpreadKey = uint32_t;
 class Cell : public Position<Topo>
 {
 public:
+  auto operator<=>(const Cell& rhs) const { return hash() <=> rhs.hash(); }
   constexpr Cell() noexcept
     : Cell(
         -1,
