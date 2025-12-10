@@ -83,7 +83,7 @@ public:
    * \brief Direction as degrees, where 0 is North and values increase clockwise
    * \return Direction as degrees, where 0 is North and values increase clockwise
    */
-  [[nodiscard]] constexpr MathSize asDegrees() const { return asValue(); }
+  [[nodiscard]] constexpr MathSize asDegrees() const { return value; }
   /**
    * \brief Heading (opposite of this direction)
    * \return Heading (opposite of this direction)
@@ -112,8 +112,8 @@ public:
    * \param speed Speed of wind
    */
   Wind(const Direction& direction, const Speed speed) noexcept
-    : wsv_x_(speed.asValue() * sin(direction.heading())),
-      wsv_y_(speed.asValue() * cos(direction.heading())), direction_(direction), speed_(speed)
+    : wsv_x_(speed.value * sin(direction.heading())),
+      wsv_y_(speed.value * cos(direction.heading())), direction_(direction), speed_(speed)
   { }
   constexpr Wind(const Wind& rhs) noexcept = default;
   constexpr Wind(Wind&& rhs) noexcept = default;

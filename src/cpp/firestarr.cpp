@@ -205,8 +205,8 @@ int main(const int argc, const char* const argv[])
   Ffmc ffmc = Ffmc::Invalid;
   Dmc dmc = Dmc::Invalid;
   Dc dc = Dc::Invalid;
-  auto wind_direction = Direction::Invalid.asValue();
-  auto wind_speed = Speed::Invalid.asValue();
+  auto wind_direction = Direction::Invalid.value;
+  auto wind_speed = Speed::Invalid.value;
   auto slope = static_cast<SlopeSize>(INVALID_SLOPE);
   auto aspect = static_cast<AspectSize>(INVALID_ASPECT);
   size_t SKIPPED_ARGS = 0;

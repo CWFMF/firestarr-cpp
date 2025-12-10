@@ -473,7 +473,7 @@ constexpr MathSize ffmc_to_moisture(const MathSize ffmc) noexcept
 }
 constexpr MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept
 {
-  return ffmc_to_moisture(ffmc.asValue());
+  return ffmc_to_moisture(ffmc.value);
 }
 constexpr MathSize moisture_to_ffmc(const MathSize m) noexcept
 {

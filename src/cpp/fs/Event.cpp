@@ -32,7 +32,7 @@ std::partial_ordering Event::operator<=>(const Event& rhs) const
   // {
   //   return cmp;
   // }
-  // if (const auto cmp = raz.asValue() <=> rhs.raz.asValue(); 0 != cmp)
+  // if (const auto cmp = raz.value <=> rhs.raz.value; 0 != cmp)
   // {
   //   return cmp;
   // }

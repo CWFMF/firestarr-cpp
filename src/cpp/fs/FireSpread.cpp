@@ -85,7 +85,7 @@ MathSize SpreadInfo::initial(
   // needs to be non-const so that we can update if slopeEffect changes direction
   MathSize raz = spread.wind().heading();
   const auto isz = 0.208 * ffmc_effect;
-  wsv = spread.wind().speed().asValue();
+  wsv = spread.wind().speed().value;
   if (!has_no_slope)
   {
     const auto isf1 = fuel->calculateIsf(spread, isz);
@@ -265,7 +265,7 @@ SpreadInfo::SpreadInfo(
     heading_cos = cos(heading);
   }
   // HACK: only use BUI from hourly weather for both calculations
-  const auto _bui = bui().asValue();
+  const auto _bui = bui().value;
   const auto bui_eff = fuel->buiEffect(_bui);
   // FIX: gets calculated when not necessary sometimes
   const auto critical_surface_intensity = fuel->criticalSurfaceIntensity(*this);
