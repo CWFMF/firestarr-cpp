@@ -2,6 +2,7 @@
 #ifndef FS_FWI_H
 #define FS_FWI_H
 #include "stdafx.h"
+#include "Index.h"
 #include "Weather.h"
 namespace fs
 {
@@ -28,6 +29,7 @@ struct Ffmc : public Index<Ffmc>
     const Precipitation prec,
     const Ffmc ffmc_previous
   ) noexcept;
+  auto operator<=>(const Ffmc& rhs) const = default;
 };
 /**
  * \brief Duff Moisture Code value.
@@ -54,6 +56,7 @@ struct Dmc : public Index<Dmc>
     const int month,
     const MathSize latitude
   ) noexcept;
+  auto operator<=>(const Dmc& rhs) const = default;
 };
 /**
  * \brief Drought Code value.
@@ -78,6 +81,7 @@ struct Dc : public Index<Dc>
     const int month,
     const MathSize latitude
   ) noexcept;
+  auto operator<=>(const Dc& rhs) const = default;
 };
 /**
  * \brief Initial Spread Index value.

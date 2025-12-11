@@ -8,12 +8,10 @@ namespace fs
 /**
  * \brief A result of calling log(x) for some value of x, pre-calculated at compile time.
  */
-class LogValue : public Index<LogValue>
+struct LogValue : public Index<LogValue>
 {
-public:
-  //! @cond Doxygen_Suppress
   using Index::Index;
-  //! @endcond
+  auto operator<=>(const LogValue& rhs) const = default;
 };
 static constexpr LogValue LOG_0_70{-0.35667494393873245};
 static constexpr LogValue LOG_0_75{-0.2876820724517809};

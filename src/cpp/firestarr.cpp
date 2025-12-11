@@ -16,6 +16,7 @@
 #include "TimeUtil.h"
 #include "Util.h"
 #include "version.h"
+#include "Weather.h"
 namespace fs
 {
 using fs::AspectSize;
@@ -203,11 +204,11 @@ int main(const int argc, const char* const argv[])
   size_t size = 0;
   // ffmc, dmc, dc are required for simulation & surface mode, so no indication of it not being
   // provided
-  Ffmc ffmc = Ffmc::Invalid();
-  Dmc dmc = Dmc::Invalid();
-  Dc dc = Dc::Invalid();
+  Ffmc ffmc{Ffmc::Invalid()};
+  Dmc dmc{Dmc::Invalid()};
+  Dc dc{Dc::Invalid()};
   auto wind_direction = Direction::Invalid().value;
-  auto wind_speed = Speed::Invalid().value;
+  auto wind_speed{Speed::Invalid().value};
   auto slope = static_cast<SlopeSize>(INVALID_SLOPE);
   auto aspect = static_cast<AspectSize>(INVALID_ASPECT);
   size_t SKIPPED_ARGS = 0;
@@ -538,7 +539,7 @@ int main(const int argc, const char* const argv[])
           Temperature::Zero(),
           RelativeHumidity::Zero(),
           Wind{Direction{wind_direction, false}, Speed{wind_speed}},
-          Precipitation{apcp_prev}
+          {apcp_prev}
         },
         ffmc,
         dmc,
@@ -588,7 +589,7 @@ int main(const int argc, const char* const argv[])
         Weather{
           Temperature::Zero(),
           RelativeHumidity::Zero(),
-          Wind(Direction(wind_direction, false), Speed(wind_speed)),
+          Wind{Direction{wind_direction, false}, Speed{wind_speed}},
           Precipitation::Zero()
         },
         ffmc,

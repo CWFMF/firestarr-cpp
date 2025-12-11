@@ -4,6 +4,7 @@
 #include <memory>
 #include "FBP45.h"
 #include "FireWeather.h"
+#include "FWI.h"
 #include "Input.h"
 #include "Log.h"
 #include "Observer.h"
