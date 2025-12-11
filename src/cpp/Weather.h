@@ -11,54 +11,37 @@ namespace fs
 /**
  * \brief Temperature in degrees Celsius.
  */
-class Temperature : public Index<Temperature>
+struct Temperature : public Index<Temperature>
 {
-public:
-  //! @cond Doxygen_Suppress
-  using Index::Index;
-  //! @endcond
-  /**
-   * \brief 0 degrees Celsius
-   */
   static constexpr Temperature Zero() { return Temperature{0}; };
   static constexpr Temperature Invalid() { return Temperature{-1}; };
+  using Index::Index;
 };
 /**
  * \brief Relative humidity as a percentage.
  */
-class RelativeHumidity : public Index<RelativeHumidity>
+struct RelativeHumidity : public Index<RelativeHumidity>
 {
-public:
-  //! @cond Doxygen_Suppress
-  using Index::Index;
-  //! @endcond
-  /**
-   * \brief 0% Relative Humidity
-   */
   static constexpr RelativeHumidity Zero() { return RelativeHumidity{0}; };
   static constexpr RelativeHumidity Invalid() { return RelativeHumidity{-1}; };
+  using Index::Index;
 };
 /**
  * \brief Speed in kilometers per hour.
  */
-class Speed : public Index<Speed>
+struct Speed : public Index<Speed>
 {
-public:
-  //! @cond Doxygen_Suppress
-  using Index::Index;
-  //! @endcond
-  /**
-   * \brief 0 km/h
-   */
   static constexpr Speed Zero() { return Speed{0}; };
   static constexpr Speed Invalid() { return Speed{-1}; };
+  using Index::Index;
 };
 /**
  * \brief Direction with access to degrees or radians.
  */
-class Direction : public Index<Direction>
+struct Direction : public Index<Direction>
 {
-public:
+  static constexpr Direction Zero() { return Direction{0, false}; };
+  static constexpr Direction Invalid() { return Direction{-1, false}; };
   ~Direction() = default;
   /**
    * \brief Construct with Direction of 0 (North)
@@ -91,11 +74,6 @@ public:
    * \return Heading (opposite of this direction)
    */
   [[nodiscard]] constexpr MathSize heading() const { return to_heading(asRadians()); }
-  /**
-   * \brief Direction of 0 (North)
-   */
-  static constexpr Direction Zero() { return Direction{0, false}; };
-  static constexpr Direction Invalid() { return Direction{-1, false}; };
 };
 /**
  * \brief Wind with a Speed and Direction.
@@ -103,6 +81,8 @@ public:
 class Wind
 {
 public:
+  static constexpr Wind Zero() { return Wind{Direction::Zero(), Speed::Zero()}; };
+  static constexpr Wind Invalid() { return Wind{Direction::Invalid(), Speed::Invalid()}; };
   ~Wind() = default;
   /**
    * \brief Construct with 0 values
@@ -167,11 +147,6 @@ public:
     }
     return direction < rhs.direction;
   }
-  /**
-   * \brief Wind with 0 Speed from Direction 0
-   */
-  static constexpr Wind Zero() { return Wind{Direction::Zero(), Speed::Zero()}; };
-  static constexpr Wind Invalid() { return Wind{Direction::Invalid(), Speed::Invalid()}; };
 
 private:
   /**
@@ -196,25 +171,29 @@ public:
 /**
  * \brief Precipitation (1hr accumulation) (mm)
  */
-class Precipitation : public Index<Precipitation>
+struct Precipitation : public Index<Precipitation>
 {
-public:
-  //! @cond Doxygen_Suppress
-  using Index::Index;
-  //! @endcond
-  /**
-   * \brief Accumulated Precipitation of 0 mm
-   */
   static constexpr Precipitation Zero() { return Precipitation{0}; };
   static constexpr Precipitation Invalid() { return Precipitation{-1}; };
-  ;
+  using Index::Index;
 };
 /**
  * \brief Collection of weather indices used for calculating FwiWeather.
  */
-class Weather
+struct Weather
 {
-public:
+  static constexpr Weather Zero()
+  {
+    return Weather{
+      Temperature::Zero(), RelativeHumidity::Zero(), Wind::Zero(), Precipitation::Zero()
+    };
+  };
+  static constexpr Weather Invalid()
+  {
+    return Weather{
+      Temperature::Invalid(), RelativeHumidity::Invalid(), Wind::Invalid(), Precipitation::Invalid()
+    };
+  };
   virtual ~Weather() = default;
   /**
    * \brief Constructor with no initialization

@@ -10,12 +10,11 @@ namespace fs
 /**
  * \brief Fine Fuel Moisture Code value.
  */
-class Ffmc : public Index<Ffmc>
+struct Ffmc : public Index<Ffmc>
 {
-public:
-  //! @cond Doxygen_Suppress
+  static constexpr Ffmc Zero() { return Ffmc{0}; };
+  static constexpr Ffmc Invalid() { return Ffmc{-1}; };
   using Index::Index;
-  //! @endcond
   /**
    * \brief Calculate Fine Fuel Moisture Code
    * \param temperature Temperature (Celsius)
@@ -31,21 +30,15 @@ public:
     const Precipitation& prec,
     const Ffmc& ffmc_previous
   ) noexcept;
-  /**
-   * \brief Fine Fuel Moisture Code of 0
-   */
-  static constexpr Ffmc Zero() { return Ffmc{0}; };
-  static constexpr Ffmc Invalid() { return Ffmc{-1}; };
 };
 /**
  * \brief Duff Moisture Code value.
  */
-class Dmc : public Index<Dmc>
+struct Dmc : public Index<Dmc>
 {
-public:
-  //! @cond Doxygen_Suppress
+  static constexpr Dmc Zero() { return Dmc{0}; };
+  static constexpr Dmc Invalid() { return Dmc{-1}; };
   using Index::Index;
-  //! @endcond
   /**
    * \brief Duff Moisture Code
    * \param temperature Temperature (Celsius)
@@ -63,21 +56,15 @@ public:
     const int month,
     const MathSize latitude
   ) noexcept;
-  /**
-   * \brief Duff Moisture Code of 0
-   */
-  static constexpr Dmc Zero() { return Dmc{0}; };
-  static constexpr Dmc Invalid() { return Dmc{-1}; };
 };
 /**
  * \brief Drought Code value.
  */
-class Dc : public Index<Dc>
+struct Dc : public Index<Dc>
 {
-public:
-  //! @cond Doxygen_Suppress
+  static constexpr Dc Zero() { return Dc{0}; };
+  static constexpr Dc Invalid() { return Dc{-1}; };
   using Index::Index;
-  //! @endcond
   /**
    * \brief Calculate Drought Code
    * \param temperature Temperature (Celsius)
@@ -93,18 +80,15 @@ public:
     const int month,
     const MathSize latitude
   ) noexcept;
-  /**
-   * \brief Drought Code of 0
-   */
-  static constexpr Dc Zero() { return Dc{0}; };
-  static constexpr Dc Invalid() { return Dc{-1}; };
 };
 /**
  * \brief Initial Spread Index value.
  */
-class Isi : public Index<Isi>
+struct Isi : public Index<Isi>
 {
-public:
+  static constexpr Isi Zero() { return Isi{0}; };
+  static constexpr Isi Invalid() { return Isi{-1}; };
+  using Index::Index;
   /**
    * \brief Calculate Initial Spread Index and verify previous value is within tolerance of
    * calculated value
@@ -119,23 +103,15 @@ public:
    * \param ffmc Fine Fuel Moisture Code
    */
   Isi(const Speed& ws, const Ffmc& ffmc) noexcept;
-  /**
-   * \brief Initial Spread Index of 0
-   */
-  static constexpr Isi Zero() { return Isi{0}; };
-  static constexpr Isi Invalid() { return Isi{-1}; };
-
-private:
-  //! @cond Doxygen_Suppress
-  using Index::Index;
-  //! @endcond
 };
 /**
  * \brief Build-up Index value.
  */
-class Bui : public Index<Bui>
+struct Bui : public Index<Bui>
 {
-public:
+  static constexpr Bui Zero() { return Bui{0}; };
+  static constexpr Bui Invalid() { return Bui{-1}; };
+  using Index::Index;
   /**
    * \brief Calculate Build-up Index and verify previous value is within tolerance of calculated
    * value
@@ -150,23 +126,15 @@ public:
    * \param dc Drought Code
    */
   Bui(const Dmc& dmc, const Dc& dc) noexcept;
-  /**
-   * \brief Build-up Index of 0
-   */
-  static constexpr Bui Zero() { return Bui{0}; };
-  static constexpr Bui Invalid() { return Bui{-1}; };
-
-private:
-  //! @cond Doxygen_Suppress
-  using Index::Index;
-  //! @endcond
 };
 /**
  * \brief Fire Weather Index value.
  */
-class Fwi : public Index<Fwi>
+struct Fwi : public Index<Fwi>
 {
-public:
+  static constexpr Fwi Zero() { return Fwi{0}; };
+  static constexpr Fwi Invalid() { return Fwi{-1}; };
+  using Index::Index;
   /**
    * \brief Calculate Fire Weather Index and verify previous value is within tolerance of calculated
    * value
@@ -181,41 +149,25 @@ public:
    * \param bui Build-up Index
    */
   Fwi(const Isi& isi, const Bui& bui) noexcept;
-  /**
-   * \brief Fire Weather Index of 0
-   */
-  static constexpr Fwi Zero() { return Fwi{0}; };
-  static constexpr Fwi Invalid() { return Fwi{-1}; };
-
-private:
-  //! @cond Doxygen_Suppress
-  using Index::Index;
-  //! @endcond
 };
 /**
  * \brief Danger Severity Rating value.
  */
-class Dsr : public Index<Dsr>
+struct Dsr : public Index<Dsr>
 {
-public:
-  //! @cond Doxygen_Suppress
+  static constexpr Dsr Zero() { return Dsr{0}; };
+  static constexpr Dsr Invalid() { return Dsr{-1}; };
   using Index::Index;
-  //! @endcond
   /**
    * \brief Calculate Danger Severity Rating
    * \param fwi Fire Weather Index
    */
   explicit Dsr(const Fwi& fwi) noexcept;
-  /**
-   * \brief Danger Severity Rating of 0
-   */
-  static constexpr Dsr Zero() { return Dsr{0}; };
-  static constexpr Dsr Invalid() { return Dsr{-1}; };
 };
 /**
  * \brief A Weather value with calculated FWI indices.
  */
-class FwiWeather : public Weather
+struct FwiWeather : public Weather
 {
 public:
   /**
