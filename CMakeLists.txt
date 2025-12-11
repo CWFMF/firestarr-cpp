@@ -41,33 +41,6 @@ message("CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
 project(firestarr)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-# set(CMAKE_CXX_CLANG_TIDY
-#   clang-tidy
-#   --fix
-#   --format-style=file
-#   -checks=-*,modernize-concat-nested-namespaces
-#   -extra-arg=-Wno-unknown-warning-option
-#   -extra-arg=-std=c++2b
-#   -header-filter=${CMAKE_SOURCE_DIR}/src/cpp/*)
-# set(CMAKE_CXX_CLANG_TIDY "clang-tidy;--format-style=file;-checks=-*,modernize-concat-nested-namespaces;-extra-arg=-Wno-unknown-warning-option;-extra-arg=-std=c++2b;--export-fixes=${CMAKE_BINARY_DIR}/clang-tidy-fixes/%f.yaml;-header-filter=${CMAKE_SOURCE_DIR}/src/cpp")
-# set(CMAKE_CXX_CLANG_TIDY "clang-tidy" "--export-fixes=${CMAKE_BINARY_DIR}/clang-tidy-fixes/%f.yaml")
-
-# set(CMAKE_CXX_CLANG_TIDY "clang-tidy;--format-style=file;-checks=-*,modernize-concat-nested-namespaces;-extra-arg=-Wno-unknown-warning-option;-header-filter=${CMAKE_SOURCE_DIR}/src/cpp/*")
-# set(CMAKE_CXX_CLANG_TIDY "clang-tidy;--fix;-checks=-*,modernize-concat-nested-namespaces;")
-
-
-# find_program(CLANG_FORMAT_EXE NAMES "clang-format")
-# set(CLANG_FORMAT_COMMAND "${CLANG_FORMAT_EXE}" "--style=file" "-i")
-
-# find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
-# set(CLANG_TIDY_COMMAND "${CLANG_TIDY_EXE}" "--fix" "-checks=-*,modernize-concat-nested-namespaces")
-
-
-# set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
-# # set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_FORMAT "${CLANG_FORMAT_COMMAND}")
-# set(CMAKE_CXX_CLANG_FORMAT
-#     clang-format --style=file ${SOURCES} ${HEADERS}
-# )
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -211,12 +184,8 @@ endif()
 if(NOT ASAN_ARGS)
     set(DIR_CLANG clang-tidy-fixes)
 
-    # set(CLANG_FORMAT_COMMAND "${CLANG_FORMAT_EXE}" "--style=file" "-i")
-    # non-parallel version can fix in-place
-    # set(CMAKE_CXX_CLANG_TIDY "clang-tidy;--fix;-config-file=${CMAKE_SOURCE_DIR}/.clang-tidy;-extra-arg=-Wno-unknown-warning-option;-extra-arg=-std=c++23;-header-filter=${CMAKE_SOURCE_DIR}/src/cpp")
     set(CMAKE_CXX_CLANG_TIDY_EXPORT_FIXES_DIR "${DIR_CLANG}")
-    set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-config-file=${CMAKE_SOURCE_DIR}/.clang-tidy;-extra-arg=-Wno-unknown-warning-option;-extra-arg=-std=c++23;-header-filter=${CMAKE_SOURCE_DIR}/src/cpp")
-    # set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-config-file=${CMAKE_SOURCE_DIR}/.clang-tidy;-extra-arg=-Wno-unknown-warning-option;-extra-arg=-std=c++23;--export-fixes=${DIR_CLANG}/${CMAKE_};-header-filter=${CMAKE_SOURCE_DIR}/src/cpp")
+    set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-config-file=${CMAKE_SOURCE_DIR}/.clang-tidy")
 
 
     add_custom_target(apply_clang_tidy_fixes ALL
@@ -233,15 +202,6 @@ endif()
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
-
-# if(NOT WIN32)
-#     set(CMAKE_CXX_CLANG_FORMAT
-#         clang-format --style=file
-#     )
-#     set(CMAKE_CXX_CLANG_TIDY
-#         clang-tidy --fix --extra-arg=-std=c++2b
-#     )
-# endif()
 
 if (WIN32)
     find_package(GeoTIFF CONFIG REQUIRED)
