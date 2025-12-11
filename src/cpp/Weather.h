@@ -12,31 +12,34 @@ namespace fs
 /**
  * \brief Temperature in degrees Celsius.
  */
-struct Temperature : public Index<Temperature>
+/**
+ * \brief Temperature in degrees Celsius.
+ */
+struct Temperature
 {
+  MathSize value{0};
   static constexpr Temperature Zero() { return Temperature{0}; };
   static constexpr Temperature Invalid() { return Temperature{-1}; };
-  using Index::Index;
   auto operator<=>(const Temperature& rhs) const = default;
 };
 /**
  * \brief Relative humidity as a percentage.
  */
-struct RelativeHumidity : public Index<RelativeHumidity>
+struct RelativeHumidity
 {
+  MathSize value{0};
   static constexpr RelativeHumidity Zero() { return RelativeHumidity{0}; };
   static constexpr RelativeHumidity Invalid() { return RelativeHumidity{-1}; };
-  using Index::Index;
   auto operator<=>(const RelativeHumidity& rhs) const = default;
 };
 /**
  * \brief Speed in kilometers per hour.
  */
-struct Speed : public Index<Speed>
+struct Speed
 {
+  MathSize value{0};
   static constexpr Speed Zero() { return Speed{0}; };
   static constexpr Speed Invalid() { return Speed{-1}; };
-  using Index::Index;
   auto operator<=>(const Speed& rhs) const = default;
 };
 /**
@@ -172,11 +175,12 @@ public:
 /**
  * \brief Precipitation (1hr accumulation) (mm)
  */
-struct Precipitation : public Index<Precipitation>
+struct Precipitation
 {
+  MathSize value{0};
   static constexpr Precipitation Zero() { return Precipitation{0}; };
   static constexpr Precipitation Invalid() { return Precipitation{-1}; };
-  using Index::Index;
+  auto operator<=>(const Precipitation& rhs) const = default;
 };
 /**
  * \brief Collection of weather indices used for calculating FwiWeather.
