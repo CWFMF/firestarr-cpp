@@ -30,6 +30,7 @@ public:
   constexpr Index(const Index<T>& rhs) noexcept = default;
   Index<T>& operator=(Index<T>&& rhs) noexcept = default;
   Index<T>& operator=(const Index<T>& rhs) noexcept = default;
+  auto operator<=>(const Index<T>& rhs) const = default;
   /**
    * \brief Equality operator
    * \param rhs Index to compare to
