@@ -16,6 +16,7 @@ struct Temperature : public Index<Temperature>
   static constexpr Temperature Zero() { return Temperature{0}; };
   static constexpr Temperature Invalid() { return Temperature{-1}; };
   using Index::Index;
+  auto operator<=>(const Temperature& rhs) const = default;
 };
 /**
  * \brief Relative humidity as a percentage.
@@ -83,6 +84,7 @@ class Wind
 public:
   static constexpr Wind Zero() { return Wind{Direction::Zero(), Speed::Zero()}; };
   static constexpr Wind Invalid() { return Wind{Direction::Invalid(), Speed::Invalid()}; };
+  auto operator<=>(const Wind& rhs) const = default;
   ~Wind() = default;
   /**
    * \brief Construct with 0 values
@@ -182,42 +184,16 @@ struct Precipitation : public Index<Precipitation>
  */
 struct Weather
 {
-  static constexpr Weather Zero()
+  static consteval Weather Zero() { return {}; }
+  static consteval Weather Invalid()
   {
-    return Weather{
-      Temperature::Zero(), RelativeHumidity::Zero(), Wind::Zero(), Precipitation::Zero()
+    return {
+      .temperature = Temperature::Invalid(),
+      .rh = RelativeHumidity::Invalid(),
+      .wind = Wind::Invalid(),
+      .prec = Precipitation::Invalid()
     };
-  };
-  static constexpr Weather Invalid()
-  {
-    return Weather{
-      Temperature::Invalid(), RelativeHumidity::Invalid(), Wind::Invalid(), Precipitation::Invalid()
-    };
-  };
-  virtual ~Weather() = default;
-  /**
-   * \brief Constructor with no initialization
-   */
-  constexpr Weather() noexcept = default;
-  /**
-   * \brief Construct with given indices
-   * \param temperature Temperature (Celsius)
-   * \param rh Relative Humidity (%)
-   * \param wind Wind (km/h)
-   * \param prec Precipitation (1hr accumulation) (mm)
-   */
-  constexpr Weather(
-    const Temperature& temperature,
-    const RelativeHumidity& rh,
-    const Wind& wind,
-    const Precipitation& prec
-  ) noexcept
-    : temperature(temperature), rh(rh), wind(wind), prec(prec)
-  { }
-  constexpr Weather(Weather&& rhs) noexcept = default;
-  constexpr Weather(const Weather& rhs) noexcept = default;
-  Weather& operator=(Weather&& rhs) noexcept = default;
-  Weather& operator=(const Weather& rhs) = default;
+  }
   /**
    * \brief Temperature (Celsius)
    */
@@ -234,6 +210,7 @@ struct Weather
    * \brief Precipitation (1hr accumulation) (mm)
    */
   Precipitation prec{};
+  auto operator<=>(const Weather& rhs) const = default;
 };
 }
 #endif

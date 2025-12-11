@@ -406,10 +406,12 @@ static ptr<const FwiWeather> make_wx(
 )
 {
   return make_wx(FwiWeather{
-    wx.temperature,
-    wx.rh,
-    Wind(wx.wind.direction, speed),
-    12 == hour ? wx.prec : Precipitation::Zero(),
+    Weather{
+      wx.temperature,
+      wx.rh,
+      Wind{wx.wind.direction, speed},
+      12 == hour ? wx.prec : Precipitation::Zero()
+    },
     ffmc,
     wx.dmc,
     wx.dc
@@ -623,9 +625,10 @@ static vector<ptr<const FwiWeather>> make_constant_weather(
   static constexpr Temperature TEMP(20.0);
   static constexpr RelativeHumidity RH(30.0);
   static constexpr Precipitation PREC(0.0);
-  const auto bui = Bui(dmc, dc);
+  const Bui bui{dmc, dc};
   vector<ptr<const FwiWeather>> wx{static_cast<size_t>(YEAR_HOURS)};
   std::generate(wx.begin(), wx.end(), [&]() {
+    const Isi isi{wind.speed, ffmc};
     return make_wx(FwiWeather{
       TEMP,
       RH,
@@ -634,9 +637,9 @@ static vector<ptr<const FwiWeather>> make_constant_weather(
       ffmc,
       dmc,
       dc,
-      Isi(wind.speed, ffmc),
+      isi,
       bui,
-      Fwi(Isi(wind.speed, ffmc), bui)
+      Fwi{isi, bui},
     });
   });
   return wx;

@@ -9,6 +9,7 @@
  */
 #include "stdafx.h"
 #include "debug_settings.h"
+#include "FWI.h"
 #include "Log.h"
 #include "Model.h"
 #include "Settings.h"
@@ -534,15 +535,17 @@ int main(const int argc, const char* const argv[])
       // HACK: ISI for yesterday really doesn't matter so just use any wind
       // HACK: it's basically wrong to assign this precip to yesterday's object,
       // but don't want to add another argument right now
-      const auto yesterday = FwiWeather(
-        Temperature::Zero(),
-        RelativeHumidity::Zero(),
-        Wind(Direction(wind_direction, false), Speed(wind_speed)),
-        Precipitation(apcp_prev),
+      const FwiWeather yesterday{
+        Weather{
+          Temperature::Zero(),
+          RelativeHumidity::Zero(),
+          Wind{Direction{wind_direction, false}, Speed{wind_speed}},
+          Precipitation{apcp_prev}
+        },
         ffmc,
         dmc,
         dc
-      );
+      };
       fs::fix_tm(&start_date);
       fs::logging::note(
         "Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
@@ -583,15 +586,17 @@ int main(const int argc, const char* const argv[])
         test_all = true;
       }
       done_positional();
-      const auto wx = FwiWeather(
-        Temperature::Zero(),
-        RelativeHumidity::Zero(),
-        Wind(Direction(wind_direction, false), Speed(wind_speed)),
-        Precipitation::Zero(),
+      const FwiWeather wx{
+        Weather{
+          Temperature::Zero(),
+          RelativeHumidity::Zero(),
+          Wind(Direction(wind_direction, false), Speed(wind_speed)),
+          Precipitation::Zero()
+        },
         ffmc,
         dmc,
         dc
-      );
+      };
       show_args();
       result = fs::test(output_directory, hours, &wx, fuel_name, slope, aspect, test_all);
     }
