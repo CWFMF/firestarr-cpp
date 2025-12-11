@@ -1,16 +1,15 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_LOG_VALUE_H
 #define FS_LOG_VALUE_H
-#include "stdafx.h"
-#include "Index.h"
+#include "unstable.h"
 namespace fs
 {
 /**
  * \brief A result of calling log(x) for some value of x, pre-calculated at compile time.
  */
-struct LogValue : public Index<LogValue>
+struct LogValue
 {
-  using Index::Index;
+  MathSize value{0};
   auto operator<=>(const LogValue& rhs) const = default;
 };
 static constexpr LogValue LOG_0_70{-0.35667494393873245};
@@ -29,11 +28,11 @@ static constexpr LogValue LOG_0_80_CALC{log(0.8)};
 static constexpr LogValue LOG_0_85_CALC{log(0.85)};
 static constexpr LogValue LOG_0_90_CALC{log(0.9)};
 static constexpr LogValue LOG_1_00_CALC{log(1.0)};
-static_assert(abs((LOG_0_70 - LOG_0_70_CALC).value) < numeric_limits<MathSize>::epsilon());
-static_assert(abs((LOG_0_75 - LOG_0_75_CALC).value) < numeric_limits<MathSize>::epsilon());
-static_assert(abs((LOG_0_80 - LOG_0_80_CALC).value) < numeric_limits<MathSize>::epsilon());
-static_assert(abs((LOG_0_90 - LOG_0_90_CALC).value) < numeric_limits<MathSize>::epsilon());
-static_assert(abs((LOG_1_00 - LOG_1_00_CALC).value) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_70.value - LOG_0_70_CALC.value)) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_75.value - LOG_0_75_CALC.value)) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_80.value - LOG_0_80_CALC.value)) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_0_90.value - LOG_0_90_CALC.value)) < numeric_limits<MathSize>::epsilon());
+static_assert(abs((LOG_1_00.value - LOG_1_00_CALC.value)) < numeric_limits<MathSize>::epsilon());
 #endif
 #endif
 }
