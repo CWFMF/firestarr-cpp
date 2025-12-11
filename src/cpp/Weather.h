@@ -5,6 +5,7 @@
 #define FS_WEATHER_H
 #include "stdafx.h"
 #include "Index.h"
+#include "unstable.h"
 #include "Util.h"
 namespace fs
 {
@@ -26,6 +27,7 @@ struct RelativeHumidity : public Index<RelativeHumidity>
   static constexpr RelativeHumidity Zero() { return RelativeHumidity{0}; };
   static constexpr RelativeHumidity Invalid() { return RelativeHumidity{-1}; };
   using Index::Index;
+  auto operator<=>(const RelativeHumidity& rhs) const = default;
 };
 /**
  * \brief Speed in kilometers per hour.
@@ -35,6 +37,7 @@ struct Speed : public Index<Speed>
   static constexpr Speed Zero() { return Speed{0}; };
   static constexpr Speed Invalid() { return Speed{-1}; };
   using Index::Index;
+  auto operator<=>(const Speed& rhs) const = default;
 };
 /**
  * \brief Direction with access to degrees or radians.
@@ -54,12 +57,8 @@ struct Direction : public Index<Direction>
    * \param is_radians Whether the given direction is in radians (as opposed to degrees)
    */
   constexpr Direction(const MathSize value, const bool is_radians)
-    : Index(is_radians ? to_degrees(value) : value)
+    : Index{is_radians ? to_degrees(value) : value}
   { }
-  constexpr Direction(const Direction& rhs) noexcept = default;
-  constexpr Direction(Direction&& rhs) noexcept = default;
-  Direction& operator=(const Direction& rhs) noexcept = default;
-  Direction& operator=(Direction&& rhs) noexcept = default;
   /**
    * \brief Direction as radians, where 0 is North and values increase clockwise
    * \return Direction as radians, where 0 is North and values increase clockwise
@@ -79,7 +78,7 @@ struct Direction : public Index<Direction>
 /**
  * \brief Wind with a Speed and Direction.
  */
-class Wind
+struct Wind
 {
 public:
   static constexpr Wind Zero() { return Wind{Direction::Zero(), Speed::Zero()}; };
