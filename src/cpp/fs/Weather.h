@@ -2,7 +2,6 @@
 #ifndef FS_WEATHER_H
 #define FS_WEATHER_H
 #include "stdafx.h"
-#include "Index.h"
 #include "Log.h"
 #include "unstable.h"
 #include "Util.h"
@@ -44,22 +43,14 @@ struct Speed
 /**
  * \brief Direction with access to degrees or radians.
  */
-struct Direction : public Index<Direction>
+struct Direction
 {
+  MathSize value{0};
   static constexpr Direction Zero() { return Direction{0, false}; };
   static constexpr Direction Invalid() { return Direction{-1, false}; };
-  ~Direction() = default;
-  /**
-   * \brief Construct with Direction of 0 (North)
-   */
-  constexpr Direction() noexcept = default;
-  /**
-   * \brief Constructor
-   * \param value Direction to use
-   * \param is_radians Whether the given direction is in radians (as opposed to degrees)
-   */
-  constexpr Direction(const MathSize value, const bool is_radians)
-    : Index{is_radians ? to_degrees(value) : value}
+  auto operator<=>(const Direction& rhs) const = default;
+  constexpr Direction(const MathSize value = 0, const bool is_radians = false)
+    : value{is_radians ? to_degrees(value) : value}
   { }
   /**
    * \brief Direction as radians, where 0 is North and values increase clockwise
