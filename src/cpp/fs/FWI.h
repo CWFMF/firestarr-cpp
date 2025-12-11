@@ -2,18 +2,19 @@
 #ifndef FS_FWI_H
 #define FS_FWI_H
 #include "stdafx.h"
-#include "Index.h"
+#include "unstable.h"
 #include "Weather.h"
 namespace fs
 {
 /**
  * \brief Fine Fuel Moisture Code value.
  */
-struct Ffmc : public Index<Ffmc>
+struct Ffmc
 {
-  static constexpr Ffmc Zero() { return Ffmc{0}; };
-  static constexpr Ffmc Invalid() { return Ffmc{-1}; };
-  using Index::Index;
+  MathSize value{0};
+  static constexpr Ffmc Zero() { return Ffmc{0.0}; };
+  static constexpr Ffmc Invalid() { return Ffmc{-1.0}; };
+  explicit constexpr Ffmc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Fine Fuel Moisture Code
    * \param temperature Temperature (Celsius)
@@ -34,11 +35,12 @@ struct Ffmc : public Index<Ffmc>
 /**
  * \brief Duff Moisture Code value.
  */
-struct Dmc : public Index<Dmc>
+struct Dmc
 {
+  MathSize value{0};
   static constexpr Dmc Zero() { return Dmc{0}; };
   static constexpr Dmc Invalid() { return Dmc{-1}; };
-  using Index::Index;
+  explicit constexpr Dmc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Duff Moisture Code
    * \param temperature Temperature (Celsius)
@@ -61,11 +63,12 @@ struct Dmc : public Index<Dmc>
 /**
  * \brief Drought Code value.
  */
-struct Dc : public Index<Dc>
+struct Dc
 {
+  MathSize value{0};
   static constexpr Dc Zero() { return Dc{0}; };
   static constexpr Dc Invalid() { return Dc{-1}; };
-  using Index::Index;
+  explicit constexpr Dc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Drought Code
    * \param temperature Temperature (Celsius)
@@ -86,11 +89,12 @@ struct Dc : public Index<Dc>
 /**
  * \brief Initial Spread Index value.
  */
-struct Isi : public Index<Isi>
+struct Isi
 {
+  MathSize value{0};
   static constexpr Isi Zero() { return Isi{0}; };
   static constexpr Isi Invalid() { return Isi{-1}; };
-  using Index::Index;
+  explicit constexpr Isi(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Initial Spread Index and verify previous value is within tolerance of
    * calculated value
@@ -105,16 +109,18 @@ struct Isi : public Index<Isi>
    * \param ffmc Fine Fuel Moisture Code
    */
   Isi(const Speed ws, const Ffmc ffmc) noexcept;
+  auto operator<=>(const Isi& rhs) const = default;
 };
 Isi check_isi(const MathSize value, const Speed& ws, const Ffmc& ffmc) noexcept;
 /**
  * \brief Build-up Index value.
  */
-struct Bui : public Index<Bui>
+struct Bui
 {
+  MathSize value{0};
   static constexpr Bui Zero() { return Bui{0}; };
   static constexpr Bui Invalid() { return Bui{-1}; };
-  using Index::Index;
+  explicit constexpr Bui(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Build-up Index and verify previous value is within tolerance of calculated
    * value
@@ -129,19 +135,21 @@ struct Bui : public Index<Bui>
    * \param dc Drought Code
    */
   Bui(const Dmc dmc, const Dc dc) noexcept;
+  auto operator<=>(const Bui& rhs) const = default;
 };
 Bui check_bui(const MathSize value, const Dmc& dmc, const Dc& dc) noexcept;
 /**
  * \brief Fire Weather Index value.
  */
-struct Fwi : public Index<Fwi>
+struct Fwi
 {
+  MathSize value{0};
   static constexpr Fwi Zero() { return Fwi{0}; };
   static constexpr Fwi Invalid() { return Fwi{-1}; };
-  using Index::Index;
+  explicit constexpr Fwi(const MathSize value_ = 0) : value{value_} { }
   /**
-   * \brief Calculate Fire Weather Index and verify previous value is within tolerance of calculated
-   * value
+   * \brief Calculate Fire Weather Index and verify previous value is within tolerance of
+   * calculated value
    * \param value Value to check is within tolerance of calculated value
    * \param isi Initial Spread Index
    * \param bui Build-up Index
@@ -153,21 +161,24 @@ struct Fwi : public Index<Fwi>
    * \param bui Build-up Index
    */
   Fwi(const Isi isi, const Bui bui) noexcept;
+  auto operator<=>(const Fwi& rhs) const = default;
 };
 Fwi check_fwi(const MathSize value, const Isi& isi, const Bui& bui) noexcept;
 /**
  * \brief Danger Severity Rating value.
  */
-struct Dsr : public Index<Dsr>
+struct Dsr
 {
+  MathSize value{0};
   static constexpr Dsr Zero() { return Dsr{0}; };
   static constexpr Dsr Invalid() { return Dsr{-1}; };
-  using Index::Index;
+  explicit constexpr Dsr(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Danger Severity Rating
    * \param fwi Fire Weather Index
    */
   explicit Dsr(const Fwi fwi) noexcept;
+  auto operator<=>(const Dsr& rhs) const = default;
 };
 /**
  * \brief A Weather value with calculated FWI indices.
