@@ -3,7 +3,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FWI_H
 #define FS_FWI_H
-#include "stdafx.h"
 #include "unstable.h"
 #include "Weather.h"
 namespace fs
@@ -14,8 +13,6 @@ namespace fs
 struct Ffmc
 {
   MathSize value{0};
-  static constexpr Ffmc Zero() { return Ffmc{0.0}; };
-  static constexpr Ffmc Invalid() { return Ffmc{-1.0}; };
   explicit constexpr Ffmc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Fine Fuel Moisture Code
@@ -40,8 +37,6 @@ struct Ffmc
 struct Dmc
 {
   MathSize value{0};
-  static constexpr Dmc Zero() { return Dmc{0}; };
-  static constexpr Dmc Invalid() { return Dmc{-1}; };
   explicit constexpr Dmc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Duff Moisture Code
@@ -68,8 +63,6 @@ struct Dmc
 struct Dc
 {
   MathSize value{0};
-  static constexpr Dc Zero() { return Dc{0}; };
-  static constexpr Dc Invalid() { return Dc{-1}; };
   explicit constexpr Dc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Drought Code
@@ -94,8 +87,6 @@ struct Dc
 struct Isi
 {
   MathSize value{0};
-  static constexpr Isi Zero() { return Isi{0}; };
-  static constexpr Isi Invalid() { return Isi{-1}; };
   explicit constexpr Isi(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Initial Spread Index and verify previous value is within tolerance of
@@ -120,8 +111,6 @@ Isi check_isi(const MathSize value, const Speed& ws, const Ffmc& ffmc) noexcept;
 struct Bui
 {
   MathSize value{0};
-  static constexpr Bui Zero() { return Bui{0}; };
-  static constexpr Bui Invalid() { return Bui{-1}; };
   explicit constexpr Bui(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Build-up Index and verify previous value is within tolerance of calculated
@@ -146,8 +135,6 @@ Bui check_bui(const MathSize value, const Dmc& dmc, const Dc& dc) noexcept;
 struct Fwi
 {
   MathSize value{0};
-  static constexpr Fwi Zero() { return Fwi{0}; };
-  static constexpr Fwi Invalid() { return Fwi{-1}; };
   explicit constexpr Fwi(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Fire Weather Index and verify previous value is within tolerance of
@@ -172,8 +159,6 @@ Fwi check_fwi(const MathSize value, const Isi& isi, const Bui& bui) noexcept;
 struct Dsr
 {
   MathSize value{0};
-  static constexpr Dsr Zero() { return Dsr{0}; };
-  static constexpr Dsr Invalid() { return Dsr{-1}; };
   explicit constexpr Dsr(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Danger Severity Rating
@@ -182,24 +167,60 @@ struct Dsr
   explicit Dsr(const Fwi fwi) noexcept;
   auto operator<=>(const Dsr& rhs) const = default;
 };
+constexpr auto FFMC_MOISTURE_CONSTANT = 250.0 * 59.5 / 101.0;
+constexpr MathSize ffmc_to_moisture(const MathSize ffmc) noexcept
+{
+  return FFMC_MOISTURE_CONSTANT * (101.0 - ffmc) / (59.5 + ffmc);
+}
+constexpr MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept
+{
+  return ffmc_to_moisture(ffmc.value);
+}
+constexpr Ffmc moisture_to_ffmc(const MathSize m) noexcept
+{
+  return Ffmc{(59.5 * (250.0 - m) / (FFMC_MOISTURE_CONSTANT + m))};
+}
+constexpr Ffmc ffmc_from_moisture(const MathSize m) noexcept { return Ffmc(moisture_to_ffmc(m)); }
+namespace ffmc
+{
+static constexpr Ffmc zero{0.0};
+static constexpr Ffmc invalid{-1.0};
+}
+namespace dmc
+{
+static constexpr Dmc zero{0};
+static constexpr Dmc invalid{-1};
+}
+namespace dc
+{
+static constexpr Dc zero{0};
+static constexpr Dc invalid{-1};
+}
+namespace isi
+{
+static constexpr Isi zero{0};
+static constexpr Isi invalid{-1};
+}
+namespace bui
+{
+static constexpr Bui zero{0};
+static constexpr Bui invalid{-1};
+}
+namespace fwi
+{
+static constexpr Fwi zero{0};
+static constexpr Fwi invalid{-1};
+}
+namespace dsr
+{
+static constexpr Dsr zero{0};
+static constexpr Dsr invalid{-1};
+}
 /**
  * \brief A Weather value with calculated FWI indices.
  */
 struct FwiWeather : public Weather
 {
-  static consteval FwiWeather Zero() { return {}; }
-  static consteval FwiWeather Invalid()
-  {
-    return {
-      Weather::Invalid(),
-      Ffmc::Invalid(),
-      Dmc::Invalid(),
-      Dc::Invalid(),
-      Isi::Invalid(),
-      Bui::Invalid(),
-      Fwi::Invalid()
-    };
-  }
   /**
    * \brief Fine Fuel Moisture Code
    */
@@ -226,6 +247,19 @@ struct FwiWeather : public Weather
   Fwi fwi{};
   constexpr FwiWeather() noexcept = default;
   constexpr FwiWeather(
+    const Weather wx,
+    const Ffmc ffmc,
+    const Dmc dmc,
+    const Dc dc,
+    Isi isi = isi::invalid,
+    Bui bui = bui::invalid,
+    Fwi fwi = fwi::invalid
+  ) noexcept
+    : Weather(wx), ffmc{ffmc}, dmc{dmc}, dc{dc},
+      isi{isi::invalid == isi ? Isi{wind.speed, ffmc} : isi},
+      bui{bui::invalid == bui ? Bui{dmc, dc} : bui}, fwi{fwi::invalid == fwi ? Fwi{isi, bui} : fwi}
+  { }
+  constexpr FwiWeather(
     const Temperature temp,
     const RelativeHumidity rh,
     const Wind wind,
@@ -237,21 +271,7 @@ struct FwiWeather : public Weather
     const Bui bui,
     const Fwi fwi
   ) noexcept
-    : Weather(temp, rh, wind, prec), ffmc{ffmc}, dmc{dmc}, dc{dc}, isi{isi}, bui{bui}, fwi{fwi}
-  { }
-  constexpr FwiWeather(
-    const Weather wx,
-    const Ffmc ffmc,
-    const Dmc dmc,
-    const Dc dc,
-    Isi isi = Isi::Invalid(),
-    Bui bui = Bui::Invalid(),
-    Fwi fwi = Fwi::Invalid()
-  ) noexcept
-    : Weather(wx), ffmc{ffmc}, dmc{dmc}, dc{dc},
-      isi{Isi::Invalid() == isi ? Isi{wind.speed, ffmc} : isi},
-      bui{Bui::Invalid() == bui ? Bui{dmc, dc} : bui},
-      fwi{Fwi::Invalid() == fwi ? Fwi{isi, bui} : fwi}
+    : FwiWeather{Weather{temp, rh, wind, prec}, ffmc, dmc, dc, isi, bui, fwi}
   { }
   constexpr FwiWeather(
     const FwiWeather& yesterday,
@@ -261,18 +281,18 @@ struct FwiWeather : public Weather
     const RelativeHumidity& rh,
     const Wind& wind,
     const Precipitation& prec,
-    Ffmc ffmc = Ffmc::Invalid(),
-    Dmc dmc = Dmc::Invalid(),
-    Dc dc = Dc::Invalid(),
-    Isi isi = Isi::Invalid(),
-    Bui bui = Bui::Invalid(),
-    Fwi fwi = Fwi::Invalid()
+    Ffmc ffmc = ffmc::invalid,
+    Dmc dmc = dmc::invalid,
+    Dc dc = dc::invalid,
+    Isi isi = isi::invalid,
+    Bui bui = bui::invalid,
+    Fwi fwi = fwi::invalid
   ) noexcept
     : FwiWeather(
         {.temperature = temp, .rh = rh, .wind = wind, .prec = prec},
-        (Ffmc::Invalid() == ffmc) ? Ffmc{temp, rh, wind.speed, prec, yesterday.ffmc} : ffmc,
-        (Dmc::Invalid() == dmc) ? Dmc{temp, rh, prec, yesterday.dmc, month, latitude} : dmc,
-        (Dc::Invalid() == dc) ? Dc{temp, prec, yesterday.dc, month, latitude} : dc,
+        (ffmc::invalid == ffmc) ? Ffmc{temp, rh, wind.speed, prec, yesterday.ffmc} : ffmc,
+        (dmc::invalid == dmc) ? Dmc{temp, rh, prec, yesterday.dmc, month, latitude} : dmc,
+        (dc::invalid == dc) ? Dc{temp, prec, yesterday.dc, month, latitude} : dc,
         isi,
         bui,
         fwi
@@ -305,19 +325,5 @@ struct FwiWeather : public Weather
    */
   [[nodiscard]] MathSize ffmcEffect() const;
 };
-constexpr auto FFMC_MOISTURE_CONSTANT = 250.0 * 59.5 / 101.0;
-constexpr MathSize ffmc_to_moisture(const MathSize ffmc) noexcept
-{
-  return FFMC_MOISTURE_CONSTANT * (101.0 - ffmc) / (59.5 + ffmc);
-}
-constexpr MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept
-{
-  return ffmc_to_moisture(ffmc.value);
-}
-constexpr Ffmc moisture_to_ffmc(const MathSize m) noexcept
-{
-  return Ffmc{(59.5 * (250.0 - m) / (FFMC_MOISTURE_CONSTANT + m))};
-}
-constexpr Ffmc ffmc_from_moisture(const MathSize m) noexcept { return Ffmc(moisture_to_ffmc(m)); }
 }
 #endif

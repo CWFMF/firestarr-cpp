@@ -77,12 +77,12 @@ FwiWeather read_weather(istringstream* iss, string* str)
   const Wind wind(wd, ws);
   return {
     {.temperature = temp, .rh = rh, .wind = wind, .prec = prec},
-    Ffmc::Zero(),
-    Dmc::Zero(),
-    Dc::Zero(),
-    Isi::Zero(),
-    Bui::Zero(),
-    Fwi::Zero()
+    ffmc::zero,
+    dmc::zero,
+    dc::zero,
+    isi::zero,
+    bui::zero,
+    fwi::zero
   };
 }
 }

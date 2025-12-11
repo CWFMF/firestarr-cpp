@@ -18,8 +18,6 @@ namespace fs
 struct Temperature
 {
   MathSize value{0};
-  static constexpr Temperature Zero() { return Temperature{0}; };
-  static constexpr Temperature Invalid() { return Temperature{-1}; };
   auto operator<=>(const Temperature& rhs) const = default;
 };
 /**
@@ -28,8 +26,6 @@ struct Temperature
 struct RelativeHumidity
 {
   MathSize value{0};
-  static constexpr RelativeHumidity Zero() { return RelativeHumidity{0}; };
-  static constexpr RelativeHumidity Invalid() { return RelativeHumidity{-1}; };
   auto operator<=>(const RelativeHumidity& rhs) const = default;
 };
 /**
@@ -38,8 +34,6 @@ struct RelativeHumidity
 struct Speed
 {
   MathSize value{0};
-  static constexpr Speed Zero() { return Speed{0}; };
-  static constexpr Speed Invalid() { return Speed{-1}; };
   auto operator<=>(const Speed& rhs) const = default;
 };
 /**
@@ -48,8 +42,6 @@ struct Speed
 struct Direction
 {
   MathSize value{0};
-  static constexpr Direction Zero() { return Direction{0, false}; };
-  static constexpr Direction Invalid() { return Direction{-1, false}; };
   auto operator<=>(const Direction& rhs) const = default;
   constexpr Direction(const MathSize value = 0, const bool is_radians = false)
     : value{is_radians ? to_degrees(value) : value}
@@ -77,8 +69,6 @@ struct Wind
 {
   Direction direction{};
   Speed speed{};
-  static constexpr Wind Zero() { return {Direction::Zero(), Speed::Zero()}; };
-  static constexpr Wind Invalid() { return {Direction::Invalid(), Speed::Invalid()}; };
   auto operator<=>(const Wind& rhs) const = default;
   /**
    * \brief Direction wind is going towards
@@ -112,8 +102,6 @@ struct Wind
 struct Precipitation
 {
   MathSize value{0};
-  static constexpr Precipitation Zero() { return Precipitation{0}; };
-  static constexpr Precipitation Invalid() { return Precipitation{-1}; };
   auto operator<=>(const Precipitation& rhs) const = default;
 };
 /**
@@ -121,16 +109,6 @@ struct Precipitation
  */
 struct Weather
 {
-  static consteval Weather Zero() { return {}; }
-  static consteval Weather Invalid()
-  {
-    return {
-      .temperature = Temperature::Invalid(),
-      .rh = RelativeHumidity::Invalid(),
-      .wind = Wind::Invalid(),
-      .prec = Precipitation::Invalid()
-    };
-  }
   /**
    * \brief Temperature (Celsius)
    */
@@ -149,5 +127,45 @@ struct Weather
   Precipitation prec{};
   auto operator<=>(const Weather& rhs) const = default;
 };
+namespace temperature
+{
+static constexpr Temperature zero{0};
+static constexpr Temperature invalid{-1};
+}
+namespace relative_humidity
+{
+static constexpr RelativeHumidity zero{0};
+static constexpr RelativeHumidity invalid{-1};
+}
+namespace speed
+{
+static constexpr Speed zero{0};
+static constexpr Speed invalid{-1};
+}
+namespace direction
+{
+static constexpr Direction zero{0, false};
+static constexpr Direction invalid{-1, false};
+}
+namespace wind
+{
+static constexpr Wind zero{direction::zero, speed::zero};
+static constexpr Wind invalid{direction::invalid, speed::invalid};
+}
+namespace precipitation
+{
+static constexpr Precipitation zero{0};
+static constexpr Precipitation invalid{-1};
+}
+namespace weather
+{
+static constexpr Weather zero{};
+static constexpr Weather invalid{
+  .temperature = temperature::invalid,
+  .rh = relative_humidity::invalid,
+  .wind = wind::invalid,
+  .prec = precipitation::invalid
+};
+}
 }
 #endif

@@ -323,7 +323,7 @@ void Scenario::evaluate(const Event& event)
       // HACK: insert point as originating from itself
       points_.insert(
         p0,
-        SpreadData(event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
+        SpreadData(event.time, NO_INTENSITY, NO_ROS, direction::invalid, direction::invalid),
         x,
         y
       );
@@ -582,7 +582,7 @@ Scenario* Scenario::run(vector<shared_ptr<ProbabilityMap>>* probabilities)
       log_verbose("Adding point (%f, %f)", x, y);
       points_.insert(
         p0,
-        SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
+        SpreadData(start_time_, NO_INTENSITY, NO_ROS, direction::invalid, direction::invalid),
         x,
         y
       );

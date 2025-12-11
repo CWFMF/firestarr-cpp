@@ -248,7 +248,7 @@ SpreadInfo::SpreadInfo(
 )
   : offsets_({}), max_intensity_(INVALID_INTENSITY), key_(key), weather(weather), time_(time),
     head_ros_(INVALID_ROS), cfb_(-1), cfc_(-1), tfc_(-1), sfc_(-1), is_crown_(false),
-    raz_(fs::Direction::Invalid()), nd_(nd)
+    raz_(fs::direction::invalid), nd_(nd)
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
   const auto slope_azimuth = Cell::aspect(key_);
@@ -353,7 +353,7 @@ SpreadInfo::SpreadInfo(
     tfc_ = -1;
     sfc_ = -1;
     is_crown_ = false;
-    raz_ = fs::Direction::Invalid();
+    raz_ = fs::direction::invalid;
   }
 }
 }

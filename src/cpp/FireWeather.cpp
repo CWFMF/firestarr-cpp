@@ -410,7 +410,7 @@ static ptr<const FwiWeather> make_wx(
       wx.temperature,
       wx.rh,
       Wind{wx.wind.direction, speed},
-      12 == hour ? wx.prec : Precipitation::Zero()
+      12 == hour ? wx.prec : precipitation::zero
     },
     ffmc,
     wx.dmc,

@@ -287,7 +287,7 @@ public:
   /**
    * \brief Head fire spread direction
    */
-  Direction raz_{Direction::Invalid()};
+  Direction raz_{direction::invalid};
 
 private:
   /**
