@@ -112,3 +112,6 @@ Checks: "
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     file
+ExtraArgs:
+    - -std=c++2b
+    - -Wno-unknown-warning-option
