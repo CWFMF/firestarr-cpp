@@ -168,6 +168,9 @@ int test_fwi_file(const string file_in, const string file_out)
   ffmc0 = 85.0;
   dmc0 = 6.0;
   dc0 = 15.0;
+  Ffmc ffmc0_{ffmc0};
+  Dmc dmc0_{dmc0};
+  Dc dc0_{dc0};
   /* Open input and output files */
   ifstream inputFile(file_in.c_str());
   if (!inputFile.is_open())
@@ -193,13 +196,13 @@ int test_fwi_file(const string file_in, const string file_out)
     Speed wind_{wind};
     Precipitation prcp_{prcp};
     FFMCcalc(temp, rhum, wind, prcp, ffmc0, ffmc);
-    Ffmc ffmc_{temp_, rhum_, wind_, prcp_, Ffmc{ffmc0}};
+    Ffmc ffmc_{temp_, rhum_, wind_, prcp_, ffmc0_};
     logging::check_tolerance(EPSILON, ffmc, ffmc_.value, "ffmc");
     DMCcalc(temp, rhum, prcp, dmc0, month, dmc);
-    Dmc dmc_{temp_, rhum_, prcp_, Dmc{dmc0}, month, LATITUDE};
+    Dmc dmc_{temp_, rhum_, prcp_, dmc0_, month, LATITUDE};
     logging::check_tolerance(EPSILON, dmc, dmc_.value, "dmc");
     DCcalc(temp, prcp, dc0, month, dc);
-    Dc dc_{temp_, prcp_, Dc{dc0}, month, LATITUDE};
+    Dc dc_{temp_, prcp_, dc0_, month, LATITUDE};
     logging::check_tolerance(EPSILON, dc, dc_.value, "dc");
     ISIcalc(ffmc, wind, isi);
     Isi isi_{wind_, ffmc_};
@@ -213,6 +216,9 @@ int test_fwi_file(const string file_in, const string file_out)
     ffmc0 = ffmc;
     dmc0 = dmc;
     dc0 = dc;
+    ffmc0_ = ffmc_;
+    dmc0_ = dmc_;
+    dc0_ = dc_;
     printf("%0.1f %0.1f %0.1f %0.1f %0.1f %0.1f\n", ffmc, dmc, dc, isi, bui, fwi);
     outputFile << std::format(
       "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}", ffmc, dmc, dc, isi, bui, fwi
