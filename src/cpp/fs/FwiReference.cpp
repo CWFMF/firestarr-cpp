@@ -13,9 +13,9 @@
 namespace fs::fwireference
 {
 using namespace std;
-void FFMCcalc(float T, float H, float W, float Ro, float Fo, float& ffmc)
+void FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo, MathSize& ffmc)
 {
-  float Mo, Rf, Ed, Ew, M, Kl, Kw, Mr, Ko, Kd;
+  MathSize Mo, Rf, Ed, Ew, M, Kl, Kw, Mr, Ko, Kd;
   // fix precision
   // Mo = 147.2 * (101. - Fo) / (59.5 + Fo); /*Eq. 1 in */
   Mo = ffmc_to_moisture(Fo);
@@ -66,10 +66,10 @@ void FFMCcalc(float T, float H, float W, float Ro, float Fo, float& ffmc)
   if (ffmc <= 0.0)
     ffmc = 0.0;
 }
-void DMCcalc(float T, float H, float Ro, float Po, int I, float& dmc)
+void DMCcalc(MathSize T, MathSize H, MathSize Ro, MathSize Po, int I, MathSize& dmc)
 {
-  float Re, Mo, Mr, K, B, P, Pr;
-  float Le[] = {6.5, 7.5, 9., 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8., 7., 6.};
+  MathSize Re, Mo, Mr, K, B, P, Pr;
+  MathSize Le[] = {6.5, 7.5, 9., 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8., 7., 6.};
   if (T >= -1.1)
     K = 1.894 * (T + 1.1) * (100. - H) * Le[I - 1] * 0.0001;
   else
@@ -101,10 +101,10 @@ void DMCcalc(float T, float H, float Ro, float Po, int I, float& dmc)
     P = 0.0;
   dmc = P;
 }
-void DCcalc(float T, float Ro, float Do, int I, float& dc)
+void DCcalc(MathSize T, MathSize Ro, MathSize Do, int I, MathSize& dc)
 {
-  float Rd, Qo, Qr, V, D, Dr;
-  float Lf[] = {-1.6, -1.6, -1.6, .9, 3.8, 5.8, 6.4, 5., 2.4, .4, -1.6, -1.6};
+  MathSize Rd, Qo, Qr, V, D, Dr;
+  MathSize Lf[] = {-1.6, -1.6, -1.6, .9, 3.8, 5.8, 6.4, 5., 2.4, .4, -1.6, -1.6};
   if (Ro > 2.8)
   {
     Rd = 0.83 * (Ro)-1.27;       /*Eq. 18*/
@@ -124,9 +124,9 @@ void DCcalc(float T, float Ro, float Do, int I, float& dc)
     V = .0;
   dc = Do + 0.5 * V;
 }
-void ISIcalc(float F, float W, float& isi)
+void ISIcalc(MathSize F, MathSize W, MathSize& isi)
 {
-  float Fw, M, Ff;
+  MathSize Fw, M, Ff;
   // fix precision
   // M = 147.2 * (101 - F) / (59.5 + F);                         /*Eq. 1*/
   M = ffmc_to_moisture(F);
@@ -134,7 +134,7 @@ void ISIcalc(float F, float W, float& isi)
   Ff = 91.9 * exp(-.1386 * M) * (1. + pow(M, 5.31) / 4.93E7); /*Eq. 25*/
   isi = 0.208 * Fw * Ff;                                      /*Eq. 26*/
 }
-void BUIcalc(float P, float D, float& bui)
+void BUIcalc(MathSize P, MathSize D, MathSize& bui)
 {
   if (P <= .4 * D)
     bui = 0.8 * P * D / (P + .4 * D);
@@ -145,9 +145,9 @@ void BUIcalc(float P, float D, float& bui)
   if (bui <= 0.0)
     bui = 0.0;
 }
-void FWIcalc(float R, float U, float& fwi)
+void FWIcalc(MathSize R, MathSize U, MathSize& fwi)
 {
-  float Fd, B, S;
+  MathSize Fd, B, S;
   if (U <= 80.)
     Fd = .626 * pow(U, .809) + 2.; /*Eq. 28a*/
   else
@@ -161,8 +161,8 @@ void FWIcalc(float R, float U, float& fwi)
 int test_fwi_file(const string file_in, const string file_out)
 {
   string line;
-  float temp, rhum, wind, prcp, x, y;
-  float ffmc, ffmc0, dmc, dmc0, dc, dc0, isi, bui, fwi;
+  MathSize temp, rhum, wind, prcp, x, y;
+  MathSize ffmc, ffmc0, dmc, dmc0, dc, dc0, isi, bui, fwi;
   int month, day;
   /* Initialize FMC, DMC, and DC */
   ffmc0 = 85.0;
@@ -189,7 +189,7 @@ int test_fwi_file(const string file_in, const string file_out)
   {
     istringstream ss(line);
     ss >> month >> day >> temp >> rhum >> wind >> prcp;
-    static constexpr MathSize EPSILON{1e-4f};
+    static constexpr MathSize EPSILON{std::numeric_limits<MathSize>::epsilon()};
     static constexpr MathSize LATITUDE{50};
     Temperature temp_{temp};
     RelativeHumidity rhum_{rhum};
