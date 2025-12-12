@@ -2,7 +2,7 @@
 #ifndef FS_FWIREFRENCE_H
 #define FS_FWIREFRENCE_H
 #define TEST_FWI 1
-// #undef TEST_FWI
+#undef TEST_FWI
 namespace fs::fwireference
 {
 void FFMCcalc(float T, float H, float W, float Ro, float Fo, float& ffmc);
