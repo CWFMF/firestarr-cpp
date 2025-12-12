@@ -1,10 +1,8 @@
-// https://publications.gc.ca/collections/collection_2016/rncan-nrcan/Fo133-1-424-eng.pdf
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FwiReference.h"
 #include <cmath>
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include "FWI.h"
 #include "Log.h"
 #include "unstable.h"
@@ -13,6 +11,7 @@
 namespace fs::fwireference
 {
 using namespace std;
+constexpr auto DEFAULT_LATITUDE = 46.0;
 void FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo, MathSize& ffmc)
 {
   MathSize Mo, Rf, Ed, Ew, M, Kl, Kw, Mr, Ko, Kd;
@@ -66,12 +65,51 @@ void FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo, Math
   if (ffmc <= 0.0)
     ffmc = 0.0;
 }
-void DMCcalc(MathSize T, MathSize H, MathSize Ro, MathSize Po, int I, MathSize& dmc)
+void DMCcalc(
+  MathSize T,
+  MathSize H,
+  MathSize Ro,
+  MathSize Po,
+  int I,
+  MathSize& dmc,
+  const MathSize latitude = DEFAULT_LATITUDE
+)
 {
   MathSize Re, Mo, Mr, K, B, P, Pr;
-  MathSize Le[] = {6.5, 7.5, 9., 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8., 7., 6.};
+  // // # Reference latitude for DMC day length adjustment
+  // // # 46N: Canadian standard, latitude >= 30N   (Van Wagner 1987)
+  // MathSize Le0[] = {6.5, 7.5, 9, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8, 7, 6};
+  // // # 20N: For 30 > latitude >= 10
+  // //       lat <= 30 & lat > 10,
+  // MathSize Le1[] = {7.9, 8.4, 8.9, 9.5, 9.9, 10.2, 10.1, 9.7, 9.1, 8.6, 8.1, 7.8};
+  // // # 20S: For -10 > latitude >= -30
+  // //       lat <= -10 & lat > -30,
+  // MathSize Le2[] = {10.1, 9.6, 9.1, 8.5, 8.1, 7.8, 7.9, 8.3, 8.9, 9.4, 9.9, 10.2};
+  // // # 40S: For -30 > latitude
+  // //      lat <= -30 & lat >= -90,
+  // MathSize Le3[] = {11.5, 10.5, 9.2, 7.9, 6.8, 6.2, 6.5, 7.4, 8.7, 10, 11.2, 11.8};
+  // // # For latitude near the equator, we simple use a factor of 9 for all months
+  // //      lat <= 10 & lat > -10,
+  // # Reference latitude for DMC day length adjustment
+  // # 46N: Canadian standard, latitude >= 30N   (Van Wagner 1987)
+  MathSize Le0[] = {6.5, 7.5, 9, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8, 7, 6};
+  // # 20N: For 30 > latitude >= 10
+  //       lat <= 30 & lat > 10,
+  MathSize Le1[] = {7.9, 8.4, 8.9, 9.5, 9.9, 10.2, 10.1, 9.7, 9.1, 8.6, 8.1, 7.8};
+  // # 20S: For -10 > latitude >= -30
+  //       lat <= -10 & lat > -30,
+  MathSize Le2[] = {10.1, 9.6, 9.1, 8.5, 8.1, 7.8, 7.9, 8.3, 8.9, 9.4, 9.9, 10.2};
+  // # 40S: For -30 > latitude
+  //      lat <= -30 & lat >= -90,
+  MathSize Le3[] = {11.5, 10.5, 9.2, 7.9, 6.8, 6.2, 6.5, 7.4, 8.7, 10, 11.2, 11.8};
+  // # For latitude near the equator, we simple use a factor of 9 for all months
+  //      lat <= 10 & lat > -10,
+  const auto le =
+    10 > abs(latitude)
+      ? 9
+      : ((latitude <= 10 ? (latitude <= -30 ? Le3 : Le2) : (latitude >= 30 ? Le0 : Le1))[I - 1]);
   if (T >= -1.1)
-    K = 1.894 * (T + 1.1) * (100. - H) * Le[I - 1] * 0.0001;
+    K = 1.894 * (T + 1.1) * (100. - H) * le * 0.0001;
   else
     K = 0.;
   /*Eq. 16*/
@@ -101,10 +139,21 @@ void DMCcalc(MathSize T, MathSize H, MathSize Ro, MathSize Po, int I, MathSize& 
     P = 0.0;
   dmc = P;
 }
-void DCcalc(MathSize T, MathSize Ro, MathSize Do, int I, MathSize& dc)
+void DCcalc(
+  MathSize T,
+  MathSize Ro,
+  MathSize Do,
+  int I,
+  MathSize& dc,
+  const MathSize latitude = DEFAULT_LATITUDE
+)
 {
   MathSize Rd, Qo, Qr, V, D, Dr;
-  MathSize Lf[] = {-1.6, -1.6, -1.6, .9, 3.8, 5.8, 6.4, 5., 2.4, .4, -1.6, -1.6};
+  // Day length factor for DC Calculations
+  // 20N: North of 20 degrees N
+  MathSize LfN[] = {-1.6, -1.6, -1.6, 0.9, 3.8, 5.8, 6.4, 5, 2.4, 0.4, -1.6, -1.6};
+  // 20S: South of 20 degrees S
+  MathSize LfS[] = {6.4, 5, 2.4, 0.4, -1.6, -1.6, -1.6, -1.6, -1.6, 0.9, 3.8, 5.8};
   if (Ro > 2.8)
   {
     Rd = 0.83 * (Ro)-1.27;       /*Eq. 18*/
@@ -116,10 +165,14 @@ void DCcalc(MathSize T, MathSize Ro, MathSize Do, int I, MathSize& dc)
     else
       Do = 0.0;
   }
-  if (T > -2.8) /*Eq. 22*/
-    V = 0.36 * (T + 2.8) + Lf[I - 1];
+  // Near the equator, we just use 1.4 for all months.
+  const auto lf = abs(latitude) <= 10 ? 1.4 : (latitude >= 10 ? LfN : LfS)[I - 1];
+  if (T > -2.8)
+  { /*Eq. 22*/
+    V = 0.36 * (T + 2.8) + lf;
+  }
   else
-    V = Lf[I - 1];
+    V = lf;
   if (V < 0.) /*Eq. 23*/
     V = .0;
   dc = Do + 0.5 * V;
@@ -158,7 +211,11 @@ void FWIcalc(MathSize R, MathSize U, MathSize& fwi)
   else                                          /*Eq. 30b*/
     fwi = B;
 }
-int test_fwi_file(const string file_in, const string file_out)
+int test_fwi_file(
+  const string file_in,
+  const string file_out,
+  const MathSize latitude = DEFAULT_LATITUDE
+)
 {
   string line;
   MathSize temp, rhum, wind, prcp, x, y;
@@ -198,10 +255,10 @@ int test_fwi_file(const string file_in, const string file_out)
     FFMCcalc(temp, rhum, wind, prcp, ffmc0, ffmc);
     Ffmc ffmc_{temp_, rhum_, wind_, prcp_, ffmc0_};
     logging::check_tolerance(EPSILON, ffmc, ffmc_.value, "ffmc");
-    DMCcalc(temp, rhum, prcp, dmc0, month, dmc);
+    DMCcalc(temp, rhum, prcp, dmc0, month, dmc, latitude);
     Dmc dmc_{temp_, rhum_, prcp_, dmc0_, month, LATITUDE};
     logging::check_tolerance(EPSILON, dmc, dmc_.value, "dmc");
-    DCcalc(temp, prcp, dc0, month, dc);
+    DCcalc(temp, prcp, dc0, month, dc, latitude);
     Dc dc_{temp_, prcp_, dc0_, month, LATITUDE};
     logging::check_tolerance(EPSILON, dc, dc_.value, "dc");
     ISIcalc(ffmc, wind, isi);
