@@ -16,8 +16,8 @@ namespace fs
 struct Temperature
 {
   MathSize value{0};
-  static constexpr Temperature Zero() { return Temperature{0}; };
-  static constexpr Temperature Invalid() { return Temperature{-1}; };
+  static consteval Temperature Zero() { return Temperature{0}; };
+  static consteval Temperature Invalid() { return Temperature{-1}; };
   auto operator<=>(const Temperature& rhs) const = default;
 };
 /**
@@ -26,8 +26,8 @@ struct Temperature
 struct RelativeHumidity
 {
   MathSize value{0};
-  static constexpr RelativeHumidity Zero() { return RelativeHumidity{0}; };
-  static constexpr RelativeHumidity Invalid() { return RelativeHumidity{-1}; };
+  static consteval RelativeHumidity Zero() { return RelativeHumidity{0}; };
+  static consteval RelativeHumidity Invalid() { return RelativeHumidity{-1}; };
   auto operator<=>(const RelativeHumidity& rhs) const = default;
 };
 /**
@@ -36,8 +36,8 @@ struct RelativeHumidity
 struct Speed
 {
   MathSize value{0};
-  static constexpr Speed Zero() { return Speed{0}; };
-  static constexpr Speed Invalid() { return Speed{-1}; };
+  static consteval Speed Zero() { return Speed{0}; };
+  static consteval Speed Invalid() { return Speed{-1}; };
   auto operator<=>(const Speed& rhs) const = default;
 };
 /**
@@ -46,8 +46,8 @@ struct Speed
 struct Direction
 {
   MathSize value{0};
-  static constexpr Direction Zero() { return Direction{0, false}; };
-  static constexpr Direction Invalid() { return Direction{-1, false}; };
+  static consteval Direction Zero() { return Direction{0, false}; };
+  static consteval Direction Invalid() { return Direction{-1, false}; };
   auto operator<=>(const Direction& rhs) const = default;
   constexpr Direction(const MathSize value = 0, const bool is_radians = false)
     : value{is_radians ? to_degrees(value) : value}
@@ -75,8 +75,8 @@ struct Wind
 {
   Direction direction{};
   Speed speed{};
-  static constexpr Wind Zero() { return {Direction::Zero(), Speed::Zero()}; };
-  static constexpr Wind Invalid() { return {Direction::Invalid(), Speed::Invalid()}; };
+  static consteval Wind Zero() { return {Direction::Zero(), Speed::Zero()}; };
+  static consteval Wind Invalid() { return {Direction::Invalid(), Speed::Invalid()}; };
   auto operator<=>(const Wind& rhs) const = default;
   /**
    * \brief Direction wind is going towards
@@ -110,8 +110,8 @@ struct Wind
 struct Precipitation
 {
   MathSize value{0};
-  static constexpr Precipitation Zero() { return Precipitation{0}; };
-  static constexpr Precipitation Invalid() { return Precipitation{-1}; };
+  static consteval Precipitation Zero() { return Precipitation{0}; };
+  static consteval Precipitation Invalid() { return Precipitation{-1}; };
   auto operator<=>(const Precipitation& rhs) const = default;
 };
 /**

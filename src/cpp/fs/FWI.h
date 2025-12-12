@@ -12,8 +12,8 @@ namespace fs
 struct Ffmc
 {
   MathSize value{0};
-  static constexpr Ffmc Zero() { return Ffmc{0.0}; };
-  static constexpr Ffmc Invalid() { return Ffmc{-1.0}; };
+  static consteval Ffmc Zero() { return Ffmc{0.0}; };
+  static consteval Ffmc Invalid() { return Ffmc{-1.0}; };
   explicit constexpr Ffmc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Fine Fuel Moisture Code
@@ -38,8 +38,8 @@ struct Ffmc
 struct Dmc
 {
   MathSize value{0};
-  static constexpr Dmc Zero() { return Dmc{0}; };
-  static constexpr Dmc Invalid() { return Dmc{-1}; };
+  static consteval Dmc Zero() { return Dmc{0}; };
+  static consteval Dmc Invalid() { return Dmc{-1}; };
   explicit constexpr Dmc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Duff Moisture Code
@@ -66,8 +66,8 @@ struct Dmc
 struct Dc
 {
   MathSize value{0};
-  static constexpr Dc Zero() { return Dc{0}; };
-  static constexpr Dc Invalid() { return Dc{-1}; };
+  static consteval Dc Zero() { return Dc{0}; };
+  static consteval Dc Invalid() { return Dc{-1}; };
   explicit constexpr Dc(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Drought Code
@@ -92,8 +92,8 @@ struct Dc
 struct Isi
 {
   MathSize value{0};
-  static constexpr Isi Zero() { return Isi{0}; };
-  static constexpr Isi Invalid() { return Isi{-1}; };
+  static consteval Isi Zero() { return Isi{0}; };
+  static consteval Isi Invalid() { return Isi{-1}; };
   explicit constexpr Isi(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Initial Spread Index and verify previous value is within tolerance of
@@ -118,8 +118,8 @@ Isi check_isi(const MathSize value, const Speed& ws, const Ffmc& ffmc) noexcept;
 struct Bui
 {
   MathSize value{0};
-  static constexpr Bui Zero() { return Bui{0}; };
-  static constexpr Bui Invalid() { return Bui{-1}; };
+  static consteval Bui Zero() { return Bui{0}; };
+  static consteval Bui Invalid() { return Bui{-1}; };
   explicit constexpr Bui(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Build-up Index and verify previous value is within tolerance of calculated
@@ -144,8 +144,8 @@ Bui check_bui(const MathSize value, const Dmc& dmc, const Dc& dc) noexcept;
 struct Fwi
 {
   MathSize value{0};
-  static constexpr Fwi Zero() { return Fwi{0}; };
-  static constexpr Fwi Invalid() { return Fwi{-1}; };
+  static consteval Fwi Zero() { return Fwi{0}; };
+  static consteval Fwi Invalid() { return Fwi{-1}; };
   explicit constexpr Fwi(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Fire Weather Index and verify previous value is within tolerance of
@@ -170,8 +170,8 @@ Fwi check_fwi(const MathSize value, const Isi& isi, const Bui& bui) noexcept;
 struct Dsr
 {
   MathSize value{0};
-  static constexpr Dsr Zero() { return Dsr{0}; };
-  static constexpr Dsr Invalid() { return Dsr{-1}; };
+  static consteval Dsr Zero() { return Dsr{0}; };
+  static consteval Dsr Invalid() { return Dsr{-1}; };
   explicit constexpr Dsr(const MathSize value_ = 0) : value{value_} { }
   /**
    * \brief Calculate Danger Severity Rating
