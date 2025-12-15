@@ -7,10 +7,6 @@
 namespace fs
 {
 using fs::logging::Log;
-static map<std::string, std::function<void()>> PARSE_FCT{};
-static vector<std::pair<std::string, std::string>> PARSE_HELP{};
-static map<std::string, bool> PARSE_REQUIRED{};
-static map<std::string, bool> PARSE_HAVE{};
 const char* cur_arg();
 string get_args();
 void show_args();
@@ -19,16 +15,18 @@ void show_usage_and_exit(int exit_code);
 void show_usage_and_exit();
 void show_help_and_exit();
 const char* get_arg() noexcept;
+void mark_parsed(const char* arg);
+bool was_parsed(const char* arg);
 template <class T>
 T parse(std::function<T()> fct)
 {
-  PARSE_HAVE.emplace(cur_arg(), true);
+  mark_parsed(cur_arg());
   return fct();
 }
 template <class T>
 T parse_once(std::function<T()> fct)
 {
-  if (PARSE_HAVE.contains(cur_arg()))
+  if (was_parsed(cur_arg()))
   {
     printf("\nArgument %s already specified\n\n", cur_arg());
     show_usage_and_exit();

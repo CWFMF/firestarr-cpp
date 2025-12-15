@@ -54,16 +54,18 @@ int main(const int argc, const char* const argv[])
   try
   {
 #endif
-    struct stat info{};
-    if (stat(parser.output_directory.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR))
-    {
-      fs::make_directory_recursive(parser.output_directory.c_str());
-    }
     fs::logging::check_fatal(
       !Log::openLogFile(parser.log_file.c_str()), "Can't open log file %s", parser.log_file.c_str()
     );
     fs::logging::note("Output directory is %s", parser.output_directory.c_str());
     fs::logging::note("Output log is %s", parser.log_file.c_str());
+    // at this point we've parsed positional args and know we're not in test mode
+    if (!was_parsed("--apcp_prev"))
+    {
+      fs::logging::warning(
+        "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
+      );
+    }
     if (parser.mode != TEST)
     {
       // handle surface/simulation positional arguments

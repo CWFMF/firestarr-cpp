@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include "ArgumentParser.h"
 #include "FWI.h"
 #include "Log.h"
 #include "unstable.h"
@@ -367,8 +368,11 @@ int test_fwi(const int argc, const char* const argv[])
   constexpr auto FILE_EXPECTED{"test/data/fwi/fwi_out.txt"};
   constexpr auto FILE_IN{"test/data/fwi/fwi_in.txt"};
   constexpr auto FILE_OUT{"test/output/fwi/fwi_out.txt"};
-  std::ignore = argc;
-  std::ignore = argv;
+  // lets logging levels and help work
+  ArgumentParser parser{argc, argv};
+  parser.parse_args();
+  // no positional arguments
+  parser.done_positional();
   make_directory_recursive("test/output/fwi");
   if (const auto ret = test_fwi_files(FILE_EXPECTED, FILE_IN, FILE_OUT); 0 != ret)
   {

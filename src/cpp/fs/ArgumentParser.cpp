@@ -3,7 +3,12 @@
 #include "Settings.h"
 namespace fs
 {
-static const char* BIN_NAME = nullptr;
+static map<std::string, std::function<void()>> PARSE_FCT{};
+static vector<std::pair<std::string, std::string>> PARSE_HELP{};
+static map<std::string, bool> PARSE_REQUIRED{};
+static map<std::string, bool> PARSE_HAVE{};
+static string BIN_DIR{};
+static string BIN_NAME{};
 static int ARGC = 0;
 static size_t SKIPPED_ARGS = 0;
 static const char* const* ARGV = nullptr;
@@ -30,11 +35,14 @@ void log_args()
 }
 void show_usage_and_exit(int exit_code)
 {
-  printf("Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n", BIN_NAME);
+  printf("Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n", BIN_NAME.c_str());
   printf("Run simulations and save output in the specified directory\n\n\n");
-  printf("Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n", BIN_NAME);
+  printf(
+    "Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n",
+    BIN_NAME.c_str()
+  );
   printf("Calculate probability surface and save output in the specified directory\n\n\n");
-  printf("Usage: %s test <output_dir> [options]\n\n", BIN_NAME);
+  printf("Usage: %s test <output_dir> [options]\n\n", BIN_NAME.c_str());
   printf(" Run test cases and save output in the specified directory\n\n");
   printf(" Input Options\n");
   // FIX: this should show arguments specific to mode, but it doesn't indicate that on the outputs
@@ -88,10 +96,8 @@ ArgumentParser::ArgumentParser(const int argc, const char* const argv[])
   auto bin = string(ARGV[CUR_ARG++]);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
-  const auto bin_dir = bin.substr(0, end);
-  const auto bin_name = bin.substr(end, bin.size() - end);
-  BIN_NAME = bin.c_str();
-  Settings::setRoot(bin_dir.c_str());
+  BIN_DIR = bin.substr(0, end);
+  BIN_NAME = bin.substr(end, bin.size() - end);
   logging::Log::setLogLevel(fs::logging::LOG_NOTE);
   register_argument("-h", "Show help", false, &show_help_and_exit);
   // can be used multiple times
@@ -313,7 +319,9 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
 }
 void MainArgumentParser::parse_args()
 {
+  Settings::setRoot(BIN_DIR.c_str());
   ArgumentParser::parse_args();
+  // fs::show_debug_settings();
   // parse positional arguments
   // output directory is always the first thing
   // positional arguments all start with <output_dir> after mode (if applicable)
@@ -326,13 +334,6 @@ void MainArgumentParser::parse_args()
   }
   // if name starts with "/" then it's an absolute path, otherwise append to working directory
   log_file = log_file_name.starts_with("/") ? log_file_name : (output_directory + log_file_name);
-  // at this point we've parsed positional args and know we're not in test mode
-  if (!PARSE_HAVE.contains("--apcp_prev"))
-  {
-    fs::logging::warning(
-      "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
-    );
-  }
 }
 FwiWeather MainArgumentParser::get_test_weather() const
 {
@@ -367,4 +368,6 @@ bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
 }
+void mark_parsed(const char* arg) { PARSE_HAVE.emplace(arg, true); }
+bool was_parsed(const char* arg) { return PARSE_HAVE.contains(arg); }
 }
