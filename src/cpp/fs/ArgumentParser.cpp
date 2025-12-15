@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "ArgumentParser.h"
+#include "Log.h"
 #include "Settings.h"
 namespace fs
 {
@@ -33,17 +34,31 @@ void log_args()
   auto args = get_args();
   fs::logging::note("Arguments are:\n%s\n", args.c_str());
 }
+static vector<string> USAGES{};
+void add_usage(const string usage)
+{
+  // HACK: make sure there's somewhere to place the BIN_NAME but nothing else to fill in
+  const auto is_exactly_one_arg = (usage.contains("%s") && usage.find('%') == usage.rfind('%'));
+  logging::check_fatal(
+    !is_exactly_one_arg,
+    "Should only be exactly one %%s for binary name, but got: %s",
+    usage.c_str()
+  );
+  USAGES.emplace_back(usage);
+}
+void add_usages(const vector<string> usages)
+{
+  for (const auto& u : usages)
+  {
+    add_usage(u);
+  }
+}
 void show_usage_and_exit(int exit_code)
 {
-  printf("Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n", BIN_NAME.c_str());
-  printf("Run simulations and save output in the specified directory\n\n\n");
-  printf(
-    "Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n",
-    BIN_NAME.c_str()
-  );
-  printf("Calculate probability surface and save output in the specified directory\n\n\n");
-  printf("Usage: %s test <output_dir> [options]\n\n", BIN_NAME.c_str());
-  printf(" Run test cases and save output in the specified directory\n\n");
+  for (const auto& usage : USAGES)
+  {
+    printf(usage.c_str(), BIN_NAME.c_str());
+  }
   printf(" Input Options\n");
   // FIX: this should show arguments specific to mode, but it doesn't indicate that on the outputs
   for (auto& kv : PARSE_HELP)
@@ -88,8 +103,16 @@ void register_flag(bool& variable, bool not_inverse, string v, string help)
 {
   register_argument(v, help, false, [=, &variable] { variable = parse_flag(not_inverse); });
 }
-ArgumentParser::ArgumentParser(const int argc, const char* const argv[])
+ArgumentParser::ArgumentParser(const string usage, const int argc, const char* const argv[])
+  : ArgumentParser(vector<string>{usage}, argc, argv)
+{ }
+ArgumentParser::ArgumentParser(
+  const vector<string> usages,
+  const int argc,
+  const char* const argv[]
+)
 {
+  add_usages(usages);
   fs::show_debug_settings();
   ARGC = argc;
   ARGV = argv;
@@ -180,8 +203,18 @@ void ArgumentParser::done_positional()
     show_usage_and_exit();
   }
 }
+static constexpr auto USAGE_MAIN =
+  "Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n"
+  "Run simulations and save output in the specified directory\n\n\n";
+static constexpr auto USAGE_SURFACE =
+  "Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n"
+  "Calculate probability surface and save output in the specified directory\n\n\n";
+static constexpr auto USAGE_TEST =
+  "Usage: %s test <output_dir> [options]\n\n"
+  " Run test cases and save output in the specified directory\n\n";
+static const vector<string> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
 MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
-  : ArgumentParser(argc, argv)
+  : ArgumentParser(DEFAULT_USAGES, argc, argv)
 {
   register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
   register_flag(&Settings::setSaveAsTiff, false, "--no-tiff", "Do not save grids as .tif");

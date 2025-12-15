@@ -78,7 +78,8 @@ private:
   size_t cur_arg = 0;
 
 public:
-  ArgumentParser(const int argc, const char* const argv[]);
+  ArgumentParser(const string usage, const int argc, const char* const argv[]);
+  ArgumentParser(const vector<string> usages, const int argc, const char* const argv[]);
   /**
    * \brief Parse arguments that were given to constructor
    * \return string Positional arguments
