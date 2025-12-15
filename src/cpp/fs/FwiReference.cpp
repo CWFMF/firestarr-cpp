@@ -10,7 +10,7 @@ namespace fs::fwireference
 using namespace std;
 const auto LATITUDE_INNER = 10.0;
 const auto LATITUDE_MIDDLE = 30.0;
-void FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo, MathSize& ffmc)
+MathSize FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo)
 {
   MathSize Mo, Rf, Ed, Ew, M, Kl, Kw, Mr, Ko, Kd;
   // fix precision
@@ -54,7 +54,7 @@ void FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo, Math
   /*Finally calculate FFMC */
   // fix precision
   // ffmc = (59.5 * (250.0 - M)) / (147.2 + M);
-  ffmc = moisture_to_ffmc(M).value;
+  auto ffmc = moisture_to_ffmc(M).value;
   /*..............................*/
   /*Make sure 0. <= FFMC <= 101.0 */
   /*..............................*/
@@ -62,16 +62,9 @@ void FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo, Math
     ffmc = 101.0;
   if (ffmc <= 0.0)
     ffmc = 0.0;
+  return ffmc;
 }
-void DMCcalc(
-  MathSize T,
-  MathSize H,
-  MathSize Ro,
-  MathSize Po,
-  int I,
-  MathSize& dmc,
-  const MathSize latitude
-)
+MathSize DMCcalc(MathSize T, MathSize H, MathSize Ro, MathSize Po, int I, const MathSize latitude)
 {
   MathSize Re, Mo, Mr, K, B, P, Pr;
   // // # Reference latitude for DMC day length adjustment
@@ -141,9 +134,9 @@ void DMCcalc(
   P = Pr + K;
   if (P <= 0.0)
     P = 0.0;
-  dmc = P;
+  return P;
 }
-void DCcalc(MathSize T, MathSize Ro, MathSize Do, int I, MathSize& dc, const MathSize latitude)
+MathSize DCcalc(MathSize T, MathSize Ro, MathSize Do, int I, MathSize latitude)
 {
   MathSize Rd, Qo, Qr, V, D, Dr;
   // Day length factor for DC Calculations
@@ -173,9 +166,9 @@ void DCcalc(MathSize T, MathSize Ro, MathSize Do, int I, MathSize& dc, const Mat
     V = lf;
   if (V < 0.) /*Eq. 23*/
     V = .0;
-  dc = Do + 0.5 * V;
+  return Do + 0.5 * V;
 }
-void ISIcalc(MathSize F, MathSize W, MathSize& isi)
+MathSize ISIcalc(MathSize F, MathSize W)
 {
   MathSize Fw, M, Ff;
   // fix precision
@@ -183,10 +176,11 @@ void ISIcalc(MathSize F, MathSize W, MathSize& isi)
   M = ffmc_to_moisture(F);
   Fw = exp(0.05039 * W);                                      /*Eq. 24*/
   Ff = 91.9 * exp(-.1386 * M) * (1. + pow(M, 5.31) / 4.93E7); /*Eq. 25*/
-  isi = 0.208 * Fw * Ff;                                      /*Eq. 26*/
+  return 0.208 * Fw * Ff;                                     /*Eq. 26*/
 }
-void BUIcalc(MathSize P, MathSize D, MathSize& bui)
+MathSize BUIcalc(MathSize P, MathSize D)
 {
+  MathSize bui;
   if (P <= .4 * D)
     bui = 0.8 * P * D / (P + .4 * D);
   else
@@ -195,9 +189,11 @@ void BUIcalc(MathSize P, MathSize D, MathSize& bui)
   /*Eq. 27b*/
   if (bui <= 0.0)
     bui = 0.0;
+  return bui;
 }
-void FWIcalc(MathSize R, MathSize U, MathSize& fwi)
+MathSize FWIcalc(MathSize R, MathSize U)
 {
+  MathSize fwi;
   MathSize Fd, B, S;
   if (U <= 80.)
     Fd = .626 * pow(U, .809) + 2.; /*Eq. 28a*/
@@ -208,5 +204,6 @@ void FWIcalc(MathSize R, MathSize U, MathSize& fwi)
     fwi = exp(2.72 * pow(.434 * log(B), .647)); /*Eq. 30a*/
   else                                          /*Eq. 30b*/
     fwi = B;
+  return fwi;
 }
 }

@@ -22,7 +22,7 @@ int test_fwi_file(
 {
   string line;
   MathSize temp, rhum, wind, prcp, x, y;
-  MathSize ffmc, ffmc0, dmc, dmc0, dc, dc0, isi, bui, fwi;
+  MathSize ffmc0, dmc0, dc0;
   int month, day;
   /* Initialize FMC, DMC, and DC */
   ffmc0 = 85.0;
@@ -59,22 +59,22 @@ int test_fwi_file(
     RelativeHumidity rhum_{rhum};
     Speed wind_{wind};
     Precipitation prcp_{prcp};
-    FFMCcalc(temp, rhum, wind, prcp, ffmc0, ffmc);
+    auto ffmc{FFMCcalc(temp, rhum, wind, prcp, ffmc0)};
     Ffmc ffmc_{temp_, rhum_, wind_, prcp_, ffmc0_};
     logging::check_tolerance(EPSILON, ffmc, ffmc_.value, "ffmc");
-    DMCcalc(temp, rhum, prcp, dmc0, month, dmc, latitude);
+    auto dmc{DMCcalc(temp, rhum, prcp, dmc0, month, latitude)};
     Dmc dmc_{temp_, rhum_, prcp_, dmc0_, month, latitude};
     logging::check_tolerance(EPSILON, dmc, dmc_.value, "dmc");
-    DCcalc(temp, prcp, dc0, month, dc, latitude);
+    auto dc{DCcalc(temp, prcp, dc0, month, latitude)};
     Dc dc_{temp_, prcp_, dc0_, month, latitude};
     logging::check_tolerance(EPSILON, dc, dc_.value, "dc");
-    ISIcalc(ffmc, wind, isi);
+    auto isi{ISIcalc(ffmc, wind)};
     Isi isi_{wind_, ffmc_};
     logging::check_tolerance(EPSILON, isi, isi_.value, "isi");
-    BUIcalc(dmc, dc, bui);
+    auto bui{BUIcalc(dmc, dc)};
     Bui bui_{dmc_, dc_};
     logging::check_tolerance(EPSILON, bui, bui_.value, "bui");
-    FWIcalc(isi, bui, fwi);
+    auto fwi{FWIcalc(isi, bui)};
     Fwi fwi_{isi_, bui_};
     logging::check_tolerance(EPSILON, fwi, fwi_.value, "fwi");
     ffmc0 = ffmc;
