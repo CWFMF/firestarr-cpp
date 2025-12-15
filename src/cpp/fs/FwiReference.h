@@ -1,6 +1,6 @@
 // https://publications.gc.ca/collections/collection_2016/rncan-nrcan/Fo133-1-424-eng.pdf
-#ifndef FS_FWIREFRENCE_H
-#define FS_FWIREFRENCE_H
+#ifndef FS_FWIREFERENCE_H
+#define FS_FWIREFERENCE_H
 #define TEST_FWI 1
 #undef TEST_FWI
 namespace fs::fwireference
