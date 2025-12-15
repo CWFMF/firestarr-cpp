@@ -1,10 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FwiReference.h"
-#include <cmath>
-#include <cstdlib>
-#include "ArgumentParser.h"
 #include "FWI.h"
-#include "unstable.h"
 namespace fs::fwireference
 {
 using namespace std;

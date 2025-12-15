@@ -1,7 +1,7 @@
 // https://publications.gc.ca/collections/collection_2016/rncan-nrcan/Fo133-1-424-eng.pdf
 #ifndef FS_FWIREFERENCE_H
 #define FS_FWIREFERENCE_H
-#include "stdafx.h"
+#include "unstable.h"
 namespace fs::fwireference
 {
 constexpr auto DEFAULT_LATITUDE = 46.0;
