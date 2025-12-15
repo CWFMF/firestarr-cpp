@@ -39,6 +39,8 @@
 //******************************************************************************************
 namespace fs
 {
+const auto LATITUDE_INNER = 10.0;
+const auto LATITUDE_MIDDLE = 30.0;
 // The following two functions refer to the MEA day length adjustment 'note'.
 //
 //******************************************************************************************
@@ -59,17 +61,19 @@ static MathSize day_length_factor(const MathSize latitude, const int month) noex
   };
   //'    '/* Use Northern hemisphere numbers */
   //'   '/* something goes wrong with >= */
-  if (latitude > 15.0)
+  if (latitude >= LATITUDE_INNER)
   {
     return LfN[month];
   }
   //'    '/* Use Equatorial numbers */
-  if ((latitude <= 15.0) && (latitude > -15.0))
+  if (LATITUDE_INNER > abs(latitude))
   {
-    return 1.39;
+    // HACK: why was this not 1.4?
+    // return 1.39;
+    return 1.4;
   }
   //'    '/* Use Southern hemisphere numbers */
-  if (latitude <= -15.0)
+  if (latitude < LATITUDE_INNER)
   {
     return LfS[month];
   }
@@ -102,25 +106,27 @@ static constexpr MathSize day_length(const MathSize latitude, const int month) n
   //'        - 0 to -30
   //'        - -30 to -90
   ///
-  if ((latitude <= 90) && (latitude > 33.0))
-  {
-    return DAY_LENGTH46_N.at(static_cast<size_t>(month) - 1);
-  }
-  if ((latitude <= 33.0) && (latitude > 15.0))
-  {
-    return DAY_LENGTH20_N.at(static_cast<size_t>(month) - 1);
-  }
-  if ((latitude <= 15.0) && (latitude > -15.0))
+  // HACK: why was this 15 previously?
+  // if ((latitude <= 15.0) && (latitude > -15.0))
+  if (LATITUDE_INNER > abs(latitude))
   {
     return 9.0;
   }
-  if ((latitude <= -15.0) && (latitude > -30.0))
+  if (latitude >= LATITUDE_MIDDLE)
   {
-    return DAY_LENGTH20_S.at(static_cast<size_t>(month) - 1);
+    return DAY_LENGTH46_N.at(static_cast<size_t>(month) - 1);
   }
-  if ((latitude <= -30.0) && (latitude >= -90.0))
+  if (latitude >= LATITUDE_INNER)
+  {
+    return DAY_LENGTH20_N.at(static_cast<size_t>(month) - 1);
+  }
+  if (latitude <= -LATITUDE_MIDDLE)
   {
     return DAY_LENGTH40_S.at(static_cast<size_t>(month) - 1);
+  }
+  if ((latitude > -LATITUDE_MIDDLE))
+  {
+    return DAY_LENGTH20_S.at(static_cast<size_t>(month) - 1);
   }
   return logging::fatal<MathSize>("Unable to calculate DayLength");
 }
