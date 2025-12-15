@@ -8,12 +8,12 @@
 #include "stdafx.h"
 #include "ArgumentParser.h"
 #include "FWI.h"
-#include "FwiReference.h"
 #include "Log.h"
 #include "Model.h"
 #include "Settings.h"
 #include "StartPoint.h"
 #include "Test.h"
+#include "TestFwi.h"
 #include "TimeUtil.h"
 #include "Util.h"
 #include "version.h"
@@ -212,7 +212,7 @@ int main(const int argc, const char* const argv[])
   //      left for reference for now so idea could be used for more tests
   constexpr auto fct_main = fs::duff::test_duff;
 #elif TEST_FWI
-  constexpr auto fct_main = fs::fwireference::test_fwi;
+  constexpr auto fct_main = fs::testing::test_fwi;
 #else
   constexpr auto fct_main = fs::main;
 #endif
