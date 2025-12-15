@@ -71,6 +71,11 @@ void register_index(T& index, string v, string help, bool required)
 {
   register_argument(v, help, required, [&] { index = parse_index<T>(); });
 }
+struct Usage
+{
+  string description{};
+  string positional_arg_summary{};
+};
 class ArgumentParser
 {
 private:
@@ -78,8 +83,8 @@ private:
   size_t cur_arg = 0;
 
 public:
-  ArgumentParser(const string usage, const int argc, const char* const argv[]);
-  ArgumentParser(const vector<string> usages, const int argc, const char* const argv[]);
+  ArgumentParser(const Usage usage, const int argc, const char* const argv[]);
+  ArgumentParser(const vector<Usage> usages, const int argc, const char* const argv[]);
   /**
    * \brief Parse arguments that were given to constructor
    * \return string Positional arguments

@@ -369,12 +369,7 @@ int test_fwi(const int argc, const char* const argv[])
   constexpr auto FILE_IN{"test/data/fwi/fwi_in.txt"};
   constexpr auto FILE_OUT{"test/output/fwi/fwi_out.txt"};
   // lets logging levels and help work
-  ArgumentParser parser{
-    "Usage: %s [options]\n\n"
-    "Test FWI calculations",
-    argc,
-    argv
-  };
+  ArgumentParser parser{{.description = "Test FWI calculations"}, argc, argv};
   parser.parse_args();
   // no positional arguments
   parser.done_positional();

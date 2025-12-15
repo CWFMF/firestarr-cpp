@@ -24,29 +24,20 @@ string get_args()
   }
   return args;
 }
+constexpr auto FMT_ARGS{"Arguments are:\n  %s\n\n"};
 void show_args()
 {
   auto args = get_args();
-  printf("Arguments are:\n%s\n", args.c_str());
+  printf(FMT_ARGS, args.c_str());
 }
 void log_args()
 {
   auto args = get_args();
-  fs::logging::note("Arguments are:\n%s\n", args.c_str());
+  fs::logging::note(FMT_ARGS, args.c_str());
 }
-static vector<string> USAGES{};
-void add_usage(const string usage)
-{
-  // HACK: make sure there's somewhere to place the BIN_NAME but nothing else to fill in
-  const auto is_exactly_one_arg = (usage.contains("%s") && usage.find('%') == usage.rfind('%'));
-  logging::check_fatal(
-    !is_exactly_one_arg,
-    "Should only be exactly one %%s for binary name, but got: %s",
-    usage.c_str()
-  );
-  USAGES.emplace_back(usage);
-}
-void add_usages(const vector<string> usages)
+static vector<Usage> USAGES{};
+void add_usage(const Usage usage) { USAGES.emplace_back(usage); }
+void add_usages(const vector<Usage> usages)
 {
   for (const auto& u : usages)
   {
@@ -55,9 +46,17 @@ void add_usages(const vector<string> usages)
 }
 void show_usage_and_exit(int exit_code)
 {
+  // NOTE: this assumes there are always optional args
+  //        (but -h, -v, -q should always be there)
   for (const auto& usage : USAGES)
   {
-    printf(usage.c_str(), BIN_NAME.c_str());
+    // FIX: extra space if no positional args
+    printf(
+      "Usage: %s [OPTION]... %s\n\n%s\n\n",
+      BIN_NAME.c_str(),
+      usage.positional_arg_summary.c_str(),
+      usage.description.c_str()
+    );
   }
   printf(" Input Options\n");
   // FIX: this should show arguments specific to mode, but it doesn't indicate that on the outputs
@@ -103,14 +102,10 @@ void register_flag(bool& variable, bool not_inverse, string v, string help)
 {
   register_argument(v, help, false, [=, &variable] { variable = parse_flag(not_inverse); });
 }
-ArgumentParser::ArgumentParser(const string usage, const int argc, const char* const argv[])
-  : ArgumentParser(vector<string>{usage}, argc, argv)
+ArgumentParser::ArgumentParser(const Usage usage, const int argc, const char* const argv[])
+  : ArgumentParser(vector<Usage>{usage}, argc, argv)
 { }
-ArgumentParser::ArgumentParser(
-  const vector<string> usages,
-  const int argc,
-  const char* const argv[]
-)
+ArgumentParser::ArgumentParser(const vector<Usage> usages, const int argc, const char* const argv[])
 {
   add_usages(usages);
   fs::show_debug_settings();
@@ -203,16 +198,19 @@ void ArgumentParser::done_positional()
     show_usage_and_exit();
   }
 }
-static constexpr auto USAGE_MAIN =
-  "Usage: %s <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n"
-  "Run simulations and save output in the specified directory\n\n\n";
-static constexpr auto USAGE_SURFACE =
-  "Usage: %s surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options]\n\n"
-  "Calculate probability surface and save output in the specified directory\n\n\n";
-static constexpr auto USAGE_TEST =
-  "Usage: %s test <output_dir> [options]\n\n"
-  " Run test cases and save output in the specified directory\n\n";
-static const vector<string> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
+static const Usage USAGE_MAIN{
+  "Run simulations and save output in the specified directory",
+  "<output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM>"
+};
+static const Usage USAGE_SURFACE{
+  "Calculate probability surface and save output in the specified directory"
+  "surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM>"
+};
+static const Usage USAGE_TEST{
+  "Run test cases and save output in the specified directory"
+  "test <output_dir>"
+};
+static const vector<Usage> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
 MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   : ArgumentParser(DEFAULT_USAGES, argc, argv)
 {
