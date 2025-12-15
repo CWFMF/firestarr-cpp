@@ -11,6 +11,8 @@
 namespace fs::fwireference
 {
 using namespace std;
+const auto LATITUDE_INNER = 10.0;
+const auto LATITUDE_MIDDLE = 30.0;
 constexpr auto DEFAULT_LATITUDE = 46.0;
 void FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo, MathSize& ffmc)
 {
@@ -92,22 +94,28 @@ void DMCcalc(
   // //      lat <= 10 & lat > -10,
   // # Reference latitude for DMC day length adjustment
   // # 46N: Canadian standard, latitude >= 30N   (Van Wagner 1987)
-  MathSize Le0[] = {6.5, 7.5, 9, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8, 7, 6};
+  MathSize DAY_LENGTH46_N[] = {6.5, 7.5, 9, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8, 7, 6};
   // # 20N: For 30 > latitude >= 10
   //       lat <= 30 & lat > 10,
-  MathSize Le1[] = {7.9, 8.4, 8.9, 9.5, 9.9, 10.2, 10.1, 9.7, 9.1, 8.6, 8.1, 7.8};
+  MathSize DAY_LENGTH20_N[] = {7.9, 8.4, 8.9, 9.5, 9.9, 10.2, 10.1, 9.7, 9.1, 8.6, 8.1, 7.8};
   // # 20S: For -10 > latitude >= -30
   //       lat <= -10 & lat > -30,
-  MathSize Le2[] = {10.1, 9.6, 9.1, 8.5, 8.1, 7.8, 7.9, 8.3, 8.9, 9.4, 9.9, 10.2};
+  MathSize DAY_LENGTH20_S[] = {10.1, 9.6, 9.1, 8.5, 8.1, 7.8, 7.9, 8.3, 8.9, 9.4, 9.9, 10.2};
   // # 40S: For -30 > latitude
   //      lat <= -30 & lat >= -90,
-  MathSize Le3[] = {11.5, 10.5, 9.2, 7.9, 6.8, 6.2, 6.5, 7.4, 8.7, 10, 11.2, 11.8};
+  MathSize DAY_LENGTH40_S[] = {11.5, 10.5, 9.2, 7.9, 6.8, 6.2, 6.5, 7.4, 8.7, 10, 11.2, 11.8};
   // # For latitude near the equator, we simple use a factor of 9 for all months
   //      lat <= 10 & lat > -10,
-  const auto le =
-    10 > abs(latitude)
-      ? 9
-      : ((latitude <= 10 ? (latitude <= -30 ? Le3 : Le2) : (latitude >= 30 ? Le0 : Le1))[I - 1]);
+  // const auto le =
+  //   LATITUDE_INNER > abs(latitude)
+  //     ? 9
+  //     : ((latitude <= 10 ? (latitude <= -30 ? Le3 : Le2) : (latitude >= 30 ? Le0 : Le1))[I - 1]);
+  const auto le = LATITUDE_INNER > abs(latitude)
+                  ? 9.0
+                  : (latitude >= LATITUDE_MIDDLE    ? DAY_LENGTH46_N
+                     : latitude >= LATITUDE_INNER   ? DAY_LENGTH20_N
+                     : latitude <= -LATITUDE_MIDDLE ? DAY_LENGTH40_S
+                                                    : DAY_LENGTH20_S)[I - 1];
   if (T >= -1.1)
     K = 1.894 * (T + 1.1) * (100. - H) * le * 0.0001;
   else
@@ -166,7 +174,8 @@ void DCcalc(
       Do = 0.0;
   }
   // Near the equator, we just use 1.4 for all months.
-  const auto lf = abs(latitude) <= 10 ? 1.4 : (latitude >= 10 ? LfN : LfS)[I - 1];
+  const auto lf =
+    abs(latitude) < LATITUDE_INNER ? 1.4 : (latitude >= LATITUDE_INNER ? LfN : LfS)[I - 1];
   if (T > -2.8)
   { /*Eq. 22*/
     V = 0.36 * (T + 2.8) + lf;
@@ -212,9 +221,10 @@ void FWIcalc(MathSize R, MathSize U, MathSize& fwi)
     fwi = B;
 }
 int test_fwi_file(
-  const string file_in,
-  const string file_out,
-  const MathSize latitude = DEFAULT_LATITUDE
+  const char* file_in,
+  const char* file_out,
+  const MathSize latitude = DEFAULT_LATITUDE,
+  const bool verbose = true
 )
 {
   string line;
@@ -229,17 +239,21 @@ int test_fwi_file(
   Dmc dmc0_{dmc0};
   Dc dc0_{dc0};
   /* Open input and output files */
-  ifstream inputFile(file_in.c_str());
+  ifstream inputFile(file_in);
   if (!inputFile.is_open())
   {
     cout << "Unable to open input data file";
     return -1;
   }
-  ofstream outputFile(file_out.c_str());
-  if (!outputFile.is_open())
+  ofstream outputFile;
+  if (nullptr != file_out)
   {
-    cout << "Unable to open output data file";
-    return 1;
+    outputFile.open(file_out);
+    if (!outputFile.is_open())
+    {
+      cout << "Unable to open output data file";
+      return 1;
+    }
   }
   /* Main loop for calculating indices */
   while (getline(inputFile, line))
@@ -247,7 +261,6 @@ int test_fwi_file(
     istringstream ss(line);
     ss >> month >> day >> temp >> rhum >> wind >> prcp;
     static constexpr MathSize EPSILON{std::numeric_limits<MathSize>::epsilon()};
-    static constexpr MathSize LATITUDE{50};
     Temperature temp_{temp};
     RelativeHumidity rhum_{rhum};
     Speed wind_{wind};
@@ -256,10 +269,10 @@ int test_fwi_file(
     Ffmc ffmc_{temp_, rhum_, wind_, prcp_, ffmc0_};
     logging::check_tolerance(EPSILON, ffmc, ffmc_.value, "ffmc");
     DMCcalc(temp, rhum, prcp, dmc0, month, dmc, latitude);
-    Dmc dmc_{temp_, rhum_, prcp_, dmc0_, month, LATITUDE};
+    Dmc dmc_{temp_, rhum_, prcp_, dmc0_, month, latitude};
     logging::check_tolerance(EPSILON, dmc, dmc_.value, "dmc");
     DCcalc(temp, prcp, dc0, month, dc, latitude);
-    Dc dc_{temp_, prcp_, dc0_, month, LATITUDE};
+    Dc dc_{temp_, prcp_, dc0_, month, latitude};
     logging::check_tolerance(EPSILON, dc, dc_.value, "dc");
     ISIcalc(ffmc, wind, isi);
     Isi isi_{wind_, ffmc_};
@@ -276,15 +289,24 @@ int test_fwi_file(
     ffmc0_ = ffmc_;
     dmc0_ = dmc_;
     dc0_ = dc_;
-    printf("%0.1f %0.1f %0.1f %0.1f %0.1f %0.1f\n", ffmc, dmc, dc, isi, bui, fwi);
-    outputFile << std::format(
-      "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}", ffmc, dmc, dc, isi, bui, fwi
-    ) << endl;
-    // outputFile << ffmc << ' ' << dmc << ' ' << dc << ' ' << isi << ' ' << bui << ' ' << fwi <<
-    // endl;
+    if (verbose)
+    {
+      printf("%0.1f %0.1f %0.1f %0.1f %0.1f %0.1f\n", ffmc, dmc, dc, isi, bui, fwi);
+    }
+    if (nullptr != file_out)
+    {
+      outputFile << std::format(
+        "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}", ffmc, dmc, dc, isi, bui, fwi
+      ) << endl;
+      // outputFile << ffmc << ' ' << dmc << ' ' << dc << ' ' << isi << ' ' << bui << ' ' << fwi <<
+      // endl;
+    }
   }
   inputFile.close();
-  outputFile.close();
+  if (nullptr != file_out)
+  {
+    outputFile.close();
+  }
   return 0;
 }
 int compare_files(const string file0, const string file1)
@@ -326,7 +348,7 @@ int compare_files(const string file0, const string file1)
 int test_fwi_files(const string file_expected, const string file_in, const string file_out)
 {
   // FIX: other tests use test/input but want to switch to test/data
-  if (auto ret = test_fwi_file(file_in, file_out); ret != 0)
+  if (auto ret = test_fwi_file(file_in.c_str(), file_out.c_str()); ret != 0)
   {
     printf("Generating %s from %s failed\n", file_out.c_str(), file_in.c_str());
     return ret;
@@ -342,11 +364,35 @@ int test_fwi_files(const string file_expected, const string file_in, const strin
 }
 int test_fwi(const int argc, const char* const argv[])
 {
+  constexpr auto FILE_EXPECTED{"test/data/fwi/fwi_out.txt"};
+  constexpr auto FILE_IN{"test/data/fwi/fwi_in.txt"};
+  constexpr auto FILE_OUT{"test/output/fwi/fwi_out.txt"};
   std::ignore = argc;
   std::ignore = argv;
   make_directory("test/output/fwi");
-  return test_fwi_files(
-    "test/data/fwi/fwi_out.txt", "test/data/fwi/fwi_in.txt", "test/output/fwi/fwi_out.txt"
-  );
+  if (const auto ret = test_fwi_files(FILE_EXPECTED, FILE_IN, FILE_OUT); 0 != ret)
+  {
+    return ret;
+  }
+  auto check_latitude = [](const MathSize latitude) {
+    printf("Comparing with latitude %f\n", latitude);
+    if (auto ret = test_fwi_file(FILE_IN, nullptr, latitude, false); ret != 0)
+    {
+      printf("Generating from %s with latitude %f failed\n", FILE_IN, latitude);
+      return ret;
+    }
+    return 0;
+  };
+  constexpr auto RESOLUTION{0.001};
+  MathSize latitude = -90;
+  while (90 > latitude)
+  {
+    if (auto ret = check_latitude(latitude); 0 != ret)
+    {
+      return ret;
+    }
+    latitude += RESOLUTION;
+  }
+  return check_latitude(90);
 }
 }
