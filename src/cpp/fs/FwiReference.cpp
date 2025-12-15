@@ -369,7 +369,7 @@ int test_fwi(const int argc, const char* const argv[])
   constexpr auto FILE_OUT{"test/output/fwi/fwi_out.txt"};
   std::ignore = argc;
   std::ignore = argv;
-  make_directory("test/output/fwi");
+  make_directory_recursive("test/output/fwi");
   if (const auto ret = test_fwi_files(FILE_EXPECTED, FILE_IN, FILE_OUT); 0 != ret)
   {
     return ret;
