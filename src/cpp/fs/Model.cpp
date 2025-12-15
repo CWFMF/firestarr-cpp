@@ -768,7 +768,8 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
   // HACK: use initial value for type
   auto timer = std::thread([&]() {
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
-    do
+    bool keep_checking{true};
+    while (keep_checking)
     {
       this->last_checked_ = Clock::now();
       // think we need to check regularly instead of just sleeping so that we can see
@@ -777,8 +778,8 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
       // set bool so other things don't need to check clock
       is_out_of_time_ = runTime().count() >= timeLimit().count();
       logging::verbose("Checking clock [%ld of %ld]", runTime(), timeLimit());
+      keep_checking = (runs_left > 0 && !shouldStop());
     }
-    while (runs_left > 0 && !shouldStop());
     if (isOutOfTime())
     {
       logging::warning("Ran out of time - cancelling simulations");
