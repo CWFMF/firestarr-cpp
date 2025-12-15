@@ -96,6 +96,9 @@ MathSize SpreadInfo::initial(
         28.0 - log(1.0 - min(0.999 * 2.496 * ffmc_effect, isf1) / (2.496 * ffmc_effect)) / 0.0818;
     }
     const auto heading = to_heading(to_radians(static_cast<double>(Cell::aspect(spread.key_))));
+    // FIX: ignore heading arguments for now since it was changing results
+    std::ignore = heading_sin;
+    std::ignore = heading_cos;
     const auto wsv_x = spread.weather->wind.wsvX() + wse * cos(heading);
     const auto wsv_y = spread.weather->wind.wsvY() + wse * sin(heading);
     // // we know that at->raz is already set to be the wind heading
