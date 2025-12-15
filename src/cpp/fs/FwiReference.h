@@ -5,24 +5,30 @@
 namespace fs::fwireference
 {
 constexpr auto DEFAULT_LATITUDE = 46.0;
-MathSize FFMCcalc(MathSize T, MathSize H, MathSize W, MathSize Ro, MathSize Fo);
+MathSize FFMCcalc(
+  MathSize temperature,
+  MathSize relative_humidity,
+  MathSize wind_speed,
+  MathSize rain_24hr,
+  MathSize ffmc_previous
+);
 MathSize DMCcalc(
-  MathSize T,
-  MathSize H,
-  MathSize Ro,
-  MathSize Po,
-  int I,
+  MathSize temperature,
+  MathSize relative_humidity,
+  MathSize rain_24hr,
+  MathSize dmc_previous,
+  int month,
   const MathSize latitude = DEFAULT_LATITUDE
 );
 MathSize DCcalc(
-  MathSize T,
-  MathSize Ro,
-  MathSize Do,
-  int I,
+  MathSize temperature,
+  MathSize rain_24hr,
+  MathSize dc_previous,
+  int month,
   const MathSize latitude = DEFAULT_LATITUDE
 );
-MathSize ISIcalc(MathSize F, MathSize W);
-MathSize BUIcalc(MathSize P, MathSize D);
-MathSize FWIcalc(MathSize R, MathSize U);
+MathSize ISIcalc(MathSize ffmc, MathSize wind_speed);
+MathSize BUIcalc(MathSize dmc, MathSize dc);
+MathSize FWIcalc(MathSize isi, MathSize bui);
 }
 #endif
