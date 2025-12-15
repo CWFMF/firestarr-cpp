@@ -102,10 +102,21 @@ void register_flag(bool& variable, bool not_inverse, string v, string help)
 {
   register_argument(v, help, false, [=, &variable] { variable = parse_flag(not_inverse); });
 }
-ArgumentParser::ArgumentParser(const Usage usage, const int argc, const char* const argv[])
-  : ArgumentParser(vector<Usage>{usage}, argc, argv)
+ArgumentParser::ArgumentParser(
+  const Usage usage,
+  const int argc,
+  const char* const argv[],
+  const PositionalArgumentsRequired require_positional
+)
+  : ArgumentParser(vector<Usage>{usage}, argc, argv, require_positional)
 { }
-ArgumentParser::ArgumentParser(const vector<Usage> usages, const int argc, const char* const argv[])
+ArgumentParser::ArgumentParser(
+  const vector<Usage> usages,
+  const int argc,
+  const char* const argv[],
+  const PositionalArgumentsRequired require_positional
+)
+  : require_positional_{require_positional}
 {
   add_usages(usages);
   fs::show_debug_settings();
@@ -160,7 +171,7 @@ void ArgumentParser::parse_args()
     if (is_positional)
     {
       // this is a positional argument so add to that list
-      positional_args.emplace_back(arg);
+      positional_args_.emplace_back(arg);
       fs::logging::debug("Found positional argument '%s'", arg.c_str());
     }
     ++CUR_ARG;
@@ -172,13 +183,13 @@ void ArgumentParser::parse_args()
       fs::logging::fatal("%s must be specified", kv.first.c_str());
     }
   }
-  if (0 == positional_args.size())
+  if ((PositionalArgumentsRequired::Required == require_positional_)
+      == (0 == positional_args_.size()))
   {
-    // always require at least some positional argument
     show_usage_and_exit();
   }
 }
-bool ArgumentParser::has_positional() const { return (cur_arg < positional_args.size()); };
+bool ArgumentParser::has_positional() const { return (cur_arg_ < positional_args_.size()); };
 string ArgumentParser::get_positional()
 {
   if (!has_positional())
@@ -187,12 +198,12 @@ string ArgumentParser::get_positional()
     show_usage_and_exit();
   }
   // return from front and advance to next
-  return positional_args[cur_arg++];
+  return positional_args_[cur_arg_++];
 }
 void ArgumentParser::done_positional()
 {
   // should be exactly at size since increments after getting argument
-  if (positional_args.size() != cur_arg)
+  if (positional_args_.size() != cur_arg_)
   {
     fs::logging::error("Too many positional arguments");
     show_usage_and_exit();

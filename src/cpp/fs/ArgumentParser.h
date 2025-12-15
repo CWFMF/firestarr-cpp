@@ -76,15 +76,31 @@ struct Usage
   string description{};
   string positional_arg_summary{};
 };
+enum class PositionalArgumentsRequired
+{
+  Required,
+  NotRequired
+};
 class ArgumentParser
 {
 private:
-  vector<string> positional_args{};
-  size_t cur_arg = 0;
+  vector<string> positional_args_{};
+  size_t cur_arg_{0};
+  PositionalArgumentsRequired require_positional_{};
 
 public:
-  ArgumentParser(const Usage usage, const int argc, const char* const argv[]);
-  ArgumentParser(const vector<Usage> usages, const int argc, const char* const argv[]);
+  ArgumentParser(
+    const Usage usage,
+    const int argc,
+    const char* const argv[],
+    const PositionalArgumentsRequired require_positional = PositionalArgumentsRequired::Required
+  );
+  ArgumentParser(
+    const vector<Usage> usages,
+    const int argc,
+    const char* const argv[],
+    const PositionalArgumentsRequired require_positional = PositionalArgumentsRequired::Required
+  );
   /**
    * \brief Parse arguments that were given to constructor
    * \return string Positional arguments
