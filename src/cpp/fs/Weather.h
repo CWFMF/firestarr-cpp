@@ -6,24 +6,20 @@
 #include "Util.h"
 namespace fs
 {
-struct Temperature : public StrictType<Temperature>
+struct Temperature : public StrictType<Temperature, UnitType{"degrees Celcius"}>
 {
-  static constexpr auto Units{"degrees Celcius"};
   using StrictType::StrictType;
 };
-struct RelativeHumidity : public StrictType<RelativeHumidity>
+struct RelativeHumidity : public StrictType<RelativeHumidity, UnitType{"percent"}>
 {
-  static constexpr auto Units{"percent"};
   using StrictType::StrictType;
 };
-struct Speed : public StrictType<Speed>
+struct Speed : public StrictType<Speed, UnitType{"km/h"}>
 {
-  static constexpr auto Units{"km/h"};
   using StrictType::StrictType;
 };
-struct Direction : public StrictType<Direction>
+struct Direction : public StrictType<Direction, UnitType{"degrees"}>
 {
-  static constexpr auto Units{"degrees"};
   using StrictType::StrictType;
   static consteval Direction Zero() { return Direction{0.0}; };
   static consteval Direction Invalid() { return Direction{-1.0}; };
@@ -83,9 +79,8 @@ struct Wind
     return v;
   }
 };
-struct Precipitation : public StrictType<Precipitation>
+struct Precipitation : public StrictType<Precipitation, UnitType{"mm accumulated"}>
 {
-  static constexpr auto Units{"mm accumulated"};
   using StrictType::StrictType;
 };
 /**

@@ -4,13 +4,31 @@
 #include "stdafx.h"
 namespace fs
 {
+template <size_t N>
+struct UnitType
+{
+  constexpr explicit UnitType(const char (&str)[N]) { std::copy_n(str, N, value); }
+  char value[N];
+  auto operator<=>(const UnitType&) const = default;
+  bool operator==(const UnitType&) const = default;
+};
+// struct UnitType
+// {
+//   const char* value{};
+// };
+// static constexpr UnitType DegreesCelcius{"degrees Celcius"};
 /**
  * \brief A wrapper around a ValueType to ensure correct types are used.
  */
-template <class ConcreteType, class ValueType = MathSize, int InvalidValue = -1>
+template <
+  class ConcreteType,
+  UnitType U = UnitType{"unitless"},
+  class ValueType = MathSize,
+  int InvalidValue = -1>
 struct StrictType
 {
-  using T = StrictType<ConcreteType, ValueType, InvalidValue>;
+  using T = StrictType<ConcreteType, U, ValueType, InvalidValue>;
+  static constexpr auto Units = U;
   static consteval ConcreteType Zero() { return ConcreteType{0.0}; };
   static consteval ConcreteType Invalid()
   {
@@ -23,10 +41,13 @@ struct StrictType
     // HACK: ensure we're always using
     //       struct X : public StrictType<X>
     static_assert(
-      std::is_same_v<decltype(*this), StrictType<ConcreteType, ValueType>&>, "Different types"
+      std::is_same_v<decltype(*this), StrictType<ConcreteType, U, ValueType, InvalidValue>&>,
+      "Different types"
     );
     static_assert(std::is_same_v<decltype(*this), T&>, "Different types");
-    static_assert(std::is_same_v<T, StrictType<ConcreteType, ValueType>>, "Different types");
+    static_assert(
+      std::is_same_v<T, StrictType<ConcreteType, U, ValueType, InvalidValue>>, "Different types"
+    );
     static_assert(std::is_convertible_v<ConcreteType, T>, "Different types");
     // // doesn't work in this direction
     // static_assert(std::is_convertible_v<T, ConcreteType>, "Different types");
