@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#include <cmath>
-#include <cstdlib>
-#include <iostream>
+#include "TestFwi.h"
 #include "ArgumentParser.h"
 #include "FWI.h"
 #include "FwiReference.h"
@@ -22,12 +20,11 @@ int test_fwi_file(
 {
   string line;
   MathSize temp, rhum, wind, prcp, x, y;
-  MathSize ffmc0, dmc0, dc0;
   int month, day;
   /* Initialize FMC, DMC, and DC */
-  ffmc0 = 85.0;
-  dmc0 = 6.0;
-  dc0 = 15.0;
+  Ffmc ffmc0{85.0};
+  Dmc dmc0{6.0};
+  Dc dc0{15.0};
   Ffmc ffmc0_{ffmc0};
   Dmc dmc0_{dmc0};
   Dc dc0_{dc0};
@@ -49,34 +46,36 @@ int test_fwi_file(
     }
   }
   logging::debug("Testing FWI generated from %s for latitude %g", file_in, latitude);
+  const Latitude latitude_{latitude};
   /* Main loop for calculating indices */
   while (getline(inputFile, line))
   {
     istringstream ss(line);
     ss >> month >> day >> temp >> rhum >> wind >> prcp;
+    const auto month_{Month::from_ordinal(month)};
     static constexpr MathSize EPSILON{std::numeric_limits<MathSize>::epsilon()};
     Temperature temp_{temp};
     RelativeHumidity rhum_{rhum};
     Speed wind_{wind};
     Precipitation prcp_{prcp};
-    auto ffmc{FFMCcalc(temp, rhum, wind, prcp, ffmc0)};
+    auto ffmc{FFMCcalc(temp_, rhum_, wind_, prcp_, ffmc0)};
     Ffmc ffmc_{temp_, rhum_, wind_, prcp_, ffmc0_};
-    logging::check_tolerance(EPSILON, ffmc, ffmc_.value, "ffmc");
-    auto dmc{DMCcalc(temp, rhum, prcp, dmc0, month, latitude)};
+    logging::check_tolerance(EPSILON, ffmc.value, ffmc_.value, "ffmc");
+    auto dmc{DMCcalc(temp_, rhum_, prcp_, dmc0_, month_, latitude_)};
     Dmc dmc_{temp_, rhum_, prcp_, dmc0_, month, latitude};
-    logging::check_tolerance(EPSILON, dmc, dmc_.value, "dmc");
-    auto dc{DCcalc(temp, prcp, dc0, month, latitude)};
+    logging::check_tolerance(EPSILON, dmc.value, dmc_.value, "dmc");
+    auto dc{DCcalc(temp_, prcp_, dc0_, month_, latitude_)};
     Dc dc_{temp_, prcp_, dc0_, month, latitude};
-    logging::check_tolerance(EPSILON, dc, dc_.value, "dc");
-    auto isi{ISIcalc(ffmc, wind)};
+    logging::check_tolerance(EPSILON, dc.value, dc_.value, "dc");
+    auto isi{ISIcalc(ffmc, wind_)};
     Isi isi_{wind_, ffmc_};
-    logging::check_tolerance(EPSILON, isi, isi_.value, "isi");
+    logging::check_tolerance(EPSILON, isi.value, isi_.value, "isi");
     auto bui{BUIcalc(dmc, dc)};
     Bui bui_{dmc_, dc_};
-    logging::check_tolerance(EPSILON, bui, bui_.value, "bui");
+    logging::check_tolerance(EPSILON, bui.value, bui_.value, "bui");
     auto fwi{FWIcalc(isi, bui)};
     Fwi fwi_{isi_, bui_};
-    logging::check_tolerance(EPSILON, fwi, fwi_.value, "fwi");
+    logging::check_tolerance(EPSILON, fwi.value, fwi_.value, "fwi");
     ffmc0 = ffmc;
     dmc0 = dmc;
     dc0 = dc;
@@ -87,7 +86,13 @@ int test_fwi_file(
     if (nullptr != file_out)
     {
       outputFile << std::format(
-        "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}", ffmc, dmc, dc, isi, bui, fwi
+        "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}",
+        ffmc.value,
+        dmc.value,
+        dc.value,
+        isi.value,
+        bui.value,
+        fwi.value
       ) << endl;
       // outputFile << ffmc << ' ' << dmc << ' ' << dc << ' ' << isi << ' ' << bui << ' ' << fwi <<
       // endl;

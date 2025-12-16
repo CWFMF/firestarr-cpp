@@ -1,34 +1,91 @@
 // https://publications.gc.ca/collections/collection_2016/rncan-nrcan/Fo133-1-424-eng.pdf
 #ifndef FS_FWIREFERENCE_H
 #define FS_FWIREFERENCE_H
-#include "unstable.h"
+#include "stdafx.h"
+#include <cstddef>
+#include "FWI.h"
+#include "Weather.h"
 namespace fs::fwireference
 {
-constexpr auto DEFAULT_LATITUDE = 46.0;
-MathSize FFMCcalc(
-  MathSize temperature,
-  MathSize relative_humidity,
-  MathSize wind_speed,
-  MathSize rain_24hr,
-  MathSize ffmc_previous
+// months as array indexes
+class Month
+{
+public:
+  enum class Value
+  {
+    January,
+    February,
+    March,
+    April,
+    May,
+    June,
+    July,
+    August,
+    September,
+    October,
+    November,
+    December
+  };
+  static Month from_index(const int value) { return {static_cast<Value>(value)}; }
+  static Month from_ordinal(const int value) { return {static_cast<Value>(value - 1)}; }
+  Month(const Value value) : value{value} { }
+  int ordinal() const { return static_cast<int>(value) + 1; }
+  size_t index() const { return static_cast<size_t>(value); }
+  string name() const
+  {
+    static constexpr string NAMES[]{
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    };
+    return NAMES[index()];
+  }
+
+private:
+  Value value;
+};
+struct Latitude
+{
+  MathSize value{};
+};
+struct Moisture
+{
+  MathSize value{};
+};
+constexpr Latitude DEFAULT_LATITUDE{46.0};
+Ffmc FFMCcalc(
+  Temperature temperature,
+  RelativeHumidity relative_humidity,
+  Speed wind_speed,
+  Precipitation rain_24hr,
+  Ffmc ffmc_previous
 );
-MathSize DMCcalc(
-  MathSize temperature,
-  MathSize relative_humidity,
-  MathSize rain_24hr,
-  MathSize dmc_previous,
-  int month,
-  const MathSize latitude = DEFAULT_LATITUDE
+Dmc DMCcalc(
+  Temperature temperature,
+  RelativeHumidity relative_humidity,
+  Precipitation rain_24hr,
+  const Dmc dmc_previous,
+  const Month month,
+  const Latitude latitude = DEFAULT_LATITUDE
 );
-MathSize DCcalc(
-  MathSize temperature,
-  MathSize rain_24hr,
-  MathSize dc_previous,
-  int month,
-  const MathSize latitude = DEFAULT_LATITUDE
+Dc DCcalc(
+  Temperature temperature,
+  Precipitation rain_24hr,
+  const Dc dc_previous,
+  const Month month,
+  const Latitude latitude = DEFAULT_LATITUDE
 );
-MathSize ISIcalc(MathSize ffmc, MathSize wind_speed);
-MathSize BUIcalc(MathSize dmc, MathSize dc);
-MathSize FWIcalc(MathSize isi, MathSize bui);
+Isi ISIcalc(Ffmc ffmc, Speed wind_speed);
+Bui BUIcalc(Dmc dmc, Dc dc);
+Fwi FWIcalc(Isi isi, Bui bui);
 }
 #endif
