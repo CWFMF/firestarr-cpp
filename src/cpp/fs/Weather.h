@@ -1,8 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_WEATHER_H
 #define FS_WEATHER_H
-#include "stdafx.h"
-#include "Log.h"
+#include "StrictType.h"
 #include "unstable.h"
 #include "Util.h"
 namespace fs
@@ -13,44 +12,40 @@ namespace fs
 /**
  * \brief Temperature in degrees Celsius.
  */
-struct Temperature
+struct Temperature : public StrictType<Temperature>
 {
-  MathSize value{0};
-  static consteval Temperature Zero() { return Temperature{0}; };
-  static consteval Temperature Invalid() { return Temperature{-1}; };
-  auto operator<=>(const Temperature& rhs) const = default;
+  using StrictType<Temperature>::StrictType;
+  static consteval Temperature Zero() { return Temperature{0.0}; };
+  static consteval Temperature Invalid() { return Temperature{-1.0}; };
 };
 /**
  * \brief Relative humidity as a percentage.
  */
-struct RelativeHumidity
+struct RelativeHumidity : public StrictType<RelativeHumidity>
 {
-  MathSize value{0};
-  static consteval RelativeHumidity Zero() { return RelativeHumidity{0}; };
-  static consteval RelativeHumidity Invalid() { return RelativeHumidity{-1}; };
-  auto operator<=>(const RelativeHumidity& rhs) const = default;
+  using StrictType<RelativeHumidity>::StrictType;
+  static consteval RelativeHumidity Zero() { return RelativeHumidity{0.0}; };
+  static consteval RelativeHumidity Invalid() { return RelativeHumidity{-1.0}; };
 };
 /**
  * \brief Speed in kilometers per hour.
  */
-struct Speed
+struct Speed : public StrictType<Speed>
 {
-  MathSize value{0};
-  static consteval Speed Zero() { return Speed{0}; };
-  static consteval Speed Invalid() { return Speed{-1}; };
-  auto operator<=>(const Speed& rhs) const = default;
+  using StrictType<Speed>::StrictType;
+  static consteval Speed Zero() { return Speed{0.0}; };
+  static consteval Speed Invalid() { return Speed{-1.0}; };
 };
 /**
  * \brief Direction with access to degrees or radians.
  */
-struct Direction
+struct Direction : public StrictType<Direction>
 {
-  MathSize value{0};
-  static consteval Direction Zero() { return Direction{0, false}; };
-  static consteval Direction Invalid() { return Direction{-1, false}; };
-  auto operator<=>(const Direction& rhs) const = default;
+  using StrictType<Direction>::StrictType;
+  static consteval Direction Zero() { return Direction{0.0}; };
+  static consteval Direction Invalid() { return Direction{-1.0}; };
   constexpr Direction(const MathSize value = 0, const bool is_radians = false)
-    : value{is_radians ? to_degrees(value) : value}
+    : StrictType{is_radians ? to_degrees(value) : value}
   { }
   /**
    * \brief Direction as radians, where 0 is North and values increase clockwise
@@ -107,12 +102,11 @@ struct Wind
 /**
  * \brief Precipitation (1hr accumulation) (mm)
  */
-struct Precipitation
+struct Precipitation : public StrictType<Precipitation>
 {
-  MathSize value{0};
-  static consteval Precipitation Zero() { return Precipitation{0}; };
-  static consteval Precipitation Invalid() { return Precipitation{-1}; };
-  auto operator<=>(const Precipitation& rhs) const = default;
+  using StrictType<Precipitation>::StrictType;
+  static consteval Precipitation Zero() { return Precipitation{0.0}; };
+  static consteval Precipitation Invalid() { return Precipitation{-1.0}; };
 };
 /**
  * \brief Collection of weather indices used for calculating FwiWeather.

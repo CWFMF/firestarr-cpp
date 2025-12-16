@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "FWI.h"
+#include "Log.h"
 #include "Weather.h"
 #ifndef FS_ARGUMENT_PARSER_H
 #define FS_ARGUMENT_PARSER_H
