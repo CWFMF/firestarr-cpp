@@ -6,35 +6,24 @@
 #include "Util.h"
 namespace fs
 {
-/**
- * \brief Temperature in degrees Celsius.
- */
-/**
- * \brief Temperature in degrees Celsius.
- */
 struct Temperature : public StrictType<Temperature>
 {
+  static constexpr auto Units{"degrees Celcius"};
   using StrictType<Temperature>::StrictType;
 };
-/**
- * \brief Relative humidity as a percentage.
- */
 struct RelativeHumidity : public StrictType<RelativeHumidity>
 {
+  static constexpr auto Units{"percent"};
   using StrictType<RelativeHumidity>::StrictType;
 };
-/**
- * \brief Speed in kilometers per hour.
- */
 struct Speed : public StrictType<Speed>
 {
+  static constexpr auto Units{"km/h"};
   using StrictType<Speed>::StrictType;
 };
-/**
- * \brief Direction with access to degrees or radians.
- */
 struct Direction : public StrictType<Direction>
 {
+  static constexpr auto Units{"degrees"};
   using StrictType<Direction>::StrictType;
   static consteval Direction Zero() { return Direction{0.0}; };
   static consteval Direction Invalid() { return Direction{-1.0}; };
@@ -62,6 +51,7 @@ struct Direction : public StrictType<Direction>
  */
 struct Wind
 {
+  static constexpr auto Units{std::pair{Speed::Units, Direction::Units}};
   Speed speed{};
   Direction direction{};
   static consteval Wind Zero() { return {Speed::Zero(), Direction::Zero()}; };
@@ -93,11 +83,9 @@ struct Wind
     return v;
   }
 };
-/**
- * \brief Precipitation (1hr accumulation) (mm)
- */
 struct Precipitation : public StrictType<Precipitation>
 {
+  static constexpr auto Units{"mm accumulated"};
   using StrictType<Precipitation>::StrictType;
 };
 /**
@@ -105,6 +93,9 @@ struct Precipitation : public StrictType<Precipitation>
  */
 struct Weather
 {
+  static constexpr auto Units{
+    std::tuple{Temperature::Units, RelativeHumidity::Units, Wind::Units, Precipitation::Units}
+  };
   static consteval Weather Zero() { return {}; }
   static consteval Weather Invalid()
   {
