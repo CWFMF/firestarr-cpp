@@ -62,10 +62,10 @@ struct Direction : public StrictType<Direction>
  */
 struct Wind
 {
-  Direction direction{};
   Speed speed{};
-  static consteval Wind Zero() { return {Direction::Zero(), Speed::Zero()}; };
-  static consteval Wind Invalid() { return {Direction::Invalid(), Speed::Invalid()}; };
+  Direction direction{};
+  static consteval Wind Zero() { return {Speed::Zero(), Direction::Zero()}; };
+  static consteval Wind Invalid() { return {Speed::Invalid(), Direction::Invalid()}; };
   auto operator<=>(const Wind& rhs) const = default;
   /**
    * \brief Direction wind is going towards

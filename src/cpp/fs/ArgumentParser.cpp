@@ -383,7 +383,7 @@ FwiWeather MainArgumentParser::get_test_weather() const
     Weather{
       Temperature::Zero(),
       RelativeHumidity::Zero(),
-      Wind{Direction{wind_direction, false}, Speed{wind_speed}},
+      Wind{Speed{wind_speed}, Direction{wind_direction, false}},
       Precipitation::Zero()
     },
     ffmc,
@@ -397,7 +397,7 @@ FwiWeather MainArgumentParser::get_yesterday_weather() const
     Weather{
       Temperature::Zero(),
       RelativeHumidity::Zero(),
-      Wind{Direction{wind_direction, false}, Speed{wind_speed}},
+      Wind{Speed{wind_speed}, Direction{wind_direction, false}},
       {apcp_prev}
     },
     ffmc,

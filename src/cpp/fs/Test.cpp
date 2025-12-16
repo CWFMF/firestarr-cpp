@@ -303,7 +303,7 @@ int test(
   static const AspectSize DEFAULT_ASPECT = 0;
   static const Speed DEFAULT_WIND_SPEED(20);
   static const Direction DEFAULT_WIND_DIRECTION(180, false);
-  static const Wind DEFAULT_WIND(DEFAULT_WIND_DIRECTION, DEFAULT_WIND_SPEED);
+  static const Wind DEFAULT_WIND(DEFAULT_WIND_SPEED, DEFAULT_WIND_DIRECTION);
   static const Ffmc DEFAULT_FFMC(90);
   static const Dmc DEFAULT_DMC(35.5);
   static const Dc DEFAULT_DC(275);
@@ -337,7 +337,7 @@ int test(
                               : wx->wind.direction;
   const auto wind_speed =
     (fs::Speed::Invalid().value == wx->wind.speed.value) ? DEFAULT_WIND_SPEED : wx->wind.speed;
-  const auto wind = fs::Wind(wind_direction, wind_speed);
+  const auto wind = fs::Wind(wind_speed, wind_direction);
   const auto slope = (INVALID_SLOPE == constant_slope) ? DEFAULT_SLOPE : constant_slope;
   const auto aspect = (INVALID_ASPECT == constant_aspect) ? DEFAULT_ASPECT : constant_aspect;
   const auto fixed_fuel_name = simplify_fuel_name(constant_fuel_name);
@@ -436,7 +436,7 @@ int test(
               const Direction direction(wind_direction, false);
               for (auto wind_speed : wind_speeds)
               {
-                const Wind wind(direction, Speed(wind_speed));
+                const Wind wind(Speed(wind_speed), direction);
                 // need to make string now because it'll be another value if we wait
                 results.push_back(async(
                   launch::async,
