@@ -15,8 +15,6 @@ namespace fs
 struct Temperature : public StrictType<Temperature>
 {
   using StrictType<Temperature>::StrictType;
-  static consteval Temperature Zero() { return Temperature{0.0}; };
-  static consteval Temperature Invalid() { return Temperature{-1.0}; };
 };
 /**
  * \brief Relative humidity as a percentage.
@@ -24,8 +22,6 @@ struct Temperature : public StrictType<Temperature>
 struct RelativeHumidity : public StrictType<RelativeHumidity>
 {
   using StrictType<RelativeHumidity>::StrictType;
-  static consteval RelativeHumidity Zero() { return RelativeHumidity{0.0}; };
-  static consteval RelativeHumidity Invalid() { return RelativeHumidity{-1.0}; };
 };
 /**
  * \brief Speed in kilometers per hour.
@@ -33,8 +29,6 @@ struct RelativeHumidity : public StrictType<RelativeHumidity>
 struct Speed : public StrictType<Speed>
 {
   using StrictType<Speed>::StrictType;
-  static consteval Speed Zero() { return Speed{0.0}; };
-  static consteval Speed Invalid() { return Speed{-1.0}; };
 };
 /**
  * \brief Direction with access to degrees or radians.
@@ -105,8 +99,6 @@ struct Wind
 struct Precipitation : public StrictType<Precipitation>
 {
   using StrictType<Precipitation>::StrictType;
-  static consteval Precipitation Zero() { return Precipitation{0.0}; };
-  static consteval Precipitation Invalid() { return Precipitation{-1.0}; };
 };
 /**
  * \brief Collection of weather indices used for calculating FwiWeather.

@@ -9,12 +9,9 @@ namespace fs
 /**
  * \brief Fine Fuel Moisture Code value.
  */
-struct Ffmc
+struct Ffmc : public StrictType<Ffmc>
 {
-  MathSize value{0};
-  static consteval Ffmc Zero() { return Ffmc{0.0}; };
-  static consteval Ffmc Invalid() { return Ffmc{-1.0}; };
-  explicit constexpr Ffmc(const MathSize value_ = 0) : value{value_} { }
+  using StrictType<Ffmc>::StrictType;
   /**
    * \brief Calculate Fine Fuel Moisture Code
    * \param temperature Temperature (Celsius)
@@ -30,17 +27,13 @@ struct Ffmc
     const Precipitation prec,
     const Ffmc ffmc_previous
   ) noexcept;
-  auto operator<=>(const Ffmc& rhs) const = default;
 };
 /**
  * \brief Duff Moisture Code value.
  */
-struct Dmc
+struct Dmc : public StrictType<Dmc>
 {
-  MathSize value{0};
-  static consteval Dmc Zero() { return Dmc{0}; };
-  static consteval Dmc Invalid() { return Dmc{-1}; };
-  explicit constexpr Dmc(const MathSize value_ = 0) : value{value_} { }
+  using StrictType<Dmc>::StrictType;
   /**
    * \brief Duff Moisture Code
    * \param temperature Temperature (Celsius)
@@ -58,17 +51,13 @@ struct Dmc
     const int month,
     const MathSize latitude
   ) noexcept;
-  auto operator<=>(const Dmc& rhs) const = default;
 };
 /**
  * \brief Drought Code value.
  */
-struct Dc
+struct Dc : public StrictType<Dc>
 {
-  MathSize value{0};
-  static consteval Dc Zero() { return Dc{0}; };
-  static consteval Dc Invalid() { return Dc{-1}; };
-  explicit constexpr Dc(const MathSize value_ = 0) : value{value_} { }
+  using StrictType<Dc>::StrictType;
   /**
    * \brief Calculate Drought Code
    * \param temperature Temperature (Celsius)
@@ -84,17 +73,13 @@ struct Dc
     const int month,
     const MathSize latitude
   ) noexcept;
-  auto operator<=>(const Dc& rhs) const = default;
 };
 /**
  * \brief Initial Spread Index value.
  */
-struct Isi
+struct Isi : public StrictType<Isi>
 {
-  MathSize value{0};
-  static consteval Isi Zero() { return Isi{0}; };
-  static consteval Isi Invalid() { return Isi{-1}; };
-  explicit constexpr Isi(const MathSize value_ = 0) : value{value_} { }
+  using StrictType<Isi>::StrictType;
   /**
    * \brief Calculate Initial Spread Index and verify previous value is within tolerance of
    * calculated value
@@ -109,76 +94,47 @@ struct Isi
    * \param ffmc Fine Fuel Moisture Code
    */
   Isi(const Speed ws, const Ffmc ffmc) noexcept;
-  auto operator<=>(const Isi& rhs) const = default;
 };
 Isi check_isi(const MathSize value, const Speed& ws, const Ffmc& ffmc) noexcept;
 /**
  * \brief Build-up Index value.
  */
-struct Bui
+struct Bui : public StrictType<Bui>
 {
-  MathSize value{0};
-  static consteval Bui Zero() { return Bui{0}; };
-  static consteval Bui Invalid() { return Bui{-1}; };
-  explicit constexpr Bui(const MathSize value_ = 0) : value{value_} { }
-  /**
-   * \brief Calculate Build-up Index and verify previous value is within tolerance of calculated
-   * value
-   * \param value Value to check is within tolerance of calculated value
-   * \param dmc Duff Moisture Code
-   * \param dc Drought Code
-   */
-  Bui(MathSize value, const Dmc dmc, const Dc dc) noexcept;
+  using StrictType<Bui>::StrictType;
   /**
    * \brief Calculate Build-up Index
    * \param dmc Duff Moisture Code
    * \param dc Drought Code
    */
   Bui(const Dmc dmc, const Dc dc) noexcept;
-  auto operator<=>(const Bui& rhs) const = default;
 };
 Bui check_bui(const MathSize value, const Dmc& dmc, const Dc& dc) noexcept;
 /**
  * \brief Fire Weather Index value.
  */
-struct Fwi
+struct Fwi : public StrictType<Fwi>
 {
-  MathSize value{0};
-  static consteval Fwi Zero() { return Fwi{0}; };
-  static consteval Fwi Invalid() { return Fwi{-1}; };
-  explicit constexpr Fwi(const MathSize value_ = 0) : value{value_} { }
-  /**
-   * \brief Calculate Fire Weather Index and verify previous value is within tolerance of
-   * calculated value
-   * \param value Value to check is within tolerance of calculated value
-   * \param isi Initial Spread Index
-   * \param bui Build-up Index
-   */
-  Fwi(MathSize value, const Isi isi, const Bui bui) noexcept;
+  using StrictType<Fwi>::StrictType;
   /**
    * \brief Calculate Fire Weather Index
    * \param isi Initial Spread Index
    * \param bui Build-up Index
    */
   Fwi(const Isi isi, const Bui bui) noexcept;
-  auto operator<=>(const Fwi& rhs) const = default;
 };
 Fwi check_fwi(const MathSize value, const Isi& isi, const Bui& bui) noexcept;
 /**
  * \brief Danger Severity Rating value.
  */
-struct Dsr
+struct Dsr : public StrictType<Dsr>
 {
-  MathSize value{0};
-  static consteval Dsr Zero() { return Dsr{0}; };
-  static consteval Dsr Invalid() { return Dsr{-1}; };
-  explicit constexpr Dsr(const MathSize value_ = 0) : value{value_} { }
+  using StrictType<Dsr>::StrictType;
   /**
    * \brief Calculate Danger Severity Rating
    * \param fwi Fire Weather Index
    */
   explicit Dsr(const Fwi fwi) noexcept;
-  auto operator<=>(const Dsr& rhs) const = default;
 };
 /**
  * \brief A Weather value with calculated FWI indices.

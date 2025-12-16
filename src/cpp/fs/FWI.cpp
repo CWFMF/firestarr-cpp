@@ -182,7 +182,7 @@ Ffmc::Ffmc(
   const Precipitation rain,
   const Ffmc ffmc_previous
 ) noexcept
-  : value{[=]() {
+  : Ffmc{[=]() {
       //'''/* 1  '*/
       auto mo = ffmc_to_moisture(ffmc_previous);
       if (rain.value > 0.5)
@@ -226,7 +226,7 @@ Dmc::Dmc(
   const int month,
   const MathSize latitude
 ) noexcept
-  : value{[=]() {
+  : Dmc{[=]() {
       auto previous = dmc_previous.value;
       if (rain.value > 1.5)
       {
@@ -275,7 +275,7 @@ Dc::Dc(
   const int month,
   const MathSize latitude
 ) noexcept
-  : value{[=]() {
+  : Dc{[=]() {
       auto previous = dc_previous.value;
       if (rain.value > 2.8)
       {
@@ -314,7 +314,7 @@ MathSize ffmc_effect(const Ffmc ffmc) noexcept
 //    ffmc is the current day's FFMC
 //******************************************************************************************
 Isi::Isi(const Speed wind, const Ffmc ffmc) noexcept
-  : value{[=]() {
+  : Isi{[=]() {
       //'''/* 24  '*/
       const auto f_wind = exp(0.05039 * wind.value);
       const auto f_f = ffmc_effect(ffmc);
@@ -371,7 +371,7 @@ Isi check_isi(
 //    DC is the current day's Drought Code
 //******************************************************************************************
 Bui::Bui(const Dmc dmc, const Dc dc) noexcept
-  : value{[=]() {
+  : Bui{[=]() {
       if (dmc.value <= 0.4 * dc.value)
       {
         // HACK: this isn't normally part of it, but it's division by 0 without this
@@ -440,7 +440,7 @@ Bui check_bui(
 //    BUI is the current day's BUI
 //******************************************************************************************
 Fwi::Fwi(const Isi isi, const Bui bui) noexcept
-  : value{[=]() {
+  : Fwi{[=]() {
       const auto f_d = (bui.value <= 80.0) ?   //'''/* 28a '*/
                          0.626 * pow(bui.value, 0.809) + 2.0
                                            :   //'''/* 28b '*/
@@ -504,7 +504,7 @@ Fwi check_fwi(
 //    FWI is current day's FWI
 //******************************************************************************************
 Dsr::Dsr(const Fwi fwi) noexcept
-  : value{[=]() {
+  : Dsr{[=]() {
       //'''/* 41 '*/
       return (0.0272 * pow(fwi.value, 1.77));
     }()}

@@ -2,16 +2,20 @@
 #ifndef FS_INDEX_H
 #define FS_INDEX_H
 #include "stdafx.h"
-#include <type_traits>
 namespace fs
 {
 /**
  * \brief A wrapper around a ValueType to ensure correct types are used.
  */
-template <class ConcreteType, class ValueType = MathSize>
+template <class ConcreteType, class ValueType = MathSize, int InvalidValue = -1>
 struct StrictType
 {
-  using T = StrictType<ConcreteType, ValueType>;
+  using T = StrictType<ConcreteType, ValueType, InvalidValue>;
+  static consteval ConcreteType Zero() { return ConcreteType{0.0}; };
+  static consteval ConcreteType Invalid()
+  {
+    return ConcreteType{static_cast<ValueType>(InvalidValue)};
+  };
   ValueType value{0.0};
   constexpr StrictType() = default;
   constexpr explicit StrictType(const ValueType value) noexcept : value(value)
