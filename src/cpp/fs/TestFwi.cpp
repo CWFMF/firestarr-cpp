@@ -19,7 +19,7 @@ int test_fwi_file(
 )
 {
   string line;
-  MathSize temp, rhum, wind, prcp, x, y;
+  MathSize temp, rhum, wind, prcp;
   int month, day;
   /* Initialize FMC, DMC, and DC */
   Ffmc ffmc0{85.0};

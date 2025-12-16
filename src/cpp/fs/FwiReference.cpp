@@ -183,7 +183,7 @@ Dc DCcalc(
   auto Ro = rain_24hr.value;
   // Do - previous day's DC
   auto Do = dc_previous.value;
-  MathSize Rd, Qo, Qr, V, D, Dr;
+  MathSize Rd, Qo, Qr, V, Dr;
   // Day length factor for DC Calculations
   // 20N: North of 20 degrees N
   MathSize LfN[] = {-1.6, -1.6, -1.6, 0.9, 3.8, 5.8, 6.4, 5, 2.4, 0.4, -1.6, -1.6};
@@ -257,7 +257,7 @@ Fwi FWIcalc(Isi isi, Bui bui)
   // U - present day's BUI
   auto U = bui.value;
   MathSize fwi;
-  MathSize Fd, B, S;
+  MathSize Fd, B;
   if (U <= 80.)
     Fd = .626 * pow(U, .809) + 2.; /*Eq. 28a*/
   else
