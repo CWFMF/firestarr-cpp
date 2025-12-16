@@ -47,7 +47,7 @@ public:
   GridBase& operator=(GridBase&& rhs) noexcept = default;
   /**
    * \brief Cell size used for GridBase.
-   * \return Cell height and width in meters.
+   * \return Cell height and width in metres.
    */
   [[nodiscard]] constexpr MathSize cellSize() const noexcept { return cell_size_; }
   /**
@@ -67,23 +67,23 @@ public:
     return static_cast<FullIdx>((xurcorner() - xllcorner()) / cellSize()) - 1;
   }
   /**
-   * \brief Lower left corner X coordinate in meters.
-   * \return Lower left corner X coordinate in meters.
+   * \brief Lower left corner X coordinate in metres.
+   * \return Lower left corner X coordinate in metres.
    */
   [[nodiscard]] constexpr MathSize xllcorner() const noexcept { return xllcorner_; }
   /**
-   * \brief Lower left corner Y coordinate in meters.
-   * \return Lower left corner Y coordinate in meters.
+   * \brief Lower left corner Y coordinate in metres.
+   * \return Lower left corner Y coordinate in metres.
    */
   [[nodiscard]] constexpr MathSize yllcorner() const noexcept { return yllcorner_; }
   /**
-   * \brief Upper right corner X coordinate in meters.
-   * \return Upper right corner X coordinate in meters.
+   * \brief Upper right corner X coordinate in metres.
+   * \return Upper right corner X coordinate in metres.
    */
   [[nodiscard]] constexpr MathSize xurcorner() const noexcept { return xurcorner_; }
   /**
-   * \brief Upper right corner Y coordinate in meters.
-   * \return Upper right corner Y coordinate in meters.
+   * \brief Upper right corner Y coordinate in metres.
+   * \return Upper right corner Y coordinate in metres.
    */
   [[nodiscard]] constexpr MathSize yurcorner() const noexcept { return yurcorner_; }
   /**
@@ -137,23 +137,23 @@ private:
    */
   string proj4_{};
   /**
-   * \brief Cell height and width in meters.
+   * \brief Cell height and width in metres.
    */
   MathSize cell_size_{-1};
   /**
-   * \brief Lower left corner X coordinate in meters.
+   * \brief Lower left corner X coordinate in metres.
    */
   MathSize xllcorner_{-1};
   /**
-   * \brief Lower left corner Y coordinate in meters.
+   * \brief Lower left corner Y coordinate in metres.
    */
   MathSize yllcorner_{-1};
   /**
-   * \brief Upper right corner X coordinate in meters.
+   * \brief Upper right corner X coordinate in metres.
    */
   MathSize xurcorner_{-1};
   /**
-   * \brief Upper right corner Y coordinate in meters.
+   * \brief Upper right corner Y coordinate in metres.
    */
   MathSize yurcorner_{-1};
 };

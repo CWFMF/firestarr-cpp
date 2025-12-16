@@ -63,6 +63,7 @@ void GridBase::createPrj(const string_view dir, const string_view base_name) con
   fprintf(out, "Projection    TRANSVERSE\n");
   fprintf(out, "Datum         AI_CSRS\n");
   fprintf(out, "Spheroid      GRS80\n");
+  // NOTE: uses American spelling
   fprintf(out, "Units         METERS\n");
   fprintf(out, "Zunits        NO\n");
   fprintf(out, "Xshift        0.0\n");
@@ -75,6 +76,7 @@ void GridBase::createPrj(const string_view dir, const string_view base_name) con
   fprintf(out, "%g /* scale factor at central meridian\n", stod(k));
   fprintf(out, "%g  0  0.0 /* longitude of central meridian\n", stod(lon_0));
   fprintf(out, "%4g  0  0.0 /* latitude of origin\n", stod(lat_0));
+  // NOTE: uses American spelling
   fprintf(out, "%6.1f /* false easting (meters)\n", stod(x_0));
   fprintf(out, "%0.1f /* false northing (meters)\n", stod(y_0));
   fclose(out);
