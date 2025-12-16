@@ -2,7 +2,6 @@
 #ifndef FS_FWIREFERENCE_H
 #define FS_FWIREFERENCE_H
 #include "stdafx.h"
-#include <cstddef>
 #include "FWI.h"
 #include "Weather.h"
 namespace fs::fwireference
@@ -56,7 +55,11 @@ private:
 struct Latitude
 {
   MathSize value{};
+  auto operator<=>(const Latitude& rhs) const = default;
+  Latitude operator-(const Latitude& rhs) const { return {value - rhs.value}; }
+  Latitude operator-() const { return {-value}; }
 };
+static inline Latitude abs(const Latitude& rhs) { return {std::abs(rhs.value)}; }
 struct Moisture
 {
   MathSize value{};

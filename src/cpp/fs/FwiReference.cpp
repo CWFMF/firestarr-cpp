@@ -4,8 +4,8 @@
 namespace fs::fwireference
 {
 using namespace std;
-const auto LATITUDE_INNER = 10.0;
-const auto LATITUDE_MIDDLE = 30.0;
+const Latitude LATITUDE_INNER{10.0};
+const Latitude LATITUDE_MIDDLE{30.0};
 Ffmc FFMCcalc(
   Temperature temperature,
   RelativeHumidity relative_humidity,
@@ -130,14 +130,12 @@ Dmc DMCcalc(
   //   LATITUDE_INNER > abs(latitude)
   //     ? 9
   //     : ((latitude <= 10 ? (latitude <= -30 ? Le3 : Le2) : (latitude >= 30 ? Le0 : Le1))[I - 1]);
-  const auto le = [=](const MathSize latitude) {
-    return LATITUDE_INNER > abs(latitude)
-           ? 9.0
-           : (latitude >= LATITUDE_MIDDLE    ? DAY_LENGTH46_N
-              : latitude >= LATITUDE_INNER   ? DAY_LENGTH20_N
-              : latitude <= -LATITUDE_MIDDLE ? DAY_LENGTH40_S
-                                             : DAY_LENGTH20_S)[month.index()];
-  }(latitude.value);
+  const auto le = LATITUDE_INNER > abs(latitude)
+                  ? 9.0
+                  : (latitude >= LATITUDE_MIDDLE    ? DAY_LENGTH46_N
+                     : latitude >= LATITUDE_INNER   ? DAY_LENGTH20_N
+                     : latitude <= -LATITUDE_MIDDLE ? DAY_LENGTH40_S
+                                                    : DAY_LENGTH20_S)[month.index()];
   if (T >= -1.1)
     K = 1.894 * (T + 1.1) * (100. - H) * le * 0.0001;
   else
@@ -203,10 +201,8 @@ Dc DCcalc(
       Do = 0.0;
   }
   // Near the equator, we just use 1.4 for all months.
-  const auto lf = [=](const MathSize latitude) {
-    return abs(latitude) < LATITUDE_INNER ? 1.4
-                                          : (latitude >= LATITUDE_INNER ? LfN : LfS)[month.index()];
-  }(latitude.value);
+  const auto lf =
+    abs(latitude) < LATITUDE_INNER ? 1.4 : (latitude >= LATITUDE_INNER ? LfN : LfS)[month.index()];
   if (T > -2.8)
   { /*Eq. 22*/
     V = 0.36 * (T + 2.8) + lf;
