@@ -4,6 +4,8 @@
 #include "stdafx.h"
 namespace fs
 {
+namespace units
+{
 template <size_t N>
 struct UnitType
 {
@@ -12,17 +14,19 @@ struct UnitType
   auto operator<=>(const UnitType&) const = default;
   bool operator==(const UnitType&) const = default;
 };
-// struct UnitType
-// {
-//   const char* value{};
-// };
-// static constexpr UnitType DegreesCelcius{"degrees Celcius"};
+static constexpr UnitType Unitless{"unitless"};
+static constexpr UnitType Celsius{"degrees Celsius"};
+static constexpr UnitType Percent{"percent"};
+static constexpr UnitType KilometresPerHour{"km/h"};
+static constexpr UnitType CompassDegrees{"degrees"};
+static constexpr UnitType MillimetresAccumulated{"mm accumulated"};
+}
 /**
  * \brief A wrapper around a ValueType to ensure correct types are used.
  */
 template <
   class ConcreteType,
-  UnitType U = UnitType{"unitless"},
+  units::UnitType U = units::Unitless,
   class ValueType = MathSize,
   int InvalidValue = -1>
 struct StrictType
