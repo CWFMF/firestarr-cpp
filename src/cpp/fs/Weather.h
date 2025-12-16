@@ -9,22 +9,22 @@ namespace fs
 struct Temperature : public StrictType<Temperature>
 {
   static constexpr auto Units{"degrees Celcius"};
-  using StrictType<Temperature>::StrictType;
+  using StrictType::StrictType;
 };
 struct RelativeHumidity : public StrictType<RelativeHumidity>
 {
   static constexpr auto Units{"percent"};
-  using StrictType<RelativeHumidity>::StrictType;
+  using StrictType::StrictType;
 };
 struct Speed : public StrictType<Speed>
 {
   static constexpr auto Units{"km/h"};
-  using StrictType<Speed>::StrictType;
+  using StrictType::StrictType;
 };
 struct Direction : public StrictType<Direction>
 {
   static constexpr auto Units{"degrees"};
-  using StrictType<Direction>::StrictType;
+  using StrictType::StrictType;
   static consteval Direction Zero() { return Direction{0.0}; };
   static consteval Direction Invalid() { return Direction{-1.0}; };
   constexpr Direction(const MathSize value = 0, const bool is_radians = false)
@@ -86,7 +86,7 @@ struct Wind
 struct Precipitation : public StrictType<Precipitation>
 {
   static constexpr auto Units{"mm accumulated"};
-  using StrictType<Precipitation>::StrictType;
+  using StrictType::StrictType;
 };
 /**
  * \brief Collection of weather indices used for calculating FwiWeather.

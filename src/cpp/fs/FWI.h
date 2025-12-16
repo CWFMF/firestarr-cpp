@@ -11,7 +11,7 @@ namespace fs
  */
 struct Ffmc : public StrictType<Ffmc>
 {
-  using StrictType<Ffmc>::StrictType;
+  using StrictType::StrictType;
   /**
    * \brief Calculate Fine Fuel Moisture Code
    * \param temperature Temperature (Celsius)
@@ -33,7 +33,7 @@ struct Ffmc : public StrictType<Ffmc>
  */
 struct Dmc : public StrictType<Dmc>
 {
-  using StrictType<Dmc>::StrictType;
+  using StrictType::StrictType;
   /**
    * \brief Duff Moisture Code
    * \param temperature Temperature (Celsius)
@@ -57,7 +57,7 @@ struct Dmc : public StrictType<Dmc>
  */
 struct Dc : public StrictType<Dc>
 {
-  using StrictType<Dc>::StrictType;
+  using StrictType::StrictType;
   /**
    * \brief Calculate Drought Code
    * \param temperature Temperature (Celsius)
@@ -79,7 +79,7 @@ struct Dc : public StrictType<Dc>
  */
 struct Isi : public StrictType<Isi>
 {
-  using StrictType<Isi>::StrictType;
+  using StrictType::StrictType;
   /**
    * \brief Calculate Initial Spread Index and verify previous value is within tolerance of
    * calculated value
@@ -101,7 +101,7 @@ Isi check_isi(const MathSize value, const Speed& ws, const Ffmc& ffmc) noexcept;
  */
 struct Bui : public StrictType<Bui>
 {
-  using StrictType<Bui>::StrictType;
+  using StrictType::StrictType;
   /**
    * \brief Calculate Build-up Index
    * \param dmc Duff Moisture Code
@@ -115,7 +115,7 @@ Bui check_bui(const MathSize value, const Dmc& dmc, const Dc& dc) noexcept;
  */
 struct Fwi : public StrictType<Fwi>
 {
-  using StrictType<Fwi>::StrictType;
+  using StrictType::StrictType;
   /**
    * \brief Calculate Fire Weather Index
    * \param isi Initial Spread Index
@@ -129,7 +129,7 @@ Fwi check_fwi(const MathSize value, const Isi& isi, const Bui& bui) noexcept;
  */
 struct Dsr : public StrictType<Dsr>
 {
-  using StrictType<Dsr>::StrictType;
+  using StrictType::StrictType;
   /**
    * \brief Calculate Danger Severity Rating
    * \param fwi Fire Weather Index
