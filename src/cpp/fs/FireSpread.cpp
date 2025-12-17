@@ -83,7 +83,7 @@ MathSize SpreadInfo::initial(
 {
   ffmc_effect = spread.weather->ffmcEffect();
   // needs to be non-const so that we can update if slopeEffect changes direction
-  MathSize raz = spread.weather->wind.heading();
+  MathSize raz = spread.weather->wind.heading().value;
   const auto isz = 0.208 * ffmc_effect;
   wsv = spread.weather->wind.speed.value;
   if (!has_no_slope)
@@ -95,7 +95,8 @@ MathSize SpreadInfo::initial(
       wse =
         28.0 - log(1.0 - min(0.999 * 2.496 * ffmc_effect, isf1) / (2.496 * ffmc_effect)) / 0.0818;
     }
-    const auto heading = to_heading(to_radians(static_cast<double>(Cell::aspect(spread.key_))));
+    const auto heading =
+      Radians{static_cast<MathSize>(Cell::aspect(spread.key_))}.to_heading().value;
     // FIX: ignore heading arguments for now since it was changing results
     std::ignore = heading_sin;
     std::ignore = heading_cos;
@@ -108,7 +109,7 @@ MathSize SpreadInfo::initial(
     raz = (0 == wsv) ? 0 : acos(wsv_y / wsv);
     if (wsv_x < 0)
     {
-      raz = RAD_360 - raz;
+      raz = Radians::D_360().value - raz;
     }
   }
   spread.raz_ = Direction(raz, true);
@@ -263,7 +264,7 @@ SpreadInfo::SpreadInfo(
   MathSize heading_cos = 0;
   if (!has_no_slope)
   {
-    const auto heading = to_heading(to_radians(static_cast<MathSize>(slope_azimuth)));
+    const auto heading = Radians{static_cast<MathSize>(slope_azimuth)}.to_heading().fix().value;
     heading_sin = sin(heading);
     heading_cos = cos(heading);
   }
@@ -341,7 +342,7 @@ SpreadInfo::SpreadInfo(
     horizontal_adjustment(slope_azimuth, percentSlope());
   const auto spread_algorithm = WidestEllipseAlgorithm(MAX_SPREAD_ANGLE, cell_size, min_ros);
   offsets_ = spread_algorithm.calculate_offsets(
-    correction_factor, tfc_, raz_.asRadians(), head_ros_, back_ros, l_b_
+    correction_factor, tfc_, raz_.asRadians().value, head_ros_, back_ros, l_b_
   );
   // #endif
   // if no offsets then not spreading so invalidate head_ros_

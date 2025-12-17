@@ -131,7 +131,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       //  180
       if (back_ros >= min_ros_)
       {
-        const auto direction = fix_radians(RAD_180 + head_raz);
+        const auto direction = Radians{head_raz}.to_heading().fix().value;
         static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
       }
     }
@@ -239,7 +239,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   {
     ++num_angles;
     theta = min(acos(cur_x), last_theta + step_max);
-    angle = ellipse_angle(length_to_breadth, theta);
+    angle = ellipse_angle(length_to_breadth, Radians{theta}).value;
     added = add_offsets_calc_ros(angle);
     cur_x = cos(theta);
     last_theta = theta;
@@ -255,25 +255,27 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   }
   if (added)
   {
-    angle = ellipse_angle(length_to_breadth, (RAD_090 + theta) / 2.0);
+    angle =
+      ellipse_angle(length_to_breadth, Radians{(Radians::D_090() + Radians{theta}).value / 2.0})
+        .value;
     added = add_offsets_calc_ros(angle);
     // always just do one between the last angle and 90
-    theta = RAD_090;
+    theta = Radians::D_090().value;
     ++num_angles;
-    angle = ellipse_angle(length_to_breadth, theta);
-    added = add_offsets(RAD_090, flank_ros * sqrt(a_sq_sub_c_sq) / a);
+    angle = ellipse_angle(length_to_breadth, Radians{theta}).value;
+    added = add_offsets(Radians::D_090().value, flank_ros * sqrt(a_sq_sub_c_sq) / a);
     cur_x = cos(theta);
     last_theta = theta;
   }
   cur_x -= (step_x / 2.0);
   step_x *= length_to_breadth;
-  MathSize max_angle = RAD_180 - (length_to_breadth * step_max);
+  MathSize max_angle = Radians::D_180().value - (length_to_breadth * step_max);
   MathSize min_x = cos(max_angle);
   while (added && cur_x >= min_x)
   {
     ++num_angles;
     theta = max(acos(cur_x), last_theta + step_max);
-    angle = ellipse_angle(length_to_breadth, theta);
+    angle = ellipse_angle(length_to_breadth, Radians{theta}).value;
     if (angle > max_angle)
     {
       break;
@@ -289,7 +291,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     //  180
     if (back_ros >= min_ros_)
     {
-      const auto direction = fix_radians(RAD_180 + head_raz);
+      const auto direction = Radians{Radians::D_180().value + head_raz}.fix().value;
       static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
     }
   }

@@ -64,7 +64,7 @@ bool IntensityMap::isSurrounded(const Location& location) const
 }
 void IntensityMap::ignite(const Location& location)
 {
-  burn(location, 1, 0, fs::Direction::Invalid());
+  burn(location, 1, 0, fs::Direction::Invalid().value);
 }
 void IntensityMap::burn(
   const Location& location,
@@ -78,7 +78,7 @@ void IntensityMap::burn(
   {
     intensity_max_.set(location, intensity);
     rate_of_spread_at_max_.set(location, ros);
-    direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees()));
+    direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees().value));
     is_burned_.set(location.hash());
   }
   else
@@ -93,7 +93,7 @@ void IntensityMap::burn(
     if (ros_old < ros)
     {
       rate_of_spread_at_max_.set(location, ros);
-      direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees()));
+      direction_of_spread_at_max_.set(location, static_cast<DegreesSize>(raz.asDegrees().value));
     }
   }
 }

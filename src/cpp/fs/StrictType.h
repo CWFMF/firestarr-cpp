@@ -19,6 +19,7 @@ static constexpr UnitType Celsius{"degrees Celsius"};
 static constexpr UnitType Percent{"percent"};
 static constexpr UnitType KilometresPerHour{"km/h"};
 static constexpr UnitType CompassDegrees{"degrees"};
+static constexpr UnitType CompassRadians{"radians"};
 static constexpr UnitType MillimetresAccumulated{"mm accumulated"};
 }
 /**
@@ -61,8 +62,14 @@ struct StrictType
   T& operator=(T&& rhs) noexcept = default;
   T& operator=(const T& rhs) noexcept = default;
   auto operator<=>(const T& rhs) const = default;
-  [[nodiscard]] constexpr T operator+(const T& rhs) const noexcept { return {value + rhs.value}; }
-  [[nodiscard]] constexpr T operator-(const T& rhs) const noexcept { return {value - rhs.value}; }
+  [[nodiscard]] constexpr ConcreteType operator+(const T& rhs) const noexcept
+  {
+    return ConcreteType{value + rhs.value};
+  }
+  [[nodiscard]] constexpr ConcreteType operator-(const T& rhs) const noexcept
+  {
+    return ConcreteType{value - rhs.value};
+  }
   constexpr T& operator+=(const T& rhs) noexcept
   {
     value += rhs.value;

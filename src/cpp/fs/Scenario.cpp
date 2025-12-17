@@ -741,7 +741,7 @@ CellPointsMap apply_offsets_spreadkey(
         const auto& out = std::get<3>(r_p);
         const auto& x_o = out.first;
         const auto& y_o = out.second;
-        const auto dir_diff = abs(raz.asDegrees() - dir);
+        const auto dir_diff = abs(raz.asDegrees().value - dir);
         // #ifdef DEBUG_CELLPOINTS
         logging::verbose(
           "location.x %d; location.y %d;"
