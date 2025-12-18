@@ -95,7 +95,7 @@ MathSize SpreadInfo::initial(
       wse =
         28.0 - log(1.0 - min(0.999 * 2.496 * ffmc_effect, isf1) / (2.496 * ffmc_effect)) / 0.0818;
     }
-    const auto heading = to_heading(to_radians(static_cast<double>(Cell::aspect(spread.key_))));
+    const auto heading = to_radians(static_cast<double>(Cell::aspect(spread.key_))).to_heading();
     // FIX: ignore heading arguments for now since it was changing results
     std::ignore = heading_sin;
     std::ignore = heading_cos;
@@ -263,7 +263,7 @@ SpreadInfo::SpreadInfo(
   MathSize heading_cos = 0;
   if (!has_no_slope)
   {
-    const auto heading = to_heading(to_radians(static_cast<MathSize>(slope_azimuth)));
+    const auto heading = to_radians(static_cast<MathSize>(slope_azimuth)).to_heading();
     heading_sin = sin(heading);
     heading_cos = cos(heading);
   }

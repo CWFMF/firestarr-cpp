@@ -3,6 +3,7 @@
 #define FS_UTIL_H
 #include "stdafx.h"
 #include "Radians.h"
+#include "unstable.h"
 namespace fs
 {
 #ifndef TIFFTAG_GDAL_NODATA
@@ -138,9 +139,9 @@ template <class T>
  * \param degrees Angle in degrees
  * \return Angle in radians
  */
-[[nodiscard]] constexpr MathSize to_radians(const MathSize degrees) noexcept
+[[nodiscard]] constexpr Radians to_radians(const MathSize degrees) noexcept
 {
-  return Radians{Degrees{degrees}}.value;
+  return Radians{Degrees{degrees}};
 }
 // only calculate this once and reuse it
 /**
@@ -164,18 +165,18 @@ static constexpr MathSize RAD_090{Radians::D_090().value};
  * \param radians Value in radians
  * \return Value in degrees
  */
-[[nodiscard]] constexpr MathSize to_degrees(const MathSize radians)
+[[nodiscard]] constexpr Degrees to_degrees(const MathSize radians)
 {
-  return Radians{radians}.asDegrees().value;
+  return Radians{radians}.asDegrees();
 }
 /**
  * \brief Convert Bearing to Heading (opposite angle)
  * \param azimuth Bearing
  * \return Heading
  */
-[[nodiscard]] constexpr MathSize to_heading(const MathSize azimuth)
+[[nodiscard]] constexpr Radians to_heading(const MathSize azimuth)
 {
-  return Radians{azimuth}.to_heading().value;
+  return Radians{azimuth}.to_heading();
 }
 /**
  * \brief Read from a stream until delimiter is found

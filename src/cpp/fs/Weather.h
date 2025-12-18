@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_WEATHER_H
 #define FS_WEATHER_H
+#include "Radians.h"
 #include "StrictType.h"
 #include "unstable.h"
 #include "Util.h"
@@ -25,20 +26,20 @@ struct Direction : public StrictType<Direction, units::CompassDegrees>
   static consteval Direction Invalid() { return Direction{-1.0}; };
   constexpr Direction(const Degrees& degrees) : StrictType{degrees.value} { }
   constexpr Direction(const Radians& radians) : Direction{radians.asDegrees()} { }
-  [[nodiscard]] constexpr MathSize asRadians() const { return to_radians(asDegrees()); }
+  [[nodiscard]] constexpr MathSize asRadians() const { return to_radians(asDegrees()).value; }
   [[nodiscard]] constexpr MathSize asDegrees() const { return value; }
   [[nodiscard]] constexpr DegreesSize asDegreesSize() const
   {
     return static_cast<DegreesSize>(asDegrees());
   }
-  [[nodiscard]] constexpr MathSize heading() const { return to_heading(asRadians()); }
+  [[nodiscard]] constexpr MathSize heading() const { return to_heading(asRadians()).value; }
 };
 /**
  * \brief Wind with a Speed and Direction.
  */
 struct Wind
 {
-  static constexpr auto Units{std::pair{Speed::Units, Direction::Units}};
+  static constexpr auto units{std::tuple{Speed::units, Direction::units}};
   Speed speed{};
   Direction direction{};
   static consteval Wind Zero() { return {Speed::Zero(), Direction::Zero()}; };
@@ -79,8 +80,8 @@ struct Precipitation : public StrictType<Precipitation, units::MillimetresAccumu
  */
 struct Weather
 {
-  static constexpr auto Units{
-    std::tuple{Temperature::Units, RelativeHumidity::Units, Wind::Units, Precipitation::Units}
+  static constexpr auto units{
+    std::tuple{Temperature::units, RelativeHumidity::units, Wind::units, Precipitation::units}
   };
   static consteval Weather Zero() { return {}; }
   static consteval Weather Invalid()

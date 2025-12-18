@@ -234,8 +234,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   MathSize widest = atan2(flank_ros, c);
   size_t num_angles = 0;
   MathSize widest_x = cos(widest);
-  MathSize step_max = STEP_MAX / pow(length_to_breadth, 0.5);
-  while (added && cur_x > (STEP_MAX / 4.0))
+  MathSize step_max = (STEP_MAX / pow(length_to_breadth, 0.5)).value;
+  while (added && cur_x > (STEP_MAX / 4.0).value)
   {
     ++num_angles;
     theta = min(acos(cur_x), last_theta + step_max);
@@ -243,9 +243,9 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     added = add_offsets_calc_ros(angle);
     cur_x = cos(theta);
     last_theta = theta;
-    if (theta > (STEP_MAX / 2.0))
+    if (theta > (STEP_MAX / 2.0).value)
     {
-      step_max = STEP_MAX;
+      step_max = STEP_MAX.value;
     }
     cur_x -= step_x;
     if (cur_x > widest_x && abs(cur_x - widest_x) < step_x)

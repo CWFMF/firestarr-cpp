@@ -27,13 +27,16 @@ static constexpr UnitType MillimetresAccumulated{"mm accumulated"};
  */
 template <
   class ConcreteType,
-  units::UnitType U = units::Unitless,
+  units::UnitType Units = units::Unitless,
   class ValueType = MathSize,
   int InvalidValue = -1>
 struct StrictType
 {
-  using T = StrictType<ConcreteType, U, ValueType, InvalidValue>;
-  static constexpr auto Units = U;
+  using T = StrictType<ConcreteType, Units, ValueType, InvalidValue>;
+  using concrete_type = ConcreteType;
+  static constexpr auto units = Units;
+  using value_type = ValueType;
+  static constexpr auto invalid_value = InvalidValue;
   static consteval ConcreteType Zero() { return ConcreteType{0.0}; };
   static consteval ConcreteType Invalid()
   {
@@ -46,12 +49,12 @@ struct StrictType
     // HACK: ensure we're always using
     //       struct X : public StrictType<X>
     static_assert(
-      std::is_same_v<decltype(*this), StrictType<ConcreteType, U, ValueType, InvalidValue>&>,
+      std::is_same_v<decltype(*this), StrictType<ConcreteType, Units, ValueType, InvalidValue>&>,
       "Different types"
     );
     static_assert(std::is_same_v<decltype(*this), T&>, "Different types");
     static_assert(
-      std::is_same_v<T, StrictType<ConcreteType, U, ValueType, InvalidValue>>, "Different types"
+      std::is_same_v<T, StrictType<ConcreteType, Units, ValueType, InvalidValue>>, "Different types"
     );
     static_assert(std::is_convertible_v<ConcreteType, T>, "Different types");
     // // doesn't work in this direction
@@ -70,6 +73,15 @@ struct StrictType
   {
     return ConcreteType{value - rhs.value};
   }
+  // NOTE: should dividing by same type remove units?
+  [[nodiscard]] constexpr ConcreteType operator*(const ValueType& rhs) const noexcept
+  {
+    return ConcreteType{value * rhs};
+  }
+  [[nodiscard]] constexpr ConcreteType operator/(const ValueType& rhs) const noexcept
+  {
+    return ConcreteType{value / rhs};
+  }
   constexpr T& operator+=(const T& rhs) noexcept
   {
     value += rhs.value;
@@ -80,6 +92,33 @@ struct StrictType
     value -= rhs.value;
     return *this;
   }
+  constexpr T& operator*=(const T& rhs) noexcept
+  {
+    value *= rhs.value;
+    return *this;
+  }
+  constexpr T& operator/=(const T& rhs) noexcept
+  {
+    value /= rhs.value;
+    return *this;
+  }
 };
+template <class ConcreteType, units::UnitType Units, class ValueType, int InvalidValue>
+[[nodiscard]] constexpr ConcreteType operator*(
+  const ValueType& rhs,
+  const StrictType<ConcreteType, Units, ValueType, InvalidValue>& lhs
+) noexcept
+{
+  return ConcreteType{rhs * lhs.value};
+}
+// NOTE: dividing non-units by units makes no sense?
+// template <class ConcreteType, units::UnitType Units, class ValueType, int InvalidValue>
+// [[nodiscard]] constexpr ConcreteType operator/(
+//   const ValueType& rhs,
+//   const StrictType<ConcreteType, Units, ValueType, InvalidValue>& lhs
+// ) noexcept
+// {
+//   return ConcreteType{rhs / lhs.value};
+// }
 }
 #endif
