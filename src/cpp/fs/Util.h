@@ -126,15 +126,6 @@ template <class T>
   return static_cast<T>(value);
 }
 /**
- * \brief Ensure that value lies between 0 and 2 * PI
- * \param theta value to ensure is within bounds
- * \return value within range of (0, 2 * PI]
- */
-[[nodiscard]] constexpr MathSize fix_radians(const Radians& theta)
-{
-  return Radians{theta}.fix().value;
-}
-/**
  * \brief Convert degrees to radians
  * \param degrees Angle in degrees
  * \return Angle in radians
@@ -142,16 +133,6 @@ template <class T>
 [[nodiscard]] constexpr Radians to_radians(const MathSize degrees) noexcept
 {
   return Radians{Degrees{degrees}};
-}
-// only calculate this once and reuse it
-/**
- * \brief Convert radians to degrees
- * \param radians Value in radians
- * \return Value in degrees
- */
-[[nodiscard]] constexpr Degrees to_degrees(const MathSize radians)
-{
-  return Radians{radians}.asDegrees();
 }
 /**
  * \brief Read from a stream until delimiter is found
