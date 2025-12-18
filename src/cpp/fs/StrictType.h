@@ -9,7 +9,7 @@ namespace units
 template <size_t N>
 struct UnitType
 {
-  constexpr explicit UnitType(const char (&str)[N]) { std::copy_n(str, N, value); }
+  consteval explicit UnitType(const char (&str)[N]) { std::copy_n(str, N, value); }
   char value[N];
   auto operator<=>(const UnitType&) const = default;
   bool operator==(const UnitType&) const = default;

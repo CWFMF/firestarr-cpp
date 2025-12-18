@@ -341,7 +341,7 @@ SpreadInfo::SpreadInfo(
     horizontal_adjustment(slope_azimuth, percentSlope());
   const auto spread_algorithm = WidestEllipseAlgorithm(MAX_SPREAD_ANGLE, cell_size, min_ros);
   offsets_ = spread_algorithm.calculate_offsets(
-    correction_factor, tfc_, raz_.asRadians(), head_ros_, back_ros, l_b_
+    correction_factor, tfc_, Radians{raz_.asRadians()}, head_ros_, back_ros, l_b_
   );
   // #endif
   // if no offsets then not spreading so invalidate head_ros_

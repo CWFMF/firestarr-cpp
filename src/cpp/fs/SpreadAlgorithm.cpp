@@ -8,15 +8,15 @@ namespace fs
 HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const SlopeSize slope)
 {
   // do everything we can to avoid calling trig functions unnecessarily
-  constexpr auto no_correction = [](const MathSize) noexcept { return 1.0; };
+  constexpr auto no_correction = [](const Radians&) noexcept { return 1.0; };
   if (0 == slope)
   {
     // do check once and make function just return 1.0 if no slope
     return no_correction;
   }
   const auto b_semi = cos(atan(slope / 100.0));
-  const auto slope_radians = to_radians(slope_azimuth);
-  const auto do_correction = [=](const MathSize theta) noexcept {
+  const Radians slope_radians{Degrees{slope_azimuth}};
+  const auto do_correction = [=](const Radians& theta) noexcept {
     // never gets called if isInvalid() so don't check
     // figure out how far the ground distance is in map distance horizontally
     const auto angle_unrotated = theta - slope_radians;
@@ -27,7 +27,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     //   // distance
     //   return 1.0;
     // }
-    const auto tan_u = tan(angle_unrotated);
+    const auto tan_u = tan(angle_unrotated.value);
     const auto y = b_semi / sqrt(b_semi * tan_u * (b_semi * tan_u) + 1.0);
     const auto x = y * tan_u;
     // CHECK: Pretty sure you can't spread farther horizontally than the spread distance, regardless
@@ -39,7 +39,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 [[nodiscard]] OffsetSet OriginalSpreadAlgorithm::calculate_offsets(
   HorizontalAdjustment correction_factor,
   MathSize tfc,
-  MathSize head_raz,
+  const Radians& head_raz,
   MathSize head_ros,
   MathSize back_ros,
   MathSize length_to_breadth
@@ -67,7 +67,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   };
   // if not over spread threshold then don't spread
   // HACK: set ros in boolean if we get that far so that we don't have to repeat the if body
-  if (!add_offset(head_raz, head_ros * correction_factor(head_raz)))
+  if (!add_offset(head_raz.value, head_ros * correction_factor(head_raz)))
   {
     return offsets;
   }
@@ -98,18 +98,18 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     {
       return false;
     }
-    auto direction = fix_radians(angle_radians + head_raz);
+    auto direction = (Radians{angle_radians} + head_raz).fix();
     // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
     // intentionally don't use || because we want both of these to happen all the time
-    auto added = add_offset(direction, ros_flat * correction_factor(direction));
-    direction = fix_radians(head_raz - angle_radians);
-    added |= add_offset(direction, ros_flat * correction_factor(direction));
+    auto added = add_offset(direction.value, ros_flat * correction_factor(direction));
+    direction = (head_raz - Radians{angle_radians}).fix();
+    added |= add_offset(direction.value, ros_flat * correction_factor(direction));
     return added;
   };
   const auto add_offsets_calc_ros = [&](const MathSize angle_radians) {
     return add_offsets(angle_radians, calculate_ros(angle_radians));
   };
-  bool added = add_offset(head_raz, head_ros);
+  bool added = add_offset(head_raz.value, head_ros);
   MathSize i = max_angle_;
   while (added && i < 90)
   {
@@ -131,8 +131,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       //  180
       if (back_ros >= min_ros_)
       {
-        const auto direction{Radians{head_raz}.to_heading().fix().value};
-        static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
+        const auto direction{Radians{head_raz}.to_heading().fix()};
+        static_cast<void>(!add_offset(direction.value, back_ros * correction_factor(direction)));
       }
     }
   }
@@ -141,7 +141,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 [[nodiscard]] OffsetSet WidestEllipseAlgorithm::calculate_offsets(
   const HorizontalAdjustment correction_factor,
   const MathSize tfc,
-  const MathSize head_raz,
+  const Radians& head_raz,
   const MathSize head_ros,
   const MathSize back_ros,
   const MathSize length_to_breadth
@@ -178,7 +178,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   };
   // if not over spread threshold then don't spread
   // HACK: set ros in boolean if we get that far so that we don't have to repeat the if body
-  if (!add_offset(head_raz, head_ros * correction_factor(head_raz)))
+  if (!add_offset(head_raz.value, head_ros * correction_factor(head_raz)))
   {
     // #endif
     return offsets;
@@ -211,12 +211,12 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     {
       return false;
     }
-    auto direction = fix_radians(angle_radians + head_raz);
+    auto direction = (Radians{angle_radians} + head_raz).fix();
     // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
     // intentionally don't use || because we want both of these to happen all the time
-    auto added = add_offset(direction, ros_flat * correction_factor(direction));
-    direction = fix_radians(head_raz - angle_radians);
-    added |= add_offset(direction, ros_flat * correction_factor(direction));
+    auto added = add_offset(direction.value, ros_flat * correction_factor(direction));
+    direction = (head_raz - Radians{angle_radians}).fix();
+    added |= add_offset(direction.value, ros_flat * correction_factor(direction));
     return added;
   };
   const auto add_offsets_calc_ros = [&](const MathSize angle_radians) {
@@ -289,8 +289,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     //  180
     if (back_ros >= min_ros_)
     {
-      const auto direction{Radians{head_raz}.to_heading().fix().value};
-      static_cast<void>(!add_offset(direction, back_ros * correction_factor(direction)));
+      const auto direction{Radians{head_raz}.to_heading().fix()};
+      static_cast<void>(!add_offset(direction.value, back_ros * correction_factor(direction)));
     }
   }
 #ifdef DEBUG_POINTS

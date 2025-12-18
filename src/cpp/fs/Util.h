@@ -9,37 +9,45 @@ struct Radians;
 struct Degrees : public StrictType<Degrees, units::CompassDegrees>
 {
   using StrictType::StrictType;
-  Degrees(const Radians& radians) noexcept;
+  explicit constexpr Degrees(const AspectSize aspect) noexcept
+    : Degrees{static_cast<MathSize>(aspect)}
+  { }
 };
 struct Radians : public StrictType<Radians, units::CompassRadians>
 {
   using StrictType::StrictType;
   static consteval Radians Pi() { return Radians{M_PI}; };
   static consteval Radians PiX2() { return Radians{2 * M_PI}; };
-  static consteval Radians D_360() { return Radians{Degrees{360}}; };
-  static consteval Radians D_270() { return Radians{Degrees{270}}; };
-  static consteval Radians D_180() { return Radians{Degrees{180}}; };
-  static consteval Radians D_090() { return Radians{Degrees{90}}; };
-  constexpr Radians(const Degrees& degrees) noexcept
-    : Radians{Radians{degrees.value / M_RADIANS_TO_DEGREES}.fix().value}
+  static consteval Radians D_360() { return Radians{Degrees{static_cast<AspectSize>(360)}}; };
+  static consteval Radians D_270() { return Radians{Degrees{static_cast<AspectSize>(270)}}; };
+  static consteval Radians D_180() { return Radians{Degrees{static_cast<AspectSize>(180)}}; };
+  static consteval Radians D_090() { return Radians{Degrees{static_cast<AspectSize>(90)}}; };
+  explicit constexpr Radians(const Degrees& degrees) noexcept
+    : Radians{degrees.value / M_RADIANS_TO_DEGREES}
   { }
+  explicit constexpr Radians(const AspectSize aspect) noexcept : Radians{Degrees{aspect}} { }
+  [[nodiscard]] constexpr Degrees asDegrees() const
+  {
+    return Degrees{value * M_RADIANS_TO_DEGREES};
+  }
+  [[nodiscard]] static constexpr Radians fix(const Radians& radians)
+  {
+    if (radians > PiX2())
+    {
+      return radians - PiX2();
+    }
+    if (radians < Radians::Zero())
+    {
+      return radians + PiX2();
+    }
+    return radians;
+  }
   /**
    * \brief Ensure that value lies between 0 and 2 * PI
    * \param theta value to ensure is within bounds
    * \return value within range of (0, 2 * PI]
    */
-  [[nodiscard]] constexpr Radians fix() const
-  {
-    if (*this > PiX2())
-    {
-      return *this - PiX2();
-    }
-    if (*this < Radians{0})
-    {
-      return *this + PiX2();
-    }
-    return *this;
-  }
+  [[nodiscard]] constexpr Radians fix() const { return Radians::fix(*this); }
   /**
    * \brief Convert Bearing to Heading (opposite angle)
    * \param azimuth Bearing
@@ -214,7 +222,7 @@ static constexpr MathSize RAD_090{Radians::D_090().value};
  */
 [[nodiscard]] constexpr MathSize to_degrees(const MathSize radians)
 {
-  return Degrees{Radians{radians}}.value;
+  return Radians{radians}.asDegrees().value;
 }
 /**
  * \brief Convert Bearing to Heading (opposite angle)

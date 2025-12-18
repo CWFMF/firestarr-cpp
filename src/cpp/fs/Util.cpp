@@ -9,8 +9,6 @@
 #endif
 namespace fs
 {
-Degrees::Degrees(const Radians& radians) noexcept
-  : Degrees{radians.value * M_RADIANS_TO_DEGREES} { };
 TIFF* GeoTiffOpen(const char* const filename, const char* const mode)
 {
   TIFF* tif = XTIFFOpen(filename, mode);

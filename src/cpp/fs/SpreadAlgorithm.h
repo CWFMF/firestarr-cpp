@@ -5,7 +5,7 @@
 #define FS_SPREADALGORITHM_H
 namespace fs
 {
-using HorizontalAdjustment = std::function<MathSize(MathSize)>;
+using HorizontalAdjustment = std::function<MathSize(const Radians&)>;
 HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const SlopeSize slope);
 class SpreadAlgorithm
 {
@@ -13,7 +13,7 @@ public:
   [[nodiscard]] virtual OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
     MathSize tfc,
-    MathSize head_raz,
+    const Radians& head_raz,
     MathSize head_ros,
     MathSize back_ros,
     MathSize length_to_breadth
@@ -38,7 +38,7 @@ public:
   [[nodiscard]] OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
     MathSize tfc,
-    MathSize head_raz,
+    const Radians& head_raz,
     MathSize head_ros,
     MathSize back_ros,
     MathSize length_to_breadth
@@ -51,7 +51,7 @@ public:
   [[nodiscard]] OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
     MathSize tfc,
-    MathSize head_raz,
+    const Radians& head_raz,
     MathSize head_ros,
     MathSize back_ros,
     MathSize length_to_breadth
