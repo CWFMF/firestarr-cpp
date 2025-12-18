@@ -11,7 +11,6 @@ struct Degrees : public StrictType<Degrees, units::CompassDegrees>
   using StrictType::StrictType;
   Degrees(const Radians& radians) noexcept;
 };
-static constexpr auto M_RADIANS_TO_DEGREES = 180.0 / M_PI;
 struct Radians : public StrictType<Radians, units::CompassRadians>
 {
   using StrictType::StrictType;
@@ -22,7 +21,7 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
   static consteval Radians D_180() { return Radians{Degrees{180}}; };
   static consteval Radians D_090() { return Radians{Degrees{90}}; };
   constexpr Radians(const Degrees& degrees) noexcept
-    : Radians{Radians{degrees.value}.fix().value / M_RADIANS_TO_DEGREES}
+    : Radians{Radians{degrees.value / M_RADIANS_TO_DEGREES}.fix().value}
   { }
   /**
    * \brief Ensure that value lies between 0 and 2 * PI
@@ -48,6 +47,12 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
    */
   [[nodiscard]] constexpr Radians to_heading() const { return (*this + D_180()).fix(); }
 };
+// static constexpr MathSize to_radians(const MathSize v) { return Radians{Degrees{v}}.value; };
+// static constexpr MathSize to_degrees(const MathSize v) { return Degrees{Radians{v}}.value; };
+// static constexpr MathSize fix_radians(const MathSize v) { return Radians{v}.fix().value; };
+static constexpr Radians abs(const Radians& radians) { return Radians{radians.value}; };
+// static constexpr MathSize to_degrees(const MathSize v) { return Degrees{Radians{v}}.value; };
+// static constexpr MathSize fix_radians(const MathSize v) { return Radians{v}.fix().value; };
 #ifndef TIFFTAG_GDAL_NODATA
 #define TIFFTAG_GDAL_NODATA 42113
 #endif
@@ -166,6 +171,59 @@ template <class T>
 [[nodiscard]] T no_convert(int value, int) noexcept
 {
   return static_cast<T>(value);
+}
+/**
+ * \brief Ensure that value lies between 0 and 2 * PI
+ * \param theta value to ensure is within bounds
+ * \return value within range of (0, 2 * PI]
+ */
+[[nodiscard]] constexpr MathSize fix_radians(const MathSize theta)
+{
+  return Radians{theta}.fix().value;
+}
+/**
+ * \brief Convert degrees to radians
+ * \param degrees Angle in degrees
+ * \return Angle in radians
+ */
+[[nodiscard]] constexpr MathSize to_radians(const MathSize degrees) noexcept
+{
+  return Radians{Degrees{degrees}}.value;
+}
+// only calculate this once and reuse it
+/**
+ * \brief 360 degrees in radians
+ */
+static constexpr MathSize RAD_360{Radians::D_360().value};
+/**
+ * \brief 270 degrees in radians
+ */
+static constexpr MathSize RAD_270{Radians::D_270().value};
+/**
+ * \brief 180 degrees in radians
+ */
+static constexpr MathSize RAD_180{Radians::D_180().value};
+/**
+ * \brief 90 degrees in radians
+ */
+static constexpr MathSize RAD_090{Radians::D_090().value};
+/**
+ * \brief Convert radians to degrees
+ * \param radians Value in radians
+ * \return Value in degrees
+ */
+[[nodiscard]] constexpr MathSize to_degrees(const MathSize radians)
+{
+  return Degrees{Radians{radians}}.value;
+}
+/**
+ * \brief Convert Bearing to Heading (opposite angle)
+ * \param azimuth Bearing
+ * \return Heading
+ */
+[[nodiscard]] constexpr MathSize to_heading(const MathSize azimuth)
+{
+  return Radians{azimuth}.to_heading().value;
 }
 /**
  * \brief Read from a stream until delimiter is found
@@ -476,13 +534,10 @@ void month_and_day(
  * @param length_to_breadth length-to-breadth ratio
  * @param theta direction to convert to ellipse direction (radians)
  */
-[[nodiscard]] inline Radians ellipse_angle(const MathSize length_to_breadth, const Radians theta)
+[[nodiscard]] inline MathSize ellipse_angle(const MathSize length_to_breadth, const MathSize theta)
 {
-  return Radians{atan2(sin(theta.value) / length_to_breadth, cos(theta.value))}.fix();
+  return (fix_radians(atan2(sin(theta) / length_to_breadth, cos(theta))));
 }
-static constexpr MathSize to_radians(const MathSize v) { return Radians{Degrees{v}}.value; };
-static constexpr MathSize to_degrees(const MathSize v) { return Degrees{Radians{v}}.value; };
-static constexpr MathSize fix_radians(const MathSize v) { return Radians{v}.fix().value; };
 // make a set of shared pointers that compares the underlying objects
 template <class T>
 struct sp_less

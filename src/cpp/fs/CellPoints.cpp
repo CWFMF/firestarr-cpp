@@ -142,8 +142,7 @@ CellPoints& CellPoints::insert(
     // only spread in a direction that's in front of the normal to the angle it came from
     // i.e. the 90 degrees on either side of the raz
     const auto dir_diff =
-      abs((spread_current.direction().asDegrees() - spread_current.direction_previous().asDegrees())
-            .value);
+      abs(spread_current.direction().asDegrees() - spread_current.direction_previous().asDegrees());
     const auto MAX_DEGREES = 90.0;
     // NOTE: there should be no change in the extent of the fire if we exclude things behind the
     // normal to the direction it came from
@@ -200,7 +199,7 @@ CellPoints& CellPoints::insert(
     closer[i] = (d < p_d);
     p_p = (d < p_d) ? p0 : p_p;
     p_d = (d < p_d) ? d : p_d;
-    p_a = (d < p_d) ? spread_current.direction().asDegrees().value : p_a;
+    p_a = (d < p_d) ? spread_current.direction().asDegrees() : p_a;
   }
 #ifdef DEBUG_CELLPOINTS
   logging::note("now have %ld points", size());

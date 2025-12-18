@@ -123,7 +123,7 @@ void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelTyp
   print_col("CFC", spread.crownFuelConsumption());
   print_col("FD", spread.fireDescription());
   print_col("HFI", static_cast<size_t>(spread.maxIntensity()));
-  print_col("RAZ", static_cast<DirectionSize>(spread.headDirection().asDegrees().value));
+  print_col("RAZ", static_cast<DirectionSize>(spread.headDirection().asDegrees()));
   print_col("ROS", spread.headRos());
   print_col("SFC", spread.surfaceFuelConsumption());
   print_col("TFC", spread.totalFuelConsumption());
@@ -394,7 +394,7 @@ int test(
       }
       else
       {
-        wind_directions.emplace_back(static_cast<int>(wx->wind.direction.asDegrees().value));
+        wind_directions.emplace_back(static_cast<int>(wx->wind.direction.asDegrees()));
       }
       auto wind_speeds = vector<int>();
       if (fs::Speed::Invalid() == wx->wind.speed)

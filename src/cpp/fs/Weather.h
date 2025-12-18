@@ -18,21 +18,21 @@ struct Speed : public StrictType<Speed, units::KilometresPerHour>
 {
   using StrictType::StrictType;
 };
-// HACK: represent Degrees but don't use that as underlying type so we don't
-//        need to use value.value to get basic type
 struct Direction : public StrictType<Direction, units::CompassDegrees>
 {
   using StrictType::StrictType;
   static consteval Direction Zero() { return Direction{0.0}; };
   static consteval Direction Invalid() { return Direction{-1.0}; };
   constexpr Direction(const MathSize value = 0, const bool is_radians = false)
-    : StrictType{is_radians ? Degrees{Radians{value}}.value : value}
+    : StrictType{is_radians ? to_degrees(value) : value}
   { }
-  constexpr Direction(const Degrees& degrees) : Direction{degrees.value} { }
-  constexpr Direction(const Radians& radians) : Direction{Degrees{radians}} { }
-  [[nodiscard]] constexpr Degrees asDegrees() const { return Degrees{value}; }
-  [[nodiscard]] constexpr Radians asRadians() const { return Radians{value}; }
-  [[nodiscard]] constexpr Radians heading() const { return asRadians().to_heading(); }
+  [[nodiscard]] constexpr MathSize asRadians() const { return to_radians(asDegrees()); }
+  [[nodiscard]] constexpr MathSize asDegrees() const { return value; }
+  [[nodiscard]] constexpr DegreesSize asDegreesSize() const
+  {
+    return static_cast<DegreesSize>(asDegrees());
+  }
+  [[nodiscard]] constexpr MathSize heading() const { return to_heading(asRadians()); }
 };
 /**
  * \brief Wind with a Speed and Direction.
@@ -49,7 +49,7 @@ struct Wind
    * \brief Direction wind is going towards
    * \return Direction wind is going towards
    */
-  [[nodiscard]] constexpr Radians heading() const noexcept { return direction.heading(); }
+  [[nodiscard]] constexpr MathSize heading() const noexcept { return direction.heading(); }
   /**
    * \brief X component of wind vector (km/h)
    * \return X component of wind vector (km/h)
@@ -57,7 +57,7 @@ struct Wind
   [[nodiscard]] constexpr MathSize wsvX() const noexcept
   {
     // HACK: rounding error due to assignment before adding in old tests so keep for now
-    volatile auto v = speed.value * sin(direction.heading().value);
+    volatile auto v = speed.value * sin(direction.heading());
     return v;
   }
   /**
@@ -67,7 +67,7 @@ struct Wind
   [[nodiscard]] constexpr MathSize wsvY() const noexcept
   {
     // HACK: rounding error due to assignment before adding in old tests so keep for now
-    volatile auto v = speed.value * cos(direction.heading().value);
+    volatile auto v = speed.value * cos(direction.heading());
     return v;
   }
 };
