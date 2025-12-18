@@ -59,6 +59,7 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
 // static constexpr MathSize to_degrees(const MathSize v) { return Degrees{Radians{v}}.value; };
 // static constexpr MathSize fix_radians(const MathSize v) { return Radians{v}.fix().value; };
 static constexpr Radians abs(const Radians& radians) { return Radians{radians.value}; };
+static constexpr MathSize tan(const Radians& radians) { return std::tan(radians.value); };
 // static constexpr MathSize to_degrees(const MathSize v) { return Degrees{Radians{v}}.value; };
 // static constexpr MathSize fix_radians(const MathSize v) { return Radians{v}.fix().value; };
 #ifndef TIFFTAG_GDAL_NODATA

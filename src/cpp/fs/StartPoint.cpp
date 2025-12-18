@@ -47,7 +47,7 @@ static std::pair<DurationSize, DurationSize> sunrise_sunset(
     const auto m = 0.9856 * t - 3.289;
     const auto l =
       fix_degrees(m + 1.916 * sin(to_radians(m)) + 0.020 * sin(to_radians(2 * m)) + 282.634);
-    auto ra = fix_degrees(to_degrees(atan(0.91764 * tan(to_radians(l)))));
+    auto ra = fix_degrees(to_degrees(atan(0.91764 * tan(Radians{to_radians(l)}))));
     const auto l_quadrant = floor(l / 90) * 90;
     const auto ra_quadrant = floor(ra / 90) * 90;
     ra += l_quadrant - ra_quadrant;

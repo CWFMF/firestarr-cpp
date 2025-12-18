@@ -27,7 +27,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     //   // distance
     //   return 1.0;
     // }
-    const auto tan_u = tan(angle_unrotated.value);
+    const auto tan_u = tan(angle_unrotated);
     const auto y = b_semi / sqrt(b_semi * tan_u * (b_semi * tan_u) + 1.0);
     const auto x = y * tan_u;
     // CHECK: Pretty sure you can't spread farther horizontally than the spread distance, regardless
