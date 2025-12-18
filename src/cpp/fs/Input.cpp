@@ -27,7 +27,7 @@ FwiWeather read_fwi_weather(istringstream* iss, string* str)
   // WD
   getline(iss, str, ',');
   logging::extensive("WD is %s", str->c_str());
-  const Direction wd(stod(str), false);
+  const Direction wd{Degrees{stod(str)}};
   const Wind wind(ws, wd);
   // FIX: pretend we're checking these but the flag is unset for now
   getline(iss, str, ',');
@@ -71,7 +71,7 @@ FwiWeather read_weather(istringstream* iss, string* str)
   // WD
   getline(iss, str, ',');
   logging::extensive("WD is %s", str->c_str());
-  const Direction wd(stod(str), false);
+  const Direction wd{Degrees{stod(str)}};
   const Wind wind(ws, wd);
   return {
     {.temperature = temp, .rh = rh, .wind = wind, .prec = prec},

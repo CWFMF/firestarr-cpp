@@ -49,7 +49,7 @@ CellPoints::CellPoints(const Idx cell_x, const Idx cell_y) noexcept
 {
   std::fill(pts_.distances().begin(), pts_.distances().end(), INVALID_DISTANCE);
   std::fill(pts_.points().begin(), pts_.points().end(), INVALID_INNER_POSITION);
-  std::fill(pts_.directions().begin(), pts_.directions().end(), INVALID_DIRECTION);
+  std::fill(pts_.directions().begin(), pts_.directions().end(), INVALID_DIRECTION.value);
 #ifdef DEBUG_CELLPOINTS
   logging::note("CellPoints is size %ld after creation and should be empty", size());
 #endif

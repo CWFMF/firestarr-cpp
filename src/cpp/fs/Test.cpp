@@ -302,7 +302,7 @@ int test(
   static const SlopeSize DEFAULT_SLOPE = 0;
   static const AspectSize DEFAULT_ASPECT = 0;
   static const Speed DEFAULT_WIND_SPEED(20);
-  static const Direction DEFAULT_WIND_DIRECTION(180, false);
+  static const Direction DEFAULT_WIND_DIRECTION{Degrees{180.0}};
   static const Wind DEFAULT_WIND(DEFAULT_WIND_SPEED, DEFAULT_WIND_DIRECTION);
   static const Ffmc DEFAULT_FFMC(90);
   static const Dmc DEFAULT_DMC(35.5);
@@ -384,7 +384,7 @@ int test(
       {
         aspects.emplace_back(constant_aspect);
       }
-      auto wind_directions = vector<int>();
+      auto wind_directions = vector<DirectionSize>();
       if (fs::Direction::Invalid() == wx->wind.direction)
       {
         for (auto wind_direction = 0; wind_direction < 360; wind_direction += WD_INCREMENT)
@@ -433,7 +433,7 @@ int test(
           {
             for (auto wind_direction : wind_directions)
             {
-              const Direction direction(wind_direction, false);
+              const Direction direction{Degrees{wind_direction}};
               for (auto wind_speed : wind_speeds)
               {
                 const Wind wind(Speed(wind_speed), direction);

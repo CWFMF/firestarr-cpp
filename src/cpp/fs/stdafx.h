@@ -180,7 +180,6 @@ using FuelCodeSize = uint8_t;
  * \brief Type used for direction values (uses [0 - 359])
  */
 using DirectionSize = uint16_t;
-constexpr auto INVALID_DIRECTION = std::numeric_limits<DirectionSize>::max();
 /**
  * \brief Type used for aspect values (uses [0 - 359])
  */

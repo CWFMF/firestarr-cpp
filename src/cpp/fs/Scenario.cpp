@@ -779,7 +779,10 @@ CellPointsMap apply_offsets_spreadkey(
             new_y
           );
           r1.insert(
-            src, SpreadData(arrival_time, intensity, ros, raz, Direction(dir, false)), new_x, new_y
+            src,
+            SpreadData(arrival_time, intensity, ros, raz, Direction(Degrees{dir})),
+            new_x,
+            new_y
           );
 #ifdef DEBUG_CELLPOINTS
           logging::note("r1 is now %ld items", r1.size());

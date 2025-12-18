@@ -9,8 +9,8 @@ struct Radians;
 struct Degrees : public StrictType<Degrees, units::CompassDegrees>
 {
   using StrictType::StrictType;
-  explicit constexpr Degrees(const AspectSize aspect) noexcept
-    : Degrees{static_cast<MathSize>(aspect)}
+  explicit constexpr Degrees(const DirectionSize degrees) noexcept
+    : Degrees{static_cast<MathSize>(degrees)}
   { }
 };
 struct Radians : public StrictType<Radians, units::CompassRadians>
@@ -55,11 +55,14 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
    */
   [[nodiscard]] constexpr Radians to_heading() const { return (*this + D_180()).fix(); }
 };
+static constexpr Degrees INVALID_DIRECTION{std::numeric_limits<DirectionSize>::max()};
 // static constexpr MathSize to_radians(const MathSize v) { return Radians{Degrees{v}}.value; };
 // static constexpr MathSize to_degrees(const MathSize v) { return Degrees{Radians{v}}.value; };
 // static constexpr MathSize fix_radians(const MathSize v) { return Radians{v}.fix().value; };
 static constexpr Radians abs(const Radians& radians) { return Radians{radians.value}; };
 static constexpr MathSize tan(const Radians& radians) { return std::tan(radians.value); };
+static constexpr MathSize sin(const Radians& radians) { return fs::sin(radians.value); };
+static constexpr MathSize cos(const Radians& radians) { return fs::cos(radians.value); };
 // static constexpr MathSize to_degrees(const MathSize v) { return Degrees{Radians{v}}.value; };
 // static constexpr MathSize fix_radians(const MathSize v) { return Radians{v}.fix().value; };
 #ifndef TIFFTAG_GDAL_NODATA

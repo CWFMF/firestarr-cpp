@@ -23,9 +23,8 @@ struct Direction : public StrictType<Direction, units::CompassDegrees>
   using StrictType::StrictType;
   static consteval Direction Zero() { return Direction{0.0}; };
   static consteval Direction Invalid() { return Direction{-1.0}; };
-  constexpr Direction(const MathSize value = 0, const bool is_radians = false)
-    : StrictType{is_radians ? to_degrees(value) : value}
-  { }
+  constexpr Direction(const Degrees& degrees) : StrictType{degrees.value} { }
+  constexpr Direction(const Radians& radians) : Direction{radians.asDegrees()} { }
   [[nodiscard]] constexpr MathSize asRadians() const { return to_radians(asDegrees()); }
   [[nodiscard]] constexpr MathSize asDegrees() const { return value; }
   [[nodiscard]] constexpr DegreesSize asDegreesSize() const

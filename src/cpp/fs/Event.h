@@ -55,7 +55,7 @@ struct Event
   /**
    * \brief Head fire spread direction
    */
-  Direction raz{INVALID_DIRECTION, false};
+  Direction raz{INVALID_DIRECTION};
   /**
    * \brief CellIndex for relative Cell that spread into from
    */
