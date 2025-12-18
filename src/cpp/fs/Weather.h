@@ -32,7 +32,10 @@ struct Direction : public StrictType<Direction, units::CompassDegrees>
   {
     return static_cast<DegreesSize>(asDegrees());
   }
-  [[nodiscard]] constexpr MathSize heading() const { return to_heading(asRadians()).value; }
+  [[nodiscard]] constexpr MathSize heading() const
+  {
+    return to_radians(asDegrees()).to_heading().value;
+  }
 };
 /**
  * \brief Wind with a Speed and Direction.

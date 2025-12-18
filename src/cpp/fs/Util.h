@@ -154,15 +154,6 @@ template <class T>
   return Radians{radians}.asDegrees();
 }
 /**
- * \brief Convert Bearing to Heading (opposite angle)
- * \param azimuth Bearing
- * \return Heading
- */
-[[nodiscard]] constexpr Radians to_heading(const MathSize azimuth)
-{
-  return Radians{azimuth}.to_heading();
-}
-/**
  * \brief Read from a stream until delimiter is found
  * \tparam Elem Elem for stream
  * \tparam Traits Traits for stream
