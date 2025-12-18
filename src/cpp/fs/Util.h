@@ -189,7 +189,7 @@ template <class T>
  * \param theta value to ensure is within bounds
  * \return value within range of (0, 2 * PI]
  */
-[[nodiscard]] constexpr MathSize fix_radians(const MathSize theta)
+[[nodiscard]] constexpr MathSize fix_radians(const Radians& theta)
 {
   return Radians{theta}.fix().value;
 }
@@ -546,9 +546,9 @@ void month_and_day(
  * @param length_to_breadth length-to-breadth ratio
  * @param theta direction to convert to ellipse direction (radians)
  */
-[[nodiscard]] inline MathSize ellipse_angle(const MathSize length_to_breadth, const MathSize theta)
+[[nodiscard]] inline Radians ellipse_angle(const MathSize length_to_breadth, const Radians& theta)
 {
-  return (fix_radians(atan2(sin(theta) / length_to_breadth, cos(theta))));
+  return Radians{atan2(sin(theta) / length_to_breadth, cos(theta))}.fix();
 }
 // make a set of shared pointers that compares the underlying objects
 template <class T>
