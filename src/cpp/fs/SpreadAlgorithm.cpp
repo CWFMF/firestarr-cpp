@@ -224,7 +224,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   };
   bool added = true;
 #define STEP_X 0.2
-#define STEP_MAX to_radians(max_angle_)
+#define STEP_MAX Radians::from_degrees(max_angle_)
   MathSize step_x = STEP_X / pow(length_to_breadth, 0.5);
   MathSize theta = 0;
   Radians angle{0.0};

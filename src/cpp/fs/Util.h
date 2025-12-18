@@ -126,15 +126,6 @@ template <class T>
   return static_cast<T>(value);
 }
 /**
- * \brief Convert degrees to radians
- * \param degrees Angle in degrees
- * \return Angle in radians
- */
-[[nodiscard]] constexpr Radians to_radians(const MathSize degrees) noexcept
-{
-  return Radians{Degrees{degrees}};
-}
-/**
  * \brief Read from a stream until delimiter is found
  * \tparam Elem Elem for stream
  * \tparam Traits Traits for stream

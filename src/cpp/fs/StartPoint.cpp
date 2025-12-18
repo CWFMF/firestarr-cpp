@@ -49,17 +49,21 @@ static std::pair<DurationSize, DurationSize> sunrise_sunset(
     // http://edwilliams.org/sunrise_sunset_algorithm.htm
     const auto t = jd + (t_hour - lng_hour) / 24;
     const auto m = 0.9856 * t - 3.289;
-    const auto l =
-      fix_degrees(m + 1.916 * sin(to_radians(m)) + 0.020 * sin(to_radians(2 * m)) + 282.634);
-    auto ra = fix_degrees(Radians{atan(0.91764 * tan(Radians{to_radians(l)}))}.asDegrees()).value;
+    const auto l = fix_degrees(
+      m + 1.916 * sin(Radians::from_degrees(m)) + 0.020 * sin(Radians::from_degrees(2 * m))
+      + 282.634
+    );
+    auto ra =
+      fix_degrees(Radians{atan(0.91764 * tan(Radians{Radians::from_degrees(l)}))}.asDegrees())
+        .value;
     const auto l_quadrant = floor(l / 90) * 90;
     const auto ra_quadrant = floor(ra / 90) * 90;
     ra += l_quadrant - ra_quadrant;
     ra /= 15;
-    const auto sin_dec = 0.39782 * sin(to_radians(l));
+    const auto sin_dec = 0.39782 * sin(Radians::from_degrees(l));
     const auto cos_dec = cos(asin(sin_dec));
-    const auto cos_h =
-      (cos(Zenith) - sin_dec * sin(to_radians(latitude))) / (cos_dec * cos(to_radians(latitude)));
+    const auto cos_h = (cos(Zenith) - sin_dec * sin(Radians::from_degrees(latitude)))
+                     / (cos_dec * cos(Radians::from_degrees(latitude)));
     MathSize h = Radians{acos(cos_h)}.asDegrees().value;
     if (cos_h > 1)
     {

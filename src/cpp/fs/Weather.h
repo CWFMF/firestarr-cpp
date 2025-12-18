@@ -26,7 +26,10 @@ struct Direction : public StrictType<Direction, units::CompassDegrees>
   static consteval Direction Invalid() { return Direction{-1.0}; };
   constexpr Direction(const Degrees& degrees) : StrictType{degrees.value} { }
   constexpr Direction(const Radians& radians) : Direction{radians.asDegrees()} { }
-  [[nodiscard]] constexpr MathSize asRadians() const { return to_radians(asDegrees()).value; }
+  [[nodiscard]] constexpr MathSize asRadians() const
+  {
+    return Radians::from_degrees(asDegrees()).value;
+  }
   [[nodiscard]] constexpr MathSize asDegrees() const { return value; }
   [[nodiscard]] constexpr DegreesSize asDegreesSize() const
   {
@@ -34,7 +37,7 @@ struct Direction : public StrictType<Direction, units::CompassDegrees>
   }
   [[nodiscard]] constexpr MathSize heading() const
   {
-    return to_radians(asDegrees()).to_heading().value;
+    return Radians::from_degrees(asDegrees()).to_heading().value;
   }
 };
 /**
