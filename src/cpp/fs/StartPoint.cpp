@@ -42,7 +42,7 @@ static std::pair<DurationSize, DurationSize> sunrise_sunset(
   const MathSize longitude
 ) noexcept
 {
-  static const auto Zenith = to_radians(96);
+  static const auto Zenith = Radians::from_degrees(96.0);
   const auto lng_hour = longitude / 15;
   auto find_time = [=](const bool for_sunrise) -> DurationSize {
     const auto t_hour = for_sunrise ? 6 : 18;

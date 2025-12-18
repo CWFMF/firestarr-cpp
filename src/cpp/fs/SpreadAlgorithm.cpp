@@ -113,16 +113,16 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   MathSize i = max_angle_;
   while (added && i < 90)
   {
-    added = add_offsets_calc_ros(Radians{Degrees{i}});
+    added = add_offsets_calc_ros(Radians::from_degrees(i));
     i += max_angle_;
   }
   if (added)
   {
-    added = add_offsets(Radians{Degrees{90.0}}, flank_ros * sqrt(a_sq_sub_c_sq) / a);
+    added = add_offsets(Radians::D_090(), flank_ros * sqrt(a_sq_sub_c_sq) / a);
     i = 90 + max_angle_;
     while (added && i < 180)
     {
-      added = add_offsets_calc_ros(Radians{Degrees{i}});
+      added = add_offsets_calc_ros(Radians::from_degrees(i));
       i += max_angle_;
     }
     if (added)

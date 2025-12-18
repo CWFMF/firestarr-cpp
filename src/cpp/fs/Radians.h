@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_TYPES_H
 #define FS_TYPES_H
+#include "stdafx.h"
 #include "StrictType.h"
 namespace fs
 {
@@ -53,6 +54,14 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
    * \return Heading
    */
   [[nodiscard]] constexpr Radians to_heading() const { return (*this + D_180()).fix(); }
+  [[nodiscard]] static constexpr Radians from_degrees(const MathSize degrees)
+  {
+    return Radians{Degrees{degrees}};
+  }
+  [[nodiscard]] static constexpr Radians from_aspect(const MathSize aspect)
+  {
+    return Radians{static_cast<AspectSize>(aspect)};
+  }
 };
 static constexpr Degrees INVALID_DIRECTION{std::numeric_limits<DirectionSize>::max()};
 static constexpr Radians abs(const Radians& radians) { return Radians{radians.value}; };
