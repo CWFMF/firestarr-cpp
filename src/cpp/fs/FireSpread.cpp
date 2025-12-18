@@ -108,7 +108,7 @@ MathSize SpreadInfo::initial(
     raz = (0 == wsv) ? 0 : acos(wsv_y / wsv);
     if (wsv_x < 0)
     {
-      raz = RAD_360 - raz;
+      raz = Radians::D_360().value - raz;
     }
   }
   spread.raz_ = Direction{Radians{raz}};

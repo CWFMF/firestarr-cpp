@@ -255,10 +255,10 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   }
   if (added)
   {
-    angle = ellipse_angle(length_to_breadth, Radians{(RAD_090 + theta) / 2.0});
+    angle = ellipse_angle(length_to_breadth, Radians{(Radians::D_090().value + theta) / 2.0});
     added = add_offsets_calc_ros(angle);
     // always just do one between the last angle and 90
-    theta = RAD_090;
+    theta = Radians::D_090().value;
     ++num_angles;
     angle = ellipse_angle(length_to_breadth, Radians{theta});
     added = add_offsets(Radians::D_090(), flank_ros * sqrt(a_sq_sub_c_sq) / a);
@@ -267,7 +267,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   }
   cur_x -= (step_x / 2.0);
   step_x *= length_to_breadth;
-  Radians max_angle{RAD_180 - (length_to_breadth * step_max)};
+  Radians max_angle{Radians::D_180().value - (length_to_breadth * step_max)};
   MathSize min_x = cos(max_angle);
   while (added && cur_x >= min_x)
   {

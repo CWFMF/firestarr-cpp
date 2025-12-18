@@ -145,22 +145,6 @@ template <class T>
 }
 // only calculate this once and reuse it
 /**
- * \brief 360 degrees in radians
- */
-static constexpr MathSize RAD_360{Radians::D_360().value};
-/**
- * \brief 270 degrees in radians
- */
-static constexpr MathSize RAD_270{Radians::D_270().value};
-/**
- * \brief 180 degrees in radians
- */
-static constexpr MathSize RAD_180{Radians::D_180().value};
-/**
- * \brief 90 degrees in radians
- */
-static constexpr MathSize RAD_090{Radians::D_090().value};
-/**
  * \brief Convert radians to degrees
  * \param radians Value in radians
  * \return Value in degrees
