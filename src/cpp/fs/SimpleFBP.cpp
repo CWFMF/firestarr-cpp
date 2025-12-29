@@ -313,8 +313,6 @@ auto check_range(
 //      left for reference for now so idea could be used for more tests
 using fs::FuelBase;
 using fs::FuelType;
-constexpr int RESOLUTION = 10000;
-constexpr MathSize RANGE = 250.0;
 // check %, so 1 decimal is fine
 static constexpr MathSize EPSILON = 1e-1f;
 // template <int BulkDensity, int InorganicPercent, int DuffDepth>
@@ -335,8 +333,8 @@ int compare(
   // FuelType
   //
   check_equal(a.isValid(), b.isValid(), "isValid");
-  // static constexpr FuelCodeSize safeCode(const FuelType* fuel)
-  // static constexpr const char* safeName(const FuelType* fuel)
+  check_equal(FuelType::safeCode(&a), FuelType::safeCode(&b), "safeCode");
+  check_equal(FuelType::safeName(&a), FuelType::safeName(&b), "safeName");
   // static constexpr MathSize criticalRos(const MathSize sfc, const MathSize csi)
   // static constexpr bool isCrown(const MathSize csi, const MathSize sfi)
   check_equal(a.cfl(), b.cfl(), "cfl");
@@ -344,9 +342,27 @@ int compare(
   // MathSize grass_curing(const int, const FwiWeather&) const
   check_equal(a.cbh(), b.cbh(), "cbh");
   // MathSize crownFractionBurned(MathSize rss, MathSize rso) const noexcept
-  // MathSize probabilityPeat(MathSize mc_fraction) const noexcept
+  check_range(
+    "probabilityPeat()",
+    "mc_fraction",
+    [&](const auto& v) { return a.probabilityPeat(v); },
+    [&](const auto& v) { return b.probabilityPeat(v); },
+    EPSILON,
+    -1,
+    3,
+    0.0001
+  );
   // ThresholdSize survivalProbability(const FwiWeather& wx) const noexcept
-  // MathSize buiEffect(MathSize bui) const
+  check_range(
+    "buiEffect()",
+    "bui",
+    [&](const auto& v) { return a.buiEffect(v); },
+    [&](const auto& v) { return b.buiEffect(v); },
+    EPSILON,
+    -1,
+    300,
+    0.01
+  );
   check_range(
     "crownConsumption()",
     "cfb",
@@ -360,11 +376,20 @@ int compare(
   // MathSize calculateRos(int nd, const FwiWeather& wx, MathSize isi) const
   // MathSize calculateIsf(const SpreadInfo& spread, MathSize isi)
   // MathSize surfaceFuelConsumption(const SpreadInfo& spread) const
-  // MathSize lengthToBreadth(MathSize ws) const
+  check_range(
+    "lengthToBreadth()",
+    "ws",
+    [&](const auto& v) { return a.lengthToBreadth(v); },
+    [&](const auto& v) { return b.lengthToBreadth(v); },
+    EPSILON,
+    0,
+    200,
+    0.01
+  );
   // MathSize finalRos(const SpreadInfo& spread, MathSize isi, MathSize cfb, MathSize rss) const
   // MathSize criticalSurfaceIntensity(const SpreadInfo& spread) const
-  // constexpr const char* name() const
-  // constexpr FuelCodeSize code()
+  check_equal(a.name(), b.name(), "name");
+  check_equal(a.code(), b.code(), "code");
   //
   // FuelBase
   //
