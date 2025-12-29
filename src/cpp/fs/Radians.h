@@ -5,6 +5,10 @@
 #include "StrictType.h"
 namespace fs
 {
+/**
+ * \brief Ratio of degrees to radians
+ */
+static constexpr auto M_RADIANS_TO_DEGREES = 180.0 / std::numbers::pi;
 struct Radians;
 struct Degrees : public StrictType<Degrees, units::CompassDegrees>
 {
@@ -16,8 +20,8 @@ struct Degrees : public StrictType<Degrees, units::CompassDegrees>
 struct Radians : public StrictType<Radians, units::CompassRadians>
 {
   using StrictType::StrictType;
-  static consteval Radians Pi() { return Radians{M_PI}; };
-  static consteval Radians PiX2() { return Radians{2 * M_PI}; };
+  static consteval Radians Pi() { return Radians{std::numbers::pi}; };
+  static consteval Radians PiX2() { return Radians{2 * std::numbers::pi}; };
   static consteval Radians D_360() { return Radians{Degrees{static_cast<AspectSize>(360)}}; };
   static consteval Radians D_270() { return Radians{Degrees{static_cast<AspectSize>(270)}}; };
   static consteval Radians D_180() { return Radians{Degrees{static_cast<AspectSize>(180)}}; };

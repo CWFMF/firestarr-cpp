@@ -225,7 +225,7 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
             MathSize aspect_azimuth = 0.0;
             if (s > 0 && (dx != 0 || dy != 0))
             {
-              aspect_azimuth = atan2(dy, -dx) * M_RADIANS_TO_DEGREES;
+              aspect_azimuth = Radians{atan2(dy, -dx)}.asDegrees().value;
               // NOTE: need to change this out of 'math' direction into 'real' direction (i.e. N
               // is 0, not E)
               aspect_azimuth =
