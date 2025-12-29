@@ -11,6 +11,7 @@
 #include "Log.h"
 #include "Model.h"
 #include "Settings.h"
+#include "SimpleFBP.h"
 #include "StartPoint.h"
 #include "Test.h"
 #include "TestFwi.h"
@@ -207,14 +208,39 @@ int main(const int argc, const char* const argv[])
 // HACK: keep everything else out of std namepace
 int main(const int argc, const char* const argv[])
 {
+  auto is_test = true;
 #ifdef TEST_DUFF
   // FIX: this was used to compare to the old template version, but doesn't work now
   //      left for reference for now so idea could be used for more tests
   constexpr auto fct_main = fs::duff::test_duff;
+#elif TEST_FBP
+  constexpr auto fct_main = fs::testing::test_fbp;
 #elif TEST_FWI
   constexpr auto fct_main = fs::testing::test_fwi;
 #else
+  is_test = false;
   constexpr auto fct_main = fs::main;
 #endif
+  if (is_test)
+  {
+    fs::logging::Log::setLogLevel(fs::logging::LOG_NOTE);
+    // HACK: just do simple check for now
+    for (auto i = 1; i < argc; ++i)
+    {
+      const auto& arg = argv[i];
+      if (0 == strcmp("-v", arg))
+      {
+        fs::logging::Log::increaseLogLevel();
+      }
+      else if (0 == strcmp("-q", arg))
+      {
+        fs::logging::Log::decreaseLogLevel();
+      }
+      else
+      {
+        fs::logging::fatal("Unsupported flag %s - tests only support -v and -q", arg);
+      }
+    }
+  }
   exit(fct_main(argc, argv));
 }

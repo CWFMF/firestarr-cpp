@@ -180,6 +180,21 @@ void check_equal(const V& lhs, const V& rhs, const char* name)
 }
 /**
  * \brief Check if items are not equal and log and exit if true
+ * \param lhs first value
+ * \param rhs second value
+ * \param name String for message describing what's being compared
+ */
+template <class V>
+void check_equal_verbose(const int log_level, const V& lhs, const V& rhs, const char* name)
+#ifdef NDEBUG
+  noexcept
+#endif
+{
+  check_equal(lhs, rhs, name);
+  output(log_level, "%s matches", name);
+}
+/**
+ * \brief Check if items are not equal and log and exit if true
  * \param epsilon difference between values tolerance
  * \param lhs first value
  * \param rhs second value

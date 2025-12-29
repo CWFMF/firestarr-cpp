@@ -5,6 +5,7 @@
 #include "unstable.h"
 #define TEST_DUFF 1
 #undef TEST_DUFF
+#ifdef TEST_DUFF
 namespace fs::duffsimple
 {
 /*! \page survival Probability of fire survival
@@ -174,4 +175,5 @@ static constexpr DuffSimple SprucePine{30.7, 116.0, 58.6921, -0.2737, -0.5413, -
 int test_duff(const int argc, const char* const argv[]);
 #endif
 }
+#endif
 #endif
