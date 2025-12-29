@@ -2,6 +2,7 @@
 #ifndef FS_STANDARDFUEL_H
 #define FS_STANDARDFUEL_H
 #include "stdafx.h"
+#include "FuelType.h"
 #include "LogValue.h"
 #include "LookupTable.h"
 namespace fs

@@ -334,18 +334,26 @@ int compare(
   check_equal(a.inorganicPercent(), b.inorganicPercent(), "inorganicPercent");
   check_equal(a.duffDepth(), b.duffDepth(), "duffDepth");
   check_equal(a.bui0(), b.bui0(), "bui0");
-  check_equal(a.cbh(), b.cbh(), "cbh");
-  check_equal(a.cfl(), b.cfl(), "cfl");
   check_equal(a.a(), b.a(), "a");
   check_equal(a.negB(), b.negB(), "negB");
   check_equal(a.c(), b.c(), "c");
-  logging::debug("Checking rosBasic()");
-  for (auto i = 0; i < RESOLUTION; ++i)
-  {
-    const MathSize isi = RANGE * i / RESOLUTION;
-    const auto msg = std::format("probability of survival (isi = {})", isi);
-    logging::check_tolerance(EPSILON, a.rosBasic(isi), b.rosBasic(isi), msg.c_str());
-  }
+  check_equal(a.isValid(), b.isValid(), "isValid");
+  check_equal(a.cfl(), b.cfl(), "cfl");
+  check_equal(a.canCrown(), b.canCrown(), "canCrown");
+  // check_equal(a.grass_curing(), b.grass_curing(), "grass_curing");
+  check_equal(a.cbh(), b.cbh(), "cbh");
+  // check_equal(a.crownFractionBurned(), b.crownFractionBurned(), "crownFractionBurned");
+  // check_equal(a.probabilityPeat(), b.probabilityPeat(), "probabilityPeat");
+  check_range(
+    "rosBasic()",
+    "isi",
+    [&](const auto& v) { return a.rosBasic(v); },
+    [&](const auto& v) { return b.rosBasic(v); },
+    EPSILON,
+    0,
+    250,
+    0.01
+  );
   check_range(
     "crownConsumption()",
     "cfb",
