@@ -452,6 +452,8 @@ int test_fbp(const int argc, const char* const argv[])
   compare_fuel("O1_A", simplefbp::O1_A, *dynamic_cast<const fs::FuelO1A*>(FuelLookup::Fuels[11]));
   compare_fuel("O1_B", simplefbp::O1_B, *dynamic_cast<const fs::FuelO1B*>(FuelLookup::Fuels[12]));
   compare_fuel("S1", simplefbp::S1, *dynamic_cast<const fs::FuelS1*>(FuelLookup::Fuels[13]));
+  compare_fuel("S2", simplefbp::S2, *dynamic_cast<const fs::FuelS2*>(FuelLookup::Fuels[14]));
+  compare_fuel("S3", simplefbp::S3, *dynamic_cast<const fs::FuelS3*>(FuelLookup::Fuels[15]));
   return 0;
 }
 }
