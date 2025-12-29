@@ -176,13 +176,18 @@ static constexpr Duff SprucePine{30.7, 116.0, 58.6921, -0.2737, -0.5413, -0.1246
 namespace fs::testing
 {
 template <class TypeA, class TypeB>
-int compare_duff(const string name, const TypeA& a, const TypeB& b)
+int compare_duff(
+  const string name,
+  const TypeA& a,
+  const TypeB& b,
+  const auto log_level = logging::LOG_INFO
+)
 {
   static constexpr int RESOLUTION = 10000;
   static constexpr MathSize RANGE = 250.0;
   // check %, so 1 decimal is fine
   static constexpr MathSize EPSILON = 1e-1f;
-  logging::info("Checking %s", name.c_str());
+  logging::output(log_level, "Checking %s", name.c_str());
   logging::check_equal_verbose(logging::LOG_DEBUG, a.ash, b.ash, "ash");
   logging::check_equal_verbose(logging::LOG_DEBUG, a.rho, b.rho, "rho");
   logging::check_equal_verbose(logging::LOG_DEBUG, a.b0, b.b0, "b0");

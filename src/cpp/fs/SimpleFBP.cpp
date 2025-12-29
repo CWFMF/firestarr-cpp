@@ -317,7 +317,7 @@ using fs::FuelType;
 static constexpr MathSize EPSILON = 1e-1f;
 // template <int BulkDensity, int InorganicPercent, int DuffDepth>
 template <class TypeA, class TypeB>
-int compare(
+int compare_fuel(
   const string name,
   // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
   // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
@@ -396,8 +396,8 @@ int compare(
   check_equal(a.bulkDensity(), b.bulkDensity(), "bulkDensity");
   check_equal(a.inorganicPercent(), b.inorganicPercent(), "inorganicPercent");
   check_equal(a.duffDepth(), b.duffDepth(), "duffDepth");
-  testing::compare_duff("duffDmcType", *a.duffDmcType(), *b.duffDmcType());
-  testing::compare_duff("duffFfmcType", *a.duffFfmcType(), *b.duffFfmcType());
+  testing::compare_duff("duffDmcType", *a.duffDmcType(), *b.duffDmcType(), logging::LOG_DEBUG);
+  testing::compare_duff("duffFfmcType", *a.duffFfmcType(), *b.duffFfmcType(), logging::LOG_DEBUG);
   check_equal(a.ffmcRatio(), b.ffmcRatio(), "ffmcRatio");
   check_equal(a.dmcRatio(), b.dmcRatio(), "dmcRatio");
   //
@@ -440,20 +440,18 @@ int test_fbp(const int argc, const char* const argv[])
   // compare(
   //   "Invalid", simplefbp::INVALID, *dynamic_cast<const fs::InvalidFuel*>(FuelLookup::Fuels[1])
   // );
-  compare("C1", simplefbp::C1, *dynamic_cast<const fs::FuelC1*>(FuelLookup::Fuels[2]));
-  compare("C2", simplefbp::C2, *dynamic_cast<const fs::FuelC2*>(FuelLookup::Fuels[3]));
-  compare("C3", simplefbp::C3, *dynamic_cast<const fs::FuelC3*>(FuelLookup::Fuels[4]));
-  compare("C4", simplefbp::C4, *dynamic_cast<const fs::FuelC4*>(FuelLookup::Fuels[5]));
-  compare("C5", simplefbp::C5, *dynamic_cast<const fs::FuelC5*>(FuelLookup::Fuels[6]));
-  compare("C6", simplefbp::C6, *dynamic_cast<const fs::FuelC6*>(FuelLookup::Fuels[7]));
-  compare("C7", simplefbp::C7, *dynamic_cast<const fs::FuelC7*>(FuelLookup::Fuels[8]));
-  // compare("FeatherMoss", duffsimple::FeatherMoss, duff::FeatherMoss);
-  // compare("Reindeer", duffsimple::Reindeer, duff::Reindeer);
-  // compare("WhiteSpruce", duffsimple::WhiteSpruce, duff::WhiteSpruce);
-  // compare("Peat", duffsimple::Peat, duff::Peat);
-  // compare("PeatMuck", duffsimple::PeatMuck, duff::PeatMuck);
-  // compare("PineSeney", duffsimple::PineSeney, duff::PineSeney);
-  // compare("SprucePine", duffsimple::SprucePine, duff::SprucePine);
+  compare_fuel("C1", simplefbp::C1, *dynamic_cast<const fs::FuelC1*>(FuelLookup::Fuels[2]));
+  compare_fuel("C2", simplefbp::C2, *dynamic_cast<const fs::FuelC2*>(FuelLookup::Fuels[3]));
+  compare_fuel("C3", simplefbp::C3, *dynamic_cast<const fs::FuelC3*>(FuelLookup::Fuels[4]));
+  compare_fuel("C4", simplefbp::C4, *dynamic_cast<const fs::FuelC4*>(FuelLookup::Fuels[5]));
+  compare_fuel("C5", simplefbp::C5, *dynamic_cast<const fs::FuelC5*>(FuelLookup::Fuels[6]));
+  compare_fuel("C6", simplefbp::C6, *dynamic_cast<const fs::FuelC6*>(FuelLookup::Fuels[7]));
+  compare_fuel("C7", simplefbp::C7, *dynamic_cast<const fs::FuelC7*>(FuelLookup::Fuels[8]));
+  compare_fuel("D1", simplefbp::D1, *dynamic_cast<const fs::FuelD1*>(FuelLookup::Fuels[9]));
+  compare_fuel("D2", simplefbp::D2, *dynamic_cast<const fs::FuelD2*>(FuelLookup::Fuels[10]));
+  compare_fuel("O1_A", simplefbp::O1_A, *dynamic_cast<const fs::FuelO1A*>(FuelLookup::Fuels[11]));
+  compare_fuel("O1_B", simplefbp::O1_B, *dynamic_cast<const fs::FuelO1B*>(FuelLookup::Fuels[12]));
+  compare_fuel("S1", simplefbp::S1, *dynamic_cast<const fs::FuelS1*>(FuelLookup::Fuels[13]));
   return 0;
 }
 }

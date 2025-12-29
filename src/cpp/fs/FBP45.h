@@ -623,7 +623,7 @@ public:
     return calculateRos(baseMultiplier(nd, wx), isi);
   }
 
-protected:
+public:
   /**
    * \brief Length to Breadth ratio [ST-X-3 eq 80/81]
    * \param ws Wind Speed (km/h)
