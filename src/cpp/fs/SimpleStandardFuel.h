@@ -234,7 +234,7 @@ public:
    */
   [[nodiscard]] static constexpr MathSize c() noexcept { return C / 100.0; }
 
-protected:
+public:
   /**
    * \brief Crown fire spread rate (RSC) (m/min) [ST-X-3 eq 64]
    * \param isi Initial Spread Index
@@ -248,6 +248,7 @@ protected:
   {
     return STANDARD_FOLIAR_MOISTURE_ISI(isi) * STANDARD_FOLIAR_MOISTURE_FMC(fmc);
   }
+  [[nodiscard]] constexpr MathSize logQ() const noexcept { return log_q_.value; }
 
 private:
   /**

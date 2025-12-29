@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SimpleFBP.h"
+#include "Duff.h"
 #include "FBP45.h"
 #include "FuelLookup.h"
 #include "FuelType.h"
@@ -330,30 +331,22 @@ int compare(
     logging::check_equal_verbose(logging::LOG_DEBUG, lhs, rhs, name);
   };
   logging::info("Checking %s", name.c_str());
-  check_equal(a.bulkDensity(), b.bulkDensity(), "bulkDensity");
-  check_equal(a.inorganicPercent(), b.inorganicPercent(), "inorganicPercent");
-  check_equal(a.duffDepth(), b.duffDepth(), "duffDepth");
-  check_equal(a.bui0(), b.bui0(), "bui0");
-  check_equal(a.a(), b.a(), "a");
-  check_equal(a.negB(), b.negB(), "negB");
-  check_equal(a.c(), b.c(), "c");
+  //
+  // FuelType
+  //
   check_equal(a.isValid(), b.isValid(), "isValid");
+  // static constexpr FuelCodeSize safeCode(const FuelType* fuel)
+  // static constexpr const char* safeName(const FuelType* fuel)
+  // static constexpr MathSize criticalRos(const MathSize sfc, const MathSize csi)
+  // static constexpr bool isCrown(const MathSize csi, const MathSize sfi)
   check_equal(a.cfl(), b.cfl(), "cfl");
   check_equal(a.canCrown(), b.canCrown(), "canCrown");
-  // check_equal(a.grass_curing(), b.grass_curing(), "grass_curing");
+  // MathSize grass_curing(const int, const FwiWeather&) const
   check_equal(a.cbh(), b.cbh(), "cbh");
-  // check_equal(a.crownFractionBurned(), b.crownFractionBurned(), "crownFractionBurned");
-  // check_equal(a.probabilityPeat(), b.probabilityPeat(), "probabilityPeat");
-  check_range(
-    "rosBasic()",
-    "isi",
-    [&](const auto& v) { return a.rosBasic(v); },
-    [&](const auto& v) { return b.rosBasic(v); },
-    EPSILON,
-    0,
-    250,
-    0.01
-  );
+  // MathSize crownFractionBurned(MathSize rss, MathSize rso) const noexcept
+  // MathSize probabilityPeat(MathSize mc_fraction) const noexcept
+  // ThresholdSize survivalProbability(const FwiWeather& wx) const noexcept
+  // MathSize buiEffect(MathSize bui) const
   check_range(
     "crownConsumption()",
     "cfb",
@@ -364,6 +357,44 @@ int compare(
     100,
     0.01
   );
+  // MathSize calculateRos(int nd, const FwiWeather& wx, MathSize isi) const
+  // MathSize calculateIsf(const SpreadInfo& spread, MathSize isi)
+  // MathSize surfaceFuelConsumption(const SpreadInfo& spread) const
+  // MathSize lengthToBreadth(MathSize ws) const
+  // MathSize finalRos(const SpreadInfo& spread, MathSize isi, MathSize cfb, MathSize rss) const
+  // MathSize criticalSurfaceIntensity(const SpreadInfo& spread) const
+  // constexpr const char* name() const
+  // constexpr FuelCodeSize code()
+  //
+  // FuelBase
+  //
+  check_equal(a.bulkDensity(), b.bulkDensity(), "bulkDensity");
+  check_equal(a.inorganicPercent(), b.inorganicPercent(), "inorganicPercent");
+  check_equal(a.duffDepth(), b.duffDepth(), "duffDepth");
+  testing::compare_duff("duffDmcType", *a.duffDmcType(), *b.duffDmcType());
+  testing::compare_duff("duffFfmcType", *a.duffFfmcType(), *b.duffFfmcType());
+  check_equal(a.ffmcRatio(), b.ffmcRatio(), "ffmcRatio");
+  check_equal(a.dmcRatio(), b.dmcRatio(), "dmcRatio");
+  //
+  // StandardFuel
+  //
+  check_range(
+    "rosBasic()",
+    "isi",
+    [&](const auto& v) { return a.rosBasic(v); },
+    [&](const auto& v) { return b.rosBasic(v); },
+    EPSILON,
+    0,
+    250,
+    0.01
+  );
+  // MathSize limitIsf(const MathSize mu, const MathSize rsf) const noexcept
+  check_equal(a.bui0(), b.bui0(), "bui0");
+  check_equal(a.a(), b.a(), "a");
+  check_equal(a.negB(), b.negB(), "negB");
+  check_equal(a.c(), b.c(), "c");
+  // static constexpr MathSize crownRateOfSpread(const MathSize isi, const MathSize fmc) noexcept
+  check_equal(a.logQ(), b.logQ(), "logQ");
   return 0;
 }
 int test_fbp(const int argc, const char* const argv[])
