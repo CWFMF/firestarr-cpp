@@ -226,26 +226,26 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 #define STEP_X 0.2
 #define STEP_MAX Radians::from_degrees(max_angle_)
   MathSize step_x = STEP_X / pow(length_to_breadth, 0.5);
-  MathSize theta = 0;
+  Radians theta{0.0};
   Radians angle{0.0};
-  MathSize last_theta = 0;
+  Radians last_theta{0.0};
   MathSize cur_x = 1.0;
   // widest point should be at origin, which is 'c' away from origin
   MathSize widest = atan2(flank_ros, c);
   size_t num_angles = 0;
   MathSize widest_x = cos(widest);
-  MathSize step_max = (STEP_MAX / pow(length_to_breadth, 0.5)).value;
+  Radians step_max{STEP_MAX / pow(length_to_breadth, 0.5)};
   while (added && cur_x > (STEP_MAX / 4.0).value)
   {
     ++num_angles;
-    theta = min(acos(cur_x), last_theta + step_max);
+    theta = min(Radians{acos(cur_x)}, last_theta + step_max);
     angle = ellipse_angle(length_to_breadth, Radians{theta});
     added = add_offsets_calc_ros(angle);
     cur_x = cos(theta);
     last_theta = theta;
-    if (theta > (STEP_MAX / 2.0).value)
+    if (theta > (STEP_MAX / 2.0))
     {
-      step_max = STEP_MAX.value;
+      step_max = STEP_MAX;
     }
     cur_x -= step_x;
     if (cur_x > widest_x && abs(cur_x - widest_x) < step_x)
@@ -255,10 +255,10 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   }
   if (added)
   {
-    angle = ellipse_angle(length_to_breadth, Radians{(Radians::D_090().value + theta) / 2.0});
+    angle = ellipse_angle(length_to_breadth, Radians{(Radians::D_090() + theta) / 2.0});
     added = add_offsets_calc_ros(angle);
     // always just do one between the last angle and 90
-    theta = Radians::D_090().value;
+    theta = Radians::D_090();
     ++num_angles;
     angle = ellipse_angle(length_to_breadth, Radians{theta});
     added = add_offsets(Radians::D_090(), flank_ros * sqrt(a_sq_sub_c_sq) / a);
@@ -267,12 +267,12 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   }
   cur_x -= (step_x / 2.0);
   step_x *= length_to_breadth;
-  Radians max_angle{Radians::D_180().value - (length_to_breadth * step_max)};
+  Radians max_angle{Radians::D_180() - (length_to_breadth * step_max)};
   MathSize min_x = cos(max_angle);
   while (added && cur_x >= min_x)
   {
     ++num_angles;
-    theta = max(acos(cur_x), last_theta + step_max);
+    theta = max(Radians{acos(cur_x)}, last_theta + step_max);
     angle = ellipse_angle(length_to_breadth, Radians{theta});
     if (angle > max_angle)
     {
