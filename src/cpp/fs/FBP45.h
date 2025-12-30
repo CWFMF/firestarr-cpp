@@ -86,6 +86,8 @@ public:
 protected:
   using StandardFuel<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>::
     StandardFuel;
+
+public:
   /**
    * \brief ISI with slope influence and zero wind (ISF) [ST-X-3 eq 41]
    * \param spread SpreadInfo to use in calculations
@@ -634,7 +636,7 @@ public:
     return LENGTH_TO_BREADTH_GRASS(ws);
   }
 
-private:
+public:
   /**
    * \brief Calculate rate of spread (m/min)
    * \param multiplier Rate of spread multiplier

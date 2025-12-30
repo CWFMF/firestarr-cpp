@@ -4,6 +4,7 @@
 #include "FBP45.h"
 #include "FuelLookup.h"
 #include "FuelType.h"
+#include "FWI.h"
 #include "Log.h"
 namespace fs::simplefbp
 {
@@ -280,12 +281,77 @@ auto range(
   // convert into integer range and then back
   const auto steps = static_cast<int>(floor((end - start) / step));
   // const auto max_value = start + steps * step;
-  logging::debug("Range is from %f to %f with step %f (%d steps)", start, end, step, steps);
+  logging::info("Range is from %f to %f with step %f (%d steps)", start, end, step, steps);
   // +1 to include end
   auto it = std::views::iota(0, steps + (inclusive ? 1 : 0));
-  return std::views::transform(it, [=](const auto& v) {
-    const auto r = start + v / static_cast<MathSize>(steps);
+  return std::views::transform(it, [=](const int v) {
+    // static int cur_step = 0;
+    // const auto r = start + v / static_cast<MathSize>(steps);
+    const auto r = start + v * step;
     // printf("%f\n", r);
+    // FIX: logging doesn't work within this?
+    logging::check_fatal(r < start, "%f less than start value %f for step %d", r, start, v);
+    logging::check_fatal(r > end, "%f more than end value %f for step %d", r, end, v);
+    // logging::check_fatal(cur_step > steps, "%ld more than steps value %ld for step %d", cur_step,
+    // steps, v);
+    // ++cur_step;
+    const auto diff = r - start;
+    const auto epsilon = step * 1E-5;
+    if (1 == v)
+    {
+      logging::check_fatal(
+        abs(diff - step) > epsilon, "%f different than step increment %f for step %d", diff, step, v
+      );
+    }
+    else if (0 < v)
+    {
+      logging::check_fatal(
+        step > diff, "%f smaller than step increment %f for step %d", diff, step, v
+      );
+      const int v0 = static_cast<int>((r - start) / step);
+      logging::check_equal(
+        v, v0, std::format("current step for {} with start {} and step {}", r, start, step).c_str()
+      );
+    }
+    return r;
+  });
+}
+auto range_int(const int start, const int end, const int step, const bool inclusive = true)
+{
+  // convert into integer range and then back
+  const auto steps = static_cast<int>(floor((end - start) / step));
+  // const auto max_value = start + steps * step;
+  logging::debug("Range is from %d to %d with step %d (%d steps)", start, end, step, steps);
+  // +1 to include end
+  auto it = std::views::iota(0, steps + (inclusive ? 1 : 0));
+  return std::views::transform(it, [=](const int v) {
+    // static int cur_step = 0;
+    // const auto r = start + v / static_cast<MathSize>(steps);
+    const int r = start + v * step;
+    // printf("%f\n", r);
+    logging::check_fatal(r < start, "%d less than start value %d for step %d", r, start, v);
+    logging::check_fatal(r > end, "%d more than end value %d for step %d", r, end, v);
+    // logging::check_fatal(cur_step > steps, "%ld more than steps value %ld for step %d", cur_step,
+    // steps, v);
+    // ++cur_step;
+    const auto epsilon = step * 1E-5;
+    const auto diff = r - start;
+    if (1 == v)
+    {
+      logging::check_fatal(
+        abs(diff - step) > epsilon, "%d different than step increment %d for step %d", diff, step, v
+      );
+    }
+    else if (0 < v)
+    {
+      logging::check_fatal(
+        step > diff, "%d smaller than step increment %d for step %d", diff, step, v
+      );
+      const int v0 = static_cast<int>((r - start) / step);
+      logging::check_equal(
+        v, v0, std::format("current step for {} with start {} and step {}", r, start, step).c_str()
+      );
+    }
     return r;
   });
 }
@@ -397,6 +463,56 @@ int compare_fuel_basic(
     0.01
   );
   // MathSize calculateRos(int nd, const FwiWeather& wx, MathSize isi) const
+  // need to check breakpoints
+  // - BUI 80 (D2)
+  // - DC 500 (O1)
+  // - nd for different latitudes
+  //   - elevation 0
+  for (auto bui : range(0.0, 300.0, 7.0))
+  {
+    logging::info("bui %f", bui);
+    for (auto dc : range(0.0, 2000.0, 7.0))
+    {
+      logging::info("dc %f", dc);
+      const FwiWeather wx{
+        Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
+      };
+      for (int jd : range_int(0, 366, 1))
+      {
+        logging::info("jd %d", jd);
+        for (auto latitude : range(-90.0, 90.0, 0.1))
+        {
+          for (auto longitude : range(-180.0, 180.0, 0.1))
+          {
+            for (auto elevation : range(-418, 8848, 100))
+            {
+              const Point pt{latitude, longitude};
+              const auto nd = calculate_nd_for_point(jd, elevation, pt);
+              const auto msg = std::format(
+                "calculateRos(jd={}, bui={}, dc={}, elevation={}, latitude={}, longitude={})",
+                jd,
+                bui,
+                dc,
+                elevation,
+                latitude,
+                longitude
+              );
+              check_range(
+                msg.c_str(),
+                "isi",
+                [&](const auto& v) { return a.calculateRos(nd, wx, v); },
+                [&](const auto& v) { return b.calculateRos(nd, wx, v); },
+                EPSILON,
+                0,
+                250,
+                0.1
+              );
+            }
+          }
+        }
+      }
+    }
+  }
   // MathSize calculateIsf(const SpreadInfo& spread, MathSize isi)
   // MathSize surfaceFuelConsumption(const SpreadInfo& spread) const
   check_range(
