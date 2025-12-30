@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SimpleFBP.h"
+#include <limits>
 #include "Duff.h"
 #include "FBP45.h"
 #include "FireWeather.h"
@@ -283,10 +284,21 @@ public:
   using iterator_category = std::bidirectional_iterator_tag;
   using difference_type = int;
   using value_type = T;
-  RangeIterator(const value_type start, const value_type end, const value_type increment)
-    : start_(start), end_(end), increment_(increment), current_(start)
+  RangeIterator(
+    const value_type start,
+    const value_type end,
+    const value_type increment,
+    const bool inclusive = true
+  )
+    : start_(start), end_(end), increment_(increment), inclusive_(inclusive)
   {
-    logging::info("Range is from %f to %f with step %f", start, end, increment);
+    logging::verbose(
+      "Range is from %f to %f with step %f %s",
+      start_,
+      end_,
+      increment_,
+      inclusive_ ? "inclusive" : "exclusive"
+    );
   }
   RangeIterator() = default;
   RangeIterator(const RangeIterator& rhs) = default;
@@ -295,24 +307,24 @@ public:
   RangeIterator& operator=(RangeIterator&& rhs) = default;
 
 public:
-  inline value_type operator*() const { return current_; }
+  inline value_type operator*() const { return start_ + step_ * increment_; }
   inline RangeIterator& operator++()
   {
     logging::check_fatal(
-      current_ < start_,
-      "operator++() %g less than start value %g (%g) for step %d",
-      current_,
+      *(*this) < start_,
+      "operator++() %g less than start value %g (+%g) for step %d",
+      *(*this),
       start_,
-      (current_ - start_),
+      (*(*this) - start_),
       step_
     );
-    current_ += increment_;
+    step_++;
     logging::check_fatal(
-      current_ > end_,
+      *this > end(),
       "operator++() %g more than end value %g (%+g) for step %d",
-      current_,
-      end_,
-      (current_ - end_),
+      *(*this),
+      *end(),
+      (*(*this) - *end()),
       step_
     );
     return *this;
@@ -320,19 +332,19 @@ public:
   inline RangeIterator operator++(int)
   {
     logging::check_fatal(
-      current_ < start_,
-      "operator++(int) %g less than start value %g (%g) for step %d",
-      current_,
+      *(*this) < start_,
+      "operator++(int) %g less than start value %g (+%g) for step %d",
+      *(*this),
       start_,
       step_
     );
-    RangeIterator oTmp = *this;
-    current_ += increment_;
+    RangeIterator oTmp = *(*this);
+    *(*this) += increment_;
     logging::check_fatal(
-      current_ > end_,
+      *this > end(),
       "operator++(int) %g more than end value %g (%+g) for step %d",
-      current_,
-      end_,
+      *(*this),
+      *end(),
       step_
     );
     return oTmp;
@@ -340,17 +352,17 @@ public:
   inline RangeIterator& operator--()
   {
     logging::check_fatal(
-      current_ > end_,
+      *this > end(),
       "operator--() %g more than end value %g (%+g) for step %d",
-      current_,
-      end_,
+      *(*this),
+      *end(),
       step_
     );
-    current_ -= increment_;
+    *(*this) -= increment_;
     logging::check_fatal(
-      current_ < start_,
-      "operator--() %g less than start value %g (%g) for step %d",
-      current_,
+      *(*this) < start_,
+      "operator--() %g less than start value %g (+%g) for step %d",
+      *(*this),
       start_,
       step_
     );
@@ -358,19 +370,19 @@ public:
   }
   inline RangeIterator operator--(int)
   {
-    RangeIterator oTmp = *this;
+    RangeIterator oTmp = *(*this);
     logging::check_fatal(
-      current_ > end_,
+      *this > end(),
       "operator--(int) %g more than end value %g (%+g) for step %d",
-      current_,
-      end_,
+      *(*this),
+      *end(),
       step_
     );
-    current_ -= increment_;
+    *(*this) -= increment_;
     logging::check_fatal(
-      current_ < start_,
-      "operator--(int) %g less than start value %g (%g) for step %d",
-      current_,
+      *(*this) < start_,
+      "operator--(int) %g less than start value %g (+%g) for step %d",
+      *(*this),
       start_,
       step_
     );
@@ -378,27 +390,35 @@ public:
   }
   inline difference_type operator-(const RangeIterator& rhs) const
   {
-    return static_cast<difference_type>((current_ - rhs.current_) / increment_);
+    return static_cast<difference_type>(step_ - rhs.step_);
   }
-  // inline auto operator<=>(const RangeIterator& rhs) const { return current_ <=> rhs.current_; }
-  inline bool operator==(const RangeIterator& rhs) const { return current_ == rhs.current_; }
-  inline bool operator!=(const RangeIterator& rhs) const { return !(*this == rhs); }
-  inline bool operator>(const RangeIterator& rhs) const { return current_ < rhs.current_; }
-  inline bool operator<(const RangeIterator& rhs) const { return current_ > rhs.current_; }
-  inline bool operator>=(const RangeIterator& rhs) const { return current_ <= rhs.current_; }
-  inline bool operator<=(const RangeIterator& rhs) const { return current_ >= rhs.current_; }
-  auto begin() { return RangeIterator<T>(this, start_); }
-  auto end() { return RangeIterator<T>(this, end_); }
+  inline auto operator<=>(const RangeIterator<value_type>& rhs) const = default;
+  // inline bool operator==(const RangeIterator& rhs) const { return *(*this) == rhs; }
+  // inline bool operator!=(const RangeIterator& rhs) const { return !(*(*this) == rhs); }
+  // inline bool operator>(const RangeIterator& rhs) const { return *(*this) < *rhs; }
+  // inline bool operator<(const RangeIterator& rhs) const { return *(*this) > *rhs; }
+  // inline bool operator>=(const RangeIterator& rhs) const { return *(*this) <= *rhs; }
+  // inline bool operator<=(const RangeIterator& rhs) const { return *(*this) >= *rhs; }
+  auto begin() { return RangeIterator<value_type>(this, start_); }
+  auto end()
+  {
+    // if inclusive then end is slightly past end value so end is included
+    return RangeIterator<value_type>(
+      this, end_ + (inclusive_ ? increment_ : static_cast<value_type>(0))
+    );
+  }
 
 private:
   RangeIterator(const RangeIterator* rhs, const T value)
-    : start_(rhs->start_), end_(rhs->end_), increment_(rhs->increment_), current_(value)
+    : start_(rhs->start_), end_(rhs->end_), increment_(rhs->increment_),
+      step_(static_cast<difference_type>((value - start_) / increment_)),
+      inclusive_(rhs->inclusive_)
   { }
   value_type start_{};
   value_type end_{};
   value_type increment_{};
-  value_type current_{};
   size_t step_{0};
+  bool inclusive_{};
 };
 static_assert(
   std::bidirectional_iterator<RangeIterator<MathSize>>,
@@ -412,6 +432,7 @@ auto range(
   const bool inclusive = true
 )
 {
+  std::ignore = inclusive;
   return RangeIterator(start, end, step);
   // // convert into integer range and then back
   // const auto steps = static_cast<int>(floor((end - start) / step));
@@ -456,6 +477,7 @@ auto range(
 }
 auto range_int(const int start, const int end, const int step, const bool inclusive = true)
 {
+  std::ignore = inclusive;
   return RangeIterator<int>(start, end, step);
   // // convert into integer range and then back
   // const auto steps = static_cast<int>(floor((end - start) / step));
@@ -468,8 +490,8 @@ auto range_int(const int start, const int end, const int step, const bool inclus
   //   // const auto r = start + v / static_cast<MathSize>(steps);
   //   const int r = start + v * step;
   //   // printf("%f\n", r);
-  //   logging::check_fatal(r < start, "%g less than start value %g (%g) for step %d", r, start, v);
-  //   logging::check_fatal(r > end, "%g more than end value %g (%+g) for step %d", r, end, v);
+  //   logging::check_fatal(r < start, "%g less than start value %g (+%g) for step %d", r, start,
+  //   v); logging::check_fatal(r > end, "%g more than end value %g (%+g) for step %d", r, end, v);
   //   // logging::check_fatal(cur_step > steps, "%ld more than steps value %ld for step %d",
   //   cur_step,
   //   // steps, v);
