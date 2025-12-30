@@ -2,10 +2,12 @@
 #include "SimpleFBP.h"
 #include "Duff.h"
 #include "FBP45.h"
+#include "FireWeather.h"
 #include "FuelLookup.h"
 #include "FuelType.h"
 #include "FWI.h"
 #include "Log.h"
+#include "unstable.h"
 namespace fs::simplefbp
 {
 MathSize SimpleFuelD1::isfD1(
@@ -271,6 +273,138 @@ const array<const FuelType*, NUMBER_OF_FUELS> SimpleFuels{
 #ifdef TEST_FBP
 namespace fs::testing
 {
+#include <iterator>
+template <class T = MathSize>
+class RangeIterator
+{
+  friend class iterable;
+
+public:
+  using iterator_category = std::bidirectional_iterator_tag;
+  using difference_type = int;
+  using value_type = T;
+  RangeIterator(const value_type start, const value_type end, const value_type increment)
+    : start_(start), end_(end), increment_(increment), current_(start)
+  {
+    logging::info("Range is from %f to %f with step %f", start, end, increment);
+  }
+  RangeIterator() = default;
+  RangeIterator(const RangeIterator& rhs) = default;
+  RangeIterator(RangeIterator&& rhs) = default;
+  RangeIterator& operator=(const RangeIterator& rhs) = default;
+  RangeIterator& operator=(RangeIterator&& rhs) = default;
+
+public:
+  inline value_type operator*() const { return current_; }
+  inline RangeIterator& operator++()
+  {
+    logging::check_fatal(
+      current_ < start_,
+      "operator++() %g less than start value %g (%g) for step %d",
+      current_,
+      start_,
+      (current_ - start_),
+      step_
+    );
+    current_ += increment_;
+    logging::check_fatal(
+      current_ > end_,
+      "operator++() %g more than end value %g (%+g) for step %d",
+      current_,
+      end_,
+      (current_ - end_),
+      step_
+    );
+    return *this;
+  }
+  inline RangeIterator operator++(int)
+  {
+    logging::check_fatal(
+      current_ < start_,
+      "operator++(int) %g less than start value %g (%g) for step %d",
+      current_,
+      start_,
+      step_
+    );
+    RangeIterator oTmp = *this;
+    current_ += increment_;
+    logging::check_fatal(
+      current_ > end_,
+      "operator++(int) %g more than end value %g (%+g) for step %d",
+      current_,
+      end_,
+      step_
+    );
+    return oTmp;
+  }
+  inline RangeIterator& operator--()
+  {
+    logging::check_fatal(
+      current_ > end_,
+      "operator--() %g more than end value %g (%+g) for step %d",
+      current_,
+      end_,
+      step_
+    );
+    current_ -= increment_;
+    logging::check_fatal(
+      current_ < start_,
+      "operator--() %g less than start value %g (%g) for step %d",
+      current_,
+      start_,
+      step_
+    );
+    return *this;
+  }
+  inline RangeIterator operator--(int)
+  {
+    RangeIterator oTmp = *this;
+    logging::check_fatal(
+      current_ > end_,
+      "operator--(int) %g more than end value %g (%+g) for step %d",
+      current_,
+      end_,
+      step_
+    );
+    current_ -= increment_;
+    logging::check_fatal(
+      current_ < start_,
+      "operator--(int) %g less than start value %g (%g) for step %d",
+      current_,
+      start_,
+      step_
+    );
+    return oTmp;
+  }
+  inline difference_type operator-(const RangeIterator& rhs) const
+  {
+    return static_cast<difference_type>((current_ - rhs.current_) / increment_);
+  }
+  // inline auto operator<=>(const RangeIterator& rhs) const { return current_ <=> rhs.current_; }
+  inline bool operator==(const RangeIterator& rhs) const { return current_ == rhs.current_; }
+  inline bool operator!=(const RangeIterator& rhs) const { return !(*this == rhs); }
+  inline bool operator>(const RangeIterator& rhs) const { return current_ < rhs.current_; }
+  inline bool operator<(const RangeIterator& rhs) const { return current_ > rhs.current_; }
+  inline bool operator>=(const RangeIterator& rhs) const { return current_ <= rhs.current_; }
+  inline bool operator<=(const RangeIterator& rhs) const { return current_ >= rhs.current_; }
+  auto begin() { return RangeIterator<T>(this, start_); }
+  auto end() { return RangeIterator<T>(this, end_); }
+
+private:
+  RangeIterator(const RangeIterator* rhs, const T value)
+    : start_(rhs->start_), end_(rhs->end_), increment_(rhs->increment_), current_(value)
+  { }
+  value_type start_{};
+  value_type end_{};
+  value_type increment_{};
+  value_type current_{};
+  size_t step_{0};
+};
+static_assert(
+  std::bidirectional_iterator<RangeIterator<MathSize>>,
+  "iterator must be an iterator!"
+);
+static_assert(std::bidirectional_iterator<RangeIterator<int>>, "iterator must be an iterator!");
 auto range(
   const MathSize start,
   const MathSize end,
@@ -278,82 +412,90 @@ auto range(
   const bool inclusive = true
 )
 {
-  // convert into integer range and then back
-  const auto steps = static_cast<int>(floor((end - start) / step));
-  // const auto max_value = start + steps * step;
-  logging::info("Range is from %f to %f with step %f (%d steps)", start, end, step, steps);
-  // +1 to include end
-  auto it = std::views::iota(0, steps + (inclusive ? 1 : 0));
-  return std::views::transform(it, [=](const int v) {
-    // static int cur_step = 0;
-    // const auto r = start + v / static_cast<MathSize>(steps);
-    const auto r = start + v * step;
-    // printf("%f\n", r);
-    // FIX: logging doesn't work within this?
-    logging::check_fatal(r < start, "%f less than start value %f for step %d", r, start, v);
-    logging::check_fatal(r > end, "%f more than end value %f for step %d", r, end, v);
-    // logging::check_fatal(cur_step > steps, "%ld more than steps value %ld for step %d", cur_step,
-    // steps, v);
-    // ++cur_step;
-    const auto diff = r - start;
-    const auto epsilon = step * 1E-5;
-    if (1 == v)
-    {
-      logging::check_fatal(
-        abs(diff - step) > epsilon, "%f different than step increment %f for step %d", diff, step, v
-      );
-    }
-    else if (0 < v)
-    {
-      logging::check_fatal(
-        step > diff, "%f smaller than step increment %f for step %d", diff, step, v
-      );
-      const int v0 = static_cast<int>((r - start) / step);
-      logging::check_equal(
-        v, v0, std::format("current step for {} with start {} and step {}", r, start, step).c_str()
-      );
-    }
-    return r;
-  });
+  return RangeIterator(start, end, step);
+  // // convert into integer range and then back
+  // const auto steps = static_cast<int>(floor((end - start) / step));
+  // // const auto max_value = start + steps * step;
+  // logging::info("Range is from %f to %f with step %f (%d steps)", start, end, step, steps);
+  // // +1 to include end
+  // auto it = std::views::iota(0, steps + (inclusive ? 1 : 0));
+  // return std::views::transform(it, [=](const int v) {
+  //   // static int cur_step = 0;
+  //   // const auto r = start + v / static_cast<MathSize>(steps);
+  //   const auto r = start + v * step;
+  //   // printf("%f\n", r);
+  //   // FIX: logging doesn't work within this?
+  //   logging::check_fatal(r < start, "%f less than start value %f for step %d", r, start, v);
+  //   logging::check_fatal(r > end, "%f more than end value %f for step %d", r, end, v);
+  //   // logging::check_fatal(cur_step > steps, "%ld more than steps value %ld for step %d",
+  //   cur_step,
+  //   // steps, v);
+  //   // ++cur_step;
+  //   const auto diff = r - start;
+  //   const auto epsilon = step * 1E-5;
+  //   if (1 == v)
+  //   {
+  //     logging::check_fatal(
+  //       abs(diff - step) > epsilon, "%f different than step increment %f for step %d", diff,
+  //       step, v
+  //     );
+  //   }
+  //   else if (0 < v)
+  //   {
+  //     logging::check_fatal(
+  //       step > diff, "%f smaller than step increment %f for step %d", diff, step, v
+  //     );
+  //     const int v0 = static_cast<int>((r - start) / step);
+  //     logging::check_equal(
+  //       v, v0, std::format("current step for {} with start {} and step {}", r, start,
+  //       step).c_str()
+  //     );
+  //   }
+  //   return r;
+  // });
 }
 auto range_int(const int start, const int end, const int step, const bool inclusive = true)
 {
-  // convert into integer range and then back
-  const auto steps = static_cast<int>(floor((end - start) / step));
-  // const auto max_value = start + steps * step;
-  logging::debug("Range is from %d to %d with step %d (%d steps)", start, end, step, steps);
-  // +1 to include end
-  auto it = std::views::iota(0, steps + (inclusive ? 1 : 0));
-  return std::views::transform(it, [=](const int v) {
-    // static int cur_step = 0;
-    // const auto r = start + v / static_cast<MathSize>(steps);
-    const int r = start + v * step;
-    // printf("%f\n", r);
-    logging::check_fatal(r < start, "%d less than start value %d for step %d", r, start, v);
-    logging::check_fatal(r > end, "%d more than end value %d for step %d", r, end, v);
-    // logging::check_fatal(cur_step > steps, "%ld more than steps value %ld for step %d", cur_step,
-    // steps, v);
-    // ++cur_step;
-    const auto epsilon = step * 1E-5;
-    const auto diff = r - start;
-    if (1 == v)
-    {
-      logging::check_fatal(
-        abs(diff - step) > epsilon, "%d different than step increment %d for step %d", diff, step, v
-      );
-    }
-    else if (0 < v)
-    {
-      logging::check_fatal(
-        step > diff, "%d smaller than step increment %d for step %d", diff, step, v
-      );
-      const int v0 = static_cast<int>((r - start) / step);
-      logging::check_equal(
-        v, v0, std::format("current step for {} with start {} and step {}", r, start, step).c_str()
-      );
-    }
-    return r;
-  });
+  return RangeIterator<int>(start, end, step);
+  // // convert into integer range and then back
+  // const auto steps = static_cast<int>(floor((end - start) / step));
+  // // const auto max_value = start + steps * step;
+  // logging::debug("Range is from %d to %d with step %d (%d steps)", start, end, step, steps);
+  // // +1 to include end
+  // auto it = std::views::iota(0, steps + (inclusive ? 1 : 0));
+  // return std::views::transform(it, [=](const int v) {
+  //   // static int cur_step = 0;
+  //   // const auto r = start + v / static_cast<MathSize>(steps);
+  //   const int r = start + v * step;
+  //   // printf("%f\n", r);
+  //   logging::check_fatal(r < start, "%g less than start value %g (%g) for step %d", r, start, v);
+  //   logging::check_fatal(r > end, "%g more than end value %g (%+g) for step %d", r, end, v);
+  //   // logging::check_fatal(cur_step > steps, "%ld more than steps value %ld for step %d",
+  //   cur_step,
+  //   // steps, v);
+  //   // ++cur_step;
+  //   const auto epsilon = step * 1E-5;
+  //   const auto diff = r - start;
+  //   if (1 == v)
+  //   {
+  //     logging::check_fatal(
+  //       abs(diff - step) > epsilon, "%d different than step increment %d for step %d", diff,
+  //       step, v
+  //     );
+  //   }
+  //   else if (0 < v)
+  //   {
+  //     logging::check_fatal(
+  //       step > diff, "%d smaller than step increment %d for step %d", diff, step, v
+  //     );
+  //     const int v0 = static_cast<int>((r - start) / step);
+  //     logging::check_equal(
+  //       v, v0, std::format("current step for {} with start {} and step {}", r, start,
+  //       step).c_str()
+  //     );
+  //   }
+  //   return r;
+  // });
 }
 auto check_range(
   const char* name_fct,
