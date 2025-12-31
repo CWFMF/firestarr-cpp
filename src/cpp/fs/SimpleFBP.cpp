@@ -310,8 +310,9 @@ static set<int> ND_DEFAULT_SINGLE{80};
 static const auto BUI_RANGE = range(0.0, 300.0, 7.0);
 static const vector<MathSize> BUI_RANGE_DEFAULTS{BUI_RANGE.begin(), BUI_RANGE.end()};
 static const vector<MathSize> BUI_DEFAULT_SINGLE{60};
-static const auto DC_RANGE = range(0.0, 2000.0, 7.0);
+static const auto DC_RANGE = range(0.0, 1000.0, 7.0);
 static const vector<MathSize> DC_RANGE_DEFAULTS{DC_RANGE.begin(), DC_RANGE.end()};
+static const vector<MathSize> DC_VALUES_GRASS{0, 10, 50, 100, 400, 499, 500, 501, 1000};
 static const vector<MathSize> DC_DEFAULT_SINGLE{200};
 struct FuelCompareOptions
 {
@@ -322,7 +323,7 @@ struct FuelCompareOptions
 static constexpr FuelCompareOptions FUEL_COMPARE_DEFAULT{};
 static constexpr FuelCompareOptions FUEL_COMPARE_GRASS{
   .nd_values = ND_ALL_VALUES,
-  .dc_values = DC_RANGE_DEFAULTS
+  .dc_values = DC_VALUES_GRASS
 };
 static constexpr FuelCompareOptions FUEL_COMPARE_DECIDUOUS{
   .nd_values = ND_DEFAULT_SINGLE,
@@ -342,6 +343,13 @@ int compare_fuel_basic(
   {
     return cmp;
   }
+  logging::info(
+    "Checking (%ld nds X %ld buis X %ld dcs) = %ld combinations",
+    options.nd_values.size(),
+    options.bui_values.size(),
+    options.dc_values.size(),
+    options.nd_values.size() * options.bui_values.size() * options.dc_values.size()
+  );
   //
   // FuelType
   //
@@ -500,13 +508,23 @@ void find_nd_values()
   static constexpr MathSize ELEVATION_INCREMENT = 100;
   // - nd for different latitudes
   //   - elevation 0
-  // for (auto latitude : range(-90.0, 90.0, DEGREE_INCREMENT))
-  for (auto latitude : range(BOUNDS_CANADA_LAT_MIN, BOUNDS_CANADA_LAT_MAX, DEGREE_INCREMENT))
+  // const auto latitudes = range(-90.0, 90.0, DEGREE_INCREMENT);
+  const auto latitudes = range(BOUNDS_CANADA_LAT_MIN, BOUNDS_CANADA_LAT_MAX, DEGREE_INCREMENT);
+  // const auto longitudes = range(-180.0, 180.0, DEGREE_INCREMENT);
+  const auto longitudes = range(BOUNDS_CANADA_LON_MIN, BOUNDS_CANADA_LON_MAX, DEGREE_INCREMENT);
+  const auto elevations = range(ELEVATION_EARTH_MIN, ELEVATION_EARTH_MAX, ELEVATION_INCREMENT);
+  logging::info(
+    "Checking (%ld latitudes X %ld longitudes X %ld elevations) = %ld combinations",
+    latitudes.size(),
+    longitudes.size(),
+    elevations.size(),
+    latitudes.size() * longitudes.size() * elevations.size()
+  );
+  for (auto latitude : latitudes)
   {
-    // for (auto longitude : range(-180.0, 180.0, DEGREE_INCREMENT))
-    for (auto longitude : range(BOUNDS_CANADA_LON_MIN, BOUNDS_CANADA_LON_MAX, DEGREE_INCREMENT))
+    for (auto longitude : longitudes)
     {
-      for (auto elevation : range(ELEVATION_EARTH_MIN, ELEVATION_EARTH_MAX, ELEVATION_INCREMENT))
+      for (auto elevation : elevations)
       {
         const Point pt{latitude, longitude};
         const auto nd_ref = calculate_nd_ref_for_point(elevation, pt);

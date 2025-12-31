@@ -157,6 +157,7 @@ public:
       this, end_ + (inclusive_ ? increment_ : static_cast<value_type>(0))
     );
   }
+  difference_type size() const { return end() - begin(); }
 
 private:
   RangeIterator(const RangeIterator* rhs, const T value)
