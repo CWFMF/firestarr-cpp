@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "SimpleFBP.h"
 #include <limits>
+#include <ranges>
 #include "Duff.h"
 #include "FBP45.h"
 #include "FireWeather.h"
@@ -307,18 +308,17 @@ int compare_fuel_valid(
   check_equal(a.code(), b.code(), "code");
   return 0;
 }
-static set<int> ND_ALL_VALUES{};
-static set<int> ND_DEFAULT_SINGLE{80};
-static const auto BUI_RANGE = range(0.0, 300.0, 7.0);
-static const vector<MathSize> BUI_RANGE_DEFAULTS{BUI_RANGE.begin(), BUI_RANGE.end()};
+static vector<int> ND_ALL_VALUES{};
+static vector<int> ND_DEFAULT_SINGLE{80};
+static const auto BUI_RANGE_DEFAULTS{std::ranges::to<vector<MathSize>>(range(0.0, 300.0, 7.0))};
 static const vector<MathSize> BUI_DEFAULT_SINGLE{60};
-static const auto DC_RANGE = range(0.0, 1000.0, 7.0);
-static const vector<MathSize> DC_RANGE_DEFAULTS{DC_RANGE.begin(), DC_RANGE.end()};
+static const auto DC_RANGE_DEFAULTS{std::ranges::to<vector<MathSize>>(range(0.0, 1000.0, 7.0))};
 static const vector<MathSize> DC_VALUES_GRASS{0, 10, 50, 100, 400, 499, 500, 501, 1000};
 static const vector<MathSize> DC_DEFAULT_SINGLE{200};
 struct FuelCompareOptions
 {
-  const set<int>& nd_values{ND_DEFAULT_SINGLE};
+  // HACK: can't figure out how to refer to a range so just use vectors
+  const vector<int>& nd_values{ND_DEFAULT_SINGLE};
   const vector<MathSize>& bui_values{BUI_DEFAULT_SINGLE};
   const vector<MathSize>& dc_values{DC_DEFAULT_SINGLE};
 };
@@ -502,10 +502,10 @@ int compare_fuel(
   return 0;
 }
 // static constexpr FuelCompareOptions FUEL_COMPARE_DECIDUOUS{.dc_values = DC_DEFAULT_SINGLE};
-void find_nd_values()
+vector<int> find_nd_values()
 {
   set<int> nd_ref_values{};
-  ND_ALL_VALUES = {};
+  set<int> nd_values{};
   static constexpr MathSize BOUNDS_CANADA_LAT_MIN = 41;
   static constexpr MathSize BOUNDS_CANADA_LAT_MAX = 84;
   static constexpr MathSize BOUNDS_CANADA_LON_MIN = -141;
@@ -557,31 +557,32 @@ void find_nd_values()
       logging::verbose("jd %d", day);
       // from calculate_nd_for_point(const Day day, const int elevation, const Point& point)
       const auto nd = static_cast<int>(abs(day - nd_ref));
-      ND_ALL_VALUES.emplace(nd);
+      nd_values.emplace(nd);
     }
   }
   auto min_nd = std::numeric_limits<int>::max();
   auto max_nd = std::numeric_limits<int>::min();
-  for (auto nd : ND_ALL_VALUES)
+  for (auto nd : nd_values)
   {
     min_nd = min(min_nd, nd);
     max_nd = max(max_nd, nd);
   }
-  const bool is_consecutive{static_cast<size_t>(max_nd - min_nd + 1) == ND_ALL_VALUES.size()};
+  const bool is_consecutive{static_cast<size_t>(max_nd - min_nd + 1) == nd_values.size()};
   logging::info(
     "Have %ld nd values between %d and %d that are %s",
-    ND_ALL_VALUES.size(),
+    nd_values.size(),
     min_nd,
     max_nd,
     is_consecutive ? "consecutive" : "non-consecutive"
   );
+  return {nd_values.begin(), nd_values.end()};
 }
 int test_fbp(const int argc, const char* const argv[])
 {
   std::ignore = argc;
   std::ignore = argv;
   logging::info("Testing FBP");
-  find_nd_values();
+  ND_ALL_VALUES = find_nd_values();
   // for (size_t i = 0; i < FuelLookup::Fuels.size(); ++i)
   // {
   //   auto& a = *simplefbp::SimpleFuels[i];
