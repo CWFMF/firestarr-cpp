@@ -305,6 +305,7 @@ int compare_fuel_valid(
   check_equal(a.code(), b.code(), "code");
   return 0;
 }
+static set<int> ND_VALUES{};
 template <class TypeA, class TypeB>
 int compare_fuel_basic(
   const string name,
@@ -366,75 +367,31 @@ int compare_fuel_basic(
   // need to check breakpoints
   // - BUI 80 (D2)
   // - DC 500 (O1)
-  // - nd for different latitudes
-  //   - elevation 0
   // FIX: use some weird increments to do less but not always have __0.0
-  size_t cur{0};
-  // static constexpr size_t CHECK_EVERY_NTH_TEST{1'000'000'000};
-  static constexpr size_t CHECK_EVERY_NTH_TEST{1'000'000};
-  static constexpr MathSize BOUNDS_CANADA_LAT_MIN = 41;
-  static constexpr MathSize BOUNDS_CANADA_LAT_MAX = 84;
-  static constexpr MathSize BOUNDS_CANADA_LON_MIN = -141;
-  static constexpr MathSize BOUNDS_CANADA_LON_MAX = -52;
-  // FIX: use some weird increments to do less but not always have __.0
-  static constexpr MathSize DEGREE_INCREMENT = 0.3;
-  static constexpr MathSize ELEVATION_EARTH_MIN = -418;
-  static constexpr MathSize ELEVATION_EARTH_MAX = 8848;
-  static constexpr MathSize ELEVATION_INCREMENT = 1000;
-  for (auto bui : range(0.0, 300.0, 7.0))
+  for (auto nd : ND_VALUES)
   {
-    // logging::verbose("bui %f", bui);
-    for (auto dc : range(0.0, 2000.0, 7.0))
+    for (auto bui : range(0.0, 300.0, 7.0))
     {
-      // logging::verbose("dc %f", dc);
-      const FwiWeather wx{
-        Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
-      };
-      for (int jd : range_int(0, 366, 1))
+      // logging::verbose("bui %f", bui);
+      for (auto dc : range(0.0, 2000.0, 7.0))
       {
-        // logging::verbose("jd %d", jd);
-        // for (auto latitude : range(-90.0, 90.0, DEGREE_INCREMENT))
-        for (auto latitude : range(BOUNDS_CANADA_LAT_MIN, BOUNDS_CANADA_LAT_MAX, DEGREE_INCREMENT))
-        {
-          // for (auto longitude : range(-180.0, 180.0, DEGREE_INCREMENT))
-          for (auto longitude :
-               range(BOUNDS_CANADA_LON_MIN, BOUNDS_CANADA_LON_MAX, DEGREE_INCREMENT))
-          {
-            for (auto elevation :
-                 range(ELEVATION_EARTH_MIN, ELEVATION_EARTH_MAX, ELEVATION_INCREMENT))
-            {
-              cur %= CHECK_EVERY_NTH_TEST;
-              if (0 == cur)
-              {
-                const Point pt{latitude, longitude};
-                const auto nd = calculate_nd_for_point(jd, elevation, pt);
-                const string msg =
-                  logging::Log::getLogLevel() >= logging::LOG_VERBOSE
-                    ? std::format(
-                        "calculateRos(jd={}, bui={}, dc={}, elevation={}, latitude={}, longitude={})",
-                        jd,
-                        bui,
-                        dc,
-                        elevation,
-                        latitude,
-                        longitude
-                      )
-                    : "calculateRos()";
-                check_range(
-                  msg.c_str(),
-                  "isi",
-                  [&](const auto& v) { return a.calculateRos(nd, wx, v); },
-                  [&](const auto& v) { return b.calculateRos(nd, wx, v); },
-                  EPSILON,
-                  0,
-                  250,
-                  0.1
-                );
-              }
-              ++cur;
-            }
-          }
-        }
+        // logging::verbose("dc %f", dc);
+        const FwiWeather wx{
+          Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
+        };
+        const string msg = logging::Log::getLogLevel() >= logging::LOG_VERBOSE
+                           ? std::format("calculateRos(nd={}, bui={}, dc={})", nd, bui, dc)
+                           : "calculateRos()";
+        check_range(
+          msg.c_str(),
+          "isi",
+          [&](const auto& v) { return a.calculateRos(nd, wx, v); },
+          [&](const auto& v) { return b.calculateRos(nd, wx, v); },
+          EPSILON,
+          0,
+          250,
+          0.1
+        );
       }
     }
   }
@@ -501,11 +458,56 @@ int compare_fuel(
   check_equal(a.logQ(), b.logQ(), "logQ");
   return 0;
 }
+set<int> find_nd_values()
+{
+  ND_VALUES = {};
+  static constexpr MathSize BOUNDS_CANADA_LAT_MIN = 41;
+  static constexpr MathSize BOUNDS_CANADA_LAT_MAX = 84;
+  static constexpr MathSize BOUNDS_CANADA_LON_MIN = -141;
+  static constexpr MathSize BOUNDS_CANADA_LON_MAX = -52;
+  // FIX: use some weird increments to do less but not always have __.0
+  static constexpr MathSize DEGREE_INCREMENT = 0.3;
+  // static constexpr MathSize ELEVATION_CANADA_MAX = 5959;
+  static constexpr MathSize ELEVATION_EARTH_MIN = -418;
+  static constexpr MathSize ELEVATION_EARTH_MAX = 8848;
+  static constexpr MathSize ELEVATION_INCREMENT = 100;
+  // - nd for different latitudes
+  //   - elevation 0
+  for (int jd : range_int(0, 366, 1))
+  {
+    // logging::verbose("jd %d", jd);
+    // for (auto latitude : range(-90.0, 90.0, DEGREE_INCREMENT))
+    for (auto latitude : range(BOUNDS_CANADA_LAT_MIN, BOUNDS_CANADA_LAT_MAX, DEGREE_INCREMENT))
+    {
+      // for (auto longitude : range(-180.0, 180.0, DEGREE_INCREMENT))
+      for (auto longitude : range(BOUNDS_CANADA_LON_MIN, BOUNDS_CANADA_LON_MAX, DEGREE_INCREMENT))
+      {
+        for (auto elevation : range(ELEVATION_EARTH_MIN, ELEVATION_EARTH_MAX, ELEVATION_INCREMENT))
+        {
+          const Point pt{latitude, longitude};
+          const auto nd = calculate_nd_for_point(jd, elevation, pt);
+          ND_VALUES.emplace(nd);
+          logging::verbose(
+            "now have %ld values for nd: %d, %f, %f, %f gives nd %d",
+            ND_VALUES.size(),
+            jd,
+            latitude,
+            longitude,
+            elevation,
+            nd
+          );
+        }
+      }
+    }
+  }
+  logging::info("Have %ld nd values", ND_VALUES.size());
+}
 int test_fbp(const int argc, const char* const argv[])
 {
   std::ignore = argc;
   std::ignore = argv;
   logging::info("Testing FBP");
+  find_nd_values();
   // for (size_t i = 0; i < FuelLookup::Fuels.size(); ++i)
   // {
   //   auto& a = *simplefbp::SimpleFuels[i];
