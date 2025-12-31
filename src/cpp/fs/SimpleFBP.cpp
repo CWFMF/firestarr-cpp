@@ -458,8 +458,9 @@ int compare_fuel(
   check_equal(a.logQ(), b.logQ(), "logQ");
   return 0;
 }
-set<int> find_nd_values()
+void find_nd_values()
 {
+  set<int> nd_ref_values{};
   ND_VALUES = {};
   static constexpr MathSize BOUNDS_CANADA_LAT_MIN = 41;
   static constexpr MathSize BOUNDS_CANADA_LAT_MAX = 84;
@@ -473,31 +474,36 @@ set<int> find_nd_values()
   static constexpr MathSize ELEVATION_INCREMENT = 100;
   // - nd for different latitudes
   //   - elevation 0
-  for (int jd : range_int(0, 366, 1))
+  // for (auto latitude : range(-90.0, 90.0, DEGREE_INCREMENT))
+  for (auto latitude : range(BOUNDS_CANADA_LAT_MIN, BOUNDS_CANADA_LAT_MAX, DEGREE_INCREMENT))
   {
-    // logging::verbose("jd %d", jd);
-    // for (auto latitude : range(-90.0, 90.0, DEGREE_INCREMENT))
-    for (auto latitude : range(BOUNDS_CANADA_LAT_MIN, BOUNDS_CANADA_LAT_MAX, DEGREE_INCREMENT))
+    // for (auto longitude : range(-180.0, 180.0, DEGREE_INCREMENT))
+    for (auto longitude : range(BOUNDS_CANADA_LON_MIN, BOUNDS_CANADA_LON_MAX, DEGREE_INCREMENT))
     {
-      // for (auto longitude : range(-180.0, 180.0, DEGREE_INCREMENT))
-      for (auto longitude : range(BOUNDS_CANADA_LON_MIN, BOUNDS_CANADA_LON_MAX, DEGREE_INCREMENT))
+      for (auto elevation : range(ELEVATION_EARTH_MIN, ELEVATION_EARTH_MAX, ELEVATION_INCREMENT))
       {
-        for (auto elevation : range(ELEVATION_EARTH_MIN, ELEVATION_EARTH_MAX, ELEVATION_INCREMENT))
-        {
-          const Point pt{latitude, longitude};
-          const auto nd = calculate_nd_for_point(jd, elevation, pt);
-          ND_VALUES.emplace(nd);
-          logging::verbose(
-            "now have %ld values for nd: %d, %f, %f, %f gives nd %d",
-            ND_VALUES.size(),
-            jd,
-            latitude,
-            longitude,
-            elevation,
-            nd
-          );
-        }
+        const Point pt{latitude, longitude};
+        const auto nd_ref = calculate_nd_ref_for_point(elevation, pt);
+        nd_ref_values.emplace(nd_ref);
+        logging::verbose(
+          "now have %ld values for nd: %g, %g, %g gives nd_ref %d",
+          nd_ref_values.size(),
+          latitude,
+          longitude,
+          elevation,
+          nd_ref
+        );
       }
+    }
+  }
+  for (int day : range_int(0, 366, 1))
+  {
+    for (auto nd_ref : nd_ref_values)
+    {
+      logging::verbose("jd %d", day);
+      // from calculate_nd_for_point(const Day day, const int elevation, const Point& point)
+      const auto nd = static_cast<int>(abs(day - nd_ref));
+      ND_VALUES.emplace(nd);
     }
   }
   logging::info("Have %ld nd values", ND_VALUES.size());
