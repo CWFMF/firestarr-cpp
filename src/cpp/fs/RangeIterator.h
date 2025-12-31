@@ -2,6 +2,7 @@
 #ifndef FS_RANGEITERATOR_H
 #define FS_RANGEITERATOR_H
 #include <iterator>
+#include "debug_settings.h"
 #include "Log.h"
 #include "unstable.h"
 namespace fs
@@ -23,6 +24,7 @@ public:
   )
     : start_(start), end_(end), increment_(increment), inclusive_(inclusive)
   {
+#ifndef DEBUG_ITERATOR
     logging::verbose(
       "Range is from %f to %f with step %f %s",
       start_,
@@ -31,6 +33,7 @@ public:
       inclusive_ ? "inclusive" : "exclusive"
     );
   }
+#endif
   RangeIterator() = default;
   RangeIterator(const RangeIterator& rhs) = default;
   RangeIterator(RangeIterator&& rhs) = default;
@@ -41,6 +44,7 @@ public:
   inline value_type operator*() const { return start_ + step_ * increment_; }
   inline RangeIterator& operator++()
   {
+#ifndef DEBUG_ITERATOR
     logging::check_fatal(
       *(*this) < start_,
       "operator++() %g less than start value %g (+%g) for step %d",
@@ -49,7 +53,9 @@ public:
       (*(*this) - start_),
       step_
     );
+#endif
     step_++;
+#ifndef DEBUG_ITERATOR
     logging::check_fatal(
       *this > end(),
       "operator++() %g more than end value %g (%+g) for step %d",
@@ -58,10 +64,12 @@ public:
       (*(*this) - *end()),
       step_
     );
+#endif
     return *this;
   }
   inline RangeIterator operator++(int)
   {
+#ifndef DEBUG_ITERATOR
     logging::check_fatal(
       *(*this) < start_,
       "operator++(int) %g less than start value %g (+%g) for step %d",
@@ -69,8 +77,10 @@ public:
       start_,
       step_
     );
+#endif
     RangeIterator oTmp = *(*this);
     *(*this) += increment_;
+#ifndef DEBUG_ITERATOR
     logging::check_fatal(
       *this > end(),
       "operator++(int) %g more than end value %g (%+g) for step %d",
@@ -78,10 +88,12 @@ public:
       *end(),
       step_
     );
+#endif
     return oTmp;
   }
   inline RangeIterator& operator--()
   {
+#ifndef DEBUG_ITERATOR
     logging::check_fatal(
       *this > end(),
       "operator--() %g more than end value %g (%+g) for step %d",
@@ -89,7 +101,9 @@ public:
       *end(),
       step_
     );
+#endif
     *(*this) -= increment_;
+#ifndef DEBUG_ITERATOR
     logging::check_fatal(
       *(*this) < start_,
       "operator--() %g less than start value %g (+%g) for step %d",
@@ -97,11 +111,13 @@ public:
       start_,
       step_
     );
+#endif
     return *this;
   }
   inline RangeIterator operator--(int)
   {
     RangeIterator oTmp = *(*this);
+#ifndef DEBUG_ITERATOR
     logging::check_fatal(
       *this > end(),
       "operator--(int) %g more than end value %g (%+g) for step %d",
@@ -109,7 +125,9 @@ public:
       *end(),
       step_
     );
+#endif
     *(*this) -= increment_;
+#ifndef DEBUG_ITERATOR
     logging::check_fatal(
       *(*this) < start_,
       "operator--(int) %g less than start value %g (+%g) for step %d",
@@ -117,6 +135,7 @@ public:
       start_,
       step_
     );
+#endif
     return oTmp;
   }
   inline difference_type operator-(const RangeIterator& rhs) const

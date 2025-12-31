@@ -370,7 +370,8 @@ int compare_fuel_basic(
   //   - elevation 0
   // FIX: use some weird increments to do less but not always have __0.0
   size_t cur{0};
-  static constexpr size_t CHECK_EVERY_NTH_TEST{1'000'000'000};
+  // static constexpr size_t CHECK_EVERY_NTH_TEST{1'000'000'000};
+  static constexpr size_t CHECK_EVERY_NTH_TEST{1'000'000};
   static constexpr MathSize BOUNDS_CANADA_LAT_MIN = 41;
   static constexpr MathSize BOUNDS_CANADA_LAT_MAX = 84;
   static constexpr MathSize BOUNDS_CANADA_LON_MIN = -141;
@@ -382,16 +383,16 @@ int compare_fuel_basic(
   static constexpr MathSize ELEVATION_INCREMENT = 1000;
   for (auto bui : range(0.0, 300.0, 7.0))
   {
-    logging::verbose("bui %f", bui);
+    // logging::verbose("bui %f", bui);
     for (auto dc : range(0.0, 2000.0, 7.0))
     {
-      logging::verbose("dc %f", dc);
+      // logging::verbose("dc %f", dc);
       const FwiWeather wx{
         Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
       };
       for (int jd : range_int(0, 366, 1))
       {
-        logging::verbose("jd %d", jd);
+        // logging::verbose("jd %d", jd);
         // for (auto latitude : range(-90.0, 90.0, DEGREE_INCREMENT))
         for (auto latitude : range(BOUNDS_CANADA_LAT_MIN, BOUNDS_CANADA_LAT_MAX, DEGREE_INCREMENT))
         {
@@ -407,15 +408,18 @@ int compare_fuel_basic(
               {
                 const Point pt{latitude, longitude};
                 const auto nd = calculate_nd_for_point(jd, elevation, pt);
-                const auto msg = std::format(
-                  "calculateRos(jd={}, bui={}, dc={}, elevation={}, latitude={}, longitude={})",
-                  jd,
-                  bui,
-                  dc,
-                  elevation,
-                  latitude,
-                  longitude
-                );
+                const string msg =
+                  logging::Log::getLogLevel() >= logging::LOG_VERBOSE
+                    ? std::format(
+                        "calculateRos(jd={}, bui={}, dc={}, elevation={}, latitude={}, longitude={})",
+                        jd,
+                        bui,
+                        dc,
+                        elevation,
+                        latitude,
+                        longitude
+                      )
+                    : "calculateRos()";
                 check_range(
                   msg.c_str(),
                   "isi",
