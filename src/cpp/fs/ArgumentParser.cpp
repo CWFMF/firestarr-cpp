@@ -222,8 +222,13 @@ static const Usage USAGE_TEST{
   "test <output_dir>"
 };
 static const vector<Usage> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
+void SettingsArgumentParser::parse_args()
+{
+  Settings::setRoot(BIN_DIR.c_str());
+  ArgumentParser::parse_args();
+}
 MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
-  : ArgumentParser(DEFAULT_USAGES, argc, argv)
+  : SettingsArgumentParser(DEFAULT_USAGES, argc, argv)
 {
   register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
   register_flag(&Settings::setSaveAsTiff, false, "--no-tiff", "Do not save grids as .tif");
@@ -361,8 +366,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
 }
 void MainArgumentParser::parse_args()
 {
-  Settings::setRoot(BIN_DIR.c_str());
-  ArgumentParser::parse_args();
+  SettingsArgumentParser::parse_args();
   // fs::show_debug_settings();
   // parse positional arguments
   // output directory is always the first thing

@@ -126,7 +126,13 @@ enum MODE
   TEST,
   SURFACE
 };
-class MainArgumentParser : public ArgumentParser
+class SettingsArgumentParser : public ArgumentParser
+{
+public:
+  using ArgumentParser::ArgumentParser;
+  void parse_args() override;
+};
+class MainArgumentParser : public SettingsArgumentParser
 {
 public:
   MODE mode{SIMULATION};

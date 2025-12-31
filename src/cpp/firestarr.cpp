@@ -208,7 +208,7 @@ int main(const int argc, const char* const argv[])
 // HACK: keep everything else out of std namepace
 int main(const int argc, const char* const argv[])
 {
-  auto is_test = true;
+#undef NOT_TEST
 #ifdef TEST_DUFF
   // FIX: this was used to compare to the old template version, but doesn't work now
   //      left for reference for now so idea could be used for more tests
@@ -220,27 +220,15 @@ int main(const int argc, const char* const argv[])
 #else
   is_test = false;
   constexpr auto fct_main = fs::main;
+  // HACK: avoid using compiled variable for this
+#define NOT_TEST
 #endif
-  if (is_test)
-  {
-    fs::logging::Log::setLogLevel(fs::logging::LOG_NOTE);
-    // HACK: just do simple check for now
-    for (auto i = 1; i < argc; ++i)
-    {
-      const auto& arg = argv[i];
-      if (0 == strcmp("-v", arg))
-      {
-        fs::logging::Log::increaseLogLevel();
-      }
-      else if (0 == strcmp("-q", arg))
-      {
-        fs::logging::Log::decreaseLogLevel();
-      }
-      else
-      {
-        fs::logging::fatal("Unsupported flag %s - tests only support -v and -q", arg);
-      }
-    }
-  }
+#ifndef NOT_TEST
+  static const fs::Usage USAGE_TEST{"Run tests and exit", ""};
+  fs::SettingsArgumentParser parser{
+    USAGE_TEST, argc, argv, fs::PositionalArgumentsRequired::NotRequired
+  };
+  parser.parse_args();
+#endif
   exit(fct_main(argc, argv));
 }
