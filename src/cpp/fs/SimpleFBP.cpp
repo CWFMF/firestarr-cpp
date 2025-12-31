@@ -331,6 +331,11 @@ static constexpr FuelCompareOptions FUEL_COMPARE_DECIDUOUS{
   .nd_values = ND_DEFAULT_SINGLE,
   .dc_values = DC_DEFAULT_SINGLE
 };
+static const auto RANGE_MC_FRACTION = range(-1, 3, 0.0001);
+static const auto RANGE_WIND_SPEED = range(0, 200, 0.01);
+static const auto RANGE_BUI_EFFECT = range(-1, 300, 0.01);
+static const auto RANGE_CFB = range(0, 100, 0.01);
+static const auto RANGE_ISI = range(0, 250, 0.1);
 template <class TypeA, class TypeB>
 int compare_fuel_basic(
   const string name,
@@ -341,12 +346,27 @@ int compare_fuel_basic(
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
 )
 {
+  const auto n_nd = options.nd_values.size();
+  const auto n_bui = options.bui_values.size();
+  const auto n_dc = options.dc_values.size();
+  const auto n_isi = RANGE_ISI.size();
+  static const auto n_mc_fraction = RANGE_MC_FRACTION.size();
+  static const auto n_wind_speed = RANGE_WIND_SPEED.size();
+  static const auto n_bui_effect = RANGE_BUI_EFFECT.size();
+  static const auto n_cfb = RANGE_CFB.size();
+  const auto n_loop = n_nd * n_bui * n_dc * n_isi;
+  const auto n_total = n_loop + n_mc_fraction + n_wind_speed + n_bui_effect + n_cfb;
   const auto msg = std::format(
-    "({} nds X {} buis X {} dcs) = {} combinations",
-    options.nd_values.size(),
-    options.bui_values.size(),
-    options.dc_values.size(),
-    options.nd_values.size() * options.bui_values.size() * options.dc_values.size()
+    "(({} nds X {} buis X {} dcs X {} isis) + {} mc_fractions + {} wind_speeds' + {} bui_effects + {} cfbs = {} combinations",
+    n_nd,
+    n_bui,
+    n_dc,
+    n_isi,
+    n_mc_fraction,
+    n_wind_speed,
+    n_bui_effect,
+    n_cfb,
+    n_total
   );
   if (const auto cmp = compare_fuel_valid(name, a, b, msg.c_str()); 0 != cmp)
   {
@@ -371,9 +391,7 @@ int compare_fuel_basic(
     [&](const auto& v) { return a.probabilityPeat(v); },
     [&](const auto& v) { return b.probabilityPeat(v); },
     EPSILON,
-    -1,
-    3,
-    0.0001
+    RANGE_MC_FRACTION
   );
   // ThresholdSize survivalProbability(const FwiWeather& wx) const noexcept
   check_range(
@@ -382,9 +400,7 @@ int compare_fuel_basic(
     [&](const auto& v) { return a.buiEffect(v); },
     [&](const auto& v) { return b.buiEffect(v); },
     EPSILON,
-    -1,
-    300,
-    0.01
+    RANGE_BUI_EFFECT
   );
   check_range(
     "crownConsumption()",
@@ -392,9 +408,7 @@ int compare_fuel_basic(
     [&](const auto& v) { return a.crownConsumption(v); },
     [&](const auto& v) { return b.crownConsumption(v); },
     EPSILON,
-    0,
-    100,
-    0.01
+    RANGE_CFB
   );
   // MathSize calculateRos(int nd, const FwiWeather& wx, MathSize isi) const
   // need to check breakpoints
@@ -422,9 +436,7 @@ int compare_fuel_basic(
           [&](const auto& v) { return a.calculateRos(nd, wx, v); },
           [&](const auto& v) { return b.calculateRos(nd, wx, v); },
           EPSILON,
-          0,
-          250,
-          0.1
+          RANGE_ISI
         );
       }
     }
@@ -437,9 +449,7 @@ int compare_fuel_basic(
     [&](const auto& v) { return a.lengthToBreadth(v); },
     [&](const auto& v) { return b.lengthToBreadth(v); },
     EPSILON,
-    0,
-    200,
-    0.01
+    RANGE_WIND_SPEED
   );
   // MathSize finalRos(const SpreadInfo& spread, MathSize isi, MathSize cfb, MathSize rss) const
   // MathSize criticalSurfaceIntensity(const SpreadInfo& spread) const
@@ -480,9 +490,7 @@ int compare_fuel(
     [&](const auto& v) { return a.rosBasic(v); },
     [&](const auto& v) { return b.rosBasic(v); },
     EPSILON,
-    0,
-    250,
-    0.01
+    RANGE_ISI
   );
   // MathSize limitIsf(const MathSize mu, const MathSize rsf) const noexcept
   check_equal(a.bui0(), b.bui0(), "bui0");

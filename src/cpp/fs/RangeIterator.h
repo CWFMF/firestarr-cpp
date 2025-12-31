@@ -194,20 +194,18 @@ auto range_int(const int start, const int end, const int step, const bool inclus
 }
 namespace fs::testing
 {
+template <class T>
 auto check_range(
   const char* name_fct,
   const char* name_param,
   const auto fct_a,
   const auto fct_b,
   const MathSize epsilon,
-  const MathSize start,
-  const MathSize end,
-  const MathSize step,
-  const bool inclusive = true
+  const RangeIterator<T>& it
 )
 {
   logging::debug("Checking %s", name_fct);
-  for (auto v : range(start, end, step, inclusive))
+  for (auto v : it)
   {
     const auto msg = std::format("{} ({} = {})", name_fct, name_param, v);
     logging::check_tolerance(epsilon, fct_a(v), fct_b(v), msg.c_str());
