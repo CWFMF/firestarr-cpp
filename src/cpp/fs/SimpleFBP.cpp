@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "SimpleFBP.h"
+#include <limits>
 #include "Duff.h"
 #include "FBP45.h"
 #include "FireWeather.h"
@@ -291,10 +292,11 @@ int compare_fuel_valid(
   // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
   // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
   const TypeA& a,
-  const TypeB& b
+  const TypeB& b,
+  const char* msg = ""
 )
 {
-  logging::info("Checking %s", name.c_str());
+  logging::info("Checking %s: %s", name.c_str(), msg);
   //
   // FuelType
   //
@@ -339,17 +341,17 @@ int compare_fuel_basic(
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
 )
 {
-  if (const auto cmp = compare_fuel_valid(name, a, b); 0 != cmp)
-  {
-    return cmp;
-  }
-  logging::info(
-    "Checking (%ld nds X %ld buis X %ld dcs) = %ld combinations",
+  const auto msg = std::format(
+    "({} nds X {} buis X {} dcs) = {} combinations",
     options.nd_values.size(),
     options.bui_values.size(),
     options.dc_values.size(),
     options.nd_values.size() * options.bui_values.size() * options.dc_values.size()
   );
+  if (const auto cmp = compare_fuel_valid(name, a, b, msg.c_str()); 0 != cmp)
+  {
+    return cmp;
+  }
   //
   // FuelType
   //
@@ -550,7 +552,21 @@ void find_nd_values()
       ND_ALL_VALUES.emplace(nd);
     }
   }
-  logging::info("Have %ld nd values", ND_ALL_VALUES.size());
+  auto min_nd = std::numeric_limits<int>::max();
+  auto max_nd = std::numeric_limits<int>::min();
+  for (auto nd : ND_ALL_VALUES)
+  {
+    min_nd = min(min_nd, nd);
+    max_nd = max(max_nd, nd);
+  }
+  const bool is_consecutive{static_cast<size_t>(max_nd - min_nd + 1) == ND_ALL_VALUES.size()};
+  logging::info(
+    "Have %ld nd values between %d and %d that are %s",
+    ND_ALL_VALUES.size(),
+    min_nd,
+    max_nd,
+    is_consecutive ? "consecutive" : "non-consecutive"
+  );
 }
 int test_fbp(const int argc, const char* const argv[])
 {
@@ -566,8 +582,8 @@ int test_fbp(const int argc, const char* const argv[])
   //   // compare("", *simplefbp::SimpleFuels[i], *FuelLookup::Fuels[i]);
   // }
   auto i = 0;
-  compare_fuel_valid("Non-fuel", simplefbp::NULL_FUEL, *FuelLookup::Fuels[i++]);
-  compare_fuel_valid("Invalid", simplefbp::INVALID, *FuelLookup::Fuels[i++]);
+  compare_fuel_valid("Non-fuel", simplefbp::NULL_FUEL, *FuelLookup::Fuels[i++], "basic test only");
+  compare_fuel_valid("Invalid", simplefbp::INVALID, *FuelLookup::Fuels[i++], "basic test only");
   compare_fuel("C1", simplefbp::C1, *dynamic_cast<const fs::FuelC1*>(FuelLookup::Fuels[i++]));
   compare_fuel("C2", simplefbp::C2, *dynamic_cast<const fs::FuelC2*>(FuelLookup::Fuels[i++]));
   compare_fuel("C3", simplefbp::C3, *dynamic_cast<const fs::FuelC3*>(FuelLookup::Fuels[i++]));
