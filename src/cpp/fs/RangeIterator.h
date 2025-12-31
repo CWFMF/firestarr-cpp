@@ -149,8 +149,8 @@ public:
   // inline bool operator<(const RangeIterator& rhs) const { return *(*this) > *rhs; }
   // inline bool operator>=(const RangeIterator& rhs) const { return *(*this) <= *rhs; }
   // inline bool operator<=(const RangeIterator& rhs) const { return *(*this) >= *rhs; }
-  auto begin() { return RangeIterator<value_type>(this, start_); }
-  auto end()
+  auto begin() const { return RangeIterator<value_type>(this, start_); }
+  auto end() const
   {
     // if inclusive then end is slightly past end value so end is included
     return RangeIterator<value_type>(

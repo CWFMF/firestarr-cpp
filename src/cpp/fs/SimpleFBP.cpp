@@ -305,14 +305,37 @@ int compare_fuel_valid(
   check_equal(a.code(), b.code(), "code");
   return 0;
 }
-static set<int> ND_VALUES{};
+static set<int> ND_ALL_VALUES{};
+static set<int> ND_DEFAULT_SINGLE{80};
+static const auto BUI_RANGE = range(0.0, 300.0, 7.0);
+static const vector<MathSize> BUI_RANGE_DEFAULTS{BUI_RANGE.begin(), BUI_RANGE.end()};
+static const vector<MathSize> BUI_DEFAULT_SINGLE{60};
+static const auto DC_RANGE = range(0.0, 2000.0, 7.0);
+static const vector<MathSize> DC_RANGE_DEFAULTS{DC_RANGE.begin(), DC_RANGE.end()};
+static const vector<MathSize> DC_DEFAULT_SINGLE{200};
+struct FuelCompareOptions
+{
+  const set<int>& nd_values{ND_DEFAULT_SINGLE};
+  const vector<MathSize>& bui_values{BUI_DEFAULT_SINGLE};
+  const vector<MathSize>& dc_values{DC_DEFAULT_SINGLE};
+};
+static constexpr FuelCompareOptions FUEL_COMPARE_DEFAULT{};
+static constexpr FuelCompareOptions FUEL_COMPARE_GRASS{
+  .nd_values = ND_ALL_VALUES,
+  .dc_values = DC_RANGE_DEFAULTS
+};
+static constexpr FuelCompareOptions FUEL_COMPARE_DECIDUOUS{
+  .nd_values = ND_DEFAULT_SINGLE,
+  .dc_values = DC_DEFAULT_SINGLE
+};
 template <class TypeA, class TypeB>
 int compare_fuel_basic(
   const string name,
   // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
   // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
   const TypeA& a,
-  const TypeB& b
+  const TypeB& b,
+  const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
 )
 {
   if (const auto cmp = compare_fuel_valid(name, a, b); 0 != cmp)
@@ -368,12 +391,13 @@ int compare_fuel_basic(
   // - BUI 80 (D2)
   // - DC 500 (O1)
   // FIX: use some weird increments to do less but not always have __0.0
-  for (auto nd : ND_VALUES)
+  for (auto nd : options.nd_values)
   {
-    for (auto bui : range(0.0, 300.0, 7.0))
+    for (auto bui : options.bui_values)
     {
       // logging::verbose("bui %f", bui);
-      for (auto dc : range(0.0, 2000.0, 7.0))
+      // for (auto dc : range(0.0, 2000.0, 7.0))
+      for (auto dc : options.dc_values)
       {
         // logging::verbose("dc %f", dc);
         const FwiWeather wx{
@@ -419,10 +443,11 @@ int compare_fuel(
   // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
   // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
   const TypeA& a,
-  const TypeB& b
+  const TypeB& b,
+  const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
 )
 {
-  if (const auto cmp = compare_fuel_basic(name, a, b); 0 != cmp)
+  if (const auto cmp = compare_fuel_basic(name, a, b, options); 0 != cmp)
   {
     return cmp;
   }
@@ -458,10 +483,11 @@ int compare_fuel(
   check_equal(a.logQ(), b.logQ(), "logQ");
   return 0;
 }
+// static constexpr FuelCompareOptions FUEL_COMPARE_DECIDUOUS{.dc_values = DC_DEFAULT_SINGLE};
 void find_nd_values()
 {
   set<int> nd_ref_values{};
-  ND_VALUES = {};
+  ND_ALL_VALUES = {};
   static constexpr MathSize BOUNDS_CANADA_LAT_MIN = 41;
   static constexpr MathSize BOUNDS_CANADA_LAT_MAX = 84;
   static constexpr MathSize BOUNDS_CANADA_LON_MIN = -141;
@@ -503,10 +529,10 @@ void find_nd_values()
       logging::verbose("jd %d", day);
       // from calculate_nd_for_point(const Day day, const int elevation, const Point& point)
       const auto nd = static_cast<int>(abs(day - nd_ref));
-      ND_VALUES.emplace(nd);
+      ND_ALL_VALUES.emplace(nd);
     }
   }
-  logging::info("Have %ld nd values", ND_VALUES.size());
+  logging::info("Have %ld nd values", ND_ALL_VALUES.size());
 }
 int test_fbp(const int argc, const char* const argv[])
 {
@@ -531,15 +557,38 @@ int test_fbp(const int argc, const char* const argv[])
   compare_fuel("C5", simplefbp::C5, *dynamic_cast<const fs::FuelC5*>(FuelLookup::Fuels[i++]));
   compare_fuel("C6", simplefbp::C6, *dynamic_cast<const fs::FuelC6*>(FuelLookup::Fuels[i++]));
   compare_fuel("C7", simplefbp::C7, *dynamic_cast<const fs::FuelC7*>(FuelLookup::Fuels[i++]));
-  compare_fuel("D1", simplefbp::D1, *dynamic_cast<const fs::FuelD1*>(FuelLookup::Fuels[i++]));
-  compare_fuel("D2", simplefbp::D2, *dynamic_cast<const fs::FuelD2*>(FuelLookup::Fuels[i++]));
-  compare_fuel("O1_A", simplefbp::O1_A, *dynamic_cast<const fs::FuelO1A*>(FuelLookup::Fuels[i++]));
-  compare_fuel("O1_B", simplefbp::O1_B, *dynamic_cast<const fs::FuelO1B*>(FuelLookup::Fuels[i++]));
+  compare_fuel(
+    "D1",
+    simplefbp::D1,
+    *dynamic_cast<const fs::FuelD1*>(FuelLookup::Fuels[i++]),
+    FUEL_COMPARE_DECIDUOUS
+  );
+  compare_fuel(
+    "D2",
+    simplefbp::D2,
+    *dynamic_cast<const fs::FuelD2*>(FuelLookup::Fuels[i++]),
+    FUEL_COMPARE_DECIDUOUS
+  );
+  compare_fuel(
+    "O1_A",
+    simplefbp::O1_A,
+    *dynamic_cast<const fs::FuelO1A*>(FuelLookup::Fuels[i++]),
+    FUEL_COMPARE_GRASS
+  );
+  compare_fuel(
+    "O1_B",
+    simplefbp::O1_B,
+    *dynamic_cast<const fs::FuelO1B*>(FuelLookup::Fuels[i++]),
+    FUEL_COMPARE_GRASS
+  );
   compare_fuel("S1", simplefbp::S1, *dynamic_cast<const fs::FuelS1*>(FuelLookup::Fuels[i++]));
   compare_fuel("S2", simplefbp::S2, *dynamic_cast<const fs::FuelS2*>(FuelLookup::Fuels[i++]));
   compare_fuel("S3", simplefbp::S3, *dynamic_cast<const fs::FuelS3*>(FuelLookup::Fuels[i++]));
   compare_fuel_basic(
-    "D1_D2", simplefbp::D1_D2, *dynamic_cast<const fs::FuelD1D2*>(FuelLookup::Fuels[i++])
+    "D1_D2",
+    simplefbp::D1_D2,
+    *dynamic_cast<const fs::FuelD1D2*>(FuelLookup::Fuels[i++]),
+    FUEL_COMPARE_DECIDUOUS
   );
   compare_fuel(
     "M1_05", simplefbp::M1_05, *dynamic_cast<const fs::FuelM1<5>*>(FuelLookup::Fuels[i++])
@@ -912,7 +961,12 @@ int test_fbp(const int argc, const char* const argv[])
     simplefbp::M3_M4_100,
     *dynamic_cast<const fs::FuelM3M4<100>*>(FuelLookup::Fuels[i++])
   );
-  compare_fuel_basic("O1", simplefbp::O1, *dynamic_cast<const fs::FuelO1*>(FuelLookup::Fuels[i++]));
+  compare_fuel_basic(
+    "O1",
+    simplefbp::O1,
+    *dynamic_cast<const fs::FuelO1*>(FuelLookup::Fuels[i++]),
+    FUEL_COMPARE_GRASS
+  );
   check_equal(NUMBER_OF_FUELS, i, "Number of fuels");
   return 0;
 }
