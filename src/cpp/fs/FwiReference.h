@@ -30,9 +30,9 @@ public:
   Month(const Value value) : value{value} { }
   int ordinal() const { return static_cast<int>(value) + 1; }
   size_t index() const { return static_cast<size_t>(value); }
-  string name() const
+  const char* name() const
   {
-    static constexpr string NAMES[]{
+    static constexpr const char* NAMES[]{
       "January",
       "February",
       "March",

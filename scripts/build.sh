@@ -31,6 +31,7 @@ if ( [ -z "${VARIANT}" ] || \
   VARIANT=${VAR_RELEASE}
   # don't shift because $1 wasn't the variant
 else
+  echo "Removing $1"
   shift;
 fi
 TARGET="$1"
