@@ -3,8 +3,6 @@
 #define FS_DUFFSIMPLE_H
 #include "stdafx.h"
 #include "unstable.h"
-#define TEST_DUFF 1
-#undef TEST_DUFF
 #ifdef TEST_DUFF
 namespace fs::duffsimple
 {

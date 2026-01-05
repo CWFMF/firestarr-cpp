@@ -122,6 +122,7 @@ ArgumentParser::ArgumentParser(
   fs::show_debug_settings();
   ARGC = argc;
   ARGV = argv;
+  assert(0 == CUR_ARG);
   auto bin = string(ARGV[CUR_ARG++]);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);

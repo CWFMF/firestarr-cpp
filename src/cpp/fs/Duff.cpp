@@ -1,15 +1,12 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Duff.h"
-#ifdef TEST_DUFF
 #include "DuffSimple.h"
 #include "Log.h"
-#endif
-namespace fs::duff
-{
 #ifdef TEST_DUFF
+namespace fs::testing
+{
 // FIX: this was used to compare to the old template version, but doesn't work now
 //      left for reference for now so idea could be used for more tests
-using duff::DuffType;
 int test_duff(const int argc, const char* const argv[])
 {
   std::ignore = argc;
@@ -25,5 +22,5 @@ int test_duff(const int argc, const char* const argv[])
   compare_duff("SprucePine", duffsimple::SprucePine, duff::SprucePine);
   return 0;
 }
-#endif
 }
+#endif

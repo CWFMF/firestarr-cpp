@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "TestFwi.h"
+#ifdef TEST_FWI
 #include "ArgumentParser.h"
 #include "FWI.h"
 #include "FwiReference.h"
@@ -159,20 +160,15 @@ int test_fwi_files(const string file_expected, const string file_in, const strin
 }
 int test_fwi(const int argc, const char* const argv[])
 {
+  // HACK: parser happens before this
+  std::ignore = argc;
+  std::ignore = argv;
   constexpr auto FILE_EXPECTED{"test/data/fwi/fwi_out.txt"};
   constexpr auto FILE_IN{"test/data/fwi/fwi_in.txt"};
   constexpr auto FILE_OUT{"test/output/fwi/fwi_out.txt"};
   constexpr auto LATITUDE_MIN{-90.0};
   constexpr auto LATITUDE_MAX{90.0};
   constexpr auto STEP{0.001};
-  // lets logging levels and help work
-  ArgumentParser parser{
-    {.description = "Test FWI calculations"}, argc, argv, PositionalArgumentsRequired::NotRequired
-  };
-  parser.parse_args();
-  logging::info("Testing FWI calculations");
-  // no positional arguments
-  parser.done_positional();
   make_directory_recursive("test/output/fwi");
   if (const auto ret = test_fwi_files(FILE_EXPECTED, FILE_IN, FILE_OUT); 0 != ret)
   {
@@ -206,3 +202,4 @@ int test_fwi(const int argc, const char* const argv[])
   return 0;
 }
 }
+#endif

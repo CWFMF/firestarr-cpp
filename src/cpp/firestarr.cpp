@@ -208,20 +208,20 @@ int main(const int argc, const char* const argv[])
 // HACK: keep everything else out of std namepace
 int main(const int argc, const char* const argv[])
 {
+  // HACK: want to be able to do tests without changing source files but can't find a nice way
 #undef NOT_TEST
 #ifdef TEST_DUFF
   // FIX: this was used to compare to the old template version, but doesn't work now
   //      left for reference for now so idea could be used for more tests
-  constexpr auto fct_main = fs::duff::test_duff;
+  constexpr auto fct_main = fs::testing::test_duff;
 #elif TEST_FBP
   constexpr auto fct_main = fs::testing::test_fbp;
 #elif TEST_FWI
   constexpr auto fct_main = fs::testing::test_fwi;
 #else
-  is_test = false;
   constexpr auto fct_main = fs::main;
   // HACK: avoid using compiled variable for this
-#define NOT_TEST
+#define NOT_TEST 1
 #endif
 #ifndef NOT_TEST
   static const fs::Usage USAGE_TEST{"Run tests and exit", ""};

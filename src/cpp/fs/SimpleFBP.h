@@ -9,8 +9,6 @@
 #ifdef DEBUG_FUEL_VARIABLE
 #include "Log.h"
 #endif
-#define TEST_FBP 1
-// #undef TEST_FBP
 namespace fs::simplefbp
 {
 /**

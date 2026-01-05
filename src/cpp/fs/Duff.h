@@ -6,7 +6,6 @@
 #include "unstable.h"
 // FIX: this was used to compare to the old template version, but doesn't work now
 //      left for reference for now so idea could be used for more tests
-#undef TEST_DUFF
 namespace fs::duff
 {
 /*! \page survival Probability of fire survival
@@ -180,7 +179,7 @@ int compare_duff(
   const string name,
   const TypeA& a,
   const TypeB& b,
-  const auto log_level = logging::LOG_INFO
+  const int log_level = logging::LOG_INFO
 )
 {
   static constexpr int RESOLUTION = 10000;
