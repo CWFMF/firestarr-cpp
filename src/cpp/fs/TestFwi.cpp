@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "TestFwi.h"
-#ifdef TEST_FWI
 #include "ArgumentParser.h"
 #include "FWI.h"
 #include "FwiReference.h"
@@ -202,4 +201,3 @@ int test_fwi(const int argc, const char* const argv[])
   return 0;
 }
 }
-#endif

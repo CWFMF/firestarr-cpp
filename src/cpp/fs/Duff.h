@@ -203,8 +203,6 @@ int compare_duff(
   }
   return 0;
 }
-#ifdef TEST_DUFF
 int test_duff(const int argc, const char* const argv[]);
-#endif
 }
 #endif

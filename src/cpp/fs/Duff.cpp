@@ -2,7 +2,6 @@
 #include "Duff.h"
 #include "DuffSimple.h"
 #include "Log.h"
-#ifdef TEST_DUFF
 namespace fs::testing
 {
 // FIX: this was used to compare to the old template version, but doesn't work now
@@ -23,4 +22,3 @@ int test_duff(const int argc, const char* const argv[])
   return 0;
 }
 }
-#endif

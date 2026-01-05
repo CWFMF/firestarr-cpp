@@ -274,7 +274,6 @@ const array<const FuelType*, NUMBER_OF_FUELS> SimpleFuels{
   &M1_M2_00,  &M3_00,    &M4_00,    &M3_M4_100, &O1,
 };
 }
-#ifdef TEST_FBP
 namespace fs::testing
 {
 // FIX: this was used to compare to the old template version, but doesn't work now
@@ -1010,4 +1009,3 @@ int test_fbp(const int argc, const char* const argv[])
   return 0;
 }
 }
-#endif
