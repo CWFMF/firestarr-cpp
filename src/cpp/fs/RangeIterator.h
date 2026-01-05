@@ -16,12 +16,15 @@ public:
   using iterator_category = std::bidirectional_iterator_tag;
   using difference_type = int;
   using value_type = T;
-  RangeIterator(
-    const value_type start,
-    const value_type end,
-    const value_type increment,
-    const bool inclusive = true
-  )
+#ifndef DEBUG_ITERATOR
+  constexpr
+#endif
+    RangeIterator(
+      const value_type start,
+      const value_type end,
+      const value_type increment,
+      const bool inclusive = true
+    )
     : start_(start), end_(end), increment_(increment), inclusive_(inclusive)
   {
 #ifndef DEBUG_ITERATOR
@@ -32,17 +35,21 @@ public:
       increment_,
       inclusive_ ? "inclusive" : "exclusive"
     );
-  }
 #endif
-  RangeIterator() = default;
-  RangeIterator(const RangeIterator& rhs) = default;
-  RangeIterator(RangeIterator&& rhs) = default;
+  }
+  constexpr RangeIterator() = default;
+  constexpr RangeIterator(const RangeIterator& rhs) = default;
+  constexpr RangeIterator(RangeIterator&& rhs) = default;
   RangeIterator& operator=(const RangeIterator& rhs) = default;
   RangeIterator& operator=(RangeIterator&& rhs) = default;
 
 public:
-  inline value_type operator*() const { return start_ + step_ * increment_; }
-  inline RangeIterator& operator++()
+  constexpr inline value_type operator*() const { return start_ + step_ * increment_; }
+#ifndef DEBUG_ITERATOR
+  constexpr
+#endif
+    inline RangeIterator&
+    operator++()
   {
 #ifndef DEBUG_ITERATOR
     logging::check_fatal(
@@ -67,7 +74,11 @@ public:
 #endif
     return *this;
   }
-  inline RangeIterator operator++(int)
+#ifndef DEBUG_ITERATOR
+  constexpr
+#endif
+    inline RangeIterator
+    operator++(int)
   {
 #ifndef DEBUG_ITERATOR
     logging::check_fatal(
@@ -91,7 +102,11 @@ public:
 #endif
     return oTmp;
   }
-  inline RangeIterator& operator--()
+#ifndef DEBUG_ITERATOR
+  constexpr
+#endif
+    inline RangeIterator&
+    operator--()
   {
 #ifndef DEBUG_ITERATOR
     logging::check_fatal(
@@ -114,7 +129,11 @@ public:
 #endif
     return *this;
   }
-  inline RangeIterator operator--(int)
+#ifndef DEBUG_ITERATOR
+  constexpr
+#endif
+    inline RangeIterator
+    operator--(int)
   {
     RangeIterator oTmp = *(*this);
 #ifndef DEBUG_ITERATOR
@@ -138,7 +157,7 @@ public:
 #endif
     return oTmp;
   }
-  inline difference_type operator-(const RangeIterator& rhs) const
+  constexpr inline difference_type operator-(const RangeIterator& rhs) const
   {
     return static_cast<difference_type>(step_ - rhs.step_);
   }
@@ -149,8 +168,8 @@ public:
   // inline bool operator<(const RangeIterator& rhs) const { return *(*this) > *rhs; }
   // inline bool operator>=(const RangeIterator& rhs) const { return *(*this) <= *rhs; }
   // inline bool operator<=(const RangeIterator& rhs) const { return *(*this) >= *rhs; }
-  auto begin() const { return RangeIterator<value_type>(this, start_); }
-  auto end() const
+  constexpr auto begin() const { return RangeIterator<value_type>(this, start_); }
+  constexpr auto end() const
   {
     // if inclusive then end is slightly past end value so end is included
     return RangeIterator<value_type>(
@@ -160,7 +179,7 @@ public:
   difference_type size() const { return end() - begin(); }
 
 private:
-  RangeIterator(const RangeIterator* rhs, const T value)
+  constexpr RangeIterator(const RangeIterator* rhs, const T value)
     : start_(rhs->start_), end_(rhs->end_), increment_(rhs->increment_),
       step_(static_cast<difference_type>((value - start_) / increment_)),
       inclusive_(rhs->inclusive_)
@@ -176,7 +195,7 @@ static_assert(
   "iterator must be an iterator!"
 );
 static_assert(std::bidirectional_iterator<RangeIterator<int>>, "iterator must be an iterator!");
-auto range(
+inline constexpr auto range(
   const MathSize start,
   const MathSize end,
   const MathSize step,
@@ -186,7 +205,12 @@ auto range(
   std::ignore = inclusive;
   return RangeIterator(start, end, step);
 }
-auto range_int(const int start, const int end, const int step, const bool inclusive = true)
+inline constexpr auto range_int(
+  const int start,
+  const int end,
+  const int step,
+  const bool inclusive = true
+)
 {
   std::ignore = inclusive;
   return RangeIterator<int>(start, end, step);
@@ -201,7 +225,7 @@ auto check_range(
   const auto fct_a,
   const auto fct_b,
   const MathSize epsilon,
-  const RangeIterator<T>& it
+  const T& it
 )
 {
   logging::debug("Checking %s", name_fct);

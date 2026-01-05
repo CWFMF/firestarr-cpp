@@ -308,34 +308,30 @@ int compare_fuel_valid(
   check_equal(a.code(), b.code(), "code");
   return 0;
 }
+// use vectors so FuelCompareOptions can assign any of these directly
 static vector<int> ND_ALL_VALUES{};
-static vector<int> ND_DEFAULT_SINGLE{80};
 static const auto BUI_RANGE_DEFAULTS{std::ranges::to<vector<MathSize>>(range(0.0, 300.0, 7.0))};
-static const vector<MathSize> BUI_DEFAULT_SINGLE{60};
 static const auto DC_RANGE_DEFAULTS{std::ranges::to<vector<MathSize>>(range(0.0, 1000.0, 7.0))};
 static const vector<MathSize> DC_VALUES_GRASS{0, 10, 50, 100, 400, 499, 500, 501, 1000};
-static const vector<MathSize> DC_DEFAULT_SINGLE{200};
+static const auto RANGE_MC_FRACTION = std::ranges::to<vector<MathSize>>(range(-1, 3, 0.0001));
+static const auto RANGE_WIND_SPEED = std::ranges::to<vector<MathSize>>(range(0, 200, 0.01));
+static const auto RANGE_BUI_EFFECT = std::ranges::to<vector<MathSize>>(range(-1, 300, 0.01));
+static const auto RANGE_CFB = std::ranges::to<vector<MathSize>>(range(0, 100, 0.01));
+static const auto RANGE_ISI = std::ranges::to<vector<MathSize>>(range(0, 250, 0.1));
 struct FuelCompareOptions
 {
   // HACK: can't figure out how to refer to a range so just use vectors
-  const vector<int>& nd_values{ND_DEFAULT_SINGLE};
-  const vector<MathSize>& bui_values{BUI_DEFAULT_SINGLE};
-  const vector<MathSize>& dc_values{DC_DEFAULT_SINGLE};
+  // single values for defaults
+  const vector<int> nd_values{80};
+  const vector<MathSize> bui_values{60};
+  const vector<MathSize> dc_values{200};
 };
-static constexpr FuelCompareOptions FUEL_COMPARE_DEFAULT{};
-static constexpr FuelCompareOptions FUEL_COMPARE_GRASS{
+static const FuelCompareOptions FUEL_COMPARE_DEFAULT{};
+static const FuelCompareOptions FUEL_COMPARE_GRASS{
   .nd_values = ND_ALL_VALUES,
   .dc_values = DC_VALUES_GRASS
 };
-static constexpr FuelCompareOptions FUEL_COMPARE_DECIDUOUS{
-  .nd_values = ND_DEFAULT_SINGLE,
-  .dc_values = DC_DEFAULT_SINGLE
-};
-static const auto RANGE_MC_FRACTION = range(-1, 3, 0.0001);
-static const auto RANGE_WIND_SPEED = range(0, 200, 0.01);
-static const auto RANGE_BUI_EFFECT = range(-1, 300, 0.01);
-static const auto RANGE_CFB = range(0, 100, 0.01);
-static const auto RANGE_ISI = range(0, 250, 0.1);
+static const FuelCompareOptions FUEL_COMPARE_DECIDUOUS{.bui_values = BUI_RANGE_DEFAULTS};
 template <class TypeA, class TypeB>
 int compare_fuel_basic(
   const string name,
