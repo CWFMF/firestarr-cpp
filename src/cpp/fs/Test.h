@@ -5,10 +5,6 @@
 #include "FWI.h"
 namespace fs
 {
-class FwiWeather;
-};
-namespace fs
-{
 #include "stdafx.h"
 static const double TEST_GRID_SIZE = 100.0;
 static const char TEST_PROJ4[] =

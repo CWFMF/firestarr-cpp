@@ -6,7 +6,6 @@
 #include "Point.h"
 namespace fs
 {
-class FwiWeather;
 class Environment;
 /**
  * \brief A map of locations which have burned in a Scenario.
