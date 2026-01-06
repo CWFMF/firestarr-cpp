@@ -246,7 +246,7 @@ public:
   template <class P>
   void set(const Position<P>& position, const T value)
   {
-    set(Location{position.hash()});
+    set(Location{position.hash()}, value);
   }
 
 protected:
