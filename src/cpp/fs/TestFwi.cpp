@@ -28,13 +28,29 @@ int test_fwi_file(
   Ffmc ffmc0_{ffmc0};
   Dmc dmc0_{dmc0};
   Dc dc0_{dc0};
-  /* Open input and output files */
-  ifstream inputFile(file_in);
-  if (!inputFile.is_open())
+  // HACK: load file once and buffer
+  using row_type = tuple<int, int, MathSize, MathSize, MathSize, MathSize>;
+  static map<string, vector<row_type>> buffered_files{};
+  auto buffer = buffered_files[file_in];
+  if (buffer.empty())
   {
-    cout << "Unable to open input data file";
-    return -1;
+    /* Open input and output files */
+    ifstream inputFile(file_in);
+    if (!inputFile.is_open())
+    {
+      cout << "Unable to open input data file";
+      return -1;
+    }
+    while (getline(inputFile, line))
+    {
+      istringstream ss(line);
+      ss >> month >> day >> temp >> rhum >> wind >> prcp;
+      buffer.emplace_back(month, day, temp, rhum, wind, prcp);
+    }
+    inputFile.close();
   }
+  buffered_files[file_in] = buffer;
+  assert(buffered_files[file_in].size() == buffer.size());
   ofstream outputFile;
   if (nullptr != file_out)
   {
@@ -48,10 +64,14 @@ int test_fwi_file(
   logging::debug("Testing FWI generated from %s for latitude %g", file_in, latitude);
   const Latitude latitude_{latitude};
   /* Main loop for calculating indices */
-  while (getline(inputFile, line))
+  for (auto row : buffer)
   {
-    istringstream ss(line);
-    ss >> month >> day >> temp >> rhum >> wind >> prcp;
+    month = std::get<0>(row);
+    day = std::get<1>(row);
+    temp = std::get<2>(row);
+    rhum = std::get<3>(row);
+    wind = std::get<4>(row);
+    prcp = std::get<5>(row);
     const auto month_{Month::from_ordinal(month)};
     static constexpr MathSize EPSILON{std::numeric_limits<MathSize>::epsilon()};
     Temperature temp_{temp};
@@ -98,7 +118,6 @@ int test_fwi_file(
       // endl;
     }
   }
-  inputFile.close();
   if (nullptr != file_out)
   {
     outputFile.close();
