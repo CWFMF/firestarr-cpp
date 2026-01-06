@@ -46,7 +46,6 @@
 #include <ranges>
 #include <set>
 #include <sstream>
-#include <stdfloat>
 #include <string>
 #include <string_view>
 #include <type_traits>
