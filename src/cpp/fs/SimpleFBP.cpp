@@ -309,14 +309,14 @@ int compare_fuel_valid(
 }
 // use vectors so FuelCompareOptions can assign any of these directly
 static vector<int> ND_ALL_VALUES{};
-static const auto BUI_RANGE_DEFAULTS{std::ranges::to<vector<MathSize>>(range(0.0, 300.0, 7.0))};
-static const auto DC_RANGE_DEFAULTS{std::ranges::to<vector<MathSize>>(range(0.0, 1000.0, 7.0))};
+static const auto BUI_RANGE_DEFAULTS = range(0.0, 300.0, 7.0);
+static const auto DC_RANGE_DEFAULTS = range(0.0, 1000.0, 7.0);
 static const vector<MathSize> DC_VALUES_GRASS{0, 10, 50, 100, 400, 499, 500, 501, 1000};
-static const auto RANGE_MC_FRACTION = std::ranges::to<vector<MathSize>>(range(-1, 3, 0.0001));
-static const auto RANGE_WIND_SPEED = std::ranges::to<vector<MathSize>>(range(0, 200, 0.01));
-static const auto RANGE_BUI_EFFECT = std::ranges::to<vector<MathSize>>(range(-1, 300, 0.01));
-static const auto RANGE_CFB = std::ranges::to<vector<MathSize>>(range(0, 100, 0.01));
-static const auto RANGE_ISI = std::ranges::to<vector<MathSize>>(range(0, 250, 0.1));
+static const auto RANGE_MC_FRACTION = range(-1, 3, 0.0001);
+static const auto RANGE_WIND_SPEED = range(0, 200, 0.01);
+static const auto RANGE_BUI_EFFECT = range(-1, 300, 0.01);
+static const auto RANGE_CFB = range(0, 100, 0.01);
+static const auto RANGE_ISI = range(0, 250, 0.1);
 struct FuelCompareOptions
 {
   // HACK: can't figure out how to refer to a range so just use vectors

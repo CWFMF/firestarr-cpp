@@ -60,7 +60,7 @@ struct Wind
    * \brief X component of wind vector (km/h)
    * \return X component of wind vector (km/h)
    */
-  [[nodiscard]] constexpr MathSize wsvX() const noexcept
+  [[nodiscard]] MathSize wsvX() const noexcept
   {
     // HACK: rounding error due to assignment before adding in old tests so keep for now
     volatile auto v = speed.value * sin(direction.heading());
@@ -70,7 +70,7 @@ struct Wind
    * \brief Y component of wind vector (km/h)
    * \return Y component of wind vector (km/h)
    */
-  [[nodiscard]] constexpr MathSize wsvY() const noexcept
+  [[nodiscard]] MathSize wsvY() const noexcept
   {
     // HACK: rounding error due to assignment before adding in old tests so keep for now
     volatile auto v = speed.value * cos(direction.heading());

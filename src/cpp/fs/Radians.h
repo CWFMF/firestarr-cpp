@@ -69,12 +69,12 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
 };
 static constexpr Degrees INVALID_DIRECTION{std::numeric_limits<DirectionSize>::max()};
 static constexpr Radians abs(const Radians& radians) { return Radians{radians.value}; };
-static constexpr MathSize tan(const Radians& radians) { return std::tan(radians.value); };
-static constexpr MathSize sin(const Radians& radians) { return fs::sin(radians.value); };
-static constexpr MathSize cos(const Radians& radians) { return fs::cos(radians.value); };
+static inline MathSize tan(const Radians& radians) { return std::tan(radians.value); };
+static inline MathSize sin(const Radians& radians) { return fs::sin(radians.value); };
+static inline MathSize cos(const Radians& radians) { return fs::cos(radians.value); };
 static constexpr Degrees abs(const Degrees& degrees) { return Degrees{degrees.value}; };
-static constexpr MathSize tan(const Degrees& degrees) { return tan(Radians{degrees}); };
-static constexpr MathSize sin(const Degrees& degrees) { return sin(Radians{degrees}); };
-static constexpr MathSize cos(const Degrees& degrees) { return cos(Radians{degrees}); };
+static inline MathSize tan(const Degrees& degrees) { return tan(Radians{degrees}); };
+static inline MathSize sin(const Degrees& degrees) { return sin(Radians{degrees}); };
+static inline MathSize cos(const Degrees& degrees) { return cos(Radians{degrees}); };
 }
 #endif

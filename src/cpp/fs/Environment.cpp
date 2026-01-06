@@ -304,15 +304,6 @@ Environment::Environment(const FuelGrid& fuel, const ElevationGrid& elevation, c
   // take elevation at point so that if max grid size changes elevation doesn't
   logging::note("Start elevation is %d", elevation_);
 }
-string_view Environment::proj4() const { return cells_.proj4(); }
-Idx Environment::rows() const { return cells_.rows(); }
-Idx Environment::columns() const { return cells_.columns(); }
-MathSize Environment::cellSize() const { return cells_.cellSize(); }
-ElevationSize Environment::elevation() const { return elevation_; }
-Cell Environment::cell(const Idx row, const Idx column) const
-{
-  return cells_.at(Location(row, column));
-}
 Cell Environment::offset(const Event& event, const Idx row, const Idx column) const
 {
   const auto& p = event.cell;

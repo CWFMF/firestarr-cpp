@@ -79,34 +79,37 @@ public:
    * \brief UTM projection that this uses
    * \return UTM projection that this uses
    */
-  [[nodiscard]] string_view proj4() const;
+  [[nodiscard]] constexpr string_view proj4() const { return cells_.proj4(); }
   /**
    * \brief Number of rows in grid
    * \return Number of rows in grid
    */
-  [[nodiscard]] Idx rows() const;
+  [[nodiscard]] constexpr Idx rows() const { return cells_.rows(); }
   /**
    * \brief Number of columns in grid
    * \return Number of columns in grid
    */
-  [[nodiscard]] Idx columns() const;
+  [[nodiscard]] constexpr Idx columns() const { return cells_.columns(); }
   /**
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
    */
-  [[nodiscard]] MathSize cellSize() const;
+  [[nodiscard]] constexpr MathSize cellSize() const { return cells_.cellSize(); };
   /**
    * \brief Elevation of the origin Point
    * \return Elevation of the origin Point
    */
-  [[nodiscard]] ElevationSize elevation() const;
+  [[nodiscard]] constexpr ElevationSize elevation() const { return elevation_; };
   /**
    * \brief Cell at given row and column
    * \param row Row
    * \param column Column
    * \return Cell at given row and column
    */
-  [[nodiscard]] Cell cell(const Idx row, const Idx column) const;
+  [[nodiscard]] constexpr Cell cell(const Idx row, const Idx column) const
+  {
+    return cells_.at(Location(row, column));
+  }
   /**
    * \brief Cell at given Location
    * \param location Location

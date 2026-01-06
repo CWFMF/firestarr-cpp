@@ -203,7 +203,8 @@ inline constexpr auto range(
 )
 {
   std::ignore = inclusive;
-  return RangeIterator(start, end, step);
+  auto r = RangeIterator(start, end, step);
+  return vector<MathSize>{r.begin(), r.end()};
 }
 inline constexpr auto range_int(
   const int start,
@@ -213,7 +214,8 @@ inline constexpr auto range_int(
 )
 {
   std::ignore = inclusive;
-  return RangeIterator<int>(start, end, step);
+  auto r = RangeIterator<int>(start, end, step);
+  return vector<int>{r.begin(), r.end()};
 }
 }
 namespace fs::testing

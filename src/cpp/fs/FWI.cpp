@@ -39,8 +39,8 @@
 //******************************************************************************************
 namespace fs
 {
-const auto LATITUDE_INNER = 10.0;
-const auto LATITUDE_MIDDLE = 30.0;
+constexpr auto LATITUDE_INNER = 10.0;
+constexpr auto LATITUDE_MIDDLE = 30.0;
 // The following two functions refer to the MEA day length adjustment 'note'.
 //
 //******************************************************************************************
