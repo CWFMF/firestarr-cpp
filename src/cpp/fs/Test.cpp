@@ -266,7 +266,7 @@ void show_options(
   const char** p = &prefix_open;
   for (auto v : values)
   {
-    printf(*p);
+    printf("%s", *p);
     printf(fmt, convert(v));
     p = &prefix_comma;
   }
