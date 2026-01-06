@@ -16,15 +16,12 @@ public:
   using iterator_category = std::bidirectional_iterator_tag;
   using difference_type = int;
   using value_type = T;
-#ifndef DEBUG_ITERATOR
-  constexpr
-#endif
-    RangeIterator(
-      const value_type start,
-      const value_type end,
-      const value_type increment,
-      const bool inclusive = true
-    )
+  RangeIterator(
+    const value_type start,
+    const value_type end,
+    const value_type increment,
+    const bool inclusive = true
+  )
     : start_(start), end_(end), increment_(increment), inclusive_(inclusive)
   {
 #ifndef DEBUG_ITERATOR
@@ -195,7 +192,7 @@ static_assert(
   "iterator must be an iterator!"
 );
 static_assert(std::bidirectional_iterator<RangeIterator<int>>, "iterator must be an iterator!");
-inline constexpr auto range(
+inline auto range(
   const MathSize start,
   const MathSize end,
   const MathSize step,
@@ -206,12 +203,7 @@ inline constexpr auto range(
   auto r = RangeIterator(start, end, step);
   return vector<MathSize>{r.begin(), r.end()};
 }
-inline constexpr auto range_int(
-  const int start,
-  const int end,
-  const int step,
-  const bool inclusive = true
-)
+inline auto range_int(const int start, const int end, const int step, const bool inclusive = true)
 {
   std::ignore = inclusive;
   auto r = RangeIterator<int>(start, end, step);

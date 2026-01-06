@@ -106,7 +106,7 @@ public:
    * \param column Column
    * \return Cell at given row and column
    */
-  [[nodiscard]] constexpr Cell cell(const Idx row, const Idx column) const
+  [[nodiscard]] Cell cell(const Idx row, const Idx column) const
   {
     return cells_.at(Location(row, column));
   }
