@@ -96,7 +96,7 @@ static constexpr MonthArray
 //      Month is integer (1..12) value of month of year for calculation
 //
 //******************************************************************************************
-static constexpr MathSize day_length(const MathSize latitude, const int month) noexcept
+static MathSize day_length(const MathSize latitude, const int month) noexcept
 {
   //'''/* Day Length Arrays for four different latitude ranges '*/
   //''/*

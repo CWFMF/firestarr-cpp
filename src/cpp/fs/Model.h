@@ -140,10 +140,7 @@ public:
    * \return Cell at the given row and column
    */
   [[nodiscard]]
-#ifdef NDEBUG
-  constexpr
-#endif
-    Cell cell(const Idx row, const Idx column) const
+  Cell cell(const Idx row, const Idx column) const
   {
     return env_->cell(row, column);
   }

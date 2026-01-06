@@ -47,12 +47,12 @@ int calculate_nd_for_point(const Day day, const int elevation, const Point& poin
 {
   return static_cast<int>(abs(day - calculate_nd_ref_for_point(elevation, point)));
 }
-static constexpr MathSize calculate_standard_back_isi_wsv(const MathSize v) noexcept
+static MathSize calculate_standard_back_isi_wsv(const MathSize v) noexcept
 {
   return 0.208 * exp(-0.05039 * v);
 }
 static const LookupTable<&calculate_standard_back_isi_wsv> STANDARD_BACK_ISI_WSV{};
-static constexpr MathSize calculate_standard_wsv(const MathSize v) noexcept
+static MathSize calculate_standard_wsv(const MathSize v) noexcept
 {
   return v < 40.0 ? exp(0.05039 * v) : 12.0 * (1.0 - exp(-0.0818 * (v - 28)));
 }

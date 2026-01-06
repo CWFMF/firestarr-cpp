@@ -69,7 +69,7 @@ struct Duff
    * \param mc_pct Moisture content, percentage dry oven weight
    * \return Probability of survival (% / 100) [eq Ig-1]
    */
-  [[nodiscard]] constexpr ThresholdSize probabilityOfSurvival(const MathSize mc_pct) const noexcept
+  [[nodiscard]] ThresholdSize probabilityOfSurvival(const MathSize mc_pct) const noexcept
   {
     /**
      * \brief Constant part of ignition probability equation [eq Ig-1]
