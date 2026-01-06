@@ -17,8 +17,8 @@ protected:
 public:
   using pair<S, S>::pair;
   constexpr BoundedPoint() noexcept : BoundedPoint(XMin - 1, YMin - 1) { }
-  S x() const { return std::get<0>(*this); }
-  S y() const { return std::get<1>(*this); }
+  constexpr S x() const { return std::get<0>(*this); }
+  constexpr S y() const { return std::get<1>(*this); }
   /**
    * \brief Add offset to position and return result
    */
