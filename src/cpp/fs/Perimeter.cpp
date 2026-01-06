@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Perimeter.h"
-#include <numbers>
 #include "Environment.h"
 #include "FuelLookup.h"
 #include "Location.h"
@@ -79,7 +78,7 @@ BurnedMap make_burned_map(const Location& location, const size_t size, const Env
   size_t count = 0;
   // convert into number of cells
   const auto num_cells = size / (100.0 * 100.0 / (perim_grid.cellSize() * perim_grid.cellSize()));
-  auto max_distance = sqrt(num_cells / std::numbers::pi);
+  auto max_distance = sqrt(num_cells / M_PI);
   perim_grid.set(location, 1);
   ++count;
   // HACK: assume fuel for origin matches the rest of the fire

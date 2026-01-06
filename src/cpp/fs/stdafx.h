@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_STDAFX_H
 #define FS_STDAFX_H
+#define _USE_MATH_DEFINES
 #include "debug_settings.h"
 #include "unstable.h"
 // #define VLD_FORCE_ENABLE
