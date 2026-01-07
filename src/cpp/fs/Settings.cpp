@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Settings.h"
+#include <exception>
 #include <filesystem>
 #include "Log.h"
 #include "Trim.h"
@@ -24,6 +25,31 @@ static vector<T> parse_list(string str, T (*convert)(const string s))
   }
   return result;
 }
+string get_canonical_path(const char* const dir_root, string path)
+{
+  if (!path.starts_with("/"))
+  {
+    // not an absolute path
+    // if binary path starts with ./ then ignore it
+    std::filesystem::path p =
+      (0 == strcmp("./", dir_root) || 0 == strcmp(".\\", dir_root)) ? path : (dir_root + path);
+    try
+    {
+#ifdef _WIN32
+      path = std::filesystem::canonical(p).generic_string();
+#else
+      path = std::filesystem::canonical(p).c_str();
+#endif
+      logging::info("Converted relative path to absolute path %s", path.c_str());
+    }
+    catch (std::exception&)
+    {
+      logging::fatal("Unable to convert relative path to canonical for %s", p.c_str());
+      path = "";
+    }
+  }
+  return path;
+}
 /**
  * \brief Settings implementation class
  */
@@ -46,7 +72,12 @@ public:
    * \brief Root directory that raster inputs are stored in
    * \return Root directory that raster inputs are stored in
    */
-  [[nodiscard]] const char* rasterRoot() const noexcept { return raster_root_.c_str(); }
+  [[nodiscard]] const char* rasterRoot() const noexcept
+  {
+    // HACK: resolve path when used to avoid failure when invalid but unused
+    static auto canonical_path = get_canonical_path(dir_root_.c_str(), raster_root_);
+    return canonical_path.c_str();
+  }
   /**
    * \brief Fuel lookup table
    * \return Fuel lookup table
@@ -55,8 +86,10 @@ public:
   {
     if (nullptr == fuel_lookup_)
     {
+      // HACK: resolve path when used to avoid failure when invalid but unused
+      static auto canonical_path = get_canonical_path(dir_root_.c_str(), fuel_lookup_table_file_);
       // do this here because it relies on instance being created already
-      fuel_lookup_ = std::make_unique<FuelLookup>(fuel_lookup_table_file_.c_str());
+      fuel_lookup_ = std::make_unique<FuelLookup>(canonical_path.c_str());
       logging::check_fatal(nullptr == fuel_lookup_, "Fuel lookup table has not been loaded");
     }
     return *fuel_lookup_;
@@ -471,24 +504,6 @@ string get_value(string_map<string>& settings, const string_view key)
   static const auto Invalid = "INVALID";
   return Invalid;
 }
-string get_path(const char* const dir_root, string_map<string>& settings, const string& key)
-{
-  auto path = get_value(settings, key);
-  if (!path.starts_with("/"))
-  {
-    // not an absolute path
-    // if binary path starts with ./ then ignore it
-    std::filesystem::path p =
-      (0 == strcmp("./", dir_root) || 0 == strcmp(".\\", dir_root)) ? path : (dir_root + path);
-#ifdef _WIN32
-    path = std::filesystem::canonical(p).generic_string();
-#else
-    path = std::filesystem::canonical(p).c_str();
-#endif
-    logging::info("Converted relative path to absolute path %s", path.c_str());
-  }
-  return path;
-}
 void SettingsImplementation::setRoot(const char* dirname) noexcept
 {
   try
@@ -520,8 +535,9 @@ void SettingsImplementation::setRoot(const char* dirname) noexcept
       }
       in.close();
     }
-    raster_root_ = get_path(dir_root_.c_str(), settings, "RASTER_ROOT");
-    fuel_lookup_table_file_ = get_path(dir_root_.c_str(), settings, "FUEL_LOOKUP_TABLE");
+    // HACK: resolve path when used to avoid failure when invalid but unused
+    raster_root_ = get_value(settings, "RASTER_ROOT");
+    fuel_lookup_table_file_ = get_value(settings, "FUEL_LOOKUP_TABLE");
     // HACK: run into fuel consumption being too low if we don't have a minimum ros
     static const auto MinRos = 0.05;
     // HACK: make sure this is always > 0 so that we don't have to check
