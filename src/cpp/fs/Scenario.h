@@ -14,7 +14,7 @@
 namespace fs
 {
 class IObserver;
-class Event;
+struct Event;
 using PointSet = vector<InnerPos>;
 /**
  * \brief Deleter for IObserver to get around incomplete class with unique_ptr

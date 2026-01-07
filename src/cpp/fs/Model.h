@@ -9,7 +9,7 @@
 namespace fs
 {
 class StartPoint;
-class Event;
+struct Event;
 class Scenario;
 /**
  * \brief Provides the ability to limit number of threads running at once.

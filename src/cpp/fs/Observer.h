@@ -7,7 +7,7 @@
 #include "Scenario.h"
 namespace fs
 {
-class Event;
+struct Event;
 class Scenario;
 /**
  * \brief Interface for observers that get notified when cells burn so they can track things.
