@@ -5,20 +5,20 @@
  *
  * FireSTARR is a probabilistic fire growth model.
  */
-#include "stdafx.h"
-#include "ArgumentParser.h"
-#include "FWI.h"
-#include "Log.h"
-#include "Model.h"
-#include "Settings.h"
-#include "SimpleFBP.h"
-#include "StartPoint.h"
-#include "Test.h"
-#include "TestFwi.h"
-#include "TimeUtil.h"
-#include "Util.h"
-#include "version.h"
-#include "Weather.h"
+#include "fs/ArgumentParser.h"
+#include "fs/FWI.h"
+#include "fs/Log.h"
+#include "fs/Model.h"
+#include "fs/Settings.h"
+#include "fs/SimpleFBP.h"
+#include "fs/StartPoint.h"
+#include "fs/stdafx.h"
+#include "fs/Test.h"
+#include "fs/TestFwi.h"
+#include "fs/TimeUtil.h"
+#include "fs/Util.h"
+#include "fs/version.h"
+#include "fs/Weather.h"
 namespace fs
 {
 using fs::AspectSize;
@@ -209,26 +209,6 @@ int main(const int argc, const char* const argv[])
 int main(const int argc, const char* const argv[])
 {
   // HACK: want to be able to do tests without changing source files but can't find a nice way
-#undef NOT_TEST
-#ifdef TEST_DUFF
-  // FIX: this was used to compare to the old template version, but doesn't work now
-  //      left for reference for now so idea could be used for more tests
-  constexpr auto fct_main = fs::testing::test_duff;
-#elif TEST_FBP
-  constexpr auto fct_main = fs::testing::test_fbp;
-#elif TEST_FWI
-  constexpr auto fct_main = fs::testing::test_fwi;
-#else
   constexpr auto fct_main = fs::main;
-  // HACK: avoid using compiled variable for this
-#define NOT_TEST 1
-#endif
-#ifndef NOT_TEST
-  static const fs::Usage USAGE_TEST{"Run tests and exit", ""};
-  fs::SettingsArgumentParser parser{
-    USAGE_TEST, argc, argv, fs::PositionalArgumentsRequired::NotRequired
-  };
-  parser.parse_args();
-#endif
   exit(fct_main(argc, argv));
 }

@@ -259,7 +259,7 @@ enable_testing()
 
 add_subdirectory(${DIR_SRC_COMMON})
 
-foreach(bin ${PROJECT_NAME})
+foreach(bin ${PROJECT_NAME} test_duff test_fwi test_fbp)
   message("Adding binary for ${bin}")
   # include file with main() for each bin
   add_executable(${bin} ${DIR_SRC}/${bin}.cpp)
