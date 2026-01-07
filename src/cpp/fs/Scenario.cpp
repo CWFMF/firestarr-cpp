@@ -24,12 +24,28 @@ static map<size_t, size_t> SIM_COUNTS{};
 template <typename T, typename F>
 void do_each(T& for_list, F fct)
 {
-  std::for_each(std::execution::seq, for_list.begin(), for_list.end(), fct);
+  std::for_each(
+#ifndef __APPLE__
+    // apple clang doesn't support this?
+    std::execution::seq,
+#endif
+    for_list.begin(),
+    for_list.end(),
+    fct
+  );
 }
 template <typename T, typename F>
 void do_par(T& for_list, F fct)
 {
-  std::for_each(std::execution::par_unseq, for_list.begin(), for_list.end(), fct);
+  std::for_each(
+#ifndef __APPLE__
+    // apple clang doesn't support this?
+    std::execution::par_unseq,
+#endif
+    for_list.begin(),
+    for_list.end(),
+    fct
+  );
 }
 void IObserver_deleter::operator()(IObserver* ptr) const
 {

@@ -20,7 +20,10 @@ _Tp do_transform_reduce(
   // to help compiler determine type
   using _ForwardIterator = decltype(container.begin());
   return std::transform_reduce(
+#ifndef __APPLE__
+    // apple clang doesn't support this?
     std::execution::par_unseq,
+#endif
     static_cast<_ForwardIterator>(container.begin()),
     static_cast<_ForwardIterator>(container.end()),
     __init,

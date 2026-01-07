@@ -27,7 +27,10 @@ void IntensityMap::applyPerimeter(const Perimeter& perimeter) noexcept
 {
   logging::verbose("Applying burned cells");
   std::for_each(
+#ifndef __APPLE__
+    // apple clang doesn't support this?
     std::execution::par_unseq,
+#endif
     perimeter.burned.cbegin(),
     perimeter.burned.cend(),
     [this](const auto& location) { ignite(location); }
