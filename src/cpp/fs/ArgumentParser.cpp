@@ -52,7 +52,7 @@ void show_usage_and_exit(int exit_code)
   {
     // FIX: extra space if no positional args
     printf(
-      "Usage: %s [OPTION]... %s\n\n%s\n\n",
+      "Usage: %s %s [OPTION]...\n\n%s\n\n",
       BIN_NAME.c_str(),
       usage.positional_arg_summary.c_str(),
       usage.description.c_str()
@@ -215,11 +215,11 @@ static const Usage USAGE_MAIN{
   "<output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM>"
 };
 static const Usage USAGE_SURFACE{
-  "Calculate probability surface and save output in the specified directory"
+  "Calculate probability surface and save output in the specified directory",
   "surface <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM>"
 };
 static const Usage USAGE_TEST{
-  "Run test cases and save output in the specified directory"
+  "Run test cases and save output in the specified directory",
   "test <output_dir>"
 };
 static const vector<Usage> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
