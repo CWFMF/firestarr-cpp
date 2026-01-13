@@ -26,7 +26,7 @@ public:
   Semaphore(Semaphore&& rhs) = delete;
   Semaphore& operator=(const Semaphore& rhs) = delete;
   Semaphore& operator=(Semaphore&& rhs) = delete;
-  void set_limit(size_t limit)
+  void set_limit(int limit)
   {
     logging::debug("Changing Semaphore limit from %d to %d", limit_, limit);
     // NOTE: won't drop threads if set lower but won't give out more until below limit
@@ -216,12 +216,12 @@ public:
    * \brief How many ignition scenarios are being used
    * \return How many ignition scenarios are being used
    */
-  [[nodiscard]] int ignitionScenarios() const noexcept { return starts_.size(); }
+  [[nodiscard]] size_t ignitionScenarios() const noexcept { return starts_.size(); }
   /**
    * \brief How many Scenarios are in each Iteration
    * \return How many Scenarios are in each Iteration
    */
-  [[nodiscard]] int scenarioCount() const noexcept { return wx_.size() * ignitionScenarios(); }
+  [[nodiscard]] size_t scenarioCount() const noexcept { return wx_.size() * ignitionScenarios(); }
   /**
    * \brief Difference between date and the date of minimum foliar moisture content
    * \param time Date to get value for

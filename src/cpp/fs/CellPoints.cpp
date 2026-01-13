@@ -54,7 +54,9 @@ CellPoints::CellPoints(const Idx cell_x, const Idx cell_y) noexcept
   logging::note("CellPoints is size %ld after creation and should be empty", size());
 #endif
 }
-CellPoints::CellPoints() noexcept : CellPoints(INVALID_XY_LOCATION, INVALID_XY_LOCATION) { }
+CellPoints::CellPoints() noexcept
+  : CellPoints(static_cast<Idx>(INVALID_XY_LOCATION), static_cast<Idx>(INVALID_XY_LOCATION))
+{ }
 CellPoints::CellPoints(const CellPoints* rhs) noexcept : CellPoints()
 {
   logging::check_fatal(nullptr == rhs, "Initializing CellPoints from nullptr");
@@ -239,7 +241,9 @@ CellPoints& CellPoints::insert(
   return *this;
 }
 #undef D_PTS
-CellPoints::CellPoints(const XYPos& p) noexcept : CellPoints(p.first, p.second) { }
+CellPoints::CellPoints(const XYPos& p) noexcept
+  : CellPoints(static_cast<Idx>(p.first), static_cast<Idx>(p.second))
+{ }
 CellPoints& CellPoints::insert(const InnerPos& p) noexcept
 {
   // HACK: FIX: just do something for now

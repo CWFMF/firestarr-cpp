@@ -613,16 +613,16 @@ protected:
     const auto buf_size = tileSize * sizeof(R);
     logging::extensive("%s has buffer size %d", string(base_name).c_str(), buf_size);
     R* buf = (R*)_TIFFmalloc(buf_size);
-    for (size_t co = 0; co < num_columns; co += tileWidth)
+    for (uint32_t co = 0; co < num_columns; co += tileWidth)
     {
-      for (size_t ro = 0; ro < num_rows; ro += tileHeight)
+      for (uint32_t ro = 0; ro < num_rows; ro += tileHeight)
       {
         std::fill_n(&buf[0], tileWidth * tileHeight, no_data);
         // NOTE: shouldn't need to check if writing outside of tile because we made bounds on tile
         // edges above need to put data from grid into buffer, but flipped vertically
-        for (size_t x = 0; x < tileWidth; ++x)
+        for (uint32_t x = 0; x < tileWidth; ++x)
         {
-          for (size_t y = 0; y < tileHeight; ++y)
+          for (uint32_t y = 0; y < tileHeight; ++y)
           {
             const Idx r = static_cast<Idx>(max_row) - (ro + y + 1);
             const Idx c = static_cast<Idx>(min_column) + co + x;

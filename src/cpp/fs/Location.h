@@ -131,7 +131,7 @@ protected:
    * \brief Construct with given hash that may contain data from subclasses
    * \param topo Hash to store
    */
-  explicit constexpr Position(const Topo& topo) noexcept : topo_data_(topo) { }
+  explicit constexpr Position(const Topo& topo) noexcept : topo_data_(static_cast<V>(topo)) { }
   /**
    * \brief Create a hash from given values
    * \param row Row

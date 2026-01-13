@@ -430,9 +430,9 @@ static ptr<const FwiWeather> make_wx(const FwiWeather& wx, const Ffmc& ffmc, con
 }
 vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
 {
-  const size_t min_date = data.begin()->first;
-  const size_t max_date = data.rbegin()->first;
-  vector<ptr<const FwiWeather>> r{(max_date - min_date + 2) * DAY_HOURS};
+  const Day min_date = data.begin()->first;
+  const Day max_date = data.rbegin()->first;
+  vector<ptr<const FwiWeather>> r{(static_cast<size_t>(max_date) - min_date + 2) * DAY_HOURS};
   // HACK: just approximate last day
   for (const auto& kv : data)
   {

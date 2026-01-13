@@ -865,7 +865,7 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
       logging::note(
         "Increasing to use at least one thread for each of %ld scenarios", +scenarios_per_iteration_
       );
-      Model::task_limiter.set_limit(MAX_THREADS);
+      Model::task_limiter.set_limit(static_cast<int>(MAX_THREADS));
     }
     // no point in running multiple iterations if deterministic
     const auto concurrent_iterations = 1;
