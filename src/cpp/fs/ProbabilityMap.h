@@ -195,7 +195,7 @@ private:
     return record_if_interim(
       grid.saveToProbabilityFile(output_directory, base_name, divisor), processing_status
     );
-  };
+  }
   /**
    * \brief Map representing all intensities
    */
