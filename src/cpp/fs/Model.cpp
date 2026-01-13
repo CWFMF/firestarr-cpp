@@ -17,8 +17,8 @@ namespace fs
 constexpr auto FMT_OUT =
   "%ld,%d-%02d-%02d %02d:%02d:%02d,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f%s";
 #endif
-// HACK: assume using half the CPUs probably means that faster cores are being used?
-constexpr MathSize PCT_CPU = 0.5;
+// // HACK: assume using half the CPUs probably means that faster cores are being used?
+// constexpr MathSize PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
 Model::Model(
   const tm& start_time,

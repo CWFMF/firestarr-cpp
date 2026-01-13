@@ -15,7 +15,7 @@ namespace fs
 {
 using std::cout;
 constexpr auto CELL_CENTER = static_cast<InnerSize>(0.5);
-constexpr auto PRECISION = static_cast<MathSize>(0.001);
+// constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
 static atomic<size_t> TOTAL_STEPS = 0;

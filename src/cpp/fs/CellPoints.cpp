@@ -16,8 +16,8 @@ static const XYPos INVALID_XY_POSITION{};
 static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, {}};
 static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.first;
 static const InnerPos INVALID_INNER_POSITION{};
-static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
-static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.first;
+// static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
+// static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.first;
 static const SpreadData INVALID_SPREAD_DATA{
   INVALID_TIME,
   static_cast<IntensitySize>(0),

@@ -232,12 +232,12 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   MathSize cur_x = 1.0;
   // widest point should be at origin, which is 'c' away from origin
   MathSize widest = atan2(flank_ros, c);
-  size_t num_angles = 0;
+  // size_t num_angles = 0;
   MathSize widest_x = cos(widest);
   Radians step_max{STEP_MAX / pow(length_to_breadth, 0.5)};
   while (added && cur_x > (STEP_MAX / 4.0).value)
   {
-    ++num_angles;
+    // ++num_angles;
     theta = min(Radians{acos(cur_x)}, last_theta + step_max);
     angle = ellipse_angle(length_to_breadth, Radians{theta});
     added = add_offsets_calc_ros(angle);
@@ -259,7 +259,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     added = add_offsets_calc_ros(angle);
     // always just do one between the last angle and 90
     theta = Radians::D_090();
-    ++num_angles;
+    // ++num_angles;
     angle = ellipse_angle(length_to_breadth, Radians{theta});
     added = add_offsets(Radians::D_090(), flank_ros * sqrt(a_sq_sub_c_sq) / a);
     cur_x = cos(theta);
@@ -271,7 +271,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   MathSize min_x = cos(max_angle);
   while (added && cur_x >= min_x)
   {
-    ++num_angles;
+    // ++num_angles;
     theta = max(Radians{acos(cur_x)}, last_theta + step_max);
     angle = ellipse_angle(length_to_breadth, Radians{theta});
     if (angle > max_angle)

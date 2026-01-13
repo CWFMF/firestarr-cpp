@@ -446,7 +446,7 @@ public:
       // we can look by fuel type because the entire landscape shares the weather
       return extinctionThreshold(time) < fire_wx->survivalProbability(time, cell.fuelCode());
     }
-    catch (const std::out_of_range& e)
+    catch (const std::out_of_range&)
     {
       // no weather, so don't survive
       return false;

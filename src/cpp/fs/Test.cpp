@@ -303,7 +303,7 @@ int test(
   static const AspectSize DEFAULT_ASPECT = 0;
   static const Speed DEFAULT_WIND_SPEED(20);
   static const Direction DEFAULT_WIND_DIRECTION{Degrees{180.0}};
-  static const Wind DEFAULT_WIND(DEFAULT_WIND_SPEED, DEFAULT_WIND_DIRECTION);
+  // static const Wind DEFAULT_WIND(DEFAULT_WIND_SPEED, DEFAULT_WIND_DIRECTION);
   static const Ffmc DEFAULT_FFMC(90);
   static const Dmc DEFAULT_DMC(35.5);
   static const Dc DEFAULT_DC(275);
