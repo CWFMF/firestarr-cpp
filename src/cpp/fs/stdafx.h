@@ -61,12 +61,6 @@ using std::async;
 using std::atomic;
 using std::endl;
 using std::fixed;
-// HACK: clang doesn't like float16_t
-#ifdef __STDCPP_FLOAT16_T__
-using std::float16_t;
-#else
-using float16_t = _Float16;
-#endif
 using std::function;
 using std::future;
 using std::get;
