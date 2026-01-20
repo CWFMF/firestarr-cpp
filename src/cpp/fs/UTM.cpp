@@ -1,9 +1,12 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "UTM.h"
+#include <cstring>
 #include <proj.h>
 #include "Log.h"
 #include "Point.h"
+#include "Settings.h"
 #include "unstable.h"
+#include "Util.h"
 namespace fs
 {
 class Point;
@@ -70,26 +73,51 @@ fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize 
   proj_context_destroy(C);
   return point;
 }
-string try_fix_meridian(const string_view proj4)
+string try_fix_meridian(const string proj4)
 {
-  const auto zone_pos = proj4.find("+zone=");
-  // if proj4 is defined by zone then convert to be defined by meridian
-  if (string::npos != zone_pos && string::npos != proj4.find("+proj=utm"))
+  const auto proj = find_value("+proj=", proj4);
+  if (0 != strcmp("tmerc", proj.c_str()) && 0 != strcmp("utm", proj.c_str()))
   {
-    // NOTE: using proj for actual projections, but we want proj4 strings to use meridian
-    //       and not zone so outputs are consistent regardless of input
-    // convert from utm zone to tmerc
-    const string zone_str{proj4.substr(zone_pos + 6)};
-    const auto zone = stoi(zone_str);
-    // zone 15 is -93 and other zones are 6 degrees difference
-    const auto degrees = fs::utm_central_meridian(zone);
-    // HACK: assume utm zone is at start
-    const string proj4_fixed =
-      ("+proj=tmerc +lat_0=0.000000000 +lon_0=" + to_string(degrees)
-       + " +k=0.999600 +x_0=500000.000 +y_0=0.000");
-    logging::verbose("Adjusted proj4 is %s\n", proj4_fixed.c_str());
-    return proj4_fixed;
+    logging::debug("try_fix_meridian() has no effect on non utm/tmerc projections");
+    return proj4;
   }
-  return string(proj4);
+  const auto [lat_0, lon_0, k, x_0, y_0] =
+    [&]() -> std::tuple<MathSize, MathSize, MathSize, MathSize, MathSize> {
+    if (0 == strcmp("utm", proj.c_str()))
+    {
+      const auto zone = find_value("+zone=", proj4);
+      // zone 15 is -93 and other zones are 6 degrees difference
+      const auto z = stod(zone);
+      const auto lon_0 = fs::utm_central_meridian(z);
+      logging::note("UTM zone %s == %f turned into meridian %f", zone.c_str(), z, lon_0);
+      logging::debug("Using default values for utm");
+      return {0.0, lon_0, 0.9996, 500000.0, 0.0};
+    }
+    logging::debug("Using existing values for tmerc");
+    const auto lat_0 = find_value("+lat_0=", proj4);
+    const auto lon_0 = find_value("+lon_0=", proj4);
+    const auto k = find_value("+k=", proj4);
+    const auto x_0 = find_value("+x_0=", proj4);
+    const auto y_0 = find_value("+y_0=", proj4);
+    return {stod(lat_0), stod(lon_0), stod(k), stod(x_0), stod(y_0)};
+  }();
+  // const auto ellps = [&]() {
+  //   auto e = find_value("+ellps=", proj4);
+  //   return e.empty() ? "GRS80" : e;
+  // }();
+  const auto ellps = find_value("+ellps=", proj4, "GRS80");
+  const auto units = find_value("+units=", proj4, "m");
+  const string proj4_replace = std::format(
+    "+proj={} +lat_0={:0.9f} +lon_0={:0.9f} +k={:0.9f} +x_0={:0.9f} +y_0={:0.9f} +ellps={} +units={}",
+    "tmerc",
+    lat_0,
+    lon_0,
+    k,
+    x_0,
+    y_0,
+    ellps,
+    units
+  );
+  return proj4_replace;
 }
 }

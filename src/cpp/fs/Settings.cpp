@@ -27,6 +27,16 @@ static vector<T> parse_list(string str, T (*convert)(const string s))
 }
 string get_canonical_path(const char* const dir_root, string path)
 {
+#ifdef _WIN32
+  std::replace(path.begin(), path.end(), '/', '\\');
+#else
+  std::replace(path.begin(), path.end(), '\\', '/');
+#endif
+#ifdef _WIN32
+  if (':' == path.at(1)) {
+    logging::note("Absolute path use on windows: %s", path.c_str());
+  } else
+#endif
   if (!path.starts_with("/"))
   {
     // not an absolute path
@@ -63,6 +73,7 @@ public:
   SettingsImplementation& operator=(SettingsImplementation&& rhs) = delete;
   static SettingsImplementation& instance() noexcept;
   static SettingsImplementation& instance(bool check_loaded) noexcept;
+  const string getRoot() noexcept;
   /**
    * \brief Set root directory and read settings from file
    * \param dirname Directory to use for settings and relative paths
@@ -504,6 +515,7 @@ string get_value(string_map<string>& settings, const string_view key)
   static const auto Invalid = "INVALID";
   return Invalid;
 }
+const string SettingsImplementation::getRoot() noexcept { return dir_root_; }
 void SettingsImplementation::setRoot(const char* dirname) noexcept
 {
   try
@@ -574,6 +586,10 @@ void SettingsImplementation::setRoot(const char* dirname) noexcept
     logging::fatal(ex);
     std::terminate();
   }
+}
+const string Settings::getRoot() noexcept
+{
+  return SettingsImplementation::instance(false).getRoot();
 }
 void Settings::setRoot(const char* dirname) noexcept
 {
