@@ -101,13 +101,16 @@ FileList read_directory(const string_view name, const string_view match, const b
 }
 FileList find_rasters(const string_view dir, const YearSize year)
 {
-  const auto for_year = string(dir) + "/" + to_string(year) + "/";
-  const auto for_default = string(dir) + "/default/";
+  // HACK: read_directory() doesn't work if path doesn't end in '/'
+  const string path = string(dir) + (dir.ends_with("/") ? "" : "/");
+  const string for_year = path + to_string(year) + "/";
+  const string for_default = path + "default/";
   // use first existing folder of dir/year, dir/default, or dir in that order
-  const auto raster_root = directory_exists(for_year.c_str())
-                           ? for_year
-                           : (directory_exists(for_default.c_str()) ? for_default : dir);
+  const string raster_root = directory_exists(for_year.c_str())
+                             ? for_year
+                             : (directory_exists(for_default.c_str()) ? for_default : path);
   FileList files{};
+  logging::info("Raster root is %s", raster_root.c_str());
   try
   {
     files.append_range(read_directory(raster_root, "fuel.*\\.tif"));
