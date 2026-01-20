@@ -210,6 +210,9 @@ public:
    * \return Code for this fuel type
    */
   [[nodiscard]] constexpr FuelCodeSize code() const { return code_; }
+  [[nodiscard]] virtual const FuelType& summer() const noexcept = 0;
+  [[nodiscard]] virtual const FuelType& spring() const noexcept = 0;
+  [[nodiscard]] const FuelType& find_fuel_by_season(const int nd) const noexcept;
 
 private:
   /**
@@ -376,6 +379,8 @@ public:
   {
     return (duffDepth() - DUFF_FFMC_DEPTH) / duffDepth();
   }
+  [[nodiscard]] const FuelType& summer() const noexcept override { return *this; }
+  [[nodiscard]] const FuelType& spring() const noexcept override { return *this; }
 
 private:
   /**
@@ -481,6 +486,8 @@ public:
    * \return Throw a runtime_error
    */
   [[nodiscard]] ThresholdSize survivalProbability(const FwiWeather&) const noexcept override;
+  [[nodiscard]] const FuelType& summer() const noexcept override { return *this; }
+  [[nodiscard]] const FuelType& spring() const noexcept override { return *this; }
 };
 }
 #endif
