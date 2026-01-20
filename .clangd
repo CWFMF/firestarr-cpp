@@ -1,8 +1,8 @@
 CompileFlags:
   CompilationDatabase: build
   Compiler: g++
-  Add: [ -std=c++23 ]
+  Add: [ -std=c++23, -Wno-unknown-warning-option ]
+  Remove: [-m*, -f*]
   BuiltinHeaders: QueryDriver
-
 InlayHints:
   Designators: No
