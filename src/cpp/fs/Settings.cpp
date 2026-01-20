@@ -44,7 +44,7 @@ string get_canonical_path(const char* const dir_root, string path)
     }
     catch (std::exception&)
     {
-      logging::fatal("Unable to convert relative path to canonical for %s", p.c_str());
+      logging::fatal("Unable to convert relative path to canonical for %s", path.c_str());
       path = "";
     }
   }
