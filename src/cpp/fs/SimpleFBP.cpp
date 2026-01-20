@@ -2,7 +2,6 @@
 #include "stdafx.h"
 #include "SimpleFBP.h"
 #include <limits>
-#include <ranges>
 #include "Duff.h"
 #include "FBP45.h"
 #include "FireWeather.h"

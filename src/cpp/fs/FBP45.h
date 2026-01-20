@@ -1117,18 +1117,6 @@ public:
 template <class FuelSpring, class FuelSummer>
 class FuelVariable;
 template <class FuelSpring, class FuelSummer>
-[[nodiscard]] const FuelType& find_fuel_by_season(
-  const int nd,
-  const FuelVariable<FuelSpring, FuelSummer>& fuel
-) noexcept
-{
-  // if not green yet, then still in spring conditions
-  return Settings::forceGreenup()   ? fuel.summer()
-       : Settings::forceNoGreenup() ? fuel.spring()
-       : calculate_is_green(nd)     ? fuel.summer()
-                                    : fuel.spring();
-}
-template <class FuelSpring, class FuelSummer>
 [[nodiscard]] MathSize compare_by_season(
   const FuelVariable<FuelSpring, FuelSummer>& fuel,
   const function<MathSize(const FuelType&)>& fct
@@ -1235,7 +1223,7 @@ public:
   [[nodiscard]] MathSize calculateRos(const int nd, const FwiWeather& wx, const MathSize isi)
     const override
   {
-    return find_fuel_by_season(nd, *this).calculateRos(nd, wx, isi);
+    return find_fuel_by_season(nd).calculateRos(nd, wx, isi);
   }
   /**
    * \brief Calculate ISI with slope influence and zero wind (ISF) [ST-X-3 eq 41]
@@ -1245,7 +1233,7 @@ public:
    */
   [[nodiscard]] MathSize calculateIsf(const SpreadInfo& spread, const MathSize isi) const override
   {
-    return find_fuel_by_season(spread.nd(), *this).calculateIsf(spread, isi);
+    return find_fuel_by_season(spread.nd()).calculateIsf(spread, isi);
   }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 9-25]
@@ -1254,7 +1242,7 @@ public:
    */
   [[nodiscard]] MathSize surfaceFuelConsumption(const SpreadInfo& spread) const override
   {
-    return find_fuel_by_season(spread.nd(), *this).surfaceFuelConsumption(spread);
+    return find_fuel_by_season(spread.nd()).surfaceFuelConsumption(spread);
   }
   /**
    * \brief Length to Breadth ratio [ST-X-3 eq 79]
@@ -1282,7 +1270,7 @@ public:
     const MathSize rss
   ) const override
   {
-    return find_fuel_by_season(spread.nd(), *this).finalRos(spread, isi, cfb, rss);
+    return find_fuel_by_season(spread.nd()).finalRos(spread, isi, cfb, rss);
   }
   /**
    * \brief Critical Surface Fire Intensity (CSI) [ST-X-3 eq 56]
@@ -1291,7 +1279,7 @@ public:
    */
   [[nodiscard]] MathSize criticalSurfaceIntensity(const SpreadInfo& spread) const override
   {
-    return find_fuel_by_season(spread.nd(), *this).criticalSurfaceIntensity(spread);
+    return find_fuel_by_season(spread.nd()).criticalSurfaceIntensity(spread);
   }
   /**
    * \brief Crown Fraction Burned (CFB) [ST-X-3 eq 58]
@@ -1327,12 +1315,12 @@ public:
    * \brief Fuel to use before green-up
    * \return Fuel to use before green-up
    */
-  [[nodiscard]] constexpr const FuelType& spring() const { return *spring_; }
+  [[nodiscard]] const FuelType& spring() const noexcept override { return *spring_; }
   /**
    * \brief Fuel to use after green-up
    * \return Fuel to use after green-up
    */
-  [[nodiscard]] constexpr const FuelType& summer() const { return *summer_; }
+  [[nodiscard]] const FuelType& summer() const noexcept override { return *summer_; }
 
 private:
   /**

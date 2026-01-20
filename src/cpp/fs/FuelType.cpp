@@ -1,8 +1,18 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FuelType.h"
+#include "FBP45.h"
 #include "Log.h"
+#include "Settings.h"
 namespace fs
 {
+[[nodiscard]] const FuelType& FuelType::find_fuel_by_season(const int nd) const noexcept
+{
+  // if not green yet, then still in spring conditions
+  return Settings::forceGreenup()   ? summer()
+       : Settings::forceNoGreenup() ? spring()
+       : calculate_is_green(nd)     ? summer()
+                                    : spring();
+}
 MathSize InvalidFuel::grass_curing(const int, const FwiWeather&) const
 {
   throw runtime_error("Invalid fuel type in fuel map");
