@@ -5,7 +5,7 @@
 #include "Settings.h"
 namespace fs
 {
-[[nodiscard]] const FuelType& FuelType::find_fuel_by_season(const int nd) const noexcept
+[[nodiscard]] const FuelType* FuelType::find_fuel_by_season(const int nd) const noexcept
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
