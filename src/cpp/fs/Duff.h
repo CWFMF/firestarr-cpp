@@ -4,8 +4,6 @@
 #include "stdafx.h"
 #include "Log.h"
 #include "unstable.h"
-// FIX: this was used to compare to the old template version, but doesn't work now
-//      left for reference for now so idea could be used for more tests
 namespace fs::duff
 {
 /*! \page survival Probability of fire survival
@@ -84,7 +82,7 @@ struct Duff
   }
   /**
    * \brief Equality operator
-   * \param rhs DuffSimple to compare to
+   * \param rhs Duff to compare to
    * \return Whether or not these are identical
    */
   [[nodiscard]] constexpr bool operator==(const Duff& rhs) const
@@ -94,7 +92,7 @@ struct Duff
   }
   /**
    * \brief Inequality operator
-   * \param rhs DuffSimple to compare to
+   * \param rhs Duff to compare to
    * \return Whether or not these are not identical
    */
   [[nodiscard]] constexpr bool operator!=(const Duff& rhs) const { return !operator==(rhs); }
@@ -102,11 +100,11 @@ struct Duff
 // /**
 //  * \brief Feather moss (upper) [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple FeatherMossUpper{17.2, 46.4, 13.9873, -0.3296, 0.4904, 0.0568};
+// static constexpr Duff FeatherMossUpper{17.2, 46.4, 13.9873, -0.3296, 0.4904, 0.0568};
 // /**
 //  * \brief Feather moss (lower) [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple FeatherMossLower{19.1, 38.9, 13.2628, -0.1167, 0.3308, -0.2604};
+// static constexpr Duff FeatherMossLower{19.1, 38.9, 13.2628, -0.1167, 0.3308, -0.2604};
 /**
  * \brief Sphagnum (upper) [Frandsen table 2/3]
  */
@@ -114,7 +112,7 @@ static constexpr Duff SphagnumUpper{12.4, 21.8, -8.8306, -0.0608, 0.8095, 0.2735
 // /**
 //  * \brief Sphagnum (lower) [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple SphagnumLower{56.7, 119.0, 327.3347, -3.7655, -8.7849, 2.6684};
+// static constexpr Duff SphagnumLower{56.7, 119.0, 327.3347, -3.7655, -8.7849, 2.6684};
 /**
  * \brief Feather [Frandsen table 3]
  */
@@ -126,11 +124,11 @@ static constexpr Duff Reindeer{26.1, 56.3, 8.0359, -0.0393, -0.0591, -0.0340};
 // /**
 //  * \brief Sedge meadow (upper) [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple SedgeMeadowUpper{23.3, 69.4, 39.8477, -0.1800, -0.3727, -0.1874};
+// static constexpr Duff SedgeMeadowUpper{23.3, 69.4, 39.8477, -0.1800, -0.3727, -0.1874};
 // /**
 //  * \brief Sedge meadow (lower) [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple SedgeMeadowLower{44.9, 91.5, 29.0818, -0.2059, -0.2319, -0.0420};
+// static constexpr Duff SedgeMeadowLower{44.9, 91.5, 29.0818, -0.2059, -0.2319, -0.0420};
 /**
  * \brief White spruce duff [Frandsen table 2/3]
  */
@@ -146,7 +144,7 @@ static constexpr Duff PeatMuck{34.9, 203.0, 37.2276, -0.1876, -0.2833, -0.0951};
 // /**
 //  * \brief Sedge meadow (Seney) [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple SedgeMeadowSeney{35.4, 183.0, 71.813, -0.1413, -0.1253, 0.0390};
+// static constexpr Duff SedgeMeadowSeney{35.4, 183.0, 71.813, -0.1413, -0.1253, 0.0390};
 /**
  * \brief Pine duff (Seney) [Frandsen table 2/3]
  */
@@ -158,19 +156,19 @@ static constexpr Duff SprucePine{30.7, 116.0, 58.6921, -0.2737, -0.5413, -0.1246
 // /**
 //  * \brief Grass/sedge marsh [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple GrassSedgeMarsh{35.2, 120.0, 236.2934, -0.8423, -2.5097, -0.4902};
+// static constexpr Duff GrassSedgeMarsh{35.2, 120.0, 236.2934, -0.8423, -2.5097, -0.4902};
 // /**
 //  * \brief Southern pine duff [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple SouthernPine{68.0, 112.0, 58.6921, -0.2737, -0.5413, -0.1246};
+// static constexpr Duff SouthernPine{68.0, 112.0, 58.6921, -0.2737, -0.5413, -0.1246};
 // /**
 //  * \brief Hardwood swamp (upper) [Frandsen table 2/3]
 //  */
-// static constexpr DuffSimple HardwoodSwamp{18.2, 138.0, 33.6907, -0.2946, -0.3002, -0.4040};
+// static constexpr Duff HardwoodSwamp{18.2, 138.0, 33.6907, -0.2946, -0.3002, -0.4040};
 // coefficients aren't defined in the table these came from
-// static const DuffSimple Pocosin;
-// static const DuffSimple SwampForest;
-// static const DuffSimple Flatwoods;
+// static const Duff Pocosin;
+// static const Duff SwampForest;
+// static const Duff Flatwoods;
 }
 namespace fs::testing
 {
@@ -203,6 +201,8 @@ int compare_duff(
   }
   return 0;
 }
+// FIX: this was used to compare to the old template version, but now just
+//      compares each Duff to itself
 int test_duff(const int argc, const char* const argv[]);
 }
 #endif

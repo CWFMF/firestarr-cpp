@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Duff.h"
-#include "DuffSimple.h"
 #include "Log.h"
 namespace fs::testing
 {
@@ -11,14 +10,14 @@ int test_duff(const int argc, const char* const argv[])
   std::ignore = argc;
   std::ignore = argv;
   logging::info("Testing Duff");
-  compare_duff("SphagnumUpper", duffsimple::SphagnumUpper, duff::SphagnumUpper);
-  compare_duff("FeatherMoss", duffsimple::FeatherMoss, duff::FeatherMoss);
-  compare_duff("Reindeer", duffsimple::Reindeer, duff::Reindeer);
-  compare_duff("WhiteSpruce", duffsimple::WhiteSpruce, duff::WhiteSpruce);
-  compare_duff("Peat", duffsimple::Peat, duff::Peat);
-  compare_duff("PeatMuck", duffsimple::PeatMuck, duff::PeatMuck);
-  compare_duff("PineSeney", duffsimple::PineSeney, duff::PineSeney);
-  compare_duff("SprucePine", duffsimple::SprucePine, duff::SprucePine);
+  compare_duff("SphagnumUpper", duff::SphagnumUpper, duff::SphagnumUpper);
+  compare_duff("FeatherMoss", duff::FeatherMoss, duff::FeatherMoss);
+  compare_duff("Reindeer", duff::Reindeer, duff::Reindeer);
+  compare_duff("WhiteSpruce", duff::WhiteSpruce, duff::WhiteSpruce);
+  compare_duff("Peat", duff::Peat, duff::Peat);
+  compare_duff("PeatMuck", duff::PeatMuck, duff::PeatMuck);
+  compare_duff("PineSeney", duff::PineSeney, duff::PineSeney);
+  compare_duff("SprucePine", duff::SprucePine, duff::SprucePine);
   return 0;
 }
 }
