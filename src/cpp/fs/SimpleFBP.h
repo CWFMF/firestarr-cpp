@@ -1139,9 +1139,9 @@ template <class FuelSpring, class FuelSummer>
 {
   // HACK: no way to tell which is which, so let's assume they have to be the same??
   // HACK: use a function so that DEBUG section doesn't get out of sync
-  const auto for_spring = fct(fuel.spring());
+  const auto for_spring = fct(*fuel.spring());
 #ifdef DEBUG_FUEL_VARIABLE
-  const auto for_summer = fct(fuel.summer());
+  const auto for_summer = fct(*fuel.summer());
   logging::check_fatal(for_spring != for_summer, "Expected spring and summer cfb to be identical");
 #endif
   return for_spring;
@@ -1237,10 +1237,9 @@ public:
    * \param isi Initial Spread Index
    * \return Initial rate of spread (m/min) [ST-X-3 eq 26]
    */
-  [[nodiscard]] MathSize calculateRos(const int nd, const FwiWeather& wx, const MathSize isi)
-    const override
+  [[nodiscard]] MathSize calculateRos(const int, const FwiWeather&, const MathSize) const override
   {
-    return find_fuel_by_season(nd).calculateRos(nd, wx, isi);
+    throw runtime_error("FuelVariable not resolved to specific type");
   }
   /**
    * \brief Calculate ISI with slope influence and zero wind (ISF) [ST-X-3 eq 41]
@@ -1248,18 +1247,18 @@ public:
    * \param isi Initial Spread Index
    * \return ISI with slope influence and zero wind (ISF) [ST-X-3 eq 41]
    */
-  [[nodiscard]] MathSize calculateIsf(const SpreadInfo& spread, const MathSize isi) const override
+  [[nodiscard]] MathSize calculateIsf(const SpreadInfo&, const MathSize) const override
   {
-    return find_fuel_by_season(spread.nd()).calculateIsf(spread, isi);
+    throw runtime_error("FuelVariable not resolved to specific type");
   }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 9-25]
    * \param spread SpreadInfo to use
    * \return Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 9-25]
    */
-  [[nodiscard]] MathSize surfaceFuelConsumption(const SpreadInfo& spread) const override
+  [[nodiscard]] MathSize surfaceFuelConsumption(const SpreadInfo&) const override
   {
-    return find_fuel_by_season(spread.nd()).surfaceFuelConsumption(spread);
+    throw runtime_error("FuelVariable not resolved to specific type");
   }
   /**
    * \brief Length to Breadth ratio [ST-X-3 eq 79]
@@ -1280,23 +1279,19 @@ public:
    * \param rss Surface Rate of spread (ROS) (m/min) [ST-X-3 eq 55]
    * \return Final rate of spread (m/min)
    */
-  [[nodiscard]] MathSize finalRos(
-    const SpreadInfo& spread,
-    const MathSize isi,
-    const MathSize cfb,
-    const MathSize rss
-  ) const override
+  [[nodiscard]] MathSize finalRos(const SpreadInfo&, const MathSize, const MathSize, const MathSize)
+    const override
   {
-    return find_fuel_by_season(spread.nd()).finalRos(spread, isi, cfb, rss);
+    throw runtime_error("FuelVariable not resolved to specific type");
   }
   /**
    * \brief Critical Surface Fire Intensity (CSI) [ST-X-3 eq 56]
    * \param spread SpreadInfo to use in calculation
    * \return Critical Surface Fire Intensity (CSI) [ST-X-3 eq 56]
    */
-  [[nodiscard]] MathSize criticalSurfaceIntensity(const SpreadInfo& spread) const override
+  [[nodiscard]] MathSize criticalSurfaceIntensity(const SpreadInfo&) const override
   {
-    return find_fuel_by_season(spread.nd()).criticalSurfaceIntensity(spread);
+    throw runtime_error("FuelVariable not resolved to specific type");
   }
   /**
    * \brief Crown Fraction Burned (CFB) [ST-X-3 eq 58]
@@ -1307,7 +1302,7 @@ public:
   [[nodiscard]] MathSize crownFractionBurned(const MathSize rss, const MathSize rso)
     const noexcept override
   {
-    return spring().crownFractionBurned(rss, rso);
+    return spring()->crownFractionBurned(rss, rso);
   }
   /**
    * \brief Calculate probability of burning [Anderson eq 1]
@@ -1316,7 +1311,7 @@ public:
    */
   [[nodiscard]] MathSize probabilityPeat(const MathSize mc_fraction) const noexcept override
   {
-    return spring().probabilityPeat(mc_fraction);
+    return spring()->probabilityPeat(mc_fraction);
   }
   /**
    * \brief Survival probability calculated using probability of ony survival based on multiple
@@ -1326,18 +1321,18 @@ public:
    */
   [[nodiscard]] MathSize survivalProbability(const FwiWeather& wx) const noexcept override
   {
-    return spring().survivalProbability(wx);
+    return spring()->survivalProbability(wx);
   }
   /**
    * \brief Fuel to use before green-up
    * \return Fuel to use before green-up
    */
-  [[nodiscard]] const FuelType& spring() const noexcept override { return *spring_; }
+  [[nodiscard]] const FuelType* spring() const noexcept override { return spring_; }
   /**
    * \brief Fuel to use after green-up
    * \return Fuel to use after green-up
    */
-  [[nodiscard]] const FuelType& summer() const noexcept override { return *summer_; }
+  [[nodiscard]] const FuelType* summer() const noexcept override { return summer_; }
 
 private:
   /**

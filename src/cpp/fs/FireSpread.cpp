@@ -254,11 +254,13 @@ SpreadInfo::SpreadInfo(
 {
   // HACK: use weather_daily to figure out probability of spread but hourly for ROS
   const auto slope_azimuth = Cell::aspect(key_);
-  const auto fuel = fuel_by_code(Cell::fuelCode(key_));
-  if (is_null_fuel(fuel))
+  const auto fuel_original = fuel_by_code(Cell::fuelCode(key_));
+  if (is_null_fuel(fuel_original))
   {
     return;
   }
+  // HACK: resolve to specific type here - lose original type but only care about this nd value
+  const auto fuel = fuel_original->find_fuel_by_season(nd);
   const auto has_no_slope = 0 == percentSlope();
   MathSize heading_sin = 0;
   MathSize heading_cos = 0;

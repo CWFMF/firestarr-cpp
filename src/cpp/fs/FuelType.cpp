@@ -5,7 +5,7 @@
 #include "Settings.h"
 namespace fs
 {
-[[nodiscard]] const FuelType& FuelType::find_fuel_by_season(const int nd) const noexcept
+[[nodiscard]] const FuelType* FuelType::find_fuel_by_season(const int nd) const noexcept
 {
   // if not green yet, then still in spring conditions
   return Settings::forceGreenup()   ? summer()
