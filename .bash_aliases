@@ -4,6 +4,7 @@ alias gs='git status'
 alias gd='git diff'
 alias gap='git add -p'
 alias vg='valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose'
+alias gbl='git branch --list --sort=-committerdate'
 
 alias tc='./test_cloc.sh'
 alias fcc='./fcc.sh'
