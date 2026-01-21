@@ -464,7 +464,11 @@ public:
     return base::emplace(new T(std::forward<Args>(args)...));
   }
 };
-inline string find_value(const string& key, const string& within, const string fallback = "")
+inline string find_value(
+  const string_view key,
+  const string_view within,
+  const string fallback = ""
+)
 {
   const auto c = within.find(key);
   if (c != string::npos)
@@ -474,14 +478,14 @@ inline string find_value(const string& key, const string& within, const string f
   }
   return fallback;
 }
-inline int str_to_int(const string& str) { return stoi(str); }
-inline MathSize str_to_value(const string& str) { return static_cast<MathSize>(stod(str)); }
+inline int str_to_int(const string str) { return stoi(str); }
+inline MathSize str_to_value(const string str) { return static_cast<MathSize>(stod(str)); }
 template <class T>
 inline bool find_value(
-  const string& key,
-  const string& within,
+  const string_view key,
+  const string_view within,
   T* result,
-  T (*convert)(const string& str)
+  T (*convert)(const string_view str)
 )
 {
   const auto str = find_value(key, within);
