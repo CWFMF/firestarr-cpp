@@ -11,6 +11,7 @@ namespace fs
 class Settings
 {
 public:
+  static const string getRoot() noexcept;
   /**
    * \brief Set root directory and read settings from file
    * \param dirname Directory to use for settings and relative paths
