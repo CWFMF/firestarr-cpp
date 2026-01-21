@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+#include "stdafx.h"
 #include "Environment.h"
 #include "EnvironmentInfo.h"
 #include "FuelLookup.h"
@@ -6,6 +7,7 @@
 #include "Log.h"
 #include "Point.h"
 #include "ProbabilityMap.h"
+#include "Radians.h"
 #include "Settings.h"
 #include "Util.h"
 namespace fs
@@ -138,6 +140,7 @@ Environment Environment::loadEnvironment(
   }
   if (nullptr == env_info && found_best)
   {
+    logging::note("Loading info for fuel %s", best_fuel.c_str());
     env_info = EnvironmentInfo::loadInfo(best_fuel, best_elevation);
   }
   logging::check_fatal(
@@ -297,6 +300,8 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
 }
 Environment::Environment(const FuelGrid& fuel, const ElevationGrid& elevation, const Point& point)
   : Environment(
+      (Settings::saveSimulationArea() ? make_unique<FuelGrid>(fuel) : nullptr),
+      (Settings::saveSimulationArea() ? make_unique<ElevationGrid>(elevation) : nullptr),
       makeCells(fuel, elevation),
       elevation.at(Location(*elevation.findCoordinates(point, false).get()))
     )
@@ -309,53 +314,46 @@ Cell Environment::offset(const Event& event, const Idx row, const Idx column) co
   const auto& p = event.cell;
   return cell(Location(p.row() + row, p.column() + column));
 }
-#ifdef FIX_THIS_LATER
-void Environment::saveToFile(const string& output_directory) const
+void Environment::saveToFile(const string_view output_directory) const
 {
-#ifndef NDEBUG
   if (Settings::saveSimulationArea())
   {
     logging::debug("Saving simulation area");
     const auto lookup = Settings::fuelLookup();
     auto convert_to_slope = [](const Cell& v) -> SlopeSize { return v.slope(); };
     auto convert_to_aspect = [](const Cell& v) -> AspectSize { return v.aspect(); };
-    auto convert_to_area = [&](const ElevationSize v) -> ElevationSize {
+    auto convert_to_area = [&](const Cell& v) -> SlopeSize {
       // need to still be nodata if it was
-      return (v == elevation.nodataValue()) ? v : 3;
+      return (v.slope() == INVALID_SLOPE) ? INVALID_SLOPE : 3;
     };
-    auto convert_to_fuelcode = [&](const FuelType* const value) -> FuelSize {
+    // HACK: use original FuelGrid instead of cell value to ensure codes match input
+    auto convert_to_fuelcode = [&lookup](const FuelType* const value) -> FuelSize {
       return lookup.fuelToCode(value);
     };
-    fuel.saveToFile<FuelSize>(output_directory, "fuel", convert_to_fuelcode);
-    elevation.saveToFile(output_directory, "dem");
+    std::ignore = fuel_grid_->saveToFile<FuelSize>(output_directory, "fuel", convert_to_fuelcode);
+    std::ignore = elevation_grid_->saveToFile<ElevationSize>(output_directory, "dem");
     // save slope & aspect grids
-    cells_->saveToFile<SlopeSize>(
+    std::ignore = cells_.saveToFile<SlopeSize>(
       output_directory, "slope", convert_to_slope, static_cast<SlopeSize>(INVALID_SLOPE)
     );
-    cells_->saveToFile<AspectSize>(
+    std::ignore = cells_.saveToFile<AspectSize>(
       output_directory, "aspect", convert_to_aspect, static_cast<AspectSize>(INVALID_ASPECT)
     );
     // HACK: make a grid with "3" as the value so if we merge max with it it'll cover up anything
     // else
-    elevation.saveToFile<ElevationSize>(output_directory, "simulation_area", convert_to_area);
-    logging::debug("Done saving fuel grid");
+    std::ignore = cells_.saveToFile<ElevationSize>(
+      output_directory, "simulation_area", convert_to_area, static_cast<SlopeSize>(INVALID_SLOPE)
+    );
+    logging::debug("Done saving simulation area grids");
   }
-  logging::debug("Done saving fuel grid");
-#endif
-  const auto lookup = Settings::fuelLookup();
-  cells_.saveToTiffFile<FuelSize>(output_directory, "fuel", [&](const auto& value) {
-    return lookup.fuelToCode(fuel_by_code(value.fuelCode()));
-  });
-  // FIX: missing elevation
-  cells_.saveToTiffFile<AspectSize>(output_directory, "aspect", [&](const auto& value) {
-    return value.aspect();
-  });
-  cells_.saveToTiffFile<SlopeSize>(output_directory, "slope", [&](const auto& value) {
-    return value.slope();
-  });
 }
-#endif
-Environment::Environment(CellGrid&& cells, const ElevationSize elevation) noexcept
-  : cells_(cells), not_burnable_{cells_}, elevation_(elevation)
+Environment::Environment(
+  unique_ptr<FuelGrid> fuel_grid,
+  unique_ptr<ElevationGrid> elevation_grid,
+  CellGrid&& cells,
+  const ElevationSize elevation
+) noexcept
+  : fuel_grid_(std::move(fuel_grid)), elevation_grid_(std::move(elevation_grid)), cells_(cells),
+    not_burnable_{cells_}, elevation_(elevation)
 { }
 }
