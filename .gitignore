@@ -14,3 +14,5 @@ firestarr
 test_duff
 test_fbp
 test_fwi
+**/*.zip
+**/*.exe
