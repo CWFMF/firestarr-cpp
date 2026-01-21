@@ -78,7 +78,6 @@ ${USE_TIME} \
     --wx "${FILE_WX}" \
     --output_date_offsets "${dates}" \
     --tz -5 \
-    --raster-root "${DIR_IN}/" \
     --perim "${FILE_PERIM}" ${@}
 RET=$?
 RESULT=0

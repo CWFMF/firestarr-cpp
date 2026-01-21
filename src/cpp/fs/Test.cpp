@@ -19,9 +19,7 @@ public:
    * \brief Environment with the same data in every cell
    * \param cells Constant cells
    */
-  explicit TestEnvironment(CellGrid&& cells) noexcept
-    : Environment(nullptr, nullptr, std::move(cells), 0)
-  { }
+  explicit TestEnvironment(CellGrid&& cells) noexcept : Environment(std::move(cells), 0) { }
 };
 /**
  * \brief A Scenario run with constant fuel, weather, and topography.

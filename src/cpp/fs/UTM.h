@@ -25,6 +25,6 @@ class Point;
 }
 void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x, MathSize* y);
 fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize y);
-string try_fix_meridian(const string proj4);
+string try_fix_meridian(const string_view proj4);
 }
 #endif

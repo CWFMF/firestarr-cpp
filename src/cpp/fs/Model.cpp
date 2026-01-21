@@ -1053,7 +1053,6 @@ int Model::runScenarios(
   auto env = Environment::loadEnvironment(
     raster_root, start_point, perimeter, start_time.tm_year + TM_YEAR_OFFSET
   );
-  env.saveToFile(output_directory);
   logging::debug("Environment loaded");
   // don't flip for Environment because that already happened
   const auto position = env.findCoordinates(start_point, false);

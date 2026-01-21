@@ -73,7 +73,6 @@ public:
   SettingsImplementation& operator=(SettingsImplementation&& rhs) = delete;
   static SettingsImplementation& instance() noexcept;
   static SettingsImplementation& instance(bool check_loaded) noexcept;
-  const string getRoot() noexcept;
   /**
    * \brief Set root directory and read settings from file
    * \param dirname Directory to use for settings and relative paths
@@ -515,7 +514,6 @@ string get_value(string_map<string>& settings, const string_view key)
   static const auto Invalid = "INVALID";
   return Invalid;
 }
-const string SettingsImplementation::getRoot() noexcept { return dir_root_; }
 void SettingsImplementation::setRoot(const char* dirname) noexcept
 {
   try
@@ -586,10 +584,6 @@ void SettingsImplementation::setRoot(const char* dirname) noexcept
     logging::fatal(ex);
     std::terminate();
   }
-}
-const string Settings::getRoot() noexcept
-{
-  return SettingsImplementation::instance(false).getRoot();
 }
 void Settings::setRoot(const char* dirname) noexcept
 {

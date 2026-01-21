@@ -172,31 +172,17 @@ protected:
    * \param cells Cells representing Environment
    * \param elevation Elevation at origin Point
    */
-  Environment(
-    unique_ptr<FuelGrid> fuel_grid,
-    unique_ptr<ElevationGrid> elevation_grid,
-    CellGrid&& cells,
-    const ElevationSize elevation
-  ) noexcept;
+  Environment(CellGrid&& cells, const ElevationSize elevation) noexcept;
   /**
    * \brief Load from rasters
    * \param fuel Fuel raster
    * \param elevation Elevation raster
    */
   Environment(const FuelGrid& fuel, const ElevationGrid& elevation, const Point& point);
-
-public:
-  void saveToFile(const string_view output_directory) const;
-
+#ifdef FIX_THIS_LATER
+  void saveToFile(const string& output_directory) const;
+#endif
 private:
-  /**
-   * \brief Fuel grid (if saving simulation area)
-   */
-  unique_ptr<FuelGrid> fuel_grid_{};
-  /**
-   * \brief Elevation grid (if saving simulation area)
-   */
-  unique_ptr<ElevationGrid> elevation_grid_{};
   /**
    * \brief Cells representing Environment
    */
