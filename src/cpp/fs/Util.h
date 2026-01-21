@@ -464,5 +464,34 @@ public:
     return base::emplace(new T(std::forward<Args>(args)...));
   }
 };
+inline string find_value(const string& key, const string& within, const string fallback = "")
+{
+  const auto c = within.find(key);
+  if (c != string::npos)
+  {
+    const string str = &within.at(c + string(key).length());
+    return str.substr(0, str.find(' '));
+  }
+  return fallback;
+}
+inline int str_to_int(const string& str) { return stoi(str); }
+inline MathSize str_to_value(const string& str) { return static_cast<MathSize>(stod(str)); }
+template <class T>
+inline bool find_value(
+  const string& key,
+  const string& within,
+  T* result,
+  T (*convert)(const string& str)
+)
+{
+  const auto str = find_value(key, within);
+  if (!str.empty())
+  {
+    *result = convert(str);
+    // logging::extensive("%s '%s'\n", string(key).c_str(), str.c_str());
+    return true;
+  }
+  return false;
+}
 }
 #endif

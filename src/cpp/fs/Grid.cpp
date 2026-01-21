@@ -4,33 +4,10 @@
 using fs::Idx;
 namespace fs
 {
+using fs::find_value;
 using fs::from_lat_long;
 using fs::to_lat_long;
 using fs::try_fix_meridian;
-string find_value(const string& key, const string& within)
-{
-  const auto c = within.find(key);
-  if (c != string::npos)
-  {
-    const string str = &within.at(c + string(key).length());
-    return str.substr(0, str.find(' '));
-  }
-  return "";
-}
-int str_to_int(const string& str) { return stoi(str); }
-MathSize str_to_value(const string& str) { return static_cast<MathSize>(stod(str)); }
-template <class T>
-bool find_value(const string& key, const string& within, T* result, T (*convert)(const string& str))
-{
-  const auto str = find_value(key, within);
-  if (!str.empty())
-  {
-    *result = convert(str);
-    logging::extensive("%s '%s'\n", string(key).c_str(), str.c_str());
-    return true;
-  }
-  return false;
-}
 GridBase::GridBase(
   const MathSize cell_size,
   const MathSize xllcorner,
