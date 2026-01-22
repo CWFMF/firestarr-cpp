@@ -6,9 +6,6 @@
 #include "unstable.h"
 namespace fs
 {
-#ifndef TIFFTAG_GDAL_NODATA
-#define TIFFTAG_GDAL_NODATA 42113
-#endif
 constexpr YearSize TM_YEAR_OFFSET = 1900;
 constexpr int TM_MONTH_OFFSET = 1;
 class FileList : public vector<string>
@@ -20,13 +17,6 @@ public:
   void append_range(const FileList& rhs) noexcept { insert(end(), rhs.cbegin(), rhs.cend()); }
 #endif
 };
-/**
- * Open file and register GeoTIFF tags so we can read and write properly
- * @param filename Name of file to open
- * @param mode Mode to open file with
- * @return Handle to open TIFF with fields registered
- */
-TIFF* GeoTiffOpen(const char* const filename, const char* const mode);
 /**
  * Call snprintf() but show where and throw exception when anything gets cut off.
  */

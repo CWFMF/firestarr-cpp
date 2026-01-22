@@ -45,13 +45,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <geo_normalize.h>
-#include <geotiff.h>
-#include <geovalues.h>
 #include <sys/stat.h>
-#include <tiffio.h>
-#include <xtiffio.h>
-#include "tiff.h"
 #include "unstable.h"
 namespace fs
 {
