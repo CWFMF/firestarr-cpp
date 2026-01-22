@@ -8,6 +8,7 @@
 #include "Log.h"
 #include "Point.h"
 #include "Settings.h"
+#include "tiff.h"
 /**
  * \brief Provides hash function for Location.
  */
@@ -166,30 +167,6 @@ void write_ascii_header(
   MathSize cell_size,
   MathSize no_data
 );
-template <class R>
-[[nodiscard]] R with_tiff(const string_view filename, function<R(TIFF*, GTIF*)> fct)
-{
-  logging::debug("Reading file %s", string(filename).c_str());
-  // suppress warnings about geotiff tags that aren't found
-  TIFFSetWarningHandler(nullptr);
-  auto tif = GeoTiffOpen(string(filename).c_str(), "r");
-  logging::check_fatal(!tif, "Cannot open file %s as a TIF", string(filename).c_str());
-  auto gtif = GTIFNew(tif);
-  logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", string(filename).c_str());
-  //  try
-  //  {
-  R result = fct(tif, gtif);
-  if (tif)
-  {
-    XTIFFClose(tif);
-  }
-  if (gtif)
-  {
-    GTIFFree(gtif);
-  }
-  GTIFDeaccessCSV();
-  return result;
-}
 GridBase read_header(TIFF* tif, GTIF* gtif);
 GridBase read_header(const string_view filename);
 /**
