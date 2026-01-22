@@ -43,11 +43,7 @@ using fs::Wind;
 using fs::logging::Log;
 int main(const int argc, const char* const argv[])
 {
-#ifdef _WIN32
-  printf("FireSTARR windows-testing\n\n");
-#else
   printf("FireSTARR %s\n\n", SPECIFIC_REVISION);
-#endif
   MainArgumentParser parser{argc, argv};
   parser.parse_args();
   auto result = -1;
