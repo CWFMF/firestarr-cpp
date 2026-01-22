@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.31.6)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(DIR_SRC src/cpp)
-set(DIR_SRC_COMMON src/cpp/fs)
+set(DIR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp)
+set(DIR_SRC_COMMON ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/fs)
 
 if(NOT VCPKG_ROOT)
   set(VCPKG_ROOT $ENV{VCPKG_ROOT})
@@ -149,7 +149,7 @@ execute_process(COMMAND ${CMAKE_CXX_COMPILER})
 file(GLOB_RECURSE FILES_USED ${DIR_SRC}/*.cpp ${DIR_SRC}/*.h)
 list(FILTER FILES_USED EXCLUDE REGEX version*)
 
-set(FILE_VERSION_CPP ${DIR_SRC_COMMON}/version.cpp)
+set(FILE_VERSION_H ${DIR_SRC_COMMON}/version.h)
 set(FILE_UNSTABLE_CPP ${DIR_SRC_COMMON}/unstable.cpp)
 
 # is anything in git changed?
@@ -185,15 +185,15 @@ endif()
 
 set (SPECIFIC_REVISION "v${VERSION} ${HASH} <${MODIFIED_TIME}>")
 message("${SPECIFIC_REVISION}")
-set(VERSION_CODE "const char* SPECIFIC_REVISION = \"${SPECIFIC_REVISION}\";\n")
-if(EXISTS FILE_VERSION_CPP)
-  file(STRINGS ${FILE_VERSION_CPP} VERSION_CODE_OLD)
+set(VERSION_CODE "constexpr char SPECIFIC_REVISION[]{\"${SPECIFIC_REVISION}\"};\n")
+if(EXISTS FILE_VERSION_H)
+  file(STRINGS ${FILE_VERSION_H} VERSION_CODE_OLD)
   # HACK: file(READ ...) is reacting to special characters, so compare substring
   string(FIND "${SPECIFIC_REVISION}" "${VERSION_CODE_OLD}" SAME_CODE)
 endif()
 # if matched exiting file don't write
 if (NOT 0 EQUAL SAME_CODE)
-  file(WRITE ${FILE_VERSION_CPP} "${VERSION_CODE}")
+  file(WRITE ${FILE_VERSION_H} "${VERSION_CODE}")
 endif()
 
 set_source_files_properties(${FILE_UNSTABLE_CPP} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}")
