@@ -63,7 +63,6 @@ if (WIN32)
   # fatal error C1128: number of sections exceeded object file format limit: compile with /bigobj
   add_compile_options(
     "$<$<CONFIG:Debug>:/bigobj>")
-  add_compile_options(/W4)
 else()
   if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     # HACK: if compiler supports ARCH_PREFERRED on this then use that else native
@@ -78,7 +77,6 @@ else()
   if(CMAKE_VERBOSE_MAKEFILE)
     add_compile_options(-fopt-info-vec-all)
   endif()
-  add_compile_options(-Wall;-Wextra;-Wpedantic)
   add_compile_options(
     "$<$<CONFIG:Release,RelWithDebInfo>:-O3;>"
     "$<$<CONFIG:MinSizeRel>:-Os;>"
@@ -243,6 +241,10 @@ if (LINUX)
     endif()
   endif()
 endif()
+
+# set compiler warnings
+include(cmake/CompilerWarnings.cmake)
+add_compile_options(${PROJECT_WARNINGS_CXX})
 
 find_package(GeoTIFF CONFIG REQUIRED)
 find_package(TIFF REQUIRED)
