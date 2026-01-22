@@ -2,10 +2,10 @@ $vsPath = vswhere -all -products * -requires Microsoft.Component.MSBuild -proper
 Import-Module "${vsPath}\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll"
 Enter-VsDevShell -VsInstallPath "$vsPath" -SkipAutomaticLocation -Arch amd64
 
-$CMAKE="${vsPath}\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe"
+# $CMAKE="${vsPath}\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe"
 # rm -r -Force ./build
-&${CMAKE} -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE --no-warn-unused-cli -S . -B ./build -G "Visual Studio 17 2022" -T host=x64 -A x64
-&${CMAKE} --build ./build --config Release --target ALL_BUILD --parallel
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE --no-warn-unused-cli -S . -B ./build -G "Visual Studio 17 2022" -T host=x64 -A x64
+cmake --build ./build --config Release --target ALL_BUILD --parallel
 
 # cmake --preset Release
 # cmake --build --preset Release --parallel
