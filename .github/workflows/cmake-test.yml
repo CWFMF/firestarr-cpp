@@ -100,7 +100,6 @@ jobs:
           find . -type f \( -name "*.tar.gz" -o -name "*.zip" \)
 
       - name: Update firestarr-latest release (manual runs)
-        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: firestarr-latest
@@ -121,6 +120,21 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
+          files: |
+            ./firestarr*/*.tar.gz
+            ./firestarr*/*.zip
+
+      - name: Attach to release (release events)
+        if: github.ref_type == 'tag'
+        with:
+          tag_name: firestarr-${{ github.ref }}
+          name: "FireSTARR ${{ github.ref }}"
+          body: |
+            **FireSTARR ref:** ${{ github.ref }}
+            **Built:** ${{ github.run_id }}
+            **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          prerelease: true
+          make_latest: false
           files: |
             ./firestarr*/*.tar.gz
             ./firestarr*/*.zip
