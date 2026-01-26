@@ -1,5 +1,3 @@
-name: cmake-test
-
 on:
   push:
     branches: [ "*" ]
@@ -8,7 +6,6 @@ on:
 
 jobs:
   cmake-test-macos:
-    name: cmake-test-macos
     uses: ./.github/workflows/cmake-test.yml
     with:
       os: ${{ matrix.os }}
@@ -25,7 +22,6 @@ jobs:
         variant: [Debug, Release]
 
   cmake-test-ubuntu:
-    name: cmake-test-ubuntu
     uses: ./.github/workflows/cmake-test.yml
     with:
       os: ${{ matrix.os }}
@@ -42,7 +38,6 @@ jobs:
         variant: [Debug, Release]
 
   cmake-test-windows:
-    name: cmake-test-windows
     uses: ./.github/workflows/cmake-test.yml
     with:
       os: ${{ matrix.os }}
@@ -59,7 +54,6 @@ jobs:
         variant: [Debug, Release]
 
   cmake-test-all:
-    name: cmake-test-all
     needs: [cmake-test-ubuntu, cmake-test-macos, cmake-test-windows]
     runs-on: ubuntu-latest
 
