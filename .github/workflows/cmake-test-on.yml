@@ -200,10 +200,10 @@ jobs:
         }
 
         # Bundle data files if they exist
-        if (Test-Path firestarr\fuel.lut) { Copy-Item firestarr\fuel.lut dist\ }
-        if (Test-Path firestarr\settings.ini) { Copy-Item firestarr\settings.ini dist\ }
-        if (Test-Path firestarr\data\fuel.lut) { Copy-Item firestarr\data\fuel.lut dist\ }
-        if (Test-Path firestarr\data\settings.ini) { Copy-Item firestarr\data\settings.ini dist\ }
+        if (Test-Path fuel.lut) { Copy-Item fuel.lut dist\ }
+        if (Test-Path settings.ini) { Copy-Item settings.ini dist\ }
+        if (Test-Path data\fuel.lut) { Copy-Item data\fuel.lut dist\ }
+        if (Test-Path data\settings.ini) { Copy-Item data\settings.ini dist\ }
 
         # Create version info
         .\firestarr.exe | select -first 1 | Out-File -FilePath dist/VERSION -Encoding utf8
