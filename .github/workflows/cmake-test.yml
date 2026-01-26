@@ -28,7 +28,7 @@ jobs:
           os: ${{ matrix.os }}
           os_version: ${{ matrix.os_version }}
           compiler: ${{ matrix.compiler }}
-          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-cpu }}
+          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
           variant: ${{ matrix.variant }}
 
       - name: Locate binary
@@ -105,7 +105,7 @@ jobs:
           os: ${{ matrix.os }}
           os_version: ${{ matrix.os_version }}
           compiler: ${{ matrix.compiler }}
-          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-cpu }}
+          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
           variant: ${{ matrix.variant }}
 
       - name: Locate binary
@@ -179,7 +179,7 @@ jobs:
           os: ${{ matrix.os }}
           os_version: ${{ matrix.os_version }}
           compiler: ${{ matrix.compiler }}
-          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-cpu }}
+          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
           variant: ${{ matrix.variant }}
 
       - name: Locate binary
