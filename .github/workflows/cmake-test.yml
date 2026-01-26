@@ -5,6 +5,14 @@ on:
     branches: [ "*" ]
   pull_request:
     branches: [ "*" ]
+  workflow_dispatch:
+    inputs:
+      firestarr_ref:
+        description: 'FireSTARR branch/tag to build'
+        default: 'main'
+        type: string
+  release:
+    types: [published]
 
 jobs:
   cmake-test-macos:
