@@ -60,7 +60,7 @@ jobs:
 
   cmake-test-all:
     name: cmake-test-all
-    needs: [cmake-test-linux, cmake-test-macos, cmake-test-windows]
+    needs: [cmake-test-ubuntu, cmake-test-macos, cmake-test-windows]
     runs-on: ubuntu-latest
 
     steps:
