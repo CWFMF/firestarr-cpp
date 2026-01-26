@@ -72,6 +72,7 @@ jobs:
         compiler: [cl]
         include:
           - os: windows
+            target-compiler: cl
             target-cpu: x64
             target-os: windows
 
