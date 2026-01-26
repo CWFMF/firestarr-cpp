@@ -90,6 +90,7 @@ private:
   PositionalArgumentsRequired require_positional_{};
 
 public:
+  virtual ~ArgumentParser() = default;
   ArgumentParser(
     const Usage usage,
     const int argc,
