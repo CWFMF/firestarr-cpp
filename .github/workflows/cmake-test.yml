@@ -1,48 +1,28 @@
-name: cmake-test
-
 on:
-  push:
-    branches: [ "*" ]
-  pull_request:
-    branches: [ "*" ]
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      os_version:
+        required: true
+        type: string
+      compiler:
+        required: true
+        type: string
+      triplet:
+        required: true
+        type: string
+      variant:
+        required: true
+        type: string
 
 jobs:
-  job:
-    name: ${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.compiler }}-${{ matrix.variant }}
+  cmake-test:
+    name:  ${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.compiler }}-${{ matrix.variant }}
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
-
     strategy:
       fail-fast: false
-      matrix:
-        os: [macos, ubuntu, windows]
-        os_version: [latest]
-        compiler: [cl, clang++, g++]
-        variant: [Debug, Release]
-        include:
-          - os: macos
-            compiler: clang++
-            triplet: arm64-osx
-          - os: ubuntu
-            compiler: clang++
-            triplet: x64-linux
-          - os: ubuntu
-            compiler: g++
-            triplet: x64-linux
-          - os: windows
-            compiler: cl
-            triplet: x64-windows
-        exclude:
-          - os: macos
-            compiler: cl
-          - os: macos
-            compiler: g++
-          - os: ubuntu
-            compiler: cl
-          - os: windows
-            compiler: clang++
-          - os: windows
-            compiler: g++
-
     env:
       CXX: ${{ matrix.compiler }}
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
