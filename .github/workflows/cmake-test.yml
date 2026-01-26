@@ -8,7 +8,13 @@ on:
 
 jobs:
   cmake-test-macos:
-    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
+    uses: ./.github/workflows/cmake-test-on.yml
+    with:
+      os: ${{ matrix.os }}
+      os_version: ${{ matrix.os_version }}
+      compiler: ${{ matrix.compiler }}
+      triplet: ${{ matrix.triplet }}
+      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
@@ -16,74 +22,15 @@ jobs:
         os_version: [latest]
         compiler: [clang++]
         variant: [Debug, Release]
-        include:
-          - os: macos
-            target-cpu: arm64
-            target-os: osx
-            target-compiler: clang
-    env:
-      OUTPUT_BINARY: firestarr-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
-    steps:
-      - uses: ./.github/workflows/cmake-test-on.yml
-        with:
-          os: ${{ matrix.os }}
-          os_version: ${{ matrix.os_version }}
-          compiler: ${{ matrix.compiler }}
-          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
-          variant: ${{ matrix.variant }}
-
-      - name: Locate binary
-        id: locate
-        run: |
-          # Find the built executable
-          BINARY=$(find build -type f -name "firestarr" -perm +111 | head -1)
-          if [ -z "$BINARY" ]; then
-            echo "ERROR: Could not find firestarr binary"
-            find build -type f -perm +111
-            exit 1
-          fi
-          echo "binary=$BINARY" >> $GITHUB_OUTPUT
-          echo "Found binary at: $BINARY"
-
-      - name: Check binary dependencies
-        run: |
-          echo "=== Binary info ==="
-          file ${{ steps.locate.outputs.binary }}
-          echo ""
-          echo "=== Dynamic dependencies ==="
-          otool -L ${{ steps.locate.outputs.binary }} || true
-
-      - name: Package artifact
-        run: |
-          mkdir -p dist
-          cp ${{ steps.locate.outputs.binary }} dist/firestarr
-
-          # Bundle data files if they exist
-          [ -f firestarr/fuel.lut ] && cp firestarr/fuel.lut dist/
-          [ -f firestarr/settings.ini ] && cp firestarr/settings.ini dist/
-          [ -f firestarr/data/fuel.lut ] && cp firestarr/data/fuel.lut dist/
-          [ -f firestarr/data/settings.ini ] && cp firestarr/data/settings.ini dist/
-
-          # Create version info
-          cd firestarr && git rev-parse HEAD > ../dist/VERSION && cd ..
-
-          # List contents
-          echo "=== Package contents ==="
-          ls -la dist/
-
-          # Create tarball
-          tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.OUTPUT_BINARY }}
-          path: ${{ env.OUTPUT_BINARY }}.tar.gz
-          retention-days: 30
-
 
   cmake-test-ubuntu:
-    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
+    uses: ./.github/workflows/cmake-test-on.yml
+    with:
+      os: ${{ matrix.os }}
+      os_version: ${{ matrix.os_version }}
+      compiler: ${{ matrix.compiler }}
+      triplet: ${{ matrix.triplet }}
+      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
@@ -91,77 +38,15 @@ jobs:
         os_version: [22.04, 24.04]
         compiler: [clang++, g++]
         variant: [Debug, Release]
-        include:
-          - os: ubuntu
-            target-cpu: x64
-            target-os: linux
-          - compiler: clang++
-            target-compiler: clang
-          - compiler: g++
-            target-compiler: gcc
-    env:
-      OUTPUT_BINARY: firestarr-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
-    steps:
-      - uses: ./.github/workflows/cmake-test-on.yml
-        with:
-          os: ${{ matrix.os }}
-          os_version: ${{ matrix.os_version }}
-          compiler: ${{ matrix.compiler }}
-          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
-          variant: ${{ matrix.variant }}
-
-      - name: Locate binary
-        id: locate
-        run: |
-          # Find the built executable
-          BINARY=$(find build -type f -name "firestarr" -executable | head -1)
-          if [ -z "$BINARY" ]; then
-            echo "ERROR: Could not find firestarr binary"
-            find build -type f -executable
-            exit 1
-          fi
-          echo "binary=$BINARY" >> $GITHUB_OUTPUT
-          echo "Found binary at: $BINARY"
-
-      - name: Check binary dependencies
-        run: |
-          echo "=== Binary info ==="
-          file ${{ steps.locate.outputs.binary }}
-          echo ""
-          echo "=== Dynamic dependencies ==="
-          ldd ${{ steps.locate.outputs.binary }} || true
-
-      - name: Package artifact
-        run: |
-          mkdir -p dist
-          cp ${{ steps.locate.outputs.binary }} dist/firestarr
-
-          # Bundle data files if they exist
-          [ -f firestarr/fuel.lut ] && cp firestarr/fuel.lut dist/
-          [ -f firestarr/settings.ini ] && cp firestarr/settings.ini dist/
-          [ -f firestarr/data/fuel.lut ] && cp firestarr/data/fuel.lut dist/
-          [ -f firestarr/data/settings.ini ] && cp firestarr/data/settings.ini dist/
-
-          # Create version info
-          cd firestarr && git rev-parse HEAD > ../dist/VERSION && cd ..
-
-          # List contents
-          echo "=== Package contents ==="
-          ls -la dist/
-
-          # Create tarball
-          tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.OUTPUT_BINARY }}
-          path: ${{ env.OUTPUT_BINARY }}.tar.gz
-          retention-days: 30
-
 
   cmake-test-windows:
-    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
+    uses: ./.github/workflows/cmake-test-on.yml
+    with:
+      os: ${{ matrix.os }}
+      os_version: ${{ matrix.os_version }}
+      compiler: ${{ matrix.compiler }}
+      triplet: ${{ matrix.triplet }}
+      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
@@ -169,118 +54,11 @@ jobs:
         os_version: [latest]
         compiler: [cl]
         variant: [Debug, Release]
-        include:
-          - os: windows
-            target-cpu: x64
-            target-os: windows
-    env:
-      OUTPUT_BINARY: firestarr-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
-    steps:
-      - uses: ./.github/workflows/cmake-test-on.yml
-        with:
-          os: ${{ matrix.os }}
-          os_version: ${{ matrix.os_version }}
-          compiler: ${{ matrix.compiler }}
-          triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
-          variant: ${{ matrix.variant }}
-
-      - name: Locate binary
-        id: locate
-        run: |
-          $BINARY = Get-ChildItem -Path build -Recurse -Filter "firestarr.exe" | Select-Object -First 1 -ExpandProperty FullName
-          if (-not $BINARY) {
-            echo "ERROR: Could not find firestarr.exe"
-            Get-ChildItem -Path build -Recurse -Filter "*.exe" | Select-Object FullName
-            exit 1
-          }
-          echo "binary=$BINARY" >> $env:GITHUB_OUTPUT
-          echo "Found binary at: $BINARY"
-        shell: pwsh
-
-      - name: Check binary dependencies
-        run: |
-          echo "=== Binary info ==="
-          Get-Item "${{ steps.locate.outputs.binary }}" | Format-List Name, Length, LastWriteTime
-          echo ""
-          echo "=== Binary size ==="
-          (Get-Item "${{ steps.locate.outputs.binary }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
-        shell: pwsh
-
-      - name: Package artifact
-        run: |
-          New-Item -ItemType Directory -Force -Path dist
-
-          Copy-Item "${{ steps.locate.outputs.binary }}" dist\firestarr.exe
-
-          # Copy required DLLs from vcpkg
-          $vcpkgBin = "C:\vcpkg\installed\x64-windows\bin"
-          if (Test-Path $vcpkgBin) {
-            Get-ChildItem "$vcpkgBin\*.dll" | Copy-Item -Destination dist\
-          }
-
-          # Bundle data files if they exist
-          if (Test-Path firestarr\fuel.lut) { Copy-Item firestarr\fuel.lut dist\ }
-          if (Test-Path firestarr\settings.ini) { Copy-Item firestarr\settings.ini dist\ }
-          if (Test-Path firestarr\data\fuel.lut) { Copy-Item firestarr\data\fuel.lut dist\ }
-          if (Test-Path firestarr\data\settings.ini) { Copy-Item firestarr\data\settings.ini dist\ }
-
-          # Create version info
-          cd firestarr
-          git rev-parse HEAD | Out-File -FilePath ..\dist\VERSION -Encoding utf8
-          cd ..
-
-          # List contents
-          echo "=== Package contents ==="
-          Get-ChildItem dist
-
-          # Create zip
-          Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_BINARY }}.zip
-        shell: pwsh
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.OUTPUT_BINARY }}
-          path: ${{ env.OUTPUT_BINARY }}.tar.gz
-          retention-days: 30
 
   cmake-test:
     needs: [cmake-test-ubuntu, cmake-test-macos, cmake-test-windows]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-
-      - name: List artifacts
-        run: |
-          echo "=== All artifacts ==="
-          find . -type f \( -name "*.tar.gz" -o -name "*.zip" \)
-
-      - name: Update firestarr-latest release (manual runs)
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: firestarr-latest
-          name: "FireSTARR Latest Build"
-          body: |
-            Latest FireSTARR binaries built from upstream.
-
-            **FireSTARR ref:** ${{ github.event.inputs.firestarr_ref || 'main' }}
-            **Built:** ${{ github.run_id }}
-            **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          prerelease: true
-          make_latest: false
-          files: |
-            *.tar.gz
-            *.zip
-
-      - name: Attach to release (release events)
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            *.tar.gz
-            *.zip
+      - run: |
+          echo "All tests completed"
