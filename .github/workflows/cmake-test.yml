@@ -8,6 +8,7 @@ on:
 
 jobs:
   cmake-test-macos:
+    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
     strategy:
       fail-fast: false
       matrix:
@@ -82,6 +83,7 @@ jobs:
 
 
   cmake-test-ubuntu:
+    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
     strategy:
       fail-fast: false
       matrix:
@@ -159,6 +161,7 @@ jobs:
 
 
   cmake-test-windows:
+    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
     strategy:
       fail-fast: false
       matrix:
