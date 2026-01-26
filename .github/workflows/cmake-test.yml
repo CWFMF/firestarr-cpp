@@ -85,8 +85,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
-        os_version: [latest]
+        os: [ubuntu]
+        os_version: [22.04, 24.04]
         compiler: [clang++, g++]
         variant: [Debug, Release]
         include:
