@@ -1,0 +1,201 @@
+name: package-binary
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      os_version:
+        required: true
+        type: string
+      compiler:
+        required: true
+        type: string
+      triplet:
+        required: true
+        type: string
+      variant:
+        required: true
+        type: string
+
+jobs:
+  package-macos:
+    if: ${{ inputs.os == 'macos' }}
+    strategy:
+      fail-fast: false
+    env:
+      OUTPUT_BINARY: firestarr-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ inputs.variant }}
+    steps:
+      - name: Locate binary
+        id: locate
+        run: |
+          # Find the built executable
+          BINARY=$(find build -type f -name "firestarr" -perm +111 | head -1)
+          if [ -z "$BINARY" ]; then
+            echo "ERROR: Could not find firestarr binary"
+            find build -type f -perm +111
+            exit 1
+          fi
+          echo "binary=$BINARY" >> $GITHUB_OUTPUT
+          echo "Found binary at: $BINARY"
+
+      - name: Check binary dependencies
+        run: |
+          echo "=== Binary info ==="
+          file ${{ steps.locate.outputs.binary }}
+          echo ""
+          echo "=== Dynamic dependencies ==="
+          otool -L ${{ steps.locate.outputs.binary }} || true
+
+      - name: Package artifact
+        run: |
+          mkdir -p dist
+          cp ${{ steps.locate.outputs.binary }} dist/firestarr
+
+          # Bundle data files if they exist
+          [ -f firestarr/fuel.lut ] && cp firestarr/fuel.lut dist/
+          [ -f firestarr/settings.ini ] && cp firestarr/settings.ini dist/
+          [ -f firestarr/data/fuel.lut ] && cp firestarr/data/fuel.lut dist/
+          [ -f firestarr/data/settings.ini ] && cp firestarr/data/settings.ini dist/
+
+          # Create version info
+          cd firestarr && git rev-parse HEAD > ../dist/VERSION && cd ..
+
+          # List contents
+          echo "=== Package contents ==="
+          ls -la dist/
+
+          # Create tarball
+          tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.OUTPUT_BINARY }}
+          path: ${{ env.OUTPUT_BINARY }}.tar.gz
+          retention-days: 30
+
+  package-linux:
+    if: ${{ inputs.os == 'linux' }}
+    strategy:
+      fail-fast: false
+    env:
+      OUTPUT_BINARY: firestarr-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ inputs.variant }}
+    steps:
+      - name: Locate binary
+        id: locate
+        run: |
+          # Find the built executable
+          BINARY=$(find build -type f -name "firestarr" -executable | head -1)
+          if [ -z "$BINARY" ]; then
+            echo "ERROR: Could not find firestarr binary"
+            find build -type f -executable
+            exit 1
+          fi
+          echo "binary=$BINARY" >> $GITHUB_OUTPUT
+          echo "Found binary at: $BINARY"
+
+      - name: Check binary dependencies
+        run: |
+          echo "=== Binary info ==="
+          file ${{ steps.locate.outputs.binary }}
+          echo ""
+          echo "=== Dynamic dependencies ==="
+          ldd ${{ steps.locate.outputs.binary }} || true
+
+      - name: Package artifact
+        run: |
+          mkdir -p dist
+          cp ${{ steps.locate.outputs.binary }} dist/firestarr
+
+          # Bundle data files if they exist
+          [ -f firestarr/fuel.lut ] && cp firestarr/fuel.lut dist/
+          [ -f firestarr/settings.ini ] && cp firestarr/settings.ini dist/
+          [ -f firestarr/data/fuel.lut ] && cp firestarr/data/fuel.lut dist/
+          [ -f firestarr/data/settings.ini ] && cp firestarr/data/settings.ini dist/
+
+          # Create version info
+          cd firestarr && git rev-parse HEAD > ../dist/VERSION && cd ..
+
+          # List contents
+          echo "=== Package contents ==="
+          ls -la dist/
+
+          # Create tarball
+          tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.OUTPUT_BINARY }}
+          path: ${{ env.OUTPUT_BINARY }}.tar.gz
+          retention-days: 30
+
+
+  package-windows:
+    if: ${{ inputs.os == 'windows' }}
+    strategy:
+      fail-fast: false
+    env:
+      OUTPUT_BINARY: firestarr-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ inputs.variant }}
+    steps:
+      - name: Locate binary
+        id: locate
+        run: |
+          $BINARY = Get-ChildItem -Path build -Recurse -Filter "firestarr.exe" | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $BINARY) {
+            echo "ERROR: Could not find firestarr.exe"
+            Get-ChildItem -Path build -Recurse -Filter "*.exe" | Select-Object FullName
+            exit 1
+          }
+          echo "binary=$BINARY" >> $env:GITHUB_OUTPUT
+          echo "Found binary at: $BINARY"
+        shell: pwsh
+
+      - name: Check binary dependencies
+        run: |
+          echo "=== Binary info ==="
+          Get-Item "${{ steps.locate.outputs.binary }}" | Format-List Name, Length, LastWriteTime
+          echo ""
+          echo "=== Binary size ==="
+          (Get-Item "${{ steps.locate.outputs.binary }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
+        shell: pwsh
+
+      - name: Package artifact
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+
+          Copy-Item "${{ steps.locate.outputs.binary }}" dist\firestarr.exe
+
+          # Copy required DLLs from vcpkg
+          $vcpkgBin = "C:\vcpkg\installed\x64-windows\bin"
+          if (Test-Path $vcpkgBin) {
+            Get-ChildItem "$vcpkgBin\*.dll" | Copy-Item -Destination dist\
+          }
+
+          # Bundle data files if they exist
+          if (Test-Path firestarr\fuel.lut) { Copy-Item firestarr\fuel.lut dist\ }
+          if (Test-Path firestarr\settings.ini) { Copy-Item firestarr\settings.ini dist\ }
+          if (Test-Path firestarr\data\fuel.lut) { Copy-Item firestarr\data\fuel.lut dist\ }
+          if (Test-Path firestarr\data\settings.ini) { Copy-Item firestarr\data\settings.ini dist\ }
+
+          # Create version info
+          cd firestarr
+          git rev-parse HEAD | Out-File -FilePath ..\dist\VERSION -Encoding utf8
+          cd ..
+
+          # List contents
+          echo "=== Package contents ==="
+          Get-ChildItem dist
+
+          # Create zip
+          Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_BINARY }}.zip
+        shell: pwsh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.OUTPUT_BINARY }}
+          path: ${{ env.OUTPUT_BINARY }}.tar.gz
+          retention-days: 30

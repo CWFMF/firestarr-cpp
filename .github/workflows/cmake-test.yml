@@ -14,14 +14,13 @@ jobs:
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
       triplet: ${{ matrix.triplet }}
-      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos]
         os_version: [latest]
         compiler: [clang++]
-        variant: [Debug, Release]
+        triplet: [arm64-osx]
 
   cmake-test-ubuntu:
     uses: ./.github/workflows/cmake-test-on.yml
@@ -30,14 +29,13 @@ jobs:
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
       triplet: ${{ matrix.triplet }}
-      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu]
         os_version: [22.04, 24.04]
         compiler: [clang++, g++]
-        variant: [Debug, Release]
+        triplet: [x64-linux]
 
   cmake-test-windows:
     uses: ./.github/workflows/cmake-test-on.yml
@@ -46,14 +44,13 @@ jobs:
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
       triplet: ${{ matrix.triplet }}
-      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows]
         os_version: [latest]
         compiler: [cl]
-        variant: [Debug, Release]
+        triplet: [x64-windows]
 
   cmake-test:
     needs: [cmake-test-ubuntu, cmake-test-macos, cmake-test-windows]
