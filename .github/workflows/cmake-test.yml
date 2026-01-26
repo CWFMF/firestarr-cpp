@@ -126,6 +126,7 @@ jobs:
 
       - name: Attach to release (release events)
         if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: firestarr-${{ github.ref }}
           name: "FireSTARR ${{ github.ref }}"
