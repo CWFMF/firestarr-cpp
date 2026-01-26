@@ -19,13 +19,13 @@ on:
 
 jobs:
   cmake-test:
-    name:  ${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.compiler }}-${{ matrix.variant }}
-    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
+    name:  ${{ inputs.os }}-${{ inputs.os_version }}-${{ inputs.compiler }}-${{ inputs.variant }}
+    runs-on: ${{ inputs.os }}-${{ inputs.os_version }}
     strategy:
       fail-fast: false
     env:
-      CXX: ${{ matrix.compiler }}
-      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+      CXX: ${{ inputs.compiler }}
+      VCPKG_DEFAULT_TRIPLET: ${{ inputs.triplet }}
       VCPKG_DISABLE_METRICS: true
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/.cache
@@ -46,19 +46,19 @@ jobs:
     - uses: actions/cache@v4
       with:
         # vcpkg always builds release, so share cache between debug and release
-        key: vcpkg-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.compiler }}-${{ hashFiles('vcpkg.json', '.github/vcpkg_overlays/**') }}
+        key: vcpkg-${{ inputs.os }}-${{ inputs.os_version }}-${{ inputs.compiler }}-${{ hashFiles('vcpkg.json', '.github/vcpkg_overlays/**') }}
         path: |
           ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
 
-    - run: cmake --preset ${{ matrix.variant }}
+    - run: cmake --preset ${{ inputs.variant }}
 
-    - name: Run cmake --build --parallel --preset ${{ matrix.variant }}
+    - name: Run cmake --build --parallel --preset ${{ inputs.variant }}
       run: |
         echo "::add-matcher::.github/cmake-problem-matcher.json"
-        cmake --build --parallel --preset ${{ matrix.variant }}
+        cmake --build --parallel --preset ${{ inputs.variant }}
 
     - run: ./firestarr -h
 
-    - run: ctest --output-on-failure --preset ${{ matrix.variant }}
+    - run: ctest --output-on-failure --preset ${{ inputs.variant }}
 
     - run: ./firestarr . 2024-06-03 58.81228184403946 -122.9117103995713 01:00 --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 -v --wx ./test/input/10N_50651/firestarr_10N_50651_wx.csv --output_date_offsets [1] --tz -5 --raster-root ./test/input/10N_50651/ --perim ./test/input/10N_50651/10N_50651.tif
