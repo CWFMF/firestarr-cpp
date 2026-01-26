@@ -464,8 +464,8 @@ protected:
     const R no_data
   ) const
   {
-    uint32_t tileWidth = min((int)(this->columns()), 256);
-    uint32_t tileHeight = min((int)(this->rows()), 256);
+    uint32_t tileWidth = min(static_cast<int>(this->columns()), 256);
+    uint32_t tileHeight = min(static_cast<int>(this->rows()), 256);
     tuple<Idx, Idx, Idx, Idx> bounds = dataBounds();
     auto min_column = std::get<0>(bounds);
     auto min_row = std::get<1>(bounds);
@@ -589,7 +589,7 @@ protected:
     size_t tileSize = tileWidth * tileHeight;
     const auto buf_size = tileSize * sizeof(R);
     logging::extensive("%s has buffer size %d", string(base_name).c_str(), buf_size);
-    R* buf = (R*)_TIFFmalloc(buf_size);
+    auto buf = static_cast<R*>(_TIFFmalloc(buf_size));
     for (uint32_t co = 0; co < num_columns; co += tileWidth)
     {
       for (uint32_t ro = 0; ro < num_rows; ro += tileHeight)
