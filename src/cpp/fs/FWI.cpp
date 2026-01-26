@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FWI.h"
 #include "Log.h"
+#include "Util.h"
 #include "Weather.h"
 // #define CHECK_CALCULATION 1
 #ifndef DEBUG_FWI_WEATHER
