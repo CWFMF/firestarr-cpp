@@ -4,7 +4,6 @@
 #include "Radians.h"
 #include "StrictType.h"
 #include "unstable.h"
-#include "Util.h"
 namespace fs
 {
 struct Temperature : public StrictType<Temperature, units::Celsius>
