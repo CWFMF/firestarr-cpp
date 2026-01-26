@@ -14,7 +14,7 @@ jobs:
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
       triplet: ${{ matrix.triplet }}
-      build_type: ${{ matrix.build_type }}
+      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +30,7 @@ jobs:
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
       triplet: ${{ matrix.triplet }}
-      build_type: ${{ matrix.build_type }}
+      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +46,7 @@ jobs:
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
       triplet: ${{ matrix.triplet }}
-      build_type: ${{ matrix.build_type }}
+      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
