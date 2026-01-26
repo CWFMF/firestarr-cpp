@@ -114,13 +114,13 @@ jobs:
           prerelease: true
           make_latest: false
           files: |
-            *.tar.gz
-            *.zip
+            ./firestarr*/*.tar.gz
+            ./firestarr*/*.zip
 
       - name: Attach to release (release events)
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            *.tar.gz
-            *.zip
+            ./firestarr*/*.tar.gz
+            ./firestarr*/*.zip
