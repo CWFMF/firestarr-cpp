@@ -10,6 +10,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 class SpreadAlgorithm
 {
 public:
+  virtual ~SpreadAlgorithm() = default;
   [[nodiscard]] virtual OffsetSet calculate_offsets(
     HorizontalAdjustment correction_factor,
     MathSize tfc,
