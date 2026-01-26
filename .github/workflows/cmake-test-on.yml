@@ -13,6 +13,15 @@ on:
       triplet:
         required: true
         type: string
+      target-compiler:
+        required: true
+        type: string
+      target-cpu:
+        required: true
+        type: string
+      target-os:
+        required: true
+        type: string
 
 jobs:
   cmake-test:

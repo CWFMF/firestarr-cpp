@@ -13,14 +13,21 @@ jobs:
       os: ${{ matrix.os }}
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
-      triplet: ${{ matrix.triplet }}
+      triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
+      target-compiler: ${{ matrix.target-compiler }}
+      target-cpu: ${{ matrix.target-cpu }}
+      target-os: ${{ matrix.target-os }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos]
         os_version: [latest]
         compiler: [clang++]
-        triplet: [arm64-osx]
+        include:
+          - os: macos
+            target-cpu: arm64
+            target-os: osx
+            target-compiler: clang
 
   cmake-test-ubuntu:
     uses: ./.github/workflows/cmake-test-on.yml
@@ -28,14 +35,24 @@ jobs:
       os: ${{ matrix.os }}
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
-      triplet: ${{ matrix.triplet }}
+      triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
+      target-compiler: ${{ matrix.target-compiler }}
+      target-cpu: ${{ matrix.target-cpu }}
+      target-os: ${{ matrix.target-os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu]
         os_version: [22.04, 24.04]
         compiler: [clang++, g++]
-        triplet: [x64-linux]
+        include:
+          - os: ubuntu
+            target-cpu: x64
+            target-os: linux
+          - compiler: clang++
+            target-compiler: clang
+          - compiler: g++
+            target-compiler: gcc
 
   cmake-test-windows:
     uses: ./.github/workflows/cmake-test-on.yml
@@ -43,14 +60,20 @@ jobs:
       os: ${{ matrix.os }}
       os_version: ${{ matrix.os_version }}
       compiler: ${{ matrix.compiler }}
-      triplet: ${{ matrix.triplet }}
+      triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
+      target-compiler: ${{ matrix.target-compiler }}
+      target-cpu: ${{ matrix.target-cpu }}
+      target-os: ${{ matrix.target-os }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows]
         os_version: [latest]
         compiler: [cl]
-        triplet: [x64-windows]
+        include:
+          - os: windows
+            target-cpu: x64
+            target-os: windows
 
   cmake-test:
     needs: [cmake-test-ubuntu, cmake-test-macos, cmake-test-windows]
