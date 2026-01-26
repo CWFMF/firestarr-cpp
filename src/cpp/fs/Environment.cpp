@@ -155,7 +155,7 @@ Environment Environment::loadEnvironment(
     point.longitude(),
     env_info->proj4().c_str()
   );
-  logging::note("Projection is %s", string(env_info->proj4()).c_str());
+  logging::note("Projection is %s", env_info->proj4().c_str());
   // envInfo should get deleted automatically because it uses unique_ptr
   return env_info->load(point);
 }
