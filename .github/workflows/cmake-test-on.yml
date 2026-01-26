@@ -77,6 +77,34 @@ jobs:
         echo "binary=$BINARY" >> $GITHUB_OUTPUT
         echo "Found binary at: $BINARY"
 
+    - name: Locate binary (linux)
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
+      id: locate-linux
+      run: |
+        # Find the built executable
+        BINARY=$(find build -type f -name "firestarr" -executable | head -1)
+        if [ -z "$BINARY" ]; then
+          echo "ERROR: Could not find firestarr binary"
+          find build -type f -executable
+          exit 1
+        fi
+        echo "binary=$BINARY" >> $GITHUB_OUTPUT
+        echo "Found binary at: $BINARY"
+
+    - name: Locate binary (windows)
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'windows' }}
+      id: locate-windows
+      run: |
+        $BINARY = Get-ChildItem -Path build -Recurse -Filter "firestarr.exe" | Select-Object -First 1 -ExpandProperty FullName
+        if (-not $BINARY) {
+          echo "ERROR: Could not find firestarr.exe"
+          Get-ChildItem -Path build -Recurse -Filter "*.exe" | Select-Object FullName
+          exit 1
+        }
+        echo "binary=$BINARY" >> $env:GITHUB_OUTPUT
+        echo "Found binary at: $BINARY"
+      shell: pwsh
+
     - name: Check binary dependencies (macos)
       if: ${{ matrix.variant == 'Release' && inputs.os == 'macos' }}
       run: |
@@ -85,6 +113,25 @@ jobs:
         echo ""
         echo "=== Dynamic dependencies ==="
         otool -L ${{ steps.locate-macos.outputs.binary }} || true
+
+    - name: Check binary dependencies (linux)
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
+      run: |
+        echo "=== Binary info ==="
+        file ${{ steps.locate-linux.outputs.binary }}
+        echo ""
+        echo "=== Dynamic dependencies ==="
+        ldd ${{ steps.locate-linux.outputs.binary }} || true
+
+    - name: Check binary dependencies (windows)
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'windows' }}
+      run: |
+        echo "=== Binary info ==="
+        Get-Item "${{ steps.locate-windows.outputs.binary }}" | Format-List Name, Length, LastWriteTime
+        echo ""
+        echo "=== Binary size ==="
+        (Get-Item "${{ steps.locate-windows.outputs.binary }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
+      shell: pwsh
 
     - name: Package artifact (macos)
       if: ${{ matrix.variant == 'Release' && inputs.os == 'macos' }}
@@ -108,37 +155,6 @@ jobs:
         # Create tarball
         tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
 
-    - name: Upload artifact (macos)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'macos' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.OUTPUT_BINARY }}
-        path: ${{ env.OUTPUT_BINARY }}.tar.gz
-        retention-days: 30
-
-    - name: Locate binary (linux)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
-      id: locate-linux
-      run: |
-        # Find the built executable
-        BINARY=$(find build -type f -name "firestarr" -executable | head -1)
-        if [ -z "$BINARY" ]; then
-          echo "ERROR: Could not find firestarr binary"
-          find build -type f -executable
-          exit 1
-        fi
-        echo "binary=$BINARY" >> $GITHUB_OUTPUT
-        echo "Found binary at: $BINARY"
-
-    - name: Check binary dependencies (linux)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
-      run: |
-        echo "=== Binary info ==="
-        file ${{ steps.locate-linux.outputs.binary }}
-        echo ""
-        echo "=== Dynamic dependencies ==="
-        ldd ${{ steps.locate-linux.outputs.binary }} || true
-
     - name: Package artifact (linux)
       if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
       run: |
@@ -160,38 +176,6 @@ jobs:
 
         # Create tarball
         tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
-
-    - name: Upload artifact (linux)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.OUTPUT_BINARY }}
-        path: ${{ env.OUTPUT_BINARY }}.tar.gz
-        retention-days: 30
-
-    - name: Locate binary (windows)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'windows' }}
-      id: locate-windows
-      run: |
-        $BINARY = Get-ChildItem -Path build -Recurse -Filter "firestarr.exe" | Select-Object -First 1 -ExpandProperty FullName
-        if (-not $BINARY) {
-          echo "ERROR: Could not find firestarr.exe"
-          Get-ChildItem -Path build -Recurse -Filter "*.exe" | Select-Object FullName
-          exit 1
-        }
-        echo "binary=$BINARY" >> $env:GITHUB_OUTPUT
-        echo "Found binary at: $BINARY"
-      shell: pwsh
-
-    - name: Check binary dependencies (windows)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'windows' }}
-      run: |
-        echo "=== Binary info ==="
-        Get-Item "${{ steps.locate-windows.outputs.binary }}" | Format-List Name, Length, LastWriteTime
-        echo ""
-        echo "=== Binary size ==="
-        (Get-Item "${{ steps.locate-windows.outputs.binary }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
-      shell: pwsh
 
     - name: Package artifact (windows)
       if: ${{ matrix.variant == 'Release' && inputs.os == 'windows' }}
@@ -224,6 +208,22 @@ jobs:
         # Create zip
         Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_BINARY }}.zip
       shell: pwsh
+
+    - name: Upload artifact (macos)
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'macos' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.OUTPUT_BINARY }}
+        path: ${{ env.OUTPUT_BINARY }}.tar.gz
+        retention-days: 30
+
+    - name: Upload artifact (linux)
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.OUTPUT_BINARY }}
+        path: ${{ env.OUTPUT_BINARY }}.tar.gz
+        retention-days: 30
 
     - name: Upload artifact (windows)
       if: ${{ matrix.variant == 'Release' && inputs.os == 'windows' }}
