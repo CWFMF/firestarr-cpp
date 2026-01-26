@@ -117,7 +117,7 @@ jobs:
         retention-days: 30
 
     - name: Locate binary (linux)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'linux' }}
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
       id: locate-linux
       run: |
         # Find the built executable
@@ -131,7 +131,7 @@ jobs:
         echo "Found binary at: $BINARY"
 
     - name: Check binary dependencies (linux)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'linux' }}
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
       run: |
         echo "=== Binary info ==="
         file ${{ steps.locate-linux.outputs.binary }}
@@ -140,7 +140,7 @@ jobs:
         ldd ${{ steps.locate-linux.outputs.binary }} || true
 
     - name: Package artifact (linux)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'linux' }}
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
       run: |
         mkdir -p dist
         cp ${{ steps.locate.outputs.binary }} dist/firestarr
@@ -162,7 +162,7 @@ jobs:
         tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
 
     - name: Upload artifact (linux)
-      if: ${{ matrix.variant == 'Release' && inputs.os == 'linux' }}
+      if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.OUTPUT_BINARY }}
