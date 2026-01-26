@@ -149,13 +149,13 @@ jobs:
         cp ${{ steps.locate-macos.outputs.binary }} dist/firestarr
 
         # Bundle data files if they exist
-        [ -f firestarr/fuel.lut ] && cp firestarr/fuel.lut dist/
-        [ -f firestarr/settings.ini ] && cp firestarr/settings.ini dist/
-        [ -f firestarr/data/fuel.lut ] && cp firestarr/data/fuel.lut dist/
-        [ -f firestarr/data/settings.ini ] && cp firestarr/data/settings.ini dist/
+        [ -f fuel.lut ] && cp fuel.lut dist/
+        [ -f settings.ini ] && cp settings.ini dist/
+        [ -f data/fuel.lut ] && cp data/fuel.lut dist/
+        [ -f data/settings.ini ] && cp data/settings.ini dist/
 
         # Create version info
-        cd firestarr && git rev-parse HEAD > ../dist/VERSION && cd ..
+        ./firestarr -h | head -n1 > dist/VERSION
 
         # List contents
         echo "=== Package contents ==="
@@ -171,13 +171,13 @@ jobs:
         cp ${{ steps.locate-linux.outputs.binary }} dist/firestarr
 
         # Bundle data files if they exist
-        [ -f firestarr/fuel.lut ] && cp firestarr/fuel.lut dist/
-        [ -f firestarr/settings.ini ] && cp firestarr/settings.ini dist/
-        [ -f firestarr/data/fuel.lut ] && cp firestarr/data/fuel.lut dist/
-        [ -f firestarr/data/settings.ini ] && cp firestarr/data/settings.ini dist/
+        [ -f fuel.lut ] && cp fuel.lut dist/
+        [ -f settings.ini ] && cp settings.ini dist/
+        [ -f data/fuel.lut ] && cp data/fuel.lut dist/
+        [ -f data/settings.ini ] && cp data/settings.ini dist/
 
         # Create version info
-        cd firestarr && git rev-parse HEAD > ../dist/VERSION && cd ..
+        ./firestarr -h | head -n1 > dist/VERSION
 
         # List contents
         echo "=== Package contents ==="
@@ -206,9 +206,7 @@ jobs:
         if (Test-Path firestarr\data\settings.ini) { Copy-Item firestarr\data\settings.ini dist\ }
 
         # Create version info
-        cd firestarr
-        git rev-parse HEAD | Out-File -FilePath ..\dist\VERSION -Encoding utf8
-        cd ..
+        .\firestarr.exe | select -first 1 | Out-File -FilePath dist/VERSION -Encoding utf8
 
         # List contents
         echo "=== Package contents ==="
