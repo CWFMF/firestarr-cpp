@@ -78,7 +78,40 @@ jobs:
   cmake-test:
     needs: [cmake-test-ubuntu, cmake-test-macos, cmake-test-windows]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - run: |
-          echo "All tests completed"
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: List artifacts
+        run: |
+          echo "=== All artifacts ==="
+          find . -type f \( -name "*.tar.gz" -o -name "*.zip" \)
+
+      - name: Update firestarr-latest release (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: firestarr-latest
+          name: "FireSTARR Latest Build"
+          body: |
+            Latest FireSTARR binaries built from upstream.
+
+            **FireSTARR ref:** ${{ github.event.inputs.firestarr_ref || 'main' }}
+            **Built:** ${{ github.run_id }}
+            **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          prerelease: true
+          make_latest: false
+          files: |
+            *.tar.gz
+            *.zip
+
+      - name: Attach to release (release events)
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.tar.gz
+            *.zip
