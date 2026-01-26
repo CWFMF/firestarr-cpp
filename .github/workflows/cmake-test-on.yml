@@ -90,7 +90,7 @@ jobs:
       if: ${{ matrix.variant == 'Release' && inputs.os == 'macos' }}
       run: |
         mkdir -p dist
-        cp ${{ steps.locate.outputs.binary }} dist/firestarr
+        cp ${{ steps.locate-macos.outputs.binary }} dist/firestarr
 
         # Bundle data files if they exist
         [ -f firestarr/fuel.lut ] && cp firestarr/fuel.lut dist/
@@ -143,7 +143,7 @@ jobs:
       if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
       run: |
         mkdir -p dist
-        cp ${{ steps.locate.outputs.binary }} dist/firestarr
+        cp ${{ steps.locate-linux.outputs.binary }} dist/firestarr
 
         # Bundle data files if they exist
         [ -f firestarr/fuel.lut ] && cp firestarr/fuel.lut dist/
@@ -198,7 +198,7 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force -Path dist
 
-        Copy-Item "${{ steps.locate.outputs.binary }}" dist\firestarr.exe
+        Copy-Item "${{ steps.locate-windows.outputs.binary }}" dist\firestarr.exe
 
         # Copy required DLLs from vcpkg
         $vcpkgBin = "C:\vcpkg\installed\x64-windows\bin"
