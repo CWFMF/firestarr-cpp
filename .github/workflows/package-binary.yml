@@ -27,6 +27,10 @@ jobs:
     env:
       OUTPUT_BINARY: firestarr-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ inputs.variant }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
       - name: Locate binary
         id: locate
         run: |
@@ -83,6 +87,10 @@ jobs:
     env:
       OUTPUT_BINARY: firestarr-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ inputs.variant }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
       - name: Locate binary
         id: locate
         run: |
@@ -140,6 +148,10 @@ jobs:
     env:
       OUTPUT_BINARY: firestarr-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ inputs.variant }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
       - name: Locate binary
         id: locate
         run: |
