@@ -197,11 +197,8 @@ jobs:
         Copy-Item @("README.md", "LICENSE", "ORIGIN.md") dist\
         Copy-Item "${{ steps.locate-windows.outputs.binary }}" dist\firestarr.exe
 
-        # Copy required DLLs from vcpkg
-        $vcpkgBin = "C:\vcpkg\installed\x64-windows\bin"
-        if (Test-Path $vcpkgBin) {
-          Get-ChildItem "$vcpkgBin\*.dll" | Copy-Item -Destination dist\
-        }
+        # Copy required DLLs from vcpkg depending on variant
+        copy @((Get-ChildItem -Recurse vcpkg\*.dll).FullName | Select-String ${{ case( matrix.variant == 'Debug', '', '-notMatch' ) }} debug) dist\
 
         # Bundle data files if they exist
         if (Test-Path fuel.lut) { Copy-Item fuel.lut dist\ }
