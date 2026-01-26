@@ -13,9 +13,6 @@ on:
       triplet:
         required: true
         type: string
-      variant:
-        required: true
-        type: string
 
 jobs:
   cmake-test:
