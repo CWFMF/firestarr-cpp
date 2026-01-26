@@ -146,6 +146,7 @@ jobs:
       if: ${{ matrix.variant == 'Release' && inputs.os == 'macos' }}
       run: |
         mkdir -p dist
+        cp README.md LICENSE ORIGIN.md dist/
         cp ${{ steps.locate-macos.outputs.binary }} dist/firestarr
 
         # Bundle data files if they exist
@@ -168,6 +169,7 @@ jobs:
       if: ${{ matrix.variant == 'Release' && inputs.os == 'ubuntu' }}
       run: |
         mkdir -p dist
+        cp README.md LICENSE ORIGIN.md dist/
         cp ${{ steps.locate-linux.outputs.binary }} dist/firestarr
 
         # Bundle data files if they exist
@@ -191,6 +193,8 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force -Path dist
 
+        # Including these is a requirement
+        Copy-Item @("README.md", "LICENSE", "ORIGIN.md") dist\
         Copy-Item "${{ steps.locate-windows.outputs.binary }}" dist\firestarr.exe
 
         # Copy required DLLs from vcpkg
