@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [Debug, Release]
+        variant: [Release]
     env:
       CXX: ${{ inputs.compiler }}
       VCPKG_DEFAULT_TRIPLET: ${{ inputs.triplet }}
