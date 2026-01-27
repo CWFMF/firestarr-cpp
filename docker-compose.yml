@@ -1,0 +1,51 @@
+services:
+  firestarr:
+    image: firestarr
+    build:
+      context: .
+      target: firestarr
+      dockerfile: .docker/Dockerfile
+      args:
+        VERSION: trixie-${VERSION}
+        USERNAME: ${USERNAME}
+        USER_ID: ${USER_ID}
+      tags:
+        - firestarr:trixie-${VERSION}
+    volumes:
+      - type: bind
+        source: .//settings.ini
+        target: /appl/firestarr/settings.ini
+      - ./data:/appl/data:z
+      - ./sims:/appl/data/sims:z
+    env_file:
+      - .env
+
+  firestarr-dev:
+    image: firestarr-dev
+    build:
+      context: .
+      target: firestarr-dev
+      dockerfile: .docker/Dockerfile
+      args:
+        VERSION: trixie-${VERSION}
+        USERNAME: ${USERNAME}
+        USER_ID: ${USER_ID}
+      tags:
+        - firestarr-dev:trixie-${VERSION}
+    entrypoint: tail -f /dev/null
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - /etc/ssl/certs:/etc/ssl/certs
+      - type: bind
+        source: ./
+        target: /appl/firestarr
+      - ./data:/appl/data:z
+      - ./sims:/appl/data/sims:z
+    restart: always
+    cap_add:
+      - PERFMON
+      - SYS_PTRACE
+      - SYS_ADMIN
+    env_file:
+      - .env
