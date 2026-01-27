@@ -306,3 +306,13 @@ foreach(bin ${PROJECT_NAME} test_duff test_fwi test_fbp)
       PROPERTIES FIXTURES_REQUIRED ${bin}_fixture)
   endif()
 endforeach()
+
+
+# HACK: find first copy of proj.db and copy to same directory as binary
+file(GLOB_RECURSE PROJ_DBS ${CMAKE_BINARY_DIR} proj.db)
+list(GET PROJ_DBS 0 PROJ_DB)
+message("proj.db path is ${PROJ_DB}")
+add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy "${PROJ_DB}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/../")
