@@ -90,3 +90,4 @@ COPY --chown=${USERNAME}:${USERNAME} --from=firestarr-build /appl/firestarr/fire
 COPY --chown=${USERNAME}:${USERNAME} --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
 USER ${USERNAME}
 RUN echo cd /appl/firestarr >> /home/${USERNAME}/.bashrc
+ENTRYPOINT [ "/appl/firestarr/firestarr" ]
