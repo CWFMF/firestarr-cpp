@@ -6,11 +6,11 @@ services:
       target: firestarr
       dockerfile: .docker/Dockerfile
       args:
-        VERSION: trixie-${VERSION}
+        VERSION: ${VERSION}
         USERNAME: ${USERNAME}
         USER_ID: ${USER_ID}
       tags:
-        - firestarr:trixie-${VERSION}
+        - firestarr:${VERSION}
     volumes:
       - type: bind
         source: .//settings.ini
@@ -27,11 +27,11 @@ services:
       target: firestarr-dev
       dockerfile: .docker/Dockerfile
       args:
-        VERSION: trixie-${VERSION}
+        VERSION: ${VERSION}
         USERNAME: ${USERNAME}
         USER_ID: ${USER_ID}
       tags:
-        - firestarr-dev:trixie-${VERSION}
+        - firestarr-dev:${VERSION}
     entrypoint: tail -f /dev/null
     security_opt:
       - seccomp:unconfined
