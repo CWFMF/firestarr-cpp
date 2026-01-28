@@ -156,11 +156,10 @@ jobs:
           VERSION="${{ github.ref_name }}"
           echo "Downloading FireSTARR $VERSION"
           mkdir -p docker-context
-          cd docker-context
-          # Download Linux x64 binary from CWFMF release
           curl -L -o firestarr.tar.gz \
             "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-x64-gcc-Release.tar.gz"
-          tar -xzf firestarr.tar.gz
+          cd docker-context
+          tar -xzf ../firestarr.tar.gz
           chmod +x firestarr
           echo "$VERSION" > VERSION
           echo "=== Contents ==="
@@ -203,10 +202,10 @@ jobs:
           VERSION="${{ github.ref_name }}"
           echo "Downloading FireSTARR ARM64 $VERSION"
           mkdir -p docker-context
-          cd docker-context
           curl -L -o firestarr.tar.gz \
             "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-arm64-gcc-Release.tar.gz"
-          tar -xzf firestarr.tar.gz
+          cd docker-context
+          tar -xzf ../firestarr.tar.gz
           chmod +x firestarr
           echo "$VERSION" > VERSION
           echo "=== Contents ==="
