@@ -26,12 +26,14 @@ jobs:
       target-compiler: ${{ matrix.target-compiler }}
       target-cpu: ${{ matrix.target-cpu }}
       target-os: ${{ matrix.target-os }}
+      variant: ${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos, ubuntu, windows]
         compiler: [cl, clang++, g++]
         target-cpu: [arm64, x64]
+        variant: [Release]
         include:
           - os: macos
             os-version: latest
