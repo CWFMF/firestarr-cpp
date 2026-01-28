@@ -25,8 +25,8 @@ on:
 
 jobs:
   cmake-test:
-    name:  ${{ inputs.os }}-${{ inputs.os_version }}-${{ inputs.compiler }}-${{ matrix.variant }}
-    runs-on: ${{ inputs.os }}-${{ inputs.os_version }}
+    name:  firestarr-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ matrix.variant }}
+    runs-on: ${{ inputs.os }}-${{ inputs.os_version }}${{ case( inputs.target-cpu == 'arm64', '-arm', '')}}
     strategy:
       fail-fast: false
       matrix:
