@@ -230,3 +230,14 @@ jobs:
           platforms: linux/arm64
           tags: |
             ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}-arm64
+
+  cleanup-docker:
+    needs: [build-docker-amd64, build-docker-arm64]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          dry-run: true
