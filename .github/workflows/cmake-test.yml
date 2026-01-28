@@ -53,9 +53,9 @@ jobs:
         os: [ubuntu]
         os_version: [24.04]
         compiler: [clang++, g++]
+        target-cpu: [arm64, x64]
         include:
           - os: ubuntu
-            target-cpu: x64
             target-os: linux
           - compiler: clang++
             target-compiler: clang
