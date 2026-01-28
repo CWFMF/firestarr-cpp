@@ -124,12 +124,11 @@ jobs:
         with:
           name: "FireSTARR ${{ github.ref_name }}"
           body: |
-            *Hash:** ${{ github.sha }}
+            **Hash:** ${{ github.sha }}
             **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           prerelease: true
           make_latest: false
           generate_release_notes: true
-          append_body: true
           files: |
             ./firestarr*/*.tar.gz
             ./firestarr*/*.zip
