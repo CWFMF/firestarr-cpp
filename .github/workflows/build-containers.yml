@@ -1,0 +1,123 @@
+name: Build FireSTARR
+
+on:
+  workflow_dispatch:
+    inputs:
+      firestarr_version:
+        description: 'FireSTARR release version'
+        default: 'v0.9.5.7'
+        type: string
+      docker:
+        description: 'Build and push Docker images'
+        type: boolean
+        default: true
+
+jobs:
+  build-docker-amd64:
+    if: ${{ inputs.docker }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Nomad (for Dockerfile)
+        uses: actions/checkout@v4
+
+      - name: Download FireSTARR release
+        run: |
+          VERSION="${{ inputs.firestarr_version }}"
+          echo "Downloading FireSTARR $VERSION"
+          mkdir -p docker-context
+          cd docker-context
+          # Download Linux x64 binary from CWFMF release
+          curl -L -o firestarr.tar.gz \
+            "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-x64-gcc-Release.tar.gz"
+          tar -xzf firestarr.tar.gz --one-top-level=firestarr/
+          chmod +x firestarr
+          echo "$VERSION" > VERSION
+          echo "=== Contents ==="
+          ls -la
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: docker-context
+          file: docker/firestarr/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ inputs.firestarr_version }}-amd64
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ inputs.firestarr_version }}
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:latest
+
+  build-docker-arm64:
+    if: ${{ inputs.docker }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Nomad (for Dockerfile)
+        uses: actions/checkout@v4
+
+      - name: Check for ARM64 release
+        id: check-arm64
+        run: |
+          VERSION="${{ inputs.firestarr_version }}"
+          # Check if ARM64 binary exists in release
+          if curl -s -f -I "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-arm64-Release.tar.gz" > /dev/null 2>&1; then
+            echo "has_arm64=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_arm64=false" >> $GITHUB_OUTPUT
+            echo "No ARM64 binary in release $VERSION - skipping"
+          fi
+      - name: Download FireSTARR release
+        if: steps.check-arm64.outputs.has_arm64 == 'true'
+        run: |
+          VERSION="${{ inputs.firestarr_version }}"
+          echo "Downloading FireSTARR ARM64 $VERSION"
+          mkdir -p docker-context
+          cd docker-context
+          curl -L -o firestarr.tar.gz \
+            "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-arm64-gcc-Release.tar.gz"
+          tar -xzf firestarr.tar.gz --one-top-level=firestarr/
+          chmod +x firestarr
+          echo "$VERSION" > VERSION
+          ls -la
+      - name: Set up QEMU
+        if: steps.check-arm64.outputs.has_arm64 == 'true'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        if: steps.check-arm64.outputs.has_arm64 == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: steps.check-arm64.outputs.has_arm64 == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        if: steps.check-arm64.outputs.has_arm64 == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: docker-context
+          file: docker/firestarr/Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ inputs.firestarr_version }}-arm64

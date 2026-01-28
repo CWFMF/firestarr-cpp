@@ -122,13 +122,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: firestarr-${{ github.ref }}
-          name: "FireSTARR ${{ github.ref }}"
+          name: "FireSTARR ${{ github.tag }}"
           body: |
-            **FireSTARR ref:** ${{ github.ref }}
             **Built:** ${{ github.run_id }}
             **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           prerelease: true
           make_latest: false
+          generate_release_notes: true
+          append_body: true
           files: |
             ./firestarr*/*.tar.gz
             ./firestarr*/*.zip
