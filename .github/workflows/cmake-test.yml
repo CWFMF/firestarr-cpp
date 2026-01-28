@@ -99,16 +99,16 @@ jobs:
           echo "=== All artifacts ==="
           find . -type f \( -name "*.tar.gz" -o -name "*.zip" \)
 
-      - name: Update firestarr-latest release (manual runs)
+      - name: Update firestarr-latest release
         if: github.event_name != 'release'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: firestarr-latest
           name: "FireSTARR Latest Build"
           body: |
-            Latest FireSTARR binaries built from upstream.
+            Latest FireSTARR binaries built from last commit
 
-            **FireSTARR ref:** ${{ github.event.inputs.firestarr_ref || 'main' }}
+            **commit:** ${{ github.ref }}
             **Built:** ${{ github.run_id }}
             **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           prerelease: true
