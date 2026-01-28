@@ -25,7 +25,7 @@ on:
 
 jobs:
   cmake-test:
-    name:  firestarr-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ matrix.variant }}
+    name:  firestarr-${{ inputs.os }}-${{ inputs.os_version }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ matrix.variant }}
     runs-on: ${{ inputs.os }}-${{ inputs.os_version }}${{ case( inputs.os != 'macos' && inputs.target-cpu == 'arm64', '-arm', '' ) }}
     strategy:
       fail-fast: false
@@ -55,7 +55,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         # vcpkg always builds release, so share cache between debug and release
-        key: vcpkg-${{ inputs.os }}-${{ inputs.os_version }}-${{ inputs.compiler }}-${{ hashFiles('vcpkg.json', '.github/vcpkg_overlays/**') }}
+        key: vcpkg-${{ inputs.os }}-${{ inputs.target-cpu}}-${{ inputs.target-compiler }}-${{ hashFiles('vcpkg.json', '.github/vcpkg_overlays/**') }}
         path: |
           ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
 
