@@ -42,8 +42,14 @@ jobs:
           - os: ubuntu
             os-version: 24.04
             target-os: linux
+          # HACK: latest doesn't work with -arm
           - os: windows
+            target-cpu: arm64
             os-version: 11
+            target-os: windows
+          - os: windows
+            target-cpu: x64
+            os-version: latest
             target-os: windows
           - compiler: clang++
             target-compiler: clang
