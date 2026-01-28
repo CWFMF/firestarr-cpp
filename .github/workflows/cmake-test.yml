@@ -30,16 +30,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos, ubuntu, windows]
-        # HACK: use 24.04 instead of latest so ubuntu-24.04-arm works
-        os-version: [latest, 24.04]
         compiler: [cl, clang++, g++]
         target-cpu: [arm64, x64]
         include:
           - os: macos
+            os-version: latest
             target-os: osx
+          # HACK: latest doesn't work with -arm
           - os: ubuntu
+            os-version: 24.04
             target-os: linux
           - os: windows
+            os-version: 11
             target-os: windows
           - compiler: clang++
             target-compiler: clang
@@ -49,20 +51,13 @@ jobs:
             target-compiler: gcc
         exclude:
           - os: macos
-            os-version: 24.04
-          - os: macos
             target-cpu: x64
           - os: macos
             compiler: cl
           - os: macos
             compiler: g++
-          # HACK: latest doesn't work with -arm
-          - os: ubuntu
-            os-version: latest
           - os: ubuntu
             compiler: cl
-          - os: windows
-            os-version: 24.04
           - os: windows
             compiler: clang++
           - os: windows
