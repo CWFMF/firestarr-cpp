@@ -11,6 +11,7 @@ on:
         description: 'Build and push Docker images'
         type: boolean
         default: true
+  pull_request:
 
 jobs:
   build-docker-amd64:
