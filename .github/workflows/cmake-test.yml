@@ -2,9 +2,9 @@ name: cmake-test
 
 on:
   push:
-    branches: [ "*" ]
+    branches: [ "main", "dev", "unstable" ]
   pull_request:
-    branches: [ "*" ]
+    branches: [ "main", "dev", "unstable" ]
   workflow_dispatch:
     inputs:
       firestarr_ref:
