@@ -16,17 +16,10 @@ RUN apt-get update --fix-missing \
   && chown -R ${USERNAME}:${USERNAME} /appl
 
 
-FROM minimal-with-user AS minimal-with-libs
+FROM minimal-with-user AS gcc-cmake-with-libs
 RUN apt-get update --fix-missing \
   && apt-get install -y --no-install-recommends \
-  libgeotiff5
-
-
-FROM minimal-with-libs AS gcc-cmake-with-libs
-RUN apt-get update --fix-missing \
-  && apt-get install -y --no-install-recommends \
-  libtiff-dev libgeotiff-dev \
-  cmake gcc g++ make ninja-build \
+  cmake gcc g++ make ninja-build pkg-config \
   curl zip unzip tar ca-certificates git
 
 
@@ -38,8 +31,7 @@ RUN apt-get update --fix-missing \
   && apt-get install -y --no-install-recommends \
   git time nano less psmisc man bc tmux \
   google-perftools libgoogle-perftools-dev golang-github-google-pprof-dev \
-  libtiff-dev libgeotiff-dev \
-  pkg-config ssh \
+  ssh \
   cmake linux-libc-dev curl zip unzip tar ninja-build \
   gdb valgrind libdwarf-dev libelf-dev libdw-dev linux-perf \
   cmake gcc g++ make clang-tools clang-tidy clang-format
@@ -47,6 +39,7 @@ RUN git config --global core.editor "nano"
 RUN git config --global core.autocrlf false
 WORKDIR /appl/firestarr
 USER ${USERNAME}
+
 
 FROM gcc-cmake-with-libs AS firestarr-build
 ARG USERNAME
@@ -67,7 +60,7 @@ RUN git clone https://github.com/microsoft/vcpkg.git \
   && cmake --build --parallel --preset Release
 
 
-FROM minimal-with-libs AS firestarr-base-env
+FROM minimal-with-user AS firestarr-base-env
 ARG USERNAME
 ARG VERSION
 ENV VERSION=${VERSION}
@@ -83,7 +76,7 @@ FROM firestarr-base AS firestarr
 ARG USERNAME
 USER ${USERNAME}
 WORKDIR /appl/firestarr
-COPY --chown=${USERNAME}:${USERNAME} ./fuel.lut /appl/
+COPY --chown=${USERNAME}:${USERNAME} ./fuel.lut /appl/firestarr/
 COPY --chown=${USERNAME}:${USERNAME} ./settings.ini /appl/firestarr/
 COPY --chown=${USERNAME}:${USERNAME} --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
 COPY --chown=${USERNAME}:${USERNAME} --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
