@@ -122,10 +122,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: firestarr-${{ github.ref }}
-          name: "FireSTARR ${{ github.tag }}"
           body: |
-            **Built:** ${{ github.run_id }}
+            **FireSTARR ${{ github.tag }}**
             **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           prerelease: true
           make_latest: false
