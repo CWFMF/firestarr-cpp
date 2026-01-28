@@ -81,7 +81,9 @@ else()
     "$<$<CONFIG:Release,RelWithDebInfo>:-O3;>"
     "$<$<CONFIG:MinSizeRel>:-Os;>"
     "$<$<CONFIG:Debug>:-O0;>")
-  if(NOT APPLE)
+  include(CheckCCompilerFlag)
+  check_c_compiler_flag(-mno-avx512f HAVE_NO_AVX512F)
+  if(HAVE_NO_AVX512F)
     message("Disabling AVX512 because performance is worse and results are wildly different with it on")
     add_compile_options(-mno-avx512f)
     # FIX: disable to avoid for now:
