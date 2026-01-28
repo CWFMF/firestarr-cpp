@@ -128,6 +128,7 @@ jobs:
 
         # Bundle data files if they exist
         [ -f fuel.lut ] && cp fuel.lut dist/
+        [ -f proj.db ] && cp proj.db dist/
         [ -f settings.ini ] && cp settings.ini dist/
         [ -f data/fuel.lut ] && cp data/fuel.lut dist/
         [ -f data/settings.ini ] && cp data/settings.ini dist/
@@ -156,6 +157,7 @@ jobs:
 
         # Bundle data files if they exist
         if (Test-Path fuel.lut) { Copy-Item fuel.lut dist\ }
+        if (Test-Path proj.db) { Copy-Item proj.db dist\ }
         if (Test-Path settings.ini) { Copy-Item settings.ini dist\ }
         if (Test-Path data\fuel.lut) { Copy-Item data\fuel.lut dist\ }
         if (Test-Path data\settings.ini) { Copy-Item data\settings.ini dist\ }
