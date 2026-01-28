@@ -246,3 +246,4 @@ jobs:
           packages: firestarr-cpp/firestarr
           delete-untagged: true
           delete-partial-images: true
+          delete-orphaned-images: true
