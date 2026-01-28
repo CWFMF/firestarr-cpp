@@ -3,6 +3,7 @@ name: cmake-test
 on:
   push:
     branches: [ "main", "dev", "unstable" ]
+    tags: [ "*" ]
   pull_request:
     branches: [ "main", "dev", "unstable" ]
   workflow_dispatch:
