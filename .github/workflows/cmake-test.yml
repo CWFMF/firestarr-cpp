@@ -140,3 +140,98 @@ jobs:
           files: |
             ./firestarr*/*.tar.gz
             ./firestarr*/*.zip
+
+  build-docker-amd64:
+    needs: [cmake-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Nomad (for Dockerfile)
+        uses: actions/checkout@v4
+
+      - name: Download FireSTARR release
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "Downloading FireSTARR $VERSION"
+          mkdir -p docker-context
+          cd docker-context
+          # Download Linux x64 binary from CWFMF release
+          curl -L -o firestarr.tar.gz \
+            "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-x64-gcc-Release.tar.gz"
+          tar -xzf firestarr.tar.gz --one-top-level=firestarr/
+          chmod +x firestarr
+          echo "$VERSION" > VERSION
+          echo "=== Contents ==="
+          ls -la
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: docker-context
+          file: docker/firestarr/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}-amd64
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:latest
+
+  build-docker-arm64:
+    needs: [cmake-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Nomad (for Dockerfile)
+        uses: actions/checkout@v4
+
+      - name: Download FireSTARR release
+        if: steps.check-arm64.outputs.has_arm64 == 'true'
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "Downloading FireSTARR ARM64 $VERSION"
+          mkdir -p docker-context
+          cd docker-context
+          curl -L -o firestarr.tar.gz \
+            "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-arm64-gcc-Release.tar.gz"
+          tar -xzf firestarr.tar.gz --one-top-level=firestarr/
+          chmod +x firestarr
+          echo "$VERSION" > VERSION
+          ls -la
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: docker-context
+          file: docker/firestarr/Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}-arm64
