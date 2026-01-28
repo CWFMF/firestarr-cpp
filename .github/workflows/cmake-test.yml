@@ -16,11 +16,11 @@ on:
     types: [published]
 
 jobs:
-  cmake-test-macos:
+  cmake-test:
     uses: ./.github/workflows/cmake-test-on.yml
     with:
       os: ${{ matrix.os }}
-      os_version: ${{ matrix.os_version }}
+      os-version: ${{ matrix.os-version }}
       compiler: ${{ matrix.compiler }}
       triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
       target-compiler: ${{ matrix.target-compiler }}
@@ -29,64 +29,47 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos]
-        os_version: [latest]
-        compiler: [clang++]
-        include:
-          - os: macos
-            target-cpu: arm64
-            target-os: osx
-            target-compiler: clang
-
-  cmake-test-ubuntu:
-    uses: ./.github/workflows/cmake-test-on.yml
-    with:
-      os: ${{ matrix.os }}
-      os_version: ${{ matrix.os_version }}
-      compiler: ${{ matrix.compiler }}
-      triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
-      target-compiler: ${{ matrix.target-compiler }}
-      target-cpu: ${{ matrix.target-cpu }}
-      target-os: ${{ matrix.target-os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu]
-        os_version: [24.04]
-        compiler: [clang++, g++]
+        os: [macos, ubuntu, windows]
+        # HACK: use 24.04 instead of latest so ubuntu-24.04-arm works
+        os-version: [latest, 24.04]
+        compiler: [cl, clang++, g++]
         target-cpu: [arm64, x64]
         include:
+          - os: macos
+            target-os: osx
           - os: ubuntu
             target-os: linux
+          - os: windows
+            target-os: windows
           - compiler: clang++
             target-compiler: clang
+          - compiler: cl
+            target-compiler: cl
           - compiler: g++
             target-compiler: gcc
-
-  cmake-test-windows:
-    uses: ./.github/workflows/cmake-test-on.yml
-    with:
-      os: ${{ matrix.os }}
-      os_version: ${{ matrix.os_version }}
-      compiler: ${{ matrix.compiler }}
-      triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
-      target-compiler: ${{ matrix.target-compiler }}
-      target-cpu: ${{ matrix.target-cpu }}
-      target-os: ${{ matrix.target-os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows]
-        os_version: [latest]
-        compiler: [cl]
-        include:
-          - os: windows
-            target-compiler: cl
+        exclude:
+          - os: macos
+            os-version: 24.04
+          - os: macos
             target-cpu: x64
-            target-os: windows
+          - os: macos
+            compiler: cl
+          - os: macos
+            compiler: g++
+          # HACK: latest doesn't work with -arm
+          - os: ubuntu
+            os-version: latest
+          - os: ubuntu
+            compiler: cl
+          - os: windows
+            os-version: 24.04
+          - os: windows
+            compiler: clang++
+          - os: windows
+            compiler: g++
 
-  cmake-test:
-    needs: [cmake-test-ubuntu, cmake-test-macos, cmake-test-windows]
+  build-release:
+    needs: [cmake-test]
     runs-on: ubuntu-latest
     permissions:
       contents: write
