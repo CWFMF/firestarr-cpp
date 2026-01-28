@@ -3,10 +3,23 @@
 #include <proj.h>
 #include "Log.h"
 #include "Point.h"
+#include "Settings.h"
 #include "unstable.h"
 #include "Util.h"
 namespace fs
 {
+PJ_CONTEXT* get_context()
+{
+  auto pjc = proj_context_create();
+  string db_path = Settings::getRoot() + "proj.db";
+  logging::debug("Trying to set db path to %s", db_path.c_str());
+  if (!proj_context_set_database_path(pjc, db_path.c_str(), NULL, NULL))
+  {
+    logging::fatal("Can't set proj.db path");
+  }
+  logging::verbose("Succeeded trying to set db path to %s", db_path.c_str());
+  return pjc;
+}
 class Point;
 PJ* normalized_context(PJ_CONTEXT* C, const string_view proj4_from, const string_view proj4_to)
 {
@@ -25,7 +38,7 @@ void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x,
 {
   // see https://proj.org/en/stable/development/quickstart.html
   // do this in a function so we can hide and clean up intial context
-  PJ_CONTEXT* C = proj_context_create();
+  PJ_CONTEXT* C = get_context();
   auto P = normalized_context(C, "EPSG:4326", proj4);
   // Given that we have used proj_normalize_for_visualization(), the order
   // of coordinates is longitude, latitude, and values are expressed in
@@ -56,7 +69,7 @@ fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize 
 {
   // see https://proj.org/en/stable/development/quickstart.html
   // do this in a function so we can hide and clean up intial context
-  PJ_CONTEXT* C = proj_context_create();
+  PJ_CONTEXT* C = get_context();
   auto P = normalized_context(C, proj4, "EPSG:4326");
   // Given that we have used proj_normalize_for_visualization(), the order
   // of coordinates is longitude, latitude, and values are expressed in
