@@ -43,7 +43,6 @@ RUN apt-get update --fix-missing \
   cmake linux-libc-dev curl zip unzip tar ninja-build \
   gdb valgrind libdwarf-dev libelf-dev libdw-dev linux-perf \
   cmake gcc g++ make clang-tools clang-tidy clang-format
-COPY --chown=${USERNAME}:${USERNAME} .docker/inst_odbc.sh /appl/firestarr/
 RUN git config --global core.editor "nano"
 RUN git config --global core.autocrlf false
 WORKDIR /appl/firestarr
