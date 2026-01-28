@@ -149,8 +149,7 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout Nomad (for Dockerfile)
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Download FireSTARR release
         run: |
@@ -161,11 +160,12 @@ jobs:
           # Download Linux x64 binary from CWFMF release
           curl -L -o firestarr.tar.gz \
             "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-x64-gcc-Release.tar.gz"
-          tar -xzf firestarr.tar.gz --one-top-level=firestarr/
+          tar -xzf firestarr.tar.gz
           chmod +x firestarr
           echo "$VERSION" > VERSION
           echo "=== Contents ==="
           ls -la
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -190,17 +190,15 @@ jobs:
 
   build-docker-arm64:
     needs: [cmake-test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-arm
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Checkout Nomad (for Dockerfile)
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Download FireSTARR release
-        if: steps.check-arm64.outputs.has_arm64 == 'true'
         run: |
           VERSION="${{ github.ref_name }}"
           echo "Downloading FireSTARR ARM64 $VERSION"
@@ -208,13 +206,11 @@ jobs:
           cd docker-context
           curl -L -o firestarr.tar.gz \
             "https://github.com/CWFMF/firestarr-cpp/releases/download/${VERSION}/firestarr-ubuntu-arm64-gcc-Release.tar.gz"
-          tar -xzf firestarr.tar.gz --one-top-level=firestarr/
+          tar -xzf firestarr.tar.gz
           chmod +x firestarr
           echo "$VERSION" > VERSION
+          echo "=== Contents ==="
           ls -la
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
