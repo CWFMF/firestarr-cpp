@@ -13,8 +13,9 @@ services:
         - firestarr:${VERSION}
     volumes:
       - type: bind
-        source: .//settings.ini
+        source: ./settings.ini
         target: /appl/firestarr/settings.ini
+      - ./test:/appl/firestarr/test:z
       - ./data:/appl/data:z
       - ./sims:/appl/data/sims:z
     env_file:
