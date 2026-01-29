@@ -17,15 +17,8 @@ on:
 
 jobs:
   cmake-test:
-    uses: ./.github/workflows/cmake-test-on.yml
-    with:
-      os: ${{ matrix.os }}
-      os-version: ${{ matrix.os-version }}
-      compiler: ${{ matrix.compiler }}
-      target-compiler: ${{ matrix.target-compiler }}
-      target-cpu: ${{ matrix.target-cpu }}
-      target-os: ${{ matrix.target-os }}
-      variant: ${{ matrix.variant }}
+    name:  firestarr-${{ matrix.os }}-${{ matrix.os-version }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
+    runs-on: ${{ matrix.os }}-${{ matrix.os-version }}${{ case( matrix.os != 'macos' && matrix.target-cpu == 'arm64', '-arm', '' ) }}
     strategy:
       fail-fast: false
       matrix:
@@ -69,6 +62,163 @@ jobs:
             compiler: clang++
           - os: windows
             compiler: g++
+    env:
+      CXX: ${{ matrix.compiler }}
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
+      VCPKG_DISABLE_METRICS: true
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/.cache
+      OUTPUT_BINARY: firestarr-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - uses: ilammy/msvc-dev-cmd@v1
+
+    - uses: friendlyanon/setup-vcpkg@v1
+      with:
+        committish: 2025.12.12
+        # getting a warning when cache exists, so just save/restore ourselves
+        cache: false
+
+    - uses: actions/cache@v4
+      with:
+        # vcpkg always builds release, so share cache between debug and release
+        key: vcpkg-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ hashFiles('vcpkg.json', '.github/vcpkg_overlays/**') }}
+        path: |
+          ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+
+    - run: cmake --preset ${{ matrix.variant }}
+
+    - name: Run cmake --build --parallel --preset ${{ matrix.variant }}
+      run: |
+        echo "::add-matcher::.github/cmake-problem-matcher.json"
+        cmake --build --parallel --preset ${{ matrix.variant }}
+
+    - run: ./firestarr -h
+
+    - run: ctest --output-on-failure --preset ${{ matrix.variant }}
+
+    - run: ./firestarr . 2024-06-03 58.81228184403946 -122.9117103995713 01:00 --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 -v --wx ./test/input/10N_50651/firestarr_10N_50651_wx.csv --output_date_offsets [1] --tz -5 --raster-root ./test/input/10N_50651/ --perim ./test/input/10N_50651/10N_50651.tif
+
+    - name: Locate binary (non-windows)
+      if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
+      id: locate
+      run: |
+        # Find the built executable
+        BINARY=$(find build -type f -name "firestarr" ${{ case ( matrix.os == 'macos', '-perm +111', '-executable' ) }} | head -1)
+        if [ -z "$BINARY" ]; then
+          echo "ERROR: Could not find firestarr binary"
+          find build -type f ${{ case ( matrix.os == 'macos', '-perm +111', '-executable' ) }}
+          exit 1
+        fi
+        echo "binary=$BINARY" >> $GITHUB_OUTPUT
+        echo "Found binary at: $BINARY"
+
+    - name: Locate binary (windows)
+      if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
+      id: locate-windows
+      run: |
+        $BINARY = Get-ChildItem -Path build -Recurse -Filter "firestarr.exe" | Select-Object -First 1 -ExpandProperty FullName
+        if (-not $BINARY) {
+          echo "ERROR: Could not find firestarr.exe"
+          Get-ChildItem -Path build -Recurse -Filter "*.exe" | Select-Object FullName
+          exit 1
+        }
+        echo "binary=$BINARY" >> $env:GITHUB_OUTPUT
+        echo "Found binary at: $BINARY"
+      shell: pwsh
+
+    - name: Check binary dependencies (non-windows)
+      if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
+      run: |
+        echo "=== Binary info ==="
+        file ${{ steps.locate.outputs.binary }}
+        echo ""
+        echo "=== Dynamic dependencies ==="
+        ${{ case ( matrix.os == 'macos', 'otool -L', 'ldd' ) }} ${{ steps.locate.outputs.binary }} || true
+
+    - name: Check binary dependencies (windows)
+      if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
+      run: |
+        echo "=== Binary info ==="
+        Get-Item "${{ steps.locate-windows.outputs.binary }}" | Format-List Name, Length, LastWriteTime
+        echo ""
+        echo "=== Binary size ==="
+        (Get-Item "${{ steps.locate-windows.outputs.binary }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
+      shell: pwsh
+
+    - name: Package artifact (non-windows)
+      if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
+      run: |
+        mkdir -p dist
+        cp README.md LICENSE ORIGIN.md dist/
+        cp ${{ steps.locate.outputs.binary }} dist/firestarr
+
+        # Bundle data files if they exist
+        [ -f fuel.lut ] && cp fuel.lut dist/
+        [ -f proj.db ] && cp proj.db dist/
+        [ -f settings.ini ] && cp settings.ini dist/
+        [ -f data/fuel.lut ] && cp data/fuel.lut dist/
+        [ -f data/settings.ini ] && cp data/settings.ini dist/
+
+        # Create version info
+        ./firestarr -h | head -n1 > dist/VERSION
+
+        # List contents
+        echo "=== Package contents ==="
+        ls -la dist/
+
+        # Create tarball
+        tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
+
+    - name: Package artifact (windows)
+      if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
+      run: |
+        New-Item -ItemType Directory -Force -Path dist
+
+        # Including these is a requirement
+        Copy-Item @("README.md", "LICENSE", "ORIGIN.md") dist\
+        Copy-Item "${{ steps.locate-windows.outputs.binary }}" dist\firestarr.exe
+
+        # Copy required DLLs from vcpkg depending on variant
+        copy @((Get-ChildItem -Recurse vcpkg\packages\*.dll).FullName | Select-String ${{ case( matrix.variant == 'Debug', '', '-notMatch' ) }} debug | Select-String bin ) dist\
+
+        # Bundle data files if they exist
+        if (Test-Path fuel.lut) { Copy-Item fuel.lut dist\ }
+        if (Test-Path proj.db) { Copy-Item proj.db dist\ }
+        if (Test-Path settings.ini) { Copy-Item settings.ini dist\ }
+        if (Test-Path data\fuel.lut) { Copy-Item data\fuel.lut dist\ }
+        if (Test-Path data\settings.ini) { Copy-Item data\settings.ini dist\ }
+
+        # Create version info
+        .\firestarr.exe | select -first 1 | Out-File -FilePath dist/VERSION -Encoding utf8
+
+        # List contents
+        echo "=== Package contents ==="
+        Get-ChildItem dist
+
+        # Create zip
+        Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_BINARY }}.zip
+      shell: pwsh
+
+    - name: Upload artifact (non-windows)
+      if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.OUTPUT_BINARY }}
+        path: ${{ env.OUTPUT_BINARY }}.tar.gz
+        retention-days: 30
+
+    - name: Upload artifact (windows)
+      if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.OUTPUT_BINARY }}
+        path: ${{ env.OUTPUT_BINARY }}.zip
+        retention-days: 30
 
   build-release:
     needs: [cmake-test]
