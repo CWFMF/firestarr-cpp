@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+#include "stdafx.h"
 #include "Test.h"
 #include "FireSpread.h"
 #include "FireWeather.h"
@@ -339,7 +340,7 @@ int test(
                               : wx->wind.direction;
   const auto wind_speed =
     (fs::Speed::Invalid().value == wx->wind.speed.value) ? DEFAULT_WIND_SPEED : wx->wind.speed;
-  const auto wind = fs::Wind(wind_speed, wind_direction);
+  const auto wind = fs::Wind{wind_speed, wind_direction};
   const auto slope = (INVALID_SLOPE == constant_slope) ? DEFAULT_SLOPE : constant_slope;
   const auto aspect = (INVALID_ASPECT == constant_aspect) ? DEFAULT_ASPECT : constant_aspect;
   const auto fixed_fuel_name = simplify_fuel_name(constant_fuel_name);
@@ -436,9 +437,10 @@ int test(
             for (auto wind_direction : wind_directions)
             {
               const Direction direction{Degrees{wind_direction}};
-              for (auto wind_speed : wind_speeds)
+              for (const auto wind_speed : wind_speeds)
               {
-                const Wind wind(Speed(wind_speed), direction);
+                const Speed speed{static_cast<MathSize>(wind_speed)};
+                const Wind wind{speed, direction};
                 // need to make string now because it'll be another value if we wait
                 results.push_back(async(
                   launch::async,
