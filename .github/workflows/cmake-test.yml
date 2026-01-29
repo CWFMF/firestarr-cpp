@@ -22,7 +22,6 @@ jobs:
       os: ${{ matrix.os }}
       os-version: ${{ matrix.os-version }}
       compiler: ${{ matrix.compiler }}
-      triplet: ${{ matrix.target-cpu }}-${{ matrix.target-os }}
       target-compiler: ${{ matrix.target-compiler }}
       target-cpu: ${{ matrix.target-cpu }}
       target-os: ${{ matrix.target-os }}

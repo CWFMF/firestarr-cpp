@@ -10,9 +10,6 @@ on:
       compiler:
         required: true
         type: string
-      triplet:
-        required: true
-        type: string
       target-compiler:
         required: true
         type: string
@@ -34,7 +31,7 @@ jobs:
       fail-fast: false
     env:
       CXX: ${{ inputs.compiler }}
-      VCPKG_DEFAULT_TRIPLET: ${{ inputs.triplet }}
+      VCPKG_DEFAULT_TRIPLET: ${{ inputs.target-cpu }}-${{ inputs.target-os }}
       VCPKG_DISABLE_METRICS: true
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/.cache
