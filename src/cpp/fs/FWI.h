@@ -179,20 +179,6 @@ struct FwiWeather : public Weather
   Fwi fwi{};
   constexpr FwiWeather() noexcept = default;
   constexpr FwiWeather(
-    const Temperature temp,
-    const RelativeHumidity rh,
-    const Wind wind,
-    const Precipitation prec,
-    const Ffmc ffmc,
-    const Dmc dmc,
-    const Dc dc,
-    const Isi isi,
-    const Bui bui,
-    const Fwi fwi
-  ) noexcept
-    : Weather(temp, rh, wind, prec), ffmc{ffmc}, dmc{dmc}, dc{dc}, isi{isi}, bui{bui}, fwi{fwi}
-  { }
-  constexpr FwiWeather(
     const Weather wx,
     const Ffmc ffmc,
     const Dmc dmc,
@@ -205,6 +191,20 @@ struct FwiWeather : public Weather
       isi{Isi::Invalid() == isi ? Isi{wind.speed, ffmc} : isi},
       bui{Bui::Invalid() == bui ? Bui{dmc, dc} : bui},
       fwi{Fwi::Invalid() == fwi ? Fwi{isi, bui} : fwi}
+  { }
+  constexpr FwiWeather(
+    const Temperature temp,
+    const RelativeHumidity rh,
+    const Wind wind,
+    const Precipitation prec,
+    const Ffmc ffmc,
+    const Dmc dmc,
+    const Dc dc,
+    const Isi isi,
+    const Bui bui,
+    const Fwi fwi
+  ) noexcept
+    : FwiWeather{Weather{temp, rh, wind, prec}, ffmc, dmc, dc, isi, bui, fwi}
   { }
   constexpr FwiWeather(
     const FwiWeather& yesterday,
