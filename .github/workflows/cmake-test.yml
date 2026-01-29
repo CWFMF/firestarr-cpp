@@ -365,6 +365,7 @@ jobs:
           platforms: linux/arm64
           tags: |
             ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}-arm64
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:latest-arm64
 
   cleanup-docker:
     needs: [build-docker-amd64, build-docker-arm64]
