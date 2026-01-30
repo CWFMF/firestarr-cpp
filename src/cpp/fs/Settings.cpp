@@ -33,11 +33,13 @@ string get_canonical_path(const char* const dir_root, string path)
   std::replace(path.begin(), path.end(), '\\', '/');
 #endif
 #ifdef _WIN32
-  if (':' == path.at(1)) {
+  if (':' == path.at(1))
+  {
     logging::note("Absolute path use on windows: %s", path.c_str());
-  } else
+  }
+  else
 #endif
-  if (!path.starts_with("/"))
+    if (!path.starts_with("/"))
   {
     // not an absolute path
     // if binary path starts with ./ then ignore it
