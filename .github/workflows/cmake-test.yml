@@ -379,10 +379,12 @@ jobs:
 
       - name: Set up docker
         run: |
-          brew install docker-compose docker-machine docker-buildx
+          brew install docker docker-compose docker-machine docker-buildx
 
           mkdir -p ~/.docker/cli-plugins
           ln -s $(which docker-buildx) ~/.docker/cli-plugins/docker-buildx
+
+          /opt/homebrew/opt/docker-machine/bin/docker-machine start default
 
           docker buildx version
 
