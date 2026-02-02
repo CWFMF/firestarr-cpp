@@ -1,5 +1,8 @@
 ARG USERNAME=user
 ARG USER_ID=1000
+# amd64, arm/v5, arm/v7, arm64/v8, ppc64le, s390x
+ARG BASE=gcr.io/distroless/static-debian13
+# armv/v5, 386, riscv64, i686
 
 FROM debian:trixie-slim AS minimal-with-user
 ARG USERNAME
@@ -88,7 +91,7 @@ RUN ctest --preset Release
 # COPY --from=firestarr-base-env / /
 
 # derive final image from base so updates to binary are small layers
-FROM gcr.io/distroless/static-debian13 AS firestarr
+FROM ${BASE} AS firestarr
 # ARG USERNAME
 # USER ${USERNAME}
 WORKDIR /appl/firestarr
