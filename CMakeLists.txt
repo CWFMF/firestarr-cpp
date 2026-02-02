@@ -13,17 +13,14 @@ endif()
 if(NOT VCPKG_ROOT)
   set(VCPKG_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg")
 endif()
-# set(VCPKG_TARGET_ARCHITECTURE x64)
-set(VCPKG_CRT_LINKAGE dynamic)
-set(VCPKG_LIBRARY_LINKAGE dynamic)
+set(VCPKG_CRT_LINKAGE static)
+set(VCPKG_LIBRARY_LINKAGE static)
 set(VCPKG_BUILD_TYPE release)
 set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
   CACHE STRING "Vcpkg toolchain file")
 
 if(WIN32)
   set(BUILD_SHARED_LIBS OFF)
-  set(VCPKG_LIBRARY_LINKAGE static)
-  set(VCPKG_TARGET_TRIPLET x64-windows-static)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
 
 #   # Enable Hot Reload for MSVC compilers if supported.
@@ -265,6 +262,9 @@ add_compile_options(${PROJECT_WARNINGS_CXX})
 
 find_package(GeoTIFF CONFIG REQUIRED)
 find_package(TIFF REQUIRED)
+# # PROJ needs this unless we can figure out how to turn net lookup off
+# find_package(CURL CONFIG REQUIRED)
+find_package(SQLite3 REQUIRED)
 find_package(PROJ CONFIG REQUIRED)
 # link_libraries(geotiff tiff PROJ::proj)
 
@@ -283,14 +283,16 @@ foreach(bin ${PROJECT_NAME} test_duff test_fwi test_fbp)
   message("Adding binary for ${bin}")
   # include file with main() for each bin
   add_executable(${bin} ${DIR_SRC}/${bin}.cpp)
-  target_include_directories(${bin} PUBLIC ${DIR_SRC_COMMON})
+  target_include_directories(${bin} PRIVATE ${DIR_SRC_COMMON})
   target_include_directories(${bin} PRIVATE ${GEOTIFF_INCLUDE_DIR})
   target_link_libraries(${bin} PUBLIC fs)
   target_link_libraries(${bin} PRIVATE ${GEOTIFF_LIBRARIES})
   target_link_libraries(${bin} PRIVATE TIFF::TIFF)
   target_link_libraries(${bin} PRIVATE PROJ::proj)
+  target_link_libraries(${bin} PRIVATE SQLite::SQLite3)
+  target_link_libraries(${bin} PRIVATE -static -static-libgcc -static-libstdc++)
   if (ASAN_ARGS)
-    target_link_options(${bin} BEFORE PUBLIC ${ASAN_ARGS})
+    target_link_options(${bin} BEFORE PRIVATE ${ASAN_ARGS})
   endif()
   add_custom_command(
     TARGET ${bin}
