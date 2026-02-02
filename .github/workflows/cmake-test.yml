@@ -367,8 +367,8 @@ jobs:
             ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}-arm64
             ghcr.io/cwfmf/firestarr-cpp/firestarr:latest-arm64
 
+  # doesn't need inputs from other steps so do at same time as cmake-test
   build-docker-armv8:
-    needs: [cmake-test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -396,7 +396,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: docker-context
+          context: .
           file: .docker/Dockerfile
           push: true
           # platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7,linux/arm/v8
