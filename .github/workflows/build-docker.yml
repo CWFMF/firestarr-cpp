@@ -121,7 +121,7 @@ jobs:
 
 
   cleanup-docker:
-    needs: [build-docker]
+    needs: [merge]
     runs-on: ubuntu-latest
     permissions:
       contents: read
