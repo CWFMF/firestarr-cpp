@@ -151,8 +151,16 @@ endif()
 
 set(MODIFIED_TIME "")
 
-message("Compiler is ${CMAKE_CXX_COMPILER}")
-execute_process(COMMAND ${CMAKE_CXX_COMPILER})
+if (WIN32)
+  message("Not setting compiler flags so binary works across windows")
+else()
+  message("Compiler flags for target with ${CMAKE_CXX_COMPILER} are:")
+  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    execute_process(COMMAND g++ -march=native -Q --help=target)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    execute_process(COMMAND clang -E - -march=native "-###")
+  endif()
+endif()
 
 file(GLOB_RECURSE FILES_USED ${DIR_SRC}/*.cpp ${DIR_SRC}/*.h)
 list(FILTER FILES_USED EXCLUDE REGEX version*)
