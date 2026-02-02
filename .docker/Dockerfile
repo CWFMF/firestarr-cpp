@@ -1,3 +1,6 @@
+ARG USERNAME=user
+ARG USER_ID=1000
+
 FROM debian:trixie-slim AS minimal-with-user
 ARG USERNAME
 ARG USER_ID

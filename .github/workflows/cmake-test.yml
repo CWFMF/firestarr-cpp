@@ -367,9 +367,9 @@ jobs:
             ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}-arm64
             ghcr.io/cwfmf/firestarr-cpp/firestarr:latest-arm64
 
-  build-docker-macos-14:
+  build-docker-armv8:
     needs: [cmake-test]
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -377,16 +377,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up docker
-        run: |
-          brew install docker docker-compose docker-machine docker-buildx
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-          mkdir -p ~/.docker/cli-plugins
-          ln -s $(which docker-buildx) ~/.docker/cli-plugins/docker-buildx
-
-          /opt/homebrew/opt/docker-machine/bin/docker-machine start default
-
-          docker buildx version
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -404,13 +399,14 @@ jobs:
           context: docker-context
           file: .docker/Dockerfile
           push: true
-          platforms: linux/arm64
+          # platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7,linux/arm/v8
+          platforms: linux/arm/v8
           tags: |
-            ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}-macos-14
-            ghcr.io/cwfmf/firestarr-cpp/firestarr:latest-macos-14
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref_name }}-armv8
+            ghcr.io/cwfmf/firestarr-cpp/firestarr:latest-armv8
 
   cleanup-docker:
-    needs: [build-docker-amd64, build-docker-arm64, build-docker-macos-14]
+    needs: [build-docker-amd64, build-docker-arm64, build-docker-armv8]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
