@@ -68,34 +68,34 @@ RUN cmake --build --parallel --preset Release
 COPY --chown=${USERNAME}:${USERNAME} ./test test/
 RUN ctest --preset Release
 
-FROM minimal-with-user AS firestarr-base-env
-ARG USERNAME
-ARG VERSION
-ENV VERSION=${VERSION}
-USER root
-# get rid of anything that's not required for firestarr - breaks apt in container
-RUN apt-get clean \
-  && rm -rf \
-    /tmp/* \
-    /usr/share/doc/* \
-    /var/cache/* \
-    /var/lib/apt/lists/* \
-    /var/lib/dpkg/* \
-    /var/tmp/*
+# FROM minimal-with-user AS firestarr-base-env
+# ARG USERNAME
+# ARG VERSION
+# ENV VERSION=${VERSION}
+# USER root
+# # get rid of anything that's not required for firestarr - breaks apt in container
+# RUN apt-get clean \
+#   && rm -rf \
+#     /tmp/* \
+#     /usr/share/doc/* \
+#     /var/cache/* \
+#     /var/lib/apt/lists/* \
+#     /var/lib/dpkg/* \
+#     /var/tmp/*
 
-# make a layer that's the environment for firestarr with scratch to clear out old layers
-FROM scratch AS firestarr-base
-COPY --from=firestarr-base-env / /
+# # make a layer that's the environment for firestarr with scratch to clear out old layers
+# FROM scratch AS firestarr-base
+# COPY --from=firestarr-base-env / /
 
 # derive final image from base so updates to binary are small layers
-FROM firestarr-base AS firestarr
-ARG USERNAME
-USER ${USERNAME}
+FROM gcr.io/distroless/static-debian13 AS firestarr
+# ARG USERNAME
+# USER ${USERNAME}
 WORKDIR /appl/firestarr
-COPY --chown=${USERNAME}:${USERNAME} ./fuel.lut /appl/firestarr/
-COPY --chown=${USERNAME}:${USERNAME} ./settings.ini /appl/firestarr/
-COPY --chown=${USERNAME}:${USERNAME} --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
-COPY --chown=${USERNAME}:${USERNAME} --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
-USER ${USERNAME}
-RUN echo cd /appl/firestarr >> /home/${USERNAME}/.bashrc
+COPY ./fuel.lut /appl/firestarr/
+COPY ./settings.ini /appl/firestarr/
+COPY --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
+COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
+# USER ${USERNAME}
+# RUN echo cd /appl/firestarr >> /home/${USERNAME}/.bashrc
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
