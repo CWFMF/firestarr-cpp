@@ -51,24 +51,37 @@ ENV VERSION=${VERSION}
 ENV VCPKG_DISABLE_METRICS=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
-COPY --chown=${USERNAME}:${USERNAME} ./src/cpp src/cpp/
-COPY --chown=${USERNAME}:${USERNAME} ./cmake cmake/
-COPY --chown=${USERNAME}:${USERNAME} ./* ./.clang-* .
+# need .git for CMakeLists.txt
 USER ${USERNAME}
-RUN git clone https://github.com/microsoft/vcpkg.git \
-  && cd vcpkg \
+RUN git clone https://github.com/microsoft/vcpkg.git
+COPY --chown=${USERNAME}:${USERNAME} ./vcpkg*.json .
+RUN cd vcpkg \
   && ./bootstrap-vcpkg.sh -disableMetrics \
   && cd .. \
-  && cmake --preset Release \
-  && cmake --build --parallel --preset Release
-
+  && vcpkg/vcpkg install
+COPY --chown=${USERNAME}:${USERNAME} ./.git .git/
+COPY --chown=${USERNAME}:${USERNAME} ./src/cpp src/cpp/
+COPY --chown=${USERNAME}:${USERNAME} ./cmake cmake/
+COPY --chown=${USERNAME}:${USERNAME} ./.env ./CMake* ./.clang-* ./fuel.lut ./settings.ini ./vcpkg*.json .
+RUN cmake --preset Release
+RUN cmake --build --parallel --preset Release
+COPY --chown=${USERNAME}:${USERNAME} ./test test/
+RUN ctest --preset Release
 
 FROM minimal-with-user AS firestarr-base-env
 ARG USERNAME
 ARG VERSION
 ENV VERSION=${VERSION}
 USER root
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# get rid of anything that's not required for firestarr - breaks apt in container
+RUN apt-get clean \
+  && rm -rf \
+    /tmp/* \
+    /usr/share/doc/* \
+    /var/cache/* \
+    /var/lib/apt/lists/* \
+    /var/lib/dpkg/* \
+    /var/tmp/*
 
 # make a layer that's the environment for firestarr with scratch to clear out old layers
 FROM scratch AS firestarr-base
