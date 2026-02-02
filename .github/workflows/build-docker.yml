@@ -11,12 +11,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-        - platform: linux/amd64
-          runner: ubuntu-24.04
-        - platform: linux/arm64
-          runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
+        # all the options that debian:trixie-slim supports
+        platform: [amd64, armv/v5, arm/v7, arm64/v8, 386, ppc64le, riscv64, s390x]
+    runs-on: ubuntu-latest
     steps:
       - name: Prepare
         run: |
