@@ -15,6 +15,8 @@ jobs:
         # all the options that debian:trixie-slim supports
         platform: [amd64, armv/v5, arm/v7, arm64/v8, 386, ppc64le, riscv64, s390x]
     steps:
+      - uses: actions/checkout@v4
+
       - name: Prepare
         run: |
           platform=${{ matrix.platform }}
@@ -69,6 +71,8 @@ jobs:
     needs:
       - build
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
