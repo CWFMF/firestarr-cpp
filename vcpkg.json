@@ -1,6 +1,17 @@
 {
   "dependencies": [
     "libgeotiff",
-    "tiff"
+    "tiff",
+    {
+      "name": "proj",
+      "default-features": false
+    },
+    {
+      "name": "sqlite3",
+      "default-features": false,
+      "features": [
+        "omit-load-extension"
+      ]
+    }
   ]
 }
