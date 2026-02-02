@@ -52,6 +52,8 @@ ARG USERNAME
 ARG VERSION
 ENV VERSION=${VERSION}
 ENV VCPKG_DISABLE_METRICS=1
+# vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
 # need .git for CMakeLists.txt
