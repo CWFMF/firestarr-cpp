@@ -379,7 +379,7 @@ jobs:
 
       - name: Set up docker
         run: |
-          brew install docker-buildx
+          brew install docker-compose docker-machine docker-buildx
 
           mkdir -p ~/.docker/cli-plugins
           ln -s $(which docker-buildx) ~/.docker/cli-plugins/docker-buildx
