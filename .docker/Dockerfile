@@ -1,63 +1,23 @@
-ARG USERNAME=user
-ARG USER_ID=1000
 # amd64, arm/v5, arm/v7, arm64/v8, ppc64le, s390x
 ARG BASE_DISTROLESS=gcr.io/distroless/static-debian13
 # armv/v5, 386, riscv64, i686
 ARG BASE_SLIM=debian:trixie-slim
 
-FROM debian:trixie-slim AS minimal-with-user
-ARG USERNAME
-ARG USER_ID
-ENV TMPDIR=/tmp
-RUN apt-get update --fix-missing \
-  && apt-get install -y locales \
-  && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
-  && locale-gen \
-  && apt-get install -y sudo \
-  && groupadd --gid ${USER_ID} ${USERNAME} \
-  && useradd --uid ${USER_ID} --gid ${USER_ID} -m ${USERNAME} \
-  && chsh --shell /bin/bash ${USERNAME} \
-  && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \
-  && chmod 0440 /etc/sudoers.d/${USERNAME} \
-  && mkdir -p /appl/firestarr \
-  && chown -R ${USERNAME}:${USERNAME} /appl
 
-
-FROM minimal-with-user AS gcc-cmake-with-libs
+FROM debian:trixie-slim AS gcc-cmake
 RUN apt-get update --fix-missing \
   && apt-get install -y --no-install-recommends \
   cmake gcc g++ make ninja-build pkg-config \
   curl zip unzip tar ca-certificates git
 
 
-FROM gcc-cmake-with-libs AS firestarr-dev
-ARG USERNAME
-ARG VERSION
-ENV VERSION=${VERSION}
-RUN apt-get update --fix-missing \
-  && apt-get install -y --no-install-recommends \
-  git time nano less psmisc man bc tmux \
-  google-perftools libgoogle-perftools-dev golang-github-google-pprof-dev \
-  ssh \
-  cmake linux-libc-dev curl zip unzip tar ninja-build \
-  gdb valgrind libdwarf-dev libelf-dev libdw-dev linux-perf \
-  cmake gcc g++ make clang-tools clang-tidy clang-format
-RUN git config --global core.editor "nano"
-RUN git config --global core.autocrlf false
-WORKDIR /appl/firestarr
-USER ${USERNAME}
-
 # run bootstrap so clone is separate
-FROM gcc-cmake-with-libs AS vcpkg-bootstrap
-ARG USERNAME
-ARG VERSION
-ENV VERSION=${VERSION}
+FROM gcc-cmake AS vcpkg-bootstrap
 ENV VCPKG_DISABLE_METRICS=1
 # vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 # need .git for CMakeLists.txt
-USER ${USERNAME}
 WORKDIR /appl/firestarr
 # compile/setup for vcpkg doesn't depend on what we're going to install
 RUN git clone -v https://github.com/microsoft/vcpkg.git
@@ -65,47 +25,36 @@ RUN cd vcpkg && ./bootstrap-vcpkg.sh -disableMetrics
 
 # run bootstrap so clone is separate
 FROM vcpkg-bootstrap AS vcpkg-installed
-ARG USERNAME
-ARG VERSION
-ENV VERSION=${VERSION}
 ENV VCPKG_DISABLE_METRICS=1
 # vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 # need .git for CMakeLists.txt
-USER ${USERNAME}
 WORKDIR /appl/firestarr
 # install packages so they stay if nothing changes with vcpkg*.json
-COPY --chown=${USERNAME}:${USERNAME} ./vcpkg*.json .
+COPY ./vcpkg*.json .
 RUN vcpkg/vcpkg install --only-downloads
 RUN vcpkg/vcpkg install
 
 FROM vcpkg-installed AS firestarr-build
-ARG USERNAME
-ARG VERSION
-ENV VERSION=${VERSION}
 ENV VCPKG_DISABLE_METRICS=1
 # vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
-USER ${USERNAME}
 # need .git for CMakeLists.txt
-COPY --chown=${USERNAME}:${USERNAME} ./.git .git/
-COPY --chown=${USERNAME}:${USERNAME} ./src/cpp src/cpp/
-COPY --chown=${USERNAME}:${USERNAME} ./cmake cmake/
-COPY --chown=${USERNAME}:${USERNAME} ./.env ./CMake* ./.clang-* ./fuel.lut ./settings.ini ./vcpkg*.json .
+COPY ./.git .git/
+COPY ./src/cpp src/cpp/
+COPY ./cmake cmake/
+COPY ./.env ./CMake* ./.clang-* ./fuel.lut ./settings.ini ./vcpkg*.json .
 RUN cmake --preset Release
 RUN cmake --build --parallel --preset Release
-COPY --chown=${USERNAME}:${USERNAME} ./test test/
+COPY ./test test/
 RUN ctest --preset Release
+
 
 # get rid of anything that's not required for firestarr - breaks apt in container
 FROM ${BASE_SLIM} AS firestarr-base-cleaned
-ARG USERNAME
-ARG VERSION
-ENV VERSION=${VERSION}
-USER root
 RUN apt-get clean \
   && rm -rf \
     /tmp/* \
@@ -115,7 +64,8 @@ RUN apt-get clean \
     /var/lib/dpkg/* \
     /var/tmp/*
 
-# # make a layer with scratch to clear out old layers
+
+# make a layer with scratch to clear out old layers
 FROM scratch AS firestarr-base-slim
 COPY --from=firestarr-base-cleaned / /
 
@@ -138,13 +88,9 @@ FROM --platform=linux/riscv64 firestarr-base-slim AS firestarr-base-riscv64
 
 # derive final image from base so updates to binary are small layers
 FROM firestarr-base-${TARGETARCH}${TARGETVARIANT} AS firestarr
-# ARG USERNAME
-# USER ${USERNAME}
 WORKDIR /appl/firestarr
 COPY ./fuel.lut /appl/firestarr/
 COPY ./settings.ini /appl/firestarr/
 COPY --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
 COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
-# USER ${USERNAME}
-# RUN echo cd /appl/firestarr >> /home/${USERNAME}/.bashrc
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
