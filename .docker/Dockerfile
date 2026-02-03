@@ -20,8 +20,10 @@ ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 # need .git for CMakeLists.txt
 WORKDIR /appl/firestarr
 # compile/setup for vcpkg doesn't depend on what we're going to install
-RUN git clone -v https://github.com/microsoft/vcpkg.git
-RUN cd vcpkg && ./bootstrap-vcpkg.sh -disableMetrics
+RUN git clone -v https://github.com/microsoft/vcpkg.git \
+  && cd vcpkg \
+  && ./bootstrap-vcpkg.sh -disableMetrics
+
 
 # run bootstrap so clone is separate
 FROM vcpkg-bootstrap AS vcpkg-installed
@@ -33,8 +35,8 @@ ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
 # install packages so they stay if nothing changes with vcpkg*.json
 COPY ./vcpkg*.json .
-RUN vcpkg/vcpkg install --only-downloads
 RUN vcpkg/vcpkg install
+
 
 FROM vcpkg-installed AS firestarr-build
 ENV VCPKG_DISABLE_METRICS=1
