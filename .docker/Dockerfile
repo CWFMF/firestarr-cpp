@@ -111,7 +111,7 @@ FROM --platform=linux/riscv64 firestarr-base-slim AS firestarr-base-riscv64
 # FROM --platform=linux/i686 firestarr-base-slim AS firestarr-base-i686
 
 # derive final image from base so updates to binary are small layers
-FROM firestarr-base-${TARGETARCH} AS firestarr
+FROM firestarr-base-${TARGETARCH}${TARGETVARIANT} AS firestarr
 # ARG USERNAME
 # USER ${USERNAME}
 WORKDIR /appl/firestarr
