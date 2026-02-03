@@ -3,46 +3,33 @@ ARG BASE_DISTROLESS=gcr.io/distroless/static-debian13
 # armv/v5, 386, riscv64, i686
 ARG BASE_SLIM=debian:trixie-slim
 
-
+# basic image to start from
 FROM debian:trixie-slim AS gcc-cmake
 RUN apt-get update --fix-missing \
   && apt-get install -y --no-install-recommends \
   cmake gcc g++ make ninja-build pkg-config \
   curl zip unzip tar ca-certificates git
 
-
-# run bootstrap so clone is separate
+# clone/bootstrap for vcpkg doesn't depend on what we're going to install
 FROM gcc-cmake AS vcpkg-bootstrap
-ENV VCPKG_DISABLE_METRICS=1
 # vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 # need .git for CMakeLists.txt
 WORKDIR /appl/firestarr
-# compile/setup for vcpkg doesn't depend on what we're going to install
 RUN git clone -v https://github.com/microsoft/vcpkg.git \
   && cd vcpkg \
   && ./bootstrap-vcpkg.sh -disableMetrics
 
-
-# run bootstrap so clone is separate
+# install packages so they stay if nothing changes with vcpkg*.json
 FROM vcpkg-bootstrap AS vcpkg-installed
-ENV VCPKG_DISABLE_METRICS=1
-# vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
-ENV VCPKG_FORCE_SYSTEM_BINARIES=1
-ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 # need .git for CMakeLists.txt
 WORKDIR /appl/firestarr
-# install packages so they stay if nothing changes with vcpkg*.json
 COPY ./vcpkg*.json .
 RUN vcpkg/vcpkg install
 
-
+# build and test
 FROM vcpkg-installed AS firestarr-build
-ENV VCPKG_DISABLE_METRICS=1
-# vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
-ENV VCPKG_FORCE_SYSTEM_BINARIES=1
-ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
 # need .git for CMakeLists.txt
 COPY ./.git .git/
