@@ -104,9 +104,11 @@ FROM --platform=linux/s390x ${BASE_DISTROLESS} AS firestarr-base-s390x
 # no distroless version of these, so use slim
 # armv/v5, 386, riscv64, i686
 FROM --platform=linux/arm/v5 firestarr-base-slim AS firestarr-base-armv5
-FROM --platform=linux/386 firestarr-base-slim AS firestarr-base-386
+# this seems like a waste of time - not sure even if vcpkg supports
+# FROM --platform=linux/386 firestarr-base-slim AS firestarr-base-386
 FROM --platform=linux/riscv64 firestarr-base-slim AS firestarr-base-riscv64
-FROM --platform=linux/i686 firestarr-base-slim AS firestarr-base-i686
+# no trixie-slim
+# FROM --platform=linux/i686 firestarr-base-slim AS firestarr-base-i686
 
 # derive final image from base so updates to binary are small layers
 FROM firestarr-base-${TARGETARCH} AS firestarr
