@@ -47,8 +47,40 @@ RUN git config --global core.autocrlf false
 WORKDIR /appl/firestarr
 USER ${USERNAME}
 
+# run bootstrap so clone is separate
+FROM gcc-cmake-with-libs AS vcpkg-bootstrap
+ARG USERNAME
+ARG VERSION
+ENV VERSION=${VERSION}
+ENV VCPKG_DISABLE_METRICS=1
+# vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+ENV VCPKG_ROOT=/appl/firestarr/vcpkg
+# need .git for CMakeLists.txt
+USER ${USERNAME}
+WORKDIR /appl/firestarr
+# compile/setup for vcpkg doesn't depend on what we're going to install
+RUN git clone -v https://github.com/microsoft/vcpkg.git
+RUN cd vcpkg && ./bootstrap-vcpkg.sh -disableMetrics
 
-FROM gcc-cmake-with-libs AS firestarr-build
+# run bootstrap so clone is separate
+FROM vcpkg-bootstrap AS vcpkg-installed
+ARG USERNAME
+ARG VERSION
+ENV VERSION=${VERSION}
+ENV VCPKG_DISABLE_METRICS=1
+# vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+ENV VCPKG_ROOT=/appl/firestarr/vcpkg
+# need .git for CMakeLists.txt
+USER ${USERNAME}
+WORKDIR /appl/firestarr
+# install packages so they stay if nothing changes with vcpkg*.json
+COPY --chown=${USERNAME}:${USERNAME} ./vcpkg*.json .
+RUN vcpkg/vcpkg install --only-downloads
+RUN vcpkg/vcpkg install
+
+FROM vcpkg-installed AS firestarr-build
 ARG USERNAME
 ARG VERSION
 ENV VERSION=${VERSION}
@@ -57,15 +89,8 @@ ENV VCPKG_DISABLE_METRICS=1
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
-# need .git for CMakeLists.txt
 USER ${USERNAME}
-# compile/setup for vcpkg doesn't depend on what we're going to install
-RUN git clone --recurse-submodules -j8 https://github.com/microsoft/vcpkg.git \
-  && cd vcpkg \
-  && ./bootstrap-vcpkg.sh -disableMetrics
-WORKDIR /appl/firestarr
-COPY --chown=${USERNAME}:${USERNAME} ./vcpkg*.json .
-RUN vcpkg/vcpkg install
+# need .git for CMakeLists.txt
 COPY --chown=${USERNAME}:${USERNAME} ./.git .git/
 COPY --chown=${USERNAME}:${USERNAME} ./src/cpp src/cpp/
 COPY --chown=${USERNAME}:${USERNAME} ./cmake cmake/
