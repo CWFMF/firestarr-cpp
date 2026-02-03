@@ -17,7 +17,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [amd64, arm/v7, arm64/v8, ppc64le, s390x, arm/v5, riscv64]
+        # ppc64le - cc1: error: '-m64' requires a PowerPC64 cpu
+        # platform: [amd64, arm/v7, arm64/v8, ppc64le, s390x, arm/v5, riscv64]
+        platform: [amd64, arm/v7, arm64/v8, s390x, arm/v5, riscv64]
     steps:
       - uses: actions/checkout@v4
 
