@@ -1,8 +1,9 @@
 ARG USERNAME=user
 ARG USER_ID=1000
 # amd64, arm/v5, arm/v7, arm64/v8, ppc64le, s390x
-ARG BASE=gcr.io/distroless/static-debian13
+ARG BASE_DISTROLESS=gcr.io/distroless/static-debian13
 # armv/v5, 386, riscv64, i686
+ARG BASE_SLIM=debian:trixie-slim
 
 FROM debian:trixie-slim AS minimal-with-user
 ARG USERNAME
@@ -73,27 +74,41 @@ RUN cmake --build --parallel --preset Release
 COPY --chown=${USERNAME}:${USERNAME} ./test test/
 RUN ctest --preset Release
 
-# FROM minimal-with-user AS firestarr-base-env
-# ARG USERNAME
-# ARG VERSION
-# ENV VERSION=${VERSION}
-# USER root
-# # get rid of anything that's not required for firestarr - breaks apt in container
-# RUN apt-get clean \
-#   && rm -rf \
-#     /tmp/* \
-#     /usr/share/doc/* \
-#     /var/cache/* \
-#     /var/lib/apt/lists/* \
-#     /var/lib/dpkg/* \
-#     /var/tmp/*
+# get rid of anything that's not required for firestarr - breaks apt in container
+FROM ${BASE_SLIM} AS firestarr-base-cleaned
+ARG USERNAME
+ARG VERSION
+ENV VERSION=${VERSION}
+USER root
+RUN apt-get clean \
+  && rm -rf \
+    /tmp/* \
+    /usr/share/doc/* \
+    /var/cache/* \
+    /var/lib/apt/lists/* \
+    /var/lib/dpkg/* \
+    /var/tmp/*
 
-# # make a layer that's the environment for firestarr with scratch to clear out old layers
-# FROM scratch AS firestarr-base
-# COPY --from=firestarr-base-env / /
+# # make a layer with scratch to clear out old layers
+FROM scratch AS firestarr-base-slim
+COPY --from=firestarr-base-cleaned / /
+
+# amd64, arm/v7, arm64/v8, ppc64le, s390x
+FROM --platform=linux/amd64 ${BASE_DISTROLESS} AS firestarr-base-amd64
+FROM --platform=linux/arm/v7 ${BASE_DISTROLESS} AS firestarr-base-armv7
+FROM --platform=linux/arm64/v8 ${BASE_DISTROLESS} AS firestarr-base-arm64v8
+FROM --platform=linux/ppc64le ${BASE_DISTROLESS} AS firestarr-base-ppc64le
+FROM --platform=linux/s390x ${BASE_DISTROLESS} AS firestarr-base-s390x
+
+# no distroless version of these, so use slim
+# armv/v5, 386, riscv64, i686
+FROM --platform=linux/arm/v5 firestarr-base-slim AS firestarr-base-armv5
+FROM --platform=linux/386 firestarr-base-slim AS firestarr-base-386
+FROM --platform=linux/riscv64 firestarr-base-slim AS firestarr-base-riscv64
+FROM --platform=linux/i686 firestarr-base-slim AS firestarr-base-i686
 
 # derive final image from base so updates to binary are small layers
-FROM ${BASE} AS firestarr
+FROM firestarr-base-${TARGETARCH} AS firestarr
 # ARG USERNAME
 # USER ${USERNAME}
 WORKDIR /appl/firestarr
