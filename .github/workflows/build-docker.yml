@@ -8,7 +8,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04${{ case( startsWith( matrix.platform, 'arm'), '-arm', '' ) }}
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
