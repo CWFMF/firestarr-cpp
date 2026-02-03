@@ -59,12 +59,13 @@ ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
 # need .git for CMakeLists.txt
 USER ${USERNAME}
-RUN git clone https://github.com/microsoft/vcpkg.git
+# compile/setup for vcpkg doesn't depend on what we're going to install
+RUN git clone --recurse-submodules -j8 https://github.com/microsoft/vcpkg.git \
+  && cd vcpkg \
+  && ./bootstrap-vcpkg.sh -disableMetrics
+WORKDIR /appl/firestarr
 COPY --chown=${USERNAME}:${USERNAME} ./vcpkg*.json .
-RUN cd vcpkg \
-  && ./bootstrap-vcpkg.sh -disableMetrics \
-  && cd .. \
-  && vcpkg/vcpkg install
+RUN vcpkg/vcpkg install
 COPY --chown=${USERNAME}:${USERNAME} ./.git .git/
 COPY --chown=${USERNAME}:${USERNAME} ./src/cpp src/cpp/
 COPY --chown=${USERNAME}:${USERNAME} ./cmake cmake/
