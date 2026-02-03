@@ -123,6 +123,7 @@ COPY --from=firestarr-base-cleaned / /
 FROM --platform=linux/amd64 ${BASE_DISTROLESS} AS firestarr-base-amd64
 FROM --platform=linux/arm/v7 ${BASE_DISTROLESS} AS firestarr-base-armv7
 FROM --platform=linux/arm64/v8 ${BASE_DISTROLESS} AS firestarr-base-arm64v8
+FROM firestarr-base-arm64v8 AS firestarr-base-arm64
 FROM --platform=linux/ppc64le ${BASE_DISTROLESS} AS firestarr-base-ppc64le
 FROM --platform=linux/s390x ${BASE_DISTROLESS} AS firestarr-base-s390x
 
