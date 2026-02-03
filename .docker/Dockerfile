@@ -18,8 +18,7 @@ ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 # need .git for CMakeLists.txt
 WORKDIR /appl/firestarr
 RUN git clone -v https://github.com/microsoft/vcpkg.git \
-  && cd vcpkg \
-  && ./bootstrap-vcpkg.sh -disableMetrics
+  && vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install packages so they stay if nothing changes with vcpkg*.json
 FROM vcpkg-bootstrap AS vcpkg-installed
