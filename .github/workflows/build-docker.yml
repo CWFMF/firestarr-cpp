@@ -17,8 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # all the options that debian:trixie-slim supports
-        platform: [amd64, arm/v7, arm64/v8, ppc64le, s390x]
+        platform: [amd64, arm/v7, arm64/v8, ppc64le, s390x, arm/v5, riscv64]
     steps:
       - uses: actions/checkout@v4
 
