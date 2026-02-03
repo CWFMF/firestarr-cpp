@@ -32,13 +32,9 @@ RUN vcpkg/vcpkg install
 FROM vcpkg-installed AS firestarr-build
 WORKDIR /appl/firestarr
 # need .git for CMakeLists.txt
-COPY ./.git .git/
-COPY ./src/cpp src/cpp/
-COPY ./cmake cmake/
-COPY ./.env ./CMake* ./.clang-* ./fuel.lut ./settings.ini ./vcpkg*.json .
+COPY . .
 RUN cmake --preset Release
 RUN cmake --build --parallel --preset Release
-COPY ./test test/
 RUN ctest --preset Release
 
 

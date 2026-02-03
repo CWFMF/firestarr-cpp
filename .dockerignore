@@ -1,0 +1,11 @@
+**
+*
+!./.git
+!**/src
+!./cmake
+!./CMake*
+!./.clang-*
+!./fuel.lut
+!./settings.ini
+!./test
+!./vcpkg*.json
