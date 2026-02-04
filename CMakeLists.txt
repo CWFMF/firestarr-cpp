@@ -29,6 +29,11 @@ if(WIN32)
   set(VCPKG_LIBRARY_LINKAGE static)
   # FIX: unsure if this matters but doesn't break things on arm64
   # set(VCPKG_TARGET_TRIPLET x64-windows-static)
+  # FIX: this should be equivalent to x64-windows-static - why does it work on arm64?
+  message("CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}")
+  set(VCPKG_TARGET_ARCHITECTURE x64)
+  set(VCPKG_CRT_LINKAGE static)
+  set(VCPKG_LIBRARY_LINKAGE static)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
 
 #   # Enable Hot Reload for MSVC compilers if supported.
