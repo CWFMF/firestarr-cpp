@@ -3,6 +3,7 @@ name: ci
 on:
   push:
     tags: [ "*" ]
+  workflow_dispatch:
 
 env:
   REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
