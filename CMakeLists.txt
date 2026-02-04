@@ -28,7 +28,7 @@ if(WIN32)
   set(BUILD_SHARED_LIBS OFF)
   set(VCPKG_LIBRARY_LINKAGE static)
   # FIX: unsure if this matters but doesn't break things on arm64
-  set(VCPKG_TARGET_TRIPLET x64-windows-static)
+  # set(VCPKG_TARGET_TRIPLET x64-windows-static)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
 
 #   # Enable Hot Reload for MSVC compilers if supported.
