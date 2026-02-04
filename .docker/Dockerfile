@@ -29,6 +29,8 @@ RUN vcpkg/vcpkg install
 
 # build and test
 FROM vcpkg-installed AS firestarr-build
+ARG TARGETARCH
+ARG TARGETVARIANT
 WORKDIR /appl/firestarr
 # need .git for CMakeLists.txt
 COPY ./.git .git/
@@ -39,7 +41,8 @@ RUN cmake --preset Release
 RUN cmake --build --parallel --preset Release
 COPY ./test test/
 RUN ctest --preset Release
-
+RUN echo "TARGETARCH = ${TARGETARCH}"
+RUN echo "TARGETVARIANT = ${TARGETVARIANT}"
 
 # get rid of anything that's not required for firestarr - breaks apt in container
 FROM ${BASE_SLIM} AS firestarr-base-cleaned
