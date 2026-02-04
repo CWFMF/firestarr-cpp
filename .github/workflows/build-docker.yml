@@ -59,8 +59,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:cache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:cache,mode=max
+          # ${{ github.repository }} isn't lowercase so manually specify
+          cache-from: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp:cache
+          cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp:cache,mode=max
 
       - name: Export digest
         run: |
