@@ -13,9 +13,13 @@ endif()
 if(NOT VCPKG_ROOT)
   set(VCPKG_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg")
 endif()
-# set(VCPKG_TARGET_ARCHITECTURE x64)
-set(VCPKG_CRT_LINKAGE dynamic)
-set(VCPKG_LIBRARY_LINKAGE dynamic)
+if (LINUX)
+  set(VCPKG_CRT_LINKAGE static)
+  set(VCPKG_LIBRARY_LINKAGE static)
+else()
+  set(VCPKG_CRT_LINKAGE dynamic)
+  set(VCPKG_LIBRARY_LINKAGE dynamic)
+endif()
 set(VCPKG_BUILD_TYPE release)
 set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
   CACHE STRING "Vcpkg toolchain file")
@@ -23,6 +27,7 @@ set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
 if(WIN32)
   set(BUILD_SHARED_LIBS OFF)
   set(VCPKG_LIBRARY_LINKAGE static)
+  # FIX: unsure if this matters but doesn't break things on arm64
   set(VCPKG_TARGET_TRIPLET x64-windows-static)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
 
@@ -52,6 +57,16 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
+include(CheckCXXCompilerFlag)
+
+# -mcpu is deprecated on some and required on others
+check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH)
+if(COMPILER_SUPPORTS_MARCH)
+  set(MARCH "march")
+else()
+  set(MARCH "mcpu")
+endif()
+
 if (WIN32)
   # HACK: use same settings for RelWitDebInfo since can't figure out how to work with vcpkg
   add_compile_options(
@@ -66,11 +81,11 @@ if (WIN32)
 else()
   if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     # HACK: if compiler supports ARCH_PREFERRED on this then use that else native
-    execute_process(COMMAND bash -c "(${CMAKE_CXX_COMPILER} -march=native -Q --help=target | grep ${ARCH_PREFERRED} > /dev/null && echo -n ${ARCH_PREFERRED}) || (echo -n 'native')"
+    execute_process(COMMAND bash -c "(${CMAKE_CXX_COMPILER} -${MARCH}=native -Q --help=target | grep ${ARCH_PREFERRED} > /dev/null && echo -n ${ARCH_PREFERRED}) || (echo -n 'native')"
             OUTPUT_VARIABLE USE_ARCH
             ERROR_QUIET)
     if (USE_ARCH)
-      add_compile_options(-march=${USE_ARCH})
+      add_compile_options(-${MARCH}=${USE_ARCH})
       message("USE_ARCH = ${USE_ARCH}")
     endif()
   endif()
@@ -81,15 +96,14 @@ else()
     "$<$<CONFIG:Release,RelWithDebInfo>:-O3;>"
     "$<$<CONFIG:MinSizeRel>:-Os;>"
     "$<$<CONFIG:Debug>:-O0;>")
-  include(CheckCCompilerFlag)
   if(APPLE)
-    check_c_compiler_flag(-mno-sve HAVE_NO_SVE)
+    check_cxx_compiler_flag(-mno-sve HAVE_NO_SVE)
     if(HAVE_NO_SVE)
       message("Disabling SVE")
       add_compile_options(-mno-sve)
     endif()
   endif()
-  check_c_compiler_flag(-mno-avx512f HAVE_NO_AVX512F)
+  check_cxx_compiler_flag(-mno-avx512f HAVE_NO_AVX512F)
   if(HAVE_NO_AVX512F)
     message("Disabling AVX512 because performance is worse and results are wildly different with it on")
     add_compile_options(-mno-avx512f)
@@ -153,6 +167,16 @@ set(MODIFIED_TIME "")
 
 message("Compiler is ${CMAKE_CXX_COMPILER}")
 execute_process(COMMAND ${CMAKE_CXX_COMPILER})
+if (WIN32)
+  message("Not setting compiler flags so binary works across windows")
+else()
+  message("Compiler flags for target with ${CMAKE_CXX_COMPILER} are:")
+  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    execute_process(COMMAND g++ -${MARCH}=native -Q --help=target)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    execute_process(COMMAND clang -E - -${MARCH}=native "-###")
+  endif()
+endif()
 
 file(GLOB_RECURSE FILES_USED ${DIR_SRC}/*.cpp ${DIR_SRC}/*.h)
 list(FILTER FILES_USED EXCLUDE REGEX version*)
@@ -257,6 +281,12 @@ add_compile_options(${PROJECT_WARNINGS_CXX})
 
 find_package(GeoTIFF CONFIG REQUIRED)
 find_package(TIFF REQUIRED)
+# FIX: wrap anything new that might be breaking windows workflow
+if(LINUX)
+  # # PROJ needs this unless we can figure out how to turn net lookup off
+  # find_package(CURL CONFIG REQUIRED)
+  find_package(SQLite3 REQUIRED)
+endif()
 find_package(PROJ CONFIG REQUIRED)
 # link_libraries(geotiff tiff PROJ::proj)
 
@@ -275,14 +305,30 @@ foreach(bin ${PROJECT_NAME} test_duff test_fwi test_fbp)
   message("Adding binary for ${bin}")
   # include file with main() for each bin
   add_executable(${bin} ${DIR_SRC}/${bin}.cpp)
+# FIX: wrap anything new that might be breaking windows workflow
+if(LINUX)
+  target_include_directories(${bin} PRIVATE ${DIR_SRC_COMMON})
+else()
   target_include_directories(${bin} PUBLIC ${DIR_SRC_COMMON})
+endif()
   target_include_directories(${bin} PRIVATE ${GEOTIFF_INCLUDE_DIR})
   target_link_libraries(${bin} PUBLIC fs)
   target_link_libraries(${bin} PRIVATE ${GEOTIFF_LIBRARIES})
   target_link_libraries(${bin} PRIVATE TIFF::TIFF)
   target_link_libraries(${bin} PRIVATE PROJ::proj)
+# FIX: wrap anything new that might be breaking windows workflow
+if(LINUX)
+  target_link_libraries(${bin} PRIVATE SQLite::SQLite3)
+  target_link_libraries(${bin} PRIVATE -static)
+  target_link_libraries(${bin} PRIVATE -static-libgcc -static-libstdc++)
+endif()
+# FIX: wrap anything new that might be breaking windows workflow
   if (ASAN_ARGS)
+if(LINUX)
+    target_link_options(${bin} BEFORE PRIVATE ${ASAN_ARGS})
+else()
     target_link_options(${bin} BEFORE PUBLIC ${ASAN_ARGS})
+endif()
   endif()
   add_custom_command(
     TARGET ${bin}
