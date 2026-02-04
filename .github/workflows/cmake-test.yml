@@ -34,11 +34,12 @@ jobs:
           - os: ubuntu
             os-version: 24.04
             target-os: linux
-          # HACK: latest doesn't work with -arm
-          - os: windows
-            target-cpu: arm64
-            os-version: 11
-            target-os: windows
+          # FIX: this is building x64 exe not arm64
+          # # HACK: latest doesn't work with -arm
+          # - os: windows
+          #   target-cpu: arm64
+          #   os-version: 11
+          #   target-os: windows
           - os: windows
             target-cpu: x64
             os-version: latest
@@ -62,8 +63,13 @@ jobs:
             compiler: clang++
           - os: windows
             compiler: g++
+          # FIX: this is building x64 exe not arm64
+          - os: windows
+            target-cpu: arm64
     env:
       CXX: ${{ matrix.compiler }}
+      # HACK: -static makes windows work right now
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.target-cpu }}-${{ matrix.target-os }}${{ case ( matrix.os == 'windows', '-static', '' ) }}
       VCPKG_DISABLE_METRICS: true
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/.cache
