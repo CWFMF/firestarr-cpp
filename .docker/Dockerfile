@@ -5,10 +5,16 @@ ARG BASE_SLIM=debian:trixie-slim
 
 # basic image to start from
 FROM debian:trixie-slim AS gcc-cmake
+ARG TARGETARCH
+ARG TARGETVARIANT
 RUN apt-get update --fix-missing \
   && apt-get install -y --no-install-recommends \
   cmake gcc g++ make ninja-build pkg-config \
   curl zip unzip tar ca-certificates git
+WORKDIR /appl/firestarr
+# HACK: show what gcc wants to use for debugging purposes
+RUN (export && g++ -march=native -Q --help=target) > /tmp/march.log
+RUN (export && g++ -mtune=native -Q --help=target) > /tmp/mtune.log
 
 # clone/bootstrap for vcpkg doesn't depend on what we're going to install
 FROM gcc-cmake AS vcpkg-bootstrap
@@ -29,8 +35,6 @@ RUN vcpkg/vcpkg install
 
 # build and test
 FROM vcpkg-installed AS firestarr-build
-ARG TARGETARCH
-ARG TARGETVARIANT
 WORKDIR /appl/firestarr
 # need .git for CMakeLists.txt
 COPY ./.git .git/
@@ -41,8 +45,6 @@ RUN cmake --preset Release
 RUN cmake --build --parallel --preset Release
 COPY ./test test/
 RUN ctest --preset Release
-RUN echo "TARGETARCH = ${TARGETARCH}"
-RUN echo "TARGETVARIANT = ${TARGETVARIANT}"
 
 # get rid of anything that's not required for firestarr - breaks apt in container
 FROM ${BASE_SLIM} AS firestarr-base-cleaned
