@@ -59,15 +59,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
-include(CheckCXXCompilerFlag)
-
-# -mcpu is deprecated on some and required on others
-check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH)
-if(COMPILER_SUPPORTS_MARCH)
-  set(MARCH "march")
-else()
-  set(MARCH "mcpu")
-endif()
+include(cmake/TuneArchCPU.cmake)
 
 if (WIN32)
   # HACK: use same settings for RelWitDebInfo since can't figure out how to work with vcpkg
@@ -88,21 +80,9 @@ else()
     "$<$<CONFIG:Release,RelWithDebInfo>:-O3;>"
     "$<$<CONFIG:MinSizeRel>:-Os;>"
     "$<$<CONFIG:Debug>:-O0;>")
-  if(APPLE)
-    check_cxx_compiler_flag(-mno-sve HAVE_NO_SVE)
-    if(HAVE_NO_SVE)
-      message("Disabling SVE")
-      add_compile_options(-mno-sve)
-    endif()
-  endif()
-  check_cxx_compiler_flag(-mno-avx512f HAVE_NO_AVX512F)
-  if(HAVE_NO_AVX512F)
-    message("Disabling AVX512 because performance is worse and results are wildly different with it on")
-    add_compile_options(-mno-avx512f)
-    # FIX: disable to avoid for now:
-    #   clang++: warning: -ltcmalloc: 'linker' input unused [-Wunused-command-line-argument]
-    # add_compile_options("$<$<CONFIG:Debug,RelWithDebInfo>:-ltcmalloc;>")
-  endif()
+  # FIX: disable to avoid for now:
+  #   clang++: warning: -ltcmalloc: 'linker' input unused [-Wunused-command-line-argument]
+  # add_compile_options("$<$<CONFIG:Debug,RelWithDebInfo>:-ltcmalloc;>")
   add_compile_options(
     "$<$<CONFIG:Debug,RelWithDebInfo>:-g;-fno-omit-frame-pointer;>")
   include(cmake/ASAN.cmake)
@@ -133,19 +113,6 @@ if (NOT "${HASH_ENV}" STREQUAL "${HASH}")
 endif()
 
 set(MODIFIED_TIME "")
-
-message("Compiler is ${CMAKE_CXX_COMPILER}")
-execute_process(COMMAND ${CMAKE_CXX_COMPILER})
-if (WIN32)
-  message("Not setting compiler flags so binary works across windows")
-else()
-  message("Compiler flags for target with ${CMAKE_CXX_COMPILER} are:")
-  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    execute_process(COMMAND g++ -${MARCH}=native -Q --help=target)
-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    execute_process(COMMAND clang -E - -${MARCH}=native "-###")
-  endif()
-endif()
 
 file(GLOB_RECURSE FILES_USED ${DIR_SRC}/*.cpp ${DIR_SRC}/*.h)
 list(FILTER FILES_USED EXCLUDE REGEX version*)

@@ -1,0 +1,38 @@
+cmake_minimum_required(VERSION 3.31.6)
+
+include(CheckCXXCompilerFlag)
+
+# -mcpu is deprecated on some and required on others
+check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH)
+if(COMPILER_SUPPORTS_MARCH)
+  set(MARCH "march")
+else()
+  set(MARCH "mcpu")
+endif()
+
+message("Compiler is ${CMAKE_CXX_COMPILER}")
+execute_process(COMMAND ${CMAKE_CXX_COMPILER})
+if (WIN32)
+  message("Not setting compiler flags so binary works across windows")
+else()
+  message("Compiler flags for target with ${CMAKE_CXX_COMPILER} are:")
+  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    execute_process(COMMAND g++ -${MARCH}=native -Q --help=target)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    execute_process(COMMAND clang -E - -${MARCH}=native "-###")
+  endif()
+endif()
+
+if(APPLE)
+  check_cxx_compiler_flag(-mno-sve HAVE_NO_SVE)
+  if(HAVE_NO_SVE)
+    message("Disabling SVE")
+    add_compile_options(-mno-sve)
+  endif()
+endif()
+
+check_cxx_compiler_flag(-mno-avx512f HAVE_NO_AVX512F)
+if(HAVE_NO_AVX512F)
+  message("Disabling AVX512 because performance is worse and results are wildly different with it on")
+  add_compile_options(-mno-avx512f)
+endif()
