@@ -1,0 +1,48 @@
+#!/bin/bash
+# set -e
+DIR_LOG="build/docker"
+# don't have base images for all the platforms so just use a list
+PLATFORMS=$(docker buildx inspect --bootstrap | grep Platforms: | sed "s/Platforms: *//;s/ //g;s/,/\n/g;s/linux\///g" | sort)
+# exclude some things
+# PLATFORMS=$(echo "$PLATFORMS" | sed "/^386$/d;/^loong64$/d;/^mips64$/d;/^mips64le$/d;/^ppc64$/d")
+PLATFORMS=$(echo "$PLATFORMS" | sed "/^386$/d")
+# unsure about why arm/v8 isn't in list but works
+# PLATFORMS="amd64 arm/v8 arm/v7 arm64/v8 ppc64le s390x arm/v5 riscv64"
+# echo PLATFORMS = ${PLATFORMS}
+mkdir -p ${DIR_LOG}
+for p in ${PLATFORMS}
+do
+  platform="linux/${p}"
+  LOG_BASE="${DIR_LOG}/${p//\//}"
+  # HACK: don't run if running
+  printf "%15s" "${platform}"
+  ps aux | grep -v grep | grep "platform=${platform}" > /dev/null \
+    && printf "%30s\n" "already building" \
+    && continue
+  for flag in cpu tune
+  do
+    (docker run --platform=${platform} -it --rm gcc:latest g++ -m${flag}=native -Q --help=target 2>&1 || echo "${flag} failed") > ${LOG_BASE}_m${flag}.txt
+  done
+  target=firestarr
+  log=${LOG_BASE}_${target}.log
+  docker build --progress=plain --platform=${platform} --target ${target} -t ${target} -f .docker/Dockerfile . &> ${log}
+  RET=$?
+  # echo "RET=$RET"
+  if [ ${RET} -ne 0 ]; then
+    RESULT="failed"
+    (grep "no match for platform in manifest" "${log}" > /dev/null) && RESULT="no base image"
+    printf "%30s\n" "${RESULT}"
+    continue
+  fi
+  # target=firestarr-minimal
+  # log=${LOG_BASE}_${target}.log
+  # docker build --progress=plain --platform=${platform} --target ${target} -t ${target} -f .docker/Dockerfile . 2&>1 ${log}
+  # RET=$?
+  # if [ ${RET} -ne 0 ]; then
+  #   RESULT="failed"
+  #   (grep "no match for platform in manifest" "${log}" > /dev/null) && RESULT="no base image"
+  #   printf "%30s\n" "${RESULT}"
+  #   continue
+  # fi
+  printf "%30s\n" "succeeded"
+done
