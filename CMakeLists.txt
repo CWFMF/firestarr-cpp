@@ -48,10 +48,6 @@ if(WIN32)
 #   endif()
 endif()
 
-
-# HACK: architecture that works on azure batch and local machine
-# set(ARCH_PREFERRED "skylake-avx512")
-
 message("CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
 
 project(firestarr)
@@ -85,16 +81,6 @@ if (WIN32)
   add_compile_options(
     "$<$<CONFIG:Debug>:/bigobj>")
 else()
-  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    # HACK: if compiler supports ARCH_PREFERRED on this then use that else native
-    execute_process(COMMAND bash -c "(${CMAKE_CXX_COMPILER} -${MARCH}=native -Q --help=target | grep ${ARCH_PREFERRED} > /dev/null && echo -n ${ARCH_PREFERRED}) || (echo -n 'native')"
-            OUTPUT_VARIABLE USE_ARCH
-            ERROR_QUIET)
-    if (USE_ARCH)
-      add_compile_options(-${MARCH}=${USE_ARCH})
-      message("USE_ARCH = ${USE_ARCH}")
-    endif()
-  endif()
   if(CMAKE_VERBOSE_MAKEFILE)
     add_compile_options(-fopt-info-vec-all)
   endif()
