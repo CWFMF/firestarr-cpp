@@ -57,6 +57,7 @@ jobs:
         with:
           context: .
           file: .docker/Dockerfile
+          target: firestarr
           platforms: linux/${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY_IMAGE }}
