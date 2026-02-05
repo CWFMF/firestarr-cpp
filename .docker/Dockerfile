@@ -13,7 +13,13 @@ RUN apt-get update --fix-missing \
   curl zip unzip tar ca-certificates git
 WORKDIR /appl/firestarr
 # HACK: show what gcc wants to use for debugging purposes
-RUN (export && g++ -march=native -Q --help=target) > /tmp/march.log
+RUN (export \
+  && ( \
+      g++ -march=native -Q --help=target \
+      || g++ -mcpu=native -Q --help=target \
+      || echo "Can't use arch or cpu" \
+    ) \
+  ) > /tmp/march.log
 RUN (export && g++ -mtune=native -Q --help=target) > /tmp/mtune.log
 
 # clone/bootstrap for vcpkg doesn't depend on what we're going to install
