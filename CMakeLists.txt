@@ -11,7 +11,7 @@ if(NOT DEFINED CPU_TUNE_ONLY)
   set(CPU_TUNE_ONLY TRUE)
 endif()
 if(NOT DEFINED CPU_TARGET)
-  set(CPU_TARGET "native")
+  set(CPU_TARGET "generic")
 endif()
 
 if(NOT VCPKG_ROOT)
