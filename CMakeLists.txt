@@ -124,7 +124,7 @@ set(MODIFIED_TIME "")
 file(GLOB_RECURSE FILES_USED ${DIR_SRC}/*.cpp ${DIR_SRC}/*.h)
 list(FILTER FILES_USED EXCLUDE REGEX version*)
 
-set(FILE_VERSION_H ${DIR_SRC_COMMON}/version.h)
+set(FILE_VERSION_CPP ${DIR_SRC}/version.cpp)
 set(FILE_UNSTABLE_CPP ${DIR_SRC_COMMON}/unstable.cpp)
 
 # is anything in git changed?
@@ -160,15 +160,15 @@ endif()
 
 set (SPECIFIC_REVISION "v${VERSION} ${HASH} <${MODIFIED_TIME}>")
 message("${SPECIFIC_REVISION}")
-set(VERSION_CODE "constexpr char SPECIFIC_REVISION[]{\"${SPECIFIC_REVISION}\"};\n")
-if(EXISTS FILE_VERSION_H)
-  file(STRINGS ${FILE_VERSION_H} VERSION_CODE_OLD)
+set(VERSION_CODE "extern \"C\" const char* const SPECIFIC_REVISION{\"${SPECIFIC_REVISION}\"};\n")
+if(EXISTS FILE_VERSION_CPP)
+  file(STRINGS ${FILE_VERSION_CPP} VERSION_CODE_OLD)
   # HACK: file(READ ...) is reacting to special characters, so compare substring
   string(FIND "${SPECIFIC_REVISION}" "${VERSION_CODE_OLD}" SAME_CODE)
 endif()
 # if matched exiting file don't write
 if (NOT 0 EQUAL SAME_CODE)
-  file(WRITE ${FILE_VERSION_H} "${VERSION_CODE}")
+  file(WRITE ${FILE_VERSION_CPP} "${VERSION_CODE}")
 endif()
 
 set_source_files_properties(${FILE_UNSTABLE_CPP} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}")
@@ -206,12 +206,12 @@ add_subdirectory(${DIR_SRC_COMMON})
 foreach(bin ${PROJECT_NAME} test_duff test_fwi test_fbp)
   message("Adding binary for ${bin}")
   # include file with main() for each bin
-  add_executable(${bin} ${DIR_SRC}/${bin}.cpp)
+  add_executable(${bin} ${DIR_SRC}/${bin}.cpp ${FILE_VERSION_CPP})
 # FIX: wrap anything new that might be breaking windows workflow
 if(LINUX)
-  target_include_directories(${bin} PRIVATE ${DIR_SRC_COMMON})
+  target_include_directories(${bin} PRIVATE ${DIR_SRC_COMMON} ${DIR_SRC})
 else()
-  target_include_directories(${bin} PUBLIC ${DIR_SRC_COMMON})
+  target_include_directories(${bin} PUBLIC ${DIR_SRC_COMMON} ${DIR_SRC})
 endif()
   target_include_directories(${bin} PRIVATE ${GEOTIFF_INCLUDE_DIR})
   target_link_libraries(${bin} PUBLIC fs)

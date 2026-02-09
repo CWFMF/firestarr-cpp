@@ -15,8 +15,8 @@
 #include "fs/Test.h"
 #include "fs/TimeUtil.h"
 #include "fs/Util.h"
-#include "fs/version.h"
 #include "fs/Weather.h"
+#include "version.h"
 namespace fs
 {
 using fs::AspectSize;
