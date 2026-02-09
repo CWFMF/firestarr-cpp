@@ -23,7 +23,7 @@ jobs:
       image: firestarr-minimal
 
   cleanup-docker:
-    needs: [build-docker]
+    needs: [build-firestarr-minimal]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
