@@ -19,10 +19,14 @@ do
   ps aux | grep -v grep | grep "platform=${platform}" > /dev/null \
     && printf "%30s\n" "already building" \
     && continue
-  for flag in cpu tune
+  for flag in arch cpu tune
   do
     (docker run --platform=${platform} -it --rm gcc:latest g++ -m${flag}=native -Q --help=target 2>&1 || echo "${flag} failed") > ${LOG_BASE}_m${flag}.txt
+    printf "%8s=%d" "${flag}" "$?"
   done
+  # (docker run --platform=${platform} -it --rm debian:trixie-slim /bin/bash -c 'apt update && apt install -y g++ && g++ -mtune=native -Q --help=target 2>&1'  || echo "tune failed") > ${LOG_BASE}_mtune.txt
+  # (docker run --platform=${platform} -it --rm debian:trixie-slim /bin/bash -c 'apt update && apt install -y g++ && g++ -mcpu=native -Q --help=target 2>&1'  || echo "cpu failed") > ${LOG_BASE}_mcpu.txt
+  # (docker run --platform=${platform} -it --rm debian:trixie-slim /bin/bash -c 'apt update && apt install -y g++ && g++ -march=native -Q --help=target 2>&1'  || echo "arch failed") > ${LOG_BASE}_march.txt
   target=firestarr
   log=${LOG_BASE}_${target}.log
   docker build --progress=plain --platform=${platform} --target ${target} -t ${target} -f .docker/Dockerfile . &> ${log}
