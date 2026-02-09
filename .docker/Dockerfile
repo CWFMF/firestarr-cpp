@@ -42,14 +42,17 @@ RUN vcpkg/vcpkg install
 # build and test
 FROM vcpkg-installed AS firestarr-build
 WORKDIR /appl/firestarr
+# vcpkg-installed should update when this file does
+# COPY ./vcpkg*.json .
 # need .git for CMakeLists.txt
 COPY ./.git .git/
 COPY ./src/cpp src/cpp/
 COPY ./cmake cmake/
-COPY ./.env ./CMake* ./.clang-* ./fuel.lut ./settings.ini ./vcpkg*.json .
+COPY ./.env ./CMake* ./.clang-* .
 RUN cmake --preset Release
 RUN cmake --build --parallel --preset Release
 COPY ./test test/
+COPY ./fuel.lut ./settings.ini .
 RUN ctest --preset Release
 
 # make a layer with scratch to clear out old layers
