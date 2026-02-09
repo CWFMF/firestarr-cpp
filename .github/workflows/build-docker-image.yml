@@ -8,7 +8,7 @@ on:
         type: string
 
 env:
-  REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
+  REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/${{ inputs.image }}
 
 jobs:
   build-docker-image:
@@ -78,7 +78,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ inputs.image }}-${{ env.PLATFORM_PAIR }}
+          name: digests-${{ env.PLATFORM_PAIR }}
           path: ${{ runner.temp }}/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -96,7 +96,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ${{ runner.temp }}/digests
-          pattern: digests-${{ inputs.image }}-*
+          pattern: digests-*
           merge-multiple: true
 
       - name: Login to GHCR
