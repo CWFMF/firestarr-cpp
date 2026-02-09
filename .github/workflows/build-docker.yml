@@ -10,14 +10,17 @@ env:
   REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
 
 jobs:
-  build-docker:
+  build-firestarr:
     uses: ./.github/workflows/build-docker-image.yml
     with:
-      image: ${{ matrix.image }}
-    strategy:
-      fail-fast: false
-      matrix:
-        image: [firestarr, firestarr-minimal]
+      image: firestarr
+
+  # uses cache from previous image so don't do at the same time
+  build-firestarr-minimal:
+    needs: [ build-firestarr ]
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      image: firestarr-minimal
 
   cleanup-docker:
     needs: [build-docker]
