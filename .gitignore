@@ -7,7 +7,7 @@ vcpkg
 **/*diff*
 **/*log*
 **/build
-**/version.h
+**/version.cpp
 **/test/10N_50651
 **/test/flamegraphs
 firestarr
