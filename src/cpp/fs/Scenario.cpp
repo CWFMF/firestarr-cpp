@@ -94,7 +94,7 @@ Scenario::~Scenario() { clear(); }
  */
 static void make_threshold(
   vector<ThresholdSize>* thresholds,
-  mt19937* mt,
+  mt19937_64* mt,
   const Day start_day,
   const Day last_date,
   ThresholdSize (*convert)(double value)
@@ -140,7 +140,7 @@ constexpr V same(const V value) noexcept
 }
 static void make_threshold(
   vector<ThresholdSize>* thresholds,
-  mt19937* mt,
+  mt19937_64* mt,
   const Day start_day,
   const Day last_date
 )
@@ -254,7 +254,11 @@ Scenario* Scenario::reset_with_new_start(
   }
   return this;
 }
-Scenario* Scenario::reset(mt19937* mt_extinction, mt19937* mt_spread, ptr<SafeVector> final_sizes)
+Scenario* Scenario::reset(
+  mt19937_64* mt_extinction,
+  mt19937_64* mt_spread,
+  ptr<SafeVector> final_sizes
+)
 {
   unburnable_.clear();
   cancelled_ = false;

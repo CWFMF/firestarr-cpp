@@ -737,8 +737,8 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   );
   std::seed_seq seed_spread{static_cast<size_t>(0), static_cast<size_t>(start_day), lat, lon};
   std::seed_seq seed_extinction{static_cast<size_t>(1), static_cast<size_t>(start_day), lat, lon};
-  mt19937 mt_spread(seed_spread);
-  mt19937 mt_extinction(seed_extinction);
+  mt19937_64 mt_spread(seed_spread);
+  mt19937_64 mt_extinction(seed_extinction);
   vector<MathSize> all_sizes{};
   vector<MathSize> means{};
   vector<MathSize> pct{};

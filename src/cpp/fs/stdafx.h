@@ -71,7 +71,7 @@ using std::make_unique;
 using std::map;
 using std::max;
 using std::min;
-using std::mt19937;
+using std::mt19937_64;
 using std::mutex;
 using std::numeric_limits;
 using std::ofstream;
