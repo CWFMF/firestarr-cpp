@@ -27,14 +27,12 @@ FROM gcc-cmake AS vcpkg-bootstrap
 # vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
-# need .git for CMakeLists.txt
 WORKDIR /appl/firestarr
 RUN git clone -v https://github.com/microsoft/vcpkg.git \
   && vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install packages so they stay if nothing changes with vcpkg*.json
 FROM vcpkg-bootstrap AS vcpkg-installed
-# need .git for CMakeLists.txt
 WORKDIR /appl/firestarr
 COPY ./vcpkg*.json .
 RUN vcpkg/vcpkg install
@@ -44,11 +42,9 @@ FROM vcpkg-installed AS firestarr-build
 WORKDIR /appl/firestarr
 # vcpkg-installed should update when this file does
 # COPY ./vcpkg*.json .
-# need .git for CMakeLists.txt
-COPY ./.git .git/
-COPY ./src/cpp src/cpp/
 COPY ./cmake cmake/
 COPY ./.env ./CMake* ./.clang-* .
+COPY ./src/cpp src/cpp/
 RUN cmake --preset Release
 RUN cmake --build --parallel --preset Release
 COPY ./test test/

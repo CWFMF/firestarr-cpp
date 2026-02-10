@@ -42,6 +42,9 @@ using fs::logging::Log;
 int main(const int argc, const char* const argv[])
 {
   printf("FireSTARR %s\n\n", SPECIFIC_REVISION);
+#ifdef NDEBUG
+  printf("Full hash of all sources is: %s\n\n", FULL_HASH);
+#endif
   MainArgumentParser parser{argc, argv};
   parser.parse_args();
   auto result = -1;
@@ -52,6 +55,7 @@ int main(const int argc, const char* const argv[])
     fs::logging::check_fatal(
       !Log::openLogFile(parser.log_file.c_str()), "Can't open log file %s", parser.log_file.c_str()
     );
+    fs::logging::debug("Full hash is %s\n\n", FULL_HASH);
     fs::logging::note("Output directory is %s", parser.output_directory.c_str());
     fs::logging::note("Output log is %s", parser.log_file.c_str());
     // at this point we've parsed positional args and know we're not in test mode
