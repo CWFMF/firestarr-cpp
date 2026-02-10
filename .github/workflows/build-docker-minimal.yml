@@ -1,19 +1,24 @@
 name: build-docker-minimal
 
 on:
-  push:
-    branches: [ "main", "dev", "unstable" ]
-    tags: [ "*" ]
-  workflow_dispatch:
-  workflow_call:
+  workflow_run:
+    workflows: [build-docker]
+    types:
+      - completed
 
 jobs:
-  # uses cache from firestarr image but get error when combined
-  # FIX: Error: Failed to CreateArtifact: Received non-retryable error:
-  #      Failed request: (409) Conflict: an artifact with this name already
-  #      exists on the workflow run
-  build-firestarr-minimal:
-    uses: ./.github/workflows/build-docker-image.yml
-    needs: [build-docker]
-    with:
-      image: firestarr-minimal
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: echo 'The triggering workflow passed'
+
+      - uses: ./.github/workflows/build-docker-image.yml
+        with:
+          image: firestarr-minimal
+
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'The triggering workflow failed'
