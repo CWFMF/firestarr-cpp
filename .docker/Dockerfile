@@ -73,6 +73,7 @@ COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
 # derive final image from base so updates to binary are small layers
 FROM scratch AS firestarr
 COPY --from=firestarr-base-cleaned / /
+RUN mkdir -p /appl/firestarr/grid
 WORKDIR /appl/firestarr
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
 
@@ -87,5 +88,7 @@ COPY --from=distroless-amd64 / /
 # make a layer with scratch to clear out old layers
 FROM scratch AS firestarr-minimal
 COPY --from=firestarr-base-minimal / /
+# should exist because of firestarr image and /bin/sh doesn't exist in -minimal
+# RUN mkdir -p /appl/firestarr/grid
 WORKDIR /appl/firestarr
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
