@@ -780,11 +780,11 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   // HACK: use initial value for type
   auto timer = std::thread([&]() {
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
-    bool keep_checking{0 != Settings::maximumTimeSeconds()};
-    if (!keep_checking)
+    bool keep_checking{true};
+    const bool is_limited = 0 != Settings::maximumTimeSeconds();
+    if (!is_limited)
     {
       logging::note("No time limit being enforced since MAXIMUM_TIME = 0");
-      return;
     }
     while (keep_checking)
     {
@@ -793,7 +793,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
       // if we've done enough runs and need to stop for that reason
       std::this_thread::sleep_for(CHECK_INTERVAL);
       // set bool so other things don't need to check clock
-      is_out_of_time_ = runTime().count() >= timeLimit().count();
+      is_out_of_time_ = is_limited && runTime().count() >= timeLimit().count();
       logging::verbose("Checking clock [%ld of %ld]", runTime(), timeLimit());
       keep_checking = (runs_left > 0 && !shouldStop());
     }
