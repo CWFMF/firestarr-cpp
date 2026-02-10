@@ -1,25 +1,24 @@
 name: build-docker
 
 on:
-  push:
-    branches: [ "main", "dev", "unstable" ]
-    tags: [ "*" ]
-  workflow_dispatch:
-  workflow_call:
+  workflow_run:
+    workflows: [build-docker-vcpkg-installed]
+    types:
+      - completed
 
 jobs:
-  build-firestarr:
-    uses: ./.github/workflows/build-docker-image.yml
-    needs: [build-docker-vcpkg-installed]
-    with:
-      image: firestarr
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: echo 'The triggering workflow passed'
 
-  # FIX: Error: Failed to CreateArtifact: Received non-retryable error:
-  #      Failed request: (409) Conflict: an artifact with this name already
-  #      exists on the workflow run
-  # # uses cache from previous image so don't do at the same time
-  # build-firestarr-minimal:
-  #   needs: [ build-firestarr ]
-  #   uses: ./.github/workflows/build-docker-image.yml
-  #   with:
-  #     image: firestarr-minimal
+      - uses: ./.github/workflows/build-docker-image.yml
+        with:
+          image: firestarr
+
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'The triggering workflow failed'

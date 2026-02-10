@@ -1,4 +1,4 @@
-name: build-docker-build
+name: build-docker-vcpkg-installed
 
 on:
   push:
