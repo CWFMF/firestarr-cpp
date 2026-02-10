@@ -490,14 +490,14 @@ shared_ptr<ProbabilityMap> Model::makeProbabilityMap(
     time, start_time, min_value, low_max, med_max, max_value, perimeter_
   );
 }
-static void show_probabilities(const vector<shared_ptr<ProbabilityMap>>& probabilities)
+static void show_probabilities(const map<ThresholdSize, shared_ptr<ProbabilityMap>>& probabilities)
 {
-  for (const auto& p : probabilities)
+  for (const auto& kv : probabilities)
   {
-    p->show();
+    kv.second->show();
   }
 }
-vector<shared_ptr<ProbabilityMap>> make_prob_map(
+map<DurationSize, shared_ptr<ProbabilityMap>> make_prob_map(
   const Model& model,
   const vector<DurationSize>& saves,
   const DurationSize started,
@@ -507,10 +507,23 @@ vector<shared_ptr<ProbabilityMap>> make_prob_map(
   const int max_value
 )
 {
-  auto it = std::views::transform(saves, [&](auto& time) -> shared_ptr<ProbabilityMap> {
-    return model.makeProbabilityMap(time, started, min_value, low_max, med_max, max_value);
-  });
-  return {it.begin(), it.end()};
+  map<DurationSize, shared_ptr<ProbabilityMap>> result{};
+  for (const auto& time : saves)
+  {
+    result.emplace(
+      time, model.makeProbabilityMap(time, started, min_value, low_max, med_max, max_value)
+    );
+  }
+  return result;
+}
+map<DurationSize, SafeVector*> make_size_map(const vector<DurationSize>& saves)
+{
+  map<DurationSize, SafeVector*> result{};
+  for (const auto& time : saves)
+  {
+    result.emplace(time, new SafeVector());
+  }
+  return result;
 }
 bool Model::add_statistics(
   vector<MathSize>* all_sizes,
@@ -625,12 +638,11 @@ size_t runs_required(
   return left;
 }
 DurationSize Model::saveProbabilities(
-  vector<shared_ptr<ProbabilityMap>>& probabilities,
+  map<DurationSize, shared_ptr<ProbabilityMap>>& probabilities,
   const Day start_day,
   const bool is_interim
 )
 {
-  lock_guard<mutex> lock(mutex_);
   auto final_time = numeric_limits<DurationSize>::min();
   const ProcessingStatus processing_status =
     !is_interim ? processed : (0 == scenarios_done_ ? unprocessed : processing);
@@ -661,7 +673,7 @@ DurationSize Model::saveProbabilities(
         timeSinceLastSave().count()
       );
     }
-    for (const auto& prob : probabilities)
+    for (const auto& [t, prob] : probabilities)
     {
       const auto time = prob->time;
       final_time = max(final_time, time);
@@ -697,7 +709,7 @@ DurationSize Model::saveProbabilities(
   }
   return final_time;
 }
-vector<shared_ptr<ProbabilityMap>> Model::runIterations(
+map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   const StartPoint& start_point,
   const DurationSize start,
   const Day start_day
@@ -752,7 +764,7 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
     Settings::intensityMaxModerate(),
     numeric_limits<int>::max()
   );
-  vector<vector<shared_ptr<ProbabilityMap>>> all_probabilities{};
+  vector<map<DurationSize, shared_ptr<ProbabilityMap>>> all_probabilities{};
   all_probabilities.push_back(make_prob_map(
     *this,
     saves,
@@ -958,13 +970,11 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
       }
       auto final_sizes = iteration.finalSizes();
       ++iterations_done_;
-      auto& cur_probs = all_probabilities[cur_iter];
-      for (size_t i_time = 0; i_time < cur_probs.size(); ++i_time)
+      for (auto& kv : all_probabilities[cur_iter])
       {
-        auto& cur_prob = cur_probs[i_time];
-        probabilities[i_time]->addProbabilities(*cur_prob);
+        probabilities[kv.first]->addProbabilities(*kv.second);
         // clear so we don't double count
-        cur_prob.reset();
+        kv.second->reset();
       }
       if (!add_statistics(&all_sizes, &means, &pct, final_sizes))
       {
