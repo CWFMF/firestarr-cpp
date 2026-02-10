@@ -5,6 +5,7 @@ on:
     branches: [ "main", "dev", "unstable" ]
     tags: [ "*" ]
   workflow_dispatch:
+  workflow_call:
 
 env:
   REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
