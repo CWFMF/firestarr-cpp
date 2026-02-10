@@ -1,10 +1,11 @@
-name: build-docker
+name: build-docker-minimal
 
 on:
   push:
     branches: [ "main", "dev", "unstable" ]
     tags: [ "*" ]
   workflow_dispatch:
+  workflow_call:
 
 env:
   REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
@@ -16,5 +17,6 @@ jobs:
   #      exists on the workflow run
   build-firestarr-minimal:
     uses: ./.github/workflows/build-docker-image.yml
+    needs: [build-docker]
     with:
       image: firestarr-minimal
