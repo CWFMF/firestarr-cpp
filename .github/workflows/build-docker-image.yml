@@ -8,6 +8,7 @@ on:
         type: string
 
 env:
+  BUILDX_NO_DEFAULT_ATTESTATIONS: 1
   REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/${{ inputs.image }}
 
 jobs:
