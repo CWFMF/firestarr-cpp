@@ -46,11 +46,14 @@ string(TIMESTAMP COMPILE_TIME "${FMT_TIME}" UTC)
 
 string(SUBSTRING ${FULL_HASH} 0 8 HASH)
 
+set(COMPILED_ON "${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM}-${CMAKE_CXX_COMPILER_ID}")
+
 message("FULL_HASH = ${FULL_HASH}")
 message("HASH = ${HASH}")
 message("MODIFIED_TIME = ${MODIFIED_TIME}")
 message("VERSION = ${VERSION}")
 message("COMPILE_TIME = ${COMPILE_TIME}")
+message("COMPILED_ON = ${COMPILED_ON}")
 
 if (NOT "" STREQUAL "${HASH}")
   set(HASH "[${HASH}]")
@@ -60,6 +63,7 @@ set (SPECIFIC_REVISION "v${VERSION} ${HASH} <${MODIFIED_TIME}>")
 message("${SPECIFIC_REVISION}")
 set(VERSION_CODE "extern \"C\" const char* const SPECIFIC_REVISION{\"${SPECIFIC_REVISION}\"}\;")
 list(APPEND VERSION_CODE "extern \"C\" const char* const FULL_HASH{\"${FULL_HASH}\"}\;")
+list(APPEND VERSION_CODE "extern \"C\" const char* const COMPILED_ON{\"${COMPILED_ON}\"}\;")
 list(JOIN VERSION_CODE "\n" VERSION_CODE)
 if(EXISTS FILE_VERSION_CPP)
   file(STRINGS ${FILE_VERSION_CPP} VERSION_CODE_OLD)
