@@ -67,7 +67,12 @@ jobs:
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           # ${{ github.repository }} isn't lowercase so manually specify
           # using just 'cache' means only the last thing to finish survives the cleanup since the rest are untagged
-          cache-from: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache
+          # HACK: hardcode cache-from for each image for now
+          cache-from: |
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:vcpkg-installed-${{ env.PLATFORM_PAIR }}
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:firestarr-${{ env.PLATFORM_PAIR }}
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:firestarr-minimal-${{ env.PLATFORM_PAIR }}
           cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ inputs.image }}-${{ env.PLATFORM_PAIR }},mode=max
 
       - name: Export digest
