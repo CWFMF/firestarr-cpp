@@ -10,17 +10,12 @@ env:
   REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
 
 jobs:
-  build-firestarr:
-    uses: ./.github/workflows/build-docker-image.yml
-    with:
-      image: firestarr
-
+  # uses cache from firestarr image but get error when combined
   # FIX: Error: Failed to CreateArtifact: Received non-retryable error:
   #      Failed request: (409) Conflict: an artifact with this name already
   #      exists on the workflow run
-  # # uses cache from previous image so don't do at the same time
-  # build-firestarr-minimal:
-  #   needs: [ build-firestarr ]
-  #   uses: ./.github/workflows/build-docker-image.yml
-  #   with:
-  #     image: firestarr-minimal
+  build-firestarr-minimal:
+    needs: [ build-firestarr ]
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      image: firestarr-minimal
