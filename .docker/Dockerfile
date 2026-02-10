@@ -81,6 +81,8 @@ FROM --platform=linux/amd64 ${BASE_DISTROLESS} AS distroless-amd64
 
 # seems like we can just delete everything and then copy distroless into any platform?
 FROM ${BASE_SLIM} AS firestarr-base-minimal
+# HACK: mkdir doesn't exist when copied into scratch but COPY should work
+RUN mkdir -p /appl/firestarr/grid
 WORKDIR /
 RUN rm -rf $(ls -1 / | grep -vE "appl|dev|etc|proc|sys")
 COPY --from=distroless-amd64 / /
@@ -88,8 +90,9 @@ COPY --from=distroless-amd64 / /
 # make a layer with scratch to clear out old layers
 FROM scratch AS firestarr-minimal
 COPY --from=firestarr-base-minimal / /
-# should exist because of firestarr image and /bin/sh doesn't exist in -minimal
-# RUN mkdir -p /appl/firestarr/grid
 WORKDIR /appl/firestarr
-COPY --from=firestarr /appl/firestarr/ /appl/firestarr/
+COPY ./fuel.lut /appl/firestarr/
+COPY ./settings.ini /appl/firestarr/
+COPY --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
+COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
