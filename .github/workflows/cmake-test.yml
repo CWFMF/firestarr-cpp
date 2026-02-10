@@ -72,7 +72,6 @@ jobs:
       VCPKG_TARGET_TRIPLET: ${{ matrix.target-cpu }}-${{ matrix.target-os }}${{ case ( matrix.os == 'windows', '-static', '' ) }}
       VCPKG_DISABLE_METRICS: true
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/.cache
       OUTPUT_BINARY: firestarr-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
 
     steps:
@@ -87,6 +86,10 @@ jobs:
         committish: 2025.12.12
         # getting a warning when cache exists, so just save/restore ourselves
         cache: false
+
+    - name: Check VCPKG_DEFAULT_BINARY_CACHE
+      run: |
+        echo "VCPKG_DEFAULT_BINARY_CACHE = $VCPKG_DEFAULT_BINARY_CACHE"
 
     - uses: actions/cache@v4
       with:
