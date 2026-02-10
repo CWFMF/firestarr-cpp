@@ -91,4 +91,5 @@ COPY --from=firestarr-base-minimal / /
 # should exist because of firestarr image and /bin/sh doesn't exist in -minimal
 # RUN mkdir -p /appl/firestarr/grid
 WORKDIR /appl/firestarr
+COPY --from=firestarr /appl/firestarr/ /appl/firestarr/
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
