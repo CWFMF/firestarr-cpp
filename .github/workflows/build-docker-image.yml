@@ -67,8 +67,8 @@ jobs:
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           # ${{ github.repository }} isn't lowercase so manually specify
           # using just 'cache' means only the last thing to finish survives the cleanup since the rest are untagged
-          cache-from: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }}
-          cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }},mode=max
+          cache-from: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ inputs.image }}-${{ env.PLATFORM_PAIR }}
+          cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ inputs.image }}-${{ env.PLATFORM_PAIR }},mode=max
 
       - name: Export digest
         run: |
