@@ -768,7 +768,12 @@ vector<shared_ptr<ProbabilityMap>> Model::runIterations(
   // HACK: use initial value for type
   auto timer = std::thread([&]() {
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
-    bool keep_checking{true};
+    bool keep_checking{0 != Settings::maximumTimeSeconds()};
+    if (!keep_checking)
+    {
+      logging::note("No time limit being enforced since MAXIMUM_TIME = 0");
+      return;
+    }
     while (keep_checking)
     {
       this->last_checked_ = Clock::now();
