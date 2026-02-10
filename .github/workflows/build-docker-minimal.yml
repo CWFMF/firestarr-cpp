@@ -7,9 +7,6 @@ on:
   workflow_dispatch:
   workflow_call:
 
-env:
-  REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
-
 jobs:
   # uses cache from firestarr image but get error when combined
   # FIX: Error: Failed to CreateArtifact: Received non-retryable error:

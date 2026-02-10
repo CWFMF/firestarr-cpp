@@ -7,9 +7,6 @@ on:
   workflow_dispatch:
   workflow_call:
 
-env:
-  REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
-
 jobs:
   build-firestarr:
     uses: ./.github/workflows/build-docker-image.yml
