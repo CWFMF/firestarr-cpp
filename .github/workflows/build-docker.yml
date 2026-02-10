@@ -1,24 +1,26 @@
 name: build-docker
 
 on:
-  workflow_run:
-    workflows: [build-docker-vcpkg-installed]
-    types:
-      - completed
+  push:
+    branches: [ "main", "dev", "unstable" ]
+    tags: [ "*" ]
+  workflow_dispatch:
 
 jobs:
-  on-success:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    steps:
-      - run: echo 'The triggering workflow passed'
+  # specifically package this so build process doesn't keep redoing it
+  build-docker-vcpkg-installed:
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      image: vcpkg-installed
 
-      - uses: ./.github/workflows/build-docker-image.yml
-        with:
-          image: firestarr
+  build-docker-normal:
+    needs: [build-docker-vcpkg-installed]
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      image: firestarr
 
-  on-failure:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-    steps:
-      - run: echo 'The triggering workflow failed'
+  build-docker-minimal:
+    needs: [build-docker-normal]
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      image: firestarr-minimal
