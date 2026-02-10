@@ -1,0 +1,15 @@
+name: build-docker-build
+
+on:
+  push:
+    branches: [ "main", "dev", "unstable" ]
+    tags: [ "*" ]
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  # specifically package this so build process doesn't keep redoing it
+  build-firestarr-minimal:
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      image: vcpkg-installed
