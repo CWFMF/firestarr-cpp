@@ -36,7 +36,7 @@ public:
    * \param mt_spread Spread thresholds
    * \return This
    */
-  Iteration* reset(mt19937* mt_extinction, mt19937* mt_spread);
+  Iteration* reset(mt19937_64* mt_extinction, mt19937_64* mt_spread);
   /**
    * \brief List of Scenarios this Iteration contains
    * \return List of Scenarios this Iteration contains

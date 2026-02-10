@@ -157,8 +157,8 @@ public:
    * \return This
    */
   [[nodiscard]] Scenario* reset(
-    mt19937* mt_extinction,
-    mt19937* mt_spread,
+    mt19937_64* mt_extinction,
+    mt19937_64* mt_spread,
     ptr<SafeVector> final_sizes
   );
   /**

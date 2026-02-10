@@ -33,7 +33,7 @@ Iteration* Iteration::reset_with_new_start(const shared_ptr<Cell>& start_cell)
   }
   return this;
 }
-Iteration* Iteration::reset(mt19937* mt_extinction, mt19937* mt_spread)
+Iteration* Iteration::reset(mt19937_64* mt_extinction, mt19937_64* mt_spread)
 {
   cancelled_ = false;
   final_sizes_ = {};
