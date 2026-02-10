@@ -15,7 +15,6 @@ jobs:
   #      Failed request: (409) Conflict: an artifact with this name already
   #      exists on the workflow run
   build-firestarr-minimal:
-    needs: [ build-firestarr ]
     uses: ./.github/workflows/build-docker-image.yml
     with:
       image: firestarr-minimal
