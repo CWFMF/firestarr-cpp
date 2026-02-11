@@ -24,7 +24,8 @@ jobs:
       matrix:
         # no point in more than base image supports
         # ignore 32-bit - 386, arm/v5
-        platform: [amd64, arm/v7, arm64/v8, ppc64le, riscv64, s390x]
+        # arm64 == arm64/v8
+        platform: [amd64, arm/v7, arm64, ppc64le, riscv64, s390x]
     steps:
       - uses: actions/checkout@v4
 
