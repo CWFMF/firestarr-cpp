@@ -3,6 +3,7 @@
 #include "SimpleFBP.h"
 #include "Duff.h"
 #include "FBP45.h"
+#include "FireSpread.h"
 #include "FireWeather.h"
 #include "FuelLookup.h"
 #include "FuelType.h"
@@ -326,6 +327,147 @@ static const FuelCompareOptions FUEL_COMPARE_GRASS{
   .dc_values = DC_VALUES_GRASS
 };
 static const FuelCompareOptions FUEL_COMPARE_DECIDUOUS{.bui_values = BUI_RANGE_DEFAULTS};
+int compare_spread(
+  const string name,
+  // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
+  // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
+  const FuelType* a,
+  const FuelType* b,
+  const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
+)
+{
+  static const DurationSize TIME{INVALID_TIME};
+  static const MathSize MIN_ROS{0.0};
+  static const MathSize CELL_SIZE{100.0};
+  static const vector<SlopeSize> slopes{0, 15, 30};
+  static const vector<AspectSize> aspects{0, 15, 25, 35, 45, 55};
+  // duration is in minutes
+  auto show_offset = [=](const ROSOffset& o) {
+    const auto intensity{o.intensity};
+    const auto ros{o.ros};
+    const auto direction{o.raz};
+    // offsets are in fraction of a cell per minute
+    const auto offset{o.offset};
+    cout << std::format(
+      " ({:d} kW/m; {:0.6f} m/min @{:03d} == ({:g}, {:g}))",
+      intensity,
+      ros,
+      direction.asDegreesSize(),
+      offset.x * CELL_SIZE,
+      offset.y * CELL_SIZE
+    );
+  };
+  size_t count_comparisons{0};
+  logging::debug(
+    "compare_spread({:s}, {:s}, {:s})", name.c_str(), FuelType::safeName(a), FuelType::safeName(b)
+  );
+  for (auto ffmc : range(0.0, 101.0, 1.0))
+  {
+    logging::extensive("ffmc {:f}", ffmc);
+    for (auto dmc : range(0.0, 200.0, 3.0))
+    {
+      logging::extensive("dmc {:f}", dmc);
+      // for (auto bui : options.bui_values)
+      {
+        for (auto dc : options.dc_values)
+        {
+          logging::extensive("dc {:f}", dc);
+          const FwiWeather weather{Weather::Invalid(), Ffmc{ffmc}, Dmc{dmc}, Dc{dc}};
+          for (auto nd : options.nd_values)
+          {
+            logging::extensive("nd {:d}", nd);
+            for (auto slope : slopes)
+            {
+              logging::extensive("slope {:d}", slope);
+              for (auto aspect : aspects)
+              {
+                ++count_comparisons;
+                logging::extensive("aspect {:d}", aspect);
+                // HACK: this constructor ignores fuel part of this
+                const auto key = Cell::key(Cell::hashCell(slope, aspect, 0));
+                const SpreadInfo spread_a{a, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
+                const SpreadInfo spread_b{b, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
+                const auto offsets_a = spread_a.offsets();
+                const auto offsets_b = spread_b.offsets();
+                const auto head_ros = spread_a.headRos();
+                static constexpr MathSize ROS_MINIMAL{1.0};
+                logging::verbose(
+                  "compare_spread() [{:d}] {:s}spreading for ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
+                  count_comparisons,
+                  spread_a.isNotSpreading() ? "not "
+                  : head_ros < ROS_MINIMAL  ? "minimal "
+                                            : "",
+                  ffmc,
+                  dmc,
+                  dc,
+                  nd,
+                  slope,
+                  aspect
+                );
+                const auto show_offsets =
+                  logging::should_log(logging::level::verbose) && head_ros >= ROS_MINIMAL;
+                if (offsets_a.size() != offsets_b.size())
+                {
+                  logging::fatal("compare_spread() failed");
+                  if (offsets_a.size() < offsets_b.size())
+                  {
+                    logging::error("compare_spread() == -1");
+                    return -1;
+                  }
+                  if (offsets_a.size() > offsets_b.size())
+                  {
+                    logging::error("compare_spread() == 1");
+                    return 1;
+                  }
+                }
+                if (show_offsets)
+                {
+                  cout << "Offsets are: [";
+                }
+                for (size_t i = 0; i < offsets_a.size(); ++i)
+                {
+                  const auto pt_a{offsets_a.at(i)};
+                  const auto pt_b{offsets_b.at(i)};
+                  if (show_offsets)
+                  {
+                    show_offset(pt_a);
+                  }
+                  if (auto cmp_pt = pt_a <=> pt_b; 0 != cmp_pt)
+                  {
+                    logging::fatal("compare_spread() failed");
+                    if (!show_offsets)
+                    {
+                      show_offset(pt_a);
+                    }
+                    cout << " != ";
+                    show_offset(pt_b);
+                    cout << "\n";
+                    if (std::weak_ordering::less == cmp_pt)
+                    {
+                      logging::error("compare_spread() == -1");
+                      return -1;
+                    }
+                    if (std::weak_ordering::greater == cmp_pt)
+                    {
+                      logging::error("compare_spread() == 1");
+                      return 1;
+                    }
+                  }
+                }
+                if (show_offsets)
+                {
+                  cout << "]\n";
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  logging::debug("compare_spread() == 0 with {:d} comparisons", count_comparisons);
+  return 0;
+}
 template <class TypeA, class TypeB>
 int compare_fuel_basic(
   const string name,
@@ -445,7 +587,10 @@ int compare_fuel_basic(
   // MathSize criticalSurfaceIntensity(const SpreadInfo& spread) const
   // check_equal(a.name(), b.name(), "name");
   // check_equal(a.code(), b.code(), "code");
-  return 0;
+  // return 0;
+  return compare_spread(
+    name, static_cast<const FuelType*>(&a), static_cast<const FuelType*>(&b), options
+  );
 }
 template <class TypeA, class TypeB>
 int compare_fuel(
@@ -489,7 +634,8 @@ int compare_fuel(
   check_equal(a.a(), b.a(), "a");
   check_equal(a.negB(), b.negB(), "negB");
   check_equal(a.c(), b.c(), "c");
-  // static constexpr MathSize crownRateOfSpread(const MathSize isi, const MathSize fmc) noexcept
+  // static constexpr MathSize crownRateOfSpread(const MathSize isi, const MathSize fmc)
+  // noexcept
   check_equal(a.logQ(), b.logQ(), "logQ");
   return 0;
 }
@@ -503,7 +649,7 @@ int compare_fuel_variable(
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
 )
 {
-  assert(&a.summer() != &a.spring());
+  assert(a.summer() != a.spring());
   // FIX: calling functions of FuelVariable should throw, but don't bother checking that
   if (const auto cmp = compare_fuel_basic(name, *a.summer(), *b.summer(), options); 0 != cmp)
   {
