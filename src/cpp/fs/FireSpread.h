@@ -15,6 +15,7 @@ struct ROSOffset
   ROSSize ros;
   Direction raz;
   Offset offset;
+  auto operator<=>(const ROSOffset& rhs) const noexcept = default;
 };
 using OffsetSet = vector<ROSOffset>;
 class FuelType;
@@ -236,6 +237,21 @@ private:
     const ptr<const FwiWeather> weather,
     const ptr<const FwiWeather> weather_daily
   );
+
+public:
+  // HACK: for testing fuels
+  SpreadInfo(
+    const FuelType* fuel_original,
+    DurationSize time,
+    MathSize min_ros,
+    MathSize cell_size,
+    const SpreadKey& key,
+    int nd,
+    const ptr<const FwiWeather> weather,
+    const ptr<const FwiWeather> weather_daily
+  );
+
+private:
   /**
    * Do initial spread calculations
    * \return Initial head ros calculation (-1 for none)
