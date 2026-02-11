@@ -1,13 +1,16 @@
 #!/bin/bash
 # set -e
 DIR_LOG="build/docker"
-# don't have base images for all the platforms so just use a list
-PLATFORMS=$(docker buildx inspect --bootstrap | grep Platforms: | sed "s/Platforms: *//;s/ //g;s/,/\n/g;s/linux\///g" | sort)
-# exclude some things
-# PLATFORMS=$(echo "$PLATFORMS" | sed "/^386$/d;/^loong64$/d;/^mips64$/d;/^mips64le$/d;/^ppc64$/d")
-PLATFORMS=$(echo "$PLATFORMS" | sed "/^386$/d")
-# unsure about why arm/v8 isn't in list but works
-# PLATFORMS="amd64 arm/v8 arm/v7 arm64/v8 ppc64le s390x arm/v5 riscv64"
+# # don't have base images for all the platforms so just use a list
+# PLATFORMS=$(docker buildx inspect --bootstrap | grep Platforms: | sed "s/Platforms: *//;s/ //g;s/,/\n/g;s/linux\///g" | sort)
+# # exclude some things
+# # PLATFORMS=$(echo "$PLATFORMS" | sed "/^386$/d;/^loong64$/d;/^mips64$/d;/^mips64le$/d;/^ppc64$/d")
+# PLATFORMS=$(echo "$PLATFORMS" | sed "/^386$/d" | sed)
+# # unsure about why arm/v8 isn't in list but works
+# # PLATFORMS="amd64 arm/v8 arm/v7 arm64/v8 ppc64le s390x arm/v5 riscv64"
+# no point in more than base image supports
+# ignore 32-bit - 386, arm/v5
+PLATFORMS="amd64 arm/v7 arm64/v8 ppc64le riscv64 s390x"
 # echo PLATFORMS = ${PLATFORMS}
 mkdir -p ${DIR_LOG}
 for p in ${PLATFORMS}

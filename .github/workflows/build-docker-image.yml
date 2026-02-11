@@ -22,11 +22,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ppc64le - cc1: error: '-m64' requires a PowerPC64 cpu
-        # riscv64 - cc1plus: error: '-mcpu=native': unknown CPU
-        # arm/v5 - undefined reference to `std::__atomic_futex_unsigned_base::_M_futex_wait_until
-        # platform: [amd64, arm/v7, arm64/v8, ppc64le, s390x, arm/v5, riscv64]
-        platform: [amd64, arm/v7, arm64/v8, s390x]
+        # no point in more than base image supports
+        # ignore 32-bit - 386, arm/v5
+        platform: [amd64, arm/v7, arm64/v8, ppc64le, riscv64, s390x]
     steps:
       - uses: actions/checkout@v4
 
