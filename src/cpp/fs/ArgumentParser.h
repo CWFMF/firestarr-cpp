@@ -88,6 +88,7 @@ private:
   vector<string> positional_args_{};
   size_t cur_arg_{0};
   PositionalArgumentsRequired require_positional_{};
+  bool help_requested_{false};
 
 public:
   virtual ~ArgumentParser() = default;
@@ -120,6 +121,7 @@ public:
    * \brief Indicate positional arguments should all be used by now and error if not
    */
   void done_positional();
+  bool help_requested() { return help_requested_; }
 };
 enum MODE
 {
