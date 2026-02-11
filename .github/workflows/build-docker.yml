@@ -24,3 +24,21 @@ jobs:
     uses: ./.github/workflows/build-docker-image.yml
     with:
       image: firestarr-minimal
+
+  cleanup-docker-cache:
+    needs: [build-docker-minimal]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          dry-run: true
+          # FIX: leave firestarr alone for now since it has the history of things from the start
+          # packages: firestarr,firestarr-cpp/firestarr
+          packages: firestarr-cpp/cache
+          delete-untagged: true
+          delete-ghost-images: true
+          delete-partial-images: true
+          delete-orphaned-images: true
