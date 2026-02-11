@@ -14,6 +14,7 @@ services:
         source: ./settings.ini
         target: /appl/firestarr/settings.ini
       - ./test:/appl/firestarr/test:z
+      - ./grid:/appl/firestarr/grid:z
       - ./data:/appl/data:z
       - ./sims:/appl/data/sims:z
     env_file:
@@ -34,6 +35,7 @@ services:
         source: ./settings.ini
         target: /appl/firestarr/settings.ini
       - ./test:/appl/firestarr/test:z
+      - ./grid:/appl/firestarr/grid:z
       - ./data:/appl/data:z
       - ./sims:/appl/data/sims:z
     env_file:
