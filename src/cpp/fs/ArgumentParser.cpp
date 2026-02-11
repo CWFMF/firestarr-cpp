@@ -129,7 +129,7 @@ ArgumentParser::ArgumentParser(
   BIN_DIR = bin.substr(0, end);
   BIN_NAME = bin.substr(end, bin.size() - end);
   logging::Log::setLogLevel(fs::logging::LOG_NOTE);
-  register_argument("-h", "Show help", false, &show_help_and_exit);
+  register_flag(help_requested_, true, "-h", "Show help");
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
@@ -176,6 +176,10 @@ void ArgumentParser::parse_args()
       fs::logging::debug("Found positional argument '%s'", arg.c_str());
     }
     ++CUR_ARG;
+  }
+  if (help_requested_)
+  {
+    return;
   }
   for (auto& kv : PARSE_REQUIRED)
   {
@@ -368,6 +372,10 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
 void MainArgumentParser::parse_args()
 {
   SettingsArgumentParser::parse_args();
+  if (help_requested())
+  {
+    return;
+  }
   // fs::show_debug_settings();
   // parse positional arguments
   // output directory is always the first thing
