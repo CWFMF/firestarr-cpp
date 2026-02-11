@@ -19,8 +19,8 @@ RUN (export \
       || g++ -mcpu=native -Q --help=target \
       || echo "Can't use arch or cpu" \
     ) \
-  ) > /tmp/march.log
-RUN (export && g++ -mtune=native -Q --help=target) > /tmp/mtune.log
+  ) &> /tmp/march.log
+RUN (export && (g++ -mtune=native -Q --help=target || echo "Can't use -mtune=native")) &> /tmp/mtune.log
 
 # clone/bootstrap for vcpkg doesn't depend on what we're going to install
 FROM gcc-cmake AS vcpkg-bootstrap
