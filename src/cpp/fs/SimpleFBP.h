@@ -297,7 +297,6 @@ static LookupTable<&calculate_surface_fuel_consumption_jackpine> SURFACE_FUEL_CO
  * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int DuffDepth>
 class SimpleFuelJackpine : public SimpleFuelConifer
 {
 public:
@@ -311,6 +310,14 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize duff_depth,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
@@ -318,15 +325,15 @@ public:
         code,
         name,
         log_q,
-        A,
-        B,
-        C,
-        Bui0,
-        Cbh,
-        Cfl,
-        BulkDensity,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
         15,
-        DuffDepth,
+        duff_depth,
         duff_ffmc,
         duff_dmc
       )
@@ -335,9 +342,31 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize duff_depth,
     const Duff* duff
   )
-    : SimpleFuelJackpine(code, name, log_q, duff, duff)
+    : SimpleFuelJackpine(
+        code,
+        name,
+        log_q,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
+        duff_depth,
+        duff,
+        duff
+      )
   { }
   /**
    * \brief Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 11]
@@ -910,7 +939,7 @@ public:
 /**
  * \brief FBP fuel type C-3.
  */
-class SimpleFuelC3 : public SimpleFuelJackpine<110, 444, 300, 62, 8, 115, 20, 65>
+class SimpleFuelC3 : public SimpleFuelJackpine
 {
 public:
   SimpleFuelC3() = delete;
@@ -924,13 +953,27 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC3(const FuelCodeSize& code) noexcept
-    : SimpleFuelJackpine(code, "C-3", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
+    : SimpleFuelJackpine(
+        code,
+        "C-3",
+        LOG_0_75,
+        110,
+        444,
+        300,
+        62,
+        8,
+        115,
+        20,
+        65,
+        &duff::FeatherMoss,
+        &duff::PineSeney
+      )
   { }
 };
 /**
  * \brief FBP fuel type C-4.
  */
-class SimpleFuelC4 : public SimpleFuelJackpine<110, 293, 150, 66, 4, 120, 31, 62>
+class SimpleFuelC4 : public SimpleFuelJackpine
 {
 public:
   SimpleFuelC4() = delete;
@@ -944,7 +987,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC4(const FuelCodeSize& code) noexcept
-    : SimpleFuelJackpine(code, "C-4", LOG_0_80, &duff::PineSeney)
+    : SimpleFuelJackpine(code, "C-4", LOG_0_80, 110, 293, 150, 66, 4, 120, 31, 62, &duff::PineSeney)
   { }
 };
 /**
