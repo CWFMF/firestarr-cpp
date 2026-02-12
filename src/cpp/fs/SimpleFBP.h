@@ -404,7 +404,6 @@ static LookupTable<&calculate_surface_fuel_consumption_pine> SURFACE_FUEL_CONSUM
  * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int DuffDepth>
 class SimpleFuelPine : public SimpleFuelConifer
 {
 public:
@@ -418,6 +417,14 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize duff_depth,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
@@ -425,15 +432,15 @@ public:
         code,
         name,
         log_q,
-        A,
-        B,
-        C,
-        Bui0,
-        Cbh,
-        Cfl,
-        BulkDensity,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
         15,
-        DuffDepth,
+        duff_depth,
         duff_ffmc,
         duff_dmc
       )
@@ -442,9 +449,31 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize duff_depth,
     const Duff* duff
   )
-    : SimpleFuelPine(code, name, log_q, duff, duff)
+    : SimpleFuelPine(
+        code,
+        name,
+        log_q,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
+        duff_depth,
+        duff,
+        duff
+      )
   { }
   /**
    * \brief Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 12]
@@ -993,7 +1022,7 @@ public:
 /**
  * \brief FBP fuel type C-5.
  */
-class SimpleFuelC5 : public SimpleFuelPine<30, 697, 400, 56, 18, 120, 93, 46>
+class SimpleFuelC5 : public SimpleFuelPine
 {
 public:
   SimpleFuelC5() = delete;
@@ -1007,13 +1036,13 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC5(const FuelCodeSize& code) noexcept
-    : SimpleFuelPine(code, "C-5", LOG_0_80, &duff::PineSeney)
+    : SimpleFuelPine(code, "C-5", LOG_0_80, 30, 697, 400, 56, 18, 120, 93, 46, &duff::PineSeney)
   { }
 };
 /**
  * \brief FBP fuel type C-6.
  */
-class SimpleFuelC6 : public SimpleFuelPine<30, 800, 300, 62, 7, 180, 50, 50>
+class SimpleFuelC6 : public SimpleFuelPine
 {
 public:
   SimpleFuelC6() = delete;
@@ -1027,7 +1056,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC6(const FuelCodeSize& code) noexcept
-    : SimpleFuelPine(code, "C-6", LOG_0_80, &duff::PineSeney)
+    : SimpleFuelPine(code, "C-6", LOG_0_80, 30, 800, 300, 62, 7, 180, 50, 50, &duff::PineSeney)
   { }
 
 protected:
