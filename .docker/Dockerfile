@@ -65,28 +65,6 @@ RUN --mount=type=bind,source=./cmake,target=./cmake \
 # COPY ./fuel.lut ./settings.ini .
 # RUN ctest --preset Release
 
-# make a layer with scratch to clear out old layers
-FROM ${BASE_SLIM} AS firestarr-base-cleaned
-RUN apt-get clean \
-  && rm -rf \
-    /tmp/* \
-    /usr/share/doc/* \
-    /var/cache/* \
-    /var/lib/apt/lists/* \
-    /var/lib/dpkg/* \
-    /var/tmp/*
-COPY ./fuel.lut /appl/firestarr/
-COPY ./settings.ini /appl/firestarr/
-COPY --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
-COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
-
-# derive final image from base so updates to binary are small layers
-FROM scratch AS firestarr
-COPY --from=firestarr-base-cleaned / /
-RUN mkdir -p /appl/firestarr/grid
-WORKDIR /appl/firestarr
-ENTRYPOINT [ "/appl/firestarr/firestarr" ]
-
 FROM --platform=linux/amd64 ${BASE_DISTROLESS} AS distroless-amd64
 
 # seems like we can just delete everything and then copy distroless into any platform?
@@ -105,4 +83,29 @@ COPY ./fuel.lut /appl/firestarr/
 COPY ./settings.ini /appl/firestarr/
 COPY --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
 COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
+ENTRYPOINT [ "/appl/firestarr/firestarr" ]
+
+# make a layer with scratch to clear out old layers
+FROM ${BASE_SLIM} AS base-cleaned
+RUN apt-get clean \
+  && rm -rf \
+    /tmp/* \
+    /usr/share/doc/* \
+    /var/cache/* \
+    /var/lib/apt/lists/* \
+    /var/lib/dpkg/* \
+    /var/tmp/*
+
+# use --from=firestarr-minimal to create a dependency so cache hopefully includes both
+FROM base-cleaned AS firestarr-base-cleaned
+COPY ./fuel.lut /appl/firestarr/
+COPY ./settings.ini /appl/firestarr/
+COPY --from=firestarr-minimal /appl/firestarr/firestarr /appl/firestarr/
+COPY --from=firestarr-minimal /appl/firestarr/proj.db /appl/firestarr/proj.db
+
+# derive final image from base so updates to binary are small layers
+FROM scratch AS firestarr
+COPY --from=firestarr-base-cleaned / /
+RUN mkdir -p /appl/firestarr/grid
+WORKDIR /appl/firestarr
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
