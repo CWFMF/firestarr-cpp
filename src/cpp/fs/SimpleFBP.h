@@ -550,18 +550,11 @@ public:
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <
-  int A,
-  int B,
-  int C,
-  int Bui0,
-  int RosMultiplier,
-  int PercentMixed,
-  int BulkDensity,
-  int InorganicPercent,
-  int DuffDepth>
 class SimpleFuelMixed : public SimpleStandardFuel
 {
+  MathSize ros_multiplier_{};
+  MathSize percent_mixed_{};
+
 public:
   SimpleFuelMixed() = delete;
   ~SimpleFuelMixed() override = default;
@@ -575,24 +568,38 @@ public:
    * \param name Name of the fuel
    * \param log_q Log value of q [ST-X-3 table 7]
    */
-  constexpr SimpleFuelMixed(const FuelCodeSize& code, const char* name, const LogValue log_q)
+  constexpr SimpleFuelMixed(
+    const FuelCodeSize& code,
+    const char* name,
+    const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize ros_multiplier,
+    const MathSize percent_mixed,
+    const MathSize bulk_density,
+    const MathSize inorganic_percent,
+    const MathSize duff_depth
+  )
     : SimpleStandardFuel(
         code,
         name,
         true,
         log_q,
-        A,
-        B,
-        C,
-        Bui0,
+        a,
+        b,
+        c,
+        bui0,
         6,
         80,
-        BulkDensity,
-        InorganicPercent,
-        DuffDepth,
+        bulk_density,
+        inorganic_percent,
+        duff_depth,
         &duff::Peat,
         &duff::Peat
-      )
+      ),
+      ros_multiplier_(ros_multiplier), percent_mixed_(percent_mixed)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 10]
@@ -640,26 +647,26 @@ public:
    * \brief Percent Conifer (% / 100)
    * \return Percent Conifer (% / 100)
    */
-  [[nodiscard]] static constexpr MathSize ratioConifer() { return PercentMixed / 100.0; }
+  [[nodiscard]] constexpr MathSize ratioConifer() const { return percent_mixed_ / 100.0; }
   /**
    * \brief Percent Deciduous (% / 100)
    * \return Percent Deciduous (% / 100)
    */
-  [[nodiscard]] static constexpr MathSize ratioDeciduous() { return 1.0 - (PercentMixed / 100.0); }
+  [[nodiscard]] constexpr MathSize ratioDeciduous() const { return 1.0 - (percent_mixed_ / 100.0); }
 
 protected:
   /**
    * \brief Rate of spread multiplier [ST-X-3 eq 27/28, GLC-X-10 eq 29/30]
    * \return Rate of spread multiplier [ST-X-3 eq 27/28, GLC-X-10 eq 29/30]
    */
-  [[nodiscard]] static constexpr MathSize rosMultiplier() { return RosMultiplier / 10.0; }
+  [[nodiscard]] constexpr MathSize rosMultiplier() const { return ros_multiplier_ / 10.0; }
   /**
    * \brief Calculate ISI with slope influence and zero wind (ISF) for D-1 [ST-X-3 eq 41]
    * \param spread SpreadInfo to use
    * \param isi Initial Spread Index
    * \return ISI with slope influence and zero wind (ISF) for D-1 [ST-X-3 eq 41]
    */
-  [[nodiscard]] static MathSize isfD1(const SpreadInfo& spread, const MathSize isi) noexcept
+  [[nodiscard]] MathSize isfD1(const SpreadInfo& spread, const MathSize isi) const noexcept
   {
     static const SimpleFuelD1 F{14};
     return F.isfD1(spread, rosMultiplier(), isi);
@@ -675,8 +682,7 @@ protected:
  * \tparam PercentDeadFir Percent dead fir in the stand.
  */
 template <int A, int B, int C, int Bui0, int RosMultiplier, int PercentDeadFir>
-class SimpleFuelMixedDead
-  : public SimpleFuelMixed<A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75>
+class SimpleFuelMixedDead : public SimpleFuelMixed
 {
 public:
   SimpleFuelMixedDead() = delete;
@@ -692,7 +698,7 @@ public:
    * \param log_q Log value of q [ST-X-3 table 7]
    */
   constexpr SimpleFuelMixedDead(const FuelCodeSize& code, const char* name, const LogValue log_q)
-    : SimpleFuelMixed<A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75>(code, name, log_q)
+    : SimpleFuelMixed(code, name, log_q, A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75)
   { }
 };
 /**
@@ -701,8 +707,7 @@ public:
  * \tparam RatioMixed Percent conifer
  */
 template <int RosMultiplier, int RatioMixed>
-class SimpleFuelMixedWood
-  : public SimpleFuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>
+class SimpleFuelMixedWood : public SimpleFuelMixed
 {
 public:
   SimpleFuelMixedWood() = delete;
@@ -717,10 +722,19 @@ public:
    * \param name Name of the fuel
    */
   constexpr SimpleFuelMixedWood(const FuelCodeSize& code, const char* name)
-    : SimpleFuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>(
+    : SimpleFuelMixed(
         code,
         name,
-        LOG_0_80
+        LOG_0_80,
+        110,
+        282,
+        150,
+        50,
+        RosMultiplier,
+        RatioMixed,
+        108,
+        25,
+        50
       )
   { }
   /**
@@ -730,9 +744,7 @@ public:
    */
   [[nodiscard]] MathSize surfaceFuelConsumption(const SpreadInfo& spread) const noexcept override
   {
-    return this->ratioConifer()
-           * SimpleFuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>::
-               surfaceFuelConsumption(spread)
+    return this->ratioConifer() * SimpleFuelMixed::surfaceFuelConsumption(spread)
          + this->ratioDeciduous() * SURFACE_FUEL_CONSUMPTION_D1(spread.weather->bui.value);
   }
 };
