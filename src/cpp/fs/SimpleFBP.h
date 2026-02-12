@@ -1576,19 +1576,19 @@ public:
    * \brief A slash fuel type
    * \param code Code to identify fuel with
    * \param name Name of the fuel
-   * \param can_crown Whether or not this fuel can have a crown fire
    * \param spring Fuel type to use in the spring
    * \param summer Fuel type to use in the summer
    */
   constexpr SimpleFuelVariable(
     const FuelCodeSize& code,
     const char* name,
-    const bool can_crown,
     const FuelType* const spring,
     const FuelType* const summer
   )
-    : SimpleFuelType(code, name, can_crown), spring_(spring), summer_(summer)
-  { }
+    : SimpleFuelType(code, name, spring->canCrown()), spring_(spring), summer_(summer)
+  {
+    assert(spring->canCrown() == summer->canCrown());
+  }
   SimpleFuelVariable(SimpleFuelVariable&& rhs) noexcept = delete;
   SimpleFuelVariable(const SimpleFuelVariable& rhs) = delete;
   SimpleFuelVariable& operator=(SimpleFuelVariable&& rhs) noexcept = delete;
@@ -1782,7 +1782,7 @@ public:
     const SimpleFuelD1* d1,
     const SimpleFuelD2* d2
   ) noexcept
-    : SimpleFuelVariable(code, "D-1/D-2", false, d1, d2)
+    : SimpleFuelVariable(code, "D-1/D-2", d1, d2)
   { }
 };
 /**
@@ -1817,7 +1817,7 @@ public:
       percent_conifer
 #endif
   )
-    : SimpleFuelVariable(code, name, true, m1, m2)
+    : SimpleFuelVariable(code, name, m1, m2)
   {
     assert(m1->percentMixed() == m2->percentMixed());
     assert(m1->percentMixed() == percent_conifer);
@@ -1854,7 +1854,7 @@ public:
       percent_dead_fir
 #endif
   )
-    : SimpleFuelVariable(code, name, true, m3, m4)
+    : SimpleFuelVariable(code, name, m3, m4)
   {
     assert(m3->percentMixed() == m4->percentMixed());
     assert(m3->percentMixed() == percent_dead_fir);
@@ -1885,7 +1885,7 @@ public:
     const SimpleFuelO1A* o1a,
     const SimpleFuelO1B* o1b
   )
-    : SimpleFuelVariable(code, name, true, o1a, o1b)
+    : SimpleFuelVariable(code, name, o1a, o1b)
   { }
 };
 }
