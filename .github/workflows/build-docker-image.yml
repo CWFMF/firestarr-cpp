@@ -67,7 +67,7 @@ jobs:
           # ${{ github.repository }} isn't lowercase so manually specify
           cache-from: |
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }}
-          cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }},mode=max,oci-mediatypes=true,image-manifest=true
+          cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }},mode=max
 
       - name: Export digest
         run: |
