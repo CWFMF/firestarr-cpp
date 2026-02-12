@@ -70,8 +70,7 @@ template <
   int BulkDensity,
   int InorganicPercent,
   int DuffDepth>
-class SimpleFuelNonMixed
-  : public SimpleStandardFuel<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>
+class SimpleFuelNonMixed : public SimpleStandardFuel
 {
 public:
   SimpleFuelNonMixed() = delete;
@@ -82,8 +81,41 @@ public:
   SimpleFuelNonMixed& operator=(SimpleFuelNonMixed&& rhs) noexcept = delete;
 
 protected:
-  using SimpleStandardFuel<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>::
-    SimpleStandardFuel;
+  constexpr SimpleFuelNonMixed(
+    const FuelCodeSize& code,
+    const char* name,
+    const bool can_crown,
+    const LogValue log_q,
+    const Duff* duff_ffmc,
+    const Duff* duff_dmc
+  )
+    : SimpleStandardFuel(
+        code,
+        name,
+        can_crown,
+        log_q,
+        A,
+        B,
+        C,
+        Bui0,
+        Cbh,
+        Cfl,
+        BulkDensity,
+        InorganicPercent,
+        DuffDepth,
+        duff_ffmc,
+        duff_dmc
+      )
+  { }
+  constexpr SimpleFuelNonMixed(
+    const FuelCodeSize& code,
+    const char* name,
+    const bool can_crown,
+    const LogValue log_q,
+    const Duff* duff
+  )
+    : SimpleFuelNonMixed(code, name, can_crown, log_q, duff, duff)
+  { }
 
 public:
   /**
@@ -339,8 +371,7 @@ template <
   int BulkDensity,
   int InorganicPercent,
   int DuffDepth>
-class SimpleFuelMixed
-  : public SimpleStandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>
+class SimpleFuelMixed : public SimpleStandardFuel
 {
 public:
   SimpleFuelMixed() = delete;
@@ -356,11 +387,20 @@ public:
    * \param log_q Log value of q [ST-X-3 table 7]
    */
   constexpr SimpleFuelMixed(const FuelCodeSize& code, const char* name, const LogValue log_q)
-    : SimpleStandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>(
+    : SimpleStandardFuel(
         code,
         name,
         true,
         log_q,
+        A,
+        B,
+        C,
+        Bui0,
+        6,
+        80,
+        BulkDensity,
+        InorganicPercent,
+        DuffDepth,
         &duff::Peat,
         &duff::Peat
       )
@@ -381,9 +421,7 @@ public:
    */
   [[nodiscard]] MathSize crownConsumption(const MathSize cfb) const noexcept override
   {
-    return ratioConifer()
-         * SimpleStandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>::
-             crownConsumption(cfb);
+    return ratioConifer() * SimpleStandardFuel::crownConsumption(cfb);
   }
   /**
    * \brief Calculate rate of spread (m/min) [ST-X-3 27/28, GLC-X-10 29/31]
@@ -541,8 +579,7 @@ static LookupTable<&calculate_base_multiplier_curing> BASE_MULTIPLIER_CURING{};
  * \tparam C Rate of spread parameter c * 100 [ST-X-3 table 6]
  */
 template <int A, int B, int C>
-class SimpleFuelGrass
-  : public SimpleStandardFuel<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>
+class SimpleFuelGrass : public SimpleStandardFuel
 {
 public:
   SimpleFuelGrass() = delete;
@@ -559,11 +596,20 @@ public:
    */
   constexpr SimpleFuelGrass(const FuelCodeSize& code, const char* name, const LogValue log_q)
     // HACK: grass assumes no duff (total duff depth == ffmc depth => dmc depth is 0)
-    : SimpleStandardFuel<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>(
+    : SimpleStandardFuel(
         code,
         name,
         false,
         log_q,
+        A,
+        B,
+        C,
+        1,
+        0,
+        0,
+        0,
+        0,
+        static_cast<int>(DUFF_FFMC_DEPTH * 10.0),
         &duff::PeatMuck,
         &duff::PeatMuck
       )
