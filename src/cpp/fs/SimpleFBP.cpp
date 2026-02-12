@@ -284,14 +284,7 @@ auto check_equal(const auto& lhs, const auto& rhs, const char* name)
   logging::check_equal_verbose(logging::LOG_DEBUG, lhs, rhs, name);
 }
 template <class TypeA, class TypeB>
-int compare_fuel_valid(
-  const string name,
-  // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
-  // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
-  const TypeA& a,
-  const TypeB& b,
-  const char* msg = ""
-)
+int compare_fuel_valid(const string name, const TypeA& a, const TypeB& b, const char* msg = "")
 {
   logging::info("Checking %s: %s", name.c_str(), msg);
   //
@@ -325,8 +318,6 @@ static const FuelCompareOptions FUEL_COMPARE_DEFAULT{};
 static const FuelCompareOptions FUEL_COMPARE_DECIDUOUS{.bui_values = BUI_RANGE_DEFAULTS};
 int compare_spread(
   const string name,
-  // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
-  // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
   const FuelType* a,
   const FuelType* b,
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
@@ -375,6 +366,7 @@ int compare_spread(
         // for (auto bui : options.bui_values)
         {
           for (auto dc : options.dc_values)
+          // for (auto dc : range(0.0, std::ranges::max(options.dc_values), 17.0))
           {
             logging::extensive("dc %f", dc);
             const FwiWeather weather{Weather::Invalid(), Ffmc{ffmc}, Dmc{dmc}, Dc{dc}};
@@ -491,8 +483,6 @@ int compare_spread(
 template <class TypeA, class TypeB>
 int compare_fuel_basic(
   const string name,
-  // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
-  // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
   const TypeA& a,
   const TypeB& b,
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
@@ -615,8 +605,6 @@ int compare_fuel_basic(
 template <class TypeA, class TypeB>
 int compare_fuel(
   const string name,
-  // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
-  // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
   const TypeA& a,
   const TypeB& b,
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
@@ -660,8 +648,6 @@ int compare_fuel(
 template <class TypeA, class TypeB>
 int compare_fuel_variable(
   const string name,
-  // const simplefbp::SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>& a,
-  // const fs::FuelBase<BulkDensity, InorganicPercent, DuffDepth>& b
   const TypeA& a,
   const TypeB& b,
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
