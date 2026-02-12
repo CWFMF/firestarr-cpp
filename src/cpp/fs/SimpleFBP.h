@@ -805,7 +805,6 @@ static LookupTable<&calculate_base_multiplier_curing> BASE_MULTIPLIER_CURING{};
  * \tparam B Rate of spread parameter b * 10000 [ST-X-3 table 6]
  * \tparam C Rate of spread parameter c * 100 [ST-X-3 table 6]
  */
-template <int A, int B, int C>
 class SimpleFuelGrass : public SimpleStandardFuel
 {
 public:
@@ -821,16 +820,23 @@ public:
    * \param name Name of the fuel
    * \param log_q Log value of q [ST-X-3 table 7]
    */
-  constexpr SimpleFuelGrass(const FuelCodeSize& code, const char* name, const LogValue log_q)
+  constexpr SimpleFuelGrass(
+    const FuelCodeSize& code,
+    const char* name,
+    const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c
+  )
     // HACK: grass assumes no duff (total duff depth == ffmc depth => dmc depth is 0)
     : SimpleStandardFuel(
         code,
         name,
         false,
         log_q,
-        A,
-        B,
-        C,
+        a,
+        b,
+        c,
         1,
         0,
         0,
@@ -1299,7 +1305,7 @@ public:
 /**
  * \brief FBP fuel type O-1a.
  */
-class SimpleFuelO1A : public SimpleFuelGrass<190, 310, 140>
+class SimpleFuelO1A : public SimpleFuelGrass
 {
 public:
   SimpleFuelO1A() = delete;
@@ -1313,13 +1319,13 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelO1A(const FuelCodeSize& code) noexcept
-    : SimpleFuelGrass(code, "O-1a", LOG_1_00)
+    : SimpleFuelGrass(code, "O-1a", LOG_1_00, 190, 310, 140)
   { }
 };
 /**
  * \brief FBP fuel type O-1b.
  */
-class SimpleFuelO1B : public SimpleFuelGrass<250, 350, 170>
+class SimpleFuelO1B : public SimpleFuelGrass
 {
 public:
   SimpleFuelO1B() = delete;
@@ -1333,7 +1339,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelO1B(const FuelCodeSize& code) noexcept
-    : SimpleFuelGrass(code, "O-1b", LOG_1_00)
+    : SimpleFuelGrass(code, "O-1b", LOG_1_00, 250, 350, 170)
   { }
 };
 /**
