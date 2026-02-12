@@ -3,6 +3,7 @@
 #define FS_SIMPLE_FUELTYPE_H
 #include "stdafx.h"
 #include "FuelType.h"
+#include "unstable.h"
 namespace fs::simplefbp
 {
 using SimpleFuelType = fs::FuelType;
@@ -12,9 +13,13 @@ using SimpleFuelType = fs::FuelType;
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <int BulkDensity, int InorganicPercent, int DuffDepth>
 class SimpleFuelBase : public SimpleFuelType
 {
+private:
+  MathSize bulk_density_{};
+  MathSize inorganic_percent_{};
+  MathSize duff_depth_{};
+
 public:
   ~SimpleFuelBase() override = default;
   /**
@@ -29,10 +34,15 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const bool can_crown,
+    const MathSize bulk_density,
+    const MathSize inorganic_percent,
+    const MathSize duff_depth,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
-    : FuelType(code, name, can_crown), duff_ffmc_(duff_ffmc), duff_dmc_(duff_dmc)
+    : FuelType(code, name, can_crown), bulk_density_(bulk_density),
+      inorganic_percent_(inorganic_percent), duff_depth_(duff_depth), duff_ffmc_(duff_ffmc),
+      duff_dmc_(duff_dmc)
   { }
   SimpleFuelBase(SimpleFuelBase&& rhs) noexcept = delete;
   SimpleFuelBase(const SimpleFuelBase& rhs) = delete;
@@ -62,13 +72,13 @@ public:
   [[nodiscard]] ThresholdSize probabilityPeat(const MathSize mc_fraction) const noexcept override
   {
     // Anderson table 1
-    constexpr auto pb = bulkDensity();
+    const auto pb = bulkDensity();
     // Anderson table 1
-    constexpr auto fi = inorganicPercent();
-    constexpr auto pi = fi * pb;
+    const auto fi = inorganicPercent();
+    const auto pi = fi * pb;
     // Inorganic ratio
-    constexpr auto ri = fi / (1 - fi);
-    constexpr auto const_part = -19.329 + 1.7170 * ri + 23.059 * pi;
+    const auto ri = fi / (1 - fi);
+    const auto const_part = -19.329 + 1.7170 * ri + 23.059 * pi;
     // Anderson eq 1
     return 1 / (1 + exp(17.047 * mc_fraction / (1 - fi) + const_part));
   }
@@ -123,17 +133,29 @@ public:
    * \brief Duff Bulk Density (kg/m^3) [Anderson table 1]
    * \return Duff Bulk Density (kg/m^3) [Anderson table 1]
    */
-  [[nodiscard]] static constexpr MathSize bulkDensity() { return BulkDensity / 1000.0; }
+  [[nodiscard]] constexpr MathSize bulkDensity() const
+  {
+    return bulk_density_;
+    // BulkDensity / 1000.0;
+  }
   /**
    * \brief Inorganic Percent (% / 100) [Anderson table 1]
    * \return Inorganic Percent (% / 100) [Anderson table 1]
    */
-  [[nodiscard]] static constexpr MathSize inorganicPercent() { return InorganicPercent / 100.0; }
+  [[nodiscard]] constexpr MathSize inorganicPercent() const
+  {
+    return inorganic_percent_;
+    // InorganicPercent / 100.0;
+  }
   /**
    * \brief DuffDepth Depth of Duff layer (cm) [Anderson table 1]
    * \return DuffDepth Depth of Duff layer (cm) [Anderson table 1]
    */
-  [[nodiscard]] static constexpr MathSize duffDepth() { return DuffDepth / 10.0; }
+  [[nodiscard]] constexpr MathSize duffDepth() const
+  {
+    return duff_depth_;
+    // DuffDepth / 10.0;
+  }
   /**
    * \brief Type of duff deeper underground
    * \return Type of duff deeper underground
@@ -148,12 +170,12 @@ public:
    * \brief What fraction of the duff layer should use FFMC to determine moisture
    * \return What fraction of the duff layer should use FFMC to determine moisture
    */
-  [[nodiscard]] static constexpr MathSize ffmcRatio() { return 1 - dmcRatio(); }
+  [[nodiscard]] constexpr MathSize ffmcRatio() const { return 1 - dmcRatio(); }
   /**
    * \brief What fraction of the duff layer should use DMC to determine moisture
    * \return What fraction of the duff layer should use DMC to determine moisture
    */
-  [[nodiscard]] static constexpr MathSize dmcRatio()
+  [[nodiscard]] constexpr MathSize dmcRatio() const
   {
     return (duffDepth() - DUFF_FFMC_DEPTH) / duffDepth();
   }
