@@ -1738,7 +1738,6 @@ public:
  * \brief FBP fuel type M-1/M-2.
  * \tparam PercentConifer Percent conifer
  */
-template <int PercentConifer>
 class SimpleFuelM1M2 : public SimpleFuelVariable<SimpleFuelM1, SimpleFuelM2>
 {
 public:
@@ -1760,12 +1759,17 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const SimpleFuelM1* m1,
-    const SimpleFuelM2* m2
+    const SimpleFuelM2* m2,
+    // HACK: to ensure they match for now
+    const MathSize
+#ifndef NDEBUG
+      percent_conifer
+#endif
   )
     : SimpleFuelVariable<SimpleFuelM1, SimpleFuelM2>(code, name, true, m1, m2)
   {
     assert(m1->percentMixed() == m2->percentMixed());
-    assert(m1->percentMixed() == PercentConifer);
+    assert(m1->percentMixed() == percent_conifer);
   }
 };
 /**
