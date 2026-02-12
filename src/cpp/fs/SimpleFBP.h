@@ -1358,9 +1358,13 @@ public:
  * \tparam WfcB Woody Fuel Consumption parameter b * 10000 [ST-X-3 eq 20/22/24]
  * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  */
-template <int A, int B, int C, int Bui0, int FfcA, int FfcB, int WfcA, int WfcB, int BulkDensity>
 class SimpleFuelSlash : public SimpleFuelConifer
 {
+  MathSize ffc_a_{};
+  MathSize ffc_b_{};
+  MathSize wfc_a_{};
+  MathSize wfc_b_{};
+
 public:
   SimpleFuelSlash() = delete;
   ~SimpleFuelSlash() override = default;
@@ -1380,6 +1384,15 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize ffc_a,
+    const MathSize ffc_b,
+    const MathSize wfc_a,
+    const MathSize wfc_b,
+    const MathSize bulk_density,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
@@ -1387,18 +1400,19 @@ public:
         code,
         name,
         log_q,
-        A,
-        B,
-        C,
-        Bui0,
+        a,
+        b,
+        c,
+        bui0,
         0,
         0,
-        BulkDensity,
+        bulk_density,
         15,
         74,
         duff_ffmc,
         duff_dmc
-      )
+      ),
+      ffc_a_(ffc_a), ffc_b_(ffc_b), wfc_a_(wfc_a), wfc_b_(wfc_b)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 25]
@@ -1416,27 +1430,27 @@ private:
    * \brief Forest Floor Consumption parameter a [ST-X-3 eq 19/21/23]
    * \return Forest Floor Consumption parameter a [ST-X-3 eq 19/21/23]
    */
-  [[nodiscard]] static constexpr MathSize ffcA() { return FfcA; }
+  [[nodiscard]] constexpr MathSize ffcA() const { return ffc_a_; }
   /**
    * \brief Forest Floor Consumption parameter b [ST-X-3 eq 19/21/23]
    * \return Forest Floor Consumption parameter b [ST-X-3 eq 19/21/23]
    */
-  [[nodiscard]] static constexpr MathSize ffcB() { return FfcB / 10000.0; }
+  [[nodiscard]] constexpr MathSize ffcB() const { return ffc_b_ / 10000.0; }
   /**
    * \brief Woody Fuel Consumption parameter a [ST-X-3 eq 20/22/24]
    * \return Woody Fuel Consumption parameter a [ST-X-3 eq 20/22/24]
    */
-  [[nodiscard]] static constexpr MathSize wfcA() { return WfcA; }
+  [[nodiscard]] constexpr MathSize wfcA() const { return wfc_a_; }
   /**
    * \brief Woody Fuel Consumption parameter b [ST-X-3 eq 20/22/24]
    * \return Woody Fuel Consumption parameter b [ST-X-3 eq 20/22/24]
    */
-  [[nodiscard]] static constexpr MathSize wfcB() { return WfcB / 10000.0; }
+  [[nodiscard]] constexpr MathSize wfcB() const { return wfc_b_ / 10000.0; }
 };
 /**
  * \brief FBP fuel type S-1.
  */
-class SimpleFuelS1 : public SimpleFuelSlash<75, 297, 130, 38, 4, -250, 4, -340, 78>
+class SimpleFuelS1 : public SimpleFuelSlash
 {
 public:
   SimpleFuelS1() = delete;
@@ -1450,13 +1464,28 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelS1(const FuelCodeSize& code) noexcept
-    : SimpleFuelSlash(code, "S-1", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
+    : SimpleFuelSlash(
+        code,
+        "S-1",
+        LOG_0_75,
+        75,
+        297,
+        130,
+        38,
+        4,
+        -250,
+        4,
+        -340,
+        78,
+        &duff::FeatherMoss,
+        &duff::PineSeney
+      )
   { }
 };
 /**
  * \brief FBP fuel type S-2.
  */
-class SimpleFuelS2 : public SimpleFuelSlash<40, 438, 170, 63, 10, -130, 6, -600, 132>
+class SimpleFuelS2 : public SimpleFuelSlash
 {
 public:
   SimpleFuelS2() = delete;
@@ -1470,13 +1499,28 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelS2(const FuelCodeSize& code) noexcept
-    : SimpleFuelSlash(code, "S-2", LOG_0_75, &duff::FeatherMoss, &duff::WhiteSpruce)
+    : SimpleFuelSlash(
+        code,
+        "S-2",
+        LOG_0_75,
+        40,
+        438,
+        170,
+        63,
+        10,
+        -130,
+        6,
+        -600,
+        132,
+        &duff::FeatherMoss,
+        &duff::WhiteSpruce
+      )
   { }
 };
 /**
  * \brief FBP fuel type S-3.
  */
-class SimpleFuelS3 : public SimpleFuelSlash<55, 829, 320, 31, 12, -166, 20, -210, 100>
+class SimpleFuelS3 : public SimpleFuelSlash
 {
 public:
   SimpleFuelS3() = delete;
@@ -1490,7 +1534,22 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelS3(const FuelCodeSize& code) noexcept
-    : SimpleFuelSlash(code, "S-3", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
+    : SimpleFuelSlash(
+        code,
+        "S-3",
+        LOG_0_75,
+        55,
+        829,
+        320,
+        31,
+        12,
+        -166,
+        20,
+        -210,
+        100,
+        &duff::FeatherMoss,
+        &duff::PineSeney
+      )
   { }
 };
 template <class FuelSpring, class FuelSummer>
