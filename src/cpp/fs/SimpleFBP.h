@@ -1776,7 +1776,6 @@ public:
  * \brief FBP fuel type M-3/M-4.
  * \tparam PercentDeadFir Percent dead fir
  */
-template <int PercentDeadFir>
 class SimpleFuelM3M4 : public SimpleFuelVariable<SimpleFuelM3, SimpleFuelM4>
 {
 public:
@@ -1797,12 +1796,17 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const SimpleFuelM3* m3,
-    const SimpleFuelM4* m4
+    const SimpleFuelM4* m4,
+    // HACK: to ensure they match for now
+    const MathSize
+#ifndef NDEBUG
+      percent_dead_fir
+#endif
   )
     : SimpleFuelVariable<SimpleFuelM3, SimpleFuelM4>(code, name, true, m3, m4)
   {
     assert(m3->percentMixed() == m4->percentMixed());
-    assert(m3->percentMixed() == PercentDeadFir);
+    assert(m3->percentMixed() == percent_dead_fir);
   }
 };
 /**
