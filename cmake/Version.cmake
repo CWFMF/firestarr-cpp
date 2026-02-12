@@ -24,7 +24,7 @@ file(GLOB_RECURSE FILES_CMAKE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/*)
 list(FILTER FILES_USED EXCLUDE REGEX version*)
 list(APPEND FILES_USED ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg.json ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-configuration.json ${FILES_CMAKE})
 
-set(FILE_VERSION_CPP ${DIR_SRC}/version.cpp)
+set(FILE_VERSION_CPP ${CMAKE_BINARY_DIR}/version.cpp)
 
 # calculate hash from files that matter
 set(HASHES)
