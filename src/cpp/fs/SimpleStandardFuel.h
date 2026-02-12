@@ -76,7 +76,7 @@ template <
   int BulkDensity,
   int InorganicPercent,
   int DuffDepth>
-class SimpleStandardFuel : public SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>
+class SimpleStandardFuel : public SimpleFuelBase
 {
 public:
   /**
@@ -96,10 +96,13 @@ public:
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   ) noexcept
-    : SimpleFuelBase<BulkDensity, InorganicPercent, DuffDepth>(
+    : SimpleFuelBase(
         code,
         name,
         can_crown,
+        BulkDensity / 1000.0,
+        InorganicPercent / 100.0,
+        DuffDepth / 10.0,
         duff_ffmc,
         duff_dmc
       ),
