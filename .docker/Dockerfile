@@ -34,8 +34,11 @@ RUN git clone -v https://github.com/microsoft/vcpkg.git \
 # install packages so they stay if nothing changes with vcpkg*.json
 FROM vcpkg-bootstrap AS vcpkg-installed
 WORKDIR /appl/firestarr
-COPY ./vcpkg*.json .
-RUN vcpkg/vcpkg install
+# COPY ./vcpkg*.json .
+# mount instead of copy to minimize layers
+RUN --mount=type=bind,source=./vcpkg-configuration.json,target=./vcpkg-configuration.json \
+    --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
+    vcpkg/vcpkg install
 
 # build and test
 FROM vcpkg-installed AS firestarr-build
@@ -53,6 +56,8 @@ RUN --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./test/input,target=./test/input \
     --mount=type=bind,source=./fuel.lut,target=./fuel.lut \
     --mount=type=bind,source=./settings.ini,target=./settings.ini \
+    --mount=type=bind,source=./vcpkg-configuration.json,target=./vcpkg-configuration.json \
+    --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
     cmake --preset Release \
     && cmake --build --parallel --preset Release \
     && ctest --preset Release
