@@ -66,16 +66,6 @@ static const LookupTable<&calculate_standard_length_to_breadth> STANDARD_LENGTH_
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <
-  int A,
-  int B,
-  int C,
-  int Bui0,
-  int Cbh,
-  int Cfl,
-  int BulkDensity,
-  int InorganicPercent,
-  int DuffDepth>
 class SimpleStandardFuel : public SimpleFuelBase
 {
 public:
@@ -93,6 +83,15 @@ public:
     const char* name,
     const bool can_crown,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize inorganic_percent,
+    const MathSize duff_depth,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   ) noexcept
@@ -100,14 +99,18 @@ public:
         code,
         name,
         can_crown,
-        BulkDensity / 1000.0,
-        InorganicPercent / 100.0,
-        DuffDepth / 10.0,
+        // FIX: change these to actual numbers when we get to derived class
+        bulk_density / 1000.0,
+        inorganic_percent / 100.0,
+        duff_depth / 10.0,
         duff_ffmc,
         duff_dmc
       ),
-      log_q_(log_q)
-  { }
+      log_q_(log_q), a_(a), b_(b), c_(c), bui0_(bui0), cbh_(cbh), cfl_(cfl)
+  {
+    assert(-negB() < 1);
+    assert(c() < 10 && c() > 1);
+  }
   /**
    * \brief Constructor
    * \param code Code to identify fuel with
@@ -121,9 +124,34 @@ public:
     const char* name,
     const bool can_crown,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize inorganic_percent,
+    const MathSize duff_depth,
     const Duff* duff
   ) noexcept
-    : SimpleStandardFuel(code, name, can_crown, log_q, duff, duff)
+    : SimpleStandardFuel(
+        code,
+        name,
+        can_crown,
+        log_q,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
+        inorganic_percent,
+        duff_depth,
+        duff,
+        duff
+      )
   { }
   SimpleStandardFuel(SimpleStandardFuel&& rhs) noexcept = delete;
   SimpleStandardFuel(const SimpleStandardFuel& rhs) noexcept = delete;
@@ -203,36 +231,36 @@ public:
    * \brief Average Build-up Index for the fuel type [ST-X-3 table 7]
    * \return Average Build-up Index for the fuel type [ST-X-3 table 7]
    */
-  [[nodiscard]] static constexpr MathSize bui0() noexcept { return Bui0; }
+  [[nodiscard]] constexpr MathSize bui0() const noexcept { return bui0_; }
   /**
    * \brief Crown base height (m) [ST-X-3 table 8]
    * \return Crown base height (m) [ST-X-3 table 8]
    */
-  [[nodiscard]] MathSize cbh() const override { return Cbh; }
+  [[nodiscard]] MathSize cbh() const override { return cbh_; }
   /**
    * \brief Crown fuel load (kg/m^2) [ST-X-3 table 8]
    * \return Crown fuel load (kg/m^2) [ST-X-3 table 8]
    */
-  [[nodiscard]] MathSize cfl() const override { return Cfl / 100.0; }
+  [[nodiscard]] MathSize cfl() const override { return cfl_ / 100.0; }
   /**
    * \brief Rate of spread parameter a [ST-X-3 table 6]
    * \return Rate of spread parameter a [ST-X-3 table 6]
    */
-  [[nodiscard]] static constexpr MathSize a() noexcept { return A; }
+  [[nodiscard]] constexpr MathSize a() const noexcept { return a_; }
   /**
    * \brief Negative of rate of spread parameter b [ST-X-3 table 6]
    * \return Negative of rate of spread parameter b [ST-X-3 table 6]
    */
-  [[nodiscard]] static constexpr MathSize negB() noexcept
+  [[nodiscard]] constexpr MathSize negB() const noexcept
   {
     // the only places this gets used it gets negated so just store it that way
-    return -B / 10000.0;
+    return -b_ / 10000.0;
   }
   /**
    * \brief Rate of spread parameter c [ST-X-3 table 6]
    * \return Rate of spread parameter c [ST-X-3 table 6]
    */
-  [[nodiscard]] static constexpr MathSize c() noexcept { return C / 100.0; }
+  [[nodiscard]] constexpr MathSize c() const noexcept { return c_ / 100.0; }
 
 public:
   /**
@@ -255,8 +283,12 @@ private:
    * \brief Log value of q [ST-X-3 table 7]
    */
   LogValue log_q_;
-  static_assert(-negB() < 1);
-  static_assert(c() < 10 && c() > 1);
+  MathSize a_{};
+  MathSize b_{};
+  MathSize c_{};
+  MathSize bui0_{};
+  MathSize cbh_{};
+  MathSize cfl_{};
 };
 }
 #endif
