@@ -13,20 +13,20 @@ jobs:
     with:
       image: vcpkg-installed
 
-  build-docker-minimal:
-    needs: [build-docker-vcpkg-installed]
-    uses: ./.github/workflows/build-docker-image.yml
-    with:
-      image: firestarr-minimal
-
   build-docker-normal:
-    needs: [build-docker-minimal]
+    needs: [build-docker-vcpkg-installed]
     uses: ./.github/workflows/build-docker-image.yml
     with:
       image: firestarr
 
-  cleanup-docker-cache:
+  build-docker-minimal:
     needs: [build-docker-normal]
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      image: firestarr-minimal
+
+  cleanup-docker-cache:
+    needs: [build-docker-minimal]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
