@@ -69,10 +69,10 @@ jobs:
           # HACK: hardcode cache-from for each image for now
           cache-from: |
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/firestarr-minimal:${{ github.ref }}
-            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref }}
-            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/vcpkg-installed:${{ github.ref }}
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:firestarr-minimal-${{ env.PLATFORM_PAIR }}
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref }}
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:firestarr-${{ env.PLATFORM_PAIR }}
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/vcpkg-installed:${{ github.ref }}
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:vcpkg-installed-${{ env.PLATFORM_PAIR }}
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache
           cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ inputs.image }}-${{ env.PLATFORM_PAIR }},mode=max
@@ -149,7 +149,7 @@ jobs:
     steps:
       - uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          dry-run: true
+          # dry-run: true
           # FIX: leave firestarr alone for now since it has the history of things from the start
           # packages: firestarr,firestarr-cpp/firestarr
           packages: firestarr-cpp/${{ inputs.image }}
