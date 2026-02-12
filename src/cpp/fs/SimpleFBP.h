@@ -682,7 +682,6 @@ protected:
  * \tparam RosMultiplier Rate of spread multiplier * 10 [ST-X-3 eq 27/28, GLC-X-10 eq 29/30]
  * \tparam PercentDeadFir Percent dead fir in the stand.
  */
-template <int A, int B, int C, int Bui0, int RosMultiplier, int PercentDeadFir>
 class SimpleFuelMixedDead : public SimpleFuelMixed
 {
 public:
@@ -698,8 +697,31 @@ public:
    * \param name Name of the fuel
    * \param log_q Log value of q [ST-X-3 table 7]
    */
-  constexpr SimpleFuelMixedDead(const FuelCodeSize& code, const char* name, const LogValue log_q)
-    : SimpleFuelMixed(code, name, log_q, A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75)
+  constexpr SimpleFuelMixedDead(
+    const FuelCodeSize& code,
+    const char* name,
+    const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize ros_multiplier,
+    const MathSize percent_dead_fir
+  )
+    : SimpleFuelMixed(
+        code,
+        name,
+        log_q,
+        a,
+        b,
+        c,
+        bui0,
+        ros_multiplier,
+        percent_dead_fir,
+        61,
+        15,
+        75
+      )
   { }
 };
 /**
@@ -1232,7 +1254,7 @@ public:
  * \tparam PercentDeadFir Percent dead fir
  */
 template <int PercentDeadFir>
-class SimpleFuelM3 : public SimpleFuelMixedDead<120, 572, 140, 50, 10, PercentDeadFir>
+class SimpleFuelM3 : public SimpleFuelMixedDead
 {
 public:
   SimpleFuelM3() = delete;
@@ -1247,7 +1269,7 @@ public:
    * \param name Name of the fuel
    */
   constexpr SimpleFuelM3(const FuelCodeSize& code, const char* name)
-    : SimpleFuelMixedDead<120, 572, 140, 50, 10, PercentDeadFir>(code, name, LOG_0_80)
+    : SimpleFuelMixedDead(code, name, LOG_0_80, 120, 572, 140, 50, 10, PercentDeadFir)
   { }
 };
 /**
@@ -1255,7 +1277,7 @@ public:
  * \tparam PercentDeadFir Percent dead fir
  */
 template <int PercentDeadFir>
-class SimpleFuelM4 : public SimpleFuelMixedDead<100, 404, 148, 50, 2, PercentDeadFir>
+class SimpleFuelM4 : public SimpleFuelMixedDead
 {
 public:
   SimpleFuelM4() = delete;
@@ -1270,7 +1292,7 @@ public:
    * \param name Name of the fuel
    */
   constexpr SimpleFuelM4(const FuelCodeSize& code, const char* name)
-    : SimpleFuelMixedDead<100, 404, 148, 50, 2, PercentDeadFir>(code, name, LOG_0_80)
+    : SimpleFuelMixedDead(code, name, LOG_0_80, 100, 404, 148, 50, 2, PercentDeadFir)
   { }
 };
 /**
