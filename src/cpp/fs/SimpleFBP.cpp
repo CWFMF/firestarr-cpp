@@ -354,25 +354,30 @@ int compare_spread(
       offset.second * CELL_SIZE
     );
   };
+  static const auto FFMC_RANGE = range(0.0, 101.0, 1.0);
+  static const auto DMC_SMALL_RANGE = range(0.0, 200.0, 47.0);
+  static const auto DMC_RANGE = range(0.0, 200.0, 3.0);
   size_t count_comparisons{0};
   logging::debug(
     "compare_spread(%s, %s, %s)", name.c_str(), FuelType::safeName(a), FuelType::safeName(b)
   );
-  for (auto ffmc : range(0.0, 101.0, 1.0))
+  // HACK: use less options for things with nd values (just grass?)
+  const auto dmc_values = options.nd_values.size() > 1 ? DMC_SMALL_RANGE : DMC_RANGE;
+  for (auto nd : options.nd_values)
   {
-    logging::extensive("ffmc %f", ffmc);
-    for (auto dmc : range(0.0, 200.0, 3.0))
+    logging::extensive("nd %d", nd);
+    for (auto ffmc : FFMC_RANGE)
     {
-      logging::extensive("dmc %f", dmc);
-      // for (auto bui : options.bui_values)
+      logging::extensive("ffmc %f", ffmc);
+      for (auto dmc : dmc_values)
       {
-        for (auto dc : options.dc_values)
+        logging::extensive("dmc %f", dmc);
+        // for (auto bui : options.bui_values)
         {
-          logging::extensive("dc %f", dc);
-          const FwiWeather weather{Weather::Invalid(), Ffmc{ffmc}, Dmc{dmc}, Dc{dc}};
-          for (auto nd : options.nd_values)
+          for (auto dc : options.dc_values)
           {
-            logging::extensive("nd %d", nd);
+            logging::extensive("dc %f", dc);
+            const FwiWeather weather{Weather::Invalid(), Ffmc{ffmc}, Dmc{dmc}, Dc{dc}};
             for (auto slope : slopes)
             {
               logging::extensive("slope %d", slope);
@@ -674,6 +679,7 @@ int compare_fuel_variable(
 // static constexpr FuelCompareOptions FUEL_COMPARE_DECIDUOUS{.dc_values = DC_DEFAULT_SINGLE};
 vector<int> find_nd_values()
 {
+  // CHECK: FIX: how are nd values 400+?
   set<int> nd_ref_values{};
   set<int> nd_values{};
   static constexpr MathSize BOUNDS_CANADA_LAT_MIN = 41;
