@@ -249,7 +249,7 @@ static SimpleFuelM1M2 M1_M2_00{136, "M-1/M-2 (00 PC)", &M1_00, &M2_00, 0};
 static SimpleFuelM3 M3_00{137, "M-3 (00 PDF)", 0};
 static SimpleFuelM4 M4_00{138, "M-4 (00 PDF)", 0};
 static SimpleFuelM3M4 M3_M4_00{139, "M-3/M-4 (00 PDF)", &M3_00, &M4_00, 0};
-static SimpleFuelO1 O1{140, "O-1", &O1_A, &O1_B};
+static SimpleFuelVariable O1{140, "O-1", &O1_A, &O1_B};
 // const array<const FuelType*, NUMBER_OF_FUELS> SimpleFuels{
 //   &NULL_FUEL, &INVALID,  &C1,       &C2,        &C3,       &C4,       &C5,       &C6,
 //   &C7,        &D1,       &D2,       &O1_A,      &O1_B,     &S1,       &S2,       &S3,

@@ -1861,34 +1861,6 @@ public:
     assert(m3->percentMixed() == percent_dead_fir);
   }
 };
-/**
- * \brief FBP fuel type O-1.
- */
-class SimpleFuelO1 : public SimpleFuelVariable
-{
-public:
-  SimpleFuelO1() = delete;
-  ~SimpleFuelO1() override = default;
-  SimpleFuelO1(const SimpleFuelO1& rhs) noexcept = delete;
-  SimpleFuelO1(SimpleFuelO1&& rhs) noexcept = delete;
-  SimpleFuelO1& operator=(const SimpleFuelO1& rhs) noexcept = delete;
-  SimpleFuelO1& operator=(SimpleFuelO1&& rhs) noexcept = delete;
-  /**
-   * \brief A fuel that changes between O-1a/O-1b depending on green-up
-   * \param code Code to identify fuel with
-   * \param name Name of the fuel
-   * \param o1a O1-a fuel to use before green-up
-   * \param o1b O1-b fuel to use after green-up
-   */
-  constexpr SimpleFuelO1(
-    const FuelCodeSize& code,
-    const char* name,
-    const SimpleFuelO1A* o1a,
-    const SimpleFuelO1B* o1b
-  )
-    : SimpleFuelVariable(code, name, o1a, o1b)
-  { }
-};
 }
 namespace fs::testing
 {
