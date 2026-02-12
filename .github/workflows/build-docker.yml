@@ -24,6 +24,8 @@ jobs:
     uses: ./.github/workflows/build-docker-image.yml
     with:
       image: firestarr-minimal
+      # HACK: this is just to prevent overwriting cache for others or figuring out how to not cache
+      cache-to-tag: "-minimal"
 
   cleanup-docker-cache:
     needs: [build-docker-minimal]
