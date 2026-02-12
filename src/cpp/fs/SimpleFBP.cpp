@@ -403,15 +403,24 @@ int compare_spread(
                   logging::should_log(logging::level::verbose) && head_ros >= ROS_MINIMAL;
                 if (offsets_a.size() != offsets_b.size())
                 {
-                  logging::fatal("compare_spread() failed");
+                  logging::error(
+                    "compare_spread() pt failed for name: {:s}; ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
+                    name.c_str(),
+                    ffmc,
+                    dmc,
+                    dc,
+                    nd,
+                    slope,
+                    aspect
+                  );
                   if (offsets_a.size() < offsets_b.size())
                   {
-                    logging::error("compare_spread() == -1");
+                    logging::error("compare_spread() size == -1");
                     return -1;
                   }
                   if (offsets_a.size() > offsets_b.size())
                   {
-                    logging::error("compare_spread() == 1");
+                    logging::error("compare_spread() size == 1");
                     return 1;
                   }
                 }
@@ -429,7 +438,6 @@ int compare_spread(
                   }
                   if (auto cmp_pt = pt_a <=> pt_b; 0 != cmp_pt)
                   {
-                    logging::fatal("compare_spread() failed");
                     if (!show_offsets)
                     {
                       show_offset(pt_a);
@@ -437,14 +445,24 @@ int compare_spread(
                     cout << " != ";
                     show_offset(pt_b);
                     cout << "\n";
+                    logging::error(
+                      "compare_spread() pt failed for name: {:s}; ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
+                      name.c_str(),
+                      ffmc,
+                      dmc,
+                      dc,
+                      nd,
+                      slope,
+                      aspect
+                    );
                     if (std::weak_ordering::less == cmp_pt)
                     {
-                      logging::error("compare_spread() == -1");
+                      logging::error("compare_spread() pt == -1");
                       return -1;
                     }
                     if (std::weak_ordering::greater == cmp_pt)
                     {
-                      logging::error("compare_spread() == 1");
+                      logging::error("compare_spread() pt == 1");
                       return 1;
                     }
                   }
