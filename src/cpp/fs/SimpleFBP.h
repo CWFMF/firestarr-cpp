@@ -3,6 +3,7 @@
 #define FS_SIMPLE_FBP_H
 #include "stdafx.h"
 #include "Duff.h"
+#include "FuelType.h"
 #include "LookupTable.h"
 #include "Settings.h"
 #include "SimpleStandardFuel.h"
@@ -654,6 +655,7 @@ public:
    * \return Percent Deciduous (% / 100)
    */
   [[nodiscard]] constexpr MathSize ratioDeciduous() const { return 1.0 - (percent_mixed_ / 100.0); }
+  [[nodiscard]] constexpr MathSize percentMixed() const noexcept { return percent_mixed_; }
 
 protected:
   /**
@@ -1555,43 +1557,16 @@ public:
       )
   { }
 };
-template <class FuelSpring, class FuelSummer>
 class SimpleFuelVariable;
-template <class FuelSpring, class FuelSummer>
-[[nodiscard]] const SimpleFuelType& find_fuel_by_season(
-  const int nd,
-  const SimpleFuelVariable<FuelSpring, FuelSummer>& fuel
-) noexcept
-{
-  // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
-  // if not green yet, then still in spring conditions
-  return settings.force_greenup    ? fuel.summer()
-       : settings.force_no_greenup ? fuel.spring()
-       : calculate_is_green(nd)    ? fuel.summer()
-                                   : fuel.spring();
-}
-template <class FuelSpring, class FuelSummer>
 [[nodiscard]] MathSize compare_by_season(
-  const SimpleFuelVariable<FuelSpring, FuelSummer>& fuel,
+  const SimpleFuelVariable& fuel,
   const function<MathSize(const SimpleFuelType&)>& fct
-)
-{
-  // HACK: no way to tell which is which, so let's assume they have to be the same??
-  // HACK: use a function so that DEBUG section doesn't get out of sync
-  const auto for_spring = fct(*fuel.spring());
-#ifdef DEBUG_FUEL_VARIABLE
-  const auto for_summer = fct(*fuel.summer());
-  logging::check_fatal(for_spring != for_summer, "Expected spring and summer cfb to be identical");
-#endif
-  return for_spring;
-}
+);
 /**
  * \brief A fuel type that changes based on the season.
  * \tparam FuelSpring Fuel type to use in the spring
  * \tparam FuelSummer Fuel type to use in the summer
  */
-template <class FuelSpring, class FuelSummer>
 class SimpleFuelVariable : public SimpleFuelType
 {
 public:
@@ -1609,8 +1584,8 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const bool can_crown,
-    const FuelSpring* const spring,
-    const FuelSummer* const summer
+    const FuelType* const spring,
+    const FuelType* const summer
   )
     : SimpleFuelType(code, name, can_crown), spring_(spring), summer_(summer)
   { }
@@ -1778,16 +1753,16 @@ private:
   /**
    * \brief Fuel to use before green-up
    */
-  const FuelSpring* const spring_{nullptr};
+  const FuelType* const spring_{nullptr};
   /**
    * \brief Fuel to use after green-up
    */
-  const FuelSummer* const summer_{nullptr};
+  const FuelType* const summer_{nullptr};
 };
 /**
  * \brief FBP fuel type D-1/D-2.
  */
-class SimpleFuelD1D2 : public SimpleFuelVariable<SimpleFuelD1, SimpleFuelD2>
+class SimpleFuelD1D2 : public SimpleFuelVariable
 {
 public:
   SimpleFuelD1D2() = delete;
@@ -1814,7 +1789,7 @@ public:
  * \brief FBP fuel type M-1/M-2.
  * \tparam PercentConifer Percent conifer
  */
-class SimpleFuelM1M2 : public SimpleFuelVariable<SimpleFuelM1, SimpleFuelM2>
+class SimpleFuelM1M2 : public SimpleFuelVariable
 {
 public:
   SimpleFuelM1M2() = delete;
@@ -1842,7 +1817,7 @@ public:
       percent_conifer
 #endif
   )
-    : SimpleFuelVariable<SimpleFuelM1, SimpleFuelM2>(code, name, true, m1, m2)
+    : SimpleFuelVariable(code, name, true, m1, m2)
   {
     assert(m1->percentMixed() == m2->percentMixed());
     assert(m1->percentMixed() == percent_conifer);
@@ -1852,7 +1827,7 @@ public:
  * \brief FBP fuel type M-3/M-4.
  * \tparam PercentDeadFir Percent dead fir
  */
-class SimpleFuelM3M4 : public SimpleFuelVariable<SimpleFuelM3, SimpleFuelM4>
+class SimpleFuelM3M4 : public SimpleFuelVariable
 {
 public:
   SimpleFuelM3M4() = delete;
@@ -1879,7 +1854,7 @@ public:
       percent_dead_fir
 #endif
   )
-    : SimpleFuelVariable<SimpleFuelM3, SimpleFuelM4>(code, name, true, m3, m4)
+    : SimpleFuelVariable(code, name, true, m3, m4)
   {
     assert(m3->percentMixed() == m4->percentMixed());
     assert(m3->percentMixed() == percent_dead_fir);
@@ -1888,7 +1863,7 @@ public:
 /**
  * \brief FBP fuel type O-1.
  */
-class SimpleFuelO1 : public SimpleFuelVariable<SimpleFuelO1A, SimpleFuelO1B>
+class SimpleFuelO1 : public SimpleFuelVariable
 {
 public:
   SimpleFuelO1() = delete;
@@ -1910,7 +1885,7 @@ public:
     const SimpleFuelO1A* o1a,
     const SimpleFuelO1B* o1b
   )
-    : SimpleFuelVariable<SimpleFuelO1A, SimpleFuelO1B>(code, name, true, o1a, o1b)
+    : SimpleFuelVariable(code, name, true, o1a, o1b)
   { }
 };
 }
