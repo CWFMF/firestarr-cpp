@@ -68,6 +68,9 @@ jobs:
           # using just 'cache' means only the last thing to finish survives the cleanup since the rest are untagged
           # HACK: hardcode cache-from for each image for now
           cache-from: |
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/firestarr-minimal:${{ github.ref }}
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/firestarr:${{ github.ref }}
+            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/vcpkg-installed:${{ github.ref }}
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:firestarr-minimal-${{ env.PLATFORM_PAIR }}
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:firestarr-${{ env.PLATFORM_PAIR }}
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:vcpkg-installed-${{ env.PLATFORM_PAIR }}
