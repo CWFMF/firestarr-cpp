@@ -1214,7 +1214,6 @@ public:
  * \brief FBP fuel type M-1.
  * \tparam PercentConifer Percent conifer
  */
-template <int PercentConifer>
 class SimpleFuelM1 : public SimpleFuelMixedWood
 {
 public:
@@ -1229,8 +1228,8 @@ public:
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    */
-  constexpr SimpleFuelM1(const FuelCodeSize& code, const char* name)
-    : SimpleFuelMixedWood(code, name, 10, PercentConifer)
+  constexpr SimpleFuelM1(const FuelCodeSize& code, const char* name, const MathSize percent_conifer)
+    : SimpleFuelMixedWood(code, name, 10, percent_conifer)
   { }
 };
 /**
@@ -1735,8 +1734,7 @@ public:
  * \tparam PercentConifer Percent conifer
  */
 template <int PercentConifer>
-class SimpleFuelM1M2
-  : public SimpleFuelVariable<SimpleFuelM1<PercentConifer>, SimpleFuelM2<PercentConifer>>
+class SimpleFuelM1M2 : public SimpleFuelVariable<SimpleFuelM1, SimpleFuelM2<PercentConifer>>
 {
 public:
   SimpleFuelM1M2() = delete;
@@ -1756,17 +1754,13 @@ public:
   constexpr SimpleFuelM1M2(
     const FuelCodeSize& code,
     const char* name,
-    const SimpleFuelM1<PercentConifer>* m1,
+    const SimpleFuelM1* m1,
     const SimpleFuelM2<PercentConifer>* m2
   )
-    : SimpleFuelVariable<SimpleFuelM1<PercentConifer>, SimpleFuelM2<PercentConifer>>(
-        code,
-        name,
-        true,
-        m1,
-        m2
-      )
-  { }
+    : SimpleFuelVariable<SimpleFuelM1, SimpleFuelM2<PercentConifer>>(code, name, true, m1, m2)
+  {
+    assert(m1->percentMixed() == m2->percentMixed());
+  }
 };
 /**
  * \brief FBP fuel type M-3/M-4.
