@@ -177,16 +177,6 @@ public:
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <
-  int A,
-  int B,
-  int C,
-  int Bui0,
-  int Cbh,
-  int Cfl,
-  int BulkDensity,
-  int InorganicPercent,
-  int DuffDepth>
 class SimpleFuelConifer : public SimpleFuelNonMixed
 {
 public:
@@ -210,6 +200,15 @@ protected:
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize inorganic_percent,
+    const MathSize duff_depth,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
@@ -218,15 +217,15 @@ protected:
         name,
         true,
         log_q,
-        A,
-        B,
-        C,
-        Bui0,
-        Cbh,
-        Cfl,
-        BulkDensity,
-        InorganicPercent,
-        DuffDepth,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
+        inorganic_percent,
+        duff_depth,
         duff_ffmc,
         duff_dmc
       )
@@ -242,9 +241,33 @@ protected:
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize inorganic_percent,
+    const MathSize duff_depth,
     const Duff* duff
   )
-    : SimpleFuelConifer(code, name, log_q, duff, duff)
+    : SimpleFuelConifer(
+        code,
+        name,
+        log_q,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
+        inorganic_percent,
+        duff_depth,
+        duff,
+        duff
+      )
   { }
 };
 /**
@@ -275,8 +298,7 @@ static LookupTable<&calculate_surface_fuel_consumption_jackpine> SURFACE_FUEL_CO
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
 template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int DuffDepth>
-class SimpleFuelJackpine
-  : public SimpleFuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>
+class SimpleFuelJackpine : public SimpleFuelConifer
 {
 public:
   SimpleFuelJackpine() = delete;
@@ -285,7 +307,38 @@ public:
   SimpleFuelJackpine(SimpleFuelJackpine&& rhs) noexcept = delete;
   SimpleFuelJackpine& operator=(const SimpleFuelJackpine& rhs) noexcept = delete;
   SimpleFuelJackpine& operator=(SimpleFuelJackpine&& rhs) noexcept = delete;
-  using SimpleFuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>::SimpleFuelConifer;
+  constexpr SimpleFuelJackpine(
+    const FuelCodeSize& code,
+    const char* name,
+    const LogValue log_q,
+    const Duff* duff_ffmc,
+    const Duff* duff_dmc
+  )
+    : SimpleFuelConifer(
+        code,
+        name,
+        log_q,
+        A,
+        B,
+        C,
+        Bui0,
+        Cbh,
+        Cfl,
+        BulkDensity,
+        15,
+        DuffDepth,
+        duff_ffmc,
+        duff_dmc
+      )
+  { }
+  constexpr SimpleFuelJackpine(
+    const FuelCodeSize& code,
+    const char* name,
+    const LogValue log_q,
+    const Duff* duff
+  )
+    : SimpleFuelJackpine(code, name, log_q, duff, duff)
+  { }
   /**
    * \brief Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 11]
    * \param spread SpreadInfo to use
@@ -323,16 +376,47 @@ static LookupTable<&calculate_surface_fuel_consumption_pine> SURFACE_FUEL_CONSUM
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
 template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int DuffDepth>
-class FuelPine : public SimpleFuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>
+class SimpleFuelPine : public SimpleFuelConifer
 {
 public:
-  FuelPine() = delete;
-  ~FuelPine() override = default;
-  FuelPine(const FuelPine& rhs) noexcept = delete;
-  FuelPine(FuelPine&& rhs) noexcept = delete;
-  FuelPine& operator=(const FuelPine& rhs) noexcept = delete;
-  FuelPine& operator=(FuelPine&& rhs) noexcept = delete;
-  using SimpleFuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>::SimpleFuelConifer;
+  SimpleFuelPine() = delete;
+  ~SimpleFuelPine() override = default;
+  SimpleFuelPine(const SimpleFuelPine& rhs) noexcept = delete;
+  SimpleFuelPine(SimpleFuelPine&& rhs) noexcept = delete;
+  SimpleFuelPine& operator=(const SimpleFuelPine& rhs) noexcept = delete;
+  SimpleFuelPine& operator=(SimpleFuelPine&& rhs) noexcept = delete;
+  constexpr SimpleFuelPine(
+    const FuelCodeSize& code,
+    const char* name,
+    const LogValue log_q,
+    const Duff* duff_ffmc,
+    const Duff* duff_dmc
+  )
+    : SimpleFuelConifer(
+        code,
+        name,
+        log_q,
+        A,
+        B,
+        C,
+        Bui0,
+        Cbh,
+        Cfl,
+        BulkDensity,
+        15,
+        DuffDepth,
+        duff_ffmc,
+        duff_dmc
+      )
+  { }
+  constexpr SimpleFuelPine(
+    const FuelCodeSize& code,
+    const char* name,
+    const LogValue log_q,
+    const Duff* duff
+  )
+    : SimpleFuelPine(code, name, log_q, duff, duff)
+  { }
   /**
    * \brief Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 12]
    * \param spread SpreadInfo to use
@@ -745,7 +829,7 @@ public:
 /**
  * \brief FBP fuel type C-1.
  */
-class SimpleFuelC1 : public SimpleFuelConifer<90, 649, 450, 72, 2, 75, 45, 5, 34>
+class SimpleFuelC1 : public SimpleFuelConifer
 {
 public:
   SimpleFuelC1() = delete;
@@ -759,7 +843,22 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC1(const FuelCodeSize& code) noexcept
-    : SimpleFuelConifer(code, "C-1", LOG_0_90, &duff::Reindeer, &duff::Peat)
+    : SimpleFuelConifer(
+        code,
+        "C-1",
+        LOG_0_90,
+        90,
+        649,
+        450,
+        72,
+        2,
+        75,
+        45,
+        5,
+        34,
+        &duff::Reindeer,
+        &duff::Peat
+      )
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [GLC-X-10 eq 9a/9b]
@@ -771,7 +870,7 @@ public:
 /**
  * \brief FBP fuel type C-2.
  */
-class SimpleFuelC2 : public SimpleFuelConifer<110, 282, 150, 64, 3, 80, 34, 0, 100>
+class SimpleFuelC2 : public SimpleFuelConifer
 {
 public:
   SimpleFuelC2() = delete;
@@ -785,7 +884,21 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC2(const FuelCodeSize& code) noexcept
-    : SimpleFuelConifer(code, "C-2", LOG_0_70, &duff::SphagnumUpper)
+    : SimpleFuelConifer(
+        code,
+        "C-2",
+        LOG_0_70,
+        110,
+        282,
+        150,
+        64,
+        3,
+        80,
+        34,
+        0,
+        100,
+        &duff::SphagnumUpper
+      )
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 10]
@@ -837,7 +950,7 @@ public:
 /**
  * \brief FBP fuel type C-5.
  */
-class SimpleFuelC5 : public FuelPine<30, 697, 400, 56, 18, 120, 93, 46>
+class SimpleFuelC5 : public SimpleFuelPine<30, 697, 400, 56, 18, 120, 93, 46>
 {
 public:
   SimpleFuelC5() = delete;
@@ -851,13 +964,13 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC5(const FuelCodeSize& code) noexcept
-    : FuelPine(code, "C-5", LOG_0_80, &duff::PineSeney)
+    : SimpleFuelPine(code, "C-5", LOG_0_80, &duff::PineSeney)
   { }
 };
 /**
  * \brief FBP fuel type C-6.
  */
-class SimpleFuelC6 : public FuelPine<30, 800, 300, 62, 7, 180, 50, 50>
+class SimpleFuelC6 : public SimpleFuelPine<30, 800, 300, 62, 7, 180, 50, 50>
 {
 public:
   SimpleFuelC6() = delete;
@@ -871,7 +984,7 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC6(const FuelCodeSize& code) noexcept
-    : FuelPine(code, "C-6", LOG_0_80, &duff::PineSeney)
+    : SimpleFuelPine(code, "C-6", LOG_0_80, &duff::PineSeney)
   { }
 
 protected:
@@ -893,7 +1006,7 @@ protected:
 /**
  * \brief FBP fuel type C-7.
  */
-class SimpleFuelC7 : public SimpleFuelConifer<45, 305, 200, 106, 10, 50, 20, 15, 50>
+class SimpleFuelC7 : public SimpleFuelConifer
 {
 public:
   SimpleFuelC7() = delete;
@@ -907,7 +1020,21 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelC7(const FuelCodeSize& code) noexcept
-    : SimpleFuelConifer(code, "C-7", LOG_0_85, &duff::SprucePine)
+    : SimpleFuelConifer(
+        code,
+        "C-7",
+        LOG_0_85,
+        45,
+        305,
+        200,
+        106,
+        10,
+        50,
+        20,
+        15,
+        50,
+        &duff::SprucePine
+      )
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 15]
@@ -1112,7 +1239,7 @@ public:
  * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  */
 template <int A, int B, int C, int Bui0, int FfcA, int FfcB, int WfcA, int WfcB, int BulkDensity>
-class SimpleFuelSlash : public SimpleFuelConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>
+class SimpleFuelSlash : public SimpleFuelConifer
 {
 public:
   SimpleFuelSlash() = delete;
@@ -1136,10 +1263,19 @@ public:
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
-    : SimpleFuelConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>(
+    : SimpleFuelConifer(
         code,
         name,
         log_q,
+        A,
+        B,
+        C,
+        Bui0,
+        0,
+        0,
+        BulkDensity,
+        15,
+        74,
         duff_ffmc,
         duff_dmc
       )
