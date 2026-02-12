@@ -305,7 +305,6 @@ int compare_fuel_valid(
   return 0;
 }
 // use vectors so FuelCompareOptions can assign any of these directly
-static vector<int> ND_ALL_VALUES{};
 static const auto BUI_RANGE_DEFAULTS = range(0.0, 300.0, 7.0);
 static const auto DC_RANGE_DEFAULTS = range(0.0, 1000.0, 7.0);
 static const vector<MathSize> DC_VALUES_GRASS{0, 10, 50, 100, 400, 499, 500, 501, 1000};
@@ -323,10 +322,6 @@ struct FuelCompareOptions
   const vector<MathSize> dc_values{200};
 };
 static const FuelCompareOptions FUEL_COMPARE_DEFAULT{};
-static const FuelCompareOptions FUEL_COMPARE_GRASS{
-  .nd_values = ND_ALL_VALUES,
-  .dc_values = DC_VALUES_GRASS
-};
 static const FuelCompareOptions FUEL_COMPARE_DECIDUOUS{.bui_values = BUI_RANGE_DEFAULTS};
 int compare_spread(
   const string name,
@@ -737,7 +732,11 @@ int test_fbp(const int argc, const char* const argv[])
   std::ignore = argc;
   std::ignore = argv;
   logging::info("Testing FBP");
-  ND_ALL_VALUES = find_nd_values();
+  const auto nd_all_values = find_nd_values();
+  // HACK: initialize here so nd_all_values is set
+  static const FuelCompareOptions FUEL_COMPARE_GRASS{
+    .nd_values = nd_all_values, .dc_values = DC_VALUES_GRASS
+  };
   // for (size_t i = 0; i < FuelLookup::Fuels.size(); ++i)
   // {
   //   auto& a = *simplefbp::SimpleFuels[i];
