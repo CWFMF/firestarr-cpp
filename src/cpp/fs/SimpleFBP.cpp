@@ -270,6 +270,20 @@ static SimpleFuelO1 O1{140, "O-1", &O1_A, &O1_B};
 //   &M3_M4_70,  &M3_M4_75, &M3_M4_80, &M3_M4_85,  &M3_M4_90, &M3_M4_95, &M1_00,    &M2_00,
 //   &M1_M2_00,  &M3_00,    &M4_00,    &M3_M4_100, &O1,
 // };
+MathSize compare_by_season(
+  const SimpleFuelVariable& fuel,
+  const function<MathSize(const SimpleFuelType&)>& fct
+)
+{
+  // HACK: no way to tell which is which, so let's assume they have to be the same??
+  // HACK: use a function so that DEBUG section doesn't get out of sync
+  const auto for_spring = fct(*fuel.spring());
+#ifdef DEBUG_FUEL_VARIABLE
+  const auto for_summer = fct(*fuel.summer());
+  logging::check_fatal(for_spring != for_summer, "Expected spring and summer cfb to be identical");
+#endif
+  return for_spring;
+}
 }
 namespace fs::testing
 {
