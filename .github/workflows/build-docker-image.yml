@@ -6,6 +6,12 @@ on:
       image:
         required: true
         type: string
+      cache-from-tag:
+        required: false
+        type: string
+      cache-to-tag:
+        required: false
+        type: string
 
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
@@ -65,9 +71,8 @@ jobs:
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           # ${{ github.repository }} isn't lowercase so manually specify
-          cache-from: |
-            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }}
-          cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }},mode=max
+          cache-from: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }}${{ inputs.cache-from-tag || '' }}
+          cache-to: type=registry,mode=max,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }}${{ inputs.cache-to-tag || '' }}
 
       - name: Export digest
         run: |
