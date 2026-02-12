@@ -65,9 +65,7 @@ jobs:
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           # ${{ github.repository }} isn't lowercase so manually specify
-          # always check final location before cache
           cache-from: |
-            type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/${{ inputs.image }}:${{ env.PLATFORM_PAIR }}
             type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }}
           cache-to: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }},mode=max,oci-mediatypes=true,image-manifest=true
 
