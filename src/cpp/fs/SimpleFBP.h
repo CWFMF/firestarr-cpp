@@ -1287,7 +1287,6 @@ public:
  * \brief FBP fuel type M-4.
  * \tparam PercentDeadFir Percent dead fir
  */
-template <int PercentDeadFir>
 class SimpleFuelM4 : public SimpleFuelMixedDead
 {
 public:
@@ -1302,8 +1301,12 @@ public:
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    */
-  constexpr SimpleFuelM4(const FuelCodeSize& code, const char* name)
-    : SimpleFuelMixedDead(code, name, LOG_0_80, 100, 404, 148, 50, 2, PercentDeadFir)
+  constexpr SimpleFuelM4(
+    const FuelCodeSize& code,
+    const char* name,
+    const MathSize percent_dead_fir
+  )
+    : SimpleFuelMixedDead(code, name, LOG_0_80, 100, 404, 148, 50, 2, percent_dead_fir)
   { }
 };
 /**
@@ -1787,7 +1790,7 @@ public:
  * \tparam PercentDeadFir Percent dead fir
  */
 template <int PercentDeadFir>
-class SimpleFuelM3M4 : public SimpleFuelVariable<SimpleFuelM3, SimpleFuelM4<PercentDeadFir>>
+class SimpleFuelM3M4 : public SimpleFuelVariable<SimpleFuelM3, SimpleFuelM4>
 {
 public:
   SimpleFuelM3M4() = delete;
@@ -1807,9 +1810,9 @@ public:
     const FuelCodeSize& code,
     const char* name,
     const SimpleFuelM3* m3,
-    const SimpleFuelM4<PercentDeadFir>* m4
+    const SimpleFuelM4* m4
   )
-    : SimpleFuelVariable<SimpleFuelM3, SimpleFuelM4<PercentDeadFir>>(code, name, true, m3, m4)
+    : SimpleFuelVariable<SimpleFuelM3, SimpleFuelM4>(code, name, true, m3, m4)
   {
     assert(m3->percentMixed() == m4->percentMixed());
     assert(m3->percentMixed() == PercentDeadFir);
