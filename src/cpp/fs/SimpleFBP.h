@@ -61,16 +61,6 @@ static LookupTable<&calculate_surface_fuel_consumption_d1> SURFACE_FUEL_CONSUMPT
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-template <
-  int A,
-  int B,
-  int C,
-  int Bui0,
-  int Cbh,
-  int Cfl,
-  int BulkDensity,
-  int InorganicPercent,
-  int DuffDepth>
 class SimpleFuelNonMixed : public SimpleStandardFuel
 {
 public:
@@ -87,6 +77,15 @@ protected:
     const char* name,
     const bool can_crown,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize inorganic_percent,
+    const MathSize duff_depth,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
@@ -95,15 +94,15 @@ protected:
         name,
         can_crown,
         log_q,
-        A,
-        B,
-        C,
-        Bui0,
-        Cbh,
-        Cfl,
-        BulkDensity,
-        InorganicPercent,
-        DuffDepth,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
+        inorganic_percent,
+        duff_depth,
         duff_ffmc,
         duff_dmc
       )
@@ -113,9 +112,34 @@ protected:
     const char* name,
     const bool can_crown,
     const LogValue log_q,
+    const MathSize a,
+    const MathSize b,
+    const MathSize c,
+    const MathSize bui0,
+    const MathSize cbh,
+    const MathSize cfl,
+    const MathSize bulk_density,
+    const MathSize inorganic_percent,
+    const MathSize duff_depth,
     const Duff* duff
   )
-    : SimpleFuelNonMixed(code, name, can_crown, log_q, duff, duff)
+    : SimpleFuelNonMixed(
+        code,
+        name,
+        can_crown,
+        log_q,
+        a,
+        b,
+        c,
+        bui0,
+        cbh,
+        cfl,
+        bulk_density,
+        inorganic_percent,
+        duff_depth,
+        duff,
+        duff
+      )
   { }
 
 public:
@@ -164,8 +188,7 @@ template <
   int BulkDensity,
   int InorganicPercent,
   int DuffDepth>
-class SimpleFuelConifer
-  : public SimpleFuelNonMixed<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>
+class SimpleFuelConifer : public SimpleFuelNonMixed
 {
 public:
   SimpleFuelConifer() = delete;
@@ -191,11 +214,20 @@ protected:
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
-    : SimpleFuelNonMixed<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>(
+    : SimpleFuelNonMixed(
         code,
         name,
         true,
         log_q,
+        A,
+        B,
+        C,
+        Bui0,
+        Cbh,
+        Cfl,
+        BulkDensity,
+        InorganicPercent,
+        DuffDepth,
         duff_ffmc,
         duff_dmc
       )
@@ -315,7 +347,7 @@ public:
 /**
  * \brief FBP fuel type D-1.
  */
-class SimpleFuelD1 : public SimpleFuelNonMixed<30, 232, 160, 32, 0, 0, 61, 59, 24>
+class SimpleFuelD1 : public SimpleFuelNonMixed
 {
 public:
   SimpleFuelD1() = delete;
@@ -329,7 +361,22 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelD1(const FuelCodeSize& code) noexcept
-    : SimpleFuelNonMixed(code, "D-1", false, LOG_0_90, &duff::Peat)
+    : SimpleFuelNonMixed(
+        code,
+        "D-1",
+        false,
+        LOG_0_90,
+        30,
+        232,
+        160,
+        32,
+        0,
+        0,
+        61,
+        59,
+        24,
+        &duff::Peat
+      )
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 25]
@@ -875,7 +922,7 @@ public:
 /**
  * \brief FBP fuel type D-2.
  */
-class SimpleFuelD2 : public SimpleFuelNonMixed<6, 232, 160, 32, 0, 0, 61, 59, 24>
+class SimpleFuelD2 : public SimpleFuelNonMixed
 {
 public:
   SimpleFuelD2() = delete;
@@ -890,7 +937,22 @@ public:
    * \param code Code to identify fuel with
    */
   explicit constexpr SimpleFuelD2(const FuelCodeSize& code) noexcept
-    : SimpleFuelNonMixed(code, "D-2", false, LOG_0_90, &duff::Peat)
+    : SimpleFuelNonMixed(
+        code,
+        "D-2",
+        false,
+        LOG_0_90,
+        6,
+        232,
+        160,
+        32,
+        0,
+        0,
+        61,
+        59,
+        24,
+        &duff::Peat
+      )
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2)
