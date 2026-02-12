@@ -333,7 +333,8 @@ int compare_spread(
 )
 {
   static const DurationSize TIME{INVALID_TIME};
-  static const MathSize MIN_ROS{0.0};
+  // HACK: 0.0 is causing offsets to be generated in grass
+  static const MathSize MIN_ROS{1E-6};
   static const MathSize CELL_SIZE{100.0};
   static const vector<SlopeSize> slopes{0, 15, 30};
   static const vector<AspectSize> aspects{0, 15, 25, 35, 45, 55};
