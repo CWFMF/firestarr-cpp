@@ -662,7 +662,8 @@ int compare_fuel_variable(
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
 )
 {
-  assert(&a.summer() != &a.spring());
+  assert(a.summer() != a.spring());
+  assert(b.summer() != b.spring());
   // FIX: calling functions of FuelVariable should throw, but don't bother checking that
   if (const auto cmp = compare_fuel_basic(name, *a.summer(), *b.summer(), options); 0 != cmp)
   {
