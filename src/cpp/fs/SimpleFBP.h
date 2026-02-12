@@ -728,7 +728,6 @@ public:
  * \tparam RosMultiplier Rate of spread multiplier * 10 [ST-X-3 eq 27/28, GLC-X-10 eq 29/30]
  * \tparam RatioMixed Percent conifer
  */
-template <int RosMultiplier, int RatioMixed>
 class SimpleFuelMixedWood : public SimpleFuelMixed
 {
 public:
@@ -743,7 +742,12 @@ public:
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    */
-  constexpr SimpleFuelMixedWood(const FuelCodeSize& code, const char* name)
+  constexpr SimpleFuelMixedWood(
+    const FuelCodeSize& code,
+    const char* name,
+    const MathSize ros_multiplier,
+    const MathSize percent_mixed
+  )
     : SimpleFuelMixed(
         code,
         name,
@@ -752,8 +756,8 @@ public:
         282,
         150,
         50,
-        RosMultiplier,
-        RatioMixed,
+        ros_multiplier,
+        percent_mixed,
         108,
         25,
         50
@@ -1205,7 +1209,7 @@ public:
  * \tparam PercentConifer Percent conifer
  */
 template <int PercentConifer>
-class SimpleFuelM1 : public SimpleFuelMixedWood<10, PercentConifer>
+class SimpleFuelM1 : public SimpleFuelMixedWood
 {
 public:
   SimpleFuelM1() = delete;
@@ -1220,7 +1224,7 @@ public:
    * \param name Name of the fuel
    */
   constexpr SimpleFuelM1(const FuelCodeSize& code, const char* name)
-    : SimpleFuelMixedWood<10, PercentConifer>(code, name)
+    : SimpleFuelMixedWood(code, name, 10, PercentConifer)
   { }
 };
 /**
@@ -1228,7 +1232,7 @@ public:
  * \tparam PercentConifer Percent conifer
  */
 template <int PercentConifer>
-class SimpleFuelM2 : public SimpleFuelMixedWood<2, PercentConifer>
+class SimpleFuelM2 : public SimpleFuelMixedWood
 {
 public:
   SimpleFuelM2() = delete;
@@ -1243,7 +1247,7 @@ public:
    * \param name Name of the fuel
    */
   constexpr SimpleFuelM2(const FuelCodeSize& code, const char* name)
-    : SimpleFuelMixedWood<2, PercentConifer>(code, name)
+    : SimpleFuelMixedWood(code, name, 2, PercentConifer)
   { }
 };
 /**
