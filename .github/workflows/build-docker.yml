@@ -20,7 +20,7 @@ jobs:
     with:
       image: firestarr-minimal
       cache-from: "type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:"
-      suffix: "-minimal"
+      suffix: "minimal"
 
   cleanup-docker:
     needs: [build-docker-minimal]
