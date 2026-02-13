@@ -14,7 +14,7 @@ if(EXISTS "${FILE_ENV}")
 else()
   message(WARNING "VERSION IS NOT SET")
   # no version set
-  set(VERSION "?.?.?.?")
+  set(VERSION "?.?")
 endif()
 
 set(MODIFIED_TIME "")
