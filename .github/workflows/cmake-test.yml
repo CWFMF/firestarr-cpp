@@ -234,6 +234,12 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      # if '-' in tag then it's -alpha or similar
+      IS_LATEST: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
+      # should just be !env.IS_LATEST but can't figure out syntax
+      IS_PRERELEASE: ${{ !startsWith(github.ref, 'refs/tags/v') || contains(github.ref, '-') }}
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -243,46 +249,23 @@ jobs:
           echo "=== All artifacts ==="
           find . -type f \( -name "*.tar.gz" -o -name "*.zip" \)
 
-      - name: Update branch release
-        if: github.event_name != 'release' && !startsWith(github.ref, 'refs/tags/v')
+      - name: Prepare Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "FireSTARR ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name }}
+          body: |
+            **Hash:** ${{ github.sha }}
+            **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          make_latest: ${{ env.IS_LATEST }}
+          prerelease: ${{ env.IS_PRERELEASE }}
+          generate_release_notes: true
+
+
+      - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: "FireSTARR ${{ github.ref_name }}"
-          body: |
-            Latest FireSTARR binaries built from last commit
-
-            **Hash:** ${{ github.sha }}
-            **Built:** ${{ github.run_id }}
-            **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          prerelease: true
-          make_latest: false
-          generate_release_notes: true
-          target_commitish: ${{ github.sha }}
-          files: |
-            ./firestarr*/*.tar.gz
-            ./firestarr*/*.zip
-
-      - name: Release tag
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "FireSTARR ${{ github.ref_name }}"
-          body: |
-            **Hash:** ${{ github.sha }}
-            **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          # if '-' in tag then it's -alpha or similar
-          make_latest: |
-            !contains(github.ref, '-')
-          generate_release_notes: true
-          files: |
-            ./firestarr*/*.tar.gz
-            ./firestarr*/*.zip
-
-      - name: Attach to release (release events)
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
           files: |
             ./firestarr*/*.tar.gz
             ./firestarr*/*.zip
