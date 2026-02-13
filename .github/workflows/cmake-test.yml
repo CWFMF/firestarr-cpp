@@ -262,7 +262,26 @@ jobs:
             ./firestarr*/*.tar.gz
             ./firestarr*/*.zip
 
-      - name: Attach to release (release events)
+      - name: Update branch release
+        if: github.event_name != 'release' && !startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "FireSTARR ${{ github.ref_name }}"
+          body: |
+            Latest FireSTARR binaries built from last commit
+
+            **Hash:** ${{ github.sha }}
+            **Built:** ${{ github.run_id }}
+            **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          prerelease: true
+          make_latest: false
+          generate_release_notes: true
+          files: |
+            ./firestarr*/*.tar.gz
+            ./firestarr*/*.zip
+
+      - name: Release tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
