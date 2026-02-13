@@ -243,25 +243,6 @@ jobs:
           echo "=== All artifacts ==="
           find . -type f \( -name "*.tar.gz" -o -name "*.zip" \)
 
-      - name: Update firestarr-latest release
-        if: github.event_name != 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: firestarr-latest
-          name: "FireSTARR Latest Build"
-          body: |
-            Latest FireSTARR binaries built from last commit
-
-            **commit:** ${{ github.ref }}
-            **Built:** ${{ github.run_id }}
-            **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          prerelease: true
-          make_latest: false
-          generate_release_notes: true
-          files: |
-            ./firestarr*/*.tar.gz
-            ./firestarr*/*.zip
-
       - name: Update branch release
         if: github.event_name != 'release' && !startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
