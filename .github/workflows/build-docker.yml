@@ -30,7 +30,7 @@ jobs:
       - uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           delete-tags: "*-*"
-          dry-run: true
+          # dry-run: true
           # FIX: leave firestarr alone for now since it has the history of things from the start
           # packages: firestarr,firestarr-cpp/firestarr
           packages: firestarr-cpp/cache
