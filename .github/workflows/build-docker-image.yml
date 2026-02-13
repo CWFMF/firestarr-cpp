@@ -12,6 +12,9 @@ on:
       cache-to:
         required: false
         type: string
+      suffix:
+        required: false
+        type: string
 
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
@@ -119,6 +122,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+          flavor: |
+            latest=auto
+            prefix=
+            suffix=${{ inputs.suffix }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
