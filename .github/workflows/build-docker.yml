@@ -30,13 +30,5 @@ jobs:
     steps:
       - uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          delete-tags: "*-*"
           # dry-run: true
-          # FIX: leave firestarr alone for now since it has the history of things from the start
-          # packages: firestarr,firestarr-cpp/firestarr
           packages: firestarr-cpp/cache
-          validate: true
-          delete-untagged: true
-          delete-ghost-images: true
-          delete-partial-images: true
-          delete-orphaned-images: true
