@@ -258,6 +258,7 @@ jobs:
           prerelease: true
           make_latest: false
           generate_release_notes: true
+          target_commitish: ${{ github.sha }}
           files: |
             ./firestarr*/*.tar.gz
             ./firestarr*/*.zip
