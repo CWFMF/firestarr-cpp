@@ -241,6 +241,17 @@ jobs:
       IS_PRERELEASE: ${{ !startsWith(github.ref, 'refs/tags/v') || contains(github.ref, '-') }}
 
     steps:
+      # need checkout to delete release
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Delete existing tag
+        if: ${{ env.IS_PRERELEASE }}
+        run: gh release delete -y ${{ github.ref_name }} --cleanup-tag || echo "Tag ${{ github.ref_name }} does not exist"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
