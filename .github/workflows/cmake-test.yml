@@ -260,7 +260,7 @@ jobs:
           echo "=== All artifacts ==="
           find . -type f \( -name "*.tar.gz" -o -name "*.zip" \)
 
-      - name: Prepare Release
+      - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
           name: "FireSTARR ${{ github.ref_name }}"
@@ -272,12 +272,6 @@ jobs:
           make_latest: ${{ env.IS_LATEST }}
           prerelease: ${{ env.IS_PRERELEASE }}
           generate_release_notes: true
-
-
-      - name: Publish Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
           files: |
             ./firestarr*/*.tar.gz
             ./firestarr*/*.zip
