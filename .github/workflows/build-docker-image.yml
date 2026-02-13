@@ -18,7 +18,8 @@ on:
 
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
-  REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/${{ inputs.image }}
+  # everything goes in same package but suffix applies to tags
+  REGISTRY_IMAGE: ghcr.io/cwfmf/firestarr-cpp/firestarr
 
 jobs:
   build-docker-image:
