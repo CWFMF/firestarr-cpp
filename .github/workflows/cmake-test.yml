@@ -254,6 +254,7 @@ jobs:
         with:
           name: "FireSTARR ${{ github.ref_name }}"
           tag_name: ${{ github.ref_name }}
+          target_commitish: ${{ github.ref }}
           body: |
             **Hash:** ${{ github.sha }}
             **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
