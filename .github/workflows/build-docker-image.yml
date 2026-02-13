@@ -6,10 +6,10 @@ on:
       image:
         required: true
         type: string
-      cache-from-tag:
+      cache-from:
         required: false
         type: string
-      cache-to-tag:
+      cache-to:
         required: false
         type: string
 
@@ -71,8 +71,8 @@ jobs:
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           # ${{ github.repository }} isn't lowercase so manually specify
-          cache-from: type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }}${{ inputs.cache-from-tag || '' }}
-          cache-to: type=registry,mode=max,ref=ghcr.io/cwfmf/firestarr-cpp/cache:${{ env.PLATFORM_PAIR }}${{ inputs.cache-to-tag || '' }}
+          cache-from: ${{ inputs.cache-from }}${{ case ( '' != inputs.cache-from, env.PLATFORM_PAIR, '' ) }}
+          cache-to: ${{ inputs.cache-to }}${{ case ( '' != inputs.cache-to, env.PLATFORM_PAIR, '' ) }}
 
       - name: Export digest
         run: |

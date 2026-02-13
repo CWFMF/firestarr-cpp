@@ -11,14 +11,15 @@ jobs:
     uses: ./.github/workflows/build-docker-image.yml
     with:
       image: firestarr
+      cache-from: "type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:"
+      cache-to: "type=registry,mode=max,ref=ghcr.io/cwfmf/firestarr-cpp/cache:"
 
   build-docker-minimal:
     needs: [build-docker-normal]
     uses: ./.github/workflows/build-docker-image.yml
     with:
       image: firestarr-minimal
-      # HACK: this is just to prevent overwriting cache for others or figuring out how to not cache
-      cache-to-tag: "-minimal"
+      cache-from: "type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:"
 
   cleanup-docker-cache:
     needs: [build-docker-minimal]
