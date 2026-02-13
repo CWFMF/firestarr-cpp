@@ -270,7 +270,6 @@ jobs:
           body: |
             **Hash:** ${{ github.sha }}
             **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          prerelease: true
           make_latest: true
           generate_release_notes: true
           files: |
