@@ -271,7 +271,9 @@ jobs:
           body: |
             **Hash:** ${{ github.sha }}
             **Workflow run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          make_latest: true
+          # if '-' in tag then it's -alpha or similar
+          make_latest: |
+            !contains(github.ref, '-')
           generate_release_notes: true
           files: |
             ./firestarr*/*.tar.gz
