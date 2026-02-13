@@ -7,14 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # specifically package this so build process doesn't keep redoing it
-  build-docker-vcpkg-installed:
-    uses: ./.github/workflows/build-docker-image.yml
-    with:
-      image: vcpkg-installed
-
   build-docker-normal:
-    needs: [build-docker-vcpkg-installed]
     uses: ./.github/workflows/build-docker-image.yml
     with:
       image: firestarr
