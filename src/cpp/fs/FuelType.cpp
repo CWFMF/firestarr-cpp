@@ -3,7 +3,7 @@
 #include "FBP45.h"
 #include "Log.h"
 #include "Settings.h"
-namespace fs
+namespace fs::fuel
 {
 [[nodiscard]] const FuelType* FuelType::find_fuel_by_season(const int nd) const noexcept
 {

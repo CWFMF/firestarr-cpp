@@ -6,6 +6,7 @@
 #include "Location.h"
 namespace fs
 {
+using namespace fuel;
 class BurnedData
 {
 public:
