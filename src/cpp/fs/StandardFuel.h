@@ -5,7 +5,7 @@
 #include "FuelType.h"
 #include "LogValue.h"
 #include "LookupTable.h"
-namespace fs
+namespace fs::fuel
 {
 /**
  * \brief Limit to slope when calculating ISI
