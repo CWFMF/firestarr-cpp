@@ -9,7 +9,7 @@
 #ifdef DEBUG_FUEL_VARIABLE
 #include "Log.h"
 #endif
-namespace fs
+namespace fs::fuel
 {
 /**
  * \brief Calculate if green-up has occurred

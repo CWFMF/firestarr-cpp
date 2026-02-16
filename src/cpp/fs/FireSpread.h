@@ -9,6 +9,8 @@
 #include "Weather.h"
 namespace fs
 {
+namespace fuel
+{
 struct ROSOffset
 {
   IntensitySize intensity;
@@ -19,6 +21,8 @@ struct ROSOffset
 };
 using OffsetSet = vector<ROSOffset>;
 class FuelType;
+}
+using namespace fuel;
 static constexpr MathSize MAX_SPREAD_ANGLE = 5.0;
 static constexpr MathSize INVALID_ROS = -1.0;
 static constexpr MathSize INVALID_INTENSITY = -1.0;
