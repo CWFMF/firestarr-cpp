@@ -1,14 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "SimpleFBP.h"
-#include "Duff.h"
 #include "FBP45.h"
 #include "FireSpread.h"
-#include "FireWeather.h"
-#include "FuelLookup.h"
-#include "FuelType.h"
 #include "FWI.h"
-#include "Log.h"
 #include "RangeIterator.h"
 #include "unstable.h"
 namespace fs::simplefbp
@@ -350,7 +345,7 @@ int compare_spread(
     // offsets are in fraction of a cell per minute
     const auto offset{o.offset};
     cout << std::format(
-      " ({:d} kW/m; {:0.6f} m/min @{:03d} == ({:g}, {:g}))",
+      " ({:d} kW/m; {:0.6f} m/min @{:03d} == ({:g}, {:g}))\n",
       intensity,
       ros,
       direction.asDegreesSize(),
@@ -416,7 +411,7 @@ int compare_spread(
                 if (offsets_a.size() != offsets_b.size())
                 {
                   logging::error(
-                    "compare_spread() pt failed for name: {:s}; ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
+                    "compare_spread() size failed for name: {:s}; ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
                     name.c_str(),
                     ffmc,
                     dmc,
@@ -773,7 +768,7 @@ int test_fbp(const int argc, const char* const argv[])
   auto i = 0;
   compare_fuel_valid("Non-fuel", simplefbp::NULL_FUEL, *FuelLookup::Fuels[i++], "basic test only");
   compare_fuel_valid("Invalid", simplefbp::INVALID, *FuelLookup::Fuels[i++], "basic test only");
-  compare_fuel("C1", simplefbp::C1, *dynamic_cast<const fs::FuelC1*>(FuelLookup::Fuels[i++]));
+  compare_fuel("C1", simplefbp::C1, *dynamic_cast<const fs::fuel::FuelC1*>(FuelLookup::Fuels[i++]));
   compare_fuel("C2", simplefbp::C2, *dynamic_cast<const fs::FuelC2*>(FuelLookup::Fuels[i++]));
   compare_fuel("C3", simplefbp::C3, *dynamic_cast<const fs::FuelC3*>(FuelLookup::Fuels[i++]));
   compare_fuel("C4", simplefbp::C4, *dynamic_cast<const fs::FuelC4*>(FuelLookup::Fuels[i++]));
