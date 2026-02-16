@@ -1862,8 +1862,4 @@ public:
   }
 };
 }
-namespace fs::testing
-{
-int test_fbp(const int argc, const char* const argv[]);
-}
 #endif
