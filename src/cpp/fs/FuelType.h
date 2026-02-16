@@ -5,7 +5,7 @@
 #include "Duff.h"
 #include "FireSpread.h"
 #include "FWI.h"
-namespace fs
+namespace fs::fuel
 {
 using duff::Duff;
 // References
