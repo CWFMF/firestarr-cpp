@@ -5,7 +5,7 @@
 #include "Cell.h"
 #include "FireWeather.h"
 #include "FuelType.h"
-namespace fs
+namespace fs::fuel
 {
 class FuelLookupImpl;
 string simplify_fuel_name(const string_view fuel);

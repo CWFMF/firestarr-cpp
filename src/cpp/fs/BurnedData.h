@@ -5,6 +5,7 @@
 #include "ConstantGrid.h"
 namespace fs
 {
+using namespace fuel;
 class BurnedData
 {
 public:

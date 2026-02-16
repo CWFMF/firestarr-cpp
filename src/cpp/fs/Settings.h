@@ -5,6 +5,7 @@
 #include "FuelLookup.h"
 namespace fs
 {
+using namespace fuel;
 /**
  * \brief Reads and provides access to settings for the simulation.
  */

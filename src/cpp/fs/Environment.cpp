@@ -12,6 +12,7 @@
 #include "Util.h"
 namespace fs
 {
+using namespace fuel;
 Environment Environment::load(
   const Point& point,
   const string_view in_fuel,

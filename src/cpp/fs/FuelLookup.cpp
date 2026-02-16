@@ -5,7 +5,7 @@
 #include "FuelType.h"
 #include "Log.h"
 #include "Settings.h"
-namespace fs
+namespace fs::fuel
 {
 string simplify_fuel_name(const string_view fuel)
 {

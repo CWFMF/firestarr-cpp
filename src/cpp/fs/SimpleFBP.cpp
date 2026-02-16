@@ -1,8 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "SimpleFBP.h"
-#include <compare>
-#include <limits>
 #include "Duff.h"
 #include "FBP45.h"
 #include "FireSpread.h"
