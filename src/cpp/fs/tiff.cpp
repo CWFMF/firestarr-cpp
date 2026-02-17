@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "tiff.h"
+#include <geo_normalize.h>
+#include <tiffio.h>
+#include <xtiffio.h>
+#include "Log.h"
 namespace fs
 {
 TIFF* GeoTiffOpen(const char* const filename, const char* const mode)
@@ -32,4 +36,31 @@ TIFF* GeoTiffOpen(const char* const filename, const char* const mode)
   TIFFMergeFieldInfo(tif, xtiffFieldInfo, sizeof(xtiffFieldInfo) / sizeof(xtiffFieldInfo[0]));
   return tif;
 }
+GeoTiff::~GeoTiff()
+{
+  if (tiff_)
+  {
+    XTIFFClose(tiff_);
+  }
+  if (gtif_)
+  {
+    GTIFFree(gtif_);
+  }
+  GTIFDeaccessCSV();
+}
+GeoTiff::GeoTiff(const string_view filename)
+  : filename_(filename), tiff_([&]() {
+      logging::debug("Reading file %s", filename_.c_str());
+      // suppress warnings about geotiff tags that aren't found
+      TIFFSetWarningHandler(nullptr);
+      auto tiff = GeoTiffOpen(filename_.c_str(), "r");
+      logging::check_fatal(!tiff, "Cannot open file %s as a TIF", filename_.c_str());
+      return tiff;
+    }()),
+    gtif_([&]() {
+      auto gtif = GTIFNew(tiff_);
+      logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename_.c_str());
+      return gtif;
+    }())
+{ }
 }

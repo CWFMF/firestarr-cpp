@@ -3,6 +3,7 @@
 #define FS_CONSTANTGRID_H
 #include "stdafx.h"
 #include "Grid.h"
+#include "tiff.h"
 #include "Util.h"
 namespace fs
 {
@@ -140,21 +141,19 @@ public:
   /**
    * \brief Read a section of a TIFF into a ConstantGrid
    * \param filename File name to read from
-   * \param tif Pointer to open TIFF denoted by filename
-   * \param gtif Pointer to open geotiff denoted by filename
    * \param point Point to center ConstantGrid on
    * \param convert Function taking int and nodata int value that returns T
    * \return ConstantGrid containing clipped data for TIFF
    */
   [[nodiscard]] static ConstantGrid<T, V> readTiff(
     const string_view filename,
-    TIFF* tif,
-    GTIF* gtif,
     const Point& point,
     std::function<T(V, V)> convert
   )
   {
-    logging::info("Reading file %s", string(filename).c_str());
+    GeoTiff geotiff{filename};
+    auto tif = geotiff.tiff();
+    auto gtif = geotiff.gtif();
 #ifdef DEBUG_GRIDS
     auto min_value = std::numeric_limits<V>::max();
     auto max_value = std::numeric_limits<V>::min();
@@ -165,7 +164,7 @@ public:
       std::numeric_limits<V>::min(),
       std::numeric_limits<V>::max()
     );
-    const GridBase grid_info = read_header(tif, gtif);
+    const GridBase grid_info = read_header(geotiff);
     uint32_t tile_width;
     uint32_t tile_length;
     TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tile_width);
@@ -239,14 +238,14 @@ public:
       "Expected nodata value to be returned from convert()"
     );
     vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, nodata_value);
-    logging::verbose("%s: malloc start", string(filename).c_str());
+    logging::verbose("%s: malloc start", geotiff.filename());
     int bps = std::numeric_limits<V>::digits + (1 * std::numeric_limits<V>::is_signed);
     uint16_t bps_file;
     TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps_file);
     logging::check_fatal(
       bps != bps_file,
       "Raster %s type is not expected type (%d bits instead of %d)",
-      string(filename).c_str(),
+      geotiff.filename(),
       bps_file,
       bps
     );
@@ -256,16 +255,16 @@ public:
     logging::debug("Size of pointer to int is %ld vs %ld", sizeof(int16_t*), sizeof(V*));
     logging::debug(
       "Raster %s calculated bps for type V is %ld; tif says bps is %ld; int16_t is %ld",
-      string(filename).c_str(),
+      geotiff.filename(),
       bps,
       bps_file,
       bps_int16_t
     );
 #endif
     const auto tile_size = TIFFTileSize(tif);
-    logging::debug("Tile size for reading %s is %ld", string(filename).c_str(), tile_size);
+    logging::debug("Tile size for reading %s is %ld", geotiff.filename(), tile_size);
     const auto buf = _TIFFmalloc(tile_size);
-    logging::verbose("%s: read start", string(filename).c_str());
+    logging::verbose("%s: read start", geotiff.filename());
     const tsample_t smp{};
     logging::debug(
       "Want to clip grid to (%d, %d) => (%d, %d) for a %dx%d raster",
@@ -309,9 +308,9 @@ public:
         }
       }
     }
-    logging::verbose("%s: read end", string(filename).c_str());
+    logging::verbose("%s: read end", geotiff.filename());
     _TIFFfree(buf);
-    logging::verbose("%s: free end", string(filename).c_str());
+    logging::verbose("%s: free end", geotiff.filename());
     const auto new_xll =
       grid_info.xllcorner() + (static_cast<MathSize>(min_column) * grid_info.cellSize());
     const auto new_yll = grid_info.yllcorner()
@@ -354,28 +353,9 @@ public:
       std::get<1>(*new_location) + std::get<3>(*new_location) / 1000.0
     );
 #ifdef DEBUG_GRIDS
-    logging::note(
-      "Values for %s range from %d to %d", string(filename).c_str(), min_value, max_value
-    );
+    logging::note("Values for %s range from %d to %d", geotiff.filename(), min_value, max_value);
 #endif
     return result;
-  }
-  /**
-   * \brief Read a section of a TIFF into a ConstantGrid
-   * \param filename File name to read from
-   * \param point Point to center ConstantGrid on
-   * \param convert Function taking V and nodata V value that returns T
-   * \return ConstantGrid containing clipped data for TIFF
-   */
-  [[nodiscard]] static ConstantGrid<T, V> readTiff(
-    const string_view filename,
-    const Point& point,
-    std::function<T(V, V)> convert
-  )
-  {
-    return with_tiff<ConstantGrid<T, V>>(filename, [&](TIFF* tif, GTIF* gtif) {
-      return readTiff(filename, tif, gtif, point, convert);
-    });
   }
   /**
    * \brief Read a section of a TIFF into a ConstantGrid

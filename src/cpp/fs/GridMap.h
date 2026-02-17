@@ -2,9 +2,7 @@
 #ifndef FS_GRIDMAP_H
 #define FS_GRIDMAP_H
 #include "stdafx.h"
-#include "ConstantGrid.h"
 #include "Grid.h"
-#include "Settings.h"
 namespace fs
 {
 /**
