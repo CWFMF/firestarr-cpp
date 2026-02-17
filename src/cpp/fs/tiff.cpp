@@ -47,12 +47,12 @@ GeoTiff::~GeoTiff()
     XTIFFClose(tiff_);
   }
 }
-GeoTiff::GeoTiff(const string_view filename)
-  : filename_(filename), tiff_([&]() {
+GeoTiff::GeoTiff(const string_view filename, const char* const mode)
+  : mode_(mode), filename_(filename), tiff_([&]() {
       logging::debug("Reading file %s", filename_.c_str());
       // suppress warnings about geotiff tags that aren't found
       TIFFSetWarningHandler(nullptr);
-      auto tiff = GeoTiffOpen(filename_.c_str(), "r");
+      auto tiff = GeoTiffOpen(filename_.c_str(), mode);
       logging::check_fatal(!tiff, "Cannot open file %s as a TIF", filename_.c_str());
       return tiff;
     }()),
