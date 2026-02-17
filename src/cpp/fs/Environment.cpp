@@ -34,9 +34,7 @@ Environment Environment::load(
   logging::warning("Loading grids synchronously");
   // HACK: need to copy strings since closures do that above
   return Environment(
-    FuelGrid::readTiff(string(in_fuel), point, lookup),
-    ElevationGrid::readTiff(string(in_elevation), point),
-    point
+    FuelGrid::readTiff(in_fuel, point, lookup), ElevationGrid::readTiff(in_elevation, point), point
   );
 }
 shared_ptr<ProbabilityMap> Environment::makeProbabilityMap(
