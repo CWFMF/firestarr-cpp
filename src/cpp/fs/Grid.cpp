@@ -213,7 +213,7 @@ void write_ascii_header(
 }
 [[nodiscard]] GridBase read_header(const string_view filename)
 {
-  GeoTiff geotiff{filename};
+  GeoTiff geotiff{filename, "r"};
   return read_header(geotiff);
 }
 string create_file_name(
