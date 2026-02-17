@@ -3,6 +3,7 @@
 #define FS_GRID_H
 #include <limits>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <geo_normalize.h>
 #include <tiffio.h>
@@ -539,8 +540,9 @@ protected:
       0 != (num_columns % tileHeight), "%d columns not divisible by tiles", num_columns
     );
     const auto filename = create_file_name(dir, base_name, "tif");
-    TIFF* tif = GeoTiffOpen(filename.c_str(), "w");
-    auto gtif = GTIFNew(tif);
+    GeoTiff geotiff{filename, "w"};
+    auto tif = geotiff.tiff();
+    auto gtif = geotiff.gtif();
     logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
     const double xul = xll;
     const double yul = this->yllcorner() + (this->cellSize() * max_row);
@@ -548,18 +550,26 @@ protected:
     double pixelScale[3] = {this->cellSize(), this->cellSize(), 0.0};
     uint32_t bps = sizeof(R) * 8;
     // make sure to use floating point if values are
-    if (std::is_floating_point<R>::value)
+    if (std::is_floating_point_v<R>)
     {
       logging::extensive(
         "Writing %s with float data type for %s", filename.c_str(), typeid(R).name()
       );
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
     }
+    else if (std::is_unsigned_v<R>)
+    {
+      logging::extensive(
+        "Writing %s with unsigned int data type for %s", filename.c_str(), typeid(R).name()
+      );
+      TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+    }
     else
     {
       logging::extensive(
         "Writing %s with int data type for %s", filename.c_str(), typeid(R).name()
       );
+      TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT);
     }
     // FIX: was using double, and that usually doesn't make sense, but sometime it might?
     // use buffer big enought to fit any (V  + '.000\0') + 1
@@ -622,12 +632,7 @@ protected:
       }
     }
     GTIFWriteKeys(gtif);
-    if (gtif)
-    {
-      GTIFFree(gtif);
-    }
     _TIFFfree(buf);
-    XTIFFClose(tif);
     return filename;
   }
 
