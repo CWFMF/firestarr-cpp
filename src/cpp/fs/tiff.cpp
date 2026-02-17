@@ -46,7 +46,6 @@ GeoTiff::~GeoTiff()
   {
     GTIFFree(gtif_);
   }
-  GTIFDeaccessCSV();
 }
 GeoTiff::GeoTiff(const string_view filename)
   : filename_(filename), tiff_([&]() {
