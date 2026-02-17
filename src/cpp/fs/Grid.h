@@ -4,6 +4,9 @@
 #include <limits>
 #include <string>
 #include <utility>
+#include <geo_normalize.h>
+#include <tiffio.h>
+#include <xtiffio.h>
 #include "Location.h"
 #include "Log.h"
 #include "Point.h"
@@ -167,7 +170,7 @@ void write_ascii_header(
   MathSize cell_size,
   MathSize no_data
 );
-GridBase read_header(TIFF* tif, GTIF* gtif);
+GridBase read_header(GeoTiff& geotiff);
 GridBase read_header(const string_view filename);
 /**
  * \brief A GridBase with an associated type of data.
