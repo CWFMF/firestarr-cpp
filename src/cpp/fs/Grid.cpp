@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Grid.h"
+#include <geo_normalize.h>
+#include <tiffio.h>
+#include <xtiffio.h>
+#include "tiff.h"
 #include "UTM.h"
 using fs::Idx;
 namespace fs
@@ -155,10 +159,12 @@ void write_ascii_header(
   out << "cellsize      " << cell_size << "\n";
   out << "NODATA_value  " << no_data << "\n";
 }
-[[nodiscard]] GridBase read_header(TIFF* tif, GTIF* gtif)
+[[nodiscard]] GridBase read_header(GeoTiff& geotiff)
 {
+  auto tif = geotiff.tiff();
+  auto gtif = geotiff.gtif();
   GTIFDefn definition;
-  if (GTIFGetDefn(gtif, &definition))
+  if (GTIFGetDefn(geotiff.gtif(), &definition))
   {
     uint32_t columns;
     uint32_t rows;
@@ -207,9 +213,8 @@ void write_ascii_header(
 }
 [[nodiscard]] GridBase read_header(const string_view filename)
 {
-  return with_tiff<GridBase>(filename, [](TIFF* tif, GTIF* gtif) {
-    return read_header(tif, gtif);
-  });
+  GeoTiff geotiff{filename};
+  return read_header(geotiff);
 }
 string create_file_name(
   const string_view dir,
