@@ -38,13 +38,13 @@ TIFF* GeoTiffOpen(const char* const filename, const char* const mode)
 }
 GeoTiff::~GeoTiff()
 {
-  if (tiff_)
-  {
-    XTIFFClose(tiff_);
-  }
   if (gtif_)
   {
     GTIFFree(gtif_);
+  }
+  if (tiff_)
+  {
+    XTIFFClose(tiff_);
   }
 }
 GeoTiff::GeoTiff(const string_view filename)
