@@ -627,7 +627,7 @@ protected:
       GTIFFree(gtif);
     }
     _TIFFfree(buf);
-    TIFFClose(tif);
+    XTIFFClose(tif);
     return filename;
   }
 
