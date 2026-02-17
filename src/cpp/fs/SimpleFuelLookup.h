@@ -80,7 +80,7 @@ private:
  * \param code Value to use for lookup
  * \return SimpleFuelType based on the given code
  */
-[[nodiscard]] constexpr const SimpleFuelType* simple_fuel_by_code(const FuelCodeSize& code)
+[[nodiscard]] constexpr const SimpleFuelType* fuel_by_code(const FuelCodeSize& code)
 {
   return SimpleFuelLookup::Fuels.at(code);
 }
@@ -89,16 +89,16 @@ private:
  * \param cell Cell to retrieve SimpleFuelType for
  * \return SimpleFuelType based on the given cell
  */
-[[nodiscard]] constexpr const SimpleFuelType* simple_check_fuel(const Cell& cell)
+[[nodiscard]] constexpr const SimpleFuelType* check_fuel(const Cell& cell)
 {
-  return simple_fuel_by_code(cell.fuelCode());
+  return fuel_by_code(cell.fuelCode());
 }
 /**
  * \brief Whether or not there is no fuel in the Cell
  * \param cell Cell to check
  * \return Whether or not there is no fuel in the Cell
  */
-[[nodiscard]] constexpr bool simple_is_null_fuel(const SimpleFuelType* fuel)
+[[nodiscard]] constexpr bool is_null_fuel(const SimpleFuelType* fuel)
 {
   return INVALID_FUEL_CODE == SimpleFuelType::safeCode(fuel);
 }
@@ -107,9 +107,9 @@ private:
  * \param cell Cell to check
  * \return Whether or not there is no fuel in the Cell
  */
-[[nodiscard]] constexpr bool simple_is_null_fuel(const Cell& cell)
+[[nodiscard]] constexpr bool is_null_fuel(const Cell& cell)
 {
-  return simple_is_null_fuel(simple_fuel_by_code(cell.fuelCode()));
+  return is_null_fuel(fuel_by_code(cell.fuelCode()));
 }
 }
 namespace fs::testing
