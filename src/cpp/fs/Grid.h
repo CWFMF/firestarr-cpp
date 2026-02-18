@@ -2,13 +2,8 @@
 #ifndef FS_GRID_H
 #define FS_GRID_H
 #include "stdafx.h"
-#include <limits>
-#include <string>
 #include <type_traits>
 #include <utility>
-#include <geo_normalize.h>
-#include <tiffio.h>
-#include <xtiffio.h>
 #include "Location.h"
 #include "Log.h"
 #include "Point.h"
@@ -143,7 +138,7 @@ public:
     const string_view dir,
     const string_view base_name,
     const uint16_t bits_per_sample,
-    const uint16_t sample_format,
+    const bool is_unsigned,
     std::function<int(Location)> value_at,
     const int nodata_as_int
   ) const;
@@ -153,8 +148,8 @@ public:
     const tuple<Idx, Idx, Idx, Idx> bounds,
     const string_view dir,
     const string_view base_name,
-    const uint16_t bits_per_sample,
-    const uint16_t sample_format,
+    // const uint16_t bits_per_sample,
+    // const uint16_t sample_format,
     std::function<double(Location)> value_at,
     const int nodata_as_int
   ) const;
@@ -492,7 +487,7 @@ protected:
   ) const
     requires(std::is_floating_point_v<R>)
   {
-    constexpr auto bps = 16;
+    // constexpr auto bps = 16;
     // auto bps = sizeof(R) * 8;
     // logging::check_fatal(
     //   bps != 16, "Only float16_t supported for output tiff but BITSPERSAMPLE is %d", bps
@@ -503,8 +498,8 @@ protected:
       this->dataBounds(),
       dir,
       base_name,
-      bps,
-      SAMPLEFORMAT_IEEEFP,
+      // bps,
+      // SAMPLEFORMAT_IEEEFP,
       [&](Location idx) { return static_cast<double>(convert(this->at(idx))); },
       static_cast<int>(this->nodataInput())
     );
@@ -519,7 +514,6 @@ protected:
     requires(std::is_integral_v<R>)
   {
     auto bps = sizeof(R) * 8;
-    const auto sample_format = std::is_unsigned_v<R> ? SAMPLEFORMAT_UINT : SAMPLEFORMAT_INT;
     return GridBase::saveToTiffFileInt(
       this->columns(),
       this->rows(),
@@ -527,7 +521,7 @@ protected:
       dir,
       base_name,
       bps,
-      sample_format,
+      std::is_unsigned_v<R>,
       [&](Location idx) { return static_cast<int>(convert(this->at(idx))); },
       static_cast<int>(this->nodataInput())
     );

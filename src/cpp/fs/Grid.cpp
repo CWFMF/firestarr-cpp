@@ -179,22 +179,24 @@ string GridBase::saveToTiffFileInt(
   const string_view dir,
   const string_view base_name,
   const uint16_t bits_per_sample,
-  const uint16_t sample_format,
+  // const uint16_t sample_format,
+  const bool is_unsigned,
   std::function<int(Location)> value_at,
   const int nodata_as_int
 ) const
 {
-  logging::check_fatal(
-    SAMPLEFORMAT_INT != sample_format && SAMPLEFORMAT_UINT != sample_format,
-    "Expected int for SAMPLEFORMAT but got value %d",
-    bits_per_sample
-  );
+  // logging::check_fatal(
+  //   SAMPLEFORMAT_INT != sample_format && SAMPLEFORMAT_UINT != sample_format,
+  //   "Expected int for SAMPLEFORMAT but got value %d",
+  //   bits_per_sample
+  // );
   logging::check_fatal(
     8 != bits_per_sample && 16 != bits_per_sample && 32 != bits_per_sample,
     "Expected integer to have 8, 16, or 32 bits but got %d",
     bits_per_sample
   );
-  if (SAMPLEFORMAT_UINT == sample_format)
+  const auto sample_format = is_unsigned ? SAMPLEFORMAT_UINT : SAMPLEFORMAT_INT;
+  if (is_unsigned)
   {
     // unsigned int
     if (8 == bits_per_sample)
@@ -243,7 +245,7 @@ string GridBase::saveToTiffFileInt(
       );
     }
   }
-  else if (SAMPLEFORMAT_INT == sample_format)
+  else
   {
     // signed int
     if (8 == bits_per_sample)
@@ -304,12 +306,14 @@ string GridBase::saveToTiffFileFloat(
   const tuple<Idx, Idx, Idx, Idx> bounds,
   const string_view dir,
   const string_view base_name,
-  const uint16_t bits_per_sample,
-  const uint16_t sample_format,
+  // const uint16_t bits_per_sample,
+  // const uint16_t sample_format,
   std::function<double(Location)> value_at,
   const int nodata_as_int
 ) const
 {
+  constexpr auto bits_per_sample = 16;
+  constexpr auto sample_format = SAMPLEFORMAT_IEEEFP;
   if (16 == bits_per_sample)
   {
     return saveToTiffFile<float>(
