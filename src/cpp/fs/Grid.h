@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_GRID_H
 #define FS_GRID_H
+#include "stdafx.h"
 #include <limits>
 #include <string>
 #include <type_traits>
@@ -135,6 +136,28 @@ public:
    */
   [[nodiscard]] unique_ptr<FullCoordinates> findFullCoordinates(const Point& point, bool flipped)
     const;
+  string saveToTiffFileInt(
+    const Idx columns,
+    const Idx rows,
+    const tuple<Idx, Idx, Idx, Idx> bounds,
+    const string_view dir,
+    const string_view base_name,
+    const uint16_t bits_per_sample,
+    const uint16_t sample_format,
+    std::function<int(Location)> value_at,
+    const int nodata_as_int
+  ) const;
+  string saveToTiffFileFloat(
+    const Idx columns,
+    const Idx rows,
+    const tuple<Idx, Idx, Idx, Idx> bounds,
+    const string_view dir,
+    const string_view base_name,
+    const uint16_t bits_per_sample,
+    const uint16_t sample_format,
+    std::function<double(Location)> value_at,
+    const int nodata_as_int
+  ) const;
 
 private:
   /**
@@ -467,173 +490,47 @@ protected:
     std::function<R(T value)> convert,
     const R no_data
   ) const
+    requires(std::is_floating_point_v<R>)
   {
-    uint32_t tileWidth = min(static_cast<int>(this->columns()), 256);
-    uint32_t tileHeight = min(static_cast<int>(this->rows()), 256);
-    tuple<Idx, Idx, Idx, Idx> bounds = dataBounds();
-    auto min_column = std::get<0>(bounds);
-    auto min_row = std::get<1>(bounds);
-    auto max_column = std::get<2>(bounds);
-    auto max_row = std::get<3>(bounds);
-    logging::check_fatal(
-      min_column > max_column, "Invalid bounds for columns with %d => %d", min_column, max_column
+    constexpr auto bps = 16;
+    // auto bps = sizeof(R) * 8;
+    // logging::check_fatal(
+    //   bps != 16, "Only float16_t supported for output tiff but BITSPERSAMPLE is %d", bps
+    // );
+    return GridBase::saveToTiffFileFloat(
+      this->columns(),
+      this->rows(),
+      this->dataBounds(),
+      dir,
+      base_name,
+      bps,
+      SAMPLEFORMAT_IEEEFP,
+      [&](Location idx) { return static_cast<double>(convert(this->at(idx))); },
+      static_cast<int>(this->nodataInput())
     );
-    logging::check_fatal(
-      min_row > max_row, "Invalid bounds for rows with %d => %d", min_row, max_row
+  }
+  template <class R>
+  string saveToTiffFile(
+    const string_view dir,
+    const string_view base_name,
+    std::function<R(T value)> convert,
+    const R no_data
+  ) const
+    requires(std::is_integral_v<R>)
+  {
+    auto bps = sizeof(R) * 8;
+    const auto sample_format = std::is_unsigned_v<R> ? SAMPLEFORMAT_UINT : SAMPLEFORMAT_INT;
+    return GridBase::saveToTiffFileInt(
+      this->columns(),
+      this->rows(),
+      this->dataBounds(),
+      dir,
+      base_name,
+      bps,
+      sample_format,
+      [&](Location idx) { return static_cast<int>(convert(this->at(idx))); },
+      static_cast<int>(this->nodataInput())
     );
-#ifdef DEBUG_GRIDS
-    logging::debug(
-      "Bounds are (%d, %d), (%d, %d) initially", min_column, min_row, max_column, max_row
-    );
-#endif
-    Idx c_min = 0;
-    while (c_min + static_cast<Idx>(tileWidth) <= min_column)
-    {
-      c_min += static_cast<Idx>(tileWidth);
-    }
-    Idx c_max = c_min + static_cast<Idx>(tileWidth);
-    while (c_max < max_column)
-    {
-      c_max += static_cast<Idx>(tileWidth);
-    }
-    min_column = c_min;
-    max_column = c_max;
-    Idx r_min = 0;
-    while (r_min + static_cast<Idx>(tileHeight) <= min_row)
-    {
-      r_min += static_cast<Idx>(tileHeight);
-    }
-    Idx r_max = r_min + static_cast<Idx>(tileHeight);
-    while (r_max < max_row)
-    {
-      r_max += static_cast<Idx>(tileHeight);
-    }
-    min_row = r_min;
-    max_row = r_max;
-    logging::check_fatal(
-      min_column >= max_column, "Invalid bounds for columns with %d => %d", min_column, max_column
-    );
-    logging::check_fatal(
-      min_row >= max_row, "Invalid bounds for rows with %d => %d", min_row, max_row
-    );
-#ifdef DEBUG_GRIDS
-    logging::debug(
-      "Bounds are (%d, %d), (%d, %d) after correction", min_column, min_row, max_column, max_row
-    );
-#endif
-    logging::extensive("(%d, %d) => (%d, %d)", min_column, min_row, max_column, max_row);
-    logging::check_fatal((max_row - min_row) % tileHeight != 0, "Invalid start and end rows");
-    logging::check_fatal(
-      (max_column - min_column) % tileHeight != 0, "Invalid start and end columns"
-    );
-    logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
-    logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
-    const MathSize xll = this->xllcorner() + min_column * this->cellSize();
-    // offset is different for y since it's flipped
-    const MathSize yll = this->yllcorner() + (min_row) * this->cellSize();
-    logging::extensive("Lower left corner is (%f, %f)", xll, yll);
-    const auto num_rows = static_cast<size_t>(max_row - min_row);
-    const auto num_columns = static_cast<size_t>(max_column - min_column);
-    // ensure this is always divisible by tile size
-    logging::check_fatal(0 != (num_rows % tileWidth), "%d rows not divisible by tiles", num_rows);
-    logging::check_fatal(
-      0 != (num_columns % tileHeight), "%d columns not divisible by tiles", num_columns
-    );
-    const auto filename = create_file_name(dir, base_name, "tif");
-    GeoTiff geotiff{filename, "w"};
-    auto tif = geotiff.tiff();
-    auto gtif = geotiff.gtif();
-    logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
-    const double xul = xll;
-    const double yul = this->yllcorner() + (this->cellSize() * max_row);
-    double tiePoints[6] = {0.0, 0.0, 0.0, xul, yul, 0.0};
-    double pixelScale[3] = {this->cellSize(), this->cellSize(), 0.0};
-    uint32_t bps = sizeof(R) * 8;
-    // make sure to use floating point if values are
-    if (std::is_floating_point_v<R>)
-    {
-      logging::extensive(
-        "Writing %s with float data type for %s", filename.c_str(), typeid(R).name()
-      );
-      TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
-    }
-    else if (std::is_unsigned_v<R>)
-    {
-      logging::extensive(
-        "Writing %s with unsigned int data type for %s", filename.c_str(), typeid(R).name()
-      );
-      TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
-    }
-    else
-    {
-      logging::extensive(
-        "Writing %s with int data type for %s", filename.c_str(), typeid(R).name()
-      );
-      TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT);
-    }
-    // FIX: was using double, and that usually doesn't make sense, but sometime it might?
-    // use buffer big enought to fit any (V  + '.000\0') + 1
-    constexpr auto n = std::numeric_limits<V>::digits10;
-    static_assert(n > 0);
-    char str[n + 6]{0};
-    const auto nodata_as_int = static_cast<int>(this->nodataInput());
-    sxprintf(str, "%d.000", nodata_as_int);
-    logging::extensive(
-      "%s using nodata string '%s' for nodata value of (%d, %f)",
-      typeid(this).name(),
-      str,
-      nodata_as_int,
-      static_cast<MathSize>(no_data)
-    );
-    TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
-    logging::extensive("%s takes %d bits", string(base_name).c_str(), bps);
-    TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);
-    TIFFSetField(tif, TIFFTAG_IMAGELENGTH, num_rows);
-    TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
-    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, bps);
-    TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileWidth);
-    TIFFSetField(tif, TIFFTAG_TILELENGTH, tileHeight);
-    TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-    TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-    TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-    GTIFSetFromProj4(gtif, this->proj4().c_str());
-    TIFFSetField(tif, TIFFTAG_GEOTIEPOINTS, 6, tiePoints);
-    TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
-    size_t tileSize = tileWidth * tileHeight;
-    const auto buf_size = tileSize * sizeof(R);
-    logging::extensive("%s has buffer size %d", string(base_name).c_str(), buf_size);
-    auto buf = static_cast<R*>(_TIFFmalloc(buf_size));
-    for (uint32_t co = 0; co < num_columns; co += tileWidth)
-    {
-      for (uint32_t ro = 0; ro < num_rows; ro += tileHeight)
-      {
-        std::fill_n(&buf[0], tileWidth * tileHeight, no_data);
-        // NOTE: shouldn't need to check if writing outside of tile because we made bounds on tile
-        // edges above need to put data from grid into buffer, but flipped vertically
-        for (uint32_t x = 0; x < tileWidth; ++x)
-        {
-          for (uint32_t y = 0; y < tileHeight; ++y)
-          {
-            const Idx r = static_cast<Idx>(max_row) - (ro + y + 1);
-            const Idx c = static_cast<Idx>(min_column) + co + x;
-            const Location idx(r, c);
-            // might be out of bounds if not divisible by number of tiles
-            if (!(this->rows() <= r || 0 > r || this->columns() <= c || 0 > c))
-            {
-              // HACK: was getting invalid rasters if assigning directly into buf
-              const R value = convert(this->at(idx));
-              buf[x + y * tileWidth] = value;
-            }
-          }
-        }
-        logging::check_fatal(
-          TIFFWriteTile(tif, buf, co, ro, 0, 0) < 0, "Cannot write tile to %s", filename.c_str()
-        );
-      }
-    }
-    GTIFWriteKeys(gtif);
-    _TIFFfree(buf);
-    return filename;
   }
 
 public:
