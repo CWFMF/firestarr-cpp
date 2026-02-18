@@ -105,8 +105,12 @@ if(NOT ASAN_ARGS)
 endif()
 
 # set compiler warnings
-include(cmake/CompilerWarnings.cmake)
-add_compile_options(${PROJECT_WARNINGS_CXX})
+if(CMAKE_QUIET_MAKEFILE)
+  message("Not turning warnings on")
+else()
+  include(cmake/CompilerWarnings.cmake)
+  add_compile_options(${PROJECT_WARNINGS_CXX})
+endif()
 
 find_package(GeoTIFF CONFIG REQUIRED)
 find_package(TIFF REQUIRED)
