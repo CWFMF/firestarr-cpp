@@ -646,6 +646,11 @@ public:
          + ratioDeciduous() * isfD1(spread, isi);
   }
   /**
+   * \brief Percent Mixed (%)
+   * \return Percent Mixed (%)
+   */
+  [[nodiscard]] constexpr MathSize percentMixed() const { return percent_mixed_; }
+  /**
    * \brief Percent Conifer (% / 100)
    * \return Percent Conifer (% / 100)
    */
@@ -655,7 +660,6 @@ public:
    * \return Percent Deciduous (% / 100)
    */
   [[nodiscard]] constexpr MathSize ratioDeciduous() const { return 1.0 - (percent_mixed_ / 100.0); }
-  [[nodiscard]] constexpr MathSize percentMixed() const noexcept { return percent_mixed_; }
 
 protected:
   /**
