@@ -148,17 +148,15 @@ endif()
 # FIX: wrap anything new that might be breaking windows workflow
 if(LINUX)
   target_link_libraries(${bin} PRIVATE SQLite::SQLite3)
-  target_link_libraries(${bin} PRIVATE -static)
-  target_link_libraries(${bin} PRIVATE -static-libgcc -static-libstdc++)
+  if(ASAN_ARGS)
+    target_link_options(${bin} BEFORE PUBLIC ${ASAN_ARGS})
+  else()
+    target_link_options(${bin} BEFORE PRIVATE ${ASAN_ARGS})
+    target_link_libraries(${bin} PRIVATE -static)
+    target_link_libraries(${bin} PRIVATE -static-libgcc -static-libstdc++)
+  endif()
 endif()
 # FIX: wrap anything new that might be breaking windows workflow
-  if (ASAN_ARGS)
-if(LINUX)
-    target_link_options(${bin} BEFORE PRIVATE ${ASAN_ARGS})
-else()
-    target_link_options(${bin} BEFORE PUBLIC ${ASAN_ARGS})
-endif()
-  endif()
   add_custom_command(
     TARGET ${bin}
     POST_BUILD
