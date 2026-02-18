@@ -109,7 +109,7 @@ public:
       log_q_(log_q), a_(a), b_(b), c_(c), bui0_(bui0), cbh_(cbh), cfl_(cfl)
   {
     assert(-negB() < 1);
-    assert(c() < 10 && c() > 1);
+    assert(SimpleStandardFuel::c() < 10 && SimpleStandardFuel::c() > 1);
   }
   /**
    * \brief Constructor
