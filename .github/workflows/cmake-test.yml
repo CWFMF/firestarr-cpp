@@ -7,11 +7,6 @@ on:
   pull_request:
     branches: [ "main", "dev", "unstable" ]
   workflow_dispatch:
-    inputs:
-      firestarr_ref:
-        description: 'FireSTARR branch/tag to build'
-        default: 'main'
-        type: string
   release:
     types: [published]
 
