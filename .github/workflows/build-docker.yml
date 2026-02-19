@@ -2,7 +2,7 @@ name: build-docker
 
 on:
   push:
-    branches: [ "main", "dev", "unstable" ]
+    branches: [ "*" ]
     tags: [ "*" ]
   workflow_dispatch:
 
@@ -10,19 +10,24 @@ jobs:
   build-docker-normal:
     uses: ./.github/workflows/build-docker-image.yml
     with:
+      # use cache instead of main package if just testing build
+      registry-image:   ghcr.io/cwfmf/firestarr-cpp/${{ case ( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
       image: firestarr
       cache-from: "type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:"
       cache-to: "type=registry,mode=max,ref=ghcr.io/cwfmf/firestarr-cpp/cache:"
 
   build-docker-minimal:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name) }}
     needs: [build-docker-normal]
     uses: ./.github/workflows/build-docker-image.yml
     with:
+      registry-image: ghcr.io/cwfmf/firestarr-cpp/firestarr
       image: firestarr-minimal
       cache-from: "type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:"
       suffix: "minimal"
 
   cleanup-docker:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name) }}
     needs: [build-docker-minimal]
     runs-on: ubuntu-24.04
     permissions:
