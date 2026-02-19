@@ -723,12 +723,11 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   // use independent seeds so that if we remove one threshold it doesn't affect the other
   // HACK: seed_seq takes a list of integers now, so multiply and convert to get more digits
   // NOTE: use abs() because negative numbers act differently on arm64 vs x64 vs windows
-  const auto lat = static_cast<size_t>(
-    abs(start_point.latitude()) * pow(10, std::numeric_limits<size_t>::digits10 - 4)
-  );
-  const auto lon = static_cast<size_t>(
-    abs(start_point.longitude()) * pow(10, std::numeric_limits<size_t>::digits10 - 4)
-  );
+  // NOTE: was matching to 15 digits (digits10 - 6) but use half precision so less likely
+  //       mismatches happen on different hardware/os combinations
+  constexpr auto precision = std::numeric_limits<size_t>::digits10 / 2;
+  const auto lat = static_cast<size_t>(abs(start_point.latitude()) * pow(10, precision));
+  const auto lon = static_cast<size_t>(abs(start_point.longitude()) * pow(10, precision));
   logging::debug(
     "lat/long (%f, %f) converted to (%zu, %zu)",
     start_point.latitude(),
@@ -738,7 +737,15 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   );
   auto make_seed = [&](const char* name, const size_t salt) {
     const auto d = static_cast<size_t>(start_day);
-    logging::info("Seed inputs for %s: %zu, %zu, %zu, %zu", name, salt, d, lat, lon);
+    logging::info(
+      "Seed inputs using precision of %ld for %s: %zu, %zu, %zu, %zu",
+      precision,
+      name,
+      salt,
+      d,
+      lat,
+      lon
+    );
     return std::seed_seq{salt, d, lat, lon};
   };
   auto seed_spread = make_seed("spread", 0);
