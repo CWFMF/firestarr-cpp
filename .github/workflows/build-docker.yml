@@ -23,16 +23,3 @@ jobs:
       image: firestarr-minimal
       cache-from: "type=registry,ref=ghcr.io/cwfmf/firestarr-cpp/cache:"
       suffix: "minimal"
-
-  cleanup-docker:
-    if: ${{ startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name) }}
-    needs: [build-docker-minimal]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: dataaxiom/ghcr-cleanup-action@v1
-        with:
-          # dry-run: true
-          packages: firestarr-cpp/cache,firestarr-cpp/firestarr

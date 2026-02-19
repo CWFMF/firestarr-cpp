@@ -1,0 +1,23 @@
+on:
+  schedule:
+    - cron: "17 23 * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        default: false
+        type: bool
+      packages:
+        default: 'firestarr-cpp/cache,firestarr-cpp/firestarr'
+        type: string
+
+jobs:
+  cleanup-docker:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          dry-run: ${{ inputs.dry-run }}
+          packages: ${{ inputs.packages }}
