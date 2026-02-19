@@ -239,6 +239,7 @@ jobs:
       IS_LATEST: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
       # should just be !env.IS_LATEST but can't figure out syntax
       IS_PRERELEASE: ${{ !startsWith(github.ref, 'refs/tags/v') || contains(github.ref, '-') }}
+      TAG: ${{ github.ref_name }}${{ case ( !startsWith(github.ref, 'refs/tags/v') || contains(github.ref, '-'), '-latest', '' ) }}
 
     steps:
       # need checkout to delete release
@@ -248,7 +249,7 @@ jobs:
 
       - name: Delete existing tag
         if: ${{ env.IS_PRERELEASE }}
-        run: gh release delete -y ${{ github.ref_name }} --cleanup-tag || echo "Tag ${{ github.ref_name }} does not exist"
+        run: gh release delete -y ${{ env.TAG }} --cleanup-tag || echo "Tag ${{ env.TAG }} does not exist"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -264,7 +265,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "FireSTARR ${{ github.ref_name }}"
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.TAG }}
           target_commitish: ${{ github.sha }}
           body: |
             **Hash:** ${{ github.sha }}
