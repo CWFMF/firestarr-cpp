@@ -722,11 +722,12 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   }
   // use independent seeds so that if we remove one threshold it doesn't affect the other
   // HACK: seed_seq takes a list of integers now, so multiply and convert to get more digits
+  // NOTE: use abs() because negative numbers act differently on arm64 vs x64 vs windows
   const auto lat = static_cast<size_t>(
-    start_point.latitude() * pow(10, std::numeric_limits<size_t>::digits10 - 4)
+    abs(start_point.latitude()) * pow(10, std::numeric_limits<size_t>::digits10 - 4)
   );
   const auto lon = static_cast<size_t>(
-    start_point.longitude() * pow(10, std::numeric_limits<size_t>::digits10 - 4)
+    abs(start_point.longitude()) * pow(10, std::numeric_limits<size_t>::digits10 - 4)
   );
   logging::debug(
     "lat/long (%f, %f) converted to (%zu, %zu)",
