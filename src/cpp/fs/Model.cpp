@@ -729,14 +729,19 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     start_point.longitude() * pow(10, std::numeric_limits<size_t>::digits10 - 4)
   );
   logging::debug(
-    "lat/long (%f, %f) converted to (%ld, %ld)",
+    "lat/long (%f, %f) converted to (%zu, %zu)",
     start_point.latitude(),
     start_point.longitude(),
     lat,
     lon
   );
-  std::seed_seq seed_spread{static_cast<size_t>(0), static_cast<size_t>(start_day), lat, lon};
-  std::seed_seq seed_extinction{static_cast<size_t>(1), static_cast<size_t>(start_day), lat, lon};
+  auto make_seed = [&](const char* name, const size_t salt) {
+    const auto d = static_cast<size_t>(start_day);
+    logging::info("Seed inputs for %s: %zu, %zu, %zu, %zu", name, salt, d, lat, lon);
+    return std::seed_seq{salt, d, lat, lon};
+  };
+  auto seed_spread = make_seed("spread", 0);
+  auto seed_extinction = make_seed("extinction", 1);
   mt19937_64 mt_spread(seed_spread);
   mt19937_64 mt_extinction(seed_extinction);
   vector<MathSize> all_sizes{};
