@@ -17,6 +17,10 @@ jobs:
       contents: read
       packages: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
       - uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           dry-run: ${{ inputs.dry-run }}
