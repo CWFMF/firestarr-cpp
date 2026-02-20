@@ -309,6 +309,13 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       &Settings::setForceNoGreenup, true, "--force-no-greenup", "Force no green up for all fires"
     );
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
+    register_setter<size_t>(
+      &Settings::setSalt,
+      "--salt",
+      "Specify salt to use for random seeds (default 0)",
+      false,
+      &parse_size_t
+    );
     if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
     {
       fs::logging::note("Running in probability surface mode");
