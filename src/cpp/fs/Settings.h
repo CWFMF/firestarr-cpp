@@ -266,6 +266,16 @@ public:
    */
   static void setConfidenceLevel(const ThresholdSize value) noexcept;
   /**
+   * \brief Salt to use for random seeds
+   * \return Salt to use for random seeds
+   */
+  [[nodiscard]] static size_t salt() noexcept;
+  /**
+   * \brief Set salt to use for random seeds
+   * \return Set salt to use for random seeds
+   */
+  static void setSalt(const size_t value) noexcept;
+  /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used
    * (s)
    * \return Maximum time simulation can run before it is ended and whatever results it has are used
