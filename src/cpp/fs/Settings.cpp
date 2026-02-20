@@ -194,6 +194,8 @@ public:
    * \return Set confidence required before simulation stops (% / 100)
    */
   void setConfidenceLevel(const ThresholdSize value) noexcept { confidence_level_ = value; }
+  size_t salt() noexcept { return salt_; }
+  void setSalt(const size_t value) noexcept { salt_ = value; }
   void setRasterRoot(const char* dirname) noexcept { raster_root_ = dirname; }
   void setFuelLookupTable(const char* filename) noexcept { fuel_lookup_table_file_ = filename; }
   /**
@@ -354,6 +356,10 @@ private:
    * \brief Confidence required before simulation stops (% / 100)
    */
   atomic<ThresholdSize> confidence_level_;
+  /**
+   * \brief Salt to use for random seeds
+   */
+  atomic<size_t> salt_{0};
   /**
    * \brief Static curing value
    */
@@ -761,6 +767,11 @@ ThresholdSize Settings::confidenceLevel() noexcept
 void Settings::setConfidenceLevel(const ThresholdSize value) noexcept
 {
   SettingsImplementation::instance().setConfidenceLevel(value);
+}
+size_t Settings::salt() noexcept { return SettingsImplementation::instance().salt(); }
+void Settings::setSalt(const size_t value) noexcept
+{
+  SettingsImplementation::instance().setSalt(value);
 }
 size_t Settings::maximumTimeSeconds() noexcept
 {

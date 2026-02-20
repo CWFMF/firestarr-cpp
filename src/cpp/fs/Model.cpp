@@ -735,18 +735,22 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     lat,
     lon
   );
+  const auto base_salt = Settings::salt();
   auto make_seed = [&](const char* name, const size_t salt) {
     const auto d = static_cast<size_t>(start_day);
     logging::info(
-      "Seed inputs using precision of %ld for %s: %zu, %zu, %zu, %zu",
+      "Seed inputs using precision of %ld with base_salt %zu for %s: %zu, %zu, %zu, %zu",
       precision,
+      base_salt,
       name,
       salt,
       d,
       lat,
       lon
     );
-    return std::seed_seq{salt, d, lat, lon};
+    // size_t will wrap around so don't need to worry about overflow
+    const size_t use_salt = base_salt + salt;
+    return std::seed_seq{use_salt, d, lat, lon};
   };
   auto seed_spread = make_seed("spread", 0);
   auto seed_extinction = make_seed("extinction", 1);
