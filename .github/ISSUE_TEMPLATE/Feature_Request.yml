@@ -1,0 +1,27 @@
+name: FireSTARR Feature Request
+description: File a FireSTARR Feature Request
+title: "[FireSTARR Feature Request]: "
+labels: ["feature", "triage"]
+assignees:
+  - jordan-evens
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature request!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: what-would-you-like
+    attributes:
+      label: What would you like to see in the tool?
+      description: Describe the new feature!
+      placeholder: New widget please!
+    validations:
+      required: true
