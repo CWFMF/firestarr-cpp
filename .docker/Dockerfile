@@ -28,8 +28,10 @@ FROM gcc-cmake AS vcpkg-bootstrap
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
-RUN git clone -v https://github.com/microsoft/vcpkg.git \
-  && vcpkg/bootstrap-vcpkg.sh -disableMetrics
+RUN --mount=type=bind,source=./vcpkg-configuration.json,target=./vcpkg-configuration.json \
+    --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
+    git clone -v https://github.com/microsoft/vcpkg.git \
+    && vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install packages so they stay if nothing changes with vcpkg*.json
 FROM vcpkg-bootstrap AS vcpkg-installed
