@@ -28,17 +28,20 @@ FROM gcc-cmake AS vcpkg-bootstrap
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
 WORKDIR /appl/firestarr
+# copy so we know correct version is bootstrapped when files change
+COPY ./vcpkg-configuration.json .
+# --branch doesn't work with sha?
 RUN git clone -v https://github.com/microsoft/vcpkg.git \
+  && cd vcpkg \
+  && git checkout $(sed -n '/baseline/{s/.*\"\([^"]*\)",$/\1/g;p}' ../vcpkg-configuration.json) \
+  && cd .. \
   && vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install packages so they stay if nothing changes with vcpkg*.json
 FROM vcpkg-bootstrap AS vcpkg-installed
 WORKDIR /appl/firestarr
-# COPY ./vcpkg*.json .
-# mount instead of copy to minimize layers
-RUN --mount=type=bind,source=./vcpkg-configuration.json,target=./vcpkg-configuration.json \
-    --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
-    vcpkg/vcpkg install
+COPY ./vcpkg.json .
+RUN vcpkg/vcpkg install
 
 # build and test
 FROM vcpkg-installed AS firestarr-build
@@ -57,8 +60,6 @@ RUN --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./test/input,target=./test/input \
     --mount=type=bind,source=./fuel.lut,target=./fuel.lut \
     --mount=type=bind,source=./settings.ini,target=./settings.ini \
-    --mount=type=bind,source=./vcpkg-configuration.json,target=./vcpkg-configuration.json \
-    --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
     cmake --preset Release \
     && cmake --build --parallel --preset Release \
     && ctest --preset Release
