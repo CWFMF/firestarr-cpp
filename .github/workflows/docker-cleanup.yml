@@ -16,6 +16,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      DEFAULT_PACKAGES: 'firestarr-cpp/cache,firestarr-cpp/firestarr'
+      DEFAULT_DRY_RUN: false
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,5 +26,5 @@ jobs:
 
       - uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          dry-run: ${{ inputs.dry-run }}
-          packages: ${{ inputs.packages }}
+          dry-run: ${{ inputs.dry-run | env.DEFAULT_DRY_RUN }}
+          packages: ${{ inputs.packages | env.DEFAULT_PACKAGES }}
