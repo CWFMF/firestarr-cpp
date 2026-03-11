@@ -319,12 +319,7 @@ string GridBase::saveToTiffFileFloat(
 {
   // HACK: use whatever hardware does for float for now
   constexpr auto bits_per_sample = 8 * sizeof(float);
-  // constexpr auto bits_per_sample = 16;
   constexpr auto sample_format = SAMPLEFORMAT_IEEEFP;
-  if (16 != bits_per_sample)
-  {
-    logging::warning("Hardware uses %ld bits for float", bits_per_sample);
-  }
   return saveToTiffFile<float>(
     *this,
     columns,
