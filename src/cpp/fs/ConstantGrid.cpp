@@ -4,6 +4,7 @@
 #include <geo_normalize.h>
 #include <tiffio.h>
 #include <xtiffio.h>
+#include "Log.h"
 #include "tiff.h"
 namespace fs
 {
@@ -114,15 +115,13 @@ int value_at_int(void* const buf, const FullIdx offset)
   logging::check_fatal(
     !TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps_file), "Cannot determine TIFFTAG_BITSPERSAMPLE"
   );
-  if (bps != bps_file)
-  {
-    logging::warning(
-      "Raster %s type is not expected type (%d bits instead of %d)",
-      geotiff.filename(),
-      bps_file,
-      bps
-    );
-  }
+  logging::check_fatal(
+    bps < bps_file,
+    "Raster %s type is larger than expected type (%d bits instead of %d)",
+    geotiff.filename(),
+    bps_file,
+    bps
+  );
 #ifdef DEBUG_GRIDS
   int bps_int16_t =
     std::numeric_limits<int16_t>::digits + (1 * std::numeric_limits<int16_t>::is_signed);
