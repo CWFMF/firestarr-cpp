@@ -723,9 +723,13 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   // use independent seeds so that if we remove one threshold it doesn't affect the other
   // HACK: seed_seq takes a list of integers now, so multiply and convert to get more digits
   // NOTE: use abs() because negative numbers act differently on arm64 vs x64 vs windows
-  // NOTE: was matching to 15 digits (digits10 - 6) but use half precision so less likely
-  //       mismatches happen on different hardware/os combinations
-  constexpr auto precision = std::numeric_limits<size_t>::digits10 / 2;
+  // // NOTE: was matching to 15 digits (digits10 - 6) but use half precision so less likely
+  // //       mismatches happen on different hardware/os combinations
+  // constexpr auto precision = std::numeric_limits<size_t>::digits10 / 2;
+  // NOTE: std::numeric_limits<size_t>::digits10 varies on different hardware
+  //       (but is 8 on 32-bit so don't go beyond that in case we can ever get that working)
+  constexpr auto precision = 8;
+  static_assert(std::numeric_limits<size_t>::digits10 >= precision);
   const auto lat = static_cast<size_t>(abs(start_point.latitude()) * pow(10, precision));
   const auto lon = static_cast<size_t>(abs(start_point.longitude()) * pow(10, precision));
   logging::debug(
