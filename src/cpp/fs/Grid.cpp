@@ -122,6 +122,10 @@ string saveToTiffFile(
   //   nodata_as_int,
   //   static_cast<MathSize>(no_data)
   // );
+  constexpr auto bps = sizeof(R) * 8;
+  logging::check_fatal(
+    bps != bits_per_sample, "Cannot have mismatched bps and type (%ld != %ld)", bps, bits_per_sample
+  );
   TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
   logging::extensive("%s takes %d bits", string(base_name).c_str(), bits_per_sample);
   TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);
@@ -139,6 +143,7 @@ string saveToTiffFile(
   size_t tileSize = tileWidth * tileHeight;
   const auto buf_size = tileSize * sizeof(R);
   logging::extensive("%s has buffer size %d", string(base_name).c_str(), buf_size);
+  // HACK: using R means size changes on different cpu types
   auto buf = static_cast<R*>(_TIFFmalloc(buf_size));
   for (uint32_t co = 0; co < num_columns; co += tileWidth)
   {
@@ -312,27 +317,25 @@ string GridBase::saveToTiffFileFloat(
   const int nodata_as_int
 ) const
 {
-  constexpr auto bits_per_sample = 16;
+  // HACK: use whatever hardware does for float for now
+  constexpr auto bits_per_sample = 8 * sizeof(float);
+  // constexpr auto bits_per_sample = 16;
   constexpr auto sample_format = SAMPLEFORMAT_IEEEFP;
-  if (16 == bits_per_sample)
+  if (16 != bits_per_sample)
   {
-    return saveToTiffFile<float>(
-      *this,
-      columns,
-      rows,
-      bounds,
-      dir,
-      base_name,
-      bits_per_sample,
-      sample_format,
-      [&](Location idx) { return static_cast<float>(value_at(idx)); },
-      nodata_as_int
-    );
+    logging::warning("Hardware uses %ld bits for float", bits_per_sample);
   }
-  return logging::fatal<string>(
-    "Invalid combination of BITSPERSAMPLE (%d) and SAMPLEFORMAT (%d)",
+  return saveToTiffFile<float>(
+    *this,
+    columns,
+    rows,
+    bounds,
+    dir,
+    base_name,
     bits_per_sample,
-    sample_format
+    sample_format,
+    [&](Location idx) { return static_cast<float>(value_at(idx)); },
+    nodata_as_int
   );
 }
 GridBase::GridBase(
