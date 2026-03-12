@@ -1,4 +1,5 @@
-# amd64, arm/v5, arm/v7, arm64/v8, ppc64le, s390x
+# ignore 32-bit - 386, arm/v5, arm/v7
+# amd64, arm/v5, arm64/v8, ppc64le, s390x
 ARG BASE_DISTROLESS=gcr.io/distroless/static-debian13
 # armv/v5, 386, riscv64, i686
 ARG BASE_SLIM=debian:trixie-slim
