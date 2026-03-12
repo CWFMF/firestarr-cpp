@@ -135,8 +135,10 @@ jobs:
             type=ref,prefix=,suffix=-latest,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') && '' == inputs.suffix }}
             type=ref,prefix=,suffix=-${{ inputs.suffix }},event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v')  && '' != inputs.suffix }}
             type=ref,prefix=,suffix=-${{ inputs.suffix }}-latest,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v')  && '' != inputs.suffix }}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v')  && '' == inputs.suffix }}
+            type=semver,pattern={{version}},prefix=,suffix=-${{ inputs.suffix }},enable=${{ startsWith(github.ref, 'refs/tags/v')  && '' != inputs.suffix }}
+            type=semver,pattern={{major}}.{{minor}},prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v')  && '' == inputs.suffix }}
+            type=semver,pattern={{major}}.{{minor}},prefix=,suffix=-${{ inputs.suffix }},enable=${{ startsWith(github.ref, 'refs/tags/v')  && '' != inputs.suffix }}
             type=raw,value=${{ inputs.suffix }},prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') && '' != inputs.suffix }}
             type=raw,value=${{ inputs.suffix }}-latest,prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') && '' != inputs.suffix }}
 
