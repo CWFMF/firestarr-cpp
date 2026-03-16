@@ -9,8 +9,8 @@ DIR_LOG="build/docker"
 # # unsure about why arm/v8 isn't in list but works
 # # PLATFORMS="amd64 arm/v8 arm/v7 arm64/v8 ppc64le s390x arm/v5 riscv64"
 # no point in more than base image supports
-# ignore 32-bit - 386, arm/v5
-PLATFORMS="amd64 arm/v7 arm64/v8 ppc64le riscv64 s390x"
+# ignore 32-bit - 386, arm/v5, arm/v7
+PLATFORMS="amd64 arm64/v8 ppc64le riscv64 s390x"
 # echo PLATFORMS = ${PLATFORMS}
 mkdir -p ${DIR_LOG}
 for p in ${PLATFORMS}
