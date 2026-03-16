@@ -10,9 +10,7 @@ static map<std::string, bool> PARSE_REQUIRED{};
 static map<std::string, bool> PARSE_HAVE{};
 static string BIN_DIR{};
 static string BIN_NAME{};
-static int ARGC = 0;
 static size_t SKIPPED_ARGS = 0;
-static const char* const* ARGV = nullptr;
 static int CUR_ARG = 0;
 ArgumentParser* PARSER{nullptr};
 void ArgumentParser::mark_parsed(const char* arg) { PARSE_HAVE.emplace(arg, true); }
@@ -79,11 +77,11 @@ void register_index(T& index, string v, string help, bool required)
 }
 string ArgumentParser::get_args()
 {
-  std::string args(ARGV[0]);
-  for (auto i = 1; i < ARGC; ++i)
+  std::string args(argv_[0]);
+  for (auto i = 1; i < argc_; ++i)
   {
     args.append(" ");
-    args.append(ARGV[i]);
+    args.append(argv_[i]);
   }
   return args;
 }
@@ -142,8 +140,8 @@ void ArgumentParser::show_help_and_exit()
 const char* ArgumentParser::get_arg() noexcept
 {
   // check if we don't have any more arguments
-  fs::logging::check_fatal(CUR_ARG + 1 >= ARGC, "Missing argument to --%s", ARGV[CUR_ARG]);
-  return ARGV[++CUR_ARG];
+  fs::logging::check_fatal(CUR_ARG + 1 >= argc_, "Missing argument to --%s", argv_[CUR_ARG]);
+  return argv_[++CUR_ARG];
 }
 size_t parse_size_t()
 {
@@ -184,16 +182,14 @@ ArgumentParser::ArgumentParser(
   const char* const argv[],
   const PositionalArgumentsRequired require_positional
 )
-  : require_positional_{require_positional}
+  : require_positional_{require_positional}, argc_{argc}, argv_{argv}
 {
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
   add_usages(usages);
   fs::show_debug_settings();
-  ARGC = argc;
-  ARGV = argv;
   assert(0 == CUR_ARG);
-  auto bin = string(ARGV[CUR_ARG++]);
+  auto bin = string(argv_[CUR_ARG++]);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
   BIN_DIR = bin.substr(0, end);
@@ -207,9 +203,9 @@ ArgumentParser::ArgumentParser(
 }
 void ArgumentParser::parse_args()
 {
-  while (CUR_ARG < ARGC)
+  while (CUR_ARG < argc_)
   {
-    const string arg = ARGV[CUR_ARG];
+    const string arg = argv_[CUR_ARG];
     bool is_positional = !arg.starts_with("-");
     if (!is_positional)
     {
@@ -224,7 +220,7 @@ void ArgumentParser::parse_args()
         catch (std::exception&)
         {
           // CUR_ARG would be incremented while trying to parse at this point, so -1 is 'arg'
-          printf("\n'%s' is not a valid value for argument %s\n\n", ARGV[CUR_ARG], arg.c_str());
+          printf("\n'%s' is not a valid value for argument %s\n\n", argv_[CUR_ARG], arg.c_str());
           show_usage_and_exit();
         }
       }
@@ -307,7 +303,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
 {
   register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
   register_flag(&Settings::setSaveAsTiff, false, "--no-tiff", "Do not save grids as .tif");
-  if (ARGC > 1 && 0 == strcmp(ARGV[1], "test"))
+  if (argc_ > 1 && 0 == strcmp(argv_[1], "test"))
   {
     fs::logging::note("Running in test mode");
     mode = TEST;
@@ -386,7 +382,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       false,
       &parse_size_t
     );
-    if (ARGC > 1 && 0 == strcmp(ARGV[1], "surface"))
+    if (argc_ > 1 && 0 == strcmp(argv_[1], "surface"))
     {
       fs::logging::note("Running in probability surface mode");
       mode = SURFACE;
@@ -490,7 +486,7 @@ FwiWeather MainArgumentParser::get_yesterday_weather() const
     dc
   };
 }
-const char* ArgumentParser::cur_arg() { return ARGV[CUR_ARG]; };
+const char* ArgumentParser::cur_arg() { return argv_[CUR_ARG]; };
 bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
