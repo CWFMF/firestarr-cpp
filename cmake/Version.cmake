@@ -45,6 +45,8 @@ foreach(file_path IN LISTS FILES_USED)
 endforeach()
 
 
+set(HASH_PREFIX "")
+set(HASH_SUFFIX "")
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   message("Using hash from git")
   if(EXISTS "${FILE_ENV}")
@@ -61,22 +63,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     # use time from git commit since nothing is different
     execute_process(COMMAND git log -1 --pretty=%ad --date=format:%Y-%m-%dT%H:%M:%SZ OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE MODIFIED_TIME)
   else()
-    # either changed or git didn't work
-    if (NOT "" STREQUAL "${HASH}")
-      # add + to hash if modified from committed version
-      set(HASH "${HASH}+")
-      set(FULL_HASH "${FULL_HASH}+")
-    endif()
+    set(HASH_SUFFIX "+")
   endif()
-  set(HASH_PREFIX "")
 else()
+  # will never have a '+' for HASH_SUFFIX because it's based on exact files
   set(HASH_PREFIX "file:")
   list(JOIN HASHES "" ALL_HASHES)
   string(SHA512 FULL_HASH ${ALL_HASHES})
 endif()
 
 string(SUBSTRING ${FULL_HASH} 0 10 HASH)
-set(HASH "${HASH_PREFIX}${HASH}")
+set(HASH "${HASH_PREFIX}${HASH}${HASH_SUFFIX}")
+set(FULL_HASH "${HASH_PREFIX}${FULL_HASH}${HASH_SUFFIX}")
 string(TIMESTAMP COMPILE_TIME "${FMT_TIME}" UTC)
 
 set(COMPILED_ON "${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM}-${CMAKE_CXX_COMPILER_ID}")
