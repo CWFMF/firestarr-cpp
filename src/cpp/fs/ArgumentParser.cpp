@@ -14,33 +14,35 @@ static int ARGC = 0;
 static size_t SKIPPED_ARGS = 0;
 static const char* const* ARGV = nullptr;
 static int CUR_ARG = 0;
-const char* cur_arg();
-string get_args();
-const char* get_arg() noexcept;
 ArgumentParser* PARSER{nullptr};
 void ArgumentParser::mark_parsed(const char* arg) { PARSE_HAVE.emplace(arg, true); }
 bool ArgumentParser::was_parsed(const char* arg) { return PARSE_HAVE.contains(arg); }
 template <class T>
-T parse(std::function<T()> fct)
+T parse(auto fct)
 {
-  PARSER->mark_parsed(cur_arg());
-  return fct();
+  auto parser = *PARSER;
+  parser.mark_parsed(parser.cur_arg());
+  // HACK: use auto instead of std::function<T()> so call is easier
+  return static_cast<T>(fct());
 }
 template <class T>
-T parse_once(std::function<T()> fct)
+T parse_once(auto fct)
 {
-  if (PARSER->was_parsed(cur_arg()))
+  auto parser = *PARSER;
+  if (parser.was_parsed(parser.cur_arg()))
   {
-    printf("\nArgument %s already specified\n\n", cur_arg());
-    PARSER->show_usage_and_exit();
+    printf("\nArgument %s already specified\n\n", parser.cur_arg());
+    parser.show_usage_and_exit();
   }
-  return parse(fct);
+  // HACK: use auto instead of std::function<T()> so call is easier
+  return parse<T>(fct);
 }
 bool parse_flag(bool not_inverse);
 template <class T>
 T parse_value()
 {
-  return parse_once<T>([] { return stod(get_arg()); });
+  auto parser = *PARSER;
+  return parse_once<T>([&] { return stod(parser.get_arg()); });
 }
 size_t parse_size_t();
 const char* parse_raw();
@@ -48,7 +50,8 @@ string parse_string();
 template <class T>
 T parse_index()
 {
-  return parse_once<T>([] { return T(stod(get_arg())); });
+  auto parser = *PARSER;
+  return parse_once<T>([&] { return T(stod(parser.get_arg())); });
 }
 void register_argument(string v, string help, bool required, std::function<void()> fct);
 template <class T>
@@ -74,7 +77,7 @@ void register_index(T& index, string v, string help, bool required)
 {
   register_argument(v, help, required, [&] { index = parse_index<T>(); });
 }
-string get_args()
+string ArgumentParser::get_args()
 {
   std::string args(ARGV[0]);
   for (auto i = 1; i < ARGC; ++i)
@@ -136,7 +139,7 @@ void ArgumentParser::show_help_and_exit()
   // showing help isn't an error
   show_usage_and_exit(0);
 }
-const char* get_arg() noexcept
+const char* ArgumentParser::get_arg() noexcept
 {
   // check if we don't have any more arguments
   fs::logging::check_fatal(CUR_ARG + 1 >= ARGC, "Missing argument to --%s", ARGV[CUR_ARG]);
@@ -144,9 +147,14 @@ const char* get_arg() noexcept
 }
 size_t parse_size_t()
 {
-  return parse_once<size_t>([] { return static_cast<size_t>(stoi(get_arg())); });
+  auto parser = *PARSER;
+  return parse_once<size_t>([&] { return static_cast<size_t>(stoi(parser.get_arg())); });
 }
-const char* parse_raw() { return parse_once<const char*>(&get_arg); }
+const char* parse_raw()
+{
+  auto parser = *PARSER;
+  return parse_once<const char*>([&]() { return parser.get_arg(); });
+}
 string parse_string() { return string(parse_raw()); }
 void register_argument(string v, string help, bool required, std::function<void()> fct)
 {
@@ -482,7 +490,7 @@ FwiWeather MainArgumentParser::get_yesterday_weather() const
     dc
   };
 }
-const char* cur_arg() { return ARGV[CUR_ARG]; };
+const char* ArgumentParser::cur_arg() { return ARGV[CUR_ARG]; };
 bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
