@@ -290,7 +290,9 @@ int value_at_int(void* const buf, const FullIdx offset)
     std::get<1>(*new_location) + std::get<3>(*new_location) / 1000.0
   );
 #ifdef DEBUG_GRIDS
-  logging::note("Values for %s range from %d to %d", filename_.c_str(), min_value, max_value);
+  logging::note(
+    "Values for %s range from %d to %d", string(filename).c_str(), min_value, max_value
+  );
 #endif
   return result;
 }
