@@ -43,12 +43,41 @@ foreach(file_path IN LISTS FILES_USED)
     set(MODIFIED_TIME "${LAST_MOD_TIME}")
   endif()
 endforeach()
-list(JOIN HASHES "" ALL_HASHES)
-string(SHA512 FULL_HASH ${ALL_HASHES})
 
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+  message("Using hash from git")
+  if(EXISTS "${FILE_ENV}")
+    execute_process(COMMAND git log -n1 --pretty=%h ${FILE_ENV} OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HASH_ENV)
+  endif()
+  execute_process(COMMAND git rev-parse --verify HEAD OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE FULL_HASH)
+  execute_process(COMMAND git diff-index --quiet HEAD RESULT_VARIABLE GIT_CHANGED)
+  if (NOT "${HASH_ENV}" STREQUAL "${HASH}")
+    # add + to version if .env isn't from current commit
+    set(VERSION "${VERSION}+")
+  endif()
+  # is anything in git changed?
+  if ("${GIT_CHANGED}" STREQUAL "0")
+    # use time from git commit since nothing is different
+    execute_process(COMMAND git log -1 --pretty=%ad --date=format:%Y-%m-%dT%H:%M:%SZ OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE MODIFIED_TIME)
+  else()
+    # either changed or git didn't work
+    if (NOT "" STREQUAL "${HASH}")
+      # add + to hash if modified from committed version
+      set(HASH "${HASH}+")
+      set(FULL_HASH "${FULL_HASH}+")
+    endif()
+  endif()
+  set(HASH_PREFIX "")
+else()
+  set(HASH_PREFIX "file:")
+  list(JOIN HASHES "" ALL_HASHES)
+  string(SHA512 FULL_HASH ${ALL_HASHES})
+endif()
+
+string(SUBSTRING ${FULL_HASH} 0 10 HASH)
+set(HASH "${HASH_PREFIX}${HASH}")
 string(TIMESTAMP COMPILE_TIME "${FMT_TIME}" UTC)
-
-string(SUBSTRING ${FULL_HASH} 0 8 HASH)
 
 set(COMPILED_ON "${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM}-${CMAKE_CXX_COMPILER_ID}")
 
