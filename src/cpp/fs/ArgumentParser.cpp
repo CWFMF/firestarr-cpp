@@ -14,6 +14,66 @@ static int ARGC = 0;
 static size_t SKIPPED_ARGS = 0;
 static const char* const* ARGV = nullptr;
 static int CUR_ARG = 0;
+const char* cur_arg();
+string get_args();
+const char* get_arg() noexcept;
+ArgumentParser* PARSER{nullptr};
+void ArgumentParser::mark_parsed(const char* arg) { PARSE_HAVE.emplace(arg, true); }
+bool ArgumentParser::was_parsed(const char* arg) { return PARSE_HAVE.contains(arg); }
+template <class T>
+T parse(std::function<T()> fct)
+{
+  PARSER->mark_parsed(cur_arg());
+  return fct();
+}
+template <class T>
+T parse_once(std::function<T()> fct)
+{
+  if (PARSER->was_parsed(cur_arg()))
+  {
+    printf("\nArgument %s already specified\n\n", cur_arg());
+    PARSER->show_usage_and_exit();
+  }
+  return parse(fct);
+}
+bool parse_flag(bool not_inverse);
+template <class T>
+T parse_value()
+{
+  return parse_once<T>([] { return stod(get_arg()); });
+}
+size_t parse_size_t();
+const char* parse_raw();
+string parse_string();
+template <class T>
+T parse_index()
+{
+  return parse_once<T>([] { return T(stod(get_arg())); });
+}
+void register_argument(string v, string help, bool required, std::function<void()> fct);
+template <class T>
+void register_setter(
+  std::function<void(T)> fct_set,
+  string v,
+  string help,
+  bool required,
+  std::function<T()> fct
+)
+{
+  register_argument(v, help, required, [=] { fct_set(fct()); });
+}
+template <class T>
+void register_setter(T& variable, string v, string help, bool required, std::function<T()> fct)
+{
+  register_argument(v, help, required, [&variable, fct] { variable = fct(); });
+}
+void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help);
+void register_flag(bool& variable, bool not_inverse, string v, string help);
+template <class T>
+void register_index(T& index, string v, string help, bool required)
+{
+  register_argument(v, help, required, [&] { index = parse_index<T>(); });
+}
 string get_args()
 {
   std::string args(ARGV[0]);
@@ -25,12 +85,12 @@ string get_args()
   return args;
 }
 constexpr auto FMT_ARGS{"Arguments are:\n  %s\n\n"};
-void show_args()
+void ArgumentParser::show_args()
 {
   auto args = get_args();
   printf(FMT_ARGS, args.c_str());
 }
-void log_args()
+void ArgumentParser::log_args()
 {
   auto args = get_args();
   fs::logging::note(FMT_ARGS, args.c_str());
@@ -44,7 +104,7 @@ void add_usages(const vector<Usage> usages)
     add_usage(u);
   }
 }
-void show_usage_and_exit(int exit_code)
+void ArgumentParser::show_usage_and_exit(int exit_code)
 {
   // NOTE: this assumes there are always optional args
   //        (but -h, -v, -q should always be there)
@@ -66,12 +126,12 @@ void show_usage_and_exit(int exit_code)
   }
   exit(exit_code);
 }
-void show_usage_and_exit()
+void ArgumentParser::show_usage_and_exit()
 {
   show_args();
   show_usage_and_exit(-1);
 }
-void show_help_and_exit()
+void ArgumentParser::show_help_and_exit()
 {
   // showing help isn't an error
   show_usage_and_exit(0);
@@ -118,6 +178,8 @@ ArgumentParser::ArgumentParser(
 )
   : require_positional_{require_positional}
 {
+  logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
+  PARSER = this;
   add_usages(usages);
   fs::show_debug_settings();
   ARGC = argc;
@@ -425,6 +487,4 @@ bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
 }
-void mark_parsed(const char* arg) { PARSE_HAVE.emplace(arg, true); }
-bool was_parsed(const char* arg) { return PARSE_HAVE.contains(arg); }
 }

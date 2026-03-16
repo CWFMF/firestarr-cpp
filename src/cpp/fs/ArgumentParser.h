@@ -8,70 +8,6 @@
 namespace fs
 {
 using fs::logging::Log;
-const char* cur_arg();
-string get_args();
-void show_args();
-void log_args();
-void show_usage_and_exit(int exit_code);
-void show_usage_and_exit();
-void show_help_and_exit();
-const char* get_arg() noexcept;
-void mark_parsed(const char* arg);
-bool was_parsed(const char* arg);
-template <class T>
-T parse(std::function<T()> fct)
-{
-  mark_parsed(cur_arg());
-  return fct();
-}
-template <class T>
-T parse_once(std::function<T()> fct)
-{
-  if (was_parsed(cur_arg()))
-  {
-    printf("\nArgument %s already specified\n\n", cur_arg());
-    show_usage_and_exit();
-  }
-  return parse(fct);
-}
-bool parse_flag(bool not_inverse);
-template <class T>
-T parse_value()
-{
-  return parse_once<T>([] { return stod(get_arg()); });
-}
-size_t parse_size_t();
-const char* parse_raw();
-string parse_string();
-template <class T>
-T parse_index()
-{
-  return parse_once<T>([] { return T(stod(get_arg())); });
-}
-void register_argument(string v, string help, bool required, std::function<void()> fct);
-template <class T>
-void register_setter(
-  std::function<void(T)> fct_set,
-  string v,
-  string help,
-  bool required,
-  std::function<T()> fct
-)
-{
-  register_argument(v, help, required, [=] { fct_set(fct()); });
-}
-template <class T>
-void register_setter(T& variable, string v, string help, bool required, std::function<T()> fct)
-{
-  register_argument(v, help, required, [&variable, fct] { variable = fct(); });
-}
-void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help);
-void register_flag(bool& variable, bool not_inverse, string v, string help);
-template <class T>
-void register_index(T& index, string v, string help, bool required)
-{
-  register_argument(v, help, required, [&] { index = parse_index<T>(); });
-}
 struct Usage
 {
   string description{};
@@ -122,6 +58,13 @@ public:
    */
   void done_positional();
   bool help_requested() { return help_requested_; }
+  void mark_parsed(const char* arg);
+  bool was_parsed(const char* arg);
+  void show_args();
+  void log_args();
+  void show_usage_and_exit(int exit_code);
+  void show_usage_and_exit();
+  void show_help_and_exit();
 };
 enum MODE
 {

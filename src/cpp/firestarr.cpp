@@ -56,7 +56,7 @@ int main(const int argc, const char* const argv[])
       fs::logging::note("Specific revision is %s", SPECIFIC_REVISION);
       fs::logging::debug("Full hash is: %s", FULL_HASH);
       fs::logging::debug("Compiled on: %s", COMPILED_ON);
-      show_help_and_exit();
+      parser.show_help_and_exit();
     }
     if (!opened_log)
     {
@@ -65,7 +65,7 @@ int main(const int argc, const char* const argv[])
     fs::logging::note("Output directory is %s", parser.output_directory.c_str());
     fs::logging::note("Output log is %s", parser.log_file.c_str());
     // at this point we've parsed positional args and know we're not in test mode
-    if (!was_parsed("--apcp_prev"))
+    if (!parser.was_parsed("--apcp_prev"))
     {
       fs::logging::warning(
         "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
@@ -138,7 +138,7 @@ int main(const int argc, const char* const argv[])
         }
         catch (std::exception&)
         {
-          show_usage_and_exit();
+          parser.show_usage_and_exit();
         }
       }
       parser.done_positional();
@@ -156,7 +156,7 @@ int main(const int argc, const char* const argv[])
         start_date.tm_min
       );
       start = start_date;
-      log_args();
+      parser.log_args();
       result = Model::runScenarios(
         parser.output_directory,
         parser.wx_file_name.c_str(),
@@ -181,13 +181,13 @@ int main(const int argc, const char* const argv[])
             "Only positional argument allowed for test mode aside from output directory is 'all' but got '%s'",
             arg.c_str()
           );
-          show_usage_and_exit();
+          parser.show_usage_and_exit();
         }
         parser.test_all = true;
       }
       parser.done_positional();
       const FwiWeather wx{parser.get_test_weather()};
-      show_args();
+      parser.show_args();
       result = fs::test(
         parser.output_directory,
         parser.hours,
