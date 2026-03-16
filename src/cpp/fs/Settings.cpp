@@ -43,7 +43,7 @@ public:
    * \brief Set root directory and read settings from file
    * \param dirname Directory to use for settings and relative paths
    */
-  void setRoot(const char* dirname) noexcept;
+  void setRoot(const string dirname) noexcept;
   /**
    * \brief Root directory that raster inputs are stored in
    * \return Root directory that raster inputs are stored in
@@ -159,8 +159,8 @@ public:
   void setConfidenceLevel(const ThresholdSize value) noexcept { confidence_level_ = value; }
   size_t salt() noexcept { return salt_; }
   void setSalt(const size_t value) noexcept { salt_ = value; }
-  void setRasterRoot(const char* dirname) noexcept { raster_root_ = dirname; }
-  void setFuelLookupTable(const char* filename) noexcept { fuel_lookup_table_file_ = filename; }
+  void setRasterRoot(const string dirname) noexcept { raster_root_ = dirname; }
+  void setFuelLookupTable(const string filename) noexcept { fuel_lookup_table_file_ = filename; }
   /**
    * \brief Static curing value
    * \return Static curing value
@@ -265,7 +265,7 @@ public:
    * \brief Set days to output probability contours for (1 is start date, 2 is day after, etc.)
    * \return None
    */
-  void setOutputDateOffsets(const char* value)
+  void setOutputDateOffsets(const string value)
   {
     output_date_offsets_ = parse_list<int>(value, [](const string s) { return stoi(s); });
     max_date_offset_ = *std::max_element(output_date_offsets_.begin(), output_date_offsets_.end());
@@ -508,7 +508,7 @@ string get_value(string_map<string>& settings, const string_view key)
   return Invalid;
 }
 const string SettingsImplementation::getRoot() noexcept { return dir_root_; }
-void SettingsImplementation::setRoot(const char* dirname) noexcept
+void SettingsImplementation::setRoot(const string dirname) noexcept
 {
   try
   {
@@ -585,11 +585,11 @@ const string Settings::getRoot() noexcept
 {
   return SettingsImplementation::instance(false).getRoot();
 }
-void Settings::setRoot(const char* dirname) noexcept
+void Settings::setRoot(const string dirname) noexcept
 {
   return SettingsImplementation::instance(false).setRoot(dirname);
 }
-void Settings::setRasterRoot(const char* dirname) noexcept
+void Settings::setRasterRoot(const string dirname) noexcept
 {
   return SettingsImplementation::instance().setRasterRoot(dirname);
 }
@@ -597,7 +597,7 @@ const char* Settings::rasterRoot() noexcept
 {
   return SettingsImplementation::instance().rasterRoot();
 }
-void Settings::setFuelLookupTable(const char* filename) noexcept
+void Settings::setFuelLookupTable(const string filename) noexcept
 {
   return SettingsImplementation::instance().setFuelLookupTable(filename);
 }
@@ -803,7 +803,7 @@ vector<int> Settings::outputDateOffsets()
 {
   return SettingsImplementation::instance().outputDateOffsets();
 }
-void Settings::setOutputDateOffsets(const char* value)
+void Settings::setOutputDateOffsets(const string value)
 {
   SettingsImplementation::instance().setOutputDateOffsets(value);
 }
