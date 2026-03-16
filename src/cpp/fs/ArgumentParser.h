@@ -68,6 +68,13 @@ public:
   void show_usage_and_exit(int exit_code);
   void show_usage_and_exit();
   void show_help_and_exit();
+  int argc() const { return argc_; }
+
+protected:
+  const int argc_;
+  const char* const* argv_;
+  string binary_directory_{};
+  string binary_name_{};
 };
 enum MODE
 {
