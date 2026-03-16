@@ -323,9 +323,6 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       // skip 'surface' argument if present
       CUR_ARG += 1;
       SKIPPED_ARGS = 1;
-      // probabalistic surface is computationally impossible at this point
-      Settings::setDeterministic(true);
-      Settings::setSurface(true);
       register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
       register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
       register_index<Dc>(dc, "--dc", "Constant Drought Code", true);
@@ -365,15 +362,6 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       false,
       &parse_raw
     );
-    if (2 == ARGC && 0 == strcmp(ARGV[CUR_ARG], "-h"))
-    {
-      // HACK: just do this for now
-      show_help_and_exit();
-    }
-    else if (3 > (ARGC - SKIPPED_ARGS))
-    {
-      show_usage_and_exit();
-    }
   }
 }
 void MainArgumentParser::parse_args()
@@ -396,6 +384,13 @@ void MainArgumentParser::parse_args()
   }
   // if name starts with "/" then it's an absolute path, otherwise append to working directory
   log_file = log_file_name.starts_with("/") ? log_file_name : (output_directory + log_file_name);
+  // HACK: ensure settings initialized before doing this
+  // probabalistic surface is computationally impossible at this point
+  if (SURFACE == mode)
+  {
+    Settings::setDeterministic(true);
+    Settings::setSurface(true);
+  }
 }
 FwiWeather MainArgumentParser::get_test_weather() const
 {
