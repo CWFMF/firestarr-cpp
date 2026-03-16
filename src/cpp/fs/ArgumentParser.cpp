@@ -11,10 +11,10 @@ static map<std::string, bool> PARSE_HAVE{};
 static string BIN_DIR{};
 static string BIN_NAME{};
 static size_t SKIPPED_ARGS = 0;
-static int CUR_ARG = 0;
+static size_t CUR_ARG = 0;
 ArgumentParser* PARSER{nullptr};
-void ArgumentParser::mark_parsed(const char* arg) { PARSE_HAVE.emplace(arg, true); }
-bool ArgumentParser::was_parsed(const char* arg) { return PARSE_HAVE.contains(arg); }
+void ArgumentParser::mark_parsed(const string arg) { PARSE_HAVE.emplace(arg, true); }
+bool ArgumentParser::was_parsed(const string arg) { return PARSE_HAVE.contains(arg); }
 template <class T>
 T parse(auto fct)
 {
@@ -29,7 +29,7 @@ T parse_once(auto fct)
   auto parser = *PARSER;
   if (parser.was_parsed(parser.cur_arg()))
   {
-    printf("\nArgument %s already specified\n\n", parser.cur_arg());
+    printf("\nArgument %s already specified\n\n", parser.cur_arg().c_str());
     parser.show_usage_and_exit();
   }
   // HACK: use auto instead of std::function<T()> so call is easier
@@ -43,7 +43,6 @@ T parse_value()
   return parse_once<T>([&] { return stod(parser.get_arg()); });
 }
 size_t parse_size_t();
-const char* parse_raw();
 string parse_string();
 template <class T>
 T parse_index()
@@ -77,11 +76,11 @@ void register_index(T& index, string v, string help, bool required)
 }
 string ArgumentParser::get_args()
 {
-  std::string args(argv_[0]);
-  for (auto i = 1; i < argc_; ++i)
+  std::string args{arguments_.at(0)};
+  for (auto i = 1; i < arguments_.size(); ++i)
   {
     args.append(" ");
-    args.append(argv_[i]);
+    args.append(arguments_.at(i));
   }
   return args;
 }
@@ -137,23 +136,24 @@ void ArgumentParser::show_help_and_exit()
   // showing help isn't an error
   show_usage_and_exit(0);
 }
-const char* ArgumentParser::get_arg() noexcept
+string ArgumentParser::get_arg() noexcept
 {
   // check if we don't have any more arguments
-  fs::logging::check_fatal(CUR_ARG + 1 >= argc_, "Missing argument to --%s", argv_[CUR_ARG]);
-  return argv_[++CUR_ARG];
+  fs::logging::check_fatal(
+    CUR_ARG + 1 >= arguments_.size(), "Missing argument to --%s", arguments_.at(CUR_ARG).c_str()
+  );
+  return arguments_.at(++CUR_ARG);
 }
 size_t parse_size_t()
 {
   auto parser = *PARSER;
   return parse_once<size_t>([&] { return static_cast<size_t>(stoi(parser.get_arg())); });
 }
-const char* parse_raw()
+string parse_string()
 {
   auto parser = *PARSER;
-  return parse_once<const char*>([&]() { return parser.get_arg(); });
+  return parse_once<string>([&]() { return parser.get_arg(); });
 }
-string parse_string() { return string(parse_raw()); }
 void register_argument(string v, string help, bool required, std::function<void()> fct)
 {
   PARSE_FCT.emplace(v, fct);
@@ -182,14 +182,21 @@ ArgumentParser::ArgumentParser(
   const char* const argv[],
   const PositionalArgumentsRequired require_positional
 )
-  : require_positional_{require_positional}, argc_{argc}, argv_{argv}
+  : require_positional_{require_positional}, arguments_{[&]() {
+      vector<std::string> args{};
+      for (auto i = 0; i < argc; ++i)
+      {
+        args.emplace_back(argv[i]);
+      }
+      return args;
+    }()}
 {
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
   add_usages(usages);
   fs::show_debug_settings();
   assert(0 == CUR_ARG);
-  auto bin = string(argv_[CUR_ARG++]);
+  auto bin = arguments_.at(CUR_ARG++);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
   BIN_DIR = bin.substr(0, end);
@@ -203,9 +210,9 @@ ArgumentParser::ArgumentParser(
 }
 void ArgumentParser::parse_args()
 {
-  while (CUR_ARG < argc_)
+  while (CUR_ARG < arguments_.size())
   {
-    const string arg = argv_[CUR_ARG];
+    const string arg = arguments_.at(CUR_ARG);
     bool is_positional = !arg.starts_with("-");
     if (!is_positional)
     {
@@ -220,7 +227,11 @@ void ArgumentParser::parse_args()
         catch (std::exception&)
         {
           // CUR_ARG would be incremented while trying to parse at this point, so -1 is 'arg'
-          printf("\n'%s' is not a valid value for argument %s\n\n", argv_[CUR_ARG], arg.c_str());
+          printf(
+            "\n'%s' is not a valid value for argument %s\n\n",
+            arguments_.at(CUR_ARG).c_str(),
+            arg.c_str()
+          );
           show_usage_and_exit();
         }
       }
@@ -295,7 +306,7 @@ static const Usage USAGE_TEST{
 static const vector<Usage> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
 void SettingsArgumentParser::parse_args()
 {
-  Settings::setRoot(BIN_DIR.c_str());
+  Settings::setRoot(BIN_DIR);
   ArgumentParser::parse_args();
 }
 MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
@@ -303,7 +314,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
 {
   register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
   register_flag(&Settings::setSaveAsTiff, false, "--no-tiff", "Do not save grids as .tif");
-  if (argc_ > 1 && 0 == strcmp(argv_[1], "test"))
+  if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "test"))
   {
     fs::logging::note("Running in test mode");
     mode = TEST;
@@ -349,19 +360,19 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     register_flag(
       &Settings::setSaveSimulationArea, true, "--sim-area", "Output simulation area grids"
     );
-    register_setter<const char*>(
+    register_setter<string>(
       &Settings::setRasterRoot,
       "--raster-root",
       "Use specified directory as raster root",
       false,
-      &parse_raw
+      &parse_string
     );
-    register_setter<const char*>(
+    register_setter<string>(
       &Settings::setFuelLookupTable,
       "--fuel-lut",
       "Use specified fuel lookup table",
       false,
-      &parse_raw
+      &parse_string
     );
     register_setter<
       DurationSize>(&Settings::setUtcOffset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
@@ -382,7 +393,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       false,
       &parse_size_t
     );
-    if (argc_ > 1 && 0 == strcmp(argv_[1], "surface"))
+    if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "surface"))
     {
       fs::logging::note("Running in probability surface mode");
       mode = SURFACE;
@@ -421,12 +432,12 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
         false
       );
     }
-    register_setter<const char*>(
+    register_setter<string>(
       &Settings::setOutputDateOffsets,
       "--output_date_offsets",
       "Override output date offsets",
       false,
-      &parse_raw
+      &parse_string
     );
   }
 }
@@ -486,7 +497,7 @@ FwiWeather MainArgumentParser::get_yesterday_weather() const
     dc
   };
 }
-const char* ArgumentParser::cur_arg() { return argv_[CUR_ARG]; };
+string ArgumentParser::cur_arg() { return arguments_.at(CUR_ARG); };
 bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
