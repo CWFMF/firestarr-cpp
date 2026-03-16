@@ -56,6 +56,9 @@ public:
   /**
    * \brief Indicate positional arguments should all be used by now and error if not
    */
+  const char* cur_arg();
+  string get_args();
+  const char* get_arg() noexcept;
   void done_positional();
   bool help_requested() { return help_requested_; }
   void mark_parsed(const char* arg);
