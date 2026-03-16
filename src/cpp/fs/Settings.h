@@ -16,12 +16,12 @@ public:
    * \brief Set root directory and read settings from file
    * \param dirname Directory to use for settings and relative paths
    */
-  static void setRoot(const char* dirname) noexcept;
+  static void setRoot(const string dirname) noexcept;
   /**
    * \brief Set raster root directory
    * \param dirname Directory to use for rasters
    */
-  static void setRasterRoot(const char* dirname) noexcept;
+  static void setRasterRoot(const string dirname) noexcept;
   /**
    * \brief Root directory that raster inputs are stored in
    * \return Root directory that raster inputs are stored in
@@ -31,7 +31,7 @@ public:
    * \brief Set fuel lookup table file
    * \param dirname Directory to use for rasters
    */
-  static void setFuelLookupTable(const char* filename) noexcept;
+  static void setFuelLookupTable(const string filename) noexcept;
   /**
    * \brief Fuel lookup table
    * \return Fuel lookup table
@@ -338,7 +338,7 @@ public:
    * \brief Set days to output probability contours for (1 is start date, 2 is day after, etc.)
    * \return None
    */
-  static void setOutputDateOffsets(const char* value);
+  static void setOutputDateOffsets(const string value);
   /**
    * \brief Whatever the maximum value in the date offsets is
    * \return Whatever the maximum value in the date offsets is
