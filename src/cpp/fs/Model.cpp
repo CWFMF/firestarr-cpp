@@ -864,9 +864,14 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
     bool keep_checking{true};
     const bool is_limited = 0 != Settings::maximumTimeSeconds();
+    const bool with_interim = 0 != interim_save_interval_.count();
     if (!is_limited)
     {
       logging::note("No time limit being enforced since MAXIMUM_TIME = 0");
+    }
+    if (!with_interim)
+    {
+      logging::note("No interim outputs being generated since INTERIM_OUTPUT_INTERVAL = 0");
     }
     while (keep_checking)
     {
@@ -876,6 +881,12 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
       std::this_thread::sleep_for(CHECK_INTERVAL);
       // set bool so other things don't need to check clock
       is_out_of_time_ = is_limited && runTime().count() >= timeLimit().count();
+      should_output_interim_ =
+        with_interim && timeSinceLastSave().count() >= interimTimeLimit().count();
+      if (should_output_interim_ && interim_changed_)
+      {
+        saveProbabilities(all_probabilities[0], start_day, true);
+      }
       logging::verbose("Checking clock [%ld of %ld]", runTime(), timeLimit());
       keep_checking = (runs_left > 0 && !shouldStop());
     }
