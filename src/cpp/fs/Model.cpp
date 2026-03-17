@@ -610,6 +610,13 @@ size_t runs_required(
     );
     return 0;
   }
+  // HACK: statistics don't work if only one value, so need at least 2
+  const auto min_values = min(min(all_sizes->size(), means->size()), pct->size());
+  if (1 >= min_values)
+  {
+    logging::note("Cannot calculate statistics with only %ld value", min_values);
+    return 1;
+  }
   const auto for_sizes = Statistics{*all_sizes};
   const auto for_means = Statistics{*means};
   const auto for_pct = Statistics{*pct};
