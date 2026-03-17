@@ -127,7 +127,8 @@ public:
       [this](const MathSize t, const MathSize x) { return t + pow_int<2>(x - mean_); }
     );
     standard_deviation_ = sqrt(total / n_);
-    sample_variance_ = total / (n_ - 1);
+    // HACK: variance is "infinite" if only one value?
+    sample_variance_ = (1 >= n_ ? std::numeric_limits<MathSize>::max() : (total / (n_ - 1)));
 #ifdef DEBUG_STATISTICS
     logging::check_equal(min_, percentiles_[0], "min");
     logging::check_equal(max_, percentiles_[100], "max");
@@ -145,12 +146,22 @@ public:
     return result;
   }
   /**
-   * \brief Whether or not we have less than the relative error and can be confident in the results
+   * \brief Whether or not statistics are valid (i.e. n > 1)
+   * \return Whether or not statistics are valid (i.e. n > 1)
+   */
+  [[nodiscard]] bool isValid() const noexcept { return 1 >= n_; }
+  /**
+   * \brief Whether or not we have less than the relative error and can be confident in the
+   * results
    * \param relative_error Relative Error that is required
    * \return If Student's T value is less than the relative error
    */
   [[nodiscard]] bool isConfident(const MathSize relative_error) const noexcept
   {
+    if (!isValid())
+    {
+      return false;
+    }
     const auto st = studentsT();
     const auto re = relative_error / (1 + relative_error);
     return st <= re;
