@@ -561,7 +561,12 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
 #endif
   log_verbose("Starting");
   CriticalSection _(Model::task_limiter);
-  logging::debug("Concurrent Scenario limit is %d", Model::task_limiter.limit());
+  // HACK: only do once
+  static const auto showed_once = [&]() {
+    logging::debug("Concurrent Scenario limit is %d", Model::task_limiter.limit());
+    return true;
+  }();
+  std::ignore = showed_once;
   unburnable_ = model_->environment().unburnable();
   probabilities_ = probabilities;
   log_verbose("Setting save points");
