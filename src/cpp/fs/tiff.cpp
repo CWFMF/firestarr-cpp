@@ -49,7 +49,7 @@ GeoTiff::~GeoTiff()
 }
 GeoTiff::GeoTiff(const string_view filename, const char* const mode)
   : mode_(mode), filename_(filename), tiff_([&]() {
-      logging::debug("Reading file %s", filename_.c_str());
+      logging::debug("%s file %s", ('r' == mode[0] ? "Reading" : "Writing"), filename_.c_str());
       // suppress warnings about geotiff tags that aren't found
       TIFFSetWarningHandler(nullptr);
       auto tiff = GeoTiffOpen(filename_.c_str(), mode);
