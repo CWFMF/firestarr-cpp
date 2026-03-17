@@ -12,7 +12,12 @@ PJ_CONTEXT* get_context()
 {
   auto pjc = proj_context_create();
   string db_path = Settings::getRoot() + "proj.db";
-  logging::debug("Trying to set db path to %s", db_path.c_str());
+  // HACK: only do once
+  static const auto showed_once = [&]() {
+    logging::debug("Trying to set db path to %s", db_path.c_str());
+    return true;
+  }();
+  std::ignore = showed_once;
   if (!proj_context_set_database_path(pjc, db_path.c_str(), NULL, NULL))
   {
     logging::fatal("Can't set proj.db path");
@@ -104,7 +109,12 @@ string try_fix_meridian(const string_view proj4)
       logging::debug("Using default values for utm");
       return {0.0, lon_0, 0.9996, 500000.0, 0.0};
     }
-    logging::debug("Using existing values for tmerc");
+    // HACK: only do once
+    static const auto showed_once = [&]() {
+      logging::debug("Using existing values for tmerc");
+      return true;
+    }();
+    std::ignore = showed_once;
     const auto lat_0 = find_value("+lat_0=", proj4);
     const auto lon_0 = find_value("+lon_0=", proj4);
     const auto k = find_value("+k=", proj4);
