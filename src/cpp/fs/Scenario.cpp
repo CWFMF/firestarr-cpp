@@ -596,7 +596,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
       const auto y = cell.row() + CELL_CENTER;
       const XYPos p0{x, y};
       // log_verbose("Adding point (%d, %d)",
-      log_verbose("Adding point (%f, %f)", x, y);
+      log_extensive("Adding point (%f, %f)", x, y);
       points_.insert(
         p0,
         SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
