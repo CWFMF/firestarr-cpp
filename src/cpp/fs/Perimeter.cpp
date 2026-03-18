@@ -49,15 +49,14 @@ BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const
       }
     }
   }
+  size_hectares_ = env.to_hectares(count);
 #ifdef DEBUG_GRIDS
   for (auto& kv : data)
   {
     logging::check_fatal(is_null_fuel(env.cell(kv.first)), "Null fuel in BurnedData");
   }
 #endif
-  logging::info(
-    "Loaded burned area of size %lu ha", static_cast<size_t>(this->cellSize() / 100.0 * count)
-  );
+  logging::info("Loaded burned area of size %lu ha", size_hectares_);
 }
 Perimeter::Perimeter(const BurnedMap& burned_map)
   : burned(burned_map.makeList()), edge(burned_map.makeEdge())

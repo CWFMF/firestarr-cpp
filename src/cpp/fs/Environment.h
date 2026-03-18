@@ -2,7 +2,6 @@
 #ifndef FS_ENVIRONMENT_H
 #define FS_ENVIRONMENT_H
 #include "stdafx.h"
-#include <limits>
 #include "BurnedData.h"
 #include "Cell.h"
 #include "ConstantGrid.h"
@@ -187,6 +186,11 @@ protected:
 
 public:
   void saveToFile(const string_view output_directory) const;
+  /*
+   * \brief Convert number of cells to size in hectares
+   * \return Size in hectares for given number of cells
+   */
+  MathSize to_hectares(const size_t num_cells) const;
 
 private:
   /**
