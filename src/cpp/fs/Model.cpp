@@ -29,7 +29,8 @@ Model::Model(
   : output_directory_(output_directory), start_time_(start_time), running_since_(Clock::now()),
     time_limit_(Settings::maximumTimeSeconds()), no_interim_save_since_(Clock::now()),
     interim_save_interval_(Settings::interimOutputIntervalSeconds()), env_(env),
-    latitude_(start_point.latitude()), longitude_(start_point.longitude())
+    latitude_(start_point.latitude()), longitude_(start_point.longitude()),
+    active_simulations_still_required_(Settings::minimumActiveSimulationCount())
 {
   logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
   const auto nd_for_point = calculate_nd_ref_for_point(env->elevation(), start_point);
@@ -475,6 +476,10 @@ bool Model::shouldStop() const noexcept
 }
 bool Model::isOutOfTime() const noexcept { return is_out_of_time_; }
 bool Model::isUnderSimulationCountMinimum() const noexcept { return is_under_simulation_minimum_; }
+size_t Model::activeSimulationsStillRequired() const noexcept
+{
+  return active_simulations_still_required_;
+}
 bool Model::isOverSimulationCountMaximum() const noexcept { return is_over_simulation_count_; }
 shared_ptr<ProbabilityMap> Model::makeProbabilityMap(
   const DurationSize time,
@@ -552,6 +557,29 @@ bool Model::add_statistics(
   {
     return true;
   }
+  active_simulations_still_required_ = [&]() {
+    size_t num_left = Settings::minimumActiveSimulationCount();
+    for (const auto s : *all_sizes)
+    {
+      if (s > initial_size())
+      {
+        --num_left;
+      }
+      if (0 == num_left)
+      {
+        logging::note("Found enough active simulations to meet minimum");
+        return num_left;
+      }
+    }
+    logging::note(
+      "Not enough active simulations out of %ld results to meet minimum", all_sizes->size()
+    );
+    return num_left;
+  }();
+  if (0 < activeSimulationsStillRequired())
+  {
+    return true;
+  }
   is_over_simulation_count_ = all_sizes->size() >= Settings::maximumSimulationCount();
   if (isOverSimulationCountMaximum())
   {
@@ -597,15 +625,6 @@ size_t runs_required(
     logging::note("Stopping after iteration %ld because running in deterministic mode", i);
     return 0;
   }
-  if (model.isUnderSimulationCountMinimum())
-  {
-    logging::debug(
-      "Continuing after %d iterations. Simulation minimum of %d simulations has not been reached.",
-      i,
-      Settings::minimumSimulationCount()
-    );
-    return Settings::minimumSimulationCount() - i;
-  }
   if (model.isOverSimulationCountMaximum())
   {
     logging::note(
@@ -623,6 +642,27 @@ size_t runs_required(
       Settings::maximumTimeSeconds()
     );
     return 0;
+  }
+  const auto max_sims_left = Settings::maximumSimulationCount() - i;
+  if (model.isUnderSimulationCountMinimum())
+  {
+    logging::debug(
+      "Continuing after %d iterations. Simulation minimum of %d simulations has not been reached.",
+      i,
+      Settings::minimumSimulationCount()
+    );
+    return min(max_sims_left, Settings::minimumSimulationCount() - i);
+  }
+  const auto active_still_required = model.activeSimulationsStillRequired();
+  if (0 < active_still_required)
+  {
+    logging::debug(
+      "Continuing after %d iterations. Active simulation minimum of %d simulations has not been reached.",
+      i,
+      Settings::minimumActiveSimulationCount()
+    );
+    // HACK: if we have n active sims so far then expect that many per i simulations?
+    return min(max_sims_left, i * active_still_required);
   }
   // HACK: statistics don't work if only one value, so need at least 2
   const auto min_values = min(min(all_sizes->size(), means->size()), pct->size());
