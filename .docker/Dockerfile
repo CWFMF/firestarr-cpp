@@ -47,30 +47,31 @@ RUN vcpkg/vcpkg install
 # build and test
 FROM vcpkg-installed AS firestarr-build
 WORKDIR /appl/firestarr
+# NOTE: was mounting instead of copy to minimize layers, but broke git diff-index
 # copy so git hash check is correct
-COPY . .
-COPY .* .
-RUN cmake --preset Release -DCMAKE_QUIET_MAKEFILE=1 \
-     && cmake --build --parallel --preset Release \
-     && ctest --preset Release
+# COPY . .
+# COPY .* .
+# RUN cmake --preset Release -DCMAKE_QUIET_MAKEFILE=1 \
+#      && cmake --build --parallel --preset Release \
+#      && ctest --preset Release
 # vcpkg-installed should update when this file does
 # COPY ./vcpkg*.json .
-# # mount instead of copy to minimize layers
-# RUN --mount=type=bind,source=./cmake,target=./cmake \
-#     --mount=type=bind,source=./CMakeLists.txt,target=./CMakeLists.txt \
-#     --mount=type=bind,source=./CMakePresets.json,target=./CMakePresets.json \
-#     --mount=type=bind,source=./.clang-format,target=./.clang-format \
-#     --mount=type=bind,source=./.clang-tidy,target=./.clang-tidy \
-#     --mount=type=bind,source=./.env,target=./.env \
-#     --mount=type=bind,source=./.git,target=./.git \
-#     --mount=type=bind,source=./src/cpp,target=./src/cpp \
-#     --mount=type=bind,source=./test/data,target=./test/data \
-#     --mount=type=bind,source=./test/input,target=./test/input \
-#     --mount=type=bind,source=./fuel.lut,target=./fuel.lut \
-#     --mount=type=bind,source=./settings.ini,target=./settings.ini \
-#     cmake --preset Release -DCMAKE_QUIET_MAKEFILE=1 \
-#     && cmake --build --parallel --preset Release \
-#     && ctest --preset Release
+# mount instead of copy to minimize layers
+RUN --mount=type=bind,source=./cmake,target=./cmake \
+    --mount=type=bind,source=./CMakeLists.txt,target=./CMakeLists.txt \
+    --mount=type=bind,source=./CMakePresets.json,target=./CMakePresets.json \
+    --mount=type=bind,source=./.clang-format,target=./.clang-format \
+    --mount=type=bind,source=./.clang-tidy,target=./.clang-tidy \
+    --mount=type=bind,source=./.env,target=./.env \
+    --mount=type=bind,source=./.git,target=./.git \
+    --mount=type=bind,source=./src/cpp,target=./src/cpp \
+    --mount=type=bind,source=./test/data,target=./test/data \
+    --mount=type=bind,source=./test/input,target=./test/input \
+    --mount=type=bind,source=./fuel.lut,target=./fuel.lut \
+    --mount=type=bind,source=./settings.ini,target=./settings.ini \
+    cmake --preset Release -DCMAKE_QUIET_MAKEFILE=1 \
+    && cmake --build --parallel --preset Release \
+    && ctest --preset Release
 # # COPY ./cmake cmake/
 # # COPY ./.env ./CMake* ./.clang-* .
 # # COPY ./src/cpp src/cpp/
