@@ -473,10 +473,11 @@ Iteration Model::readScenarios(
 }
 bool Model::shouldStop() const noexcept
 {
-  return !Settings::surface() && (isOutOfTime() || isOverSimulationCountLimit());
+  return !Settings::surface() && (isOutOfTime() || isOverSimulationCountMaximum());
 }
 bool Model::isOutOfTime() const noexcept { return is_out_of_time_; }
-bool Model::isOverSimulationCountLimit() const noexcept { return is_over_simulation_count_; }
+bool Model::isUnderSimulationCountMinimum() const noexcept { return is_under_simulation_minimum_; }
+bool Model::isOverSimulationCountMaximum() const noexcept { return is_over_simulation_count_; }
 shared_ptr<ProbabilityMap> Model::makeProbabilityMap(
   const DurationSize time,
   const DurationSize start_time,
@@ -532,6 +533,7 @@ bool Model::add_statistics(
   const SafeVector& sizes
 )
 {
+  const auto i = pct->size();
   const auto cur_sizes = sizes.getValues();
   logging::check_fatal(cur_sizes.empty(), "No sizes at end of simulation");
   const Statistics s{cur_sizes};
@@ -547,13 +549,18 @@ bool Model::add_statistics(
   {
     return true;
   }
-  is_over_simulation_count_ = all_sizes->size() >= Settings::maximumCountSimulations();
-  if (isOverSimulationCountLimit())
+  is_under_simulation_minimum_ = all_sizes->size() < Settings::minimumSimulationCount();
+  if (isUnderSimulationCountMinimum())
+  {
+    return true;
+  }
+  is_over_simulation_count_ = all_sizes->size() >= Settings::maximumSimulationCount();
+  if (isOverSimulationCountMaximum())
   {
     logging::note(
       "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
-      all_sizes->size(),
-      Settings::maximumCountSimulations()
+      i,
+      Settings::maximumSimulationCount()
     );
     return false;
   }
@@ -561,7 +568,7 @@ bool Model::add_statistics(
   {
     logging::note(
       "Stopping after %d iterations. Time limit of %d seconds has been reached.",
-      pct->size(),
+      i,
       Settings::maximumTimeSeconds()
     );
     return false;
@@ -592,12 +599,21 @@ size_t runs_required(
     logging::note("Stopping after iteration %ld because running in deterministic mode", i);
     return 0;
   }
-  if (model.isOverSimulationCountLimit())
+  if (model.isUnderSimulationCountMinimum())
+  {
+    logging::debug(
+      "Continuing after %d iterations. Simulation minimum of %d simulations has not been reached.",
+      i,
+      Settings::minimumSimulationCount()
+    );
+    return Settings::minimumSimulationCount() - i;
+  }
+  if (model.isOverSimulationCountMaximum())
   {
     logging::note(
       "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
-      all_sizes->size(),
-      Settings::maximumCountSimulations()
+      i,
+      Settings::maximumSimulationCount()
     );
     return 0;
   }
