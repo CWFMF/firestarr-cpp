@@ -26,27 +26,9 @@ list(APPEND FILES_USED ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt ${CMAKE_CURREN
 
 set(FILE_VERSION_CPP ${CMAKE_BINARY_DIR}/version.cpp)
 
-# calculate hash from files that matter
-set(HASHES)
-# if modified from committed version then look at file timestamps
-foreach(file_path IN LISTS FILES_USED)
-  file(SHA512 ${file_path} HASH_FILE)
-  if(NOT CMAKE_QUIET_MAKEFILE)
-    message("${file_path} ${HASH_FILE}")
-  endif()
-  list(APPEND HASHES ${HASH_FILE})
-  file(TIMESTAMP "${file_path}" LAST_MOD_TIME "${FMT_TIME}")
-  if ("${LAST_MOD_TIME}" STRGREATER "${MODIFIED_TIME}")
-    if(NOT CMAKE_QUIET_MAKEFILE)
-      message("Change in ${file_path}")
-    endif()
-    set(MODIFIED_TIME "${LAST_MOD_TIME}")
-  endif()
-endforeach()
-
-
 set(HASH_PREFIX "")
 set(HASH_SUFFIX "")
+set(MODIFIED_TIME "")
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   message("Using hash from git")
   if(EXISTS "${FILE_ENV}")
@@ -78,6 +60,23 @@ else()
   set(HASH_PREFIX "file:")
   list(JOIN HASHES "" ALL_HASHES)
   string(SHA512 FULL_HASH ${ALL_HASHES})
+endif()
+
+if(NOT MODIFIED_TIME)
+  # calculate hash from files that matter
+  set(HASHES)
+  # if modified from committed version then look at file timestamps
+  foreach(file_path IN LISTS FILES_USED)
+    file(SHA512 ${file_path} HASH_FILE)
+    if(NOT CMAKE_QUIET_MAKEFILE)
+      message("${file_path} ${HASH_FILE}")
+    endif()
+    list(APPEND HASHES ${HASH_FILE})
+    file(TIMESTAMP "${file_path}" LAST_MOD_TIME "${FMT_TIME}")
+    if ("${LAST_MOD_TIME}" STRGREATER "${MODIFIED_TIME}")
+      set(MODIFIED_TIME "${LAST_MOD_TIME}")
+    endif()
+  endforeach()
 endif()
 
 string(SUBSTRING ${FULL_HASH} 0 10 HASH)
