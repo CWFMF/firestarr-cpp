@@ -53,7 +53,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     execute_process(COMMAND git log -n1 --pretty=%h ${FILE_ENV} OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HASH_ENV)
   endif()
   execute_process(COMMAND git rev-parse --verify HEAD OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE FULL_HASH)
-  execute_process(COMMAND git diff-index --quiet HEAD RESULT_VARIABLE GIT_CHANGED)
+  execute_process(COMMAND git diff-index --quiet HEAD ${FILES_USED} RESULT_VARIABLE GIT_CHANGED)
   if (NOT "${HASH_ENV}" STREQUAL "${HASH}")
     # add + to version if .env isn't from current commit
     set(VERSION "${VERSION}+")
