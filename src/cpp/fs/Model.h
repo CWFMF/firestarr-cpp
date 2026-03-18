@@ -324,6 +324,15 @@ public:
    * Conditions for yesterday (or constant weather)
    */
   ptr<const FwiWeather> yesterday() const noexcept { return &yesterday_; }
+  /**
+   * \brief Initial fire size at start of scenario
+   */
+  MathSize initial_size() const
+  {
+    // if more than one cell at start then we'd have a perimeter
+    const auto num_cells = (nullptr == perimeter_) ? 1 : perimeter_->burned.size();
+    return env_->to_hectares(num_cells);
+  };
 
 private:
   const string output_directory_;

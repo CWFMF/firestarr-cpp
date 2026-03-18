@@ -345,6 +345,13 @@ void Environment::saveToFile(const string_view output_directory) const
     logging::debug("Done saving simulation area grids");
   }
 }
+MathSize Environment::to_hectares(const size_t num_cells) const
+{
+  // we know that every cell is square, so figure out how many cells per ha
+  const MathSize hectares_per_width = (this->cellSize() / 100.0);
+  const MathSize hectares_per_cell = hectares_per_width * hectares_per_width;
+  return num_cells * hectares_per_cell;
+}
 Environment::Environment(
   unique_ptr<FuelGrid> fuel_grid,
   unique_ptr<ElevationGrid> elevation_grid,

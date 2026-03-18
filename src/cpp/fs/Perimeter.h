@@ -20,6 +20,13 @@ public:
    * \param env Environment to use as base
    */
   BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const Environment& env);
+  size_t size_hectares() const { return size_hectares_; }
+
+private:
+  /**
+   * \brief Size in hectares
+   */
+  size_t size_hectares_;
 };
 /**
  * \brief Perimeter for an existing fire to initialize a simulation with.
