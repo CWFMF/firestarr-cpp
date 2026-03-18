@@ -246,14 +246,20 @@ public:
     interim_output_interval_seconds_ = value;
   }
   /**
-   * \brief Maximum number of simulations that can run before it is ended and whatever results it
-   * has are used
-   * \return Maximum number of simulations that can run before it is ended and whatever results it
-   * has are used
+   * \brief Minimum number of simulations that must run before stopping
+   * \return Minimum number of simulations that must run before stopping
    */
-  [[nodiscard]] constexpr size_t maximumCountSimulations() const noexcept
+  [[nodiscard]] constexpr size_t minimumSimulationCount() noexcept
   {
-    return maximum_count_simulations_;
+    return minimum_simulation_count_;
+  }
+  /**
+   * \brief Maximum number of simulations before stopping and whatever results it has are used
+   * \return Maximum number of simulations before stopping and whatever results it has are used
+   */
+  [[nodiscard]] constexpr size_t maximumSimulationCount() const noexcept
+  {
+    return maximum_simulation_count_;
   }
   /**
    * \brief Weight to give to Scenario part of thresholds
@@ -374,10 +380,13 @@ private:
    */
   atomic<size_t> interim_output_interval_seconds_;
   /**
-   * @brief Maximum number of simulations that can run before it is ended and whatever results it
-   * has are used
+   * \brief Minimum number of simulations that must run before stopping
    */
-  size_t maximum_count_simulations_;
+  size_t minimum_simulation_count_;
+  /**
+   * \brief Maximum number of simulations before stopping and whatever results it has are used
+   */
+  size_t maximum_simulation_count_;
   /**
    * \brief Weight to give to Scenario part of thresholds
    */
@@ -571,7 +580,8 @@ void SettingsImplementation::setRoot(const char* dirname) noexcept
     confidence_level_ = stod(get_value(settings, "CONFIDENCE_LEVEL"));
     maximum_time_seconds_ = stol(get_value(settings, "MAXIMUM_TIME"));
     interim_output_interval_seconds_ = stol(get_value(settings, "INTERIM_OUTPUT_INTERVAL"));
-    maximum_count_simulations_ = stol(get_value(settings, "MAXIMUM_SIMULATIONS"));
+    minimum_simulation_count_ = stol(get_value(settings, "MINIMUM_SIMULATIONS"));
+    maximum_simulation_count_ = stol(get_value(settings, "MAXIMUM_SIMULATIONS"));
     threshold_scenario_weight_ = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
     threshold_daily_weight_ = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
     threshold_hourly_weight_ = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
@@ -789,9 +799,13 @@ void Settings::setInterimOutputIntervalSeconds(const size_t value) noexcept
 {
   return SettingsImplementation::instance().setInterimOutputIntervalSeconds(value);
 }
-size_t Settings::maximumCountSimulations() noexcept
+size_t Settings::minimumSimulationCount() noexcept
 {
-  return SettingsImplementation::instance().maximumCountSimulations();
+  return SettingsImplementation::instance().minimumSimulationCount();
+}
+size_t Settings::maximumSimulationCount() noexcept
+{
+  return SettingsImplementation::instance().maximumSimulationCount();
 }
 ThresholdSize Settings::thresholdScenarioWeight() noexcept
 {

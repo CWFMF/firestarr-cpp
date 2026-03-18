@@ -300,12 +300,15 @@ public:
    */
   static void setInterimOutputIntervalSeconds(const size_t value) noexcept;
   /**
-   * \brief Maximum number of simulations that can run before it is ended and whatever results it
-   * has are used
-   * \return Maximum number of simulations that can run before it is ended and whatever results it
-   * has are used
+   * \brief Minimum number of simulations that must run before stopping
+   * \return Minimum number of simulations that must run before stopping
    */
-  [[nodiscard]] static size_t maximumCountSimulations() noexcept;
+  [[nodiscard]] static size_t minimumSimulationCount() noexcept;
+  /**
+   * \brief Maximum number of simulations before stopping and whatever results it has are used
+   * \return Maximum number of simulations before stopping and whatever results it has are used
+   */
+  [[nodiscard]] static size_t maximumSimulationCount() noexcept;
   /**
    * \brief Weight to give to Scenario part of thresholds
    * \return Weight to give to Scenario part of thresholds

@@ -203,10 +203,15 @@ public:
    */
   [[nodiscard]] bool isOutOfTime() const noexcept;
   /**
+   * \brief Whether or not simulation is under min simulation count
+   * \return Whether or not simulation is under min simulation count
+   */
+  [[nodiscard]] bool isUnderSimulationCountMinimum() const noexcept;
+  /**
    * \brief Whether or not simulation is over max simulation count
    * \return Whether or not simulation is over max simulation count
    */
-  [[nodiscard]] bool isOverSimulationCountLimit() const noexcept;
+  [[nodiscard]] bool isOverSimulationCountMaximum() const noexcept;
   /**
    * \brief What year the weather is for
    * \return What year the weather is for
@@ -460,6 +465,10 @@ private:
    * \brief If interim outputs are different than last time they were saved
    */
   bool interim_changed_ = true;
+  /**
+   * \brief If simulation is undex min simulation count
+   */
+  bool is_under_simulation_minimum_{true};
   /**
    * \brief If simulation is over max simulation count
    */
