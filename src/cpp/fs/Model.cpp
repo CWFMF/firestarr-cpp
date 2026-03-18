@@ -340,7 +340,7 @@ void Model::makeStarts(
     const auto s = burned.size();
     if (1 >= s)
     {
-      logging::note("Converting perimeter into point since size is %ld", s);
+      logging::note("Converting perimeter into point since size is %ld cell(s)", s);
       // use whatever the one cell is instead of the lat/long
       if (1 == s)
       {
@@ -354,7 +354,7 @@ void Model::makeStarts(
   // use if instead of else if in case perimeter was a single point and got switched
   if (size > 0)
   {
-    logging::note("Initializing from size %d ha", size);
+    logging::note("Initializing from size %f ha", env_->to_hectares(size));
     perimeter_ = make_shared<Perimeter>(location, size, *env_);
   }
   // figure out where the fire can exist
@@ -364,9 +364,7 @@ void Model::makeStarts(
     // we have a perimeter to start from
     // HACK: make sure this isn't empty
     starts_.push_back(make_shared<Cell>(cell(location)));
-    logging::note(
-      "Fire starting with size %0.1f ha", perimeter_->burned.size() * env_->cellSize() / 100.0
-    );
+    logging::note("Fire starting with size %0.1f ha", env_->to_hectares(perimeter_->burned.size()));
   }
   else
   {
@@ -384,7 +382,7 @@ void Model::makeStarts(
     }
     else
     {
-      logging::note("Fire starting with size %0.1f ha", env_->cellSize() / 100.0);
+      logging::note("Fire starting with size %0.1f ha", env_->to_hectares(1));
       if (0 == size && is_null_fuel(cell(location)))
       {
         findStarts(location);
