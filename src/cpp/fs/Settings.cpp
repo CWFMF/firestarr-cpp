@@ -254,6 +254,14 @@ public:
     return minimum_simulation_count_;
   }
   /**
+   * \brief Minimum number of simulations that must run before stopping
+   * \return Minimum number of simulations that must run before stopping
+   */
+  [[nodiscard]] constexpr size_t minimumActiveSimulationCount() noexcept
+  {
+    return minimum_active_simulation_count_;
+  }
+  /**
    * \brief Maximum number of simulations before stopping and whatever results it has are used
    * \return Maximum number of simulations before stopping and whatever results it has are used
    */
@@ -383,6 +391,10 @@ private:
    * \brief Minimum number of simulations that must run before stopping
    */
   size_t minimum_simulation_count_;
+  /**
+   * \brief Minimum number of simulations with any spread that must run before stopping
+   */
+  size_t minimum_active_simulation_count_;
   /**
    * \brief Maximum number of simulations before stopping and whatever results it has are used
    */
@@ -581,6 +593,7 @@ void SettingsImplementation::setRoot(const char* dirname) noexcept
     maximum_time_seconds_ = stol(get_value(settings, "MAXIMUM_TIME"));
     interim_output_interval_seconds_ = stol(get_value(settings, "INTERIM_OUTPUT_INTERVAL"));
     minimum_simulation_count_ = stol(get_value(settings, "MINIMUM_SIMULATIONS"));
+    minimum_active_simulation_count_ = stol(get_value(settings, "MINIMUM_ACTIVE_SIMULATIONS"));
     maximum_simulation_count_ = stol(get_value(settings, "MAXIMUM_SIMULATIONS"));
     threshold_scenario_weight_ = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
     threshold_daily_weight_ = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
@@ -802,6 +815,10 @@ void Settings::setInterimOutputIntervalSeconds(const size_t value) noexcept
 size_t Settings::minimumSimulationCount() noexcept
 {
   return SettingsImplementation::instance().minimumSimulationCount();
+}
+size_t Settings::minimumActiveSimulationCount() noexcept
+{
+  return SettingsImplementation::instance().minimumActiveSimulationCount();
 }
 size_t Settings::maximumSimulationCount() noexcept
 {
