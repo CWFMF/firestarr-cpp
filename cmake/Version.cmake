@@ -26,29 +26,59 @@ list(APPEND FILES_USED ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt ${CMAKE_CURREN
 
 set(FILE_VERSION_CPP ${CMAKE_BINARY_DIR}/version.cpp)
 
-# calculate hash from files that matter
-set(HASHES)
-# if modified from committed version then look at file timestamps
-foreach(file_path IN LISTS FILES_USED)
-  file(SHA512 ${file_path} HASH_FILE)
-  if(NOT CMAKE_QUIET_MAKEFILE)
-    message("${file_path} ${HASH_FILE}")
+set(HASH_PREFIX "")
+set(HASH_SUFFIX "")
+set(MODIFIED_TIME "")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+  if(EXISTS "${FILE_ENV}")
+    # check when .env last changed - if not this commit then this is version+
+    execute_process(COMMAND git log -n1 --pretty=%H ${FILE_ENV} OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE VERSION_HASH)
   endif()
-  list(APPEND HASHES ${HASH_FILE})
-  file(TIMESTAMP "${file_path}" LAST_MOD_TIME "${FMT_TIME}")
-  if ("${LAST_MOD_TIME}" STRGREATER "${MODIFIED_TIME}")
-    if(NOT CMAKE_QUIET_MAKEFILE)
-      message("Change in ${file_path}")
+  execute_process(COMMAND git rev-parse --verify HEAD OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE FULL_HASH)
+  message("VERSION_HASH = ${VERSION_HASH}")
+  message("FULL_HASH = ${FULL_HASH}")
+  if (NOT "${VERSION_HASH}" STREQUAL "${FULL_HASH}")
+    # add + to version if .env isn't from current commit
+    set(VERSION "${VERSION}+")
+  endif()
+  # is anything in git changed?
+  list(JOIN FILES_USED " " FILES_USED_STRING)
+  execute_process(COMMAND git diff-index HEAD -- ${FILES_USED_STRING} RESULT_VARIABLE GIT_CHANGED)
+  message("GIT_CHANGED = ${GIT_CHANGED}")
+  if ("${GIT_CHANGED}" STREQUAL "0")
+    # use time from git commit since nothing is different
+    execute_process(COMMAND git log -1 --pretty=%ad --date=format:%Y-%m-%dT%H:%M:%SZ OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE MODIFIED_TIME)
+  else()
+    set(HASH_SUFFIX "+")
+  endif()
+else()
+  # will never have a '+' for HASH_SUFFIX because it's based on exact files
+  set(HASH_PREFIX "file:")
+  list(JOIN HASHES "" ALL_HASHES)
+  string(SHA512 FULL_HASH ${ALL_HASHES})
+endif()
+
+if(NOT MODIFIED_TIME)
+  # calculate hash from files that matter
+  set(HASHES)
+  # if modified from committed version then look at file timestamps
+  foreach(file_path IN LISTS FILES_USED)
+    file(SHA512 ${file_path} HASH_FILE)
+    if(CMAKE_VERBOSE_MAKEFILE)
+      message("${file_path} ${HASH_FILE}")
     endif()
-    set(MODIFIED_TIME "${LAST_MOD_TIME}")
-  endif()
-endforeach()
-list(JOIN HASHES "" ALL_HASHES)
-string(SHA512 FULL_HASH ${ALL_HASHES})
+    list(APPEND HASHES ${HASH_FILE})
+    file(TIMESTAMP "${file_path}" LAST_MOD_TIME "${FMT_TIME}")
+    if ("${LAST_MOD_TIME}" STRGREATER "${MODIFIED_TIME}")
+      set(MODIFIED_TIME "${LAST_MOD_TIME}")
+    endif()
+  endforeach()
+endif()
 
+string(SUBSTRING ${FULL_HASH} 0 10 HASH)
+set(HASH "${HASH_PREFIX}${HASH}${HASH_SUFFIX}")
+set(FULL_HASH "${HASH_PREFIX}${FULL_HASH}${HASH_SUFFIX}")
 string(TIMESTAMP COMPILE_TIME "${FMT_TIME}" UTC)
-
-string(SUBSTRING ${FULL_HASH} 0 8 HASH)
 
 set(COMPILED_ON "${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM}-${CMAKE_CXX_COMPILER_ID}")
 

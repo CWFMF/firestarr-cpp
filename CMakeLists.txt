@@ -79,7 +79,7 @@ if (WIN32)
   add_compile_options(
     "$<$<CONFIG:Debug>:/bigobj>")
 else()
-  if(CMAKE_VERBOSE_MAKEFILE)
+  if(CMAKE_VERBOSE_OPTIMIZATIONS)
     add_compile_options(-fopt-info-vec-all)
   endif()
   add_compile_options(
