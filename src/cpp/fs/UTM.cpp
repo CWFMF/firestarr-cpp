@@ -105,8 +105,7 @@ string try_fix_meridian(const string_view proj4)
       // zone 15 is -93 and other zones are 6 degrees difference
       const auto z = stod(zone);
       const auto lon_0 = fs::utm_central_meridian(z);
-      logging::note("UTM zone %s == %f turned into meridian %f", zone.c_str(), z, lon_0);
-      logging::debug("Using default values for utm");
+      logging::debug("UTM zone %s == %f turned into meridian %f", zone.c_str(), z, lon_0);
       return {0.0, lon_0, 0.9996, 500000.0, 0.0};
     }
     // HACK: only do once
