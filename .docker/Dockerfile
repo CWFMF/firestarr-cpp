@@ -62,7 +62,7 @@ RUN --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./test/input,target=./test/input \
     --mount=type=bind,source=./fuel.lut,target=./fuel.lut \
     --mount=type=bind,source=./settings.ini,target=./settings.ini \
-    cmake --preset Release \
+    cmake --preset Release -DQUIET_MAKEFILE=1 \
     && cmake --build --parallel --preset Release \
     && ctest --preset Release
 # COPY ./cmake cmake/
