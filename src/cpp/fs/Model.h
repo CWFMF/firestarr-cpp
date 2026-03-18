@@ -6,6 +6,7 @@
 #include "FireWeather.h"
 #include "Iteration.h"
 #include "Perimeter.h"
+#include "unstable.h"
 namespace fs
 {
 class StartPoint;
@@ -207,6 +208,11 @@ public:
    * \return Whether or not simulation is under min simulation count
    */
   [[nodiscard]] bool isUnderSimulationCountMinimum() const noexcept;
+  /**
+   * \brief How many active simulations are still needed
+   * \return How many active simulations are still needed
+   */
+  [[nodiscard]] size_t activeSimulationsStillRequired() const noexcept;
   /**
    * \brief Whether or not simulation is over max simulation count
    * \return Whether or not simulation is over max simulation count
@@ -478,6 +484,10 @@ private:
    * \brief If simulation is undex min simulation count
    */
   bool is_under_simulation_minimum_{true};
+  /**
+   * \brief Number of active simulations still required
+   */
+  size_t active_simulations_still_required_{};
   /**
    * \brief If simulation is over max simulation count
    */

@@ -305,6 +305,11 @@ public:
    */
   [[nodiscard]] static size_t minimumSimulationCount() noexcept;
   /**
+   * \brief Minimum number of simulations that must run before stopping
+   * \return Minimum number of simulations that must run before stopping
+   */
+  [[nodiscard]] static size_t minimumActiveSimulationCount() noexcept;
+  /**
    * \brief Maximum number of simulations before stopping and whatever results it has are used
    * \return Maximum number of simulations before stopping and whatever results it has are used
    */
