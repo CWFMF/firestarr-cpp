@@ -64,7 +64,7 @@ if(NOT MODIFIED_TIME)
   # if modified from committed version then look at file timestamps
   foreach(file_path IN LISTS FILES_USED)
     file(SHA512 ${file_path} HASH_FILE)
-    if(NOT CMAKE_QUIET_MAKEFILE)
+    if(CMAKE_VERBOSE_MAKEFILE)
       message("${file_path} ${HASH_FILE}")
     endif()
     list(APPEND HASHES ${HASH_FILE})
