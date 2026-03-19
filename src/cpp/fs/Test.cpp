@@ -325,9 +325,9 @@ int test(
   SafeVector final_sizes{};
   // FIX: I think this does a lot of the same things as the test code is doing because it was
   // derived from this code
-  Settings::setDeterministic(true);
+  settings::deterministic = true;
   Settings::setMinimumRos(0.0);
-  Settings::setSavePoints(false);
+  settings::save_points = false;
   // make sure all tests run regardless of how long it takes
   Settings::setMaximumTimeSeconds(numeric_limits<size_t>::max());
   const auto hours = INVALID_TIME == num_hours ? DEFAULT_HOURS : num_hours;

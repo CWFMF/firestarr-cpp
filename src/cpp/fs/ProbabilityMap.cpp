@@ -42,7 +42,7 @@ void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
   lock_guard<mutex> lock(mutex_);
   // need to lock both maps
   lock_guard<mutex> lock_rhs(rhs.mutex_);
-  if (Settings::saveIntensity())
+  if (settings::save_intensity)
   {
     for (auto&& kv : rhs.low_.data)
     {
@@ -73,7 +73,7 @@ void ProbabilityMap::addProbability(const IntensityMap& for_time)
     const auto k = kv.first;
     const auto v = kv.second;
     all_.data[k] += 1;
-    if (Settings::saveIntensity())
+    if (settings::save_intensity)
     {
       if (v >= min_value_ && v <= low_max_)
       {
@@ -203,10 +203,10 @@ void ProbabilityMap::deleteInterim()
     const auto text = (is_interim ? "interim_" : "") + prefix;
     return make_string(text.c_str(), t, day);
   };
-  if (Settings::runAsync())
+  if (settings::run_async)
   {
     vector<std::future<FileList>> results{};
-    if (Settings::saveProbability())
+    if (settings::save_probability)
     {
       results.push_back(async(
         launch::async,
@@ -217,7 +217,7 @@ void ProbabilityMap::deleteInterim()
         processing_status
       ));
     }
-    if (Settings::saveOccurrence())
+    if (settings::save_occurrence)
     {
       results.push_back(async(
         launch::async,
@@ -228,7 +228,7 @@ void ProbabilityMap::deleteInterim()
         processing_status
       ));
     }
-    if (Settings::saveIntensity())
+    if (settings::save_intensity)
     {
       results.push_back(async(
         launch::async,
@@ -271,17 +271,17 @@ void ProbabilityMap::deleteInterim()
   }
   else
   {
-    if (Settings::saveProbability())
+    if (settings::save_probability)
     {
       files.append_range(saveTotal(output_directory, fix_string("probability"), processing_status));
     }
-    if (Settings::saveOccurrence())
+    if (settings::save_occurrence)
     {
       files.append_range(
         saveTotalCount(output_directory, fix_string("occurrence"), processing_status)
       );
     }
-    if (Settings::saveIntensity())
+    if (settings::save_intensity)
     {
       files.append_range(saveLow(output_directory, fix_string("intensity_L"), processing_status));
       files.append_range(

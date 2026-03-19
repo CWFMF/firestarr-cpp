@@ -17,7 +17,7 @@ Iteration* Iteration::reset_with_new_start(const shared_ptr<Cell>& start_cell)
 {
   // HACK: ensure only called with surface
   logging::check_fatal(
-    !Settings::surface(), "Called reset_with_new_start() when not calculating surface"
+    !settings::surface, "Called reset_with_new_start() when not calculating surface"
   );
   // HACK: just copy code for now
   // FIX: remove duplicate code
