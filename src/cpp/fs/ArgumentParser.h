@@ -79,8 +79,10 @@ protected:
   size_t cur_arg_{0};
   size_t skipped_args_{0};
   vector<string> arguments_{};
+  vector<string> arguments_expanded_{};
   string binary_directory_{};
   string binary_name_{};
+  vector<string>& args_expanded();
 };
 enum MODE
 {

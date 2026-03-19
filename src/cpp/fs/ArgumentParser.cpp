@@ -73,7 +73,7 @@ void register_index(T& index, string v, string help, bool required)
 string ArgumentParser::get_args()
 {
   std::string args{arguments_.at(0)};
-  for (auto i = 1; i < arguments_.size(); ++i)
+  for (size_t i = 1; i < arguments_.size(); ++i)
   {
     args.append(" ");
     args.append(arguments_.at(i));
@@ -136,9 +136,11 @@ string ArgumentParser::get_arg() noexcept
 {
   // check if we don't have any more arguments
   fs::logging::check_fatal(
-    cur_arg_ + 1 >= arguments_.size(), "Missing argument to --%s", arguments_.at(cur_arg_).c_str()
+    cur_arg_ + 1 >= args_expanded().size(),
+    "Missing argument to --%s",
+    args_expanded().at(cur_arg_).c_str()
   );
-  return arguments_.at(++cur_arg_);
+  return args_expanded().at(++cur_arg_);
 }
 size_t parse_size_t()
 {
@@ -206,9 +208,10 @@ ArgumentParser::ArgumentParser(
 }
 void ArgumentParser::parse_args()
 {
-  while (cur_arg_ < arguments_.size())
+  auto& args = args_expanded();
+  while (cur_arg_ < args.size())
   {
-    const string arg = arguments_.at(cur_arg_);
+    const string arg = args.at(cur_arg_);
     bool is_positional = !arg.starts_with("-");
     if (!is_positional)
     {
@@ -225,7 +228,7 @@ void ArgumentParser::parse_args()
           // cur_arg_ would be incremented while trying to parse at this point, so -1 is 'arg'
           printf(
             "\n'%s' is not a valid value for argument %s\n\n",
-            arguments_.at(cur_arg_).c_str(),
+            args.at(cur_arg_).c_str(),
             arg.c_str()
           );
           show_usage_and_exit();
@@ -493,9 +496,55 @@ FwiWeather MainArgumentParser::get_yesterday_weather() const
     dc
   };
 }
-string ArgumentParser::cur_arg() { return arguments_.at(cur_arg_); };
+string ArgumentParser::cur_arg() { return args_expanded().at(cur_arg_); };
 bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
+}
+vector<string>& ArgumentParser::args_expanded()
+{
+  // if empty then not parsed, or parsing is fast since no arguments
+  if (arguments_expanded_.empty())
+  {
+    arguments_expanded_ = [&]() {
+      vector<std::string> args{};
+      for (const auto& s : arguments_)
+      {
+        if (s.starts_with("-") && !s.starts_with("--"))
+        {
+          // break anything starting with just one - into individual letters
+          for (size_t i = 1; i < s.length(); ++i)
+          {
+            const string arg = string("-") + s.at(i);
+            // if this isn't a flag then don't expand it
+            if (PARSE_FCT.find(arg) != PARSE_FCT.end())
+            {
+              args.emplace_back(arg);
+            }
+            else if (1 == i)
+            {
+              // if this is just the start of a non-flag then leave it alone
+              args.emplace_back(s);
+              break;
+            }
+            else
+            {
+              return logging::fatal<vector<string>>(
+                "Invalid argument %s found as part of combined flag argument %s",
+                arg.c_str(),
+                s.c_str()
+              );
+            }
+          }
+        }
+        else
+        {
+          args.emplace_back(s);
+        }
+      }
+      return args;
+    }();
+  }
+  return arguments_expanded_;
 }
 }
