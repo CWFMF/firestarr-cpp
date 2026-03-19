@@ -40,6 +40,11 @@ public:
     const char* const argv[],
     const PositionalArgumentsRequired require_positional = PositionalArgumentsRequired::Required
   );
+  // HACK: copying is breaking current argument tracking
+  ArgumentParser(const ArgumentParser& rhs) = delete;
+  ArgumentParser(ArgumentParser& rhs) = delete;
+  ArgumentParser& operator=(const ArgumentParser& rhs) = delete;
+  ArgumentParser& operator=(ArgumentParser& rhs) = delete;
   /**
    * \brief Parse arguments that were given to constructor
    * \return string Positional arguments

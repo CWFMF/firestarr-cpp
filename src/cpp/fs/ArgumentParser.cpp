@@ -16,7 +16,7 @@ bool ArgumentParser::was_parsed(const string arg) { return PARSE_HAVE.contains(a
 template <class T>
 T parse(auto fct)
 {
-  auto parser = *PARSER;
+  auto& parser = *PARSER;
   parser.mark_parsed(parser.cur_arg());
   // HACK: use auto instead of std::function<T()> so call is easier
   return static_cast<T>(fct());
@@ -24,7 +24,7 @@ T parse(auto fct)
 template <class T>
 T parse_once(auto fct)
 {
-  auto parser = *PARSER;
+  auto& parser = *PARSER;
   if (parser.was_parsed(parser.cur_arg()))
   {
     printf("\nArgument %s already specified\n\n", parser.cur_arg().c_str());
@@ -37,7 +37,7 @@ bool parse_flag(bool not_inverse);
 template <class T>
 T parse_value()
 {
-  auto parser = *PARSER;
+  auto& parser = *PARSER;
   return parse_once<T>([&] { return stod(parser.get_arg()); });
 }
 size_t parse_size_t();
@@ -45,7 +45,7 @@ string parse_string();
 template <class T>
 T parse_index()
 {
-  auto parser = *PARSER;
+  auto& parser = *PARSER;
   return parse_once<T>([&] { return T(stod(parser.get_arg())); });
 }
 void register_argument(string v, string help, bool required, std::function<void()> fct);
@@ -144,12 +144,12 @@ string ArgumentParser::get_arg() noexcept
 }
 size_t parse_size_t()
 {
-  auto parser = *PARSER;
+  auto& parser = *PARSER;
   return parse_once<size_t>([&] { return static_cast<size_t>(stoi(parser.get_arg())); });
 }
 string parse_string()
 {
-  auto parser = *PARSER;
+  auto& parser = *PARSER;
   return parse_once<string>([&]() { return parser.get_arg(); });
 }
 void register_argument(string v, string help, bool required, std::function<void()> fct)
