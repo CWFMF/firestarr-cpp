@@ -269,7 +269,7 @@ void ArgumentParser::parse_args()
     show_usage_and_exit();
   }
 }
-bool ArgumentParser::has_positional() const { return (cur_arg_ < positional_args_.size()); };
+bool ArgumentParser::has_positional() const { return (cur_positional_ < positional_args_.size()); };
 string ArgumentParser::get_positional()
 {
   if (!has_positional())
@@ -278,12 +278,12 @@ string ArgumentParser::get_positional()
     show_usage_and_exit();
   }
   // return from front and advance to next
-  return positional_args_[cur_arg_++];
+  return positional_args_[cur_positional_++];
 }
 void ArgumentParser::done_positional()
 {
   // should be exactly at size since increments after getting argument
-  if (positional_args_.size() != cur_arg_)
+  if (positional_args_.size() != cur_positional_)
   {
     fs::logging::error("Too many positional arguments");
     show_usage_and_exit();
