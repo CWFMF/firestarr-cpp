@@ -575,7 +575,7 @@ public:
    */
   [[nodiscard]] MathSize grass_curing(const int nd, const FwiWeather& wx) const override
   {
-    if (Settings::forceStaticCuring())
+    if (settings::force_static_curing)
     {
       return Settings::staticCuring();
     }
@@ -1123,8 +1123,8 @@ template <class FuelSpring, class FuelSummer>
 ) noexcept
 {
   // if not green yet, then still in spring conditions
-  return Settings::forceGreenup()   ? fuel.summer()
-       : Settings::forceNoGreenup() ? fuel.spring()
+  return settings::force_greenup    ? fuel.summer()
+       : settings::force_no_greenup ? fuel.spring()
        : calculate_is_green(nd)     ? fuel.summer()
                                     : fuel.spring();
 }

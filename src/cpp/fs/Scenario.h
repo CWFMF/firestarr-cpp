@@ -426,7 +426,7 @@ public:
     const DurationSize time_at_location
   ) const
   {
-    if (Settings::deterministic())
+    if (settings::deterministic)
     {
       // always survive if deterministic
       return true;

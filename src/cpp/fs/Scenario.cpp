@@ -58,7 +58,7 @@ void Scenario::clear() noexcept
   scheduler_ = set<Event>();
   arrival_ = {};
   points_ = {};
-  if (!Settings::surface())
+  if (!settings::surface)
   {
     spread_info_ = {};
   }
@@ -398,7 +398,7 @@ Scenario::Scenario(
     start_point_(std::move(start_point)), id_(id), start_time_(start_time),
     last_save_(weather_->minDate()), simulation_(-1), start_day_(start_day), last_date_(last_date),
     ran_(false), step_(0),
-    points_log_(LogPoints{model_->outputDirectory(), Settings::savePoints(), id_, start_time_})
+    points_log_(LogPoints{model_->outputDirectory(), settings::save_points, id_, start_time_})
 {
   const auto wx = weather_->at(start_time_);
   logging::check_fatal(
@@ -634,9 +634,9 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   const auto completed = ++COMPLETED;
   // HACK: use + to pull value out of atomic
-  const auto count = Settings::surface() ? model_->scenarioCount() : (+COUNT);
+  const auto count = settings::surface ? model_->scenarioCount() : (+COUNT);
   const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
-  if (Settings::surface())
+  if (settings::surface)
   {
     const auto ratio_done = static_cast<MathSize>(completed) / count;
     const auto s = model_->runTime().count();
@@ -817,8 +817,8 @@ void Scenario::scheduleFireSpread(const Event& event)
 {
   const auto time = event.time;
   const auto this_time = time_index(time);
-  const auto wx = Settings::surface() ? model_->yesterday() : weather(time);
-  const auto wx_daily = Settings::surface() ? model_->yesterday() : weather_daily(time);
+  const auto wx = settings::surface ? model_->yesterday() : weather(time);
+  const auto wx_daily = settings::surface ? model_->yesterday() : weather_daily(time);
   current_time_ = time;
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
@@ -837,7 +837,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     current_time_index_ = this_time;
     // seemed like it would be good to keep offsets but max_ros_ needs to reset or things slow to a
     // crawl?
-    if (!Settings::surface())
+    if (!settings::surface)
     {
       spread_info_ = {};
     }

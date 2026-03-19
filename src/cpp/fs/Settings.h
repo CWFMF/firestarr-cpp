@@ -5,6 +5,37 @@
 #include "FuelLookup.h"
 namespace fs
 {
+namespace settings
+{
+// Whether or not to save individual grids
+static atomic<bool> save_individual{false};
+// Whether or not to run things asynchronously where possible
+static atomic<bool> run_async{true};
+// Whether or not to run deterministically (100% chance of spread & survival)
+static atomic<bool> deterministic{false};
+// Whether or not to create a probability surface
+static atomic<bool> surface{false};
+// Whether or not to save grids as .asc
+static atomic<bool> save_as_ascii{false};
+// Whether or not to save grids as .tif
+static atomic<bool> save_as_tiff{true};
+// Whether or not to save points used for spread
+static atomic<bool> save_points{false};
+// Whether or not to save intensity grids
+static atomic<bool> save_intensity{true};
+// Whether or not to save probability grids
+static atomic<bool> save_probability{true};
+// Whether or not to save occurrence grids
+static atomic<bool> save_occurrence{false};
+// Whether or not to save simulation area grids
+static atomic<bool> save_simulation_area{false};
+// Whether or not to force greenup for all fires
+static atomic<bool> force_greenup{false};
+// Whether or not to force no greenup for all fires
+static atomic<bool> force_no_greenup{false};
+// Whether or not to force static curing value for all fires
+static atomic<bool> force_static_curing{false};
+}
 /**
  * \brief Reads and provides access to settings for the simulation.
  */
@@ -37,152 +68,6 @@ public:
    * \return Fuel lookup table
    */
   [[nodiscard]] static const FuelLookup& fuelLookup() noexcept;
-  /**
-   * \brief Whether or not to save individual grids
-   * \return Whether or not to save individual grids
-   */
-  [[nodiscard]] static bool saveIndividual() noexcept;
-  /**
-   * \brief Set whether or not to save individual grids
-   * \param value Whether or not to save individual grids
-   * \return None
-   */
-  static void setSaveIndividual(bool value) noexcept;
-  /**
-   * \brief Whether or not to run things asynchronously where possible
-   * \return Whether or not to run things asynchronously where possible
-   */
-  [[nodiscard]] static bool runAsync() noexcept;
-  /**
-   * \brief Set whether or not to run things asynchronously where possible
-   * \param value Whether or not to run things asynchronously where possible
-   * \return None
-   */
-  static void setRunAsync(bool value) noexcept;
-  /**
-   * \brief Whether or not to run deterministically (100% chance of spread & survival)
-   * \return Whether or not to run deterministically (100% chance of spread & survival)
-   */
-  [[nodiscard]] static bool deterministic() noexcept;
-  /**
-   * \brief Set whether or not to run deterministically (100% chance of spread & survival)
-   * \param value Whether or not to run deterministically (100% chance of spread & survival)
-   * \return None
-   */
-  static void setDeterministic(bool value) noexcept;
-  /**
-   * \brief Whether or not to run all Cell(s) that can burn in entire Environment
-   * \return Whether or not to run all Cell(s) that can burn in entire Environment
-   */
-  [[nodiscard]] static bool surface() noexcept;
-  /**
-   * \brief Set whether or not to run all Cell(s) that can burn in entire Environment
-   * \param value Whether or not to run all Cell(s) that can burn in entire Environment
-   * \return None
-   */
-  static void setSurface(bool value) noexcept;
-  /**
-   * \brief Whether or not to save grids as .asc
-   * \return Whether or not to save grids as .asc
-   */
-  [[nodiscard]] static bool saveAsAscii() noexcept;
-  /**
-   * \brief Set whether or not to save grids as .asc
-   * \param value Whether or not to save grids as .asc
-   * \return None
-   */
-  static void setSaveAsAscii(bool value) noexcept;
-  /**
-   * \brief Whether or not to save grids as .tif
-   * \return Whether or not to save grids as .tif
-   */
-  [[nodiscard]] static bool saveAsTiff() noexcept;
-  /**
-   * \brief Set whether or not to save grids as .tif
-   * \param value Whether or not to save grids as .tif
-   * \return None
-   */
-  static void setSaveAsTiff(bool value) noexcept;
-  /**
-   * \brief Whether or not to save points used for spread
-   * \return Whether or not to save points used for spread
-   */
-  [[nodiscard]] static bool savePoints() noexcept;
-  /**
-   * \brief Set whether or not to save points used for spread
-   * \param value Whether or not to save points used for spread
-   * \return None
-   */
-  static void setSavePoints(bool value) noexcept;
-  /**
-   * \brief Whether or not to save intensity grids
-   * \return Whether or not to save intensity grids
-   */
-  [[nodiscard]] static bool saveIntensity() noexcept;
-  /**
-   * \brief Set whether or not to save intensity grids
-   * \param value Whether or not to save intensity grids
-   * \return None
-   */
-  static void setSaveIntensity(bool value) noexcept;
-  /**
-   * \brief Whether or not to save probability grids
-   * \return Whether or not to save probability grids
-   */
-  [[nodiscard]] static bool saveProbability() noexcept;
-  /**
-   * \brief Set whether or not to save probability grids
-   * \param value Whether or not to save probability grids
-   * \return None
-   */
-  static void setSaveProbability(bool value) noexcept;
-  /**
-   * \brief Whether or not to save occurrence grids
-   * \return Whether or not to save occurrence grids
-   */
-  [[nodiscard]] static bool saveOccurrence() noexcept;
-  /**
-   * \brief Set whether or not to save occurrence grids
-   * \param value Whether or not to save occurrence grids
-   * \return None
-   */
-  static void setSaveOccurrence(bool value) noexcept;
-  /**
-   * \brief Whether or not to save simulation area grids
-   * \return Whether or not to save simulation area grids
-   */
-  [[nodiscard]] static bool saveSimulationArea() noexcept;
-  /**
-   * \brief Set whether or not to save simulation area grids
-   * \param value Whether or not to save simulation area grids
-   * \return None
-   */
-  static void setSaveSimulationArea(bool value) noexcept;
-  /**
-   * \brief Whether or not to force greenup for all fires
-   * \return None
-   */
-  [[nodiscard]] static bool forceGreenup() noexcept;
-  /**
-   * \brief Whether or not to force greenup for all fires
-   * \return Whether or not to force greenup for all fires
-   */
-  static void setForceGreenup(bool value) noexcept;
-  /**
-   * \brief Whether or not to force no greenup for all fires
-   * \return None
-   */
-  [[nodiscard]] static bool forceNoGreenup() noexcept;
-  /**
-   * \brief Whether or not to force no greenup for all fires
-   * \return Whether or not to force no greenup for all fires
-   */
-  static void setForceNoGreenup(bool value) noexcept;
-  /**
-   * \brief Whether or not to force static grass curing value for all fires
-   * \return Whether or not to force static grass curing value for all fires
-   */
-  [[nodiscard]] static bool forceStaticCuring() noexcept;
   /**
    * \brief Static curing value
    * \return Static curing value

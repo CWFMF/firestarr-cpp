@@ -162,6 +162,10 @@ void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, st
 {
   register_argument(v, help, false, [=] { fct(parse_flag(not_inverse)); });
 }
+void register_flag(atomic<bool>& variable, bool not_inverse, string v, string help)
+{
+  register_argument(v, help, false, [=, &variable] { variable = parse_flag(not_inverse); });
+}
 void register_flag(bool& variable, bool not_inverse, string v, string help)
 {
   register_argument(v, help, false, [=, &variable] { variable = parse_flag(not_inverse); });
@@ -308,8 +312,8 @@ void SettingsArgumentParser::parse_args() { ArgumentParser::parse_args(); }
 MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   : SettingsArgumentParser(DEFAULT_USAGES, argc, argv)
 {
-  register_flag(&Settings::setSaveAsAscii, true, "--ascii", "Save grids as .asc");
-  register_flag(&Settings::setSaveAsTiff, false, "--no-tiff", "Do not save grids as .tif");
+  register_flag(settings::save_as_ascii, true, "--ascii", "Save grids as .asc");
+  register_flag(settings::save_as_tiff, false, "--no-tiff", "Do not save grids as .tif");
   if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "test"))
   {
     fs::logging::note("Running in test mode");
@@ -334,27 +338,25 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     register_setter<size_t>(
       &Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t
     );
+    register_flag(settings::force_greenup, true, "--force-greenup", "Force green up for all fires");
     register_flag(
-      &Settings::setForceGreenup, true, "--force-greenup", "Force green up for all fires"
-    );
-    register_flag(
-      &Settings::setForceNoGreenup, true, "--force-no-greenup", "Force no green up for all fires"
+      settings::force_no_greenup, true, "--force-no-greenup", "Force no green up for all fires"
     );
   }
   else
   {
-    register_flag(&Settings::setSaveIndividual, true, "-i", "Save individual maps for simulations");
-    register_flag(&Settings::setRunAsync, false, "-s", "Run in synchronous mode");
-    register_flag(&Settings::setSavePoints, true, "--points", "Save simulation points to file");
+    register_flag(settings::save_individual, true, "-i", "Save individual maps for simulations");
+    register_flag(settings::run_async, false, "-s", "Run in synchronous mode");
+    register_flag(settings::save_points, true, "--points", "Save simulation points to file");
     register_flag(
-      &Settings::setSaveIntensity, false, "--no-intensity", "Do not output intensity grids"
+      settings::save_intensity, false, "--no-intensity", "Do not output intensity grids"
     );
     register_flag(
-      &Settings::setSaveProbability, false, "--no-probability", "Do not output probability grids"
+      settings::save_probability, false, "--no-probability", "Do not output probability grids"
     );
-    register_flag(&Settings::setSaveOccurrence, true, "--occurrence", "Output occurrence grids");
+    register_flag(settings::save_occurrence, true, "--occurrence", "Output occurrence grids");
     register_flag(
-      &Settings::setSaveSimulationArea, true, "--sim-area", "Output simulation area grids"
+      settings::save_simulation_area, true, "--sim-area", "Output simulation area grids"
     );
     register_setter<string>(
       &Settings::setRasterRoot,
@@ -375,11 +377,9 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     register_setter<size_t>(
       &Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t
     );
+    register_flag(settings::force_greenup, true, "--force-greenup", "Force green up for all fires");
     register_flag(
-      &Settings::setForceGreenup, true, "--force-greenup", "Force green up for all fires"
-    );
-    register_flag(
-      &Settings::setForceNoGreenup, true, "--force-no-greenup", "Force no green up for all fires"
+      settings::force_no_greenup, true, "--force-no-greenup", "Force no green up for all fires"
     );
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<size_t>(
@@ -408,7 +408,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     {
       register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
       register_flag(
-        &Settings::setDeterministic,
+        settings::deterministic,
         true,
         "--deterministic",
         "Run deterministically (100% chance of spread & survival)"
@@ -461,8 +461,8 @@ void MainArgumentParser::parse_args()
   // probabalistic surface is computationally impossible at this point
   if (SURFACE == mode)
   {
-    Settings::setDeterministic(true);
-    Settings::setSurface(true);
+    settings::deterministic = true;
+    settings::surface = true;
   }
 }
 FwiWeather MainArgumentParser::get_test_weather() const

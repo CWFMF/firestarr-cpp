@@ -20,7 +20,7 @@ Environment Environment::load(
 {
   logging::note("Fuel raster is %s", string(in_fuel).c_str());
   const auto& lookup = Settings::fuelLookup();
-  if (Settings::runAsync())
+  if (settings::run_async)
   {
     logging::debug("Loading grids async");
     auto fuel = async(launch::async, [&]() {
@@ -298,8 +298,8 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
 }
 Environment::Environment(const FuelGrid& fuel, const ElevationGrid& elevation, const Point& point)
   : Environment(
-      (Settings::saveSimulationArea() ? make_unique<FuelGrid>(fuel) : nullptr),
-      (Settings::saveSimulationArea() ? make_unique<ElevationGrid>(elevation) : nullptr),
+      (settings::save_simulation_area ? make_unique<FuelGrid>(fuel) : nullptr),
+      (settings::save_simulation_area ? make_unique<ElevationGrid>(elevation) : nullptr),
       makeCells(fuel, elevation),
       elevation.at(Location(*elevation.findCoordinates(point, false).get()))
     )
@@ -314,7 +314,7 @@ Cell Environment::offset(const Event& event, const Idx row, const Idx column) co
 }
 void Environment::saveToFile(const string_view output_directory) const
 {
-  if (Settings::saveSimulationArea())
+  if (settings::save_simulation_area)
   {
     logging::debug("Saving simulation area");
     const auto lookup = Settings::fuelLookup();

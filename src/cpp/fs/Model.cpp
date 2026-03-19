@@ -11,6 +11,7 @@
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "Scenario.h"
+#include "Settings.h"
 namespace fs
 {
 #ifdef DEBUG_WEATHER
@@ -377,7 +378,7 @@ void Model::makeStarts(
       logging::note("Using fire perimeter results in empty fire - changing to use point");
       perimeter_ = nullptr;
     }
-    if (Settings::surface())
+    if (settings::surface)
     {
       findAllStarts();
     }
@@ -412,9 +413,8 @@ Iteration Model::readScenarios(
   // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
   const auto saves = Settings::outputDateOffsets();
-  const auto save_individual = Settings::saveIndividual();
-  const auto setup_scenario = [&, save_individual](Scenario* scenario) {
-    if (save_individual)
+  const auto setup_scenario = [&](Scenario* scenario) {
+    if (settings::save_individual)
     {
       scenario->registerObserver(new IntensityObserver(*scenario));
       scenario->registerObserver(new ArrivalObserver(*scenario));
@@ -427,7 +427,7 @@ Iteration Model::readScenarios(
     }
     result.push_back(scenario);
   };
-  if (Settings::surface())
+  if (settings::surface)
   {
     setup_scenario(new Scenario(
       this, 0, &wx_.at(0), &wx_daily_.at(0), start, starts_.at(0), start_point, start_day, last_date
@@ -472,7 +472,7 @@ Iteration Model::readScenarios(
 }
 bool Model::shouldStop() const noexcept
 {
-  return !Settings::surface() && (isOutOfTime() || isOverSimulationCountMaximum());
+  return !settings::surface && (isOutOfTime() || isOverSimulationCountMaximum());
 }
 bool Model::isOutOfTime() const noexcept { return is_out_of_time_; }
 bool Model::isUnderSimulationCountMinimum() const noexcept { return is_under_simulation_minimum_; }
@@ -548,7 +548,7 @@ bool Model::add_statistics(
   {
     static_cast<void>(insert_sorted(all_sizes, size));
   }
-  if (Settings::surface())
+  if (settings::surface)
   {
     return true;
   }
@@ -620,7 +620,7 @@ size_t runs_required(
   const Model& model
 )
 {
-  if (Settings::deterministic())
+  if (settings::deterministic)
   {
     logging::note("Stopping after iteration %ld because running in deterministic mode", i);
     return 0;
@@ -949,7 +949,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   // if using surface just run each start through in a loop here
   size_t cur_start = 0;
   auto reset_iter = [&](Iteration& iter) {
-    if (Settings::surface())
+    if (settings::surface)
     {
       if (cur_start >= starts_.size())
       {
@@ -965,7 +965,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     }
     return true;
   };
-  if (Settings::runAsync())
+  if (settings::run_async)
   {
     const auto HARDWARE_THREADS = static_cast<size_t>(std::thread::hardware_concurrency());
     // maybe a bit slower but prefer to run all scenarios at the same time
@@ -1075,7 +1075,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         return finalize_probabilities();
       }
       {
-        if (Settings::surface())
+        if (settings::surface)
         {
           runs_left = ignitionScenarios() - iterations_done_;
         }
@@ -1125,7 +1125,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
           // ran out of time but timer should cance everything
           return finalize_probabilities();
         }
-        if (Settings::surface())
+        if (settings::surface)
         {
           runs_left = ignitionScenarios() - iterations_done_;
         }
@@ -1190,7 +1190,7 @@ int Model::runScenarios(
   );
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
-  if (Settings::surface())
+  if (settings::surface)
   {
     // yesterday should have constants to use
     model.setWeather(yesterday, start_day);
@@ -1215,7 +1215,7 @@ int Model::runScenarios(
     }
     // want to output internal representation of weather to file
 #ifdef DEBUG_WEATHER
-    if (!Settings::surface())
+    if (!settings::surface)
     {
       model.outputWeather();
     }

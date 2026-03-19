@@ -176,7 +176,7 @@ public:
       0 > value || 100 < value, "Grass curing (%) must be in range [0-100] but got %d", value
     );
     static_curing_ = value;
-    force_curing = true;
+    settings::force_static_curing = true;
   }
   /**
    * \brief Maximum time simulation can run before it is ended and whatever results it has are used
@@ -398,78 +398,6 @@ private:
    * \brief The maximum fire intensity for the 'moderate' range of intensity (kW/m)
    */
   int intensity_max_moderate_;
-
-public:
-  /**
-   * \brief Whether or not to save individual grids
-   * \return Whether or not to save individual grids
-   */
-  atomic<bool> save_individual = false;
-  /**
-   * \brief Whether or not to run things asynchronously where possible
-   * \return Whether or not to run things asynchronously where possible
-   */
-  atomic<bool> run_async = true;
-  /**
-   * \brief Whether or not to run deterministically (100% chance of spread & survival)
-   * \return Whether or not to run deterministically (100% chance of spread & survival)
-   */
-  atomic<bool> deterministic = false;
-  /**
-   * \brief Whether or not to create a probability surface
-   * \return Whether or not to create a probability surface
-   */
-  atomic<bool> surface = false;
-  /**
-   * \brief Whether or not to save grids as .asc
-   * \return Whether or not to save grids as .asc
-   */
-  atomic<bool> save_as_ascii{false};
-  /**
-   * \brief Whether or not to save grids as .tif
-   * \return Whether or not to save grids as .tif
-   */
-  atomic<bool> save_as_tiff{true};
-  /**
-   * \brief Whether or not to save points used for spread
-   * \return Whether or not to save points used for spread
-   */
-  atomic<bool> save_points = false;
-  /**
-   * \brief Whether or not to save intensity grids
-   * \return Whether or not to save intensity grids
-   */
-  atomic<bool> save_intensity = true;
-  /**
-   * \brief Whether or not to save probability grids
-   * \return Whether or not to save probability grids
-   */
-  atomic<bool> save_probability = true;
-  /**
-   * \brief Whether or not to save occurrence grids
-   * \return Whether or not to save occurrence grids
-   */
-  atomic<bool> save_occurrence = false;
-  /**
-   * \brief Whether or not to save simulation area grids
-   * \return Whether or not to save simulation area grids
-   */
-  atomic<bool> save_simulation_area = false;
-  /**
-   * \brief Whether or not to force greenup for all fires
-   * \return Whether or not to force greenup for all fires
-   */
-  atomic<bool> force_greenup = false;
-  /**
-   * \brief Whether or not to force no greenup for all fires
-   * \return Whether or not to force no greenup for all fires
-   */
-  atomic<bool> force_no_greenup = false;
-  /**
-   * \brief Whether or not to force static curing value for all fires
-   * \return Whether or not to force static curing value for all fires
-   */
-  atomic<bool> force_curing = false;
 };
 /**
  * \brief The singleton instance for this class
@@ -604,93 +532,6 @@ void Settings::setFuelLookupTable(const string filename) noexcept
 const FuelLookup& Settings::fuelLookup() noexcept
 {
   return SettingsImplementation::instance().fuelLookup();
-}
-bool Settings::saveIndividual() noexcept
-{
-  return SettingsImplementation::instance().save_individual;
-}
-void Settings::setSaveIndividual(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_individual = value;
-}
-bool Settings::runAsync() noexcept { return SettingsImplementation::instance().run_async; }
-void Settings::setRunAsync(const bool value) noexcept
-{
-  SettingsImplementation::instance().run_async = value;
-}
-bool Settings::deterministic() noexcept { return SettingsImplementation::instance().deterministic; }
-bool Settings::surface() noexcept { return SettingsImplementation::instance().surface; }
-void Settings::setSurface(const bool value) noexcept
-{
-  SettingsImplementation::instance().surface = value;
-}
-void Settings::setDeterministic(const bool value) noexcept
-{
-  SettingsImplementation::instance().deterministic = value;
-}
-bool Settings::saveAsAscii() noexcept { return SettingsImplementation::instance().save_as_ascii; }
-void Settings::setSaveAsAscii(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_as_ascii = value;
-}
-bool Settings::saveAsTiff() noexcept { return SettingsImplementation::instance().save_as_tiff; }
-void Settings::setSaveAsTiff(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_as_tiff = value;
-}
-bool Settings::savePoints() noexcept { return SettingsImplementation::instance().save_points; }
-void Settings::setSavePoints(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_points = value;
-}
-bool Settings::saveIntensity() noexcept
-{
-  return SettingsImplementation::instance().save_intensity;
-}
-void Settings::setSaveIntensity(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_intensity = value;
-}
-bool Settings::saveProbability() noexcept
-{
-  return SettingsImplementation::instance().save_probability;
-}
-void Settings::setSaveProbability(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_probability = value;
-}
-bool Settings::saveOccurrence() noexcept
-{
-  return SettingsImplementation::instance().save_occurrence;
-}
-void Settings::setSaveOccurrence(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_occurrence = value;
-}
-bool Settings::saveSimulationArea() noexcept
-{
-  return SettingsImplementation::instance().save_simulation_area;
-}
-void Settings::setSaveSimulationArea(const bool value) noexcept
-{
-  SettingsImplementation::instance().save_simulation_area = value;
-}
-bool Settings::forceGreenup() noexcept { return SettingsImplementation::instance().force_greenup; }
-void Settings::setForceGreenup(const bool value) noexcept
-{
-  SettingsImplementation::instance().force_greenup = value;
-}
-bool Settings::forceNoGreenup() noexcept
-{
-  return SettingsImplementation::instance().force_no_greenup;
-}
-void Settings::setForceNoGreenup(const bool value) noexcept
-{
-  SettingsImplementation::instance().force_no_greenup = value;
-}
-bool Settings::forceStaticCuring() noexcept
-{
-  return SettingsImplementation::instance().force_curing;
 }
 int Settings::staticCuring() noexcept { return SettingsImplementation::instance().staticCuring(); }
 void Settings::setStaticCuring(const int value) noexcept
