@@ -8,8 +8,6 @@ static map<std::string, std::function<void()>> PARSE_FCT{};
 static vector<std::pair<std::string, std::string>> PARSE_HELP{};
 static map<std::string, bool> PARSE_REQUIRED{};
 static map<std::string, bool> PARSE_HAVE{};
-static string BIN_DIR{};
-static string BIN_NAME{};
 static size_t SKIPPED_ARGS = 0;
 static size_t CUR_ARG = 0;
 ArgumentParser* PARSER{nullptr};
@@ -113,7 +111,7 @@ void ArgumentParser::show_usage_and_exit(int exit_code)
     // FIX: extra space if no positional args
     printf(
       "Usage: %s %s [OPTION]...\n\n%s\n\n",
-      BIN_NAME.c_str(),
+      binary_name_.c_str(),
       usage.positional_arg_summary.c_str(),
       usage.description.c_str()
     );
@@ -199,8 +197,8 @@ ArgumentParser::ArgumentParser(
   auto bin = arguments_.at(CUR_ARG++);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
-  BIN_DIR = bin.substr(0, end);
-  BIN_NAME = bin.substr(end, bin.size() - end);
+  binary_directory_ = bin.substr(0, end);
+  binary_name_ = bin.substr(end, bin.size() - end);
   logging::Log::setLogLevel(fs::logging::LOG_NOTE);
   register_flag(help_requested_, true, "-h", "Show help");
   // can be used multiple times
@@ -306,7 +304,7 @@ static const Usage USAGE_TEST{
 static const vector<Usage> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
 void SettingsArgumentParser::parse_args()
 {
-  Settings::setRoot(BIN_DIR);
+  Settings::setRoot(binary_directory_);
   ArgumentParser::parse_args();
 }
 MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
