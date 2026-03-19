@@ -547,12 +547,12 @@ public:
   {
     FileList files{};
     // NOTE: do this instead of function pointer because it's using templates
-    if (Settings::saveAsAscii())
+    if (settings::save_as_ascii)
     {
       files.emplace_back(this->template saveToAsciiFile<R>(dir, base_name, convert, no_data));
     }
     // always save at least something
-    if (!Settings::saveAsAscii() || Settings::saveAsTiff())
+    if (!settings::save_as_ascii || settings::save_as_tiff)
     {
       files.emplace_back(this->template saveToTiffFile<R>(dir, base_name, convert, no_data));
     }
