@@ -76,6 +76,7 @@ public:
   size_t argc() const { return arguments_.size(); }
 
 protected:
+  size_t cur_arg_{0};
   vector<string> arguments_{};
   string binary_directory_{};
   string binary_name_{};
