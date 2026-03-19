@@ -9,7 +9,6 @@ static vector<std::pair<std::string, std::string>> PARSE_HELP{};
 static map<std::string, bool> PARSE_REQUIRED{};
 static map<std::string, bool> PARSE_HAVE{};
 static size_t SKIPPED_ARGS = 0;
-static size_t CUR_ARG = 0;
 ArgumentParser* PARSER{nullptr};
 void ArgumentParser::mark_parsed(const string arg) { PARSE_HAVE.emplace(arg, true); }
 bool ArgumentParser::was_parsed(const string arg) { return PARSE_HAVE.contains(arg); }
@@ -138,9 +137,9 @@ string ArgumentParser::get_arg() noexcept
 {
   // check if we don't have any more arguments
   fs::logging::check_fatal(
-    CUR_ARG + 1 >= arguments_.size(), "Missing argument to --%s", arguments_.at(CUR_ARG).c_str()
+    cur_arg_ + 1 >= arguments_.size(), "Missing argument to --%s", arguments_.at(cur_arg_).c_str()
   );
-  return arguments_.at(++CUR_ARG);
+  return arguments_.at(++cur_arg_);
 }
 size_t parse_size_t()
 {
@@ -193,8 +192,8 @@ ArgumentParser::ArgumentParser(
   PARSER = this;
   add_usages(usages);
   fs::show_debug_settings();
-  assert(0 == CUR_ARG);
-  auto bin = arguments_.at(CUR_ARG++);
+  assert(0 == cur_arg_);
+  auto bin = arguments_.at(cur_arg_++);
   replace(bin.begin(), bin.end(), '\\', '/');
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
   binary_directory_ = bin.substr(0, end);
@@ -208,9 +207,9 @@ ArgumentParser::ArgumentParser(
 }
 void ArgumentParser::parse_args()
 {
-  while (CUR_ARG < arguments_.size())
+  while (cur_arg_ < arguments_.size())
   {
-    const string arg = arguments_.at(CUR_ARG);
+    const string arg = arguments_.at(cur_arg_);
     bool is_positional = !arg.starts_with("-");
     if (!is_positional)
     {
@@ -224,10 +223,10 @@ void ArgumentParser::parse_args()
         }
         catch (std::exception&)
         {
-          // CUR_ARG would be incremented while trying to parse at this point, so -1 is 'arg'
+          // cur_arg_ would be incremented while trying to parse at this point, so -1 is 'arg'
           printf(
             "\n'%s' is not a valid value for argument %s\n\n",
-            arguments_.at(CUR_ARG).c_str(),
+            arguments_.at(cur_arg_).c_str(),
             arg.c_str()
           );
           show_usage_and_exit();
@@ -250,7 +249,7 @@ void ArgumentParser::parse_args()
       positional_args_.emplace_back(arg);
       fs::logging::debug("Found positional argument '%s'", arg.c_str());
     }
-    ++CUR_ARG;
+    ++cur_arg_;
   }
   if (help_requested_)
   {
@@ -316,7 +315,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   {
     fs::logging::note("Running in test mode");
     mode = TEST;
-    CUR_ARG += 1;
+    cur_arg_ += 1;
     SKIPPED_ARGS = 1;
     // if we have a directory and nothing else then use defaults for single run
     // if we have 'all' then overrride specified indices, but then filter down to the subset that
@@ -396,7 +395,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       fs::logging::note("Running in probability surface mode");
       mode = SURFACE;
       // skip 'surface' argument if present
-      CUR_ARG += 1;
+      cur_arg_ += 1;
       SKIPPED_ARGS = 1;
       register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
       register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
@@ -495,7 +494,7 @@ FwiWeather MainArgumentParser::get_yesterday_weather() const
     dc
   };
 }
-string ArgumentParser::cur_arg() { return arguments_.at(CUR_ARG); };
+string ArgumentParser::cur_arg() { return arguments_.at(cur_arg_); };
 bool parse_flag(bool not_inverse)
 {
   return parse_once<bool>([not_inverse] { return not_inverse; });
