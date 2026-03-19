@@ -8,7 +8,6 @@ static map<std::string, std::function<void()>> PARSE_FCT{};
 static vector<std::pair<std::string, std::string>> PARSE_HELP{};
 static map<std::string, bool> PARSE_REQUIRED{};
 static map<std::string, bool> PARSE_HAVE{};
-static size_t SKIPPED_ARGS = 0;
 ArgumentParser* PARSER{nullptr};
 void ArgumentParser::mark_parsed(const string arg) { PARSE_HAVE.emplace(arg, true); }
 bool ArgumentParser::was_parsed(const string arg) { return PARSE_HAVE.contains(arg); }
@@ -316,7 +315,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     fs::logging::note("Running in test mode");
     mode = TEST;
     cur_arg_ += 1;
-    SKIPPED_ARGS = 1;
+    skipped_args_ = 1;
     // if we have a directory and nothing else then use defaults for single run
     // if we have 'all' then overrride specified indices, but then filter down to the subset that
     // matches what was specified
@@ -396,7 +395,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       mode = SURFACE;
       // skip 'surface' argument if present
       cur_arg_ += 1;
-      SKIPPED_ARGS = 1;
+      skipped_args_ = 1;
       register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
       register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
       register_index<Dc>(dc, "--dc", "Constant Drought Code", true);
