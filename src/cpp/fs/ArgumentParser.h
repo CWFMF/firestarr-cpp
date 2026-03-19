@@ -22,7 +22,7 @@ class ArgumentParser
 {
 private:
   vector<string> positional_args_{};
-  size_t cur_arg_{0};
+  size_t cur_positional_{0};
   PositionalArgumentsRequired require_positional_{};
   bool help_requested_{false};
 
