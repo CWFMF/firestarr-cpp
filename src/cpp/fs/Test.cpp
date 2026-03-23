@@ -327,7 +327,7 @@ int test(
   // FIX: I think this does a lot of the same things as the test code is doing because it was
   // derived from this code
   settings::deterministic = true;
-  Settings::setMinimumRos(0.0);
+  settings::minimum_ros = 0.0;
   settings::save_points = false;
   // make sure all tests run regardless of how long it takes
   settings::maximum_time_seconds = numeric_limits<size_t>::max();

@@ -35,6 +35,8 @@ extern atomic<bool> force_greenup;
 extern atomic<bool> force_no_greenup;
 // Whether or not to force static curing value for all fires
 extern atomic<bool> force_static_curing;
+// Minimum rate of spread before fire is considered to be spreading (m/min)
+extern atomic<MathSize> minimum_ros;
 // Maximum time simulation can run before it is ended and whatever results it has are used (s)
 extern atomic<size_t> maximum_time_seconds;
 // Time between generating interim outputs (s)
@@ -96,12 +98,6 @@ public:
    * \return Set static curing value
    */
   static void setStaticCuring(const int value) noexcept;
-  /**
-   * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
-   * \return Minimum rate of spread before fire is considered to be spreading (m/min)
-   */
-  [[nodiscard]] static MathSize minimumRos() noexcept;
-  static void setMinimumRos(MathSize value) noexcept;
   /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    * \return Maximum distance that the fire is allowed to spread in one step (# of cells)
