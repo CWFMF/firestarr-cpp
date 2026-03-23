@@ -63,6 +63,17 @@ void register_setter(T& variable, string v, string help, bool required, std::fun
 {
   register_argument(v, help, required, [&variable, fct] { variable = fct(); });
 }
+template <class T>
+void register_setter(
+  atomic<T>& variable,
+  string v,
+  string help,
+  bool required,
+  std::function<T()> fct
+)
+{
+  register_argument(v, help, required, [&variable, fct] { variable = fct(); });
+}
 void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help);
 void register_flag(bool& variable, bool not_inverse, string v, string help);
 template <class T>
@@ -381,7 +392,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       &parse_string
     );
     register_setter<
-      DurationSize>(&Settings::setUtcOffset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
+      DurationSize>(settings::utc_offset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
     register_setter<size_t>(
       &Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t
     );
@@ -391,7 +402,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     );
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<size_t>(
-      &Settings::setSalt,
+      settings::salt,
       "--salt",
       "Specify salt to use for random seeds (default 0)",
       false,
@@ -422,7 +433,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
         "Run deterministically (100% chance of spread & survival)"
       );
       register_setter<
-        ThresholdSize>(&Settings::setConfidenceLevel, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
+        ThresholdSize>(settings::confidence_level, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
       // HACK: want different text for same flag so define here too

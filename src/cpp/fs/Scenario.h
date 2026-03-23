@@ -305,7 +305,7 @@ public:
    */
   [[nodiscard]] MathSize minimumFfmcForSpread(const DurationSize time) const noexcept
   {
-    return isAtNight(time) ? Settings::minimumFfmcAtNight() : Settings::minimumFfmc();
+    return isAtNight(time) ? settings::minimum_ffmc_at_night : settings::minimum_ffmc;
   }
   /**
    * \brief Whether or not the given Location is surrounded by cells that are burnt

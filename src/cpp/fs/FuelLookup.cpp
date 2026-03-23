@@ -355,7 +355,7 @@ public:
       emplaceFuel(i);
     }
     // HACK: use offset from base fuel type
-    const auto pc = Settings::defaultPercentConifer();
+    const int pc = settings::default_percent_conifer;
     logging::check_fatal(
       0 >= pc || 100 <= pc || (pc % 5) != 0, "Invalid default percent conifer (%d)", pc
     );
@@ -370,7 +370,7 @@ public:
     emplaceFuel("M-3 (00 PDF)", &D1_D2);
     emplaceFuel("M-4 (00 PDF)", &D1_D2);
     emplaceFuel("M-3/M-4 (00 PDF)", &D1_D2);
-    const auto pdf = Settings::defaultPercentDeadFir();
+    const int pdf = settings::default_percent_dead_fir;
     logging::check_fatal(
       0 > pdf || 100 < pdf || (pdf % 5) != 0, "Invalid default percent dead fir (%d)", pdf
     );
