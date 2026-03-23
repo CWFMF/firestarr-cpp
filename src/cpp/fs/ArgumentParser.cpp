@@ -199,6 +199,7 @@ ArgumentParser::ArgumentParser(
   const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
   binary_directory_ = bin.substr(0, end);
   binary_name_ = bin.substr(end, bin.size() - end);
+  Settings::setRoot(binary_directory_);
   logging::Log::setLogLevel(fs::logging::LOG_NOTE);
   register_flag(help_requested_, true, "-h", "Show help");
   // can be used multiple times
@@ -303,11 +304,7 @@ static const Usage USAGE_TEST{
   "test <output_dir>"
 };
 static const vector<Usage> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
-void SettingsArgumentParser::parse_args()
-{
-  Settings::setRoot(binary_directory_);
-  ArgumentParser::parse_args();
-}
+void SettingsArgumentParser::parse_args() { ArgumentParser::parse_args(); }
 MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   : SettingsArgumentParser(DEFAULT_USAGES, argc, argv)
 {
