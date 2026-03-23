@@ -844,7 +844,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     max_ros_ = 0.0;
   }
   // get once and keep
-  const auto ros_min = Settings::minimumRos();
+  const MathSize ros_min = settings::minimum_ros;
   spreading_points to_spread{};
   // make block to prevent it being visible beyond use
   {

@@ -23,6 +23,7 @@ atomic<bool> save_simulation_area{false};
 atomic<bool> force_greenup{false};
 atomic<bool> force_no_greenup{false};
 atomic<bool> force_static_curing{false};
+atomic<MathSize> minimum_ros{0.0};
 atomic<size_t> maximum_time_seconds{0};
 atomic<size_t> interim_output_interval_seconds{0};
 atomic<size_t> minimum_simulation_count{0};
@@ -96,12 +97,6 @@ public:
     }
     return *fuel_lookup_;
   }
-  /**
-   * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
-   * \return Minimum rate of spread before fire is considered to be spreading (m/min)
-   */
-  [[nodiscard]] MathSize minimumRos() const noexcept { return minimum_ros_; }
-  void setMinimumRos(const MathSize value) noexcept { minimum_ros_ = value; }
   /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    * \return Maximum distance that the fire is allowed to spread in one step (# of cells)
@@ -250,10 +245,6 @@ private:
    */
   unique_ptr<FuelLookup> fuel_lookup_ = nullptr;
   /**
-   * \brief Minimum rate of spread before fire is considered to be spreading (m/min)
-   */
-  atomic<MathSize> minimum_ros_;
-  /**
    * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
    */
   MathSize maximum_spread_distance_;
@@ -389,7 +380,7 @@ void SettingsImplementation::setRoot(const string dirname) noexcept
     static const auto MinRos = 0.05;
     // HACK: make sure this is always > 0 so that we don't have to check
     // specifically for 0 to avoid div error
-    minimum_ros_ = max(stod(get_value(settings, "MINIMUM_ROS")), MinRos);
+    settings::minimum_ros = max(stod(get_value(settings, "MINIMUM_ROS")), MinRos);
     maximum_spread_distance_ = stod(get_value(settings, "MAX_SPREAD_DISTANCE"));
     minimum_ffmc_ = stod(get_value(settings, "MINIMUM_FFMC"));
     minimum_ffmc_at_night_ = stod(get_value(settings, "MINIMUM_FFMC_AT_NIGHT"));
@@ -458,11 +449,6 @@ int Settings::staticCuring() noexcept { return SettingsImplementation::instance(
 void Settings::setStaticCuring(const int value) noexcept
 {
   SettingsImplementation::instance().setStaticCuring(value);
-}
-MathSize Settings::minimumRos() noexcept { return SettingsImplementation::instance().minimumRos(); }
-void Settings::setMinimumRos(const MathSize value) noexcept
-{
-  SettingsImplementation::instance().setMinimumRos(value);
 }
 MathSize Settings::maximumSpreadDistance() noexcept
 {
