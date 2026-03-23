@@ -48,7 +48,9 @@ unique_ptr<EnvironmentInfo> EnvironmentInfo::loadInfo(
   const string_view in_elevation
 )
 {
-  if (settings::run_async)
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  if (settings.run_async)
   {
     auto fuel_async = async(launch::async, [in_fuel]() { return read_header(in_fuel); });
     auto elevation_async =

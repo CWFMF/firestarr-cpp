@@ -31,6 +31,8 @@ ProbabilityMap::ProbabilityMap(
 { }
 void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
 #ifndef DEBUG_PROBABILITY
   logging::check_fatal(rhs.time != time, "Wrong time");
   logging::check_fatal(rhs.start_time != start_time, "Wrong start time");
@@ -42,7 +44,7 @@ void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
   lock_guard<mutex> lock(mutex_);
   // need to lock both maps
   lock_guard<mutex> lock_rhs(rhs.mutex_);
-  if (settings::save_intensity)
+  if (settings.save_intensity)
   {
     for (auto&& kv : rhs.low_.data)
     {
@@ -68,12 +70,14 @@ void ProbabilityMap::addProbabilities(const ProbabilityMap& rhs)
 }
 void ProbabilityMap::addProbability(const IntensityMap& for_time)
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   lock_guard<mutex> lock(mutex_);
   std::for_each(for_time.cbegin(), for_time.cend(), [this](auto&& kv) {
     const auto k = kv.first;
     const auto v = kv.second;
     all_.data[k] += 1;
-    if (settings::save_intensity)
+    if (settings.save_intensity)
     {
       if (v >= min_value_ && v <= low_max_)
       {
@@ -191,6 +195,8 @@ void ProbabilityMap::deleteInterim()
   const ProcessingStatus processing_status
 ) const
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   lock_guard<mutex> lock(mutex_);
   FileList files{};
   const auto is_interim = processed != processing_status;
@@ -203,10 +209,10 @@ void ProbabilityMap::deleteInterim()
     const auto text = (is_interim ? "interim_" : "") + prefix;
     return make_string(text.c_str(), t, day);
   };
-  if (settings::run_async)
+  if (settings.run_async)
   {
     vector<std::future<FileList>> results{};
-    if (settings::save_probability)
+    if (settings.save_probability)
     {
       results.push_back(async(
         launch::async,
@@ -217,7 +223,7 @@ void ProbabilityMap::deleteInterim()
         processing_status
       ));
     }
-    if (settings::save_occurrence)
+    if (settings.save_occurrence)
     {
       results.push_back(async(
         launch::async,
@@ -228,7 +234,7 @@ void ProbabilityMap::deleteInterim()
         processing_status
       ));
     }
-    if (settings::save_intensity)
+    if (settings.save_intensity)
     {
       results.push_back(async(
         launch::async,
@@ -271,17 +277,17 @@ void ProbabilityMap::deleteInterim()
   }
   else
   {
-    if (settings::save_probability)
+    if (settings.save_probability)
     {
       files.append_range(saveTotal(output_directory, fix_string("probability"), processing_status));
     }
-    if (settings::save_occurrence)
+    if (settings.save_occurrence)
     {
       files.append_range(
         saveTotalCount(output_directory, fix_string("occurrence"), processing_status)
       );
     }
-    if (settings::save_intensity)
+    if (settings.save_intensity)
     {
       files.append_range(saveLow(output_directory, fix_string("intensity_L"), processing_status));
       files.append_range(

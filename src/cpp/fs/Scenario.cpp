@@ -55,11 +55,13 @@ void IObserver_deleter::operator()(IObserver* ptr) const
 }
 void Scenario::clear() noexcept
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   unburnable_.clear();
   scheduler_ = set<Event>();
   arrival_ = {};
   points_ = {};
-  if (!settings::surface)
+  if (!settings.surface)
   {
     spread_info_ = {};
   }
@@ -101,8 +103,10 @@ static void make_threshold(
   ThresholdSize (*convert)(double value)
 )
 {
-  const auto total_weight = settings::threshold_scenario_weight + settings::threshold_daily_weight
-                          + settings::threshold_hourly_weight;
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  const auto total_weight = settings.threshold_scenario_weight + settings.threshold_daily_weight
+                          + settings.threshold_hourly_weight;
   uniform_real_distribution<ThresholdSize> rand(0.0, 1.0);
   const auto general = rand(*mt);
   for (size_t i = start_day; i < MAX_DAYS; ++i)
@@ -124,9 +128,9 @@ static void make_threshold(
           min(
             1.0,
             1.0
-              - (+settings::threshold_scenario_weight * general
-                 + +settings::threshold_daily_weight * daily
-                 + +settings::threshold_hourly_weight * hourly)
+              - (+settings.threshold_scenario_weight * general
+                 + +settings.threshold_daily_weight * daily
+                 + +settings.threshold_hourly_weight * hourly)
                   / total_weight
           )
         ));
@@ -393,13 +397,40 @@ Scenario::Scenario(
   const Day start_day,
   const Day last_date
 )
+  : Scenario(
+      model,
+      id,
+      weather,
+      weather_daily,
+      start_time,
+      perimeter,
+      start_cell,
+      start_point,
+      start_day,
+      last_date,
+      settings::instance()
+    )
+{ }
+Scenario::Scenario(
+  Model* model,
+  const size_t id,
+  const ptr<const FireWeather> weather,
+  const ptr<const FireWeather> weather_daily,
+  const DurationSize start_time,
+  const shared_ptr<Perimeter>& perimeter,
+  const shared_ptr<Cell>& start_cell,
+  StartPoint start_point,
+  const Day start_day,
+  const Day last_date,
+  const Settings& settings
+)
   : current_time_(start_time), unburnable_{}, intensity_(nullptr), perimeter_(perimeter),
     max_ros_(0), start_cell_(start_cell), weather_(weather), weather_daily_(weather_daily),
     model_(model), probabilities_(nullptr), final_sizes_(nullptr),
     start_point_(std::move(start_point)), id_(id), start_time_(start_time),
     last_save_(weather_->minDate()), simulation_(-1), start_day_(start_day), last_date_(last_date),
     ran_(false), step_(0),
-    points_log_(LogPoints{model_->outputDirectory(), settings::save_points, id_, start_time_})
+    points_log_(LogPoints{model_->outputDirectory(), settings.save_points, id_, start_time_})
 {
   const auto wx = weather_->at(start_time_);
   logging::check_fatal(
@@ -407,7 +438,7 @@ Scenario::Scenario(
     "No weather for start time %s",
     make_timestamp(model->year(), start_time_).c_str()
   );
-  const auto saves = Settings::outputDateOffsets();
+  const auto saves = settings.outputDateOffsets();
   const auto last_save = start_day_ + saves[saves.size() - 1];
   logging::check_fatal(
     last_save > weather_->maxDate(),
@@ -557,6 +588,8 @@ void saveProbabilities(
 #endif
 Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabilities)
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
 #ifdef DEBUG_SIMULATION
   log_check_fatal(ran(), "Scenario has already run");
 #endif
@@ -635,9 +668,9 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   const auto completed = ++COMPLETED;
   // HACK: use + to pull value out of atomic
-  const auto count = settings::surface ? model_->scenarioCount() : (+COUNT);
+  const auto count = settings.surface ? model_->scenarioCount() : (+COUNT);
   const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
-  if (settings::surface)
+  if (settings.surface)
   {
     const auto ratio_done = static_cast<MathSize>(completed) / count;
     const auto s = model_->runTime().count();
@@ -816,10 +849,12 @@ CellPointsMap apply_offsets_spreadkey(
 }
 void Scenario::scheduleFireSpread(const Event& event)
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   const auto time = event.time;
   const auto this_time = time_index(time);
-  const auto wx = settings::surface ? model_->yesterday() : weather(time);
-  const auto wx_daily = settings::surface ? model_->yesterday() : weather_daily(time);
+  const auto wx = settings.surface ? model_->yesterday() : weather(time);
+  const auto wx_daily = settings.surface ? model_->yesterday() : weather_daily(time);
   current_time_ = time;
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
@@ -838,14 +873,14 @@ void Scenario::scheduleFireSpread(const Event& event)
     current_time_index_ = this_time;
     // seemed like it would be good to keep offsets but max_ros_ needs to reset or things slow to a
     // crawl?
-    if (!settings::surface)
+    if (!settings.surface)
     {
       spread_info_ = {};
     }
     max_ros_ = 0.0;
   }
   // get once and keep
-  const MathSize ros_min = settings::minimum_ros;
+  const MathSize ros_min = settings.minimum_ros;
   spreading_points to_spread{};
   // make block to prevent it being visible beyond use
   {
@@ -894,7 +929,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     return;
   }
   const auto duration =
-    ((max_ros_ > 0) ? min(max_duration, settings::maximum_spread_distance * cellSize() / max_ros_)
+    ((max_ros_ > 0) ? min(max_duration, settings.maximum_spread_distance * cellSize() / max_ros_)
                     : max_duration);
   const auto new_time = time + duration / DAY_MINUTES;
   CellPointsMap cell_pts{};

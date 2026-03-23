@@ -2,7 +2,6 @@
 #include "stdafx.h"
 #include "SimpleFBP.h"
 #include <limits>
-#include <ranges>
 #include "Duff.h"
 #include "FBP45.h"
 #include "FireWeather.h"
@@ -14,6 +13,7 @@
 #include "unstable.h"
 namespace fs::simplefbp
 {
+using settings::Settings;
 MathSize SimpleFuelD1::isfD1(
   const SpreadInfo& spread,
   const MathSize ros_multiplier,

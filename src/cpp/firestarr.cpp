@@ -41,8 +41,11 @@ using fs::Wind;
 using fs::logging::Log;
 int main(const int argc, const char* const argv[])
 {
+  using namespace fs::settings;
   printf("FireSTARR %s\n\n", SPECIFIC_REVISION);
   MainArgumentParser parser{argc, argv};
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   parser.parse_args();
   auto result = -1;
 #ifdef NDEBUG
@@ -146,7 +149,7 @@ int main(const int argc, const char* const argv[])
           fs::logging::debug("Calculated number of days until end of year: %d", num_days);
           // +1 because day 1 counts too
           // +2 so that results don't change when we change number of days
-          num_days = min(num_days, static_cast<size_t>(Settings::maxDateOffset()) + 2);
+          num_days = min(num_days, static_cast<size_t>(settings.maxDateOffset()) + 2);
         }
         catch (std::exception&)
         {
@@ -173,7 +176,7 @@ int main(const int argc, const char* const argv[])
         parser.output_directory,
         parser.wx_file_name.c_str(),
         yesterday,
-        Settings::rasterRoot(),
+        settings.rasterRoot(),
         start_point,
         start,
         parser.perim,

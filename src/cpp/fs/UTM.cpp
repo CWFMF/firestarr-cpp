@@ -10,8 +10,10 @@ namespace fs
 {
 PJ_CONTEXT* get_context()
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   auto pjc = proj_context_create();
-  string db_path = Settings::getRoot() + "proj.db";
+  string db_path = settings.getRoot() + "proj.db";
   // HACK: only do once
   static const auto showed_once = [&]() {
     logging::debug("Trying to set db path to %s", db_path.c_str());

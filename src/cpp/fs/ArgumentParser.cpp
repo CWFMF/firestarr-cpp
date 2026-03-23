@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "ArgumentParser.h"
+#include <utility>
 #include "Log.h"
-#include "Settings.h"
-namespace fs
+namespace fs::settings
 {
 static map<std::string, std::function<void()>> PARSE_FCT{};
 static vector<std::pair<std::string, std::string>> PARSE_HELP{};
@@ -195,43 +195,66 @@ ArgumentParser::ArgumentParser(
   const char* const argv[],
   const PositionalArgumentsRequired require_positional
 )
-  : require_positional_{require_positional}, arguments_{[&]() {
-      vector<std::string> args{};
-      for (auto i = 0; i < argc; ++i)
-      {
-        args.emplace_back(argv[i]);
-      }
-      return args;
-    }()}
+  : ArgumentParser(
+      usages,
+      [&]() {
+        vector<std::string> args{};
+        for (auto i = 0; i < argc; ++i)
+        {
+          args.emplace_back(argv[i]);
+        }
+        return args;
+      }(),
+      require_positional
+    )
+{ }
+ArgumentParser::ArgumentParser(
+  const vector<Usage> usages,
+  const vector<string> arguments,
+  const PositionalArgumentsRequired require_positional
+)
+  : ArgumentParser(
+      usages,
+      arguments,
+      [&]() {
+        auto bin = arguments.at(0);
+        replace(bin.begin(), bin.end(), '\\', '/');
+        const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
+        auto directory = bin.substr(0, end);
+        auto name = bin.substr(end, bin.size() - end);
+        return std::make_pair(directory, name);
+      }(),
+      require_positional
+    )
+{ }
+// HACK: already parsed binary from arg 0
+ArgumentParser::ArgumentParser(
+  const vector<Usage> usages,
+  const vector<string> arguments,
+  const pair<string, string> binary,
+  const PositionalArgumentsRequired require_positional
+)
+  : require_positional_{require_positional}, cur_arg_{1}, arguments_{arguments},
+    // HACK: already parsed binary from arg 0
+    binary_directory_{std::get<0>(binary)}, binary_name_{std::get<1>(binary)}
 {
+  Settings::setRoot(binary_directory_);
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
   add_usages(usages);
   fs::show_debug_settings();
-  assert(0 == cur_arg_);
-  auto bin = arguments_.at(cur_arg_++);
-  replace(bin.begin(), bin.end(), '\\', '/');
-  const auto end = max(static_cast<size_t>(0), bin.rfind('/') + 1);
-  binary_directory_ = bin.substr(0, end);
-  binary_name_ = bin.substr(end, bin.size() - end);
-  Settings::setRoot(binary_directory_);
+  assert(1 == cur_arg_);
   logging::Log::setLogLevel(fs::logging::LOG_NOTE);
-  logging::check_fatal(
-    !settings::was_initialized,
-    "Trying to add argument parsing, but have not initialized from settings file yet"
-  );
   register_flag(help_requested_, true, "-h", "Show help");
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
   // if they want to specify -v and -q then that's fine
   register_argument("-q", "Decrease output level", false, &Log::decreaseLogLevel);
 }
-void ArgumentParser::parse_args()
+Settings& ArgumentParser::parse_args()
 {
-  logging::check_fatal(
-    !settings::was_initialized,
-    "Trying to parse arguments, but have not initialized from settings file yet"
-  );
+  // HACK: resolve once and fail if not set already
+  static auto& settings = fs::settings::instance();
   auto& args = args_expanded();
   while (cur_arg_ < args.size())
   {
@@ -279,7 +302,7 @@ void ArgumentParser::parse_args()
   }
   if (help_requested_)
   {
-    return;
+    return settings;
   }
   for (auto& kv : PARSE_REQUIRED)
   {
@@ -293,6 +316,8 @@ void ArgumentParser::parse_args()
   {
     show_usage_and_exit();
   }
+  // HACK: should never happen
+  return settings;
 }
 bool ArgumentParser::has_positional() const { return (cur_positional_ < positional_args_.size()); };
 string ArgumentParser::get_positional()
@@ -327,12 +352,14 @@ static const Usage USAGE_TEST{
   "test <output_dir>"
 };
 static const vector<Usage> DEFAULT_USAGES{USAGE_MAIN, USAGE_SURFACE, USAGE_TEST};
-void SettingsArgumentParser::parse_args() { ArgumentParser::parse_args(); }
+Settings& SettingsArgumentParser::parse_args() { return ArgumentParser::parse_args(); }
 MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   : SettingsArgumentParser(DEFAULT_USAGES, argc, argv)
 {
-  register_flag(settings::save_as_ascii, true, "--ascii", "Save grids as .asc");
-  register_flag(settings::save_as_tiff, false, "--no-tiff", "Do not save grids as .tif");
+  // HACK: resolve once and fail if not set already
+  static auto& settings = fs::settings::instance();
+  register_flag(settings.save_as_ascii, true, "--ascii", "Save grids as .asc");
+  register_flag(settings.save_as_tiff, false, "--no-tiff", "Do not save grids as .tif");
   if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "test"))
   {
     fs::logging::note("Running in test mode");
@@ -355,54 +382,62 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     register_setter<
       AspectSize>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
     register_setter<size_t>(
-      &Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t
+      [&](const auto v) { settings.setStaticCuring(v); },
+      "--curing",
+      "Specify static grass curing",
+      false,
+      &parse_size_t
     );
-    register_flag(settings::force_greenup, true, "--force-greenup", "Force green up for all fires");
+    register_flag(settings.force_greenup, true, "--force-greenup", "Force green up for all fires");
     register_flag(
-      settings::force_no_greenup, true, "--force-no-greenup", "Force no green up for all fires"
+      settings.force_no_greenup, true, "--force-no-greenup", "Force no green up for all fires"
     );
   }
   else
   {
-    register_flag(settings::save_individual, true, "-i", "Save individual maps for simulations");
-    register_flag(settings::run_async, false, "-s", "Run in synchronous mode");
-    register_flag(settings::save_points, true, "--points", "Save simulation points to file");
+    register_flag(settings.save_individual, true, "-i", "Save individual maps for simulations");
+    register_flag(settings.run_async, false, "-s", "Run in synchronous mode");
+    register_flag(settings.save_points, true, "--points", "Save simulation points to file");
     register_flag(
-      settings::save_intensity, false, "--no-intensity", "Do not output intensity grids"
+      settings.save_intensity, false, "--no-intensity", "Do not output intensity grids"
     );
     register_flag(
-      settings::save_probability, false, "--no-probability", "Do not output probability grids"
+      settings.save_probability, false, "--no-probability", "Do not output probability grids"
     );
-    register_flag(settings::save_occurrence, true, "--occurrence", "Output occurrence grids");
+    register_flag(settings.save_occurrence, true, "--occurrence", "Output occurrence grids");
     register_flag(
-      settings::save_simulation_area, true, "--sim-area", "Output simulation area grids"
+      settings.save_simulation_area, true, "--sim-area", "Output simulation area grids"
     );
     register_setter<string>(
-      &Settings::setRasterRoot,
+      [&](const auto v) { settings.setRasterRoot(v); },
       "--raster-root",
       "Use specified directory as raster root",
       false,
       &parse_string
     );
     register_setter<string>(
-      &Settings::setFuelLookupTable,
+      [&](const auto v) { settings.setFuelLookupTable(v); },
       "--fuel-lut",
       "Use specified fuel lookup table",
       false,
       &parse_string
     );
     register_setter<
-      DurationSize>(settings::utc_offset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
+      DurationSize>(settings.utc_offset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
     register_setter<size_t>(
-      &Settings::setStaticCuring, "--curing", "Specify static grass curing", false, &parse_size_t
+      [&](const auto v) { settings.setStaticCuring(v); },
+      "--curing",
+      "Specify static grass curing",
+      false,
+      &parse_size_t
     );
-    register_flag(settings::force_greenup, true, "--force-greenup", "Force green up for all fires");
+    register_flag(settings.force_greenup, true, "--force-greenup", "Force green up for all fires");
     register_flag(
-      settings::force_no_greenup, true, "--force-no-greenup", "Force no green up for all fires"
+      settings.force_no_greenup, true, "--force-no-greenup", "Force no green up for all fires"
     );
     register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
     register_setter<size_t>(
-      settings::salt,
+      settings.salt,
       "--salt",
       "Specify salt to use for random seeds (default 0)",
       false,
@@ -427,13 +462,13 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     {
       register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
       register_flag(
-        settings::deterministic,
+        settings.deterministic,
         true,
         "--deterministic",
         "Run deterministically (100% chance of spread & survival)"
       );
       register_setter<
-        ThresholdSize>(settings::confidence_level, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
+        ThresholdSize>(settings.confidence_level, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
       register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
       // HACK: want different text for same flag so define here too
@@ -448,7 +483,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       );
     }
     register_setter<string>(
-      &Settings::setOutputDateOffsets,
+      [&](const auto v) { settings.setOutputDateOffsets(v); },
       "--output_date_offsets",
       "Override output date offsets",
       false,
@@ -456,12 +491,12 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     );
   }
 }
-void MainArgumentParser::parse_args()
+Settings& MainArgumentParser::parse_args()
 {
-  SettingsArgumentParser::parse_args();
+  auto& settings = SettingsArgumentParser::parse_args();
   if (help_requested())
   {
-    return;
+    return settings;
   }
   // fs::show_debug_settings();
   // parse positional arguments
@@ -480,9 +515,10 @@ void MainArgumentParser::parse_args()
   // probabalistic surface is computationally impossible at this point
   if (SURFACE == mode)
   {
-    settings::deterministic = true;
-    settings::surface = true;
+    settings.deterministic = true;
+    settings.surface = true;
   }
+  return settings;
 }
 FwiWeather MainArgumentParser::get_test_weather() const
 {
