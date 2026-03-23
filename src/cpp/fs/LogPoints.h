@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+#ifndef FS_LOG_POINTS_H
+#define FS_LOG_POINTS_H
 #include "stdafx.h"
 #include "InnerPos.h"
 namespace fs
@@ -71,3 +73,4 @@ private:
   FILE* log_stages_{nullptr};
 };
 };
+#endif
