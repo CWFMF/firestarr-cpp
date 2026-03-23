@@ -3,6 +3,7 @@
 #define FS_SETTINGS_H
 #include "stdafx.h"
 #include "FuelLookup.h"
+#include "unstable.h"
 namespace fs
 {
 namespace settings
@@ -37,6 +38,8 @@ extern atomic<bool> force_no_greenup;
 extern atomic<bool> force_static_curing;
 // Minimum rate of spread before fire is considered to be spreading (m/min)
 extern atomic<MathSize> minimum_ros;
+// Maximum distance that the fire is allowed to spread in one step (# of cells)
+extern atomic<MathSize> maximum_spread_distance;
 // Maximum time simulation can run before it is ended and whatever results it has are used (s)
 extern atomic<size_t> maximum_time_seconds;
 // Time between generating interim outputs (s)
@@ -98,11 +101,6 @@ public:
    * \return Set static curing value
    */
   static void setStaticCuring(const int value) noexcept;
-  /**
-   * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
-   * \return Maximum distance that the fire is allowed to spread in one step (# of cells)
-   */
-  [[nodiscard]] static MathSize maximumSpreadDistance() noexcept;
   /**
    * \brief Minimum Fine Fuel Moisture Code required for spread during the day
    * \return Minimum Fine Fuel Moisture Code required for spread during the day
