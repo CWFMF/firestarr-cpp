@@ -25,6 +25,17 @@ atomic<bool> force_no_greenup{false};
 atomic<bool> force_static_curing{false};
 atomic<MathSize> minimum_ros{0.0};
 atomic<MathSize> maximum_spread_distance{0.0};
+atomic<MathSize> minimum_ffmc{0.0};
+atomic<MathSize> minimum_ffmc_at_night{0.0};
+atomic<DurationSize> utc_offset{0.0};
+atomic<DurationSize> offset_sunrise{0.0};
+atomic<DurationSize> offset_sunset{0.0};
+atomic<int> default_percent_conifer{0};
+atomic<int> default_percent_dead_fir{0};
+atomic<int> intensity_max_low{0};
+atomic<int> intensity_max_moderate{0};
+atomic<ThresholdSize> confidence_level{0.0};
+atomic<size_t> salt;
 atomic<size_t> maximum_time_seconds{0};
 atomic<size_t> interim_output_interval_seconds{0};
 atomic<size_t> minimum_simulation_count{0};
@@ -98,81 +109,6 @@ public:
     }
     return *fuel_lookup_;
   }
-  /**
-   * \brief Minimum Fine Fuel Moisture Code required for spread during the day
-   * \return Minimum Fine Fuel Moisture Code required for spread during the day
-   */
-  [[nodiscard]] constexpr MathSize minimumFfmc() const noexcept { return minimum_ffmc_; }
-  /**
-   * \brief Minimum Fine Fuel Moisture Code required for spread during the night
-   * \return Minimum Fine Fuel Moisture Code required for spread during the night
-   */
-  [[nodiscard]] constexpr MathSize minimumFfmcAtNight() const noexcept
-  {
-    return minimum_ffmc_at_night_;
-  }
-  /**
-   * \brief Set offset from UTC to use for entire simulation (hours)
-   * \param v Offset from UTC to use for entire simulation (hours)
-   */
-  void setUtcOffset(const DurationSize v) noexcept { utc_offset_ = v; }
-  /**
-   * \brief Offset from UTC to use for entire simulation (hours)
-   * \return Offset from UTC to use for entire simulation (hours)
-   */
-  [[nodiscard]] constexpr DurationSize utcOffset() const noexcept { return utc_offset_; }
-  /**
-   * \brief Offset from sunrise at which the day is considered to start (hours)
-   * \return Offset from sunrise at which the day is considered to start (hours)
-   */
-  [[nodiscard]] constexpr DurationSize offsetSunrise() const noexcept { return offset_sunrise_; }
-  /**
-   * \brief Offset from sunrise at which the day is considered to end (hours)
-   * \return Offset from sunrise at which the day is considered to end (hours)
-   */
-  [[nodiscard]] constexpr DurationSize offsetSunset() const noexcept { return offset_sunset_; }
-  /**
-   * \brief Default Percent Conifer to use for M1/M2 fuels where none is specified (%)
-   * \return Percent of the stand that is composed of conifer (%)
-   */
-  [[nodiscard]] constexpr int defaultPercentConifer() const noexcept
-  {
-    return default_percent_conifer_;
-  }
-  /**
-   * \brief Default Percent Dead Fir to use for M3/M4 fuels where none is specified (%)
-   * \return Percent of the stand that is composed of dead fir (NOT percent of the fir that is dead)
-   * (%)
-   */
-  [[nodiscard]] constexpr int defaultPercentDeadFir() const noexcept
-  {
-    return default_percent_dead_fir_;
-  }
-  /**
-   * \brief The maximum fire intensity for the 'low' range of intensity (kW/m)
-   * \return The maximum fire intensity for the 'low' range of intensity (kW/m)
-   */
-  [[nodiscard]] constexpr int intensityMaxLow() const noexcept { return intensity_max_low_; }
-  /**
-   * \brief The maximum fire intensity for the 'moderate' range of intensity (kW/m)
-   * \return The maximum fire intensity for the 'moderate' range of intensity (kW/m)
-   */
-  [[nodiscard]] constexpr int intensityMaxModerate() const noexcept
-  {
-    return intensity_max_moderate_;
-  }
-  /**
-   * \brief Confidence required before simulation stops (% / 100)
-   * \return Confidence required before simulation stops (% / 100)
-   */
-  [[nodiscard]] ThresholdSize confidenceLevel() const noexcept { return confidence_level_; }
-  /**
-   * \brief Set confidence required before simulation stops (% / 100)
-   * \return Set confidence required before simulation stops (% / 100)
-   */
-  void setConfidenceLevel(const ThresholdSize value) noexcept { confidence_level_ = value; }
-  size_t salt() noexcept { return salt_; }
-  void setSalt(const size_t value) noexcept { salt_ = value; }
   void setRasterRoot(const string dirname) noexcept { raster_root_ = dirname; }
   void setFuelLookupTable(const string filename) noexcept { fuel_lookup_table_file_ = filename; }
   /**
@@ -238,34 +174,6 @@ private:
    */
   unique_ptr<FuelLookup> fuel_lookup_ = nullptr;
   /**
-   * \brief Minimum Fine Fuel Moisture Code required for spread during the day
-   */
-  MathSize minimum_ffmc_;
-  /**
-   * \brief Minimum Fine Fuel Moisture Code required for spread during the night
-   */
-  MathSize minimum_ffmc_at_night_;
-  /**
-   * \brief Offset from UTC to use for entire simulation (hours)
-   */
-  DurationSize utc_offset_;
-  /**
-   * \brief Offset from sunrise at which the day is considered to start (hours)
-   */
-  DurationSize offset_sunrise_;
-  /**
-   * \brief Offset from sunrise at which the day is considered to end (hours)
-   */
-  DurationSize offset_sunset_;
-  /**
-   * \brief Confidence required before simulation stops (% / 100)
-   */
-  atomic<ThresholdSize> confidence_level_;
-  /**
-   * \brief Salt to use for random seeds
-   */
-  atomic<size_t> salt_{0};
-  /**
    * \brief Static curing value
    */
   atomic<int> static_curing_ = 75;
@@ -274,25 +182,9 @@ private:
    */
   vector<int> output_date_offsets_;
   /**
-   * \brief Default Percent Conifer to use for M1/M2 fuels where none is specified (%)
-   */
-  int default_percent_conifer_;
-  /**
-   * \brief Default Percent Dead Fir to use for M3/M4 fuels where none is specified (%)
-   */
-  int default_percent_dead_fir_;
-  /**
    * \brief Whatever the maximum value in the date offsets is
    */
   int max_date_offset_;
-  /**
-   * \brief The maximum fire intensity for the 'low' range of intensity (kW/m)
-   */
-  int intensity_max_low_;
-  /**
-   * \brief The maximum fire intensity for the 'moderate' range of intensity (kW/m)
-   */
-  int intensity_max_moderate_;
 };
 /**
  * \brief The singleton instance for this class
@@ -371,11 +263,11 @@ void SettingsImplementation::setRoot(const string dirname) noexcept
     // specifically for 0 to avoid div error
     settings::minimum_ros = max(stod(get_value(settings, "MINIMUM_ROS")), MinRos);
     settings::maximum_spread_distance = stod(get_value(settings, "MAX_SPREAD_DISTANCE"));
-    minimum_ffmc_ = stod(get_value(settings, "MINIMUM_FFMC"));
-    minimum_ffmc_at_night_ = stod(get_value(settings, "MINIMUM_FFMC_AT_NIGHT"));
-    offset_sunrise_ = stod(get_value(settings, "OFFSET_SUNRISE"));
-    offset_sunset_ = stod(get_value(settings, "OFFSET_SUNSET"));
-    confidence_level_ = stod(get_value(settings, "CONFIDENCE_LEVEL"));
+    settings::minimum_ffmc = stod(get_value(settings, "MINIMUM_FFMC"));
+    settings::minimum_ffmc_at_night = stod(get_value(settings, "MINIMUM_FFMC_AT_NIGHT"));
+    settings::offset_sunrise = stod(get_value(settings, "OFFSET_SUNRISE"));
+    settings::offset_sunset = stod(get_value(settings, "OFFSET_SUNSET"));
+    settings::confidence_level = stod(get_value(settings, "CONFIDENCE_LEVEL"));
     settings::maximum_time_seconds = stol(get_value(settings, "MAXIMUM_TIME"));
     settings::interim_output_interval_seconds =
       stol(get_value(settings, "INTERIM_OUTPUT_INTERVAL"));
@@ -387,10 +279,10 @@ void SettingsImplementation::setRoot(const string dirname) noexcept
     settings::threshold_daily_weight = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
     settings::threshold_hourly_weight = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
     setOutputDateOffsets(get_value(settings, "OUTPUT_DATE_OFFSETS").c_str());
-    default_percent_conifer_ = stoi(get_value(settings, "DEFAULT_PERCENT_CONIFER"));
-    default_percent_dead_fir_ = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
-    intensity_max_low_ = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
-    intensity_max_moderate_ = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
+    settings::default_percent_conifer = stoi(get_value(settings, "DEFAULT_PERCENT_CONIFER"));
+    settings::default_percent_dead_fir = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
+    settings::intensity_max_low = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
+    settings::intensity_max_moderate = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
     if (!settings.empty())
     {
       logging::warning("Unused settings in settings file %s", filename.c_str());
@@ -438,59 +330,6 @@ int Settings::staticCuring() noexcept { return SettingsImplementation::instance(
 void Settings::setStaticCuring(const int value) noexcept
 {
   SettingsImplementation::instance().setStaticCuring(value);
-}
-MathSize Settings::minimumFfmc() noexcept
-{
-  return SettingsImplementation::instance().minimumFfmc();
-}
-MathSize Settings::minimumFfmcAtNight() noexcept
-{
-  return SettingsImplementation::instance().minimumFfmcAtNight();
-}
-void Settings::setUtcOffset(const DurationSize v) noexcept
-{
-  SettingsImplementation::instance().setUtcOffset(v);
-}
-DurationSize Settings::utcOffset() noexcept
-{
-  return SettingsImplementation::instance().utcOffset();
-}
-DurationSize Settings::offsetSunrise() noexcept
-{
-  return SettingsImplementation::instance().offsetSunrise();
-}
-DurationSize Settings::offsetSunset() noexcept
-{
-  return SettingsImplementation::instance().offsetSunset();
-}
-int Settings::defaultPercentConifer() noexcept
-{
-  return SettingsImplementation::instance().defaultPercentConifer();
-}
-int Settings::defaultPercentDeadFir() noexcept
-{
-  return SettingsImplementation::instance().defaultPercentDeadFir();
-}
-int Settings::intensityMaxLow() noexcept
-{
-  return SettingsImplementation::instance().intensityMaxLow();
-}
-int Settings::intensityMaxModerate() noexcept
-{
-  return SettingsImplementation::instance().intensityMaxModerate();
-}
-ThresholdSize Settings::confidenceLevel() noexcept
-{
-  return SettingsImplementation::instance().confidenceLevel();
-}
-void Settings::setConfidenceLevel(const ThresholdSize value) noexcept
-{
-  SettingsImplementation::instance().setConfidenceLevel(value);
-}
-size_t Settings::salt() noexcept { return SettingsImplementation::instance().salt(); }
-void Settings::setSalt(const size_t value) noexcept
-{
-  SettingsImplementation::instance().setSalt(value);
 }
 vector<int> Settings::outputDateOffsets()
 {

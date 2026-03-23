@@ -40,6 +40,28 @@ extern atomic<bool> force_static_curing;
 extern atomic<MathSize> minimum_ros;
 // Maximum distance that the fire is allowed to spread in one step (# of cells)
 extern atomic<MathSize> maximum_spread_distance;
+// Minimum Fine Fuel Moisture Code required for spread during the day
+extern atomic<MathSize> minimum_ffmc;
+// Minimum Fine Fuel Moisture Code required for spread during the night
+extern atomic<MathSize> minimum_ffmc_at_night;
+// Offset from UTC to use for entire simulation (hours)
+extern atomic<DurationSize> utc_offset;
+// Offset from sunrise at which the day is considered to start (hours)
+extern atomic<DurationSize> offset_sunrise;
+// Offset from sunrise at which the day is considered to end (hours)
+extern atomic<DurationSize> offset_sunset;
+// Default Percent Conifer to use for M1/M2 fuels where none is specified (%)
+extern atomic<int> default_percent_conifer;
+// Default Percent Dead Fir to use for M3/M4 fuels where none is specified (%)
+extern atomic<int> default_percent_dead_fir;
+// The maximum fire intensity for the 'low' range of intensity (kW/m)
+extern atomic<int> intensity_max_low;
+// The maximum fire intensity for the 'moderate' range of intensity (kW/m)
+extern atomic<int> intensity_max_moderate;
+// Confidence required before simulation stops (% / 100)
+extern atomic<ThresholdSize> confidence_level;
+// Salt to use for random seeds
+extern atomic<size_t> salt;
 // Maximum time simulation can run before it is ended and whatever results it has are used (s)
 extern atomic<size_t> maximum_time_seconds;
 // Time between generating interim outputs (s)
@@ -101,77 +123,6 @@ public:
    * \return Set static curing value
    */
   static void setStaticCuring(const int value) noexcept;
-  /**
-   * \brief Minimum Fine Fuel Moisture Code required for spread during the day
-   * \return Minimum Fine Fuel Moisture Code required for spread during the day
-   */
-  [[nodiscard]] static MathSize minimumFfmc() noexcept;
-  /**
-   * \brief Minimum Fine Fuel Moisture Code required for spread during the night
-   * \return Minimum Fine Fuel Moisture Code required for spread during the night
-   */
-  [[nodiscard]] static MathSize minimumFfmcAtNight() noexcept;
-  /**
-   * \brief Set offset from UTC to use for entire simulation (hours)
-   * \param v Offset from UTC to use for entire simulation (hours)
-   */
-  static void setUtcOffset(const DurationSize v) noexcept;
-  /**
-   * \brief Offset from UTC to use for entire simulation (hours)
-   * \return Offset from UTC to use for entire simulation (hours)
-   */
-  [[nodiscard]] static DurationSize utcOffset() noexcept;
-  /**
-   * \brief Offset from sunrise at which the day is considered to start (hours)
-   * \return Offset from sunrise at which the day is considered to start (hours)
-   */
-  [[nodiscard]] static DurationSize offsetSunrise() noexcept;
-  /**
-   * \brief Offset from sunrise at which the day is considered to end (hours)
-   * \return Offset from sunrise at which the day is considered to end (hours)
-   */
-  [[nodiscard]] static DurationSize offsetSunset() noexcept;
-  /**
-   * \brief Default Percent Conifer to use for M1/M2 fuels where none is specified (%)
-   * \return Percent of the stand that is composed of conifer (%)
-   */
-  [[nodiscard]] static int defaultPercentConifer() noexcept;
-  /**
-   * \brief Default Percent Dead Fir to use for M3/M4 fuels where none is specified (%)
-   * \return Percent of the stand that is composed of dead fir (NOT percent of the fir that is dead)
-   * (%)
-   */
-  [[nodiscard]] static int defaultPercentDeadFir() noexcept;
-  /**
-   * \brief The maximum fire intensity for the 'low' range of intensity (kW/m)
-   * \return The maximum fire intensity for the 'low' range of intensity (kW/m)
-   */
-  [[nodiscard]] static int intensityMaxLow() noexcept;
-  /**
-   * \brief The maximum fire intensity for the 'moderate' range of intensity (kW/m)
-   * \return The maximum fire intensity for the 'moderate' range of intensity (kW/m)
-   */
-  [[nodiscard]] static int intensityMaxModerate() noexcept;
-  /**
-   * \brief Confidence required before simulation stops (% / 100)
-   * \return Confidence required before simulation stops (% / 100)
-   */
-  [[nodiscard]] static ThresholdSize confidenceLevel() noexcept;
-  /**
-   * \brief Set confidence required before simulation stops (% / 100)
-   * \return Set confidence required before simulation stops (% / 100)
-   */
-  static void setConfidenceLevel(const ThresholdSize value) noexcept;
-  /**
-   * \brief Salt to use for random seeds
-   * \return Salt to use for random seeds
-   */
-  [[nodiscard]] static size_t salt() noexcept;
-  /**
-   * \brief Set salt to use for random seeds
-   * \return Set salt to use for random seeds
-   */
-  static void setSalt(const size_t value) noexcept;
   /**
    * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
    * \return Days to output probability contours for (1 is start date, 2 is day after, etc.)
