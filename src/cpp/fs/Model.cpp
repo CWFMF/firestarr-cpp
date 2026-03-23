@@ -674,15 +674,15 @@ size_t runs_required(
   const auto for_sizes = Statistics{*all_sizes};
   const auto for_means = Statistics{*means};
   const auto for_pct = Statistics{*pct};
-  if (!(!for_means.isConfident(Settings::confidenceLevel())
-        || !for_pct.isConfident(Settings::confidenceLevel())
-        || !for_sizes.isConfident(Settings::confidenceLevel())))
+  if (!(!for_means.isConfident(settings::confidence_level)
+        || !for_pct.isConfident(settings::confidence_level)
+        || !for_sizes.isConfident(settings::confidence_level)))
   {
     return 0;
   }
-  const auto runs_for_means = for_means.runsRequired(Settings::confidenceLevel());
-  const auto runs_for_pct = for_pct.runsRequired(Settings::confidenceLevel());
-  const auto runs_for_sizes = for_sizes.runsRequired(Settings::confidenceLevel());
+  const auto runs_for_means = for_means.runsRequired(settings::confidence_level);
+  const auto runs_for_pct = for_pct.runsRequired(settings::confidence_level);
+  const auto runs_for_sizes = for_sizes.runsRequired(settings::confidence_level);
   logging::debug(
     "Runs required based on criteria: { means: %ld, pct: %ld, sizes: %ld}",
     runs_for_means,
@@ -800,7 +800,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     lat,
     lon
   );
-  const auto base_salt = Settings::salt();
+  const size_t base_salt = settings::salt;
   auto make_seed = [&](const char* name, const size_t salt) {
     const auto d = static_cast<size_t>(start_day);
     logging::info(
@@ -842,8 +842,8 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     saves,
     started,
     0,
-    Settings::intensityMaxLow(),
-    Settings::intensityMaxModerate(),
+    settings::intensity_max_low,
+    settings::intensity_max_moderate,
     numeric_limits<int>::max()
   );
   vector<map<DurationSize, shared_ptr<ProbabilityMap>>> all_probabilities{};
@@ -852,8 +852,8 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     saves,
     started,
     0,
-    Settings::intensityMaxLow(),
-    Settings::intensityMaxModerate(),
+    settings::intensity_max_low,
+    settings::intensity_max_moderate,
     numeric_limits<int>::max()
   ));
   logging::verbose("Setting up initial intensity map with perimeter");
@@ -987,8 +987,8 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         saves,
         started,
         0,
-        Settings::intensityMaxLow(),
-        Settings::intensityMaxModerate(),
+        settings::intensity_max_low,
+        settings::intensity_max_moderate,
         numeric_limits<int>::max()
       ));
     }

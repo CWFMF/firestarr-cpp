@@ -97,8 +97,8 @@ static array<tuple<DurationSize, DurationSize>, MAX_DAYS> make_days(
   {
     const auto [sunrise, sunset] = sunrise_sunset(static_cast<int>(i), latitude, longitude);
     days[i] = make_tuple(
-      fix_hours(sunrise + Settings::utcOffset() + Settings::offsetSunrise()),
-      fix_hours(sunset + Settings::utcOffset() - Settings::offsetSunset())
+      fix_hours(sunrise + settings::utc_offset + settings::offset_sunrise),
+      fix_hours(sunset + settings::utc_offset - settings::offset_sunset)
     );
     day_length_hours[i] = get<1>(days[i]) - get<0>(days[i]);
   }
