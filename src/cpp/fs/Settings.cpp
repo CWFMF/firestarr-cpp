@@ -24,6 +24,7 @@ atomic<bool> force_greenup{false};
 atomic<bool> force_no_greenup{false};
 atomic<bool> force_static_curing{false};
 atomic<MathSize> minimum_ros{0.0};
+atomic<MathSize> maximum_spread_distance{0.0};
 atomic<size_t> maximum_time_seconds{0};
 atomic<size_t> interim_output_interval_seconds{0};
 atomic<size_t> minimum_simulation_count{0};
@@ -96,14 +97,6 @@ public:
       logging::check_fatal(nullptr == fuel_lookup_, "Fuel lookup table has not been loaded");
     }
     return *fuel_lookup_;
-  }
-  /**
-   * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
-   * \return Maximum distance that the fire is allowed to spread in one step (# of cells)
-   */
-  [[nodiscard]] constexpr MathSize maximumSpreadDistance() const noexcept
-  {
-    return maximum_spread_distance_;
   }
   /**
    * \brief Minimum Fine Fuel Moisture Code required for spread during the day
@@ -245,10 +238,6 @@ private:
    */
   unique_ptr<FuelLookup> fuel_lookup_ = nullptr;
   /**
-   * \brief Maximum distance that the fire is allowed to spread in one step (# of cells)
-   */
-  MathSize maximum_spread_distance_;
-  /**
    * \brief Minimum Fine Fuel Moisture Code required for spread during the day
    */
   MathSize minimum_ffmc_;
@@ -381,7 +370,7 @@ void SettingsImplementation::setRoot(const string dirname) noexcept
     // HACK: make sure this is always > 0 so that we don't have to check
     // specifically for 0 to avoid div error
     settings::minimum_ros = max(stod(get_value(settings, "MINIMUM_ROS")), MinRos);
-    maximum_spread_distance_ = stod(get_value(settings, "MAX_SPREAD_DISTANCE"));
+    settings::maximum_spread_distance = stod(get_value(settings, "MAX_SPREAD_DISTANCE"));
     minimum_ffmc_ = stod(get_value(settings, "MINIMUM_FFMC"));
     minimum_ffmc_at_night_ = stod(get_value(settings, "MINIMUM_FFMC_AT_NIGHT"));
     offset_sunrise_ = stod(get_value(settings, "OFFSET_SUNRISE"));
@@ -449,10 +438,6 @@ int Settings::staticCuring() noexcept { return SettingsImplementation::instance(
 void Settings::setStaticCuring(const int value) noexcept
 {
   SettingsImplementation::instance().setStaticCuring(value);
-}
-MathSize Settings::maximumSpreadDistance() noexcept
-{
-  return SettingsImplementation::instance().maximumSpreadDistance();
 }
 MathSize Settings::minimumFfmc() noexcept
 {

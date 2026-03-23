@@ -11,6 +11,7 @@
 #include "Observer.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
+#include "Settings.h"
 namespace fs
 {
 using std::cout;
@@ -893,7 +894,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     return;
   }
   const auto duration =
-    ((max_ros_ > 0) ? min(max_duration, Settings::maximumSpreadDistance() * cellSize() / max_ros_)
+    ((max_ros_ > 0) ? min(max_duration, settings::maximum_spread_distance * cellSize() / max_ros_)
                     : max_duration);
   const auto new_time = time + duration / DAY_MINUTES;
   CellPointsMap cell_pts{};
