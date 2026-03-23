@@ -6,6 +6,7 @@
 #include "Util.h"
 namespace fs
 {
+using settings::Settings;
 template <typename T>
 static T fix_range(T value, T min_value, T max_value) noexcept
 {
@@ -91,14 +92,15 @@ static array<tuple<DurationSize, DurationSize>, MAX_DAYS> make_days(
   const MathSize longitude
 ) noexcept
 {
+  static const Settings& settings = settings::instance();
   array<tuple<DurationSize, DurationSize>, MAX_DAYS> days{};
   array<DurationSize, MAX_DAYS> day_length_hours{};
   for (size_t i = 0; i < day_length_hours.size(); ++i)
   {
     const auto [sunrise, sunset] = sunrise_sunset(static_cast<int>(i), latitude, longitude);
     days[i] = make_tuple(
-      fix_hours(sunrise + settings::utc_offset + settings::offset_sunrise),
-      fix_hours(sunset + settings::utc_offset - settings::offset_sunset)
+      fix_hours(sunrise + settings.utc_offset + settings.offset_sunrise),
+      fix_hours(sunset + settings.utc_offset - settings.offset_sunset)
     );
     day_length_hours[i] = get<1>(days[i]) - get<0>(days[i]);
   }

@@ -4,8 +4,9 @@
 #include "stdafx.h"
 #include "FWI.h"
 #include "Log.h"
+#include "Settings.h"
 #include "Weather.h"
-namespace fs
+namespace fs::settings
 {
 using fs::logging::Log;
 struct Usage
@@ -29,6 +30,17 @@ private:
 public:
   virtual ~ArgumentParser() = default;
   ArgumentParser(
+    const vector<Usage> usages,
+    const vector<string> arguments,
+    const PositionalArgumentsRequired require_positional
+  );
+  ArgumentParser(
+    const vector<Usage> usages,
+    const vector<string> arguments,
+    const pair<string, string> binary,
+    const PositionalArgumentsRequired require_positional
+  );
+  ArgumentParser(
     const Usage usage,
     const int argc,
     const char* const argv[],
@@ -49,7 +61,7 @@ public:
    * \brief Parse arguments that were given to constructor
    * \return string Positional arguments
    */
-  virtual void parse_args();
+  virtual Settings& parse_args();
   /**
    * \brief If any more positional arguments are available
    */
@@ -94,7 +106,7 @@ class SettingsArgumentParser : public ArgumentParser
 {
 public:
   using ArgumentParser::ArgumentParser;
-  void parse_args() override;
+  Settings& parse_args() override;
 };
 class MainArgumentParser : public SettingsArgumentParser
 {
@@ -130,7 +142,7 @@ public:
   // FIX: need to get rain since noon yesterday to start of this hourly weather
   Precipitation apcp_prev{Precipitation::Zero()};
   MainArgumentParser(const int argc, const char* const argv[]);
-  void parse_args() override;
+  Settings& parse_args() override;
   FwiWeather get_test_weather() const;
   FwiWeather get_yesterday_weather() const;
 };

@@ -11,6 +11,7 @@
 #include "Util.h"
 namespace fs
 {
+using settings::Settings;
 /**
  * \brief An Environment with no elevation and the same value in every Cell.
  */
@@ -172,6 +173,7 @@ string run_test(
   const bool ignore_existing
 )
 {
+  static const Settings& settings = settings::instance();
   string test_name = generate_test_name(fuel_name, slope, aspect, wind);
   logging::verbose("Queueing test for %s", &(test_name[0]));
   const string output_directory = string(base_directory) + test_name + "/";
@@ -198,7 +200,7 @@ string run_test(
   const auto start_date = start_time.tm_yday;
   const auto end_date = start_date + static_cast<DurationSize>(num_hours) / DAY_HOURS;
   make_directory_recursive(string(output_directory).c_str());
-  const auto fuel = Settings::fuelLookup().bySimplifiedName(simplify_fuel_name(fuel_name));
+  const auto fuel = settings.fuelLookup().bySimplifiedName(simplify_fuel_name(fuel_name));
   auto values = vector<Cell>();
   for (Idx r = 0; r < MAX_ROWS; ++r)
   {
@@ -297,6 +299,8 @@ int test(
   const bool test_all
 )
 {
+  // HACK: resolve once and fail if not set already
+  static auto& settings = fs::settings::instance();
   static const AspectSize ASPECT_INCREMENT = 90;
   static const SlopeSize SLOPE_INCREMENT = 60;
   static const int WS_INCREMENT = 5;
@@ -326,11 +330,11 @@ int test(
   SafeVector final_sizes{};
   // FIX: I think this does a lot of the same things as the test code is doing because it was
   // derived from this code
-  settings::deterministic = true;
-  settings::minimum_ros = 0.0;
-  settings::save_points = false;
+  settings.deterministic = true;
+  settings.minimum_ros = 0.0;
+  settings.save_points = false;
   // make sure all tests run regardless of how long it takes
-  settings::maximum_time_seconds = numeric_limits<size_t>::max();
+  settings.maximum_time_seconds = numeric_limits<size_t>::max();
   const auto hours = INVALID_TIME == num_hours ? DEFAULT_HOURS : num_hours;
   const auto ffmc = (fs::Ffmc::Invalid() == wx->ffmc) ? DEFAULT_FFMC : wx->ffmc;
   const auto dmc = (fs::Dmc::Invalid() == wx->dmc) ? DEFAULT_DMC : wx->dmc;

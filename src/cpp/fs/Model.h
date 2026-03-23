@@ -6,9 +6,11 @@
 #include "FireWeather.h"
 #include "Iteration.h"
 #include "Perimeter.h"
+#include "Settings.h"
 #include "unstable.h"
 namespace fs
 {
+using settings::Settings;
 class StartPoint;
 struct Event;
 class Scenario;
@@ -278,6 +280,13 @@ public:
     const string_view output_directory,
     const StartPoint& start_point,
     Environment* env
+  );
+  Model(
+    const tm& start_time,
+    const string_view output_directory,
+    const StartPoint& start_point,
+    Environment* env,
+    const Settings& settings
   );
   Model(Model&& rhs) noexcept = delete;
   Model(const Model& rhs) = delete;

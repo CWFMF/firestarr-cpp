@@ -9,6 +9,7 @@
 namespace fs::testing
 {
 // https://publications.gc.ca/collections/collection_2016/rncan-nrcan/Fo133-1-424-eng.pdf
+using settings::Settings;
 using namespace std;
 using namespace fs::fwireference;
 constexpr auto DEFAULT_LATITUDE = 46.0;
@@ -222,11 +223,10 @@ int test_fwi(const int argc, const char* const argv[])
 }
 int main(const int argc, const char* const argv[])
 {
+  using namespace fs::settings;
   constexpr auto fct_main = fs::testing::test_fwi;
-  static const fs::Usage USAGE_TEST{"Run tests and exit", ""};
-  fs::SettingsArgumentParser parser{
-    USAGE_TEST, argc, argv, fs::PositionalArgumentsRequired::NotRequired
-  };
+  static const Usage USAGE_TEST{"Run tests and exit", ""};
+  SettingsArgumentParser parser{USAGE_TEST, argc, argv, PositionalArgumentsRequired::NotRequired};
   parser.parse_args();
   exit(fct_main(argc, argv));
 }

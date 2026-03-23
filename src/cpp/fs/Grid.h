@@ -545,14 +545,15 @@ public:
     const R no_data
   ) const
   {
+    static const auto& settings = settings::instance();
     FileList files{};
     // NOTE: do this instead of function pointer because it's using templates
-    if (settings::save_as_ascii)
+    if (settings.save_as_ascii)
     {
       files.emplace_back(this->template saveToAsciiFile<R>(dir, base_name, convert, no_data));
     }
     // always save at least something
-    if (!settings::save_as_ascii || settings::save_as_tiff)
+    if (!settings.save_as_ascii || settings.save_as_tiff)
     {
       files.emplace_back(this->template saveToTiffFile<R>(dir, base_name, convert, no_data));
     }
