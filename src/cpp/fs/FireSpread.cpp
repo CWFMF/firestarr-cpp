@@ -137,8 +137,10 @@ MathSize SpreadInfo::initial(
 }
 static MathSize find_min_ros(const Scenario& scenario, const DurationSize time)
 {
-  const MathSize min_ros = settings::minimum_ros;
-  return settings::deterministic ? min_ros : std::max(scenario.spreadThresholdByRos(time), min_ros);
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  const MathSize min_ros = settings.minimum_ros;
+  return settings.deterministic ? min_ros : std::max(scenario.spreadThresholdByRos(time), min_ros);
 }
 SpreadInfo::SpreadInfo(
   const Scenario& scenario,
@@ -160,7 +162,9 @@ SpreadInfo::SpreadInfo(
 { }
 static SpreadKey make_key(const SlopeSize slope, const AspectSize aspect, const char* fuel_name)
 {
-  const auto lookup = Settings::fuelLookup();
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  const auto lookup = settings.fuelLookup();
   const auto key =
     Cell::key(Cell::hashCell(slope, aspect, FuelType::safeCode(lookup.byName(fuel_name))));
   const auto a = Cell::aspect(key);

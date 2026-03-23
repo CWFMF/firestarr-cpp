@@ -183,6 +183,12 @@ protected:
    * \param elevation Elevation raster
    */
   Environment(const FuelGrid& fuel, const ElevationGrid& elevation, const Point& point);
+  Environment(
+    const FuelGrid& fuel,
+    const ElevationGrid& elevation,
+    const Point& point,
+    const Settings& settings
+  );
 
 public:
   void saveToFile(const string_view output_directory) const;

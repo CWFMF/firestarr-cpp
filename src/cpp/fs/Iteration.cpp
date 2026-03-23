@@ -15,9 +15,11 @@ Iteration::~Iteration()
 Iteration::Iteration(vector<Scenario*> scenarios) noexcept : scenarios_(std::move(scenarios)) { }
 Iteration* Iteration::reset_with_new_start(const shared_ptr<Cell>& start_cell)
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   // HACK: ensure only called with surface
   logging::check_fatal(
-    !settings::surface, "Called reset_with_new_start() when not calculating surface"
+    !settings.surface, "Called reset_with_new_start() when not calculating surface"
   );
   // HACK: just copy code for now
   // FIX: remove duplicate code

@@ -305,7 +305,9 @@ public:
    */
   [[nodiscard]] MathSize minimumFfmcForSpread(const DurationSize time) const noexcept
   {
-    return isAtNight(time) ? settings::minimum_ffmc_at_night : settings::minimum_ffmc;
+    // HACK: resolve once and fail if not set already
+    static const auto& settings = fs::settings::instance();
+    return isAtNight(time) ? settings.minimum_ffmc_at_night : settings.minimum_ffmc;
   }
   /**
    * \brief Whether or not the given Location is surrounded by cells that are burnt
@@ -426,7 +428,9 @@ public:
     const DurationSize time_at_location
   ) const
   {
-    if (settings::deterministic)
+    // HACK: resolve once and fail if not set already
+    static const auto& settings = fs::settings::instance();
+    if (settings.deterministic)
     {
       // always survive if deterministic
       return true;
@@ -513,6 +517,19 @@ protected:
     StartPoint start_point,
     Day start_day,
     Day last_date
+  );
+  Scenario(
+    Model* model,
+    size_t id,
+    const ptr<const FireWeather> weather,
+    const ptr<const FireWeather> weather_daily,
+    DurationSize start_time,
+    const shared_ptr<Perimeter>& perimeter,
+    const shared_ptr<Cell>& start_cell,
+    StartPoint start_point,
+    Day start_day,
+    Day last_date,
+    const Settings& settings
   );
   /**
    * \brief Observers to be notified when cells burn

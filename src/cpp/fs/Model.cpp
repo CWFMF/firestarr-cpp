@@ -27,11 +27,20 @@ Model::Model(
   const StartPoint& start_point,
   Environment* env
 )
+  : Model(start_time, output_directory, start_point, env, settings::instance())
+{ }
+Model::Model(
+  const tm& start_time,
+  const string_view output_directory,
+  const StartPoint& start_point,
+  Environment* env,
+  const Settings& settings
+)
   : output_directory_(output_directory), start_time_(start_time), running_since_(Clock::now()),
-    time_limit_(settings::maximum_time_seconds), no_interim_save_since_(Clock::now()),
-    interim_save_interval_(settings::interim_output_interval_seconds), env_(env),
-    latitude_(start_point.latitude()), longitude_(start_point.longitude()),
-    active_simulations_still_required_(settings::minimum_active_simulation_count)
+    time_limit_(settings.maximum_time_seconds), no_interim_save_since_(Clock::now()),
+    interim_save_interval_(settings.interim_output_interval_seconds), env_(env),
+    active_simulations_still_required_(settings.minimum_active_simulation_count),
+    latitude_(start_point.latitude()), longitude_(start_point.longitude())
 {
   logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
   const auto nd_for_point = calculate_nd_ref_for_point(env->elevation(), start_point);
@@ -49,8 +58,10 @@ Model::Model(
 }
 void Model::setWeather(const FwiWeather& weather, const Day start_day)
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   yesterday_ = weather;
-  const auto fuel_lookup = Settings::fuelLookup();
+  const auto fuel_lookup = settings.fuelLookup();
   const auto& f = fuel_lookup.usedFuels();
   wx_.emplace(
     0,
@@ -71,6 +82,8 @@ void Model::readWeather(
   const string& filename
 )
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   map<size_t, vector<FwiWeather>> wx{};
   map<size_t, map<Day, FwiWeather>> wx_daily{};
   map<Day, struct tm> dates{};
@@ -258,7 +271,7 @@ void Model::readWeather(
 #endif
     in.close();
   }
-  const auto fuel_lookup = Settings::fuelLookup();
+  const auto fuel_lookup = settings.fuelLookup();
   const auto& f = fuel_lookup.usedFuels();
   // loop through and try to find duplicates
   for (const auto& kv : wx)
@@ -331,6 +344,8 @@ void Model::makeStarts(
   size_t size
 )
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   Location location(std::get<0>(coordinates), std::get<1>(coordinates));
   if (!perim.empty())
   {
@@ -378,7 +393,7 @@ void Model::makeStarts(
       logging::note("Using fire perimeter results in empty fire - changing to use point");
       perimeter_ = nullptr;
     }
-    if (settings::surface)
+    if (settings.surface)
     {
       findAllStarts();
     }
@@ -410,11 +425,13 @@ Iteration Model::readScenarios(
   const Day last_date
 )
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
-  const auto saves = Settings::outputDateOffsets();
+  const auto saves = settings.outputDateOffsets();
   const auto setup_scenario = [&](Scenario* scenario) {
-    if (settings::save_individual)
+    if (settings.save_individual)
     {
       scenario->registerObserver(new IntensityObserver(*scenario));
       scenario->registerObserver(new ArrivalObserver(*scenario));
@@ -427,7 +444,7 @@ Iteration Model::readScenarios(
     }
     result.push_back(scenario);
   };
-  if (settings::surface)
+  if (settings.surface)
   {
     setup_scenario(new Scenario(
       this, 0, &wx_.at(0), &wx_daily_.at(0), start, starts_.at(0), start_point, start_day, last_date
@@ -472,7 +489,9 @@ Iteration Model::readScenarios(
 }
 bool Model::shouldStop() const noexcept
 {
-  return !settings::surface && (isOutOfTime() || isOverSimulationCountMaximum());
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  return !settings.surface && (isOutOfTime() || isOverSimulationCountMaximum());
 }
 bool Model::isOutOfTime() const noexcept { return is_out_of_time_; }
 bool Model::isUnderSimulationCountMinimum() const noexcept { return is_under_simulation_minimum_; }
@@ -536,6 +555,8 @@ bool Model::add_statistics(
   const SafeVector& sizes
 )
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   const auto i = pct->size();
   const auto cur_sizes = sizes.getValues();
   logging::check_fatal(cur_sizes.empty(), "No sizes at end of simulation");
@@ -548,17 +569,17 @@ bool Model::add_statistics(
   {
     static_cast<void>(insert_sorted(all_sizes, size));
   }
-  if (settings::surface)
+  if (settings.surface)
   {
     return true;
   }
-  is_under_simulation_minimum_ = all_sizes->size() < settings::minimum_simulation_count;
+  is_under_simulation_minimum_ = all_sizes->size() < settings.minimum_simulation_count;
   if (isUnderSimulationCountMinimum())
   {
     return true;
   }
   active_simulations_still_required_ = [&]() {
-    size_t num_left = settings::minimum_active_simulation_count;
+    size_t num_left = settings.minimum_active_simulation_count;
     for (const auto s : *all_sizes)
     {
       if (s > initial_size())
@@ -580,13 +601,13 @@ bool Model::add_statistics(
   {
     return true;
   }
-  is_over_simulation_count_ = all_sizes->size() >= settings::maximum_simulation_count;
+  is_over_simulation_count_ = all_sizes->size() >= settings.maximum_simulation_count;
   if (isOverSimulationCountMaximum())
   {
     logging::note(
       "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
       i,
-      +settings::maximum_simulation_count
+      +settings.maximum_simulation_count
     );
     return false;
   }
@@ -595,7 +616,7 @@ bool Model::add_statistics(
     logging::note(
       "Stopping after %d iterations. Time limit of %d seconds has been reached.",
       i,
-      +settings::maximum_time_seconds
+      +settings.maximum_time_seconds
     );
     return false;
   }
@@ -620,7 +641,9 @@ size_t runs_required(
   const Model& model
 )
 {
-  if (settings::deterministic)
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  if (settings.deterministic)
   {
     logging::note("Stopping after iteration %ld because running in deterministic mode", i);
     return 0;
@@ -630,7 +653,7 @@ size_t runs_required(
     logging::note(
       "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
       i,
-      +settings::maximum_simulation_count
+      +settings.maximum_simulation_count
     );
     return 0;
   }
@@ -639,19 +662,19 @@ size_t runs_required(
     logging::note(
       "Stopping after %d iterations. Time limit of %d seconds has been reached.",
       i,
-      +settings::maximum_time_seconds
+      +settings.maximum_time_seconds
     );
     return 0;
   }
-  const auto max_sims_left = settings::maximum_simulation_count - i;
+  const auto max_sims_left = settings.maximum_simulation_count - i;
   if (model.isUnderSimulationCountMinimum())
   {
     logging::debug(
       "Continuing after %d iterations. Simulation minimum of %d simulations has not been reached.",
       i,
-      +settings::minimum_simulation_count
+      +settings.minimum_simulation_count
     );
-    return min(max_sims_left, settings::minimum_simulation_count - i);
+    return min(max_sims_left, settings.minimum_simulation_count - i);
   }
   const auto active_still_required = model.activeSimulationsStillRequired();
   if (0 < active_still_required)
@@ -659,7 +682,7 @@ size_t runs_required(
     logging::debug(
       "Continuing after %d iterations. Active simulation minimum of %d simulations has not been reached.",
       i,
-      +settings::minimum_active_simulation_count
+      +settings.minimum_active_simulation_count
     );
     // HACK: if we have n active sims so far then expect that many per i simulations?
     return min(max_sims_left, i * active_still_required);
@@ -674,15 +697,15 @@ size_t runs_required(
   const auto for_sizes = Statistics{*all_sizes};
   const auto for_means = Statistics{*means};
   const auto for_pct = Statistics{*pct};
-  if (!(!for_means.isConfident(settings::confidence_level)
-        || !for_pct.isConfident(settings::confidence_level)
-        || !for_sizes.isConfident(settings::confidence_level)))
+  if (!(!for_means.isConfident(settings.confidence_level)
+        || !for_pct.isConfident(settings.confidence_level)
+        || !for_sizes.isConfident(settings.confidence_level)))
   {
     return 0;
   }
-  const auto runs_for_means = for_means.runsRequired(settings::confidence_level);
-  const auto runs_for_pct = for_pct.runsRequired(settings::confidence_level);
-  const auto runs_for_sizes = for_sizes.runsRequired(settings::confidence_level);
+  const auto runs_for_means = for_means.runsRequired(settings.confidence_level);
+  const auto runs_for_pct = for_pct.runsRequired(settings.confidence_level);
+  const auto runs_for_sizes = for_sizes.runsRequired(settings.confidence_level);
   logging::debug(
     "Runs required based on criteria: { means: %ld, pct: %ld, sizes: %ld}",
     runs_for_means,
@@ -776,8 +799,10 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   const Day start_day
 )
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   auto last_date = start_day;
-  for (const auto& i : Settings::outputDateOffsets())
+  for (const auto& i : settings.outputDateOffsets())
   {
     last_date = max(static_cast<Day>(start_day + i), last_date);
   }
@@ -800,7 +825,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     lat,
     lon
   );
-  const size_t base_salt = settings::salt;
+  const size_t base_salt = settings.salt;
   auto make_seed = [&](const char* name, const size_t salt) {
     const auto d = static_cast<size_t>(start_day);
     logging::info(
@@ -842,8 +867,8 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     saves,
     started,
     0,
-    settings::intensity_max_low,
-    settings::intensity_max_moderate,
+    settings.intensity_max_low,
+    settings.intensity_max_moderate,
     numeric_limits<int>::max()
   );
   vector<map<DurationSize, shared_ptr<ProbabilityMap>>> all_probabilities{};
@@ -852,8 +877,8 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     saves,
     started,
     0,
-    settings::intensity_max_low,
-    settings::intensity_max_moderate,
+    settings.intensity_max_low,
+    settings.intensity_max_moderate,
     numeric_limits<int>::max()
   ));
   logging::verbose("Setting up initial intensity map with perimeter");
@@ -863,7 +888,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   auto timer = std::thread([&]() {
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
     bool keep_checking{true};
-    const bool is_limited = 0 != settings::maximum_time_seconds;
+    const bool is_limited = 0 != settings.maximum_time_seconds;
     const bool with_interim = 0 != interim_save_interval_.count();
     if (!is_limited)
     {
@@ -925,7 +950,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
       }
     }
     const auto run_time_seconds = runTime().count();
-    const auto time_left = settings::maximum_time_seconds - run_time_seconds;
+    const auto time_left = settings.maximum_time_seconds - run_time_seconds;
     logging::debug(
       "Ending timer after %ld seconds with %ld seconds left", run_time_seconds, time_left
     );
@@ -949,7 +974,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   // if using surface just run each start through in a loop here
   size_t cur_start = 0;
   auto reset_iter = [&](Iteration& iter) {
-    if (settings::surface)
+    if (settings.surface)
     {
       if (cur_start >= starts_.size())
       {
@@ -965,7 +990,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     }
     return true;
   };
-  if (settings::run_async)
+  if (settings.run_async)
   {
     const auto HARDWARE_THREADS = static_cast<size_t>(std::thread::hardware_concurrency());
     // maybe a bit slower but prefer to run all scenarios at the same time
@@ -987,8 +1012,8 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         saves,
         started,
         0,
-        settings::intensity_max_low,
-        settings::intensity_max_moderate,
+        settings.intensity_max_low,
+        settings.intensity_max_moderate,
         numeric_limits<int>::max()
       ));
     }
@@ -1075,7 +1100,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         return finalize_probabilities();
       }
       {
-        if (settings::surface)
+        if (settings.surface)
         {
           runs_left = ignitionScenarios() - iterations_done_;
         }
@@ -1125,7 +1150,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
           // ran out of time but timer should cance everything
           return finalize_probabilities();
         }
-        if (settings::surface)
+        if (settings.surface)
         {
           runs_left = ignitionScenarios() - iterations_done_;
         }
@@ -1150,6 +1175,8 @@ int Model::runScenarios(
   const size_t size
 )
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   fs::logging::note(
     "Simulation start time at start of runScenarios() is %d-%02d-%02d %02d:%02d",
     start_time.tm_year + TM_YEAR_OFFSET,
@@ -1190,7 +1217,7 @@ int Model::runScenarios(
   );
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
-  if (settings::surface)
+  if (settings.surface)
   {
     // yesterday should have constants to use
     model.setWeather(yesterday, start_day);
@@ -1206,7 +1233,7 @@ int Model::runScenarios(
     const auto& w = model.wx_.begin()->second;
     logging::debug("Have weather from day %d to %d", w.minDate(), w.maxDate());
     const auto numDays = (w.maxDate() - w.minDate() + 1);
-    const auto needDays = Settings::maxDateOffset();
+    const auto needDays = settings.maxDateOffset();
     if (numDays < needDays)
     {
       logging::fatal(
@@ -1215,7 +1242,7 @@ int Model::runScenarios(
     }
     // want to output internal representation of weather to file
 #ifdef DEBUG_WEATHER
-    if (!settings::surface)
+    if (!settings.surface)
     {
       model.outputWeather();
     }
@@ -1231,7 +1258,7 @@ int Model::runScenarios(
   auto probabilities = model.runIterations(start_point, start, start_day);
   logging::note("Ran %d simulations", Scenario::completed());
   const auto run_time_seconds = model.runTime();
-  const auto time_left = settings::maximum_time_seconds - run_time_seconds.count();
+  const size_t time_left = settings.maximum_time_seconds - run_time_seconds.count();
   logging::debug(
     "Finished successfully after %ld seconds with %ld seconds left",
     run_time_seconds.count(),
@@ -1309,7 +1336,7 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
         SlopeSize SLOPE_INCREMENT = 200;
         AspectSize ASPECT_MAX = 360;
         AspectSize ASPECT_INCREMENT = 450;
-        const auto lookup = Settings::fuelLookup();
+        const auto lookup = settings.fuelLookup();
         const auto fuel = lookup.byName("C-2");
         for (SlopeSize slope = 0; slope < SLOPE_MAX; slope += SLOPE_INCREMENT)
         {

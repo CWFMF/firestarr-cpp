@@ -19,12 +19,14 @@ Environment Environment::load(
 )
 {
   logging::note("Fuel raster is %s", string(in_fuel).c_str());
-  const auto& lookup = Settings::fuelLookup();
-  if (settings::run_async)
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  const auto& lookup = settings.fuelLookup();
+  if (settings.run_async)
   {
     logging::debug("Loading grids async");
     auto fuel = async(launch::async, [&]() {
-      return FuelGrid::readTiff(in_fuel, point, Settings::fuelLookup());
+      return FuelGrid::readTiff(in_fuel, point, settings.fuelLookup());
     });
     auto elevation =
       async(launch::async, [&]() { return ElevationGrid::readTiff(in_elevation, point); });
@@ -297,9 +299,17 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
   );
 }
 Environment::Environment(const FuelGrid& fuel, const ElevationGrid& elevation, const Point& point)
+  : Environment(fuel, elevation, point, settings::instance())
+{ }
+Environment::Environment(
+  const FuelGrid& fuel,
+  const ElevationGrid& elevation,
+  const Point& point,
+  const Settings& settings
+)
   : Environment(
-      (settings::save_simulation_area ? make_unique<FuelGrid>(fuel) : nullptr),
-      (settings::save_simulation_area ? make_unique<ElevationGrid>(elevation) : nullptr),
+      (settings.save_simulation_area ? make_unique<FuelGrid>(fuel) : nullptr),
+      (settings.save_simulation_area ? make_unique<ElevationGrid>(elevation) : nullptr),
       makeCells(fuel, elevation),
       elevation.at(Location(*elevation.findCoordinates(point, false).get()))
     )
@@ -314,10 +324,12 @@ Cell Environment::offset(const Event& event, const Idx row, const Idx column) co
 }
 void Environment::saveToFile(const string_view output_directory) const
 {
-  if (settings::save_simulation_area)
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  if (settings.save_simulation_area)
   {
     logging::debug("Saving simulation area");
-    const auto lookup = Settings::fuelLookup();
+    const auto lookup = settings.fuelLookup();
     auto convert_to_slope = [](const Cell& v) -> SlopeSize { return v.slope(); };
     auto convert_to_aspect = [](const Cell& v) -> AspectSize { return v.aspect(); };
     auto convert_to_area = [&](const Cell& v) -> SlopeSize {

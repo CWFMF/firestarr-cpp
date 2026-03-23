@@ -4,10 +4,12 @@
 #include "stdafx.h"
 #include "GridMap.h"
 #include "Perimeter.h"
+#include "Settings.h"
 #include "Statistics.h"
 #include "Util.h"
 namespace fs
 {
+using settings::Settings;
 /**
  * \brief The code to burn into probability maps where the perimeter is to represent the status of
  * the sims

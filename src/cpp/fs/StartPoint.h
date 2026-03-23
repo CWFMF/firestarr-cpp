@@ -3,8 +3,10 @@
 #define FS_STARTPOINT_H
 #include "stdafx.h"
 #include "Point.h"
+#include "Settings.h"
 namespace fs
 {
+using settings::Settings;
 /**
  * \brief A Point that has sunrise and sunset times for each day.
  */

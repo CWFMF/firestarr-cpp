@@ -11,6 +11,7 @@
 #endif
 namespace fs::simplefbp
 {
+using settings::Settings;
 /**
  * \brief Calculate if green-up has occurred
  * \param nd Difference between date and the date of minimum foliar moisture content
@@ -582,9 +583,11 @@ public:
    */
   [[nodiscard]] MathSize grass_curing(const int nd, const FwiWeather& wx) const override
   {
-    if (settings::force_static_curing)
+    // HACK: resolve once and fail if not set already
+    static const auto& settings = fs::settings::instance();
+    if (settings.force_static_curing)
     {
-      return Settings::staticCuring();
+      return settings.staticCuring();
     }
     const auto is_drought = wx.dc.value > 500;
     return is_drought ? 100 : calculate_grass_curing(nd);
@@ -1137,11 +1140,13 @@ template <class FuelSpring, class FuelSummer>
   const SimpleFuelVariable<FuelSpring, FuelSummer>& fuel
 ) noexcept
 {
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
   // if not green yet, then still in spring conditions
-  return settings::force_greenup    ? fuel.summer()
-       : settings::force_no_greenup ? fuel.spring()
-       : calculate_is_green(nd)     ? fuel.summer()
-                                    : fuel.spring();
+  return settings.force_greenup    ? fuel.summer()
+       : settings.force_no_greenup ? fuel.spring()
+       : calculate_is_green(nd)    ? fuel.summer()
+                                   : fuel.spring();
 }
 template <class FuelSpring, class FuelSummer>
 [[nodiscard]] MathSize compare_by_season(
@@ -1493,6 +1498,7 @@ public:
 }
 namespace fs::testing
 {
+using settings::Settings;
 int test_fbp(const int argc, const char* const argv[]);
 }
 #endif
