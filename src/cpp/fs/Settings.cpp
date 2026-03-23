@@ -7,6 +7,32 @@
 #include "Util.h"
 namespace fs
 {
+namespace settings
+{
+atomic<bool> save_individual{false};
+atomic<bool> run_async{true};
+atomic<bool> deterministic{false};
+atomic<bool> surface{false};
+atomic<bool> save_as_ascii{false};
+atomic<bool> save_as_tiff{true};
+atomic<bool> save_points{false};
+atomic<bool> save_intensity{true};
+atomic<bool> save_probability{true};
+atomic<bool> save_occurrence{false};
+atomic<bool> save_simulation_area{false};
+atomic<bool> force_greenup{false};
+atomic<bool> force_no_greenup{false};
+atomic<bool> force_static_curing{false};
+atomic<size_t> maximum_time_seconds{0};
+atomic<size_t> interim_output_interval_seconds{0};
+atomic<size_t> minimum_simulation_count{0};
+atomic<size_t> minimum_active_simulation_count{0};
+atomic<size_t> maximum_simulation_count{0};
+atomic<ThresholdSize> threshold_scenario_weight{0.0};
+atomic<ThresholdSize> threshold_daily_weight{0.0};
+atomic<ThresholdSize> threshold_hourly_weight{0.0};
+atomic<bool> was_initialized{false};
+}
 template <class T>
 static vector<T> parse_list(string str, T (*convert)(const string s))
 {
@@ -179,84 +205,6 @@ public:
     settings::force_static_curing = true;
   }
   /**
-   * \brief Maximum time simulation can run before it is ended and whatever results it has are used
-   * (s)
-   * \return Maximum time simulation can run before it is ended and whatever results it has are used
-   * (s)
-   */
-  [[nodiscard]] size_t maximumTimeSeconds() const noexcept { return maximum_time_seconds_; }
-  /**
-   * \brief Set maximum time simulation can run before it is ended and whatever results it has are
-   * used (s)
-   * \return Set maximum time simulation can run before it is ended and whatever results it has are
-   * used (s)
-   */
-  void setMaximumTimeSeconds(const size_t value) noexcept { maximum_time_seconds_ = value; }
-  /**
-   * \brief Time between generating interim outputs (s)
-   * \return Time between generating interim outputs (s)
-   */
-  [[nodiscard]] size_t interimOutputIntervalSeconds() const noexcept
-  {
-    return interim_output_interval_seconds_;
-  }
-  /**
-   * \brief Set time between generating interim outputs (s)
-   * \return Set time between generating interim outputs (s)
-   */
-  void setInterimOutputIntervalSeconds(const size_t value) noexcept
-  {
-    interim_output_interval_seconds_ = value;
-  }
-  /**
-   * \brief Minimum number of simulations that must run before stopping
-   * \return Minimum number of simulations that must run before stopping
-   */
-  [[nodiscard]] constexpr size_t minimumSimulationCount() noexcept
-  {
-    return minimum_simulation_count_;
-  }
-  /**
-   * \brief Minimum number of simulations that must run before stopping
-   * \return Minimum number of simulations that must run before stopping
-   */
-  [[nodiscard]] constexpr size_t minimumActiveSimulationCount() noexcept
-  {
-    return minimum_active_simulation_count_;
-  }
-  /**
-   * \brief Maximum number of simulations before stopping and whatever results it has are used
-   * \return Maximum number of simulations before stopping and whatever results it has are used
-   */
-  [[nodiscard]] constexpr size_t maximumSimulationCount() const noexcept
-  {
-    return maximum_simulation_count_;
-  }
-  /**
-   * \brief Weight to give to Scenario part of thresholds
-   * \return Weight to give to Scenario part of thresholds
-   */
-  [[nodiscard]] constexpr ThresholdSize thresholdScenarioWeight() const noexcept
-  {
-    return threshold_scenario_weight_;
-  }
-  /**
-   * \brief Weight to give to daily part of thresholds
-   * \return Weight to give to daily part of thresholds
-   */
-  [[nodiscard]] constexpr ThresholdSize thresholdDailyWeight() const noexcept
-  {
-    return threshold_daily_weight_;
-  }
-  /**
-   * \brief Weight to give to hourly part of thresholds
-   * \return Weight to give to hourly part of thresholds
-   */
-  [[nodiscard]] constexpr ThresholdSize thresholdHourlyWeight() const noexcept
-  {
-    return threshold_hourly_weight_;
-  }
-  /**
    * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
    * \return Days to output probability contours for (1 is start date, 2 is day after, etc.)
    */
@@ -341,39 +289,6 @@ private:
    * \brief Static curing value
    */
   atomic<int> static_curing_ = 75;
-  /**
-   * \brief Maximum time simulation can run before it is ended and whatever results it has are used
-   * (s)
-   */
-  atomic<size_t> maximum_time_seconds_;
-  /**
-   * \brief Time between generating interim outputs (s)
-   */
-  atomic<size_t> interim_output_interval_seconds_;
-  /**
-   * \brief Minimum number of simulations that must run before stopping
-   */
-  size_t minimum_simulation_count_;
-  /**
-   * \brief Minimum number of simulations with any spread that must run before stopping
-   */
-  size_t minimum_active_simulation_count_;
-  /**
-   * \brief Maximum number of simulations before stopping and whatever results it has are used
-   */
-  size_t maximum_simulation_count_;
-  /**
-   * \brief Weight to give to Scenario part of thresholds
-   */
-  ThresholdSize threshold_scenario_weight_;
-  /**
-   * \brief Weight to give to daily part of thresholds
-   */
-  ThresholdSize threshold_daily_weight_;
-  /**
-   * \brief Weight to give to hourly part of thresholds
-   */
-  ThresholdSize threshold_hourly_weight_;
   /**
    * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
    */
@@ -481,14 +396,16 @@ void SettingsImplementation::setRoot(const string dirname) noexcept
     offset_sunrise_ = stod(get_value(settings, "OFFSET_SUNRISE"));
     offset_sunset_ = stod(get_value(settings, "OFFSET_SUNSET"));
     confidence_level_ = stod(get_value(settings, "CONFIDENCE_LEVEL"));
-    maximum_time_seconds_ = stol(get_value(settings, "MAXIMUM_TIME"));
-    interim_output_interval_seconds_ = stol(get_value(settings, "INTERIM_OUTPUT_INTERVAL"));
-    minimum_simulation_count_ = stol(get_value(settings, "MINIMUM_SIMULATIONS"));
-    minimum_active_simulation_count_ = stol(get_value(settings, "MINIMUM_ACTIVE_SIMULATIONS"));
-    maximum_simulation_count_ = stol(get_value(settings, "MAXIMUM_SIMULATIONS"));
-    threshold_scenario_weight_ = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
-    threshold_daily_weight_ = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
-    threshold_hourly_weight_ = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
+    settings::maximum_time_seconds = stol(get_value(settings, "MAXIMUM_TIME"));
+    settings::interim_output_interval_seconds =
+      stol(get_value(settings, "INTERIM_OUTPUT_INTERVAL"));
+    settings::minimum_simulation_count = stol(get_value(settings, "MINIMUM_SIMULATIONS"));
+    settings::minimum_active_simulation_count =
+      stol(get_value(settings, "MINIMUM_ACTIVE_SIMULATIONS"));
+    settings::maximum_simulation_count = stol(get_value(settings, "MAXIMUM_SIMULATIONS"));
+    settings::threshold_scenario_weight = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
+    settings::threshold_daily_weight = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
+    settings::threshold_hourly_weight = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
     setOutputDateOffsets(get_value(settings, "OUTPUT_DATE_OFFSETS").c_str());
     default_percent_conifer_ = stoi(get_value(settings, "DEFAULT_PERCENT_CONIFER"));
     default_percent_dead_fir_ = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
@@ -502,6 +419,10 @@ void SettingsImplementation::setRoot(const string dirname) noexcept
         logging::warning("%s = %s", kv.first.c_str(), kv.second.c_str());
       }
     }
+    settings::was_initialized = true;
+    logging::check_fatal(
+      !settings::was_initialized, "Settings read from file, but was_initialized is false"
+    );
   }
   catch (const std::exception& ex)
   {
@@ -599,46 +520,6 @@ size_t Settings::salt() noexcept { return SettingsImplementation::instance().sal
 void Settings::setSalt(const size_t value) noexcept
 {
   SettingsImplementation::instance().setSalt(value);
-}
-size_t Settings::maximumTimeSeconds() noexcept
-{
-  return SettingsImplementation::instance().maximumTimeSeconds();
-}
-void Settings::setMaximumTimeSeconds(const size_t value) noexcept
-{
-  return SettingsImplementation::instance().setMaximumTimeSeconds(value);
-}
-size_t Settings::interimOutputIntervalSeconds() noexcept
-{
-  return SettingsImplementation::instance().interimOutputIntervalSeconds();
-}
-void Settings::setInterimOutputIntervalSeconds(const size_t value) noexcept
-{
-  return SettingsImplementation::instance().setInterimOutputIntervalSeconds(value);
-}
-size_t Settings::minimumSimulationCount() noexcept
-{
-  return SettingsImplementation::instance().minimumSimulationCount();
-}
-size_t Settings::minimumActiveSimulationCount() noexcept
-{
-  return SettingsImplementation::instance().minimumActiveSimulationCount();
-}
-size_t Settings::maximumSimulationCount() noexcept
-{
-  return SettingsImplementation::instance().maximumSimulationCount();
-}
-ThresholdSize Settings::thresholdScenarioWeight() noexcept
-{
-  return SettingsImplementation::instance().thresholdScenarioWeight();
-}
-ThresholdSize Settings::thresholdDailyWeight() noexcept
-{
-  return SettingsImplementation::instance().thresholdDailyWeight();
-}
-ThresholdSize Settings::thresholdHourlyWeight() noexcept
-{
-  return SettingsImplementation::instance().thresholdHourlyWeight();
 }
 vector<int> Settings::outputDateOffsets()
 {

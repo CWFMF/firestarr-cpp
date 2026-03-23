@@ -8,33 +8,51 @@ namespace fs
 namespace settings
 {
 // Whether or not to save individual grids
-static atomic<bool> save_individual{false};
+extern atomic<bool> save_individual;
 // Whether or not to run things asynchronously where possible
-static atomic<bool> run_async{true};
+extern atomic<bool> run_async;
 // Whether or not to run deterministically (100% chance of spread & survival)
-static atomic<bool> deterministic{false};
+extern atomic<bool> deterministic;
 // Whether or not to create a probability surface
-static atomic<bool> surface{false};
+extern atomic<bool> surface;
 // Whether or not to save grids as .asc
-static atomic<bool> save_as_ascii{false};
+extern atomic<bool> save_as_ascii;
 // Whether or not to save grids as .tif
-static atomic<bool> save_as_tiff{true};
+extern atomic<bool> save_as_tiff;
 // Whether or not to save points used for spread
-static atomic<bool> save_points{false};
+extern atomic<bool> save_points;
 // Whether or not to save intensity grids
-static atomic<bool> save_intensity{true};
+extern atomic<bool> save_intensity;
 // Whether or not to save probability grids
-static atomic<bool> save_probability{true};
+extern atomic<bool> save_probability;
 // Whether or not to save occurrence grids
-static atomic<bool> save_occurrence{false};
+extern atomic<bool> save_occurrence;
 // Whether or not to save simulation area grids
-static atomic<bool> save_simulation_area{false};
+extern atomic<bool> save_simulation_area;
 // Whether or not to force greenup for all fires
-static atomic<bool> force_greenup{false};
+extern atomic<bool> force_greenup;
 // Whether or not to force no greenup for all fires
-static atomic<bool> force_no_greenup{false};
+extern atomic<bool> force_no_greenup;
 // Whether or not to force static curing value for all fires
-static atomic<bool> force_static_curing{false};
+extern atomic<bool> force_static_curing;
+// Maximum time simulation can run before it is ended and whatever results it has are used (s)
+extern atomic<size_t> maximum_time_seconds;
+// Time between generating interim outputs (s)
+extern atomic<size_t> interim_output_interval_seconds;
+// Minimum number of simulations that must run before stopping
+extern atomic<size_t> minimum_simulation_count;
+// Minimum number of simulations with any spread that must run before stopping
+extern atomic<size_t> minimum_active_simulation_count;
+// Maximum number of simulations before stopping and whatever results it has are used
+extern atomic<size_t> maximum_simulation_count;
+// Weight to give to Scenario part of thresholds=
+extern atomic<ThresholdSize> threshold_scenario_weight;
+// Weight to give to daily part of thresholds
+extern atomic<ThresholdSize> threshold_daily_weight;
+// Weight to give to hourly part of thresholds
+extern atomic<ThresholdSize> threshold_hourly_weight;
+// HACK: provide a way to check we actually initialized
+extern atomic<bool> was_initialized;
 }
 /**
  * \brief Reads and provides access to settings for the simulation.
@@ -160,60 +178,6 @@ public:
    * \return Set salt to use for random seeds
    */
   static void setSalt(const size_t value) noexcept;
-  /**
-   * \brief Maximum time simulation can run before it is ended and whatever results it has are used
-   * (s)
-   * \return Maximum time simulation can run before it is ended and whatever results it has are used
-   * (s)
-   */
-  [[nodiscard]] static size_t maximumTimeSeconds() noexcept;
-  /**
-   * \brief Set maximum time simulation can run before it is ended and whatever results it has are
-   * used (s)
-   * \return Set maximum time simulation can run before it is ended and whatever results it has are
-   * used (s)
-   */
-  static void setMaximumTimeSeconds(const size_t value) noexcept;
-  /**
-   * \brief Time between generating interim outputs (s)
-   * \return Time between generating interim outputs (s)
-   */
-  [[nodiscard]] static size_t interimOutputIntervalSeconds() noexcept;
-  /**
-   * \brief Set time between generating interim outputs (s)
-   * \return Set time between generating interim outputs (s)
-   */
-  static void setInterimOutputIntervalSeconds(const size_t value) noexcept;
-  /**
-   * \brief Minimum number of simulations that must run before stopping
-   * \return Minimum number of simulations that must run before stopping
-   */
-  [[nodiscard]] static size_t minimumSimulationCount() noexcept;
-  /**
-   * \brief Minimum number of simulations that must run before stopping
-   * \return Minimum number of simulations that must run before stopping
-   */
-  [[nodiscard]] static size_t minimumActiveSimulationCount() noexcept;
-  /**
-   * \brief Maximum number of simulations before stopping and whatever results it has are used
-   * \return Maximum number of simulations before stopping and whatever results it has are used
-   */
-  [[nodiscard]] static size_t maximumSimulationCount() noexcept;
-  /**
-   * \brief Weight to give to Scenario part of thresholds
-   * \return Weight to give to Scenario part of thresholds
-   */
-  [[nodiscard]] static ThresholdSize thresholdScenarioWeight() noexcept;
-  /**
-   * \brief Weight to give to daily part of thresholds
-   * \return Weight to give to daily part of thresholds
-   */
-  [[nodiscard]] static ThresholdSize thresholdDailyWeight() noexcept;
-  /**
-   * \brief Weight to give to hourly part of thresholds
-   * \return Weight to give to hourly part of thresholds
-   */
-  [[nodiscard]] static ThresholdSize thresholdHourlyWeight() noexcept;
   /**
    * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
    * \return Days to output probability contours for (1 is start date, 2 is day after, etc.)

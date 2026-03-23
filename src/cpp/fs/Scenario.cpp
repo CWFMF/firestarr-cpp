@@ -100,8 +100,8 @@ static void make_threshold(
   ThresholdSize (*convert)(double value)
 )
 {
-  const auto total_weight = Settings::thresholdScenarioWeight() + Settings::thresholdDailyWeight()
-                          + Settings::thresholdHourlyWeight();
+  const auto total_weight = settings::threshold_scenario_weight + settings::threshold_daily_weight
+                          + settings::threshold_hourly_weight;
   uniform_real_distribution<ThresholdSize> rand(0.0, 1.0);
   const auto general = rand(*mt);
   for (size_t i = start_day; i < MAX_DAYS; ++i)
@@ -123,9 +123,9 @@ static void make_threshold(
           min(
             1.0,
             1.0
-              - (Settings::thresholdScenarioWeight() * general
-                 + Settings::thresholdDailyWeight() * daily
-                 + Settings::thresholdHourlyWeight() * hourly)
+              - (+settings::threshold_scenario_weight * general
+                 + +settings::threshold_daily_weight * daily
+                 + +settings::threshold_hourly_weight * hourly)
                   / total_weight
           )
         ));
