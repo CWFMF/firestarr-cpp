@@ -253,6 +253,43 @@ string make_timestamp(const YearSize year, const DurationSize time)
   sxprintf(buffer, "%4d-%02ld-%02ld %02ld:%02ld", year, month, day_of_month, hour, minute);
   return {buffer};
 }
+string get_canonical_path(const char* const dir_root, string path)
+{
+#ifdef _WIN32
+  std::replace(path.begin(), path.end(), '/', '\\');
+#else
+  std::replace(path.begin(), path.end(), '\\', '/');
+#endif
+#ifdef _WIN32
+  if (':' == path.at(1))
+  {
+    logging::note("Absolute path use on windows: %s", path.c_str());
+  }
+  else
+#endif
+    if (!path.starts_with("/"))
+  {
+    // not an absolute path
+    // if binary path starts with ./ then ignore it
+    std::filesystem::path p =
+      (0 == strcmp("./", dir_root) || 0 == strcmp(".\\", dir_root)) ? path : (dir_root + path);
+    try
+    {
+#ifdef _WIN32
+      path = std::filesystem::canonical(p).generic_string();
+#else
+      path = std::filesystem::canonical(p).c_str();
+#endif
+      logging::info("Converted relative path to absolute path %s", path.c_str());
+    }
+    catch (std::exception&)
+    {
+      logging::fatal("Unable to convert relative path to canonical for %s", path.c_str());
+      path = "";
+    }
+  }
+  return path;
+}
 string tolower(string value)
 {
   std::transform(value.begin(), value.end(), value.begin(), [](const auto c) {

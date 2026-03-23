@@ -487,6 +487,7 @@ inline bool find_value(
   }
   return false;
 }
+string get_canonical_path(const char* const dir_root, string path);
 // convert string to lower case
 string tolower(string value);
 template <class V>
