@@ -205,6 +205,10 @@ ArgumentParser::ArgumentParser(
   binary_name_ = bin.substr(end, bin.size() - end);
   Settings::setRoot(binary_directory_);
   logging::Log::setLogLevel(fs::logging::LOG_NOTE);
+  logging::check_fatal(
+    !settings::was_initialized,
+    "Trying to add argument parsing, but have not initialized from settings file yet"
+  );
   register_flag(help_requested_, true, "-h", "Show help");
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
@@ -213,6 +217,10 @@ ArgumentParser::ArgumentParser(
 }
 void ArgumentParser::parse_args()
 {
+  logging::check_fatal(
+    !settings::was_initialized,
+    "Trying to parse arguments, but have not initialized from settings file yet"
+  );
   auto& args = args_expanded();
   while (cur_arg_ < args.size())
   {
