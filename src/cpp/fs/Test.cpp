@@ -7,6 +7,7 @@
 #include "Model.h"
 #include "Observer.h"
 #include "SafeVector.h"
+#include "Settings.h"
 #include "Util.h"
 namespace fs
 {
@@ -329,7 +330,7 @@ int test(
   Settings::setMinimumRos(0.0);
   settings::save_points = false;
   // make sure all tests run regardless of how long it takes
-  Settings::setMaximumTimeSeconds(numeric_limits<size_t>::max());
+  settings::maximum_time_seconds = numeric_limits<size_t>::max();
   const auto hours = INVALID_TIME == num_hours ? DEFAULT_HOURS : num_hours;
   const auto ffmc = (fs::Ffmc::Invalid() == wx->ffmc) ? DEFAULT_FFMC : wx->ffmc;
   const auto dmc = (fs::Dmc::Invalid() == wx->dmc) ? DEFAULT_DMC : wx->dmc;

@@ -28,10 +28,10 @@ Model::Model(
   Environment* env
 )
   : output_directory_(output_directory), start_time_(start_time), running_since_(Clock::now()),
-    time_limit_(Settings::maximumTimeSeconds()), no_interim_save_since_(Clock::now()),
-    interim_save_interval_(Settings::interimOutputIntervalSeconds()), env_(env),
-    active_simulations_still_required_(Settings::minimumActiveSimulationCount()),
-    latitude_(start_point.latitude()), longitude_(start_point.longitude())
+    time_limit_(settings::maximum_time_seconds), no_interim_save_since_(Clock::now()),
+    interim_save_interval_(settings::interim_output_interval_seconds), env_(env),
+    latitude_(start_point.latitude()), longitude_(start_point.longitude()),
+    active_simulations_still_required_(settings::minimum_active_simulation_count)
 {
   logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
   const auto nd_for_point = calculate_nd_ref_for_point(env->elevation(), start_point);
@@ -552,13 +552,13 @@ bool Model::add_statistics(
   {
     return true;
   }
-  is_under_simulation_minimum_ = all_sizes->size() < Settings::minimumSimulationCount();
+  is_under_simulation_minimum_ = all_sizes->size() < settings::minimum_simulation_count;
   if (isUnderSimulationCountMinimum())
   {
     return true;
   }
   active_simulations_still_required_ = [&]() {
-    size_t num_left = Settings::minimumActiveSimulationCount();
+    size_t num_left = settings::minimum_active_simulation_count;
     for (const auto s : *all_sizes)
     {
       if (s > initial_size())
@@ -580,13 +580,13 @@ bool Model::add_statistics(
   {
     return true;
   }
-  is_over_simulation_count_ = all_sizes->size() >= Settings::maximumSimulationCount();
+  is_over_simulation_count_ = all_sizes->size() >= settings::maximum_simulation_count;
   if (isOverSimulationCountMaximum())
   {
     logging::note(
       "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
       i,
-      Settings::maximumSimulationCount()
+      +settings::maximum_simulation_count
     );
     return false;
   }
@@ -595,7 +595,7 @@ bool Model::add_statistics(
     logging::note(
       "Stopping after %d iterations. Time limit of %d seconds has been reached.",
       i,
-      Settings::maximumTimeSeconds()
+      +settings::maximum_time_seconds
     );
     return false;
   }
@@ -630,7 +630,7 @@ size_t runs_required(
     logging::note(
       "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
       i,
-      Settings::maximumSimulationCount()
+      +settings::maximum_simulation_count
     );
     return 0;
   }
@@ -639,19 +639,19 @@ size_t runs_required(
     logging::note(
       "Stopping after %d iterations. Time limit of %d seconds has been reached.",
       i,
-      Settings::maximumTimeSeconds()
+      +settings::maximum_time_seconds
     );
     return 0;
   }
-  const auto max_sims_left = Settings::maximumSimulationCount() - i;
+  const auto max_sims_left = settings::maximum_simulation_count - i;
   if (model.isUnderSimulationCountMinimum())
   {
     logging::debug(
       "Continuing after %d iterations. Simulation minimum of %d simulations has not been reached.",
       i,
-      Settings::minimumSimulationCount()
+      +settings::minimum_simulation_count
     );
-    return min(max_sims_left, Settings::minimumSimulationCount() - i);
+    return min(max_sims_left, settings::minimum_simulation_count - i);
   }
   const auto active_still_required = model.activeSimulationsStillRequired();
   if (0 < active_still_required)
@@ -659,7 +659,7 @@ size_t runs_required(
     logging::debug(
       "Continuing after %d iterations. Active simulation minimum of %d simulations has not been reached.",
       i,
-      Settings::minimumActiveSimulationCount()
+      +settings::minimum_active_simulation_count
     );
     // HACK: if we have n active sims so far then expect that many per i simulations?
     return min(max_sims_left, i * active_still_required);
@@ -863,7 +863,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   auto timer = std::thread([&]() {
     constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
     bool keep_checking{true};
-    const bool is_limited = 0 != Settings::maximumTimeSeconds();
+    const bool is_limited = 0 != settings::maximum_time_seconds;
     const bool with_interim = 0 != interim_save_interval_.count();
     if (!is_limited)
     {
@@ -925,7 +925,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
       }
     }
     const auto run_time_seconds = runTime().count();
-    const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds;
+    const auto time_left = settings::maximum_time_seconds - run_time_seconds;
     logging::debug(
       "Ending timer after %ld seconds with %ld seconds left", run_time_seconds, time_left
     );
@@ -1231,7 +1231,7 @@ int Model::runScenarios(
   auto probabilities = model.runIterations(start_point, start, start_day);
   logging::note("Ran %d simulations", Scenario::completed());
   const auto run_time_seconds = model.runTime();
-  const auto time_left = Settings::maximumTimeSeconds() - run_time_seconds.count();
+  const auto time_left = settings::maximum_time_seconds - run_time_seconds.count();
   logging::debug(
     "Finished successfully after %ld seconds with %ld seconds left",
     run_time_seconds.count(),
