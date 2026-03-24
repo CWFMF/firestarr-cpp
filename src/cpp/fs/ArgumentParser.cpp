@@ -2,6 +2,7 @@
 #include "ArgumentParser.h"
 #include <utility>
 #include "Log.h"
+#include "Settings.h"
 namespace fs::settings
 {
 static map<std::string, std::function<void()>> PARSE_FCT{};
@@ -483,7 +484,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       );
     }
     register_setter<string>(
-      [&](const auto v) { settings.setOutputDateOffsets(v); },
+      [&](const auto v) { settings.output_date_offsets = OutputDateOffsets{v}; },
       "--output_date_offsets",
       "Override output date offsets",
       false,

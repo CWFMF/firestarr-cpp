@@ -429,7 +429,7 @@ Iteration Model::readScenarios(
   static const auto& settings = fs::settings::instance();
   // FIX: this is going to do a lot of work to set up each scenario if we're making a surface
   vector<Scenario*> result{};
-  const auto saves = settings.outputDateOffsets();
+  const auto saves = settings.output_date_offsets.offsets();
   const auto setup_scenario = [&](Scenario* scenario) {
     if (settings.save_individual)
     {
@@ -802,7 +802,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
   auto last_date = start_day;
-  for (const auto& i : settings.outputDateOffsets())
+  for (const auto& i : settings.output_date_offsets.offsets())
   {
     last_date = max(static_cast<Day>(start_day + i), last_date);
   }
@@ -1233,7 +1233,7 @@ int Model::runScenarios(
     const auto& w = model.wx_.begin()->second;
     logging::debug("Have weather from day %d to %d", w.minDate(), w.maxDate());
     const auto numDays = (w.maxDate() - w.minDate() + 1);
-    const auto needDays = settings.maxDateOffset();
+    const auto needDays = settings.output_date_offsets.max();
     if (numDays < needDays)
     {
       logging::fatal(

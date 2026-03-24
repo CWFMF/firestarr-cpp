@@ -39,6 +39,10 @@ static vector<T> parse_list(string str, T (*convert)(const string s))
   }
   return result;
 }
+OutputDateOffsets::OutputDateOffsets(const string value) noexcept
+  : output_date_offsets_{parse_list<int>(value, [](const string s) { return stoi(s); })},
+    max_date_offset_{*std::max_element(output_date_offsets_.begin(), output_date_offsets_.end())}
+{ }
 [[nodiscard]] int Settings::staticCuring() const noexcept { return static_curing_; }
 void Settings::setStaticCuring(const int value) noexcept
 {
@@ -48,13 +52,6 @@ void Settings::setStaticCuring(const int value) noexcept
   static_curing_ = value;
   force_static_curing = true;
 }
-[[nodiscard]] vector<int> Settings::outputDateOffsets() const { return output_date_offsets_; }
-void Settings::setOutputDateOffsets(const string value)
-{
-  output_date_offsets_ = parse_list<int>(value, [](const string s) { return stoi(s); });
-  max_date_offset_ = *std::max_element(output_date_offsets_.begin(), output_date_offsets_.end());
-}
-[[nodiscard]] int Settings::maxDateOffset() const noexcept { return max_date_offset_; }
 string get_value(string_map<string>& settings, const string_view key)
 {
   const auto found = settings.find(key);
@@ -129,7 +126,7 @@ Settings::Settings(const string dirname)
     threshold_scenario_weight = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
     threshold_daily_weight = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
     threshold_hourly_weight = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
-    setOutputDateOffsets(get_value(settings, "OUTPUT_DATE_OFFSETS").c_str());
+    output_date_offsets = OutputDateOffsets{get_value(settings, "OUTPUT_DATE_OFFSETS")};
     default_percent_conifer = stoi(get_value(settings, "DEFAULT_PERCENT_CONIFER"));
     default_percent_dead_fir = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
     intensity_max_low = stoi(get_value(settings, "INTENSITY_MAX_LOW"));

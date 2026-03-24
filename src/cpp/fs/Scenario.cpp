@@ -438,7 +438,7 @@ Scenario::Scenario(
     "No weather for start time %s",
     make_timestamp(model->year(), start_time_).c_str()
   );
-  const auto saves = settings.outputDateOffsets();
+  const auto saves = settings.output_date_offsets.offsets();
   const auto last_save = start_day_ + saves[saves.size() - 1];
   logging::check_fatal(
     last_save > weather_->maxDate(),
