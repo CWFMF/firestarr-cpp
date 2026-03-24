@@ -149,7 +149,7 @@ int main(const int argc, const char* const argv[])
           fs::logging::debug("Calculated number of days until end of year: %d", num_days);
           // +1 because day 1 counts too
           // +2 so that results don't change when we change number of days
-          num_days = min(num_days, static_cast<size_t>(settings.maxDateOffset()) + 2);
+          num_days = min(num_days, static_cast<size_t>(settings.output_date_offsets.max()) + 2);
         }
         catch (std::exception&)
         {

@@ -10,6 +10,26 @@ namespace settings
 {
 class Settings;
 Settings& instance() noexcept;
+class OutputDateOffsets
+{
+public:
+  OutputDateOffsets(const string value) noexcept;
+  OutputDateOffsets() noexcept = default;
+  OutputDateOffsets(const OutputDateOffsets& rhs) = default;
+  OutputDateOffsets(OutputDateOffsets&& rhs) = default;
+  OutputDateOffsets& operator=(const OutputDateOffsets& rhs) = default;
+  OutputDateOffsets& operator=(OutputDateOffsets&& rhs) = default;
+  // Days to output probability contours for (1 is start date, 2 is day after, etc.)
+  [[nodiscard]] vector<int> offsets() const noexcept { return output_date_offsets_; }
+  // Whatever the maximum value in the date offsets is
+  [[nodiscard]] int max() const noexcept { return max_date_offset_; }
+
+private:
+  // Days to output probability contours for (1 is start date, 2 is day after, etc.)
+  vector<int> output_date_offsets_{};
+  // Whatever the maximum value in the date offsets is
+  int max_date_offset_{0};
+};
 /**
  * \brief Reads and provides access to settings for the simulation.
  */
@@ -92,6 +112,8 @@ public:
   LazyPath raster_root{};
   // Name of file that defines fuel lookup table
   LazyFuelLookup fuel_lookup{};
+  // Days to output probability contours for (1 is start date, 2 is day after, etc.)
+  OutputDateOffsets output_date_offsets{};
   /**
    * \brief curing value
    * \return curing value
@@ -102,21 +124,6 @@ public:
    * \return Set curing value
    */
   void setStaticCuring(const int value) noexcept;
-  /**
-   * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
-   * \return Days to output probability contours for (1 is start date, 2 is day after, etc.)
-   */
-  [[nodiscard]] vector<int> outputDateOffsets() const;
-  /**
-   * \brief Set days to output probability contours for (1 is start date, 2 is day after, etc.)
-   * \return None
-   */
-  void setOutputDateOffsets(const string value);
-  /**
-   * \brief Whatever the maximum value in the date offsets is
-   * \return Whatever the maximum value in the date offsets is
-   */
-  [[nodiscard]] int maxDateOffset() const noexcept;
   Settings() = delete;
   Settings(const string dirname);
 
@@ -129,14 +136,6 @@ private:
    * \brief Static curing value
    */
   int static_curing_{75};
-  /**
-   * \brief Days to output probability contours for (1 is start date, 2 is day after, etc.)
-   */
-  vector<int> output_date_offsets_;
-  /**
-   * \brief Whatever the maximum value in the date offsets is
-   */
-  int max_date_offset_;
 };
 }
 }
