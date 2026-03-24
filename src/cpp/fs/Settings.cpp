@@ -146,37 +146,38 @@ Settings::Settings(const string dirname)
     default_percent_dead_fir = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
     intensity_max_low = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
     intensity_max_moderate = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
-    // save_individual = get_flag(false, settings, "SAVE_INDIVIDUAL");
-    // run_async = get_flag(true, settings, "RUN_ASYNC");
-    // // FIX: have single MODE = setting
-    // deterministic = get_flag(false, settings, "DETERMINISTIC");
-    // surface = get_flag(false, settings, "SURFACE");
-    // save_as_ascii = get_flag(false, settings, "SAVE_AS_ASCII");
-    // save_points = get_flag(true, settings, "SAVE_AS_TIFF");
-    // save_intensity = get_flag(true, settings, "SAVE_INTENSITY");
-    // save_probability = get_flag(true, settings, "SAVE_PROBABILITY");
-    // save_occurrence = get_flag(true, settings, "SAVE_OCCURRENCE");
-    // save_simulation_area = get_flag(true, settings, "SAVE_SIMULATION_AREA");
-    // // FIX: have single GREENUP = setting ?
-    // force_greenup = get_flag(true, settings, "FORCE_GREENUP");
-    // force_no_greenup = get_flag(true, settings, "FORCE_NO_GREENUP");
-    // if (const auto value = get_value(settings, "STATIC_CURING", false); "INVALID" != value)
-    // {
-    //   static_curing = stoi(value);
-    // }
-    // if (const auto value = get_value(settings, "UTC_OFFSET", false); "INVALID" != value)
-    // {
-    //   utc_offset = stod(value);
-    // }
-    // if (const auto value = get_value(settings, "SALT", false); "INVALID" != value)
-    // {
-    //   const int v = stoi(value);
-    //   salt = static_cast<size_t>(abs(v));
-    //   if (v < 0)
-    //   {
-    //     logging::warning("Negative salt value '%d' converted to positive value %zu", v, salt);
-    //   }
-    // }
+    save_individual = get_flag(false, settings, "SAVE_INDIVIDUAL");
+    run_async = get_flag(true, settings, "RUN_ASYNC");
+    // FIX: have single MODE = setting
+    deterministic = get_flag(false, settings, "DETERMINISTIC");
+    surface = get_flag(false, settings, "SURFACE");
+    save_as_ascii = get_flag(false, settings, "SAVE_AS_ASCII");
+    save_as_tiff = get_flag(true, settings, "SAVE_AS_TIFF");
+    save_points = get_flag(false, settings, "SAVE_POINTS");
+    save_intensity = get_flag(true, settings, "SAVE_INTENSITY");
+    save_probability = get_flag(true, settings, "SAVE_PROBABILITY");
+    save_occurrence = get_flag(false, settings, "SAVE_OCCURRENCE");
+    save_simulation_area = get_flag(false, settings, "SAVE_SIMULATION_AREA");
+    // FIX: have single GREENUP = setting ?
+    force_greenup = get_flag(false, settings, "FORCE_GREENUP");
+    force_no_greenup = get_flag(false, settings, "FORCE_NO_GREENUP");
+    if (const auto value = get_value(settings, "STATIC_CURING", false); "INVALID" != value)
+    {
+      static_curing = stoi(value);
+    }
+    if (const auto value = get_value(settings, "UTC_OFFSET", false); "INVALID" != value)
+    {
+      utc_offset = stod(value);
+    }
+    if (const auto value = get_value(settings, "SALT", false); "INVALID" != value)
+    {
+      const int v = stoi(value);
+      salt = static_cast<size_t>(abs(v));
+      if (v < 0)
+      {
+        logging::warning("Negative salt value '%d' converted to positive value %zu", v, salt);
+      }
+    }
     if (!settings.empty())
     {
       logging::warning("Unused settings in settings file %s", filename.c_str());
