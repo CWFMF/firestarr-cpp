@@ -39,30 +39,6 @@ static vector<T> parse_list(string str, T (*convert)(const string s))
   }
   return result;
 }
-[[nodiscard]] const char* Settings::rasterRoot() const noexcept
-{
-  // HACK: resolve path when used to avoid failure when invalid but unused
-  static auto canonical_path = get_canonical_path(dir_root_.c_str(), raster_root_);
-  return canonical_path.c_str();
-}
-[[nodiscard]] const FuelLookup& Settings::fuelLookup() const noexcept
-{
-  // HACK: pretend this is const because it only gets assigned once
-  if (nullptr == fuel_lookup_)
-  {
-    // HACK: resolve path when used to avoid failure when invalid but unused
-    static auto canonical_path = get_canonical_path(dir_root_.c_str(), fuel_lookup_table_file_);
-    // do this here because it relies on instance being created already
-    fuel_lookup_ = std::make_unique<FuelLookup>(canonical_path.c_str());
-    logging::check_fatal(nullptr == fuel_lookup_, "Fuel lookup table has not been loaded");
-  }
-  return *fuel_lookup_;
-}
-void Settings::setRasterRoot(const string dirname) noexcept { raster_root_ = dirname; }
-void Settings::setFuelLookupTable(const string filename) noexcept
-{
-  fuel_lookup_table_file_ = filename;
-}
 [[nodiscard]] int Settings::staticCuring() const noexcept { return static_curing_; }
 void Settings::setStaticCuring(const int value) noexcept
 {
@@ -132,8 +108,8 @@ Settings::Settings(const string dirname)
       in.close();
     }
     // HACK: resolve path when used to avoid failure when invalid but unused
-    raster_root_ = get_value(settings, "RASTER_ROOT");
-    fuel_lookup_table_file_ = get_value(settings, "FUEL_LOOKUP_TABLE");
+    raster_root = LazyPath(dir_root_, get_value(settings, "RASTER_ROOT"));
+    fuel_lookup = LazyFuelLookup(dir_root_, get_value(settings, "FUEL_LOOKUP_TABLE"));
     // HACK: run into fuel consumption being too low if we don't have a minimum ros
     static const auto MinRos = 0.05;
     // HACK: make sure this is always > 0 so that we don't have to check

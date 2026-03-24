@@ -60,9 +60,9 @@ void Model::setWeather(const FwiWeather& weather, const Day start_day)
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
+  static const auto& lookup = settings.fuel_lookup.lookup();
   yesterday_ = weather;
-  const auto fuel_lookup = settings.fuelLookup();
-  const auto& f = fuel_lookup.usedFuels();
+  const auto& f = lookup.usedFuels();
   wx_.emplace(
     0,
     FireWeather{
@@ -84,6 +84,7 @@ void Model::readWeather(
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
+  static const auto& lookup = settings.fuel_lookup.lookup();
   map<size_t, vector<FwiWeather>> wx{};
   map<size_t, map<Day, FwiWeather>> wx_daily{};
   map<Day, struct tm> dates{};
@@ -271,8 +272,7 @@ void Model::readWeather(
 #endif
     in.close();
   }
-  const auto fuel_lookup = settings.fuelLookup();
-  const auto& f = fuel_lookup.usedFuels();
+  const auto& f = lookup.usedFuels();
   // loop through and try to find duplicates
   for (const auto& kv : wx)
   {

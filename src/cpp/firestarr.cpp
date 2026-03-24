@@ -176,7 +176,7 @@ int main(const int argc, const char* const argv[])
         parser.output_directory,
         parser.wx_file_name.c_str(),
         yesterday,
-        settings.rasterRoot(),
+        settings.raster_root.canonical(),
         start_point,
         start,
         parser.perim,
