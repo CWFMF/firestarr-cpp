@@ -2,6 +2,7 @@
 #ifndef FS_SETTINGS_H
 #define FS_SETTINGS_H
 #include "stdafx.h"
+#include <string>
 #include "FuelLookup.h"
 #include "unstable.h"
 namespace fs
@@ -19,12 +20,15 @@ public:
   OutputDateOffsets(OutputDateOffsets&& rhs) = default;
   OutputDateOffsets& operator=(const OutputDateOffsets& rhs) = default;
   OutputDateOffsets& operator=(OutputDateOffsets&& rhs) = default;
+  // Original text that was parsed
+  [[nodiscard]] string text() const noexcept { return text_; }
   // Days to output probability contours for (1 is start date, 2 is day after, etc.)
   [[nodiscard]] vector<int> offsets() const noexcept { return output_date_offsets_; }
   // Whatever the maximum value in the date offsets is
   [[nodiscard]] int max() const noexcept { return max_date_offset_; }
 
 private:
+  string text_{};
   // Days to output probability contours for (1 is start date, 2 is day after, etc.)
   vector<int> output_date_offsets_{};
   // Whatever the maximum value in the date offsets is
@@ -45,6 +49,11 @@ public:
   { }
   int value() const noexcept { return value_.value(); };
   bool has_value() const noexcept { return value_.has_value(); }
+  string as_string() const noexcept
+  {
+    string result = has_value() ? std::format("%d", value()) : "";
+    return result;
+  }
 
 private:
   std::optional<int> value_{};
@@ -135,6 +144,8 @@ public:
   OutputDateOffsets output_date_offsets{};
   Settings() = delete;
   Settings(const string dirname);
+  // save to directory in same format parse expects
+  void saveTo(const string& output_directory) const noexcept;
 
 private:
   /**

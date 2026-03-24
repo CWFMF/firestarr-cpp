@@ -172,6 +172,7 @@ int main(const int argc, const char* const argv[])
       );
       start = start_date;
       parser.log_args();
+      settings::instance().saveTo(parser.output_directory);
       result = Model::runScenarios(
         parser.output_directory,
         parser.wx_file_name.c_str(),
