@@ -173,7 +173,9 @@ string run_test(
   const bool ignore_existing
 )
 {
-  static const Settings& settings = settings::instance();
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  static const auto& lookup = settings.fuel_lookup.lookup();
   string test_name = generate_test_name(fuel_name, slope, aspect, wind);
   logging::verbose("Queueing test for %s", &(test_name[0]));
   const string output_directory = string(base_directory) + test_name + "/";
@@ -200,7 +202,7 @@ string run_test(
   const auto start_date = start_time.tm_yday;
   const auto end_date = start_date + static_cast<DurationSize>(num_hours) / DAY_HOURS;
   make_directory_recursive(string(output_directory).c_str());
-  const auto fuel = settings.fuelLookup().bySimplifiedName(simplify_fuel_name(fuel_name));
+  const auto fuel = lookup.bySimplifiedName(simplify_fuel_name(fuel_name));
   auto values = vector<Cell>();
   for (Idx r = 0; r < MAX_ROWS; ++r)
   {

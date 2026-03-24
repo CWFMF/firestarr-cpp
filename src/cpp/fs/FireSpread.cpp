@@ -164,7 +164,7 @@ static SpreadKey make_key(const SlopeSize slope, const AspectSize aspect, const 
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
-  const auto lookup = settings.fuelLookup();
+  static const auto& lookup = settings.fuel_lookup.lookup();
   const auto key =
     Cell::key(Cell::hashCell(slope, aspect, FuelType::safeCode(lookup.byName(fuel_name))));
   const auto a = Cell::aspect(key);
