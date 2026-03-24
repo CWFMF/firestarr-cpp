@@ -43,15 +43,6 @@ OutputDateOffsets::OutputDateOffsets(const string value) noexcept
   : output_date_offsets_{parse_list<int>(value, [](const string s) { return stoi(s); })},
     max_date_offset_{*std::max_element(output_date_offsets_.begin(), output_date_offsets_.end())}
 { }
-[[nodiscard]] int Settings::staticCuring() const noexcept { return static_curing_; }
-void Settings::setStaticCuring(const int value) noexcept
-{
-  logging::check_fatal(
-    0 > value || 100 < value, "Grass curing (%) must be in range [0-100] but got %d", value
-  );
-  static_curing_ = value;
-  force_static_curing = true;
-}
 string get_value(string_map<string>& settings, const string_view key)
 {
   const auto found = settings.find(key);

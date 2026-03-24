@@ -577,9 +577,9 @@ public:
   {
     // HACK: resolve once and fail if not set already
     static const auto& settings = fs::settings::instance();
-    if (settings.force_static_curing)
+    if (settings.static_curing.has_value())
     {
-      return settings.staticCuring();
+      return settings.static_curing.value();
     }
     const auto is_drought = wx.dc.value > 500;
     return is_drought ? 100 : calculate_grass_curing(nd);
