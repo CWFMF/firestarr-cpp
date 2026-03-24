@@ -30,6 +30,25 @@ private:
   // Whatever the maximum value in the date offsets is
   int max_date_offset_{0};
 };
+class StaticCuring
+{
+public:
+  StaticCuring() noexcept = default;
+  StaticCuring(const int value) noexcept
+    : value_{[&]() {
+        // HACK: enforce bounds
+        logging::check_fatal(
+          0 > value || 100 < value, "Grass curing (%) must be in range [0-100] but got %d", value
+        );
+        return value;
+      }()}
+  { }
+  int value() const noexcept { return value_.value(); };
+  bool has_value() const noexcept { return value_.has_value(); }
+
+private:
+  std::optional<int> value_{};
+};
 /**
  * \brief Reads and provides access to settings for the simulation.
  */
@@ -62,8 +81,8 @@ public:
   bool force_greenup{false};
   // Whether or not to force no greenup for all fires
   bool force_no_greenup{false};
-  // Whether or not to force static curing value for all fires
-  bool force_static_curing{false};
+  // Static curing value to force for all fires
+  StaticCuring static_curing{};
   // Minimum rate of spread before fire is considered to be spreading (m/min)
   MathSize minimum_ros{0.0};
   // Maximum distance that the fire is allowed to spread in one step (# of cells)
@@ -114,16 +133,6 @@ public:
   LazyFuelLookup fuel_lookup{};
   // Days to output probability contours for (1 is start date, 2 is day after, etc.)
   OutputDateOffsets output_date_offsets{};
-  /**
-   * \brief curing value
-   * \return curing value
-   */
-  [[nodiscard]] int staticCuring() const noexcept;
-  /**
-   * \brief Set curing value
-   * \return Set curing value
-   */
-  void setStaticCuring(const int value) noexcept;
   Settings() = delete;
   Settings(const string dirname);
 
@@ -132,10 +141,6 @@ private:
    * \brief Directory used for settings and relative paths
    */
   string dir_root_;
-  /**
-   * \brief Static curing value
-   */
-  int static_curing_{75};
 };
 }
 }
