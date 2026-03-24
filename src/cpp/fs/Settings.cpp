@@ -40,10 +40,11 @@ static vector<T> parse_list(string str, T (*convert)(const string s))
   return result;
 }
 OutputDateOffsets::OutputDateOffsets(const string value) noexcept
-  : output_date_offsets_{parse_list<int>(value, [](const string s) { return stoi(s); })},
+  : text_(value),
+    output_date_offsets_{parse_list<int>(value, [](const string s) { return stoi(s); })},
     max_date_offset_{*std::max_element(output_date_offsets_.begin(), output_date_offsets_.end())}
 { }
-string get_value(string_map<string>& settings, const string_view key)
+string get_value(string_map<string>& settings, const string_view key, const bool required = true)
 {
   const auto found = settings.find(key);
   if (found != settings.end())
@@ -52,10 +53,33 @@ string get_value(string_map<string>& settings, const string_view key)
     settings.erase(found);
     return result;
   }
-  logging::fatal("Missing setting for %s", string(key).c_str());
+  if (required)
+  {
+    logging::fatal("Missing setting for %s", string(key).c_str());
+  }
   // HACK: use return to avoid compiler warning
   static const auto Invalid = "INVALID";
   return Invalid;
+}
+bool get_flag(const bool default_value, string_map<string>& settings, const string key)
+{
+  constexpr auto required = false;
+  auto value = get_value(settings, key, required);
+  if ("INVALID" == value)
+  {
+    return default_value;
+  }
+  if ("1" == value)
+  {
+    return true;
+  }
+  if ("0" == value)
+  {
+    return false;
+  }
+  return logging::fatal<bool>(
+    "Only valid values for %s are 0 (false) or 1 (true) but got %s", key.c_str(), value.c_str()
+  );
 }
 const string Settings::getRoot() const noexcept { return dir_root_; }
 void Settings::setRoot(const string dirname) noexcept
@@ -122,6 +146,37 @@ Settings::Settings(const string dirname)
     default_percent_dead_fir = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
     intensity_max_low = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
     intensity_max_moderate = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
+    // save_individual = get_flag(false, settings, "SAVE_INDIVIDUAL");
+    // run_async = get_flag(true, settings, "RUN_ASYNC");
+    // // FIX: have single MODE = setting
+    // deterministic = get_flag(false, settings, "DETERMINISTIC");
+    // surface = get_flag(false, settings, "SURFACE");
+    // save_as_ascii = get_flag(false, settings, "SAVE_AS_ASCII");
+    // save_points = get_flag(true, settings, "SAVE_AS_TIFF");
+    // save_intensity = get_flag(true, settings, "SAVE_INTENSITY");
+    // save_probability = get_flag(true, settings, "SAVE_PROBABILITY");
+    // save_occurrence = get_flag(true, settings, "SAVE_OCCURRENCE");
+    // save_simulation_area = get_flag(true, settings, "SAVE_SIMULATION_AREA");
+    // // FIX: have single GREENUP = setting ?
+    // force_greenup = get_flag(true, settings, "FORCE_GREENUP");
+    // force_no_greenup = get_flag(true, settings, "FORCE_NO_GREENUP");
+    // if (const auto value = get_value(settings, "STATIC_CURING", false); "INVALID" != value)
+    // {
+    //   static_curing = stoi(value);
+    // }
+    // if (const auto value = get_value(settings, "UTC_OFFSET", false); "INVALID" != value)
+    // {
+    //   utc_offset = stod(value);
+    // }
+    // if (const auto value = get_value(settings, "SALT", false); "INVALID" != value)
+    // {
+    //   const int v = stoi(value);
+    //   salt = static_cast<size_t>(abs(v));
+    //   if (v < 0)
+    //   {
+    //     logging::warning("Negative salt value '%d' converted to positive value %zu", v, salt);
+    //   }
+    // }
     if (!settings.empty())
     {
       logging::warning("Unused settings in settings file %s", filename.c_str());
@@ -136,5 +191,125 @@ Settings::Settings(const string dirname)
     logging::fatal(ex);
     std::terminate();
   }
+}
+void Settings::saveTo(const string& output_directory) const noexcept
+{
+  const auto filename = string(output_directory) + "settings.ini";
+  ofstream out{filename};
+  auto put = [&](const string& key, const string& comment, const auto& value) {
+    out << "# " << comment << "\n";
+    out << key << " = " << value << "\n";
+  };
+  // HACK: just hardcode how this works since it's the opposite of parsing
+  put("RASTER_ROOT", "root directory to read rasters from", raster_root.canonical());
+  put(
+    "MINIMUM_ROS",
+    "minimum rate of spread before fire is considered to actually be spreading",
+    minimum_ros
+  );
+  put(
+    "MAX_SPREAD_DISTANCE",
+    "maximum distance that the fire is allowed to spread in one step (# of cells)",
+    maximum_spread_distance
+  );
+  put("OUTPUT_DATE_OFFSETS", "days to output probability contours for", output_date_offsets.text());
+  put("FUEL_LOOKUP_TABLE", "lookup table for fuels (prometheus format)", fuel_lookup.canonical());
+  put("MINIMUM_FFMC", "minimum ffmc for fire to spread", minimum_ffmc);
+  put("MINIMUM_FFMC_AT_NIGHT", "minimum ffmc for fire to spread at night", minimum_ffmc_at_night);
+  put(
+    "OFFSET_SUNRISE",
+    "offset from sunrise at which the day is considered to start (hours)",
+    offset_sunrise
+  );
+  put(
+    "OFFSET_SUNSET",
+    "offset from sunrise at which the day is considered to end (hours)",
+    offset_sunset
+  );
+  put(
+    "THRESHOLD_SCENARIO_WEIGHT",
+    "weight given to scenario value when generating random thresholds",
+    threshold_scenario_weight
+  );
+  put(
+    "THRESHOLD_DAILY_WEIGHT",
+    "weight given to daily value when generating random thresholds",
+    threshold_daily_weight
+  );
+  put(
+    "THRESHOLD_HOURLY_WEIGHT",
+    "weight given to hourly value when generating random thresholds",
+    threshold_hourly_weight
+  );
+  put(
+    "DEFAULT_PERCENT_CONIFER",
+    "default Percent Conifer to use for M1/M2 fuels where none is specified (%)",
+    default_percent_conifer
+  );
+  put(
+    "DEFAULT_PERCENT_DEAD_FIR",
+    "default Percent Dead Fir to use for M3/M4 fuels where none is specified (%)",
+    default_percent_dead_fir
+  );
+  put(
+    "MAXIMUM_TIME",
+    "maximum amount of time to take for simulation (seconds) (0 is unlimited)",
+    maximum_time_seconds
+  );
+  put(
+    "INTERIM_OUTPUT_INTERVAL",
+    "amount of time between generating interim outputs (seconds) (0 is no interim outputs)",
+    interim_output_interval_seconds
+  );
+  put(
+    "MINIMUM_SIMULATIONS",
+    "minimum number of simulations to do (0 is exactly 1 simulation per scenario)",
+    maximum_simulation_count
+  );
+  put(
+    "MINIMUM_ACTIVE_SIMULATIONS",
+    "minimum number of simulations where any spread occurs to do (0 is exactly 1 simulation per scenario)",
+    minimum_active_simulation_count
+  );
+  put(
+    "MAXIMUM_SIMULATIONS",
+    "maximum number of simulations to do (0 is exactly 1 simulation per scenario)",
+    maximum_simulation_count
+  );
+  put(
+    "CONFIDENCE_LEVEL", "confidence required before simulation stops (% / 100)", confidence_level
+  );
+  put(
+    "INTENSITY_MAX_LOW",
+    "maximum fire intensity for the 'low' range of intensity (kW/m)",
+    intensity_max_low
+  );
+  put(
+    "INTENSITY_MAX_MODERATE",
+    "maximum fire intensity for the 'moderate' range of intensity (kW/m)",
+    intensity_max_moderate
+  );
+  put("SAVE_INDIVIDUAL", "whether or not to save individual grids", save_individual);
+  put("RUN_ASYNC", "whether or not to run things asynchronously where possible", run_async);
+  put(
+    "DETERMINISTIC",
+    "whether or not to run deterministically (100% chance of spread & survival)",
+    deterministic
+  );
+  put("SURFACE", "whether or not to create a probability surface", surface);
+  put("SAVE_AS_ASCII", "whether or not to save grids as .asc", save_as_ascii);
+  put("SAVE_AS_TIFF", "whether or not to save grids as .tif", save_as_tiff);
+  put("SAVE_POINTS", "whether or not to save points used for spread", save_points);
+  put("SAVE_INTENSITY", "whether or not to save intensity grids", save_intensity);
+  put("SAVE_PROBABILITY", "whether or not to save probability grids", save_probability);
+  put("SAVE_OCCURRENCE", "whether or not to save occurrence grids", save_occurrence);
+  put("SAVE_SIMULATION_AREA", "whether or not to save simulation area grids", save_simulation_area);
+  put("FORCE_GREENUP", "whether or not to force greenup for all fires", force_greenup);
+  put("FORCE_NO_GREENUP", "whether or not to force no greenup for all fires", force_no_greenup);
+  put("STATIC_CURING", "static curing value to force for all fires", static_curing.as_string());
+  put("UTC_OFFSET", "offset from UTC to use for entire simulation (hours)", utc_offset);
+  put("SALT", "salt to use for random seeds", salt);
+  // FIX: don't have output for set/getRoot()
+  // put("", "", );
 }
 }
