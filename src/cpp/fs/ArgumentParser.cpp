@@ -409,14 +409,14 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       settings.save_simulation_area, true, "--sim-area", "Output simulation area grids"
     );
     register_setter<string>(
-      [&](const auto v) { settings.setRasterRoot(v); },
+      [&](const auto v) { settings.raster_root = v; },
       "--raster-root",
       "Use specified directory as raster root",
       false,
       &parse_string
     );
     register_setter<string>(
-      [&](const auto v) { settings.setFuelLookupTable(v); },
+      [&](const auto v) { settings.fuel_lookup = v; },
       "--fuel-lut",
       "Use specified fuel lookup table",
       false,

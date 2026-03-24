@@ -88,26 +88,10 @@ public:
   ThresholdSize threshold_hourly_weight{0.0};
   static void setRoot(const string dirname) noexcept;
   const string getRoot() const noexcept;
-  /**
-   * \brief Set raster root directory
-   * \param dirname Directory to use for rasters
-   */
-  void setRasterRoot(const string dirname) noexcept;
-  /**
-   * \brief Root directory that raster inputs are stored in
-   * \return Root directory that raster inputs are stored in
-   */
-  [[nodiscard]] const char* rasterRoot() const noexcept;
-  /**
-   * \brief Set fuel lookup table file
-   * \param dirname Directory to use for rasters
-   */
-  void setFuelLookupTable(const string filename) noexcept;
-  /**
-   * \brief Fuel lookup table
-   * \return Fuel lookup table
-   */
-  [[nodiscard]] const FuelLookup& fuelLookup() const noexcept;
+  // Root directory that raster inputs are stored in
+  LazyPath raster_root{};
+  // Name of file that defines fuel lookup table
+  LazyFuelLookup fuel_lookup{};
   /**
    * \brief curing value
    * \return curing value
@@ -141,18 +125,6 @@ private:
    * \brief Directory used for settings and relative paths
    */
   string dir_root_;
-  /**
-   * \brief Root directory that raster inputs are stored in
-   */
-  string raster_root_;
-  /**
-   * \brief Name of file that defines fuel lookup table
-   */
-  string fuel_lookup_table_file_;
-  /**
-   * \brief fuel lookup table
-   */
-  mutable unique_ptr<FuelLookup> fuel_lookup_ = nullptr;
   /**
    * \brief Static curing value
    */

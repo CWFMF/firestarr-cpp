@@ -488,6 +488,46 @@ inline bool find_value(
   return false;
 }
 string get_canonical_path(const char* const dir_root, string path);
+class LazyPath
+{
+public:
+  LazyPath() = default;
+  LazyPath(const string dir_root, const string path) : dir_root_{dir_root}, path_{path} { }
+  const char* canonical() const
+  {
+    if (nullptr == canonical_path_)
+    {
+      canonical_path_ = make_unique<string>(get_canonical_path(dir_root_.c_str(), path_));
+    }
+    return canonical_path_->c_str();
+  }
+  LazyPath& operator=(const LazyPath& rhs) noexcept
+  {
+    dir_root_ = rhs.dir_root_;
+    path_ = rhs.path_;
+    canonical_path_ = nullptr;
+    return *this;
+  }
+  LazyPath& operator=(LazyPath&& rhs) noexcept
+  {
+    dir_root_ = std::move(rhs.dir_root_);
+    path_ = std::move(rhs.path_);
+    canonical_path_ = std::move(rhs.canonical_path_);
+    rhs.canonical_path_ = nullptr;
+    return *this;
+  }
+  LazyPath& operator=(const string& path) noexcept
+  {
+    path_ = path;
+    canonical_path_ = nullptr;
+    return *this;
+  }
+
+protected:
+  string dir_root_;
+  string path_;
+  mutable unique_ptr<string> canonical_path_{nullptr};
+};
 // convert string to lower case
 string tolower(string value);
 template <class V>

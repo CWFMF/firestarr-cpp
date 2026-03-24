@@ -5,6 +5,7 @@
 #include "Cell.h"
 #include "FireWeather.h"
 #include "FuelType.h"
+#include "Util.h"
 namespace fs
 {
 class FuelLookupImpl;
@@ -113,5 +114,42 @@ private:
 {
   return is_null_fuel(fuel_by_code(cell.fuelCode()));
 }
+class LazyFuelLookup : public LazyPath
+{
+public:
+  using LazyPath::LazyPath;
+  const FuelLookup& lookup() const
+  {
+    // HACK: pretend this is const because it only gets assigned once
+    if (nullptr == fuel_lookup_)
+    {
+      fuel_lookup_ = std::make_unique<FuelLookup>(canonical());
+      logging::check_fatal(nullptr == fuel_lookup_, "Fuel lookup table has not been loaded");
+    }
+    return *fuel_lookup_;
+  }
+  LazyFuelLookup& operator=(const LazyFuelLookup& rhs) noexcept
+  {
+    LazyPath::operator=(rhs);
+    fuel_lookup_ = nullptr;
+    return *this;
+  }
+  LazyFuelLookup& operator=(LazyFuelLookup&& rhs) noexcept
+  {
+    LazyPath::operator=(rhs);
+    fuel_lookup_ = std::move(rhs.fuel_lookup_);
+    rhs.fuel_lookup_ = nullptr;
+    return *this;
+  }
+  LazyFuelLookup& operator=(const string& path) noexcept
+  {
+    LazyPath::operator=(path);
+    fuel_lookup_ = nullptr;
+    return *this;
+  }
+
+protected:
+  mutable unique_ptr<FuelLookup> fuel_lookup_{nullptr};
+};
 }
 #endif

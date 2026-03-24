@@ -21,13 +21,11 @@ Environment Environment::load(
   logging::note("Fuel raster is %s", string(in_fuel).c_str());
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
-  const auto& lookup = settings.fuelLookup();
+  static const auto& lookup = settings.fuel_lookup.lookup();
   if (settings.run_async)
   {
     logging::debug("Loading grids async");
-    auto fuel = async(launch::async, [&]() {
-      return FuelGrid::readTiff(in_fuel, point, settings.fuelLookup());
-    });
+    auto fuel = async(launch::async, [&]() { return FuelGrid::readTiff(in_fuel, point, lookup); });
     auto elevation =
       async(launch::async, [&]() { return ElevationGrid::readTiff(in_elevation, point); });
     logging::debug("Waiting for grids");
@@ -326,10 +324,10 @@ void Environment::saveToFile(const string_view output_directory) const
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
+  static const auto& lookup = settings.fuel_lookup.lookup();
   if (settings.save_simulation_area)
   {
     logging::debug("Saving simulation area");
-    const auto lookup = settings.fuelLookup();
     auto convert_to_slope = [](const Cell& v) -> SlopeSize { return v.slope(); };
     auto convert_to_aspect = [](const Cell& v) -> AspectSize { return v.aspect(); };
     auto convert_to_area = [&](const Cell& v) -> SlopeSize {
@@ -337,7 +335,7 @@ void Environment::saveToFile(const string_view output_directory) const
       return (v.slope() == INVALID_SLOPE) ? INVALID_SLOPE : 3;
     };
     // HACK: use original FuelGrid instead of cell value to ensure codes match input
-    auto convert_to_fuelcode = [&lookup](const FuelType* const value) -> FuelSize {
+    auto convert_to_fuelcode = [&](const FuelType* const value) -> FuelSize {
       return lookup.fuelToCode(value);
     };
     std::ignore = fuel_grid_->saveToFile<FuelSize>(output_directory, "fuel", convert_to_fuelcode);
