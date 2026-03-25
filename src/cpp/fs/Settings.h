@@ -171,6 +171,8 @@ public:
   // test mode only variables
   // name of fuel to use for test
   string fuel_name{};
+  // test every combination of settings for tests
+  bool test_all{false};
 
 private:
   /**
