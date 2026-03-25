@@ -300,18 +300,16 @@ void show_options(const char* name, const vector<string>& values)
     return value.c_str();
   });
 };
-int test(
-  const string_view output_directory,
-  const DurationSize num_hours,
-  const ptr<const FwiWeather> wx,
-  const string_view constant_fuel_name,
-  const SlopeSize constant_slope,
-  const AspectSize constant_aspect,
-  const bool test_all
-)
+int test(Settings& settings)
 {
-  // HACK: resolve once and fail if not set already
-  static auto& settings = fs::settings::instance();
+  const FwiWeather wx_test{settings.get_test_weather()};
+  const auto output_directory{settings.output_directory};
+  const auto num_hours{settings.hours};
+  const ptr<const FwiWeather> wx{&wx_test};
+  const auto constant_fuel_name{settings.fuel_name};
+  const auto constant_slope{settings.slope};
+  const auto constant_aspect{settings.aspect};
+  const auto test_all{settings.test_all};
   static const AspectSize ASPECT_INCREMENT = 90;
   static const SlopeSize SLOPE_INCREMENT = 60;
   static const int WS_INCREMENT = 5;

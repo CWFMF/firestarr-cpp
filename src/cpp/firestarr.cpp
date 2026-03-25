@@ -201,17 +201,8 @@ int main(const int argc, const char* const argv[])
         settings.test_all = true;
       }
       parser.done_positional();
-      const FwiWeather wx{settings.get_test_weather()};
       parser.show_args();
-      result = fs::test(
-        settings.output_directory,
-        settings.hours,
-        &wx,
-        settings.fuel_name,
-        settings.slope,
-        settings.aspect,
-        settings.test_all
-      );
+      result = fs::test(settings);
     }
 #ifdef NDEBUG
   }
