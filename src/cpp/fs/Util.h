@@ -487,5 +487,7 @@ inline bool find_value(
   }
   return false;
 }
+// convert string to lower case
+string tolower(string value);
 }
 #endif
