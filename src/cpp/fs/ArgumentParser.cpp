@@ -239,13 +239,37 @@ ArgumentParser::ArgumentParser(
     // HACK: already parsed binary from arg 0
     binary_directory_{std::get<0>(binary)}, binary_name_{std::get<1>(binary)}
 {
+  // HACK: count -v and -q before anything to get right log level
+  constexpr auto log_default = fs::logging::LOG_NOTE;
+  logging::Log::setLogLevel(log_default);
+  for (const auto& arg : arguments)
+  {
+    if (arg.starts_with("-") && !arg.starts_with(("--")))
+    {
+      // HACK: not quite right if somehow a positional arg could start with '-' and have letters
+      // increment for each -v and decrement for each -q
+      for (const auto c : arg)
+      {
+        if ('q' == c)
+        {
+          logging::Log::decreaseLogLevel();
+        }
+        else if ('v' == c)
+        {
+          logging::Log::increaseLogLevel();
+        }
+      }
+    }
+  }
+  // FIX: doing this here means we always see the settings if we haven't adjusted log level
   Settings::setRoot(binary_directory_);
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
   add_usages(usages);
   fs::show_debug_settings();
   assert(1 == cur_arg_);
-  logging::Log::setLogLevel(fs::logging::LOG_NOTE);
+  // HACK: revert log level so -v and -q set it
+  logging::Log::setLogLevel(log_default);
   register_flag(help_requested_, true, "-h", "Show help");
   // can be used multiple times
   register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
