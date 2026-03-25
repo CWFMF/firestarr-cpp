@@ -4,6 +4,7 @@
 #include "FireSpread.h"
 #include "FireWeather.h"
 #include "FuelLookup.h"
+#include "Log.h"
 #include "Model.h"
 #include "Observer.h"
 #include "SafeVector.h"
@@ -78,31 +79,39 @@ public:
 void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelType* fuel)
 {
   // column, (width, format)
-  static const map<const char* const, std::pair<int, const char* const>> FMT{
-    {"PREC", {5, "%*.2f"}}, {"TEMP", {5, "%*.1f"}}, {"RH", {3, "%*g"}},    {"WS", {5, "%*.1f"}},
-    {"WD", {3, "%*g"}},     {"FFMC", {5, "%*.1f"}}, {"DMC", {5, "%*.1f"}}, {"DC", {5, "%*g"}},
-    {"ISI", {5, "%*.1f"}},  {"BUI", {5, "%*.1f"}},  {"FWI", {5, "%*.1f"}}, {"GS", {3, "%*d"}},
-    {"SAZ", {3, "%*d"}},    {"FUEL", {7, "%*s"}},   {"GC", {3, "%*g"}},    {"L:B", {5, "%*.2f"}},
-    {"CBH", {4, "%*.1f"}},  {"CFB", {6, "%*.3f"}},  {"CFC", {6, "%*.3f"}}, {"FD", {2, "%*c"}},
-    {"HFI", {6, "%*ld"}},   {"RAZ", {3, "%*d"}},    {"ROS", {6, "%*.4g"}}, {"SFC", {6, "%*.4g"}},
-    {"TFC", {6, "%*.4g"}},
+  // static const vector<const char* const> FMT_COLUMNS{
+  //   "PREC", "TEMP", "RH",  "WS",  "WD",  "FFMC", "DMC", "DC",  "ISI", "BUI", "FWI", "GS",  "SAZ",
+  //   "FUEL", "GC",   "L:B", "CBH", "CFB", "CFC",  "FD",  "HFI", "RAZ", "ROS", "SFC", "TFC",
+  // };
+  // static const vector<int> FMT_WIDTH{
+  //   5, 5, 3, 5, 3, 5, 5, 5, 5, 5, 5, 3, 3, 7, 3, 5, 4, 6, 6, 2, 6, 3, 6, 6, 6,
+  // };
+  static const vector<std::tuple<const char* const, int, const char* const>> FMT{
+    {"PREC", 5, "%*.2f"}, {"TEMP", 5, "%*.1f"}, {"RH", 3, "%*g"},    {"WS", 5, "%*.1f"},
+    {"WD", 3, "%*g"},     {"FFMC", 5, "%*.1f"}, {"DMC", 5, "%*.1f"}, {"DC", 5, "%*g"},
+    {"ISI", 5, "%*.1f"},  {"BUI", 5, "%*.1f"},  {"FWI", 5, "%*.1f"}, {"GS", 3, "%*d"},
+    {"SAZ", 3, "%*d"},    {"FUEL", 7, "%*s"},   {"GC", 3, "%*g"},    {"L:B", 5, "%*.2f"},
+    {"CBH", 4, "%*.1f"},  {"CFB", 6, "%*.3f"},  {"CFC", 6, "%*.3f"}, {"FD", 2, "%*c"},
+    {"HFI", 6, "%*ld"},   {"RAZ", 3, "%*d"},    {"ROS", 6, "%*.4g"}, {"SFC", 6, "%*.4g"},
+    {"TFC", 6, "%*.4g"},
   };
   printf("Calculated spread is:\n");
   // print header row
-  for (const auto& h_f : FMT)
+  for (const auto& [col, width, fmt] : FMT)
   {
-    // HACK: need to format string of the same length
-    const auto col = h_f.first;
-    const auto width = h_f.second.first;
     // column width + 1 space
     printf("%*s", width + 1, col);
   }
   printf("\n");
-  auto print_col = [](const char* col, auto value) {
-    const auto width_fmt = FMT.at(col);
-    const auto width = width_fmt.first + 1;
-    const auto fmt = width_fmt.second;
+  size_t cur_col{0};
+  auto print_col = [&](const char* col, auto value) {
+    const auto& [col_actual, width_fmt, fmt] = FMT.at(cur_col);
+    logging::check_fatal(
+      0 != strcmp(col, col_actual), "Expected column to be %s but got %s", col, col_actual
+    );
+    const auto width = width_fmt + 1;
     printf(fmt, width, value);
+    ++cur_col;
   };
   // HACK: just do individual calls for now
   // can we assign them to a lookup table if they're not all numbers?
