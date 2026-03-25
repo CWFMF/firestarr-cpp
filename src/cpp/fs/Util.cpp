@@ -253,4 +253,11 @@ string make_timestamp(const YearSize year, const DurationSize time)
   sxprintf(buffer, "%4d-%02ld-%02ld %02ld:%02ld", year, month, day_of_month, hour, minute);
   return {buffer};
 }
+string tolower(string value)
+{
+  std::transform(value.begin(), value.end(), value.begin(), [](const auto c) {
+    return std::tolower(c);
+  });
+  return value;
+}
 }
