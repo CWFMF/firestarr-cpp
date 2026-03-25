@@ -424,10 +424,13 @@ void Settings::saveTo(const string& output_directory) const noexcept
     put("FFMC", "fine fuel moisture code", ffmc.value);
     put("DMC", "duff moisture code", dmc.value);
     put("DC", "drought code", dc.value);
-    put("WD", "wind direction (degrees)", dc.value);
-    put("WS", "wind speed (km/h)", dc.value);
-    put("SLOPE", "ground slope (%)", dc.value);
-    put("ASPECT", "ground aspect (degrees)", dc.value);
+    put("WD", "wind direction (degrees)", wind_direction);
+    put("WS", "wind speed (km/h)", wind_speed);
+  }
+  if (Mode::Test == mode)
+  {
+    put("SLOPE", "ground slope (%)", slope);
+    put("ASPECT", "ground aspect (degrees)", aspect);
   }
   // FIX: don't have output for set/getRoot()
   // put("", "", );
