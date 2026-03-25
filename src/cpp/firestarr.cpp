@@ -160,7 +160,7 @@ int main(const int argc, const char* const argv[])
       // HACK: ISI for yesterday really doesn't matter so just use any wind
       // HACK: it's basically wrong to assign this precip to yesterday's object,
       // but don't want to add another argument right now
-      const FwiWeather yesterday{settings.get_yesterday_weather()};
+      const FwiWeather yesterday{settings.get_weather()};
       fs::fix_tm(&start_date);
       fs::logging::note(
         "Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
@@ -180,7 +180,7 @@ int main(const int argc, const char* const argv[])
         start_point,
         start,
         settings.perimeter,
-        settings.initial_size
+        settings.initial_size.value_or(0)
       );
       Log::closeLogFile();
     }

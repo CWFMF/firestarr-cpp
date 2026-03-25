@@ -177,34 +177,33 @@ public:
   LazyFuelLookup fuel_lookup{};
   // Days to output probability contours for (1 is start date, 2 is day after, etc.)
   OutputDateOffsets output_date_offsets{};
-  FwiWeather get_yesterday_weather() const;
+  FwiWeather get_weather() const;
   // FIX: need to get rain since noon yesterday to start of this hourly weather
   Precipitation apcp_prev{Precipitation::Zero()};
 
 public:
   // normal mode only variables
   // initial fire size (ha)
-  size_t initial_size{0};
+  std::optional<size_t> initial_size{};
 
 public:
   // test mode only variables
   // name of fuel to use for test
-  string fuel_name{};
+  std::optional<string> fuel_name{};
   // test every combination of settings for tests
-  bool test_all{false};
+  std::optional<bool> test_all{};
   // number of hours to run tests for
-  MathSize hours{INVALID_TIME};
-  FwiWeather get_test_weather() const;
+  std::optional<MathSize> hours{};
 
 public:
   // test/surface mode variables
-  Ffmc ffmc{Ffmc::Invalid()};
-  Dmc dmc{Dmc::Invalid()};
-  Dc dc{Dc::Invalid()};
-  MathSize wind_direction{Direction::Invalid().value};
-  MathSize wind_speed{Speed::Invalid().value};
-  SlopeSize slope = static_cast<SlopeSize>(INVALID_SLOPE);
-  AspectSize aspect = static_cast<AspectSize>(INVALID_ASPECT);
+  std::optional<Ffmc> ffmc{};
+  std::optional<Dmc> dmc{};
+  std::optional<Dc> dc{};
+  std::optional<MathSize> wind_direction{};
+  std::optional<MathSize> wind_speed{};
+  std::optional<SlopeSize> slope{};
+  std::optional<AspectSize> aspect{};
 
 private:
   /**
