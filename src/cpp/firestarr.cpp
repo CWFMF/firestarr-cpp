@@ -86,7 +86,7 @@ int main(const int argc, const char* const argv[])
         "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
       );
     }
-    if (settings.mode != MODE::TEST)
+    if (!settings.is_test())
     {
       // handle surface/simulation positional arguments
       // positional arguments should be:

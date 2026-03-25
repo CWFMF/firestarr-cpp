@@ -58,11 +58,11 @@ public:
 private:
   std::optional<int> value_{};
 };
-enum class MODE
+enum class Mode
 {
-  SIMULATION,
-  TEST,
-  SURFACE
+  Simulation,
+  Test,
+  Surface
 };
 /**
  * \brief Reads and provides access to settings for the simulation.
@@ -71,7 +71,7 @@ class Settings
 {
 public:
   // general settings
-  MODE mode{MODE::SIMULATION};
+  Mode mode{Mode::Simulation};
   // directory to put simulation outputs in
   string output_directory{};
   // .csv with weather streams
@@ -97,8 +97,10 @@ public:
   bool run_async{true};
   // Whether or not to run deterministically (100% chance of spread & survival)
   bool deterministic{false};
-  // Whether or not to create a probability surface
-  bool surface{false};
+  // Whether or not this is running in test mode
+  constexpr bool is_test() const { return Mode::Test == mode; }
+  // Whether or not this is running in surface mode
+  constexpr bool is_surface() const { return Mode::Surface == mode; }
   // Whether or not to save grids as .asc
   bool save_as_ascii{false};
   // Whether or not to save grids as .tif

@@ -393,7 +393,7 @@ void Model::makeStarts(
       logging::note("Using fire perimeter results in empty fire - changing to use point");
       perimeter_ = nullptr;
     }
-    if (settings.surface)
+    if (settings.is_surface())
     {
       findAllStarts();
     }
@@ -444,7 +444,7 @@ Iteration Model::readScenarios(
     }
     result.push_back(scenario);
   };
-  if (settings.surface)
+  if (settings.is_surface())
   {
     setup_scenario(new Scenario(
       this, 0, &wx_.at(0), &wx_daily_.at(0), start, starts_.at(0), start_point, start_day, last_date
@@ -491,7 +491,7 @@ bool Model::shouldStop() const noexcept
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
-  return !settings.surface && (isOutOfTime() || isOverSimulationCountMaximum());
+  return (!settings.is_surface()) && (isOutOfTime() || isOverSimulationCountMaximum());
 }
 bool Model::isOutOfTime() const noexcept { return is_out_of_time_; }
 bool Model::isUnderSimulationCountMinimum() const noexcept { return is_under_simulation_minimum_; }
@@ -569,7 +569,7 @@ bool Model::add_statistics(
   {
     static_cast<void>(insert_sorted(all_sizes, size));
   }
-  if (settings.surface)
+  if (settings.is_surface())
   {
     return true;
   }
@@ -974,7 +974,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   // if using surface just run each start through in a loop here
   size_t cur_start = 0;
   auto reset_iter = [&](Iteration& iter) {
-    if (settings.surface)
+    if (settings.is_surface())
     {
       if (cur_start >= starts_.size())
       {
@@ -1100,7 +1100,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         return finalize_probabilities();
       }
       {
-        if (settings.surface)
+        if (settings.is_surface())
         {
           runs_left = ignitionScenarios() - iterations_done_;
         }
@@ -1150,7 +1150,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
           // ran out of time but timer should cance everything
           return finalize_probabilities();
         }
-        if (settings.surface)
+        if (settings.is_surface())
         {
           runs_left = ignitionScenarios() - iterations_done_;
         }
@@ -1217,7 +1217,7 @@ int Model::runScenarios(
   );
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
-  if (settings.surface)
+  if (settings.is_surface())
   {
     // yesterday should have constants to use
     model.setWeather(yesterday, start_day);
@@ -1242,7 +1242,7 @@ int Model::runScenarios(
     }
     // want to output internal representation of weather to file
 #ifdef DEBUG_WEATHER
-    if (!settings.surface)
+    if (!settings.is_surface())
     {
       model.outputWeather();
     }
