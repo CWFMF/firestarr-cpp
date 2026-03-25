@@ -198,7 +198,7 @@ Settings::Settings(const string dirname)
     // FIX: have single GREENUP = setting ?
     force_greenup = get_flag(false, settings, "FORCE_GREENUP");
     force_no_greenup = get_flag(false, settings, "FORCE_NO_GREENUP");
-    if (const auto value = get_value(settings, "STATIC_CURING", false); "INVALID" != value)
+    if (const auto value = get_value(settings, "CURING", false); "INVALID" != value)
     {
       static_curing = stoi(value);
     }
@@ -344,7 +344,7 @@ void Settings::saveTo(const string& output_directory) const noexcept
   put("SAVE_SIMULATION_AREA", "whether or not to save simulation area grids", save_simulation_area);
   put("FORCE_GREENUP", "whether or not to force greenup for all fires", force_greenup);
   put("FORCE_NO_GREENUP", "whether or not to force no greenup for all fires", force_no_greenup);
-  put("STATIC_CURING", "static curing value to force for all fires", static_curing.as_string());
+  put("CURING", "static curing value to force for all fires", static_curing.as_string());
   put("UTC_OFFSET", "offset from UTC to use for entire simulation (hours)", utc_offset);
   put("SALT", "salt to use for random seeds", salt);
   // FIX: don't have output for set/getRoot()
