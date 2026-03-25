@@ -49,6 +49,18 @@ int main(const int argc, const char* const argv[])
   try
   {
 #endif
+    static const auto dir_log = parser.log_directory();
+    static const auto dir_out = parser.output_directory;
+    make_directory_recursive(dir_log.c_str());
+    if (dir_log != dir_out)
+    {
+      logging::warning(
+        "Log file (%s) is being written outside the output directory (%s)",
+        parser.log_file.c_str(),
+        dir_out.c_str()
+      );
+      make_directory_recursive(dir_out.c_str());
+    }
     const auto opened_log = Log::openLogFile(parser.log_file.c_str());
     // HACK: check here so verbosity can affect showing compile info
     if (parser.help_requested())

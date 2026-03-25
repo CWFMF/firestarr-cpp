@@ -143,6 +143,15 @@ public:
   string wx_file_name;
   string log_file_name = "firestarr.log";
   string log_file;
+  // HACK: should be output_directory, but if log_file_name starts with '/' it could be anything
+  string log_directory()
+  {
+    static const auto d = [&] {
+      const auto last_index = log_file.find_last_of('/') + 1;
+      return log_file.substr(0, last_index);
+    }();
+    return d;
+  }
   string fuel_name;
   string perim;
   bool test_all = false;
