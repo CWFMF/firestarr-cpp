@@ -313,4 +313,32 @@ void Settings::saveTo(const string& output_directory) const noexcept
   // FIX: don't have output for set/getRoot()
   // put("", "", );
 }
+FwiWeather Settings::get_test_weather() const
+{
+  return {
+    Weather{
+      Temperature::Zero(),
+      RelativeHumidity::Zero(),
+      Wind{Speed{wind_speed}, Direction{Degrees{wind_direction}}},
+      Precipitation::Zero()
+    },
+    ffmc,
+    dmc,
+    dc
+  };
+}
+FwiWeather Settings::get_yesterday_weather() const
+{
+  return {
+    Weather{
+      Temperature::Zero(),
+      RelativeHumidity::Zero(),
+      Wind{Speed{wind_speed}, Direction{Degrees{wind_direction}}},
+      {apcp_prev}
+    },
+    ffmc,
+    dmc,
+    dc
+  };
+}
 }
