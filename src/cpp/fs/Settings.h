@@ -58,6 +58,12 @@ public:
 private:
   std::optional<int> value_{};
 };
+enum class MODE
+{
+  SIMULATION,
+  TEST,
+  SURFACE
+};
 /**
  * \brief Reads and provides access to settings for the simulation.
  */
@@ -65,6 +71,7 @@ class Settings
 {
 public:
   // general settings
+  MODE mode{MODE::SIMULATION};
   // directory to put simulation outputs in
   string output_directory{};
   // .csv with weather streams
@@ -169,6 +176,11 @@ public:
   FwiWeather get_yesterday_weather() const;
   // FIX: need to get rain since noon yesterday to start of this hourly weather
   Precipitation apcp_prev{Precipitation::Zero()};
+
+public:
+  // normal mode only variables
+  // initial fire size (ha)
+  size_t initial_size{0};
 
 public:
   // test mode only variables

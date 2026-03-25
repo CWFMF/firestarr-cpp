@@ -96,12 +96,6 @@ protected:
   string binary_name_{};
   vector<string>& args_expanded();
 };
-enum MODE
-{
-  SIMULATION,
-  TEST,
-  SURFACE
-};
 class SettingsArgumentParser : public ArgumentParser
 {
 public:
@@ -111,8 +105,6 @@ public:
 class MainArgumentParser : public SettingsArgumentParser
 {
 public:
-  MODE mode{SIMULATION};
-  size_t size = 0;
   MainArgumentParser(const int argc, const char* const argv[]);
   Settings& parse_args() override;
 };

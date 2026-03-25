@@ -364,7 +364,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "test"))
   {
     fs::logging::note("Running in test mode");
-    mode = TEST;
+    settings.mode = MODE::TEST;
     cur_arg_ += 1;
     skipped_args_ = 1;
     // if we have a directory and nothing else then use defaults for single run
@@ -451,7 +451,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "surface"))
     {
       fs::logging::note("Running in probability surface mode");
-      mode = SURFACE;
+      settings.mode = MODE::SURFACE;
       // skip 'surface' argument if present
       cur_arg_ += 1;
       skipped_args_ = 1;
@@ -479,7 +479,9 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       register_setter<string>(
         settings.perimeter, "--perim", "Start from perimeter", false, &parse_string
       );
-      register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
+      register_setter<size_t>(
+        settings.initial_size, "--size", "Start from size", false, &parse_size_t
+      );
       // HACK: want different text for same flag so define here too
       register_index<Ffmc>(settings.ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
       register_index<Dmc>(settings.dmc, "--dmc", "Startup Duff Moisture Code", true);
@@ -526,7 +528,7 @@ Settings& MainArgumentParser::parse_args()
                     + settings.log_file_name;
   // HACK: ensure settings initialized before doing this
   // probabalistic surface is computationally impossible at this point
-  if (SURFACE == mode)
+  if (MODE::SURFACE == settings.mode)
   {
     settings.deterministic = true;
     settings.surface = true;
