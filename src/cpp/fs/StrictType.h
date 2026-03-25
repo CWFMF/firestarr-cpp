@@ -102,6 +102,7 @@ struct StrictType
     value /= rhs.value;
     return *this;
   }
+  operator string() noexcept { return string(value); }
 };
 template <class ConcreteType, units::UnitType Units, class ValueType, int InvalidValue>
 [[nodiscard]] constexpr ConcreteType operator*(

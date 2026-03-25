@@ -6,6 +6,7 @@
 #include "FuelLookup.h"
 #include "Log.h"
 #include "Trim.h"
+#include "unstable.h"
 #include "Util.h"
 namespace fs::settings
 {
@@ -92,6 +93,7 @@ constexpr string to_string(const Mode mode)
     case Mode::Surface:
       return "SURFACE";
   }
+  return logging::fatal<string>("Mode %s not handled", mode);
 };
 string ModeOptions()
 {
@@ -415,15 +417,15 @@ void Settings::saveTo(const string& output_directory) const noexcept
   }
   if (Mode::Test == mode)
   {
-    put("FUEL", "initial fire size", initial_size);
+    put("FUEL", "fbp fuel type", fuel_name);
     put("TEST_ALL", "test every combination of settings for tests", test_all);
     put("HOURS", "number of hours to run tests for", hours);
   }
   if (Mode::Simulation != mode)
   {
-    put("FFMC", "fine fuel moisture code", ffmc.value);
-    put("DMC", "duff moisture code", dmc.value);
-    put("DC", "drought code", dc.value);
+    put("FFMC", "fine fuel moisture code", ffmc);
+    put("DMC", "duff moisture code", dmc);
+    put("DC", "drought code", dc);
     put("WD", "wind direction (degrees)", wind_direction);
     put("WS", "wind speed (km/h)", wind_speed);
   }
@@ -435,32 +437,21 @@ void Settings::saveTo(const string& output_directory) const noexcept
   // FIX: don't have output for set/getRoot()
   // put("", "", );
 }
-FwiWeather Settings::get_test_weather() const
+FwiWeather Settings::get_weather() const
 {
   return {
     Weather{
       Temperature::Zero(),
       RelativeHumidity::Zero(),
-      Wind{Speed{wind_speed}, Direction{Degrees{wind_direction}}},
-      Precipitation::Zero()
-    },
-    ffmc,
-    dmc,
-    dc
-  };
-}
-FwiWeather Settings::get_yesterday_weather() const
-{
-  return {
-    Weather{
-      Temperature::Zero(),
-      RelativeHumidity::Zero(),
-      Wind{Speed{wind_speed}, Direction{Degrees{wind_direction}}},
+      Wind{
+        Speed{wind_speed.value_or(Speed::Invalid().value)},
+        Direction{Degrees{wind_direction.value_or(Direction::Invalid().value)}}
+      },
       {apcp_prev}
     },
-    ffmc,
-    dmc,
-    dc
+    ffmc.value_or(Ffmc::Invalid()),
+    dmc.value_or(Dmc::Invalid()),
+    dc.value_or(Dc::Invalid())
   };
 }
 }
