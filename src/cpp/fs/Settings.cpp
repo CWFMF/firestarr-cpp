@@ -81,7 +81,7 @@ bool get_flag(const bool default_value, string_map<string>& settings, const stri
     "Only valid values for %s are 0 (false) or 1 (true) but got %s", key.c_str(), value.c_str()
   );
 }
-string to_string(const Mode mode)
+constexpr string to_string(const Mode mode)
 {
   switch (mode)
   {
@@ -93,29 +93,37 @@ string to_string(const Mode mode)
       return "SURFACE";
   }
 };
+string ModeOptions()
+{
+  static const auto MODE_OPTIONS{std::format(
+    "[{}, {}, {}]", to_string(Mode::Simulation), to_string(Mode::Test), to_string(Mode::Surface)
+  )};
+  return MODE_OPTIONS;
+}
 Mode get_mode(const Mode default_value, string_map<string>& settings, const string key)
 {
   constexpr auto required = false;
-  auto value = get_value(settings, key, required);
-  if ("INVALID" == value)
+  auto value = tolower(get_value(settings, key, required));
+  if ("invalid" == value)
   {
     return default_value;
   }
-  if ("SIMULATION" == value)
+  if ("simulation" == value)
   {
     return Mode::Simulation;
   }
-  if ("SURFACE" == value)
+  if ("surface" == value)
   {
     return Mode::Surface;
   }
-  if ("TEST" == value)
+  if ("test" == value)
   {
     return Mode::Test;
   }
   return logging::fatal<Mode>(
-    "Only valid value for %s is one of [SIMULATION, SURFACE, TEST] but got %s",
+    "Only valid value for %s is one of %s but got %s",
     key.c_str(),
+    ModeOptions().c_str(),
     value.c_str()
   );
 }
@@ -334,7 +342,8 @@ void Settings::saveTo(const string& output_directory) const noexcept
     "whether or not to run deterministically (100% chance of spread & survival)",
     deterministic
   );
-  put("MODE", "whether or not to create a probability surface", to_string(mode));
+  static const auto mode_help = std::format("simulation mode (one of {})", ModeOptions());
+  put("MODE", mode_help, to_string(mode));
   put("SAVE_AS_ASCII", "whether or not to save grids as .asc", save_as_ascii);
   put("SAVE_AS_TIFF", "whether or not to save grids as .tif", save_as_tiff);
   put("SAVE_POINTS", "whether or not to save points used for spread", save_points);
