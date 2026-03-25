@@ -120,5 +120,14 @@ template <class ConcreteType, units::UnitType Units, class ValueType, int Invali
 // {
 //   return ConcreteType{rhs / lhs.value};
 // }
+template <class ConcreteType, fs::units::UnitType Units, class ValueType, int InvalidValue>
+std::ostream& operator<<(
+  std::ostream& os,
+  const fs::StrictType<ConcreteType, Units, ValueType, InvalidValue>& v
+)
+{
+  os << v.value;
+  return os;
+}
 }
 #endif
