@@ -173,6 +173,8 @@ public:
   string fuel_name{};
   // test every combination of settings for tests
   bool test_all{false};
+  // number of hours to run tests for
+  MathSize hours{INVALID_TIME};
 
 private:
   /**
