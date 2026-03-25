@@ -45,7 +45,7 @@ int main(const int argc, const char* const argv[])
   printf("FireSTARR %s\n\n", SPECIFIC_REVISION);
   MainArgumentParser parser{argc, argv};
   // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
+  static auto& settings = fs::settings::instance();
   parser.parse_args();
   auto result = -1;
 #ifdef NDEBUG
@@ -199,7 +199,7 @@ int main(const int argc, const char* const argv[])
           );
           parser.show_usage_and_exit();
         }
-        parser.test_all = true;
+        settings.test_all = true;
       }
       parser.done_positional();
       const FwiWeather wx{parser.get_test_weather()};
@@ -211,7 +211,7 @@ int main(const int argc, const char* const argv[])
         settings.fuel_name,
         parser.slope,
         parser.aspect,
-        parser.test_all
+        settings.test_all
       );
     }
 #ifdef NDEBUG

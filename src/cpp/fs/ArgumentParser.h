@@ -112,7 +112,6 @@ class MainArgumentParser : public SettingsArgumentParser
 {
 public:
   MODE mode{SIMULATION};
-  bool test_all = false;
   MathSize hours = INVALID_TIME;
   size_t size = 0;
   // ffmc, dmc, dc are required for simulation & surface mode, so no indication of it not being
