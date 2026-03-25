@@ -86,7 +86,7 @@ int main(const int argc, const char* const argv[])
         "Assuming 0 precipitation between noon yesterday and weather start for startup indices"
       );
     }
-    if (parser.mode != TEST)
+    if (settings.mode != MODE::TEST)
     {
       // handle surface/simulation positional arguments
       // positional arguments should be:
@@ -181,7 +181,7 @@ int main(const int argc, const char* const argv[])
         start_point,
         start,
         settings.perimeter,
-        parser.size
+        settings.initial_size
       );
       Log::closeLogFile();
     }
