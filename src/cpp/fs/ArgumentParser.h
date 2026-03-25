@@ -113,21 +113,8 @@ class MainArgumentParser : public SettingsArgumentParser
 public:
   MODE mode{SIMULATION};
   size_t size = 0;
-  // ffmc, dmc, dc are required for simulation & surface mode, so no indication of it not being
-  // provided
-  Ffmc ffmc{Ffmc::Invalid()};
-  Dmc dmc{Dmc::Invalid()};
-  Dc dc{Dc::Invalid()};
-  MathSize wind_direction = Direction::Invalid().value;
-  MathSize wind_speed{Speed::Invalid().value};
-  SlopeSize slope = static_cast<SlopeSize>(INVALID_SLOPE);
-  AspectSize aspect = static_cast<AspectSize>(INVALID_ASPECT);
-  // FIX: need to get rain since noon yesterday to start of this hourly weather
-  Precipitation apcp_prev{Precipitation::Zero()};
   MainArgumentParser(const int argc, const char* const argv[]);
   Settings& parse_args() override;
-  FwiWeather get_test_weather() const;
-  FwiWeather get_yesterday_weather() const;
 };
 }
 #endif
