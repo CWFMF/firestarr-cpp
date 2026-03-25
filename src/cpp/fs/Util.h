@@ -489,5 +489,14 @@ inline bool find_value(
 }
 // convert string to lower case
 string tolower(string value);
+template <class V>
+std::ostream& operator<<(std::ostream& os, const std::optional<V>& v)
+{
+  if (v.has_value())
+  {
+    os << v.value();
+  }
+  return os;
+}
 }
 #endif
