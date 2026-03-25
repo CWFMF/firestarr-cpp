@@ -370,7 +370,8 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     // if we have a directory and nothing else then use defaults for single run
     // if we have 'all' then overrride specified indices, but then filter down to the subset that
     // matches what was specified
-    register_setter<MathSize>(hours, "--hours", "Duration in hours", false, &parse_value<MathSize>);
+    register_setter<
+      MathSize>(settings.hours, "--hours", "Duration in hours", false, &parse_value<MathSize>);
     register_setter<string>(settings.fuel_name, "--fuel", "FBP fuel type", false, &parse_string);
     register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", false);
     register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", false);

@@ -206,7 +206,7 @@ int main(const int argc, const char* const argv[])
       parser.show_args();
       result = fs::test(
         settings.output_directory,
-        parser.hours,
+        settings.hours,
         &wx,
         settings.fuel_name,
         parser.slope,
