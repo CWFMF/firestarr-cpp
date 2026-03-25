@@ -81,6 +81,44 @@ bool get_flag(const bool default_value, string_map<string>& settings, const stri
     "Only valid values for %s are 0 (false) or 1 (true) but got %s", key.c_str(), value.c_str()
   );
 }
+string to_string(const Mode mode)
+{
+  switch (mode)
+  {
+    case Mode::Simulation:
+      return "SIMULATION";
+    case Mode::Test:
+      return "TEST";
+    case Mode::Surface:
+      return "SURFACE";
+  }
+};
+Mode get_mode(const Mode default_value, string_map<string>& settings, const string key)
+{
+  constexpr auto required = false;
+  auto value = get_value(settings, key, required);
+  if ("INVALID" == value)
+  {
+    return default_value;
+  }
+  if ("SIMULATION" == value)
+  {
+    return Mode::Simulation;
+  }
+  if ("SURFACE" == value)
+  {
+    return Mode::Surface;
+  }
+  if ("TEST" == value)
+  {
+    return Mode::Test;
+  }
+  return logging::fatal<Mode>(
+    "Only valid value for %s is one of [SIMULATION, SURFACE, TEST] but got %s",
+    key.c_str(),
+    value.c_str()
+  );
+}
 const string Settings::getRoot() const noexcept { return dir_root_; }
 void Settings::setRoot(const string dirname) noexcept
 {
@@ -148,9 +186,8 @@ Settings::Settings(const string dirname)
     intensity_max_moderate = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
     save_individual = get_flag(false, settings, "SAVE_INDIVIDUAL");
     run_async = get_flag(true, settings, "RUN_ASYNC");
-    // FIX: have single MODE = setting
     deterministic = get_flag(false, settings, "DETERMINISTIC");
-    surface = get_flag(false, settings, "SURFACE");
+    mode = get_mode(Mode::Simulation, settings, "MODE");
     save_as_ascii = get_flag(false, settings, "SAVE_AS_ASCII");
     save_as_tiff = get_flag(true, settings, "SAVE_AS_TIFF");
     save_points = get_flag(false, settings, "SAVE_POINTS");
@@ -297,7 +334,7 @@ void Settings::saveTo(const string& output_directory) const noexcept
     "whether or not to run deterministically (100% chance of spread & survival)",
     deterministic
   );
-  put("SURFACE", "whether or not to create a probability surface", surface);
+  put("MODE", "whether or not to create a probability surface", to_string(mode));
   put("SAVE_AS_ASCII", "whether or not to save grids as .asc", save_as_ascii);
   put("SAVE_AS_TIFF", "whether or not to save grids as .tif", save_as_tiff);
   put("SAVE_POINTS", "whether or not to save points used for spread", save_points);

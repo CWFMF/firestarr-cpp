@@ -364,7 +364,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "test"))
   {
     fs::logging::note("Running in test mode");
-    settings.mode = MODE::TEST;
+    settings.mode = Mode::Test;
     cur_arg_ += 1;
     skipped_args_ = 1;
     // if we have a directory and nothing else then use defaults for single run
@@ -451,7 +451,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "surface"))
     {
       fs::logging::note("Running in probability surface mode");
-      settings.mode = MODE::SURFACE;
+      settings.mode = Mode::Surface;
       // skip 'surface' argument if present
       cur_arg_ += 1;
       skipped_args_ = 1;
@@ -528,10 +528,9 @@ Settings& MainArgumentParser::parse_args()
                     + settings.log_file_name;
   // HACK: ensure settings initialized before doing this
   // probabalistic surface is computationally impossible at this point
-  if (MODE::SURFACE == settings.mode)
+  if (settings.is_surface())
   {
     settings.deterministic = true;
-    settings.surface = true;
   }
   return settings;
 }
