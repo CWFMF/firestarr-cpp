@@ -51,7 +51,7 @@ public:
   bool has_value() const noexcept { return value_.has_value(); }
   string as_string() const noexcept
   {
-    string result = has_value() ? std::format("%d", value()) : "";
+    string result = has_value() ? std::format("{:d}", value()) : "";
     return result;
   }
 
