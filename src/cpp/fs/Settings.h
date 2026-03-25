@@ -70,6 +70,14 @@ enum class Mode
 class Settings
 {
 public:
+  static void setRoot(const string dirname) noexcept;
+  const string getRoot() const noexcept;
+  Settings() = delete;
+  Settings(const string dirname);
+  // save to directory in same format parse expects
+  void saveTo(const string& output_directory) const noexcept;
+
+public:
   // general settings
   Mode mode{Mode::Simulation};
   // directory to put simulation outputs in
@@ -163,18 +171,12 @@ public:
   ThresholdSize threshold_daily_weight{0.0};
   // Weight to give to hourly part of thresholds
   ThresholdSize threshold_hourly_weight{0.0};
-  static void setRoot(const string dirname) noexcept;
-  const string getRoot() const noexcept;
   // Root directory that raster inputs are stored in
   LazyPath raster_root{};
   // Name of file that defines fuel lookup table
   LazyFuelLookup fuel_lookup{};
   // Days to output probability contours for (1 is start date, 2 is day after, etc.)
   OutputDateOffsets output_date_offsets{};
-  Settings() = delete;
-  Settings(const string dirname);
-  // save to directory in same format parse expects
-  void saveTo(const string& output_directory) const noexcept;
   FwiWeather get_yesterday_weather() const;
   // FIX: need to get rain since noon yesterday to start of this hourly weather
   Precipitation apcp_prev{Precipitation::Zero()};
