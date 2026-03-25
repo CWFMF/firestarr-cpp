@@ -49,6 +49,14 @@ int main(const int argc, const char* const argv[])
   try
   {
 #endif
+    // HACK: check here so verbosity can affect showing compile info
+    if (parser.help_requested())
+    {
+      fs::logging::note("Specific revision is %s", SPECIFIC_REVISION);
+      fs::logging::debug("Full hash is: %s", FULL_HASH);
+      fs::logging::debug("Compiled on: %s", COMPILED_ON);
+      show_help_and_exit();
+    }
     static const auto dir_log = parser.log_directory();
     static const auto dir_out = parser.output_directory;
     make_directory_recursive(dir_log.c_str());
@@ -62,14 +70,6 @@ int main(const int argc, const char* const argv[])
       make_directory_recursive(dir_out.c_str());
     }
     const auto opened_log = Log::openLogFile(parser.log_file.c_str());
-    // HACK: check here so verbosity can affect showing compile info
-    if (parser.help_requested())
-    {
-      fs::logging::note("Specific revision is %s", SPECIFIC_REVISION);
-      fs::logging::debug("Full hash is: %s", FULL_HASH);
-      fs::logging::debug("Compiled on: %s", COMPILED_ON);
-      show_help_and_exit();
-    }
     if (!opened_log)
     {
       logging::fatal("Can't open log file %s", parser.log_file.c_str());
