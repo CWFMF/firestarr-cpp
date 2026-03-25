@@ -436,6 +436,13 @@ public:
       const auto fire_wx = weather_;
       const auto wx = fire_wx->at(time);
       // use Mike's table
+      // days at location     equivalent DMC
+      //                *     54.40794725611335
+      //                5     49.77788646253319
+      //                4     45.15330890865478
+      //                3     40.184467357005346
+      //                2     35.025698388961054
+      //                1     15.049926856936347
       const auto mc = wx->mcDmcPct();
       if (100 > mc || (109 >= mc && 5 > time_at_location) || (119 >= mc && 4 > time_at_location)
           || (131 >= mc && 3 > time_at_location) || (145 >= mc && 2 > time_at_location)
