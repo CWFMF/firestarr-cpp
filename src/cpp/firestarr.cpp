@@ -60,25 +60,25 @@ int main(const int argc, const char* const argv[])
       fs::logging::debug("Compiled on: %s", COMPILED_ON);
       parser.show_help_and_exit();
     }
-    static const auto dir_log = parser.log_directory();
-    static const auto dir_out = parser.output_directory;
+    static const auto dir_log = settings.log_directory();
+    static const auto dir_out = settings.output_directory;
     make_directory_recursive(dir_log.c_str());
     if (dir_log != dir_out)
     {
       logging::warning(
         "Log file (%s) is being written outside the output directory (%s)",
-        parser.log_file.c_str(),
+        settings.log_file.c_str(),
         dir_out.c_str()
       );
       make_directory_recursive(dir_out.c_str());
     }
-    const auto opened_log = Log::openLogFile(parser.log_file.c_str());
+    const auto opened_log = Log::openLogFile(settings.log_file.c_str());
     if (!opened_log)
     {
-      logging::fatal("Can't open log file %s", parser.log_file.c_str());
+      logging::fatal("Can't open log file %s", settings.log_file.c_str());
     }
-    fs::logging::note("Output directory is %s", parser.output_directory.c_str());
-    fs::logging::note("Output log is %s", parser.log_file.c_str());
+    fs::logging::note("Output directory is %s", settings.output_directory.c_str());
+    fs::logging::note("Output log is %s", settings.log_file.c_str());
     // at this point we've parsed positional args and know we're not in test mode
     if (!parser.was_parsed("--apcp_prev"))
     {
@@ -172,15 +172,15 @@ int main(const int argc, const char* const argv[])
       );
       start = start_date;
       parser.log_args();
-      settings::instance().saveTo(parser.output_directory);
+      settings::instance().saveTo(settings.output_directory);
       result = Model::runScenarios(
-        parser.output_directory,
-        parser.wx_file_name.c_str(),
+        settings.output_directory,
+        settings.wx_file_name.c_str(),
         yesterday,
         settings.raster_root.canonical(),
         start_point,
         start,
-        parser.perim,
+        settings.perimeter,
         parser.size
       );
       Log::closeLogFile();
@@ -205,10 +205,10 @@ int main(const int argc, const char* const argv[])
       const FwiWeather wx{parser.get_test_weather()};
       parser.show_args();
       result = fs::test(
-        parser.output_directory,
+        settings.output_directory,
         parser.hours,
         &wx,
-        parser.fuel_name,
+        settings.fuel_name,
         parser.slope,
         parser.aspect,
         parser.test_all
