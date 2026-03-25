@@ -239,6 +239,38 @@ Settings::Settings(const string dirname)
     {
       perimeter = value;
     }
+    // HACK: check for value that should only exist for specific mode
+    auto get_mode_value = [&](const char* key, const Mode mode_required) {
+      const auto value = get_value(settings, key, false);
+      if ("INVALID" != value)
+      {
+        logging::check_fatal(
+          mode_required != mode,
+          "Value for %s found but mode is %s not %s",
+          key,
+          to_string(mode).c_str(),
+          to_string(mode_required).c_str()
+        );
+      }
+      return value;
+    };
+    if (const auto value = get_mode_value("SIZE", Mode::Simulation); "INVALID" != value)
+    {
+      initial_size = stoi(value);
+    }
+    if (const auto value = get_mode_value("FUEL", Mode::Test); "INVALID" != value)
+    {
+      fuel_name = value;
+    }
+    if (const auto value = get_mode_value("TEST_ALL", Mode::Test); "INVALID" != value)
+    {
+      // FIX: duplicates effort
+      test_all = get_flag(true, settings, "TEST_ALL");
+    }
+    if (const auto value = get_mode_value("HOURS", Mode::Simulation); "INVALID" != value)
+    {
+      hours = stod(value);
+    }
     if (!settings.empty())
     {
       logging::warning("Unused settings in settings file %s", filename.c_str());
@@ -377,6 +409,26 @@ void Settings::saveTo(const string& output_directory) const noexcept
   put("CURING", "static curing value to force for all fires", static_curing.as_string());
   put("UTC_OFFSET", "offset from UTC to use for entire simulation (hours)", utc_offset);
   put("SALT", "salt to use for random seeds", salt);
+  if (Mode::Simulation == mode)
+  {
+    put("SIZE", "initial fire size", initial_size);
+  }
+  if (Mode::Test == mode)
+  {
+    put("FUEL", "initial fire size", initial_size);
+    put("TEST_ALL", "test every combination of settings for tests", test_all);
+    put("HOURS", "number of hours to run tests for", hours);
+  }
+  if (Mode::Simulation != mode)
+  {
+    put("FFMC", "fine fuel moisture code", ffmc.value);
+    put("DMC", "duff moisture code", dmc.value);
+    put("DC", "drought code", dc.value);
+    put("WD", "wind direction (degrees)", dc.value);
+    put("WS", "wind speed (km/h)", dc.value);
+    put("SLOPE", "ground slope (%)", dc.value);
+    put("ASPECT", "ground aspect (degrees)", dc.value);
+  }
   // FIX: don't have output for set/getRoot()
   // put("", "", );
 }
