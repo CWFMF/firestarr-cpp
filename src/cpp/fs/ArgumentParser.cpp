@@ -66,6 +66,17 @@ void register_setter(T& variable, string v, string help, bool required, std::fun
 }
 template <class T>
 void register_setter(
+  std::optional<T>& variable,
+  string v,
+  string help,
+  bool required,
+  std::function<T()> fct
+)
+{
+  register_argument(v, help, required, [&variable, fct] { variable = fct(); });
+}
+template <class T>
+void register_setter(
   atomic<T>& variable,
   string v,
   string help,
@@ -79,6 +90,11 @@ void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, st
 void register_flag(bool& variable, bool not_inverse, string v, string help);
 template <class T>
 void register_index(T& index, string v, string help, bool required)
+{
+  register_argument(v, help, required, [&] { index = parse_index<T>(); });
+}
+template <class T>
+void register_index(std::optional<T>& index, string v, string help, bool required)
 {
   register_argument(v, help, required, [&] { index = parse_index<T>(); });
 }

@@ -302,14 +302,7 @@ void show_options(const char* name, const vector<string>& values)
 };
 int test(Settings& settings)
 {
-  const FwiWeather wx_test{settings.get_test_weather()};
   const auto output_directory{settings.output_directory};
-  const auto num_hours{settings.hours};
-  const ptr<const FwiWeather> wx{&wx_test};
-  const auto constant_fuel_name{settings.fuel_name};
-  const auto constant_slope{settings.slope};
-  const auto constant_aspect{settings.aspect};
-  const auto test_all{settings.test_all};
   static const AspectSize ASPECT_INCREMENT = 90;
   static const SlopeSize SLOPE_INCREMENT = 60;
   static const int WS_INCREMENT = 5;
@@ -344,24 +337,20 @@ int test(Settings& settings)
   settings.save_points = false;
   // make sure all tests run regardless of how long it takes
   settings.maximum_time_seconds = numeric_limits<size_t>::max();
-  const auto hours = INVALID_TIME == num_hours ? DEFAULT_HOURS : num_hours;
-  const auto ffmc = (fs::Ffmc::Invalid() == wx->ffmc) ? DEFAULT_FFMC : wx->ffmc;
-  const auto dmc = (fs::Dmc::Invalid() == wx->dmc) ? DEFAULT_DMC : wx->dmc;
-  const auto dc = (fs::Dc::Invalid() == wx->dc) ? DEFAULT_DC : wx->dc;
-  // HACK: need to compare value and not object
-  const auto wind_direction = (fs::Direction::Invalid().value == wx->wind.direction.value)
-                              ? DEFAULT_WIND_DIRECTION
-                              : wx->wind.direction;
-  const auto wind_speed =
-    (fs::Speed::Invalid().value == wx->wind.speed.value) ? DEFAULT_WIND_SPEED : wx->wind.speed;
-  const auto wind = fs::Wind{wind_speed, wind_direction};
-  const auto slope = (INVALID_SLOPE == constant_slope) ? DEFAULT_SLOPE : constant_slope;
-  const auto aspect = (INVALID_ASPECT == constant_aspect) ? DEFAULT_ASPECT : constant_aspect;
-  const auto fixed_fuel_name = simplify_fuel_name(constant_fuel_name);
+  const auto hours{settings.hours.value_or(DEFAULT_HOURS)};
+  const auto ffmc{settings.ffmc.value_or(DEFAULT_FFMC)};
+  const auto dmc{settings.dmc.value_or(DEFAULT_DMC)};
+  const auto dc{settings.dc.value_or(DEFAULT_DC)};
+  const Direction wind_direction{settings.wind_direction.value_or(DEFAULT_WIND_DIRECTION.value)};
+  const Speed wind_speed{settings.wind_speed.value_or(DEFAULT_WIND_SPEED.value)};
+  const Wind wind{wind_speed, wind_direction};
+  const auto slope{settings.slope.value_or(DEFAULT_SLOPE)};
+  const auto aspect{settings.aspect.value_or(DEFAULT_ASPECT)};
+  const auto fixed_fuel_name = simplify_fuel_name(settings.fuel_name.value_or(""));
   const auto fuel = (fixed_fuel_name.empty() ? DEFAULT_FUEL_NAME : fixed_fuel_name);
   try
   {
-    if (test_all)
+    if (settings.test_all.value_or(false))
     {
       size_t result = 0;
       // generate all options first so we can say how many there are at start
@@ -378,7 +367,7 @@ int test(Settings& settings)
         fuel_names.emplace_back(fuel);
       }
       auto slopes = vector<SlopeSize>();
-      if (INVALID_SLOPE == constant_slope)
+      if (!settings.slope.has_value())
       {
         for (SlopeSize slope = 0; slope <= 100; slope += SLOPE_INCREMENT)
         {
@@ -387,10 +376,10 @@ int test(Settings& settings)
       }
       else
       {
-        slopes.emplace_back(constant_slope);
+        slopes.emplace_back(slope);
       }
       auto aspects = vector<AspectSize>();
-      if (INVALID_ASPECT == constant_aspect)
+      if (!settings.aspect.has_value())
       {
         for (AspectSize aspect = 0; aspect < 360; aspect += ASPECT_INCREMENT)
         {
@@ -399,10 +388,10 @@ int test(Settings& settings)
       }
       else
       {
-        aspects.emplace_back(constant_aspect);
+        aspects.emplace_back(aspect);
       }
       auto wind_directions = vector<DirectionSize>();
-      if (fs::Direction::Invalid() == wx->wind.direction)
+      if (!settings.wind_direction.has_value())
       {
         for (auto wind_direction = 0; wind_direction < 360; wind_direction += WD_INCREMENT)
         {
@@ -411,10 +400,10 @@ int test(Settings& settings)
       }
       else
       {
-        wind_directions.emplace_back(static_cast<int>(wx->wind.direction.asDegreesSize()));
+        wind_directions.emplace_back(static_cast<int>(wind_direction.value));
       }
       auto wind_speeds = vector<int>();
-      if (fs::Speed::Invalid() == wx->wind.speed)
+      if (!settings.wind_speed.has_value())
       {
         for (auto wind_speed = 0; wind_speed <= MAX_WIND; wind_speed += WS_INCREMENT)
         {
@@ -423,7 +412,7 @@ int test(Settings& settings)
       }
       else
       {
-        wind_speeds.emplace_back(static_cast<int>(wx->wind.speed.value));
+        wind_speeds.emplace_back(static_cast<int>(wind_speed.value));
       }
       size_t values = 1;
       values *= fuel_names.size();
