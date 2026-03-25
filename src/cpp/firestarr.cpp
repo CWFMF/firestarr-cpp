@@ -160,7 +160,7 @@ int main(const int argc, const char* const argv[])
       // HACK: ISI for yesterday really doesn't matter so just use any wind
       // HACK: it's basically wrong to assign this precip to yesterday's object,
       // but don't want to add another argument right now
-      const FwiWeather yesterday{parser.get_yesterday_weather()};
+      const FwiWeather yesterday{settings.get_yesterday_weather()};
       fs::fix_tm(&start_date);
       fs::logging::note(
         "Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
@@ -202,15 +202,15 @@ int main(const int argc, const char* const argv[])
         settings.test_all = true;
       }
       parser.done_positional();
-      const FwiWeather wx{parser.get_test_weather()};
+      const FwiWeather wx{settings.get_test_weather()};
       parser.show_args();
       result = fs::test(
         settings.output_directory,
         settings.hours,
         &wx,
         settings.fuel_name,
-        parser.slope,
-        parser.aspect,
+        settings.slope,
+        settings.aspect,
         settings.test_all
       );
     }

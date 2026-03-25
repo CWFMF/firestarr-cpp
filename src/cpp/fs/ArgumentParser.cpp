@@ -373,16 +373,17 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     register_setter<
       MathSize>(settings.hours, "--hours", "Duration in hours", false, &parse_value<MathSize>);
     register_setter<string>(settings.fuel_name, "--fuel", "FBP fuel type", false, &parse_string);
-    register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", false);
-    register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", false);
-    register_index<Dc>(dc, "--dc", "Constant Drought Code", false);
+    register_index<Ffmc>(settings.ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", false);
+    register_index<Dmc>(settings.dmc, "--dmc", "Constant Duff Moisture Code", false);
+    register_index<Dc>(settings.dc, "--dc", "Constant Drought Code", false);
     register_setter<
-      MathSize>(wind_direction, "--wd", "Constant wind direction", false, &parse_value<MathSize>);
+      MathSize>(settings.wind_direction, "--wd", "Constant wind direction", false, &parse_value<MathSize>);
     register_setter<
-      MathSize>(wind_speed, "--ws", "Constant wind speed", false, &parse_value<MathSize>);
-    register_setter<SlopeSize>(slope, "--slope", "Constant slope", false, &parse_value<SlopeSize>);
+      MathSize>(settings.wind_speed, "--ws", "Constant wind speed", false, &parse_value<MathSize>);
     register_setter<
-      AspectSize>(aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
+      SlopeSize>(settings.slope, "--slope", "Constant slope", false, &parse_value<SlopeSize>);
+    register_setter<
+      AspectSize>(settings.aspect, "--aspect", "Constant slope aspect/azimuth", false, &parse_value<AspectSize>);
     register_setter<size_t>(
       [&](const auto v) { settings.static_curing = v; },
       "--curing",
@@ -454,13 +455,13 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       // skip 'surface' argument if present
       cur_arg_ += 1;
       skipped_args_ = 1;
-      register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
-      register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", true);
-      register_index<Dc>(dc, "--dc", "Constant Drought Code", true);
+      register_index<Ffmc>(settings.ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
+      register_index<Dmc>(settings.dmc, "--dmc", "Constant Duff Moisture Code", true);
+      register_index<Dc>(settings.dc, "--dc", "Constant Drought Code", true);
       register_setter<
-        MathSize>(wind_direction, "--wd", "Constant wind direction", true, &parse_value<MathSize>);
+        MathSize>(settings.wind_direction, "--wd", "Constant wind direction", true, &parse_value<MathSize>);
       register_setter<
-        MathSize>(wind_speed, "--ws", "Constant wind speed", true, &parse_value<MathSize>);
+        MathSize>(settings.wind_speed, "--ws", "Constant wind speed", true, &parse_value<MathSize>);
     }
     else
     {
@@ -480,11 +481,11 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       );
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
       // HACK: want different text for same flag so define here too
-      register_index<Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
-      register_index<Dmc>(dmc, "--dmc", "Startup Duff Moisture Code", true);
-      register_index<Dc>(dc, "--dc", "Startup Drought Code", true);
+      register_index<Ffmc>(settings.ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
+      register_index<Dmc>(settings.dmc, "--dmc", "Startup Duff Moisture Code", true);
+      register_index<Dc>(settings.dc, "--dc", "Startup Drought Code", true);
       register_index<Precipitation>(
-        apcp_prev,
+        settings.apcp_prev,
         "--apcp_prev",
         "Startup precipitation between 1200 yesterday and start of hourly weather",
         false
@@ -531,34 +532,6 @@ Settings& MainArgumentParser::parse_args()
     settings.surface = true;
   }
   return settings;
-}
-FwiWeather MainArgumentParser::get_test_weather() const
-{
-  return {
-    Weather{
-      Temperature::Zero(),
-      RelativeHumidity::Zero(),
-      Wind{Speed{wind_speed}, Direction{Degrees{wind_direction}}},
-      Precipitation::Zero()
-    },
-    ffmc,
-    dmc,
-    dc
-  };
-}
-FwiWeather MainArgumentParser::get_yesterday_weather() const
-{
-  return {
-    Weather{
-      Temperature::Zero(),
-      RelativeHumidity::Zero(),
-      Wind{Speed{wind_speed}, Direction{Degrees{wind_direction}}},
-      {apcp_prev}
-    },
-    ffmc,
-    dmc,
-    dc
-  };
 }
 string ArgumentParser::cur_arg() { return args_expanded().at(cur_arg_); };
 bool parse_flag(bool not_inverse)

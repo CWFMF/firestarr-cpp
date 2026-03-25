@@ -166,6 +166,9 @@ public:
   Settings(const string dirname);
   // save to directory in same format parse expects
   void saveTo(const string& output_directory) const noexcept;
+  FwiWeather get_yesterday_weather() const;
+  // FIX: need to get rain since noon yesterday to start of this hourly weather
+  Precipitation apcp_prev{Precipitation::Zero()};
 
 public:
   // test mode only variables
@@ -175,6 +178,17 @@ public:
   bool test_all{false};
   // number of hours to run tests for
   MathSize hours{INVALID_TIME};
+  FwiWeather get_test_weather() const;
+
+public:
+  // test/surface mode variables
+  Ffmc ffmc{Ffmc::Invalid()};
+  Dmc dmc{Dmc::Invalid()};
+  Dc dc{Dc::Invalid()};
+  MathSize wind_direction{Direction::Invalid().value};
+  MathSize wind_speed{Speed::Invalid().value};
+  SlopeSize slope = static_cast<SlopeSize>(INVALID_SLOPE);
+  AspectSize aspect = static_cast<AspectSize>(INVALID_ASPECT);
 
 private:
   /**
