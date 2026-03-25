@@ -371,7 +371,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     // if we have 'all' then overrride specified indices, but then filter down to the subset that
     // matches what was specified
     register_setter<MathSize>(hours, "--hours", "Duration in hours", false, &parse_value<MathSize>);
-    register_setter<string>(fuel_name, "--fuel", "FBP fuel type", false, &parse_string);
+    register_setter<string>(settings.fuel_name, "--fuel", "FBP fuel type", false, &parse_string);
     register_index<Ffmc>(ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", false);
     register_index<Dmc>(dmc, "--dmc", "Constant Duff Moisture Code", false);
     register_index<Dc>(dc, "--dc", "Constant Drought Code", false);
@@ -436,7 +436,9 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     register_flag(
       settings.force_no_greenup, true, "--force-no-greenup", "Force no green up for all fires"
     );
-    register_setter<string>(log_file_name, "--log", "Output log file", false, &parse_string);
+    register_setter<string>(
+      settings.log_file_name, "--log", "Output log file", false, &parse_string
+    );
     register_setter<size_t>(
       settings.salt,
       "--salt",
@@ -461,7 +463,9 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     }
     else
     {
-      register_setter<string>(wx_file_name, "--wx", "Input weather file", true, &parse_string);
+      register_setter<string>(
+        settings.wx_file_name, "--wx", "Input weather file", true, &parse_string
+      );
       register_flag(
         settings.deterministic,
         true,
@@ -470,7 +474,9 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       );
       register_setter<
         ThresholdSize>(settings.confidence_level, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
-      register_setter<string>(perim, "--perim", "Start from perimeter", false, &parse_string);
+      register_setter<string>(
+        settings.perimeter, "--perim", "Start from perimeter", false, &parse_string
+      );
       register_setter<size_t>(size, "--size", "Start from size", false, &parse_size_t);
       // HACK: want different text for same flag so define here too
       register_index<Ffmc>(ffmc, "--ffmc", "Startup Fine Fuel Moisture Code", true);
@@ -504,14 +510,18 @@ Settings& MainArgumentParser::parse_args()
   // output directory is always the first thing
   // positional arguments all start with <output_dir> after mode (if applicable)
   // "./firestarr [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
-  output_directory = get_positional();
-  replace(output_directory.begin(), output_directory.end(), '\\', '/');
-  if ('/' != output_directory[output_directory.length() - 1])
-  {
-    output_directory += '/';
-  }
+  settings.output_directory = [&]() {
+    auto d = get_positional();
+    replace(d.begin(), d.end(), '\\', '/');
+    if ('/' != d[d.length() - 1])
+    {
+      d += '/';
+    }
+    return d;
+  }();
   // if name starts with "/" then it's an absolute path, otherwise append to working directory
-  log_file = log_file_name.starts_with("/") ? log_file_name : (output_directory + log_file_name);
+  settings.log_file = (settings.log_file_name.starts_with("/") ? "" : settings.output_directory)
+                    + settings.log_file_name;
   // HACK: ensure settings initialized before doing this
   // probabalistic surface is computationally impossible at this point
   if (SURFACE == mode)

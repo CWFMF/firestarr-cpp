@@ -64,6 +64,26 @@ private:
 class Settings
 {
 public:
+  // general settings
+  // directory to put simulation outputs in
+  string output_directory{};
+  // .csv with weather streams
+  string wx_file_name{};
+  // name to use for log file inside output_directory
+  string log_file_name{"firestarr.log"};
+  // full path for log file
+  string log_file{};
+  // HACK: should be output_directory, but if log_file_name starts with '/' it could be anything
+  string log_directory() const
+  {
+    static const auto d = [&] {
+      const auto last_index = log_file.find_last_of('/') + 1;
+      return log_file.substr(0, last_index);
+    }();
+    return d;
+  }
+  // perimeter to use for igntion (empty if none)
+  string perimeter{};
   // Whether or not to save individual grids
   bool save_individual{false};
   // Whether or not to run things asynchronously where possible
@@ -146,6 +166,11 @@ public:
   Settings(const string dirname);
   // save to directory in same format parse expects
   void saveTo(const string& output_directory) const noexcept;
+
+public:
+  // test mode only variables
+  // name of fuel to use for test
+  string fuel_name{};
 
 private:
   /**
