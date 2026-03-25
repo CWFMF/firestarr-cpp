@@ -61,7 +61,7 @@ void Scenario::clear() noexcept
   scheduler_ = set<Event>();
   arrival_ = {};
   points_ = {};
-  if (!settings.surface)
+  if (!settings.is_surface())
   {
     spread_info_ = {};
   }
@@ -668,9 +668,9 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   const auto completed = ++COMPLETED;
   // HACK: use + to pull value out of atomic
-  const auto count = settings.surface ? model_->scenarioCount() : (+COUNT);
+  const auto count = (settings.is_surface()) ? model_->scenarioCount() : (+COUNT);
   const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
-  if (settings.surface)
+  if (settings.is_surface())
   {
     const auto ratio_done = static_cast<MathSize>(completed) / count;
     const auto s = model_->runTime().count();
@@ -853,8 +853,8 @@ void Scenario::scheduleFireSpread(const Event& event)
   static const auto& settings = fs::settings::instance();
   const auto time = event.time;
   const auto this_time = time_index(time);
-  const auto wx = settings.surface ? model_->yesterday() : weather(time);
-  const auto wx_daily = settings.surface ? model_->yesterday() : weather_daily(time);
+  const auto wx = settings.is_surface() ? model_->yesterday() : weather(time);
+  const auto wx_daily = settings.is_surface() ? model_->yesterday() : weather_daily(time);
   current_time_ = time;
   logging::check_fatal(nullptr == wx, "No weather available for time %f", time);
   const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
@@ -873,7 +873,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     current_time_index_ = this_time;
     // seemed like it would be good to keep offsets but max_ros_ needs to reset or things slow to a
     // crawl?
-    if (!settings.surface)
+    if (!settings.is_surface())
     {
       spread_info_ = {};
     }
