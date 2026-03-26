@@ -452,10 +452,20 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   register_flag(settings.save_as_tiff, false, "--no-tiff", "Do not save grids as .tif");
   if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "test"))
   {
-    fs::logging::note("Running in test mode");
     settings.mode = Mode::Test;
     cur_arg_ += 1;
     skipped_args_ = 1;
+  }
+  if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "surface"))
+  {
+    settings.mode = Mode::Surface;
+    // skip 'surface' argument if present
+    cur_arg_ += 1;
+    skipped_args_ = 1;
+  }
+  if (Mode::Test == settings.mode)
+  {
+    fs::logging::note("Running in test mode");
     // if we have a directory and nothing else then use defaults for single run
     // if we have 'all' then overrride specified indices, but then filter down to the subset that
     // matches what was specified
@@ -537,13 +547,9 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       false,
       &parse_size_t
     );
-    if (arguments_.size() > 1 && 0 == strcmp(arguments_.at(1).c_str(), "surface"))
+    if (Mode::Surface == settings.mode)
     {
       fs::logging::note("Running in probability surface mode");
-      settings.mode = Mode::Surface;
-      // skip 'surface' argument if present
-      cur_arg_ += 1;
-      skipped_args_ = 1;
       register_index<Ffmc>(settings.ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
       register_index<Dmc>(settings.dmc, "--dmc", "Constant Duff Moisture Code", true);
       register_index<Dc>(settings.dc, "--dc", "Constant Drought Code", true);
