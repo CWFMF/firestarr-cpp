@@ -1178,12 +1178,7 @@ int Model::runScenarios(
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
   fs::logging::note(
-    "Simulation start time at start of runScenarios() is %d-%02d-%02d %02d:%02d",
-    start_time.tm_year + TM_YEAR_OFFSET,
-    start_time.tm_mon + TM_MONTH_OFFSET,
-    start_time.tm_mday,
-    start_time.tm_hour,
-    start_time.tm_min
+    "Simulation start time at start of runScenarios() is %s", format_datetime(start_time).c_str()
   );
   auto env = Environment::loadEnvironment(
     raster_root, start_point, perimeter, start_time.tm_year + TM_YEAR_OFFSET

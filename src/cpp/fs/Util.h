@@ -237,6 +237,11 @@ template <unsigned int N>
  * \return tm representing date and time
  */
 tm to_tm(const YearSize year, const int month, const int day, const int hour, const int minute);
+string format_datetime(const tm& date);
+string format_date(const tm& date);
+string format_time(const tm& date);
+tm parse_date(const string value);
+void add_time(tm& date, const string value);
 /**
  * \brief Convert tm struct into internal represenation
  * \param t tm struct to convert
@@ -530,6 +535,8 @@ protected:
 };
 // convert string to lower case
 string tolower(string value);
+// convert string to upper case
+string toupper(string value);
 template <class V>
 std::ostream& operator<<(std::ostream& os, const std::optional<V>& v)
 {

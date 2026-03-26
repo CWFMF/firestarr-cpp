@@ -45,16 +45,23 @@ OutputDateOffsets::OutputDateOffsets(const string value) noexcept
     output_date_offsets_{parse_list<int>(value, [](const string s) { return stoi(s); })},
     max_date_offset_{*std::max_element(output_date_offsets_.begin(), output_date_offsets_.end())}
 { }
-string get_value(string_map<string>& settings, const string_view key, const bool required = true)
+string get_value(
+  std::pair<string_map<string>, string_map<string>>& settings,
+  const string_view key,
+  const bool required = true
+)
 {
-  const auto found = settings.find(key);
-  if (found != settings.end())
+  auto& settings_unparsed = settings.first;
+  auto& settings_found = settings.second;
+  const auto found = settings_unparsed.find(key);
+  if (found != settings_unparsed.end())
   {
     auto result = found->second;
-    settings.erase(found);
+    settings_unparsed.erase(found);
     // if empty then same as no value
     if ("" != result)
     {
+      settings_found.emplace(key, result);
       return result;
     }
   }
@@ -66,7 +73,11 @@ string get_value(string_map<string>& settings, const string_view key, const bool
   static const auto Invalid = "INVALID";
   return Invalid;
 }
-bool get_flag(const bool default_value, string_map<string>& settings, const string key)
+bool get_flag(
+  const bool default_value,
+  std::pair<string_map<string>, string_map<string>>& settings,
+  const string key
+)
 {
   constexpr auto required = false;
   auto value = get_value(settings, key, required);
@@ -106,7 +117,11 @@ string ModeOptions()
   )};
   return MODE_OPTIONS;
 }
-Mode get_mode(const Mode default_value, string_map<string>& settings, const string key)
+Mode get_mode(
+  const Mode default_value,
+  std::pair<string_map<string>, string_map<string>>& settings,
+  const string key
+)
 {
   constexpr auto required = false;
   auto value = tolower(get_value(settings, key, required));
@@ -134,19 +149,24 @@ Mode get_mode(const Mode default_value, string_map<string>& settings, const stri
   );
 }
 const string Settings::getRoot() const noexcept { return dir_root_; }
-void Settings::setRoot(const string dirname) noexcept
+const string Settings::getBinaryDirectory() const noexcept { return dir_binary_; }
+void Settings::setRoot(const string dir_binary, const string dir_out) noexcept
 {
   std::lock_guard<mutex> lock{MUTEX};
   logging::check_fatal(nullptr != INSTANCE, "Settings already initialized from file");
-  INSTANCE = make_unique<Settings>(dirname);
+  INSTANCE = make_unique<Settings>(dir_binary, dir_out);
 }
-Settings::Settings(const string dirname)
+Settings::Settings(const string dir_binary, const string dir_settings)
 {
   try
   {
-    dir_root_ = dirname;
+    dir_binary_ = dir_binary;
+    dir_root_ = dir_settings;
     const auto filename = dir_root_ + "settings.ini";
-    string_map<string> settings{};
+    logging::note("Initializing settings from %s", filename.c_str());
+    settings_ =
+      make_pair<string_map<string>, string_map<string>>(string_map<string>{}, string_map<string>{});
+    ;
     ifstream in;
     in.open(filename.c_str());
     if (in.is_open())
@@ -165,62 +185,62 @@ Settings::Settings(const string dirname)
           const auto key = trim_copy(str);
           getline(iss, str, '\n');
           const auto value = trim_copy(str);
-          settings.emplace(key, value);
+          settings_.first.emplace(key, value);
           logging::debug("%s: %s", key.c_str(), value.c_str());
         }
       }
       in.close();
     }
     // HACK: resolve path when used to avoid failure when invalid but unused
-    raster_root = LazyPath(dir_root_, get_value(settings, "RASTER_ROOT"));
-    fuel_lookup = LazyFuelLookup(dir_root_, get_value(settings, "FUEL_LOOKUP_TABLE"));
+    raster_root = LazyPath(dir_root_, get_value(settings_, "RASTER_ROOT"));
+    fuel_lookup = LazyFuelLookup(dir_root_, get_value(settings_, "FUEL_LOOKUP_TABLE"));
     // HACK: run into fuel consumption being too low if we don't have a minimum ros
     static const auto MinRos = 0.05;
     // HACK: make sure this is always > 0 so that we don't have to check
     // specifically for 0 to avoid div error
-    minimum_ros = max(stod(get_value(settings, "MINIMUM_ROS")), MinRos);
-    maximum_spread_distance = stod(get_value(settings, "MAX_SPREAD_DISTANCE"));
-    minimum_ffmc = stod(get_value(settings, "MINIMUM_FFMC"));
-    minimum_ffmc_at_night = stod(get_value(settings, "MINIMUM_FFMC_AT_NIGHT"));
-    offset_sunrise = stod(get_value(settings, "OFFSET_SUNRISE"));
-    offset_sunset = stod(get_value(settings, "OFFSET_SUNSET"));
-    confidence_level = stod(get_value(settings, "CONFIDENCE_LEVEL"));
-    maximum_time_seconds = stol(get_value(settings, "MAXIMUM_TIME"));
-    interim_output_interval_seconds = stol(get_value(settings, "INTERIM_OUTPUT_INTERVAL"));
-    minimum_simulation_count = stol(get_value(settings, "MINIMUM_SIMULATIONS"));
-    minimum_active_simulation_count = stol(get_value(settings, "MINIMUM_ACTIVE_SIMULATIONS"));
-    maximum_simulation_count = stol(get_value(settings, "MAXIMUM_SIMULATIONS"));
-    threshold_scenario_weight = stod(get_value(settings, "THRESHOLD_SCENARIO_WEIGHT"));
-    threshold_daily_weight = stod(get_value(settings, "THRESHOLD_DAILY_WEIGHT"));
-    threshold_hourly_weight = stod(get_value(settings, "THRESHOLD_HOURLY_WEIGHT"));
-    output_date_offsets = OutputDateOffsets{get_value(settings, "OUTPUT_DATE_OFFSETS")};
-    default_percent_conifer = stoi(get_value(settings, "DEFAULT_PERCENT_CONIFER"));
-    default_percent_dead_fir = stoi(get_value(settings, "DEFAULT_PERCENT_DEAD_FIR"));
-    intensity_max_low = stoi(get_value(settings, "INTENSITY_MAX_LOW"));
-    intensity_max_moderate = stoi(get_value(settings, "INTENSITY_MAX_MODERATE"));
-    save_individual = get_flag(false, settings, "SAVE_INDIVIDUAL");
-    run_async = get_flag(true, settings, "RUN_ASYNC");
-    deterministic = get_flag(false, settings, "DETERMINISTIC");
-    mode = get_mode(Mode::Simulation, settings, "MODE");
-    save_as_ascii = get_flag(false, settings, "SAVE_AS_ASCII");
-    save_as_tiff = get_flag(true, settings, "SAVE_AS_TIFF");
-    save_points = get_flag(false, settings, "SAVE_POINTS");
-    save_intensity = get_flag(true, settings, "SAVE_INTENSITY");
-    save_probability = get_flag(true, settings, "SAVE_PROBABILITY");
-    save_occurrence = get_flag(false, settings, "SAVE_OCCURRENCE");
-    save_simulation_area = get_flag(false, settings, "SAVE_SIMULATION_AREA");
+    minimum_ros = max(stod(get_value(settings_, "MINIMUM_ROS")), MinRos);
+    maximum_spread_distance = stod(get_value(settings_, "MAX_SPREAD_DISTANCE"));
+    minimum_ffmc = stod(get_value(settings_, "MINIMUM_FFMC"));
+    minimum_ffmc_at_night = stod(get_value(settings_, "MINIMUM_FFMC_AT_NIGHT"));
+    offset_sunrise = stod(get_value(settings_, "OFFSET_SUNRISE"));
+    offset_sunset = stod(get_value(settings_, "OFFSET_SUNSET"));
+    confidence_level = stod(get_value(settings_, "CONFIDENCE_LEVEL"));
+    maximum_time_seconds = stol(get_value(settings_, "MAXIMUM_TIME"));
+    interim_output_interval_seconds = stol(get_value(settings_, "INTERIM_OUTPUT_INTERVAL"));
+    minimum_simulation_count = stol(get_value(settings_, "MINIMUM_SIMULATIONS"));
+    minimum_active_simulation_count = stol(get_value(settings_, "MINIMUM_ACTIVE_SIMULATIONS"));
+    maximum_simulation_count = stol(get_value(settings_, "MAXIMUM_SIMULATIONS"));
+    threshold_scenario_weight = stod(get_value(settings_, "THRESHOLD_SCENARIO_WEIGHT"));
+    threshold_daily_weight = stod(get_value(settings_, "THRESHOLD_DAILY_WEIGHT"));
+    threshold_hourly_weight = stod(get_value(settings_, "THRESHOLD_HOURLY_WEIGHT"));
+    output_date_offsets = OutputDateOffsets{get_value(settings_, "OUTPUT_DATE_OFFSETS")};
+    default_percent_conifer = stoi(get_value(settings_, "DEFAULT_PERCENT_CONIFER"));
+    default_percent_dead_fir = stoi(get_value(settings_, "DEFAULT_PERCENT_DEAD_FIR"));
+    intensity_max_low = stoi(get_value(settings_, "INTENSITY_MAX_LOW"));
+    intensity_max_moderate = stoi(get_value(settings_, "INTENSITY_MAX_MODERATE"));
+    save_individual = get_flag(false, settings_, "SAVE_INDIVIDUAL");
+    run_async = get_flag(true, settings_, "RUN_ASYNC");
+    deterministic = get_flag(false, settings_, "DETERMINISTIC");
+    mode = get_mode(Mode::Simulation, settings_, "MODE");
+    save_as_ascii = get_flag(false, settings_, "SAVE_AS_ASCII");
+    save_as_tiff = get_flag(true, settings_, "SAVE_AS_TIFF");
+    save_points = get_flag(false, settings_, "SAVE_POINTS");
+    save_intensity = get_flag(true, settings_, "SAVE_INTENSITY");
+    save_probability = get_flag(true, settings_, "SAVE_PROBABILITY");
+    save_occurrence = get_flag(false, settings_, "SAVE_OCCURRENCE");
+    save_simulation_area = get_flag(false, settings_, "SAVE_SIMULATION_AREA");
     // FIX: have single GREENUP = setting ?
-    force_greenup = get_flag(false, settings, "FORCE_GREENUP");
-    force_no_greenup = get_flag(false, settings, "FORCE_NO_GREENUP");
-    if (const auto value = get_value(settings, "CURING", false); "INVALID" != value)
+    force_greenup = get_flag(false, settings_, "FORCE_GREENUP");
+    force_no_greenup = get_flag(false, settings_, "FORCE_NO_GREENUP");
+    if (const auto value = get_value(settings_, "CURING", false); "INVALID" != value)
     {
       static_curing = stoi(value);
     }
-    if (const auto value = get_value(settings, "UTC_OFFSET", false); "INVALID" != value)
+    if (const auto value = get_value(settings_, "TZ", false); "INVALID" != value)
     {
       utc_offset = stod(value);
     }
-    if (const auto value = get_value(settings, "SALT", false); "INVALID" != value)
+    if (const auto value = get_value(settings_, "SALT", false); "INVALID" != value)
     {
       const int v = stoi(value);
       salt = static_cast<size_t>(abs(v));
@@ -229,25 +249,49 @@ Settings::Settings(const string dirname)
         logging::warning("Negative salt value '%d' converted to positive value %zu", v, salt);
       }
     }
-    if (const auto value = get_value(settings, "OUTPUT_DIRECTORY", false); "INVALID" != value)
+    if (const auto value = get_value(settings_, "OUTPUT_DIRECTORY", false); "INVALID" != value)
     {
       output_directory = value;
     }
-    if (const auto value = get_value(settings, "WX", false); "INVALID" != value)
+    if (const auto value = get_value(settings_, "WX", false); "INVALID" != value)
     {
       wx_file_name = value;
     }
-    if (const auto value = get_value(settings, "LOG_FILE_NAME", false); "INVALID" != value)
+    if (const auto value = get_value(settings_, "LOG_FILE_NAME", false); "INVALID" != value)
     {
       log_file_name = value;
     }
-    if (const auto value = get_value(settings, "PERIMETER", false); "INVALID" != value)
+    if (const auto value = get_value(settings_, "PERIMETER", false); "INVALID" != value)
     {
       perimeter = value;
     }
+    if (const auto value = get_value(settings_, "FFMC", false); "INVALID" != value)
+    {
+      ffmc = Ffmc{stod(value)};
+    }
+    if (const auto value = get_value(settings_, "DMC", false); "INVALID" != value)
+    {
+      dmc = Dmc{stod(value)};
+    }
+    if (const auto value = get_value(settings_, "DC", false); "INVALID" != value)
+    {
+      dc = Dc{stod(value)};
+    }
+    if (const auto value = get_value(settings_, "TZ", false); "INVALID" != value)
+    {
+      utc_offset = stod(value);
+    }
+    if (const auto value = get_value(settings_, "WD", false); "INVALID" != value)
+    {
+      wind_direction = stod(value);
+    }
+    if (const auto value = get_value(settings_, "WS", false); "INVALID" != value)
+    {
+      wind_speed = stod(value);
+    }
     // HACK: check for value that should only exist for specific mode
     auto get_mode_value = [&](const char* key, const Mode mode_required) {
-      const auto value = get_value(settings, key, false);
+      const auto value = get_value(settings_, key, false);
       if ("INVALID" != value)
       {
         logging::check_fatal(
@@ -271,16 +315,33 @@ Settings::Settings(const string dirname)
     if (const auto value = get_mode_value("TEST_ALL", Mode::Test); "INVALID" != value)
     {
       // FIX: duplicates effort
-      test_all = get_flag(true, settings, "TEST_ALL");
+      test_all = get_flag(true, settings_, "TEST_ALL");
     }
     if (const auto value = get_mode_value("HOURS", Mode::Simulation); "INVALID" != value)
     {
       hours = stod(value);
     }
-    if (!settings.empty())
+    if (const auto value = get_mode_value("START_DATE", Mode::Simulation); "INVALID" != value)
+    {
+      start_date = parse_date(value);
+    }
+    if (const auto value = get_mode_value("START_TIME", Mode::Simulation); "INVALID" != value)
+    {
+      // NOTE: required START_DATE to be parsed previously
+      add_time(start_date.value(), value);
+    }
+    if (const auto value = get_mode_value("LATITUDE", Mode::Simulation); "INVALID" != value)
+    {
+      latitude = stod(value);
+    }
+    if (const auto value = get_mode_value("LONGITUDE", Mode::Simulation); "INVALID" != value)
+    {
+      longitude = stod(value);
+    }
+    if (!settings_.first.empty())
     {
       logging::warning("Unused settings in settings file %s", filename.c_str());
-      for (const auto& kv : settings)
+      for (const auto& kv : settings_.first)
       {
         logging::warning("%s = %s", kv.first.c_str(), kv.second.c_str());
       }
@@ -413,11 +474,18 @@ void Settings::saveTo(const string& output_directory) const noexcept
   put("FORCE_GREENUP", "whether or not to force greenup for all fires", force_greenup);
   put("FORCE_NO_GREENUP", "whether or not to force no greenup for all fires", force_no_greenup);
   put("CURING", "static curing value to force for all fires", static_curing.as_string());
-  put("UTC_OFFSET", "offset from UTC to use for entire simulation (hours)", utc_offset);
+  put("TZ", "offset from UTC to use for entire simulation (hours)", utc_offset);
   put("SALT", "salt to use for random seeds", salt);
   if (Mode::Simulation == mode)
   {
     put("SIZE", "initial fire size", initial_size);
+  }
+  if (Mode::Surface != mode)
+  {
+    put("START_DATE", "ignition start time", format_date(start_date.value()));
+    put("START_TIME", "ignition start time", format_time(start_date.value()));
+    put("LATITUDE", "weather file path", latitude);
+    put("LONGITUDE", "weather file path", longitude);
   }
   if (Mode::Test == mode)
   {
@@ -425,11 +493,12 @@ void Settings::saveTo(const string& output_directory) const noexcept
     put("TEST_ALL", "test every combination of settings for tests", test_all);
     put("HOURS", "number of hours to run tests for", hours);
   }
+  // always need these for startup or constant indices
+  put("FFMC", "fine fuel moisture code", ffmc);
+  put("DMC", "duff moisture code", dmc);
+  put("DC", "drought code", dc);
   if (Mode::Simulation != mode)
   {
-    put("FFMC", "fine fuel moisture code", ffmc);
-    put("DMC", "duff moisture code", dmc);
-    put("DC", "drought code", dc);
     put("WD", "wind direction (degrees)", wind_direction);
     put("WS", "wind speed (km/h)", wind_speed);
   }

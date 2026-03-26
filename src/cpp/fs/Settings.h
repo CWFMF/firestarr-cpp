@@ -70,12 +70,18 @@ enum class Mode
 class Settings
 {
 public:
-  static void setRoot(const string dirname) noexcept;
+  static void setRoot(const string dir_binary, const string dir_settings) noexcept;
   const string getRoot() const noexcept;
+  const string getBinaryDirectory() const noexcept;
   Settings() = delete;
-  Settings(const string dirname);
+  Settings(const string dir_binary, const string dir_settings);
   // save to directory in same format parse expects
   void saveTo(const string& output_directory) const noexcept;
+  bool found(const string& key) const noexcept
+  {
+    auto& s = settings_.second;
+    return s.find(key) != s.end();
+  }
 
 public:
   // general settings
@@ -216,6 +222,9 @@ private:
    * \brief Directory used for settings and relative paths
    */
   string dir_root_;
+  string dir_binary_;
+  // unparsed and found settings
+  std::pair<string_map<string>, string_map<string>> settings_;
 };
 }
 }
