@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "Util.h"
 #include "Log.h"
+#include "TimeUtil.h"
 // HACK: complains when importing otherwise
 #include <regex>
 #ifdef _WIN32
@@ -154,6 +155,51 @@ tm to_tm(const YearSize year, const int month, const int day, const int hour, co
   mktime(&t);
   return t;
 }
+string format_date(const tm& date)
+{
+  return std::format(
+    "{:4d}-{:02d}-{:02d}",
+    date.tm_year + TM_YEAR_OFFSET,
+    date.tm_mon + TM_MONTH_OFFSET,
+    date.tm_mday
+  );
+}
+string format_time(const tm& date)
+{
+  return std::format("{:02d}:{:02d}", date.tm_hour, date.tm_min);
+}
+string format_datetime(const tm& date)
+{
+  // make sure parts match whole
+  return std::format("{} {}", format_date(date), format_time(date));
+}
+tm parse_date(const string value)
+{
+  tm date{};
+  date.tm_year = stoi(value.substr(0, 4)) - TM_YEAR_OFFSET;
+  date.tm_mon = stoi(value.substr(5, 2)) - TM_MONTH_OFFSET;
+  date.tm_mday = stoi(value.substr(8, 2));
+  return date;
+}
+void add_time(tm& date, const string value)
+{
+  // if this is a time then we aren't just running the weather
+  date.tm_hour = stoi(value.substr(0, 2));
+  fs::logging::check_fatal(
+    date.tm_hour < 0 || date.tm_hour > 23,
+    "Simulation start time has an invalid hour (%d)",
+    date.tm_hour
+  );
+  date.tm_min = stoi(value.substr(3, 2));
+  fs::logging::check_fatal(
+    date.tm_min < 0 || date.tm_min > 59,
+    "Simulation start time has an invalid minute (%d)",
+    date.tm_min
+  );
+  fs::logging::note("Simulation start time before fix_tm() is %s", format_datetime(date).c_str());
+  fs::fix_tm(&date);
+  fs::logging::note("Simulation start time after fix_tm() is %s", format_datetime(date).c_str());
+}
 DurationSize to_time(const tm& t)
 {
   return t.tm_yday
@@ -184,13 +230,7 @@ void read_date(istringstream* iss, string* str, tm* t)
   t->tm_mday = stoi(ds);
   getline(dss, ds, ':');
   t->tm_hour = stoi(ds);
-  logging::verbose(
-    "Date is %4d-%02d-%02d %02d:00",
-    t->tm_year + TM_YEAR_OFFSET,
-    t->tm_mon + TM_MONTH_OFFSET,
-    t->tm_mday,
-    t->tm_hour
-  );
+  logging::verbose("Date is %s", format_datetime(*t).c_str());
 }
 UsageCount::~UsageCount() { logging::note("%s called %d times", for_what_.c_str(), count_.load()); }
 UsageCount::UsageCount(string for_what) noexcept : count_(0), for_what_(std::move(for_what)) { }
@@ -294,6 +334,13 @@ string tolower(string value)
 {
   std::transform(value.begin(), value.end(), value.begin(), [](const auto c) {
     return std::tolower(c);
+  });
+  return value;
+}
+string toupper(string value)
+{
+  std::transform(value.begin(), value.end(), value.begin(), [](const auto c) {
+    return std::toupper(c);
   });
   return value;
 }
