@@ -96,13 +96,22 @@ int main(const int argc, const char* const argv[])
       auto& start_date = settings.start_date.value();
       fs::fix_tm(&start_date);
       fs::logging::note(
-        "Simulation start time after fix_tm() again is %d-%02d-%02d %02d:%02d",
-        start_date.tm_year + TM_YEAR_OFFSET,
-        start_date.tm_mon + TM_MONTH_OFFSET,
-        start_date.tm_mday,
-        start_date.tm_hour,
-        start_date.tm_min
+        "Simulation start time after fix_tm() again is %s", format_datetime(start_date).c_str()
       );
+      // we were given a time, so number of days is until end of year
+      tm start = start_date;
+      const auto start_t = mktime(&start);
+      auto year_end = start;
+      year_end.tm_mon = 12 - TM_MONTH_OFFSET;
+      year_end.tm_mday = 31;
+      const auto seconds = difftime(mktime(&year_end), start_t);
+      // start day counts too, so +1
+      // HACK: but we don't want to go to Jan 1 so don't add 1
+      size_t num_days = static_cast<size_t>(seconds / fs::DAY_SECONDS);
+      fs::logging::debug("Calculated number of days until end of year: %d", num_days);
+      // +1 because day 1 counts too
+      // +2 so that results don't change when we change number of days
+      num_days = min(num_days, static_cast<size_t>(settings.output_date_offsets.max()) + 2);
       parser.log_args();
       result = Model::runScenarios(
         settings.output_directory,

@@ -100,7 +100,7 @@ void register_index(T& index, string v, string help, bool required)
 template <class T>
 void register_index(std::optional<T>& index, string v, string help, bool required)
 {
-  register_argument(v, help, required, [&] { index = parse_index<T>(); });
+  register_argument(v, help, required && !index.has_value(), [&] { index = parse_index<T>(); });
 }
 string ArgumentParser::get_args()
 {
@@ -186,8 +186,25 @@ string parse_string()
 }
 void register_argument(string v, string help, bool required, std::function<void()> fct)
 {
+  // HACK: resolve once and fail if not set already
+  static auto& settings = fs::settings::instance();
+  // cli is lower case with '-' and settings are uppercase with '_'
+  const auto as_setting = [&]() {
+    // start after any '-' at front
+    string s{v.substr(v.find_first_not_of('-'))};
+    std::transform(s.begin(), s.end(), s.begin(), [](const auto c) -> int {
+      if ('-' == c)
+      {
+        return '_';
+      }
+      return std::toupper(c);
+    });
+    return s;
+  }();
   PARSE_FCT.emplace(v, fct);
   PARSE_HELP.emplace_back(v, help);
+  logging::note("Checking if already have %s", as_setting.c_str());
+  required = required && !settings.found(as_setting);
   PARSE_REQUIRED.emplace(v, required);
 }
 void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help)
@@ -259,7 +276,26 @@ ArgumentParser::ArgumentParser(
     // HACK: already parsed binary from arg 0
     binary_directory_{std::get<0>(binary)}, binary_name_{std::get<1>(binary)}
 {
-  // HACK: count -v and -q before anything to get right log level
+  // HACK: need output directory so find first thing without a -
+  auto output_directory = [&]() -> string {
+    size_t i = 1;
+    while (i < arguments.size())
+    {
+      const string arg = arguments.at(i);
+      if (!arg.starts_with("-"))
+      {
+        auto d = arg;
+        replace(d.begin(), d.end(), '\\', '/');
+        if ('/' != d[d.length() - 1])
+        {
+          d += '/';
+        }
+        return d;
+      }
+      ++i;
+    }
+    return {};
+  }();   // HACK: count -v and -q before anything to get right log level
   constexpr auto log_default = fs::logging::LOG_NOTE;
   logging::Log::setLogLevel(log_default);
   for (const auto& arg : arguments)
@@ -282,7 +318,12 @@ ArgumentParser::ArgumentParser(
     }
   }
   // FIX: doing this here means we always see the settings if we haven't adjusted log level
-  Settings::setRoot(binary_directory_);
+  // if there is a settings.ini in the output directory then use that
+  logging::note("Checking for %s", (output_directory + "settings.ini").c_str());
+  auto dir_settings = std::filesystem::exists(output_directory + "settings.ini")
+                      ? output_directory
+                      : binary_directory_;
+  Settings::setRoot(binary_directory_, dir_settings);
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
   add_usages(usages);
@@ -585,72 +626,33 @@ Settings& MainArgumentParser::parse_args()
     // handle surface/simulation positional arguments
     // positional arguments should be:
     // "./firestarr [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
-    string date(get_positional());
-    settings.start_date = [&]() {
-      tm start_date{};
-      start_date.tm_year = stoi(date.substr(0, 4)) - TM_YEAR_OFFSET;
-      start_date.tm_mon = stoi(date.substr(5, 2)) - TM_MONTH_OFFSET;
-      start_date.tm_mday = stoi(date.substr(8, 2));
-      return start_date;
-    }();
-    auto& start_date = settings.start_date.value();
-    settings.latitude = stod(get_positional());
-    settings.longitude = stod(get_positional());
-    size_t num_days = 0;
-    string arg(get_positional());
-    tm start{};
-    if (5 == arg.size() && ':' == arg[2])
+    // HACK: if we handle these in order it should let us omit things that are in the settings
+    if (!settings.found("START_DATE"))
     {
-      try
+      settings.start_date = parse_date(get_positional());
+    }
+    auto& start_date = settings.start_date.value();
+    if (!settings.found("LATITUDE"))
+    {
+      settings.latitude = stod(get_positional());
+    }
+    if (!settings.found("LONGITUDE"))
+    {
+      settings.longitude = stod(get_positional());
+    }
+    if (!settings.found("START_TIME"))
+    {
+      string arg(get_positional());
+      if (5 == arg.size() && ':' == arg[2])
       {
-        // if this is a time then we aren't just running the weather
-        start_date.tm_hour = stoi(arg.substr(0, 2));
-        fs::logging::check_fatal(
-          start_date.tm_hour < 0 || start_date.tm_hour > 23,
-          "Simulation start time has an invalid hour (%d)",
-          start_date.tm_hour
-        );
-        start_date.tm_min = stoi(arg.substr(3, 2));
-        fs::logging::check_fatal(
-          start_date.tm_min < 0 || start_date.tm_min > 59,
-          "Simulation start time has an invalid minute (%d)",
-          start_date.tm_min
-        );
-        fs::logging::note(
-          "Simulation start time before fix_tm() is %d-%02d-%02d %02d:%02d",
-          start_date.tm_year + TM_YEAR_OFFSET,
-          start_date.tm_mon + TM_MONTH_OFFSET,
-          start_date.tm_mday,
-          start_date.tm_hour,
-          start_date.tm_min
-        );
-        fs::fix_tm(&start_date);
-        fs::logging::note(
-          "Simulation start time after fix_tm() is %d-%02d-%02d %02d:%02d",
-          start_date.tm_year + TM_YEAR_OFFSET,
-          start_date.tm_mon + TM_MONTH_OFFSET,
-          start_date.tm_mday,
-          start_date.tm_hour,
-          start_date.tm_min
-        );
-        // we were given a time, so number of days is until end of year
-        start = start_date;
-        const auto start_t = mktime(&start);
-        auto year_end = start;
-        year_end.tm_mon = 12 - TM_MONTH_OFFSET;
-        year_end.tm_mday = 31;
-        const auto seconds = difftime(mktime(&year_end), start_t);
-        // start day counts too, so +1
-        // HACK: but we don't want to go to Jan 1 so don't add 1
-        num_days = static_cast<size_t>(seconds / fs::DAY_SECONDS);
-        fs::logging::debug("Calculated number of days until end of year: %d", num_days);
-        // +1 because day 1 counts too
-        // +2 so that results don't change when we change number of days
-        num_days = min(num_days, static_cast<size_t>(settings.output_date_offsets.max()) + 2);
-      }
-      catch (std::exception&)
-      {
-        show_usage_and_exit();
+        try
+        {
+          add_time(start_date, arg);
+        }
+        catch (std::exception&)
+        {
+          show_usage_and_exit();
+        }
       }
     }
   }
