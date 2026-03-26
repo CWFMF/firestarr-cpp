@@ -16,7 +16,7 @@ BIN=$(realpath "${DIR_ROOT}/firestarr")
 echo ${BIN}
 
 pushd ${DIR_ROOT}
-git restore settings.ini
+# git restore settings.ini
 
 VARIANT="$1"
 if ( [ -z "${VARIANT}" ] || ( [ "Release" != "${VARIANT}" ] && [ "Debug" != ${VARIANT} ] && [ "Test" != "${VARIANT}" ]) ); then
@@ -53,9 +53,9 @@ intensity=""
 
 scripts/build.sh ${VARIANT}
 
-# make sure it only runs 1 sim each
-sed -i "s/MAXIMUM_SIMULATIONS = .*/MAXIMUM_SIMULATIONS = 0/g" settings.ini
-sed -i "s/MAXIMUM_TIME = .*/MAXIMUM_TIME = 0/g" settings.ini
+# # make sure it only runs 1 sim each
+# sed -i "s/MAXIMUM_SIMULATIONS = .*/MAXIMUM_SIMULATIONS = 0/g" settings.ini
+# sed -i "s/MAXIMUM_TIME = .*/MAXIMUM_TIME = 0/g" settings.ini
 
 #################
 
@@ -102,7 +102,7 @@ else
 fi
 
 popd
-git restore settings.ini
+# git restore settings.ini
 
 popd
 if [ "" == "${IS_PASTED}" ]; then
