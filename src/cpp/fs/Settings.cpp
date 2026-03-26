@@ -249,10 +249,10 @@ Settings::Settings(const string dir_binary, const string dir_settings)
         logging::warning("Negative salt value '%d' converted to positive value %zu", v, salt);
       }
     }
-    if (const auto value = get_value(settings_, "OUTPUT_DIRECTORY", false); "INVALID" != value)
-    {
-      output_directory = value;
-    }
+    // if (const auto value = get_value(settings_, "OUTPUT_DIRECTORY", false); "INVALID" != value)
+    // {
+    //   output_directory = value;
+    // }
     if (const auto value = get_value(settings_, "WX", false); "INVALID" != value)
     {
       wx_file_name = value;
@@ -362,8 +362,9 @@ void Settings::saveTo(const string& output_directory) const noexcept
     out << key << " = " << value << "\n";
   };
   // HACK: just hardcode how this works since it's the opposite of parsing
-  // FIX: this should always just be whatever folder the settings file is in?
-  put("OUTPUT_DIRECTORY", "output directory", output_directory.c_str());
+  // // FIX: this should always just be whatever folder the settings file is in?
+  // auto abs = std::filesystem::absolute(output_directory);
+  // put("OUTPUT_DIRECTORY", "output directory", abs.c_str());
   put("WX", "weather file path", wx_file_name.c_str());
   put("LOG_FILE_NAME", "log file name", log_file_name.c_str());
   put("PERIMETER", "perimeter to use for ignition", perimeter.c_str());
