@@ -62,6 +62,8 @@ public:
    * \return string Positional arguments
    */
   virtual Settings& parse_args();
+
+protected:
   /**
    * \brief If any more positional arguments are available
    */
@@ -70,13 +72,15 @@ public:
    * \brief Get next positional argument
    */
   string get_positional();
+  void done_positional();
+
+public:
   /**
    * \brief Indicate positional arguments should all be used by now and error if not
    */
   string cur_arg();
   string get_args();
   string get_arg() noexcept;
-  void done_positional();
   bool help_requested() { return help_requested_; }
   void mark_parsed(const string arg);
   bool was_parsed(const string arg);
