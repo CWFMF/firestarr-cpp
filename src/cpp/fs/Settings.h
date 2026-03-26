@@ -187,6 +187,12 @@ public:
   std::optional<size_t> initial_size{};
 
 public:
+  // normal or test mode variables
+  std::optional<tm> start_date{};
+  std::optional<MathSize> latitude{};
+  std::optional<MathSize> longitude{};
+
+public:
   // test mode only variables
   // name of fuel to use for test
   std::optional<string> fuel_name{};
