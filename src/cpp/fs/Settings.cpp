@@ -52,7 +52,11 @@ string get_value(string_map<string>& settings, const string_view key, const bool
   {
     auto result = found->second;
     settings.erase(found);
-    return result;
+    // if empty then same as no value
+    if ("" != result)
+    {
+      return result;
+    }
   }
   if (required)
   {
