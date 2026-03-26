@@ -73,7 +73,10 @@ void register_setter(
   std::function<T()> fct
 )
 {
-  register_argument(v, help, required, [&variable, fct] { variable = fct(); });
+  // if supposed to be required but has a value from settings then shouldn't be required
+  register_argument(v, help, required && !variable.has_value(), [&variable, fct] {
+    variable = fct();
+  });
 }
 template <class T>
 void register_setter(
