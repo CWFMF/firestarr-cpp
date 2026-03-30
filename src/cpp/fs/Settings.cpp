@@ -191,9 +191,17 @@ Settings::Settings(const string dir_binary, const string dir_settings)
       }
       in.close();
     }
+    if (const auto value = get_value(settings_, "OUTPUT_DIRECTORY", false); "INVALID" != value)
+    {
+      output_directory = value;
+    }
+    else
+    {
+      output_directory = std::filesystem::absolute(dir_root_).lexically_normal();
+    }
     // HACK: resolve path when used to avoid failure when invalid but unused
-    raster_root = LazyPath(dir_root_, get_value(settings_, "RASTER_ROOT"));
-    fuel_lookup = LazyFuelLookup(dir_root_, get_value(settings_, "FUEL_LOOKUP_TABLE"));
+    raster_root = LazyPath(output_directory, get_value(settings_, "RASTER_ROOT"));
+    fuel_lookup = LazyFuelLookup(output_directory, get_value(settings_, "FUEL_LOOKUP_TABLE"));
     // HACK: run into fuel consumption being too low if we don't have a minimum ros
     static const auto MinRos = 0.05;
     // HACK: make sure this is always > 0 so that we don't have to check
@@ -249,10 +257,6 @@ Settings::Settings(const string dir_binary, const string dir_settings)
         logging::warning("Negative salt value '%d' converted to positive value %zu", v, salt);
       }
     }
-    // if (const auto value = get_value(settings_, "OUTPUT_DIRECTORY", false); "INVALID" != value)
-    // {
-    //   output_directory = value;
-    // }
     if (const auto value = get_value(settings_, "WX", false); "INVALID" != value)
     {
       wx_file_name = value;
@@ -363,12 +367,19 @@ void Settings::saveTo(const string& output_directory) const noexcept
   };
   // HACK: just hardcode how this works since it's the opposite of parsing
   // // FIX: this should always just be whatever folder the settings file is in?
-  // auto abs = std::filesystem::absolute(output_directory);
-  // put("OUTPUT_DIRECTORY", "output directory", abs.c_str());
-  put("WX", "weather file path", wx_file_name.c_str());
+  auto abs = std::filesystem::absolute(output_directory).lexically_normal();
+  auto relative = [&](const string& path) {
+    return std::filesystem::relative(path.c_str(), abs.c_str());
+  };
+  // put("OUTPUT_DIRECTORY", "output directory", relative(output_directory).c_str());
+  // HACK: output full path so if it isn't the same on read we can warn
+  put("OUTPUT_DIRECTORY", "output directory", abs.c_str());
+  put("WX", "weather file path", relative(wx_file_name).c_str());
   put("LOG_FILE_NAME", "log file name", log_file_name.c_str());
-  put("PERIMETER", "perimeter to use for ignition", perimeter.c_str());
-  put("RASTER_ROOT", "root directory to read rasters from", raster_root.canonical());
+  put("PERIMETER", "perimeter to use for ignition", relative(perimeter).c_str());
+  put(
+    "RASTER_ROOT", "root directory to read rasters from", relative(raster_root.canonical()).c_str()
+  );
   put(
     "MINIMUM_ROS",
     "minimum rate of spread before fire is considered to actually be spreading",
@@ -380,7 +391,11 @@ void Settings::saveTo(const string& output_directory) const noexcept
     maximum_spread_distance
   );
   put("OUTPUT_DATE_OFFSETS", "days to output probability contours for", output_date_offsets.text());
-  put("FUEL_LOOKUP_TABLE", "lookup table for fuels (prometheus format)", fuel_lookup.canonical());
+  put(
+    "FUEL_LOOKUP_TABLE",
+    "lookup table for fuels (prometheus format)",
+    relative(fuel_lookup.canonical()).c_str()
+  );
   put("MINIMUM_FFMC", "minimum ffmc for fire to spread", minimum_ffmc);
   put("MINIMUM_FFMC_AT_NIGHT", "minimum ffmc for fire to spread at night", minimum_ffmc_at_night);
   put(
