@@ -51,7 +51,7 @@ export VCPKG_ROOT=$(realpath .)/vcpkg
 export PATH=$VCPKG_ROOT:$PATH
 export VCPKG_DISABLE_METRICS=1
 export VCPKG_INSTALLED_DIR=$VCPKG_ROOT/installed
-if [ ! -d "${VCPKG_ROOT}" ]; then
+if [ ! -d "${VCPKG_ROOT}/vcpkg" ]; then
   git clone -v https://github.com/microsoft/vcpkg.git \
   && cd vcpkg \
   && git checkout $(sed -n '/baseline/{s/.*\"\([^"]*\)",$/\1/g;p}' ../vcpkg-configuration.json) \
