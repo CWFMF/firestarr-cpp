@@ -431,7 +431,7 @@ void Settings::saveTo(const string& output_directory) const noexcept
   put(
     "MINIMUM_SIMULATIONS",
     "minimum number of simulations to do (0 is exactly 1 simulation per scenario)",
-    maximum_simulation_count
+    minimum_simulation_count
   );
   put(
     "MINIMUM_ACTIVE_SIMULATIONS",
