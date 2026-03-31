@@ -309,6 +309,7 @@ string get_canonical_path(const char* const dir_root, string path)
 #endif
     if (!path.starts_with("/"))
   {
+    const pushd dir{dir_root};
     // not an absolute path
     // if binary path starts with ./ then ignore it
     std::filesystem::path p =

@@ -373,9 +373,10 @@ void Settings::saveTo(const string& output_directory) const noexcept
   // auto abs = std::filesystem::absolute(output_directory).lexically_normal();
   auto abs = dir.current_directory;
   auto relative = [&](const string& path) {
+    const pushd dir{output_directory};
     // return std::filesystem::relative(path.c_str(), abs.c_str());
-    // return std::filesystem::relative(path.c_str());
-    return path;
+    return std::filesystem::relative(path.c_str());
+    // return path;
   };
   // put("OUTPUT_DIRECTORY", "output directory", relative(output_directory).c_str());
   // HACK: output full path so if it isn't the same on read we can warn
