@@ -4,6 +4,7 @@
 #include "Log.h"
 #include "TimeUtil.h"
 // HACK: complains when importing otherwise
+#include <filesystem>
 #include <regex>
 #ifdef _WIN32
 #include <direct.h>
@@ -309,13 +310,17 @@ string get_canonical_path(const char* const dir_root, string path)
 #endif
     if (!path.starts_with("/"))
   {
-    const pushd dir{dir_root};
-    // not an absolute path
-    // if binary path starts with ./ then ignore it
-    std::filesystem::path p =
-      (0 == strcmp("./", dir_root) || 0 == strcmp(".\\", dir_root)) ? path : (dir_root + path);
     try
     {
+      // not an absolute path so should be relative to root
+      const pushd dir{dir_root};
+      auto p = std::filesystem::absolute(std::filesystem::relative(path));
+      logging::note(
+        "Relative to %s path %s becomes %s",
+        dir_root,
+        p.c_str(),
+        std::filesystem::canonical(p).c_str()
+      );
 #ifdef _WIN32
       path = std::filesystem::canonical(p).generic_string();
 #else

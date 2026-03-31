@@ -500,6 +500,10 @@ class LazyPath
 public:
   LazyPath() = default;
   LazyPath(const string dir_root, const string path) : dir_root_{dir_root}, path_{path} { }
+  LazyPath(const string_view dir_root, const string_view path)
+    : LazyPath(string(dir_root), string(path))
+  { }
+  bool empty() const { return path_.empty(); }
   const char* canonical() const
   {
     if (nullptr == canonical_path_)
