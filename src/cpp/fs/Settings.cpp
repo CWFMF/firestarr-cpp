@@ -191,6 +191,11 @@ Settings::Settings(const string dir_binary, const string dir_settings)
       }
       in.close();
     }
+    if (settings_.first.empty())
+    {
+      // could work if all arguments were specified as cli args (not currently possible)
+      logging::warning("Settings file %s is empty", filename.c_str());
+    }
     if (const auto value = get_value(settings_, "OUTPUT_DIRECTORY", false); "INVALID" != value)
     {
       output_directory = value;
@@ -359,10 +364,12 @@ Settings::Settings(const string dir_binary, const string dir_settings)
 }
 void Settings::saveTo(const string& output_directory) const noexcept
 {
+  make_directory_recursive(output_directory.c_str());
   const pushd dir{output_directory};
   const auto filename = string(output_directory) + "settings.ini";
   ofstream out{filename};
   auto put = [&](const string& key, const string& comment, const auto& value) {
+    // FIX: use original string instead of parsed and stringified input so nothing can change
     static constexpr auto MAX_PRECISION = std::numeric_limits<double>::digits10 + 1;
     // make sure we don't lose precision or results will differ when run with settings file
     out << "# " << comment << "\n";
@@ -373,7 +380,6 @@ void Settings::saveTo(const string& output_directory) const noexcept
   // auto abs = std::filesystem::absolute(output_directory).lexically_normal();
   auto abs = dir.current_directory;
   auto relative = [&](const string& path) {
-    const pushd dir{output_directory};
     // return std::filesystem::relative(path.c_str(), abs.c_str());
     return std::filesystem::relative(path.c_str());
     // return path;

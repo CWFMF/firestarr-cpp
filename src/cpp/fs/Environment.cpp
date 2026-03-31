@@ -69,7 +69,8 @@ Environment Environment::loadEnvironment(
   auto found_best = false;
   if (!perimeter.empty())
   {
-    for_info = make_unique<GridBase>(read_header(perimeter));
+    LazyPath p{path, perimeter};
+    for_info = make_unique<GridBase>(read_header(p.canonical()));
     logging::info("Perimeter projection is %s", for_info->proj4().c_str());
   }
   for (const auto& raster : rasters)

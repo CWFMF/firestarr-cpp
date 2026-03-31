@@ -60,17 +60,17 @@ int main(const int argc, const char* const argv[])
       fs::logging::debug("Compiled on: %s", COMPILED_ON);
       parser.show_help_and_exit();
     }
-    static const auto dir_log = settings.log_directory();
+    // HACK: know saving settings made output_directory already
     static const auto dir_out = settings.output_directory;
-    make_directory_recursive(dir_log.c_str());
+    static const auto dir_log = settings.log_directory();
     if (dir_log != dir_out)
     {
+      make_directory_recursive(dir_log.c_str());
       logging::warning(
         "Log file (%s) is being written outside the output directory (%s)",
         settings.log_file.c_str(),
         dir_out.c_str()
       );
-      make_directory_recursive(dir_out.c_str());
     }
     const auto opened_log = Log::openLogFile(settings.log_file.c_str());
     if (!opened_log)
