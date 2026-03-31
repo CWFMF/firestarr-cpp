@@ -2,6 +2,8 @@
 #ifndef FS_UTIL_H
 #define FS_UTIL_H
 #include "stdafx.h"
+#include <filesystem>
+#include <utility>
 #include "Radians.h"
 #include "unstable.h"
 namespace fs
@@ -546,5 +548,24 @@ std::ostream& operator<<(std::ostream& os, const std::optional<V>& v)
   }
   return os;
 }
+// go into directory and return to previous location when object is deleted
+class pushd
+{
+public:
+  const string previous_directory;
+  const string current_directory;
+  pushd(string path) noexcept
+    : previous_directory{std::filesystem::current_path()}, current_directory{[&]() {
+        auto p = std::filesystem::absolute(path).lexically_normal();
+        std::filesystem::current_path(p);
+        return p;
+      }()}
+  { }
+  ~pushd() noexcept { std::filesystem::current_path(previous_directory); }
+  pushd& operator=(const pushd& rhs) noexcept = delete;
+  pushd& operator=(pushd&& rhs) noexcept = delete;
+  pushd(const pushd& rhs) noexcept = delete;
+  pushd(pushd&& rhs) noexcept = delete;
+};
 }
 #endif
