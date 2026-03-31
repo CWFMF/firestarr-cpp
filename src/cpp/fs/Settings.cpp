@@ -359,6 +359,7 @@ Settings::Settings(const string dir_binary, const string dir_settings)
 }
 void Settings::saveTo(const string& output_directory) const noexcept
 {
+  const pushd dir{output_directory};
   const auto filename = string(output_directory) + "settings.ini";
   ofstream out{filename};
   auto put = [&](const string& key, const string& comment, const auto& value) {
