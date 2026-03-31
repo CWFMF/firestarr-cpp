@@ -357,10 +357,7 @@ Settings::Settings(const string dir_binary, const string dir_settings)
     }
   }
   catch (const std::exception& ex)
-  {
-    logging::fatal(ex);
-    std::terminate();
-  }
+  { }
 }
 void Settings::saveTo(const string& output_directory) const noexcept
 {
