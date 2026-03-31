@@ -363,8 +363,10 @@ void Settings::saveTo(const string& output_directory) const noexcept
   const auto filename = string(output_directory) + "settings.ini";
   ofstream out{filename};
   auto put = [&](const string& key, const string& comment, const auto& value) {
+    static constexpr auto MAX_PRECISION = std::numeric_limits<double>::digits10 + 1;
+    // make sure we don't lose precision or results will differ when run with settings file
     out << "# " << comment << "\n";
-    out << key << " = " << value << "\n";
+    out << key << " = " << std::setprecision(MAX_PRECISION) << value << "\n";
   };
   // HACK: just hardcode how this works since it's the opposite of parsing
   // // FIX: this should always just be whatever folder the settings file is in?
