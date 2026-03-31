@@ -323,7 +323,7 @@ ArgumentParser::ArgumentParser(
   auto dir_settings = std::filesystem::exists(output_directory + "settings.ini")
                       ? output_directory
                       : binary_directory_;
-  Settings::setRoot(binary_directory_, dir_settings);
+  Settings::setRoot(binary_directory_, std::filesystem::absolute(dir_settings));
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
   add_usages(usages);

@@ -350,7 +350,8 @@ void Model::makeStarts(
   if (!perim.empty())
   {
     logging::note("Initializing from perimeter %s", string(perim).c_str());
-    perimeter_ = make_shared<Perimeter>(perim, point, *env_);
+    LazyPath p{settings.output_directory, perim};
+    perimeter_ = make_shared<Perimeter>(p.canonical(), point, *env_);
     // HACK: if perimeter is only one cell then use position not perimeter so it can bounce if
     // non-fuel
     const auto& burned = perimeter_->burned;
@@ -1220,7 +1221,8 @@ int Model::runScenarios(
   }
   else
   {
-    model.readWeather(yesterday, start_point.latitude(), weather_input);
+    const LazyPath wx{settings.output_directory, weather_input};
+    model.readWeather(yesterday, start_point.latitude(), wx.canonical());
     if (model.wx_.empty())
     {
       logging::fatal("No weather provided");
