@@ -498,14 +498,22 @@ void Settings::saveTo(const string& output_directory) const noexcept
   put("SALT", "salt to use for random seeds", salt);
   if (Mode::Simulation == mode)
   {
-    put("SIZE", "initial fire size", initial_size);
+    put("SIZE", "initial fire size (ha)", initial_size);
   }
   if (Mode::Surface != mode)
   {
-    put("START_DATE", "ignition start time", format_date(start_date.value()));
-    put("START_TIME", "ignition start time", format_time(start_date.value()));
-    put("LATITUDE", "weather file path", latitude);
-    put("LONGITUDE", "weather file path", longitude);
+    put("START_DATE", "ignition start date (yyyy-mm-dd)", format_date(start_date.value()));
+    put("START_TIME", "ignition start time (HH:MM)", format_time(start_date.value()));
+    put(
+      "LATITUDE",
+      "latitude to center on and use for ignition if no perimeter provided (decimal degrees)",
+      latitude
+    );
+    put(
+      "LONGITUDE",
+      "longituded to center on and use for ignition if no perimeter provided (decimal degrees)",
+      longitude
+    );
   }
   if (Mode::Test == mode)
   {
