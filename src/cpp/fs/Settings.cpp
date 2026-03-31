@@ -367,9 +367,12 @@ void Settings::saveTo(const string& output_directory) const noexcept
   };
   // HACK: just hardcode how this works since it's the opposite of parsing
   // // FIX: this should always just be whatever folder the settings file is in?
-  auto abs = std::filesystem::absolute(output_directory).lexically_normal();
+  // auto abs = std::filesystem::absolute(output_directory).lexically_normal();
+  auto abs = dir.current_directory;
   auto relative = [&](const string& path) {
-    return std::filesystem::relative(path.c_str(), abs.c_str());
+    // return std::filesystem::relative(path.c_str(), abs.c_str());
+    // return std::filesystem::relative(path.c_str());
+    return path;
   };
   // put("OUTPUT_DIRECTORY", "output directory", relative(output_directory).c_str());
   // HACK: output full path so if it isn't the same on read we can warn
