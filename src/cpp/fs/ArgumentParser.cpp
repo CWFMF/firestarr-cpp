@@ -630,23 +630,14 @@ Settings& MainArgumentParser::parse_args()
     // handle surface/simulation positional arguments
     // positional arguments should be:
     // "./firestarr [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
-    // FIX: breaks if arguments are given again but a settings file already exists in output_dir
-    // HACK: if we handle these in order it should let us omit things that are in the settings
-    if (!settings.found("START_DATE"))
+    // require all positional arguments or none
+    if (has_positional())
     {
+      // NOTE: these will overwrite any values in the settings file that exist
       settings.start_date = parse_date(get_positional());
-    }
-    auto& start_date = settings.start_date.value();
-    if (!settings.found("LATITUDE"))
-    {
+      auto& start_date = settings.start_date.value();
       settings.latitude = stod(get_positional());
-    }
-    if (!settings.found("LONGITUDE"))
-    {
       settings.longitude = stod(get_positional());
-    }
-    if (!settings.found("START_TIME"))
-    {
       string arg(get_positional());
       if (5 == arg.size() && ':' == arg[2])
       {
@@ -658,6 +649,20 @@ Settings& MainArgumentParser::parse_args()
         {
           show_usage_and_exit();
         }
+      }
+    }
+    else
+    {
+      auto check_have = [&](const string& v) {
+        logging::check_fatal(
+          !settings.found(v),
+          "No positional arguments specified and missing value for %s",
+          v.c_str()
+        );
+      };
+      for (const auto& k : {"START_DATE", "LATITUDE", "LONGITUDE", "START_TIME"})
+      {
+        check_have(k);
       }
     }
   }
