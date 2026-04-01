@@ -499,7 +499,13 @@ class LazyPath
 {
 public:
   LazyPath() = default;
-  LazyPath(const string dir_root, const string path) : dir_root_{dir_root}, path_{path} { }
+  LazyPath(const string dir_root, const string path)
+    : dir_root_{[&]() {
+        // have to convert to absolute path or this makes no sense if current path changes
+        return std::filesystem::absolute(dir_root);
+      }()},
+      path_{path}
+  { }
   LazyPath(const string_view dir_root, const string_view path)
     : LazyPath(string(dir_root), string(path))
   { }
