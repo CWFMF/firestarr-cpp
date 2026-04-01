@@ -340,7 +340,7 @@ void Model::findAllStarts()
 void Model::makeStarts(
   Coordinates coordinates,
   const Point& point,
-  const string_view perim,
+  const LazyPath& perim,
   size_t size
 )
 {
@@ -349,9 +349,8 @@ void Model::makeStarts(
   Location location(std::get<0>(coordinates), std::get<1>(coordinates));
   if (!perim.empty())
   {
-    logging::note("Initializing from perimeter %s", string(perim).c_str());
-    LazyPath p{settings.output_directory, perim};
-    perimeter_ = make_shared<Perimeter>(p.canonical(), point, *env_);
+    logging::note("Initializing from perimeter %s", perim.canonical());
+    perimeter_ = make_shared<Perimeter>(perim, point, *env_);
     // HACK: if perimeter is only one cell then use position not perimeter so it can bounce if
     // non-fuel
     const auto& burned = perimeter_->burned;
@@ -1167,12 +1166,12 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
 }
 int Model::runScenarios(
   const string_view output_directory,
-  const char* const weather_input,
+  const LazyPath& weather_input,
   const FwiWeather& yesterday,
   const char* const raster_root,
   const StartPoint& start_point,
   const tm& start_time,
-  const string_view perimeter,
+  const LazyPath& perimeter,
   const size_t size
 )
 {
@@ -1221,8 +1220,7 @@ int Model::runScenarios(
   }
   else
   {
-    const LazyPath wx{settings.output_directory, weather_input};
-    model.readWeather(yesterday, start_point.latitude(), wx.canonical());
+    model.readWeather(yesterday, start_point.latitude(), weather_input.canonical());
     if (model.wx_.empty())
     {
       logging::fatal("No weather provided");

@@ -52,7 +52,7 @@ public:
   [[nodiscard]] static Environment loadEnvironment(
     const string_view path,
     const Point& point,
-    const string_view perimeter,
+    const LazyPath& perimeter,
     YearSize year
   );
   /**

@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "ArgumentParser.h"
+#include <filesystem>
 #include <utility>
 #include "Log.h"
 #include "Settings.h"
 #include "TimeUtil.h"
+#include "Util.h"
 namespace fs::settings
 {
 static map<std::string, std::function<void()>> PARSE_FCT{};
@@ -89,6 +91,13 @@ void register_setter(
 )
 {
   register_argument(v, help, required, [&variable, fct] { variable = fct(); });
+}
+void register_path_setter(LazyPath& variable, string v, string help, bool required)
+{
+  register_argument(v, help, required, [&variable] {
+    // always relative to current directory since this was a cli arg
+    variable = LazyPath{std::filesystem::current_path(), parse_string()};
+  });
 }
 void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help);
 void register_flag(bool& variable, bool not_inverse, string v, string help);
@@ -320,10 +329,7 @@ ArgumentParser::ArgumentParser(
   // FIX: doing this here means we always see the settings if we haven't adjusted log level
   // if there is a settings.ini in the output directory then use that
   logging::note("Checking for %s", (output_directory + "settings.ini").c_str());
-  auto dir_settings = std::filesystem::exists(output_directory + "settings.ini")
-                      ? output_directory
-                      : binary_directory_;
-  Settings::setRoot(binary_directory_, dir_settings);
+  Settings::setRoot(binary_directory_, output_directory);
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
   add_usages(usages);
@@ -514,19 +520,11 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     register_flag(
       settings.save_simulation_area, true, "--sim-area", "Output simulation area grids"
     );
-    register_setter<string>(
-      [&](const auto v) { settings.raster_root = v; },
-      "--raster-root",
-      "Use specified directory as raster root",
-      false,
-      &parse_string
+    register_path_setter(
+      settings.raster_root, "--raster-root", "Use specified directory as raster root", false
     );
-    register_setter<string>(
-      [&](const auto v) { settings.fuel_lookup = v; },
-      "--fuel-lut",
-      "Use specified fuel lookup table",
-      false,
-      &parse_string
+    register_path_setter(
+      settings.fuel_lookup, "--fuel-lut", "Use specified fuel lookup table", false
     );
     register_setter<
       DurationSize>(settings.utc_offset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
@@ -564,9 +562,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     }
     else
     {
-      register_setter<string>(
-        settings.wx_file_name, "--wx", "Input weather file", true, &parse_string
-      );
+      register_path_setter(settings.wx_file_name, "--wx", "Input weather file", true);
       register_flag(
         settings.deterministic,
         true,
@@ -575,9 +571,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       );
       register_setter<
         ThresholdSize>(settings.confidence_level, "--confidence", "Use specified confidence level", false, &parse_value<ThresholdSize>);
-      register_setter<string>(
-        settings.perimeter, "--perim", "Start from perimeter", false, &parse_string
-      );
+      register_path_setter(settings.perimeter, "--perim", "Start from perimeter", false);
       register_setter<size_t>(
         settings.initial_size, "--size", "Start from size", false, &parse_size_t
       );
@@ -636,6 +630,7 @@ Settings& MainArgumentParser::parse_args()
     // handle surface/simulation positional arguments
     // positional arguments should be:
     // "./firestarr [surface] <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [options] [-v | -q]"
+    // FIX: breaks if arguments are given again but a settings file already exists in output_dir
     // HACK: if we handle these in order it should let us omit things that are in the settings
     if (!settings.found("START_DATE"))
     {

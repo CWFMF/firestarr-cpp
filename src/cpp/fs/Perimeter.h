@@ -40,7 +40,7 @@ public:
    * \param point Origin of fire
    * \param env Environment to apply Perimeter to
    */
-  Perimeter(const string_view perim, const Point& point, const Environment& env);
+  Perimeter(const LazyPath& perim, const Point& point, const Environment& env);
   /**
    * \brief Create a Perimeter of the given size at the given Location
    * \param location Location to center Perimeter on
