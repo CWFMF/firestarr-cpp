@@ -28,7 +28,12 @@ private:
   bool help_requested_{false};
 
 public:
-  virtual ~ArgumentParser() = default;
+  virtual ~ArgumentParser() noexcept
+  {   // HACK: resolve once and fail if not set already
+    static const auto& settings = settings::instance();
+    // HACK: save settings on exit
+    settings.saveTo(settings.output_directory);
+  };
   ArgumentParser(
     const vector<Usage> usages,
     const vector<string> arguments,

@@ -411,9 +411,15 @@ void Settings::saveTo(const string& output_directory) const noexcept
   // put("OUTPUT_DIRECTORY", "output directory", relative(output_directory).c_str());
   // HACK: output full path so if it isn't the same on read we can warn
   put("OUTPUT_DIRECTORY", "output directory", abs.c_str());
-  put("WX", "weather file path", relative(wx_file_name.canonical()).c_str());
+  if (!wx_file_name.empty())
+  {
+    put("WX", "weather file path", relative(wx_file_name.canonical()).c_str());
+  }
   put("LOG_FILE_NAME", "log file name", log_file_name.c_str());
-  put("PERIMETER", "perimeter to use for ignition", relative(perimeter.canonical()).c_str());
+  if (!perimeter.empty())
+  {
+    put("PERIMETER", "perimeter to use for ignition", relative(perimeter.canonical()).c_str());
+  }
   put(
     "RASTER_ROOT", "root directory to read rasters from", relative(raster_root.canonical()).c_str()
   );
