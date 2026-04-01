@@ -70,11 +70,11 @@ enum class Mode
 class Settings
 {
 public:
-  static void setRoot(const string dir_binary, const string dir_settings) noexcept;
+  static void setRoot(const string dir_binary, const string dir_root) noexcept;
   const string getRoot() const noexcept;
   const string getBinaryDirectory() const noexcept;
   Settings() = delete;
-  Settings(const string dir_binary, const string dir_settings);
+  Settings(const string dir_binary, const string dir_root) noexcept;
   // save to directory in same format parse expects
   void saveTo(const string& output_directory) const noexcept;
   bool found(const string& key) const noexcept
@@ -89,7 +89,7 @@ public:
   // directory to put simulation outputs in
   string output_directory{};
   // .csv with weather streams
-  string wx_file_name{};
+  LazyPath wx_file_name{};
   // name to use for log file inside output_directory
   string log_file_name{"firestarr.log"};
   // full path for log file
@@ -104,7 +104,7 @@ public:
     return d;
   }
   // perimeter to use for igntion (empty if none)
-  string perimeter{};
+  LazyPath perimeter{};
   // Whether or not to save individual grids
   bool save_individual{false};
   // Whether or not to run things asynchronously where possible
@@ -218,11 +218,8 @@ public:
   std::optional<AspectSize> aspect{};
 
 private:
-  /**
-   * \brief Directory used for settings and relative paths
-   */
-  string dir_root_;
   string dir_binary_;
+  string dir_root_;
   // unparsed and found settings
   std::pair<string_map<string>, string_map<string>> settings_;
 };

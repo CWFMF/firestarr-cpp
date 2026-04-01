@@ -314,18 +314,20 @@ string get_canonical_path(const char* const dir_root, string path)
     {
       // not an absolute path so should be relative to root
       const pushd dir{dir_root};
-      auto p = std::filesystem::absolute(std::filesystem::relative(path));
+      logging::note("dir_root = %s", dir_root);
+      auto p_rel = std::filesystem::relative(path);
+      logging::note("p_rel = %s", p_rel.c_str());
+      auto p_abs =
+        p_rel.empty() ? dir.current_directory : std::filesystem::absolute(p_rel).generic_string();
+      logging::note("p_abs = %s", p_abs.c_str());
+      // auto p_can = std::filesystem::canonical(p_rel);
+      // logging::note("p_can = %s", p_can.c_str());
       logging::note(
-        "Relative to %s path %s becomes %s",
-        dir_root,
-        p.c_str(),
-        std::filesystem::canonical(p).c_str()
+        "Relative to %s path %s becomes %s", dir_root, p_rel.c_str(), p_abs.c_str()
+        // ,
+        // p_can.c_str()
       );
-#ifdef _WIN32
-      path = std::filesystem::canonical(p).generic_string();
-#else
-      path = std::filesystem::canonical(p).c_str();
-#endif
+      path = p_abs;
       logging::info("Converted relative path to absolute path %s", path.c_str());
     }
     catch (std::exception&)

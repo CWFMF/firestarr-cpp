@@ -54,7 +54,7 @@ shared_ptr<ProbabilityMap> Environment::makeProbabilityMap(
 Environment Environment::loadEnvironment(
   const string_view path,
   const Point& point,
-  const string_view perimeter,
+  const LazyPath& perimeter,
   const YearSize year
 )
 {
@@ -69,8 +69,7 @@ Environment Environment::loadEnvironment(
   auto found_best = false;
   if (!perimeter.empty())
   {
-    LazyPath p{path, perimeter};
-    for_info = make_unique<GridBase>(read_header(p.canonical()));
+    for_info = make_unique<GridBase>(read_header(perimeter.canonical()));
     logging::info("Perimeter projection is %s", for_info->proj4().c_str());
   }
   for (const auto& raster : rasters)

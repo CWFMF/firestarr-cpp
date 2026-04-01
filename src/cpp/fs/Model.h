@@ -128,12 +128,12 @@ public:
    */
   [[nodiscard]] static int runScenarios(
     const string_view output_directory,
-    const char* weather_input,
+    const LazyPath& weather_input,
     const FwiWeather& yesterday,
     const char* raster_root,
     const StartPoint& start_point,
     const tm& start_time,
-    const string_view perimeter,
+    const LazyPath& perimeter,
     const size_t size
   );
   /**
@@ -311,12 +311,7 @@ public:
    * \param perim Perimeter to start from, if there is one
    * \param size Size of fire to create if no input Perimeter
    */
-  void makeStarts(
-    Coordinates coordinates,
-    const Point& point,
-    const string_view perim,
-    size_t size
-  );
+  void makeStarts(Coordinates coordinates, const Point& point, const LazyPath& perim, size_t size);
   /**
    * \brief Create an Iteration by initializing Scenarios
    * \param start_point StartPoint to use for sunrise/sunset

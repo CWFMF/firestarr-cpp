@@ -61,12 +61,12 @@ BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const
 Perimeter::Perimeter(const BurnedMap& burned_map)
   : burned(burned_map.makeList()), edge(burned_map.makeEdge())
 { }
-BurnedMap make_burned_map(const string_view perim, const Point& point, const Environment& env)
+BurnedMap make_burned_map(const LazyPath& perim, const Point& point, const Environment& env)
 {
-  auto perim_grid = ConstantGrid<unsigned char>::readTiff(perim, point);
+  auto perim_grid = ConstantGrid<unsigned char>::readTiff(perim.canonical(), point);
   return BurnedMap(perim_grid, env);
 }
-Perimeter::Perimeter(const string_view perim, const Point& point, const Environment& env)
+Perimeter::Perimeter(const LazyPath& perim, const Point& point, const Environment& env)
   : Perimeter(make_burned_map(perim, point, env))
 { }
 BurnedMap make_burned_map(const Location& location, const size_t size, const Environment& env)

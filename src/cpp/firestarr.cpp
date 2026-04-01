@@ -115,7 +115,7 @@ int main(const int argc, const char* const argv[])
       parser.log_args();
       result = Model::runScenarios(
         settings.output_directory,
-        settings.wx_file_name.c_str(),
+        settings.wx_file_name,
         yesterday,
         settings.raster_root.canonical(),
         start_point,

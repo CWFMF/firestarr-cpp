@@ -150,19 +150,40 @@ Mode get_mode(
 }
 const string Settings::getRoot() const noexcept { return dir_root_; }
 const string Settings::getBinaryDirectory() const noexcept { return dir_binary_; }
-void Settings::setRoot(const string dir_binary, const string dir_out) noexcept
+void Settings::setRoot(const string dir_binary, const string dir_root) noexcept
 {
   std::lock_guard<mutex> lock{MUTEX};
   logging::check_fatal(nullptr != INSTANCE, "Settings already initialized from file");
-  INSTANCE = make_unique<Settings>(dir_binary, dir_out);
+  INSTANCE = make_unique<Settings>(dir_binary, dir_root);
 }
-Settings::Settings(const string dir_binary, const string dir_settings)
+Settings::Settings(const string dir_binary, const string dir_root) noexcept
+  : dir_binary_{dir_binary}, dir_root_{dir_root}
 {
   try
   {
-    dir_binary_ = dir_binary;
-    dir_root_ = dir_settings;
-    const auto filename = dir_root_ + "settings.ini";
+    auto dir_settings = dir_root_;
+    auto filename = dir_root_ + "settings.ini";
+    if (!std::filesystem::exists(filename))
+    {
+      logging::note("No exisiting settings file to read at %s", filename.c_str());
+      // ensure directory exists and then copy settings.ini from beside binary to start
+      const auto default_settings = dir_binary + "settings.ini";
+      if (!std::filesystem::exists(default_settings))
+      {
+        logging::fatal("No default settings found at %s", default_settings.c_str());
+      }
+      dir_settings = dir_binary;
+      filename = default_settings;
+      // logging::note(
+      //   "Copying default settings from %s to %s", default_settings.c_str(), filename.c_str()
+      // );
+      // make_directory_recursive(dir_root_.c_str());
+      // std::filesystem::copy(default_settings, filename);
+    }
+    if (!std::filesystem::exists(filename))
+    {
+      logging::fatal("Unable to read settings from %s", filename.c_str());
+    }
     logging::note("Initializing settings from %s", filename.c_str());
     settings_ =
       make_pair<string_map<string>, string_map<string>>(string_map<string>{}, string_map<string>{});
@@ -202,11 +223,15 @@ Settings::Settings(const string dir_binary, const string dir_settings)
     }
     else
     {
+      if (dir_root_.empty())
+      {
+        dir_root_ = std::filesystem::current_path();
+      }
       output_directory = std::filesystem::absolute(dir_root_).lexically_normal();
     }
     // HACK: resolve path when used to avoid failure when invalid but unused
-    raster_root = LazyPath(output_directory, get_value(settings_, "RASTER_ROOT"));
-    fuel_lookup = LazyFuelLookup(output_directory, get_value(settings_, "FUEL_LOOKUP_TABLE"));
+    raster_root = LazyPath(dir_settings, get_value(settings_, "RASTER_ROOT"));
+    fuel_lookup = LazyFuelLookup(dir_settings, get_value(settings_, "FUEL_LOOKUP_TABLE"));
     // HACK: run into fuel consumption being too low if we don't have a minimum ros
     static const auto MinRos = 0.05;
     // HACK: make sure this is always > 0 so that we don't have to check
@@ -272,7 +297,7 @@ Settings::Settings(const string dir_binary, const string dir_settings)
     }
     if (const auto value = get_value(settings_, "PERIMETER", false); "INVALID" != value)
     {
-      perimeter = value;
+      perimeter = LazyPath{dir_settings, value};
     }
     if (const auto value = get_value(settings_, "FFMC", false); "INVALID" != value)
     {
@@ -357,13 +382,15 @@ Settings::Settings(const string dir_binary, const string dir_settings)
     }
   }
   catch (const std::exception& ex)
-  { }
+  {
+    // failed to read settings but just use defaults
+  }
 }
 void Settings::saveTo(const string& output_directory) const noexcept
 {
   make_directory_recursive(output_directory.c_str());
   const pushd dir{output_directory};
-  const auto filename = string(output_directory) + "settings.ini";
+  const auto filename = "settings.ini";
   ofstream out{filename};
   auto put = [&](const string& key, const string& comment, const auto& value) {
     // FIX: use original string instead of parsed and stringified input so nothing can change
@@ -384,9 +411,9 @@ void Settings::saveTo(const string& output_directory) const noexcept
   // put("OUTPUT_DIRECTORY", "output directory", relative(output_directory).c_str());
   // HACK: output full path so if it isn't the same on read we can warn
   put("OUTPUT_DIRECTORY", "output directory", abs.c_str());
-  put("WX", "weather file path", relative(wx_file_name).c_str());
+  put("WX", "weather file path", relative(wx_file_name.canonical()).c_str());
   put("LOG_FILE_NAME", "log file name", log_file_name.c_str());
-  put("PERIMETER", "perimeter to use for ignition", relative(perimeter).c_str());
+  put("PERIMETER", "perimeter to use for ignition", relative(perimeter.canonical()).c_str());
   put(
     "RASTER_ROOT", "root directory to read rasters from", relative(raster_root.canonical()).c_str()
   );
