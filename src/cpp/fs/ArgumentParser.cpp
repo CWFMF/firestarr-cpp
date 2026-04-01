@@ -96,7 +96,7 @@ void register_path_setter(LazyPath& variable, string v, string help, bool requir
 {
   register_argument(v, help, required, [&variable] {
     // always relative to current directory since this was a cli arg
-    variable = LazyPath{std::filesystem::current_path(), parse_string()};
+    variable = LazyPath{std::filesystem::current_path().generic_string(), parse_string()};
   });
 }
 void register_flag(std::function<void(bool)> fct, bool not_inverse, string v, string help);

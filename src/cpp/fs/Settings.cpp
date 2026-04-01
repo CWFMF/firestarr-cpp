@@ -225,9 +225,9 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     {
       if (dir_root_.empty())
       {
-        dir_root_ = std::filesystem::current_path();
+        dir_root_ = std::filesystem::current_path().generic_string();
       }
-      output_directory = std::filesystem::absolute(dir_root_).lexically_normal();
+      output_directory = std::filesystem::absolute(dir_root_).lexically_normal().generic_string();
     }
     // HACK: resolve path when used to avoid failure when invalid but unused
     raster_root = LazyPath(dir_settings, get_value(settings_, "RASTER_ROOT"));
@@ -405,7 +405,7 @@ void Settings::saveTo(const string& output_directory) const noexcept
   auto abs = dir.current_directory;
   auto relative = [&](const string& path) {
     // return std::filesystem::relative(path.c_str(), abs.c_str());
-    return std::filesystem::relative(path.c_str());
+    return std::filesystem::relative(path.c_str()).generic_string();
     // return path;
   };
   // put("OUTPUT_DIRECTORY", "output directory", relative(output_directory).c_str());

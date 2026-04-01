@@ -502,7 +502,7 @@ public:
   LazyPath(const string dir_root, const string path)
     : dir_root_{[&]() {
         // have to convert to absolute path or this makes no sense if current path changes
-        return std::filesystem::absolute(dir_root);
+        return std::filesystem::absolute(dir_root).generic_string();
       }()},
       path_{path}
   { }
@@ -565,10 +565,11 @@ public:
   const string previous_directory;
   const string current_directory;
   pushd(string path) noexcept
-    : previous_directory{std::filesystem::current_path()}, current_directory{[&]() {
+    : previous_directory{std::filesystem::current_path().generic_string()},
+      current_directory{[&]() {
         auto p = std::filesystem::absolute(path).lexically_normal();
         std::filesystem::current_path(p);
-        return p;
+        return p.generic_string();
       }()}
   { }
   ~pushd() noexcept { std::filesystem::current_path(previous_directory); }
