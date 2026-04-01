@@ -434,6 +434,10 @@ void ArgumentParser::done_positional()
     fs::logging::error("Too many positional arguments");
     show_usage_and_exit();
   }
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = settings::instance();
+  // HACK: save settings here since should be parsed
+  settings.saveTo(settings.output_directory);
 }
 static const Usage USAGE_MAIN{
   "Run simulations and save output in the specified directory",
@@ -471,6 +475,15 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
   }
   if (Mode::Test == settings.mode)
   {
+    // defaults for test mode - no way to specify others right now
+    const auto year = 2020;
+    const auto month = 6;
+    const auto day = 15;
+    const auto hour = 12;
+    const auto minute = 0;
+    settings.start_date = to_tm(year, month, day, hour, minute);
+    settings.latitude = 49.3911;
+    settings.longitude = -84.7395;
     fs::logging::note("Running in test mode");
     // if we have a directory and nothing else then use defaults for single run
     // if we have 'all' then overrride specified indices, but then filter down to the subset that
