@@ -329,14 +329,6 @@ int test(Settings& settings)
   settings.save_points = false;
   // make sure all tests run regardless of how long it takes
   settings.maximum_time_seconds = numeric_limits<size_t>::max();
-  const auto year = 2020;
-  const auto month = 6;
-  const auto day = 15;
-  const auto hour = 12;
-  const auto minute = 0;
-  settings.start_date = to_tm(year, month, day, hour, minute);
-  settings.latitude = 49.3911;
-  settings.longitude = -84.7395;
   const auto hours{settings.hours.value_or(DEFAULT_HOURS)};
   const auto ffmc{settings.ffmc.value_or(DEFAULT_FFMC)};
   const auto dmc{settings.dmc.value_or(DEFAULT_DMC)};
