@@ -183,7 +183,7 @@ string run_test(
 )
 {
   // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
+  static auto& settings = fs::settings::instance();
   static const auto& lookup = settings.fuel_lookup.lookup();
   string test_name = generate_test_name(fuel_name, slope, aspect, wind);
   logging::verbose("Queueing test for %s", &(test_name[0]));
@@ -199,16 +199,8 @@ string run_test(
   CriticalSection _(num_concurrent);
   // logging::debug("Concurrent test limit is %d", num_concurrent.limit());
   logging::note("Running test for %s", string(output_directory).c_str());
-  const auto year = 2020;
-  const auto month = 6;
-  const auto day = 15;
-  const auto hour = 12;
-  const auto minute = 0;
-  const auto start_time = to_tm(year, month, day, hour, minute);
-  static const auto Latitude = 49.3911;
-  static const auto Longitude = -84.7395;
-  static const StartPoint ForPoint(Latitude, Longitude);
-  const auto start_date = start_time.tm_yday;
+  static const StartPoint ForPoint(settings.latitude.value(), settings.longitude.value());
+  const auto start_date = settings.start_date.value().tm_yday;
   const auto end_date = start_date + static_cast<DurationSize>(num_hours) / DAY_HOURS;
   make_directory_recursive(string(output_directory).c_str());
   const auto fuel = lookup.bySimplifiedName(simplify_fuel_name(fuel_name));
@@ -235,7 +227,7 @@ string run_test(
     std::move(values)
   }};
   const Location start_location(static_cast<Idx>(MAX_ROWS / 2), static_cast<Idx>(MAX_COLUMNS / 2));
-  Model model(start_time, output_directory, ForPoint, &env);
+  Model model(settings.start_date.value(), output_directory, ForPoint, &env);
   const auto start_cell = make_shared<Cell>(model.cell(start_location));
   FireWeather weather(fuel, start_date, dc, dmc, ffmc, wind);
   TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather, final_sizes);
@@ -337,6 +329,14 @@ int test(Settings& settings)
   settings.save_points = false;
   // make sure all tests run regardless of how long it takes
   settings.maximum_time_seconds = numeric_limits<size_t>::max();
+  const auto year = 2020;
+  const auto month = 6;
+  const auto day = 15;
+  const auto hour = 12;
+  const auto minute = 0;
+  settings.start_date = to_tm(year, month, day, hour, minute);
+  settings.latitude = 49.3911;
+  settings.longitude = -84.7395;
   const auto hours{settings.hours.value_or(DEFAULT_HOURS)};
   const auto ffmc{settings.ffmc.value_or(DEFAULT_FFMC)};
   const auto dmc{settings.dmc.value_or(DEFAULT_DMC)};

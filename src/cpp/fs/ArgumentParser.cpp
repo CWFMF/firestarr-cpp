@@ -434,10 +434,6 @@ void ArgumentParser::done_positional()
     fs::logging::error("Too many positional arguments");
     show_usage_and_exit();
   }
-  // HACK: resolve once and fail if not set already
-  static const auto& settings = settings::instance();
-  // HACK: save settings here since should be parsed
-  settings.saveTo(settings.output_directory);
 }
 static const Usage USAGE_MAIN{
   "Run simulations and save output in the specified directory",
