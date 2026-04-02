@@ -1,25 +1,25 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "debug_settings.h"
 #include <cstdio>
-#include <cstring>
+#include <format>
+#include <iostream>
+#include <string>
 namespace fs
 {
-constexpr auto HR = "**********************************************************************";
-constexpr auto EDGE = 3;
-constexpr auto WIDTH = static_cast<int>(sizeof(HR)) - (2 * (EDGE + 1));
-void printf_centered(const char* str)
-{
-  const auto n = static_cast<int>(strlen(str));
-  const auto pad_left = ((WIDTH - n) / 2) + n;
-  const auto pad_right = WIDTH - pad_left;
-  printf("%.*s %*s%*s %.*s\n", EDGE, HR, pad_left, str, pad_right, "", EDGE, HR);
-};
 void show_debug_settings()
 {
 #ifdef DEBUG_ANY
-  printf("%s\n", HR);
+  constexpr auto width = 60;
+  constexpr auto side_width = 1;
+  // FIX: duplicate code from settings file output
+  std::string hr = std::format("{:#^{}}\n", "#", width);
+  std::string side = std::format("{:#^{}}", "#", side_width);
+  auto printf_centered = [&](const std::string& text) {
+    std::cout << std::format("{}{: ^{}}{}\n", side, text, width - (2 * side_width), side);
+  };
+  std::cout << hr;
   printf_centered("DEBUG OPTIONS");
-  printf("%s\n", HR);
+  std::cout << hr;
 #endif
 #ifndef NDEBUG
   printf_centered("DEBUG");
@@ -52,7 +52,7 @@ void show_debug_settings()
   printf_centered("DEBUG_WEATHER");
 #endif
 #ifdef DEBUG_ANY
-  printf("%s\n", HR);
+  std::cout << hr;
 #endif
 }
 }
