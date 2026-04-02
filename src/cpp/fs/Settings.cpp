@@ -447,7 +447,7 @@ void Settings::saveTo(const string& output_directory) const noexcept
   {
     put("WX", "weather file path", relative(wx_file_name.canonical()).c_str());
   }
-  put("LOG_FILE_NAME", "log file name", log_file_name.c_str());
+  put("LOG_FILE_NAME", "log file name (created in output directoy)", log_file_name.c_str());
   if (!perimeter.empty())
   {
     put("PERIMETER", "perimeter to use for ignition", relative(perimeter.canonical()).c_str());
@@ -462,42 +462,46 @@ void Settings::saveTo(const string& output_directory) const noexcept
   );
   put(
     "DEFAULT_PERCENT_CONIFER",
-    "default Percent Conifer to use for M1/M2 fuels where none is specified (%)",
+    "default Percent Conifer (PC) for M1/M2 fuels where none is specified (%)",
     default_percent_conifer
   );
   put(
     "DEFAULT_PERCENT_DEAD_FIR",
-    "default Percent Dead Fir to use for M3/M4 fuels where none is specified (%)",
+    "default Percent Dead Fir (PDF) for M3/M4 fuels where none is specified (%)",
     default_percent_dead_fir
   );
-  put("FORCE_GREENUP", "whether or not to force greenup for all fires", force_greenup);
-  put("FORCE_NO_GREENUP", "whether or not to force no greenup for all fires", force_no_greenup);
-  put("CURING", "static curing value to force for all fires", static_curing.as_string());
-  put("TZ", "offset from UTC to use for entire simulation (hours)", utc_offset);
+  put("FORCE_GREENUP", "force greenup for entire simulation (0 = off, 1 = on)", force_greenup);
+  put(
+    "FORCE_NO_GREENUP", "force no greenup for entire simulation (0 = off, 1 = on)", force_no_greenup
+  );
+  put(
+    "CURING",
+    "static curing value to force for entire simulation (no value = off)",
+    static_curing.as_string()
+  );
+  put("TZ", "offset from UTC to use for determining sunrise/sunset (hours)", utc_offset);
   put("SALT", "salt to use for random seeds", salt);
   if (Mode::Simulation == mode)
   {
-    put("SIZE", "initial fire size (ha)", initial_size);
+    put("SIZE", "initial fire size (ha) (if no perimeter)", initial_size);
   }
   if (Mode::Test != mode)
   {
     put("START_DATE", "ignition start date (yyyy-mm-dd)", format_date(start_date.value()));
     put("START_TIME", "ignition start time (HH:MM)", format_time(start_date.value()));
     put(
-      "LATITUDE",
-      "latitude to center on and use for ignition if no perimeter provided (decimal degrees)",
-      latitude
+      "LATITUDE", "latitude of area center & ignition if no perimeter (decimal degrees)", latitude
     );
     put(
       "LONGITUDE",
-      "longituded to center on and use for ignition if no perimeter provided (decimal degrees)",
+      "longitude of area center & ignition if no perimeter (decimal degrees)",
       longitude
     );
   }
   if (Mode::Test == mode)
   {
-    put("FUEL", "fbp fuel type", fuel_name);
     put("TEST_ALL", "test every combination of settings for tests", test_all);
+    put("FUEL", "fbp fuel type", fuel_name);
     put("HOURS", "number of hours to run tests for", hours);
   }
   // always need these for startup or constant indices
@@ -540,29 +544,29 @@ void Settings::saveTo(const string& output_directory) const noexcept
   );
   put(
     "THRESHOLD_SCENARIO_WEIGHT",
-    "weight given to scenario value when generating random thresholds",
+    "weight given to scenario when generating random thresholds",
     threshold_scenario_weight
   );
   put(
     "THRESHOLD_DAILY_WEIGHT",
-    "weight given to daily value when generating random thresholds",
+    "weight given to daily when generating random thresholds",
     threshold_daily_weight
   );
   put(
     "THRESHOLD_HOURLY_WEIGHT",
-    "weight given to hourly value when generating random thresholds",
+    "weight given to hourly when generating random thresholds",
     threshold_hourly_weight
   );
   /////////////////////////////////////////////////////////////////////////////
   add_section("OUTPUT OPTIONS");
   put("OUTPUT_DATE_OFFSETS", "days to output probability contours for", output_date_offsets.text());
-  put("SAVE_AS_ASCII", "whether or not to save grids as .asc", save_as_ascii);
-  put("SAVE_AS_TIFF", "whether or not to save grids as .tif", save_as_tiff);
-  put("SAVE_POINTS", "whether or not to save points used for spread", save_points);
-  put("SAVE_INTENSITY", "whether or not to save intensity grids", save_intensity);
-  put("SAVE_PROBABILITY", "whether or not to save probability grids", save_probability);
-  put("SAVE_OCCURRENCE", "whether or not to save occurrence grids", save_occurrence);
-  put("SAVE_SIMULATION_AREA", "whether or not to save simulation area grids", save_simulation_area);
+  put("SAVE_AS_ASCII", "save grids as .asc (0 = off, 1 = on)", save_as_ascii);
+  put("SAVE_AS_TIFF", "to save grids as .tif (0 = off, 1 = on)", save_as_tiff);
+  put("SAVE_POINTS", "save points used for spread (0 = off, 1 = on)", save_points);
+  put("SAVE_INTENSITY", "save intensity grids (0 = off, 1 = on)", save_intensity);
+  put("SAVE_PROBABILITY", "save probability grids (0 = off, 1 = on)", save_probability);
+  put("SAVE_OCCURRENCE", "save occurrence grids (0 = off, 1 = on)", save_occurrence);
+  put("SAVE_SIMULATION_AREA", "save simulation area grids (0 = off, 1 = on)", save_simulation_area);
   put(
     "INTENSITY_MAX_LOW",
     "maximum fire intensity for the 'low' range of intensity (kW/m)",
@@ -573,21 +577,23 @@ void Settings::saveTo(const string& output_directory) const noexcept
     "maximum fire intensity for the 'moderate' range of intensity (kW/m)",
     intensity_max_moderate
   );
-  put("SAVE_INDIVIDUAL", "whether or not to save individual grids", save_individual);
+  put("SAVE_INDIVIDUAL", "save individual grids (0 = off, 1 = on)", save_individual);
   /////////////////////////////////////////////////////////////////////////////
   add_section("EXECUTION OPTIONS");
-  put("RUN_ASYNC", "whether or not to run things asynchronously where possible", run_async);
+  put("RUN_ASYNC", "run things asynchronously where possible (0 = off, 1 = on)", run_async);
   put(
     "DETERMINISTIC",
-    "whether or not to run deterministically (100% chance of spread & survival)",
+    "run deterministically (100% chance of spread & survival)  (0 = off, 1 = on)",
     deterministic
   );
   put(
-    "CONFIDENCE_LEVEL", "confidence required before simulation stops (% / 100)", confidence_level
+    "CONFIDENCE_LEVEL",
+    "confidence required before simulation stops (1.0 - (% / 100))",
+    confidence_level
   );
   put(
     "INTERIM_OUTPUT_INTERVAL",
-    "amount of time between generating interim outputs (seconds) (0 is no interim outputs)",
+    "time between generating interim outputs (seconds) (0 is no interim outputs)",
     interim_output_interval_seconds
   );
   put(
@@ -597,19 +603,15 @@ void Settings::saveTo(const string& output_directory) const noexcept
   );
   put(
     "MINIMUM_SIMULATIONS",
-    "minimum number of simulations to do (0 is exactly 1 simulation per scenario)",
+    "minimum number of simulations (0 == 1 simulation per scenario)",
     minimum_simulation_count
   );
   put(
     "MINIMUM_ACTIVE_SIMULATIONS",
-    "minimum number of simulations where any spread occurs to do (0 is exactly 1 simulation per scenario)",
+    "minimum number of simulations where any spread occurs",
     minimum_active_simulation_count
   );
-  put(
-    "MAXIMUM_SIMULATIONS",
-    "maximum number of simulations to do (0 is exactly 1 simulation per scenario)",
-    maximum_simulation_count
-  );
+  put("MAXIMUM_SIMULATIONS", "maximum number of simulations to do", maximum_simulation_count);
 }
 FwiWeather Settings::get_weather() const
 {
