@@ -66,6 +66,10 @@ endif()
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 include(cmake/TuneArchCPU.cmake)
+message("COMPILER_TUNING = ${COMPILER_TUNING}")
+if (COMPILER_TUNING)
+  add_compile_options(${COMPILER_TUNING})
+endif()
 
 if (WIN32)
   # HACK: use same settings for RelWitDebInfo since can't figure out how to work with vcpkg
