@@ -324,51 +324,61 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
       wind_speed = stod(value);
     }
     // HACK: check for value that should only exist for specific mode
-    auto get_mode_value = [&](const char* key, const Mode mode_required) {
-      const auto value = get_value(settings_, key, false);
-      if ("INVALID" != value)
-      {
-        logging::check_fatal(
-          mode_required != mode,
-          "Value for %s found but mode is %s not %s",
-          key,
-          to_string(mode).c_str(),
-          to_string(mode_required).c_str()
-        );
-      }
-      return value;
+    auto get_value_if_mode =
+      [&](const char* key, const Mode mode_required, const bool inverse = false) {
+        const auto value = get_value(settings_, key, false);
+        if ("INVALID" != value)
+        {
+          auto have_mode = mode_required == mode;
+          if (inverse)
+          {
+            have_mode = !have_mode;
+          }
+          logging::check_fatal(
+            !have_mode,
+            "Value for %s found but mode is %s and needs to be%s %s",
+            key,
+            to_string(mode).c_str(),
+            inverse ? " not" : "",
+            to_string(mode_required).c_str()
+          );
+        }
+        return value;
+      };
+    auto get_value_if_not_mode = [&](const char* key, const Mode mode_required) {
+      return get_value_if_mode(key, mode_required, true);
     };
-    if (const auto value = get_mode_value("SIZE", Mode::Simulation); "INVALID" != value)
+    if (const auto value = get_value_if_mode("SIZE", Mode::Simulation); "INVALID" != value)
     {
       initial_size = stoi(value);
     }
-    if (const auto value = get_mode_value("FUEL", Mode::Test); "INVALID" != value)
+    if (const auto value = get_value_if_mode("FUEL", Mode::Test); "INVALID" != value)
     {
       fuel_name = value;
     }
-    if (const auto value = get_mode_value("TEST_ALL", Mode::Test); "INVALID" != value)
+    if (const auto value = get_value_if_mode("TEST_ALL", Mode::Test); "INVALID" != value)
     {
       // FIX: duplicates effort
       test_all = get_flag(true, settings_, "TEST_ALL");
     }
-    if (const auto value = get_mode_value("HOURS", Mode::Simulation); "INVALID" != value)
+    if (const auto value = get_value_if_mode("HOURS", Mode::Simulation); "INVALID" != value)
     {
       hours = stod(value);
     }
-    if (const auto value = get_mode_value("START_DATE", Mode::Simulation); "INVALID" != value)
+    if (const auto value = get_value_if_not_mode("START_DATE", Mode::Test); "INVALID" != value)
     {
       start_date = parse_date(value);
     }
-    if (const auto value = get_mode_value("START_TIME", Mode::Simulation); "INVALID" != value)
+    if (const auto value = get_value_if_not_mode("START_TIME", Mode::Test); "INVALID" != value)
     {
       // NOTE: required START_DATE to be parsed previously
       add_time(start_date.value(), value);
     }
-    if (const auto value = get_mode_value("LATITUDE", Mode::Simulation); "INVALID" != value)
+    if (const auto value = get_value_if_not_mode("LATITUDE", Mode::Test); "INVALID" != value)
     {
       latitude = stod(value);
     }
-    if (const auto value = get_mode_value("LONGITUDE", Mode::Simulation); "INVALID" != value)
+    if (const auto value = get_value_if_not_mode("LONGITUDE", Mode::Test); "INVALID" != value)
     {
       longitude = stod(value);
     }
@@ -539,7 +549,7 @@ void Settings::saveTo(const string& output_directory) const noexcept
   {
     put("SIZE", "initial fire size (ha)", initial_size);
   }
-  if (Mode::Surface != mode)
+  if (Mode::Test != mode)
   {
     put("START_DATE", "ignition start date (yyyy-mm-dd)", format_date(start_date.value()));
     put("START_TIME", "ignition start time (HH:MM)", format_time(start_date.value()));
