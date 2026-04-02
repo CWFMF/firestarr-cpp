@@ -396,17 +396,32 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     // failed to read settings but just use defaults
   }
 }
+string format_section_header(const string& section, int width = 80, int side_width = 5)
+{
+  // const string hr = std::format("{:#^80}", "#");
+  // const string side = std::format("{:#^5}", "#");
+  string hr = std::format("{:#^{}}", "#", width);
+  string side = std::format("{:#^{}}", "#", side_width);
+  return std::format(
+    "{}\n{}{: ^{}}{}\n{}\n", hr, side, section, width - (2 * side_width), side, hr
+  );
+}
 void Settings::saveTo(const string& output_directory) const noexcept
 {
   make_directory_recursive(output_directory.c_str());
   const pushd dir{output_directory};
   const auto filename = "settings.ini";
   ofstream out{filename};
+  auto add_comment = [&](const string& comment) { out << "#" << comment << "\n"; };
+  auto add_section = [&](const string& section) {
+    auto header = format_section_header(section);
+    out << header;
+  };
   auto put = [&](const string& key, const string& comment, const auto& value) {
     // FIX: use original string instead of parsed and stringified input so nothing can change
     static constexpr auto MAX_PRECISION = std::numeric_limits<double>::digits10 + 1;
     // make sure we don't lose precision or results will differ when run with settings file
-    out << "# " << comment << "\n";
+    add_comment(" " + comment);
     out << key << " = " << std::setprecision(MAX_PRECISION) << value << "\n";
   };
   // HACK: just hardcode how this works since it's the opposite of parsing
@@ -418,9 +433,16 @@ void Settings::saveTo(const string& output_directory) const noexcept
     return std::filesystem::relative(path.c_str()).generic_string();
     // return path;
   };
+  add_section("SIMULATION INPUTS");
   // put("OUTPUT_DIRECTORY", "output directory", relative(output_directory).c_str());
   // HACK: output full path so if it isn't the same on read we can warn
-  put("OUTPUT_DIRECTORY", "output directory", abs.c_str());
+  put(
+    "OUTPUT_DIRECTORY",
+    "output directory (warning if not the same as path for this file)",
+    abs.c_str()
+  );
+  static const auto mode_help = std::format("simulation mode (one of {})", ModeOptions());
+  put("MODE", mode_help, to_string(mode));
   if (!wx_file_name.empty())
   {
     put("WX", "weather file path", relative(wx_file_name.canonical()).c_str());
@@ -434,47 +456,9 @@ void Settings::saveTo(const string& output_directory) const noexcept
     "RASTER_ROOT", "root directory to read rasters from", relative(raster_root.canonical()).c_str()
   );
   put(
-    "MINIMUM_ROS",
-    "minimum rate of spread before fire is considered to actually be spreading",
-    minimum_ros
-  );
-  put(
-    "MAX_SPREAD_DISTANCE",
-    "maximum distance that the fire is allowed to spread in one step (# of cells)",
-    maximum_spread_distance
-  );
-  put("OUTPUT_DATE_OFFSETS", "days to output probability contours for", output_date_offsets.text());
-  put(
     "FUEL_LOOKUP_TABLE",
     "lookup table for fuels (prometheus format)",
     relative(fuel_lookup.canonical()).c_str()
-  );
-  put("MINIMUM_FFMC", "minimum ffmc for fire to spread", minimum_ffmc);
-  put("MINIMUM_FFMC_AT_NIGHT", "minimum ffmc for fire to spread at night", minimum_ffmc_at_night);
-  put(
-    "OFFSET_SUNRISE",
-    "offset from sunrise at which the day is considered to start (hours)",
-    offset_sunrise
-  );
-  put(
-    "OFFSET_SUNSET",
-    "offset from sunrise at which the day is considered to end (hours)",
-    offset_sunset
-  );
-  put(
-    "THRESHOLD_SCENARIO_WEIGHT",
-    "weight given to scenario value when generating random thresholds",
-    threshold_scenario_weight
-  );
-  put(
-    "THRESHOLD_DAILY_WEIGHT",
-    "weight given to daily value when generating random thresholds",
-    threshold_daily_weight
-  );
-  put(
-    "THRESHOLD_HOURLY_WEIGHT",
-    "weight given to hourly value when generating random thresholds",
-    threshold_hourly_weight
   );
   put(
     "DEFAULT_PERCENT_CONIFER",
@@ -486,60 +470,6 @@ void Settings::saveTo(const string& output_directory) const noexcept
     "default Percent Dead Fir to use for M3/M4 fuels where none is specified (%)",
     default_percent_dead_fir
   );
-  put(
-    "MAXIMUM_TIME",
-    "maximum amount of time to take for simulation (seconds) (0 is unlimited)",
-    maximum_time_seconds
-  );
-  put(
-    "INTERIM_OUTPUT_INTERVAL",
-    "amount of time between generating interim outputs (seconds) (0 is no interim outputs)",
-    interim_output_interval_seconds
-  );
-  put(
-    "MINIMUM_SIMULATIONS",
-    "minimum number of simulations to do (0 is exactly 1 simulation per scenario)",
-    minimum_simulation_count
-  );
-  put(
-    "MINIMUM_ACTIVE_SIMULATIONS",
-    "minimum number of simulations where any spread occurs to do (0 is exactly 1 simulation per scenario)",
-    minimum_active_simulation_count
-  );
-  put(
-    "MAXIMUM_SIMULATIONS",
-    "maximum number of simulations to do (0 is exactly 1 simulation per scenario)",
-    maximum_simulation_count
-  );
-  put(
-    "CONFIDENCE_LEVEL", "confidence required before simulation stops (% / 100)", confidence_level
-  );
-  put(
-    "INTENSITY_MAX_LOW",
-    "maximum fire intensity for the 'low' range of intensity (kW/m)",
-    intensity_max_low
-  );
-  put(
-    "INTENSITY_MAX_MODERATE",
-    "maximum fire intensity for the 'moderate' range of intensity (kW/m)",
-    intensity_max_moderate
-  );
-  put("SAVE_INDIVIDUAL", "whether or not to save individual grids", save_individual);
-  put("RUN_ASYNC", "whether or not to run things asynchronously where possible", run_async);
-  put(
-    "DETERMINISTIC",
-    "whether or not to run deterministically (100% chance of spread & survival)",
-    deterministic
-  );
-  static const auto mode_help = std::format("simulation mode (one of {})", ModeOptions());
-  put("MODE", mode_help, to_string(mode));
-  put("SAVE_AS_ASCII", "whether or not to save grids as .asc", save_as_ascii);
-  put("SAVE_AS_TIFF", "whether or not to save grids as .tif", save_as_tiff);
-  put("SAVE_POINTS", "whether or not to save points used for spread", save_points);
-  put("SAVE_INTENSITY", "whether or not to save intensity grids", save_intensity);
-  put("SAVE_PROBABILITY", "whether or not to save probability grids", save_probability);
-  put("SAVE_OCCURRENCE", "whether or not to save occurrence grids", save_occurrence);
-  put("SAVE_SIMULATION_AREA", "whether or not to save simulation area grids", save_simulation_area);
   put("FORCE_GREENUP", "whether or not to force greenup for all fires", force_greenup);
   put("FORCE_NO_GREENUP", "whether or not to force no greenup for all fires", force_no_greenup);
   put("CURING", "static curing value to force for all fires", static_curing.as_string());
@@ -584,8 +514,102 @@ void Settings::saveTo(const string& output_directory) const noexcept
     put("SLOPE", "ground slope (%)", slope);
     put("ASPECT", "ground aspect (degrees)", aspect);
   }
-  // FIX: don't have output for set/getRoot()
-  // put("", "", );
+  /////////////////////////////////////////////////////////////////////////////
+  add_section("SIMULATION OPTIONS");
+  put(
+    "MINIMUM_ROS",
+    "minimum rate of spread before fire is considered to actually be spreading",
+    minimum_ros
+  );
+  put(
+    "MAX_SPREAD_DISTANCE",
+    "maximum distance that the fire is allowed to spread in one step (# of cells)",
+    maximum_spread_distance
+  );
+  put("MINIMUM_FFMC", "minimum ffmc for fire to spread", minimum_ffmc);
+  put("MINIMUM_FFMC_AT_NIGHT", "minimum ffmc for fire to spread at night", minimum_ffmc_at_night);
+  put(
+    "OFFSET_SUNRISE",
+    "offset from sunrise at which the day is considered to start (hours)",
+    offset_sunrise
+  );
+  put(
+    "OFFSET_SUNSET",
+    "offset from sunrise at which the day is considered to end (hours)",
+    offset_sunset
+  );
+  put(
+    "THRESHOLD_SCENARIO_WEIGHT",
+    "weight given to scenario value when generating random thresholds",
+    threshold_scenario_weight
+  );
+  put(
+    "THRESHOLD_DAILY_WEIGHT",
+    "weight given to daily value when generating random thresholds",
+    threshold_daily_weight
+  );
+  put(
+    "THRESHOLD_HOURLY_WEIGHT",
+    "weight given to hourly value when generating random thresholds",
+    threshold_hourly_weight
+  );
+  /////////////////////////////////////////////////////////////////////////////
+  add_section("OUTPUT OPTIONS");
+  put("OUTPUT_DATE_OFFSETS", "days to output probability contours for", output_date_offsets.text());
+  put("SAVE_AS_ASCII", "whether or not to save grids as .asc", save_as_ascii);
+  put("SAVE_AS_TIFF", "whether or not to save grids as .tif", save_as_tiff);
+  put("SAVE_POINTS", "whether or not to save points used for spread", save_points);
+  put("SAVE_INTENSITY", "whether or not to save intensity grids", save_intensity);
+  put("SAVE_PROBABILITY", "whether or not to save probability grids", save_probability);
+  put("SAVE_OCCURRENCE", "whether or not to save occurrence grids", save_occurrence);
+  put("SAVE_SIMULATION_AREA", "whether or not to save simulation area grids", save_simulation_area);
+  put(
+    "INTENSITY_MAX_LOW",
+    "maximum fire intensity for the 'low' range of intensity (kW/m)",
+    intensity_max_low
+  );
+  put(
+    "INTENSITY_MAX_MODERATE",
+    "maximum fire intensity for the 'moderate' range of intensity (kW/m)",
+    intensity_max_moderate
+  );
+  put("SAVE_INDIVIDUAL", "whether or not to save individual grids", save_individual);
+  /////////////////////////////////////////////////////////////////////////////
+  add_section("EXECUTION OPTIONS");
+  put("RUN_ASYNC", "whether or not to run things asynchronously where possible", run_async);
+  put(
+    "DETERMINISTIC",
+    "whether or not to run deterministically (100% chance of spread & survival)",
+    deterministic
+  );
+  put(
+    "CONFIDENCE_LEVEL", "confidence required before simulation stops (% / 100)", confidence_level
+  );
+  put(
+    "INTERIM_OUTPUT_INTERVAL",
+    "amount of time between generating interim outputs (seconds) (0 is no interim outputs)",
+    interim_output_interval_seconds
+  );
+  put(
+    "MAXIMUM_TIME",
+    "maximum amount of time to take for simulation (seconds) (0 is unlimited)",
+    maximum_time_seconds
+  );
+  put(
+    "MINIMUM_SIMULATIONS",
+    "minimum number of simulations to do (0 is exactly 1 simulation per scenario)",
+    minimum_simulation_count
+  );
+  put(
+    "MINIMUM_ACTIVE_SIMULATIONS",
+    "minimum number of simulations where any spread occurs to do (0 is exactly 1 simulation per scenario)",
+    minimum_active_simulation_count
+  );
+  put(
+    "MAXIMUM_SIMULATIONS",
+    "maximum number of simulations to do (0 is exactly 1 simulation per scenario)",
+    maximum_simulation_count
+  );
 }
 FwiWeather Settings::get_weather() const
 {
