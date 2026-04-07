@@ -25,7 +25,6 @@ int value_at_int(void* const buf, const FullIdx offset)
 {
   GeoTiff geotiff{filename, "r"};
   auto tif = geotiff.tiff();
-  auto gtif = geotiff.gtif();
 #ifdef DEBUG_GRIDS
   auto min_value = std::numeric_limits<int>::max();
   auto max_value = std::numeric_limits<int>::min();
@@ -216,7 +215,7 @@ int value_at_int(void* const buf, const FullIdx offset)
   {
     for (auto w = tile_column; w <= max_column; w += tile_width)
     {
-      tmsize_t t_size =
+      std::ignore =
         TIFFReadTile(tif, buf, static_cast<uint32_t>(w), static_cast<uint32_t>(h), 0, smp);
       for (FullIdx y = 0; (y < static_cast<FullIdx>(tile_length)) && (y + h <= max_row); ++y)
       {
