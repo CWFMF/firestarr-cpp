@@ -567,7 +567,14 @@ public:
   pushd(string path) noexcept
     : previous_directory{std::filesystem::current_path().generic_string()},
       current_directory{[&]() {
-        auto p = std::filesystem::absolute(path).lexically_normal();
+        // HACK: empty is current, but still do rest of parsing so results match that process
+        if (path.empty())
+        {
+          path = ".";
+        }
+        auto p_rel = std::filesystem::relative(path);
+        auto p_abs = std::filesystem::absolute(p_rel);
+        auto p = p_abs.lexically_normal();
         std::filesystem::current_path(p);
         return p.generic_string();
       }()}
