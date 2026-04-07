@@ -212,7 +212,7 @@ void register_argument(string v, string help, bool required, std::function<void(
   }();
   PARSE_FCT.emplace(v, fct);
   PARSE_HELP.emplace_back(v, help);
-  logging::note("Checking if already have %s", as_setting.c_str());
+  logging::debug("Checking if already have %s", as_setting.c_str());
   required = required && !settings.found(as_setting);
   PARSE_REQUIRED.emplace(v, required);
 }
