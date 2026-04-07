@@ -165,7 +165,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     auto filename = dir_root_ + "settings.ini";
     if (!std::filesystem::exists(filename))
     {
-      logging::note("No exisiting settings file to read at %s", filename.c_str());
+      logging::debug("No exisiting settings file to read at %s", filename.c_str());
       // ensure directory exists and then copy settings.ini from beside binary to start
       const auto default_settings = dir_binary + "settings.ini";
       if (!std::filesystem::exists(default_settings))
@@ -184,7 +184,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     {
       logging::fatal("Unable to read settings from %s", filename.c_str());
     }
-    logging::note("Initializing settings from %s", filename.c_str());
+    logging::debug("Initializing settings from %s", filename.c_str());
     settings_ =
       make_pair<string_map<string>, string_map<string>>(string_map<string>{}, string_map<string>{});
     ;
