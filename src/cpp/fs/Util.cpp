@@ -197,9 +197,11 @@ void add_time(tm& date, const string value)
     "Simulation start time has an invalid minute (%d)",
     date.tm_min
   );
-  fs::logging::note("Simulation start time before fix_tm() is %s", format_datetime(date).c_str());
+  fs::logging::verbose(
+    "Simulation start time before fix_tm() is %s", format_datetime(date).c_str()
+  );
   fs::fix_tm(&date);
-  fs::logging::note("Simulation start time after fix_tm() is %s", format_datetime(date).c_str());
+  fs::logging::verbose("Simulation start time after fix_tm() is %s", format_datetime(date).c_str());
 }
 DurationSize to_time(const tm& t)
 {
@@ -316,13 +318,13 @@ string get_canonical_path(const char* const dir_root, string path)
       const pushd dir{dir_root};
       logging::note("dir_root = %s", dir_root);
       auto p_rel = std::filesystem::relative(path);
-      logging::note("p_rel = %s", p_rel.c_str());
+      logging::verbose("p_rel = %s", p_rel.c_str());
       auto p_abs =
         p_rel.empty() ? dir.current_directory : std::filesystem::absolute(p_rel).generic_string();
-      logging::note("p_abs = %s", p_abs.c_str());
+      logging::verbose("p_abs = %s", p_abs.c_str());
       // auto p_can = std::filesystem::canonical(p_rel);
       // logging::note("p_can = %s", p_can.c_str());
-      logging::note(
+      logging::debug(
         "Relative to %s path %s becomes %s", dir_root, p_rel.c_str(), p_abs.c_str()
         // ,
         // p_can.c_str()

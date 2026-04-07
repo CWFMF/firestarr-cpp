@@ -95,7 +95,7 @@ int main(const int argc, const char* const argv[])
       const FwiWeather yesterday{settings.get_weather()};
       auto& start_date = settings.start_date.value();
       fs::fix_tm(&start_date);
-      fs::logging::note(
+      fs::logging::debug(
         "Simulation start time after fix_tm() again is %s", format_datetime(start_date).c_str()
       );
       // we were given a time, so number of days is until end of year
