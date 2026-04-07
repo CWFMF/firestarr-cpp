@@ -3,12 +3,19 @@
 # https://github.com/lefticus/cppbestpractices/blob/master/02-Use_the_Tools_Available.md
 
 # HACK: turn off excessive flags usually
-set(MSVC_VERBOSE "")
+set(MSVC_VERBOSE
+    /wd4244 # 'conversion' conversion from 'type1' to 'type2', possible loss of data
+    /wd4267 # 'var' : conversion from 'size_t' to 'type', possible loss of data
+    /wd4456 # declaration of 'identifier' hides previous local declaration
+    /wd4458 # declaration of 'identifier' hides class member
+    /wd4459 # declaration of 'identifier' hides global declaration
+)
 set(CLANG_VERBOSE "")
 set(GCC_VERBOSE "")
 set(CUDA_VERBOSE "")
 if(CMAKE_VERBOSE_MAKEFILE)
   set(MSVC_VERBOSE
+      /w14242 # 'identifier': conversion from 'type1' to 'type2', possible loss of data
   )
   set(CLANG_VERBOSE
       -Wshadow # warn the user if a variable declaration shadows one from a parent context
@@ -24,9 +31,8 @@ if(CMAKE_VERBOSE_MAKEFILE)
 endif()
 
 set(MSVC_WARNINGS
-    ${MSVC_VERBOSE}
     /W4 # Baseline reasonable warnings
-    /w14242 # 'identifier': conversion from 'type1' to 'type2', possible loss of data
+    ${MSVC_VERBOSE}
     /w14254 # 'operator': conversion from 'type1:field_bits' to 'type2:field_bits', possible loss of data
     /w14263 # 'function': member function does not override any base class virtual member function
     /w14265 # 'classname': class has virtual functions, but destructor is not virtual instances of this class may not
