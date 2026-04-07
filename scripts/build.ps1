@@ -48,6 +48,9 @@ cmake --build --parallel --preset Release
 
 ctest --preset Release
 
+# HACK: just copy here for now but should be part of cmake
+
+copy build\*.dll .
 # .\test_duff.exe -v
 # .\test_fbp.exe -v
 # .\test_fwi.exe -v
