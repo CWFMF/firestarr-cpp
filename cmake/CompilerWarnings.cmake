@@ -2,7 +2,29 @@
 #
 # https://github.com/lefticus/cppbestpractices/blob/master/02-Use_the_Tools_Available.md
 
+# HACK: turn off excessive flags usually
+set(MSVC_VERBOSE "")
+set(CLANG_VERBOSE "")
+set(GCC_VERBOSE "")
+set(CUDA_VERBOSE "")
+if(CMAKE_VERBOSE_MAKEFILE)
+  set(MSVC_VERBOSE
+  )
+  set(CLANG_VERBOSE
+      -Wshadow # warn the user if a variable declaration shadows one from a parent context
+      -Wconversion # warn on type conversions that may lose data
+      -Wsign-conversion # warn on sign conversions
+  )
+  set(GCC_VERBOSE
+      -Wuseless-cast # warn if you perform a cast to the same type
+  )
+  set(CUDA_VERBOSE
+      -Wshadow
+  )
+endif()
+
 set(MSVC_WARNINGS
+    ${MSVC_VERBOSE}
     /W4 # Baseline reasonable warnings
     /w14242 # 'identifier': conversion from 'type1' to 'type2', possible loss of data
     /w14254 # 'operator': conversion from 'type1:field_bits' to 'type2:field_bits', possible loss of data
@@ -27,11 +49,10 @@ set(MSVC_WARNINGS
     /w14928 # illegal copy-initialization; more than one user-defined conversion has been implicitly applied
     /permissive- # standards conformance mode for MSVC compiler.
 )
-
 set(CLANG_WARNINGS
+    ${CLANG_VERBOSE}
     -Wall
     -Wextra # reasonable and standard
-    -Wshadow # warn the user if a variable declaration shadows one from a parent context
     -Wnon-virtual-dtor # warn the user if a class with virtual functions has a non-virtual destructor. This helps
     # catch hard to track down memory errors
     -Wold-style-cast # warn for c-style casts
@@ -39,8 +60,6 @@ set(CLANG_WARNINGS
     -Wunused # warn on anything being unused
     -Woverloaded-virtual # warn if you overload (not override) a virtual function
     -Wpedantic # warn if non-standard C++ is used
-    -Wconversion # warn on type conversions that may lose data
-    -Wsign-conversion # warn on sign conversions
     -Wnull-dereference # warn if a null dereference is detected
     -Wdouble-promotion # warn if float is implicit promoted to double
     -Wformat=2 # warn on security issues around functions that format output (ie printf)
@@ -49,20 +68,20 @@ set(CLANG_WARNINGS
 
 set(GCC_WARNINGS
     ${CLANG_WARNINGS}
+    ${GCC_VERBOSE}
     -Wmisleading-indentation # warn if indentation implies blocks where blocks do not exist
     -Wduplicated-cond # warn if if / else chain has duplicated conditions
     -Wduplicated-branches # warn if if / else branches have duplicated code
     -Wlogical-op # warn about logical operations being used where bitwise were probably wanted
-    -Wuseless-cast # warn if you perform a cast to the same type
     -Wsuggest-override # warn if an overridden member function is not marked 'override' or 'final'
 )
 
 set(CUDA_WARNINGS
+    ${CUDA_VERBOSE}
     -Wall
     -Wextra
     -Wunused
     -Wconversion
-    -Wshadow
     # TODO add more Cuda warnings
 )
 
