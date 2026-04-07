@@ -62,13 +62,11 @@ scripts/build.sh ${VARIANT}
 dates="[$(seq -s, ${DAYS})]"
 
 rm -rf "${DIR_OUT}"
-mkdir -p "${DIR_OUT}"
-pushd "${DIR_OUT}"
 FILE_WX="${DIR_IN}/firestarr_10N_50651_wx.csv"
 FILE_PERIM="${DIR_IN}/10N_50651.tif"
 
 ${USE_TIME} \
-  "${BIN}" . 2024-06-03 58.81228184403946 -122.9117103995713 01:00 \
+  "${BIN}" "${DIR_OUT}" 2024-06-03 58.81228184403946 -122.9117103995713 01:00 \
     ${intensity} ${opts} \
     --ffmc 89.9 \
     --dmc 59.5 \
@@ -101,7 +99,6 @@ else
   tail -n1 "${DIR_OUT}/firestarr.log"
 fi
 
-popd
 # git restore settings.ini
 
 popd
