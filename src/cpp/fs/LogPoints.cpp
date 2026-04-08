@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "LogPoints.h"
+#include "Log.h"
 #define LOG_POINTS_RELATIVE
 // #undef LOG_POINTS_RELATIVE
 #define LOG_POINTS_CELL
@@ -10,11 +11,8 @@ namespace fs
 // FIX: clean this up but for now just hide the details from outside
 LogPoints::~LogPoints()
 {
-  if (nullptr != log_points_)
-  {
-    fclose(log_points_);
-    fclose(log_stages_);
-  }
+  log_points_.close();
+  log_stages_.close();
 }
 LogPoints::LogPoints(
   const string_view output_directory,
@@ -33,18 +31,14 @@ LogPoints::LogPoints(
 #else
     constexpr auto HEADER_POINTS = "step_id,x,y\n";
 #endif
-    char log_name[2048];
-    sxprintf(log_name, "%s/scenario_%05ld_points.txt", string(output_directory).c_str(), id);
-    log_points_ = fopen(log_name, "w");
-    sxprintf(log_name, "%s/scenario_%05ld_stages.txt", string(output_directory).c_str(), id);
-    log_stages_ = fopen(log_name, "w");
-    fprintf(log_points_, HEADER_POINTS);
-    fprintf(log_stages_, HEADER_STAGES);
-  }
-  else
-  {
-    log_points_ = nullptr;
-    log_stages_ = nullptr;
+    const auto file_points = std::format("{:s}/scenario_{:05d}_points.txt", output_directory, id);
+    log_points_.open(file_points);
+    logging::check_fatal(!log_points_.is_open(), "Unable to write to %s", file_points.c_str());
+    const auto file_stages = std::format("{:s}/scenario_{:05d}_stages.txt", output_directory, id);
+    log_stages_.open(file_stages);
+    logging::check_fatal(!log_stages_.is_open(), "Unable to write to %s", file_stages.c_str());
+    log_points_ << HEADER_POINTS;
+    log_stages_ << HEADER_STAGES;
   }
 }
 void LogPoints::log(
@@ -69,14 +63,6 @@ void LogPoints::log_unchecked(
   const XYSize y
 ) const noexcept
 {
-  static const auto FMT_LOG_STAGE = "%s,%ld,%c,%ld,%f\n";
-#ifdef LOG_POINTS_CELL
-  static const auto FMT_LOG_POINT = "%s,%d,%d,%f,%f\n";
-  const auto column = static_cast<Idx>(x);
-  const auto row = static_cast<Idx>(y);
-#else
-  static const auto FMT_LOG_POINT = "%s,%f,%f\n";
-#endif
 #ifdef LOG_POINTS_RELATIVE
   constexpr auto MID = MAX_COLUMNS / 2;
   const auto p_x = x - MID;
@@ -96,7 +82,7 @@ void LogPoints::log_unchecked(
 #ifdef DEBUG_POINTS
     last_time_ = t;
 #endif
-    fprintf(log_stages_, FMT_LOG_STAGE, stage_id_, id_, stage, step, t);
+    log_stages_ << std::format("{:s},{:d},{:c},{:d},{:f}\n", stage_id_, id_, stage, step, t);
 #ifdef DEBUG_POINTS
   }
   else
@@ -106,17 +92,20 @@ void LogPoints::log_unchecked(
     );
 #endif
   }
-  fprintf(
-    log_points_,
-    FMT_LOG_POINT,
+  log_points_ << std::format(
+#ifdef LOG_POINTS_CELL
+    "{:s},{:d},{:d},{:f},{:f}\n",
+#else
+    "{:s},{:f},{:f}\n",
+#endif
     stage_id_,
 #ifdef LOG_POINTS_CELL
-    column,
-    row,
+    static_cast<Idx>(x),
+    static_cast<Idx>(y),
 #endif
     static_cast<double>(p_x),
     static_cast<double>(p_y)
   );
 }
-bool LogPoints::isLogging() const noexcept { return nullptr != log_points_; }
+bool LogPoints::isLogging() const noexcept { return log_points_.is_open(); }
 }

@@ -66,11 +66,8 @@ private:
   mutable DurationSize last_time_{};
 #endif
   mutable char stage_id_[1024]{};
-  /**
-   * \brief FILE to write logging information about points to
-   */
-  FILE* log_points_{nullptr};
-  FILE* log_stages_{nullptr};
+  mutable ofstream log_points_{};
+  mutable ofstream log_stages_{};
 };
 };
 #endif
