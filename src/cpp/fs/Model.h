@@ -442,7 +442,7 @@ private:
    * \param weather Weather to write
    * \param file_name Name of file to write to
    */
-  void outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const char* file_name);
+  void outputWeather(map<size_t, FireWeather>& weather, const char* file_name);
 #endif
   /**
    * \brief What year the weather is for

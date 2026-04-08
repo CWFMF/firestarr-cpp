@@ -14,10 +14,6 @@
 #include "Settings.h"
 namespace fs
 {
-#ifdef DEBUG_WEATHER
-constexpr auto FMT_OUT =
-  "%ld,%d-%02d-%02d %02d:%02d:%02d,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f,%1.6f%s";
-#endif
 // // HACK: assume using half the CPUs probably means that faster cores are being used?
 // constexpr MathSize PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
@@ -95,11 +91,11 @@ void Model::readWeather(
   logging::check_fatal(!in.is_open(), "Could not open input weather file %s", filename.c_str());
   if (in.is_open())
   {
-#ifndef NDEBUG
+#ifdef DEBUG_WEATHER
     const auto file_out = string(output_directory_) + "/wx_hourly_out_read.csv";
-    FILE* out = fopen(file_out.c_str(), "w");
-    logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
-    fprintf(out, "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\r\n");
+    ofstream out{file_out};
+    logging::check_fatal(!out.is_open(), "Cannot open file %s for output", file_out.c_str());
+    out << "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\r\n";
 #endif
     string str;
     logging::info("Reading scenarios from '%s'", filename.c_str());
@@ -221,8 +217,8 @@ void Model::readWeather(
         }
 #ifdef DEBUG_WEATHER
         const auto month = t.tm_mon + 1;
-        logging::debug(
-          FMT_OUT,
+        const auto row_fmt = std::format(
+          "{:d},{:d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f}",
           cur,
           year_,
           month,
@@ -240,35 +236,16 @@ void Model::readWeather(
           w.dc.value,
           w.isi.value,
           w.bui.value,
-          w.fwi.value ""
+          w.fwi.value
         );
-        fprintf(
-          out,
-          FMT_OUT,
-          cur,
-          year_,
-          month,
-          t.tm_mday,
-          t.tm_hour,
-          t.tm_min,
-          t.tm_sec,
-          w.prec.value,
-          w.temperature.value,
-          w.rh.value,
-          w.wind.speed.value,
-          w.wind.direction.value,
-          w.ffmc.value,
-          w.dmc.value,
-          w.dc.value,
-          w.isi.value,
-          w.bui.value,
-          w.fwi.value "\r\n"
-        );
+        logging::debug(row_fmt.c_str());
+        out << row_fmt << "\r\n";
 #endif
       }
     }
-#ifndef NDEBUG
-    logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());
+#ifdef DEBUG_WEATHER
+    out.close();
+    logging::check_fatal(out.fail(), "Could not close file %s", file_out.c_str());
 #endif
     in.close();
   }
@@ -1274,39 +1251,39 @@ void Model::outputWeather()
   outputWeather(wx_, "wx_hourly_out.csv");
   outputWeather(wx_daily_, "wx_daily_out.csv");
 }
-void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const char* file_name)
+void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_name)
 {
-  const auto file_out = string(output_directory) + file_name;
-  const auto file_out_fbp = string(output_directory) + string("fbp_") + file_name;
-  FILE* out = fopen(file_out.c_str(), "w");
-  FILE* out_fbp = fopen(file_out_fbp.c_str(), "w");
-  logging::check_fatal(nullptr == out, "Cannot open file %s for output", file_out.c_str());
+  const auto file_out = string(output_directory_) + file_name;
+  const auto file_out_fbp = string(output_directory_) + string("fbp_") + file_name;
+  ofstream out{file_out};
+  logging::check_fatal(!out.is_open(), "Unable to write to %s", file_out.c_str());
+  ofstream out_fbp{file_out_fbp};
+  logging::check_fatal(!out_fbp.is_open(), "Unable to write to %s", file_out.c_str());
   constexpr auto HEADER_FWI = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
   constexpr auto HEADER_FBP_PRIMARY = "CFB,CFC,FD,HFI,RAZ,ROS,SFC,TFC";
-  fprintf(out, "%s\r\n", HEADER_FWI);
-  fprintf(out_fbp, "%s,%s\r\n", HEADER_FWI, HEADER_FBP_PRIMARY);
+  out << HEADER_FWI << "\r\n";
+  out_fbp << HEADER_FWI << "," << HEADER_FBP_PRIMARY << "\r\n";
   size_t i = 0;
   for (auto& kv : weather)
   {
     auto& s = kv.second;
     // do we need to index this by hour and day?
     // was assuming it started at 0 for first hour and day
-    auto wx = s->getWeather();
-    size_t min_hour = s->minDate() * DAY_HOURS;
-    size_t wx_size = wx->size();
+    auto& wx = s.getWeather();
+    size_t min_hour = s.minDate() * DAY_HOURS;
+    size_t wx_size = wx.size();
     size_t hour = min_hour;
     for (size_t j = 0; j < wx_size; ++j)
     {
       size_t day = hour / 24;
-      auto w = wx->at(hour - min_hour);
+      auto w = wx.at(hour - min_hour);
       size_t month;
       size_t day_of_month;
       month_and_day(year_, day, &month, &day_of_month);
       if (nullptr != w)
       {
-        fprintf(
-          out,
-          FMT_OUT,
+        const auto fmt_row = std::format(
+          "{:d},{:d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f}",
           i,
           year_,
           static_cast<uint8_t>(month),
@@ -1315,7 +1292,7 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
           0,
           0,
           w->prec.value,
-          w->temp.value,
+          w->temperature.value,
           w->rh.value,
           w->wind.speed.value,
           w->wind.direction.value,
@@ -1324,14 +1301,14 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
           w->dc.value,
           w->isi.value,
           w->bui.value,
-          w->fwi.value,
-          "\r\n"
+          w->fwi.value
         );
+        out << fmt_row << "\r\n";
         SlopeSize SLOPE_MAX = MAX_SLOPE_FOR_DISTANCE;
         SlopeSize SLOPE_INCREMENT = 200;
         AspectSize ASPECT_MAX = 360;
         AspectSize ASPECT_INCREMENT = 450;
-        const auto lookup = settings.fuelLookup();
+        static const auto lookup = settings::instance().fuel_lookup.lookup();
         const auto fuel = lookup.byName("C-2");
         for (SlopeSize slope = 0; slope < SLOPE_MAX; slope += SLOPE_INCREMENT)
         {
@@ -1342,24 +1319,22 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
               const auto fuel_name = fuel->name();
               // calculate and output fbp
               // const auto spread = SpreadInfo(year_,
+              Point start_point{latitude_, longitude_};
               const SpreadInfo spread(
                 year_,
                 month,
                 day_of_month,
                 hour,
                 0,
-                latitude_,
-                longitude_,
+                start_point,
                 env_->elevation(),
                 slope,
                 aspect,
                 fuel_name,
                 w
               );
-              constexpr auto FMT_FBP_OUT =
-                "%ld,%d-%02d-%02d %02d:%02d:%02d,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g,%c,%1.6g,%1.6g,%1.6g,%1.6g,%1.6g%s";
-              printf(
-                FMT_FBP_OUT,
+              const auto fmt_row = std::format(
+                "{:d},{:d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:c},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g}\r\n",
                 i,
                 year_,
                 static_cast<uint8_t>(month),
@@ -1368,7 +1343,7 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
                 0,
                 0,
                 w->prec.value,
-                w->temp.value,
+                w->temperature.value,
                 w->rh.value,
                 w->wind.speed.value,
                 w->wind.direction.value,
@@ -1385,40 +1360,10 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
                 spread.headDirection().asDegrees(),
                 spread.headRos(),
                 spread.surfaceFuelConsumption(),
-                spread.totalFuelConsumption(),
-                "\r\n"
+                spread.totalFuelConsumption()
               );
-              fprintf(
-                out_fbp,
-                FMT_FBP_OUT,
-                i,
-                year_,
-                static_cast<uint8_t>(month),
-                static_cast<uint8_t>(day_of_month),
-                static_cast<uint8_t>(hour - day * DAY_HOURS),
-                0,
-                0,
-                w->prec.value,
-                w->temp.value,
-                w->rh.value,
-                w->wind.speed.value,
-                w->wind.direction.value,
-                w->ffmc.value,
-                w->dmc.value,
-                w->dc.value,
-                w->isi.value,
-                w->bui.value,
-                w->fwi.value,
-                spread.crownFractionBurned(),
-                spread.crownFuelConsumption(),
-                spread.fireDescription(),
-                spread.maxIntensity(),
-                spread.headDirection().asDegrees(),
-                spread.headRos(),
-                spread.surfaceFuelConsumption(),
-                spread.totalFuelConsumption(),
-                "\r\n"
-              );
+              printf("%s", fmt_row.c_str());
+              out_fbp << fmt_row;
             }
           }
         }
@@ -1427,8 +1372,10 @@ void Model::outputWeather(map<size_t, shared_ptr<FireWeather>>& weather, const c
     }
     ++i;
   }
-  logging::check_fatal(0 != fclose(out), "Could not close file %s", file_out.c_str());
-  logging::check_fatal(0 != fclose(out_fbp), "Could not close file %s", file_out_fbp.c_str());
+  out.close();
+  out_fbp.close();
+  logging::check_fatal(out.fail(), "Could not close file %s", file_out.c_str());
+  logging::check_fatal(out_fbp.fail(), "Could not close file %s", file_out_fbp.c_str());
 }
 #endif
 }
