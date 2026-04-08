@@ -58,6 +58,8 @@ services:
       - seccomp:unconfined
     volumes:
       - /etc/ssl/certs:/etc/ssl/certs
+      - ~/.ssh:/home/user/.ssh
+      - ./repo/.bash_aliases:/home/user/.bash_aliases
       - type: bind
         source: ./
         target: /appl/firestarr
