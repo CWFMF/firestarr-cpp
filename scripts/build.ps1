@@ -35,7 +35,8 @@ git clone https://github.com/microsoft/vcpkg
 # mkdir $env:VCPKG_ROOT\\installed
 # $env:VCPKG_INSTALLED=Resolve-Path vcpkg\\installed
 
-# $env:VCPKG_DEFAULT_TRIPLET="x86-windows-static"
+# avoid dlls
+$env:VCPKG_TARGET_TRIPLET="x64-windows-static"
 pushd vcpkg
 $env:VCPKG_ROOT=pwd
 git checkout 2025.12.12
@@ -48,9 +49,6 @@ cmake --build --parallel --preset Release
 
 ctest --preset Release
 
-# HACK: just copy here for now but should be part of cmake
-
-copy build\*.dll .
 # .\test_duff.exe -v
 # .\test_fbp.exe -v
 # .\test_fwi.exe -v
