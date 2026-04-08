@@ -190,7 +190,7 @@ struct FwiWeather : public Weather
     : Weather(wx), ffmc{ffmc}, dmc{dmc}, dc{dc},
       isi{Isi::Invalid() == isi ? Isi{wind.speed, ffmc} : isi},
       bui{Bui::Invalid() == bui ? Bui{dmc, dc} : bui},
-      fwi{Fwi::Invalid() == fwi ? Fwi{isi, bui} : fwi}
+      fwi{Fwi::Invalid() == fwi ? Fwi{this->isi, this->bui} : fwi}
   { }
   constexpr FwiWeather(
     const Temperature temp,
