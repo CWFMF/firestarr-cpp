@@ -32,24 +32,20 @@ void Log::decreaseLogLevel() noexcept
   logging_level_ = min(LOG_SILENT, getLogLevel() + 1);
 }
 int Log::getLogLevel() noexcept { return logging_level_; }
-static FILE* out_{nullptr};
+static ofstream out_{};
 int Log::openLogFile(const char* filename) noexcept
 {
-  out_ = fopen(filename, "w");
-  if (nullptr != out_)
-  {
-    // turn off buffering so lines write to file immediately
-    setbuf(out_, nullptr);
-    return true;
-  }
-  return false;
+  // turn off buffering so lines write to file immediately
+  out_.rdbuf()->pubsetbuf(0, 0);
+  out_.open(filename);
+  return out_.is_open();
 }
 int Log::closeLogFile() noexcept
 {
-  if (nullptr != out_)
+  if (out_.is_open())
   {
-    return fclose(out_);
-    out_ = nullptr;
+    out_.close();
+    return out_.fail();
   }
   return 0;
 }
@@ -99,10 +95,10 @@ void output(const int log_level, const char* format, va_list* args)
     if (log_level >= LOG_VERBOSE)
 #endif
     {   // fflush(stdout);
-      if (nullptr != out_)
+      if (out_.is_open())
       {
-        fprintf(out_, "%s\n", msg.c_str());
-        fflush(out_);
+        out_ << msg << "\n";
+        out_.flush();
       }
     }
   }
