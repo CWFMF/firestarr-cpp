@@ -347,7 +347,8 @@ GridBase::GridBase(
 void GridBase::createPrj(const string_view dir, const string_view base_name) const
 {
   const auto filename = string(dir) + string(base_name) + ".prj";
-  FILE* out = fopen(filename.c_str(), "w");
+  ofstream out{filename};
+  logging::check_fatal(!out.is_open(), "Unable to write to %s", filename.c_str());
   logging::extensive(proj4_.c_str());
   // HACK: use what we know is true for the grids that were generated and
   // hope it's correct otherwise
@@ -362,26 +363,26 @@ void GridBase::createPrj(const string_view dir, const string_view base_name) con
   {
     logging::fatal("Cannot convert proj4 '%s' into .prj file", proj4_.c_str());
   }
-  fprintf(out, "Projection    TRANSVERSE\n");
-  fprintf(out, "Datum         AI_CSRS\n");
-  fprintf(out, "Spheroid      GRS80\n");
+  out << "Projection    TRANSVERSE\n";
+  out << "Datum         AI_CSRS\n";
+  out << "Spheroid      GRS80\n";
   // NOTE: uses American spelling
-  fprintf(out, "Units         METERS\n");
-  fprintf(out, "Zunits        NO\n");
-  fprintf(out, "Xshift        0.0\n");
-  fprintf(out, "Yshift        0.0\n");
-  fprintf(out, "Parameters    \n");
+  out << "Units         METERS\n";
+  out << "Zunits        NO\n";
+  out << "Xshift        0.0\n";
+  out << "Yshift        0.0\n";
+  out << "Parameters    \n";
   // NOTE: it seems like comments in .prj files is no longer supported?
   // these are all just strings since they're out of the proj4 string
   //   - but convert to number so precision matches old output
   // HACK: this is the order they were previously, so not just outputting in order they occur
-  fprintf(out, "%g /* scale factor at central meridian\n", stod(k));
-  fprintf(out, "%g  0  0.0 /* longitude of central meridian\n", stod(lon_0));
-  fprintf(out, "%4g  0  0.0 /* latitude of origin\n", stod(lat_0));
+  out << std::format("{:g} /* scale factor at central meridian\n", stod(k));
+  out << std::format("{:g}  0  0.0 /* longitude of central meridian\n", stod(lon_0));
+  out << std::format("{:4g}  0  0.0 /* latitude of origin\n", stod(lat_0));
   // NOTE: uses American spelling
-  fprintf(out, "%6.1f /* false easting (meters)\n", stod(x_0));
-  fprintf(out, "%0.1f /* false northing (meters)\n", stod(y_0));
-  fclose(out);
+  out << std::format("{:6.1f} /* false easting (meters)\n", stod(x_0));
+  out << std::format("{:0.1f} /* false northing (meters)\n", stod(y_0));
+  out.close();
 }
 unique_ptr<Coordinates> GridBase::findCoordinates(const Point& point, const bool flipped) const
 {
