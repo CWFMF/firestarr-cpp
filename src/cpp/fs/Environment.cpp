@@ -220,7 +220,7 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
             auto slope_pct = static_cast<float>(100 * (sqrt(key) / 8.0));
             s = min(
               static_cast<SlopeSize>(MAX_SLOPE_FOR_DISTANCE),
-              static_cast<SlopeSize>(round(slope_pct))
+              static_cast<SlopeSize>(round(static_cast<MathSize>(slope_pct)))
             );
             static_assert(std::numeric_limits<SlopeSize>::max() >= MAX_SLOPE_FOR_DISTANCE);
             MathSize aspect_azimuth = 0.0;
