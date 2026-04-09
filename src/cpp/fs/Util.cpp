@@ -3,9 +3,6 @@
 #include "Util.h"
 #include "Log.h"
 #include "TimeUtil.h"
-#ifdef _WIN32
-#include <direct.h>
-#endif
 namespace fs
 {
 int sxprintf(char* buffer, size_t N, const char* format, va_list* args)
@@ -104,12 +101,13 @@ bool file_exists(const char* path) noexcept
 }
 void make_directory(const char* dir) noexcept
 {
-#ifdef _WIN32
-  if (-1 == _mkdir(dir) && errno != EEXIST)
-#else
-  if (-1 == mkdir(dir, 0777) && errno != EEXIST)
-#endif
+  std::error_code ec{};
+  if (std::filesystem::create_directory(dir, ec))
   {
+    if (ec)
+    {
+      logging::fatal("Error %d creating directory %s", ec.value(), dir);
+    }
     struct stat dir_info{};
     if (stat(dir, &dir_info) != 0)
     {
