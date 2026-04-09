@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#include "stdafx.h"
-#include "InnerPos.h"
 #ifndef FS_SPREADALGORITHM_H
 #define FS_SPREADALGORITHM_H
+#include "stdafx.h"
+#include "InnerPos.h"
 namespace fs
 {
 using HorizontalAdjustment = std::function<MathSize(const Radians&)>;

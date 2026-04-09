@@ -2,7 +2,6 @@
 #include "CellPoints.h"
 #include "Location.h"
 #include "Log.h"
-#include "Scenario.h"
 namespace fs
 {
 constexpr InnerSize DIST_22_5 =

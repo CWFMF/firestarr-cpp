@@ -2,8 +2,6 @@
 #ifndef FS_GRID_H
 #define FS_GRID_H
 #include "stdafx.h"
-#include <type_traits>
-#include <utility>
 #include "Location.h"
 #include "Log.h"
 #include "Point.h"

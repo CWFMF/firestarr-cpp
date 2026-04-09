@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Model.h"
-#include <chrono>
-#include <memory>
 #include "FBP45.h"
 #include "FireWeather.h"
 #include "FWI.h"

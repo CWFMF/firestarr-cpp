@@ -2,9 +2,8 @@
 #ifndef FS_EVENT_H
 #define FS_EVENT_H
 #include "stdafx.h"
-#include <compare>
 #include "Cell.h"
-#include "FireSpread.h"
+#include "Weather.h"
 namespace fs
 {
 using fs::Direction;

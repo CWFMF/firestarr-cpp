@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FuelLookup.h"
-#include <cstddef>
 #include "FBP45.h"
 #include "FuelType.h"
 #include "Log.h"

@@ -2,10 +2,7 @@
 #ifndef FS_UTIL_H
 #define FS_UTIL_H
 #include "stdafx.h"
-#include <filesystem>
-#include <utility>
 #include "Radians.h"
-#include "unstable.h"
 namespace fs
 {
 constexpr YearSize TM_YEAR_OFFSET = 1900;

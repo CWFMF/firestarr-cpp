@@ -5,8 +5,8 @@
 #ifndef TIFFTAG_GDAL_NODATA
 #define TIFFTAG_GDAL_NODATA 42113
 #endif
-typedef struct tiff TIFF;
-typedef struct gtiff GTIF;
+using TIFF = struct tiff;
+using GTIF = struct gtiff;
 namespace fs
 {
 /**
