@@ -77,6 +77,9 @@ int main(const int argc, const char* const argv[])
     {
       logging::fatal("Can't open log file %s", settings.log_file.c_str());
     }
+    fs::logging::note("Specific revision is %s", SPECIFIC_REVISION);
+    fs::logging::debug("Full hash is: %s", FULL_HASH);
+    fs::logging::debug("Compiled on: %s", COMPILED_ON);
     fs::logging::note("Output directory is %s", settings.output_directory.c_str());
     fs::logging::note("Output log is %s", settings.log_file.c_str());
     // at this point we've parsed positional args and know we're not in test mode
