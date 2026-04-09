@@ -113,20 +113,12 @@ string saveToTiffFile(
   // use buffer big enought to fit any (R  + '.000\0') + 1
   constexpr auto n = std::numeric_limits<R>::digits10;
   static_assert(n > 0);
-  char str[n + 6]{0};
-  sxprintf(str, "%d.000", nodata_as_int);
-  // logging::extensive(
-  //   "%s using nodata string '%s' for nodata value of (%d, %f)",
-  //   typeid(&grid).name(),
-  //   str,
-  //   nodata_as_int,
-  //   static_cast<MathSize>(no_data)
-  // );
+  const auto nodata_str = std::format("{:d}.000", nodata_as_int);
   constexpr auto bps = sizeof(R) * 8;
   logging::check_fatal(
     bps != bits_per_sample, "Cannot have mismatched bps and type (%ld != %ld)", bps, bits_per_sample
   );
-  TIFFSetField(tif, TIFFTAG_GDAL_NODATA, str);
+  TIFFSetField(tif, TIFFTAG_GDAL_NODATA, nodata_str.c_str());
   logging::extensive("%s takes %d bits", string(base_name).c_str(), bits_per_sample);
   TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);
   TIFFSetField(tif, TIFFTAG_IMAGELENGTH, num_rows);
