@@ -76,7 +76,7 @@ void LogPoints::log_unchecked(
   // time should always be the same for each step, regardless of stage
   if (last_step_ != step || last_stage_ != stage)
   {
-    sxprintf(stage_id_, "%ld%c%ld", id_, stage, step);
+    stage_id_ = std::format("{:d}{:c}{:d}", id_, stage, step);
     last_stage_ = stage;
     last_step_ = step;
 #ifdef DEBUG_POINTS

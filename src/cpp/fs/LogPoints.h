@@ -65,7 +65,7 @@ private:
 #ifdef DEBUG_POINTS
   mutable DurationSize last_time_{};
 #endif
-  mutable char stage_id_[1024]{};
+  mutable string stage_id_{};
   mutable ofstream log_points_{};
   mutable ofstream log_stages_{};
 };
