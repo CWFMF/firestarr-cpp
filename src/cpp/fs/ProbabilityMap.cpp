@@ -163,10 +163,14 @@ void ProbabilityMap::show() const
 }
 string make_string(const char* name, const tm& t, const int day)
 {
-  constexpr auto mask = "%s_%03d_%04d-%02d-%02d";
-  char tmp[100];
-  sxprintf(tmp, mask, name, day, t.tm_year + TM_YEAR_OFFSET, t.tm_mon + TM_MONTH_OFFSET, t.tm_mday);
-  return string(tmp);
+  return std::format(
+    "{:s}_{:03d}_{:04d}-{:02d}-{:02d}",
+    name,
+    day,
+    t.tm_year + TM_YEAR_OFFSET,
+    t.tm_mon + TM_MONTH_OFFSET,
+    t.tm_mday
+  );
 };
 void ProbabilityMap::deleteInterim()
 {
