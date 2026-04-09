@@ -119,11 +119,8 @@ string ArgumentParser::get_args()
   }
   return args;
 }
-string ArgumentParser::format_args()
-{
-  return std::format("Arguments are:\n  {:s}\n\n", get_args());
-}
-void ArgumentParser::show_args() { cout << format_args(); }
+string ArgumentParser::format_args() { return std::format("Arguments are:\n  {:s}\n", get_args()); }
+void ArgumentParser::show_args() { cout << format_args() << "\n"; }
 void ArgumentParser::log_args() { fs::logging::note(format_args().c_str()); }
 static vector<Usage> USAGES{};
 void add_usage(const Usage usage) { USAGES.emplace_back(usage); }

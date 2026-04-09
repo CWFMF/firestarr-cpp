@@ -42,7 +42,7 @@ using fs::logging::Log;
 int main(const int argc, const char* const argv[])
 {
   using namespace fs::settings;
-  cout << std::format("FireSTARR {:s}\n\n", SPECIFIC_REVISION);
+  logging::note("FireSTARR %s\n", SPECIFIC_REVISION);
   MainArgumentParser parser{argc, argv};
   // HACK: resolve once and fail if not set already
   static auto& settings = fs::settings::instance();
@@ -55,7 +55,6 @@ int main(const int argc, const char* const argv[])
     // HACK: check here so verbosity can affect showing compile info
     if (parser.help_requested())
     {
-      fs::logging::note("Specific revision is %s", SPECIFIC_REVISION);
       fs::logging::debug("Full hash is: %s", FULL_HASH);
       fs::logging::debug("Compiled on: %s", COMPILED_ON);
       parser.show_help_and_exit();
