@@ -14,19 +14,21 @@ int sxprintf(char* buffer, size_t N, const char* format, va_list* args)
   auto r = vsnprintf(buffer, N, format, *args);
   if (!(r < static_cast<int>(N)))
   {
-    printf("**************** ERROR ****************\n");
-    printf("\tTrying to write to buffer resulted in string being cut off at %ld characters\n", N);
-    printf("Should have written:\n\t\"");
+    cout << "**************** ERROR ****************\n";
+    cout << std::format(
+      "\tTrying to write to buffer resulted in string being cut off at {:d} characters\n", N
+    );
+    cout << "Should have written:\n\t\"";
     vprintf(format, *args);
-    printf("\"\n\t\"%s\"", buffer);
+    cout << std::format("\"\n\t\"{:s}\"", buffer);
     // HACK: just loop
-    printf("\n\t");
+    cout << "\n\t";
     for (size_t i = 0; i < (N - 1); ++i)
     {
-      printf(" ");
+      cout << " ";
     }
-    printf("^-- cut off here at character %ld\n", N);
-    printf("**************** ERROR ****************\n");
+    cout << std::format("^-- cut off here at character {:d}\n", N);
+    cout << "**************** ERROR ****************\n";
     throw std::runtime_error("String buffer overflow avoided");
   }
   return r;

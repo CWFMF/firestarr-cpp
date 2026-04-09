@@ -1360,7 +1360,7 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
                 spread.surfaceFuelConsumption(),
                 spread.totalFuelConsumption()
               );
-              printf("%s", fmt_row.c_str());
+              cout << fmt_row;
               out_fbp << fmt_row;
             }
           }

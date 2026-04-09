@@ -42,7 +42,7 @@ using fs::logging::Log;
 int main(const int argc, const char* const argv[])
 {
   using namespace fs::settings;
-  printf("FireSTARR %s\n\n", SPECIFIC_REVISION);
+  cout << std::format("FireSTARR {:s}\n\n", SPECIFIC_REVISION);
   MainArgumentParser parser{argc, argv};
   // HACK: resolve once and fail if not set already
   static auto& settings = fs::settings::instance();
