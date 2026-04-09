@@ -3,7 +3,6 @@
 #include "IntensityMap.h"
 #include "Model.h"
 #include "Perimeter.h"
-#include "Settings.h"
 #include "unstable.h"
 #include "Weather.h"
 namespace fs

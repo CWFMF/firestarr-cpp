@@ -2,7 +2,6 @@
 #ifndef FS_LOCATION_H
 #define FS_LOCATION_H
 #include "stdafx.h"
-#include "Log.h"
 #include "Util.h"
 namespace fs
 {

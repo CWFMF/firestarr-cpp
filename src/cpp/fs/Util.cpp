@@ -3,9 +3,6 @@
 #include "Util.h"
 #include "Log.h"
 #include "TimeUtil.h"
-// HACK: complains when importing otherwise
-#include <filesystem>
-#include <regex>
 #ifdef _WIN32
 #include <direct.h>
 #endif

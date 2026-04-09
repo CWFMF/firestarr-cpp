@@ -1,10 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_RANGEITERATOR_H
 #define FS_RANGEITERATOR_H
-#include <iterator>
-#include "debug_settings.h"
+#include "stdafx.h"
 #include "Log.h"
-#include "unstable.h"
 namespace fs
 {
 template <class T = MathSize>

@@ -2,8 +2,9 @@
 #ifndef FS_CELLPOINTS_H
 #define FS_CELLPOINTS_H
 #include "stdafx.h"
+#include "BurnedData.h"
+#include "Cell.h"
 #include "InnerPos.h"
-#include "IntensityMap.h"
 namespace fs
 {
 using fs::Direction;

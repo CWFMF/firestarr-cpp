@@ -1,7 +1,6 @@
 // https://publications.gc.ca/collections/collection_2016/rncan-nrcan/Fo133-1-424-eng.pdf
 #ifndef FS_FWIREFERENCE_H
 #define FS_FWIREFERENCE_H
-#include "stdafx.h"
 #include "FWI.h"
 #include "Weather.h"
 namespace fs::fwireference

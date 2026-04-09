@@ -1,9 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Log.h"
-#include <cstdarg>
-#include <cstdio>
-#include <ctime>
-#include <exception>
 namespace fs::logging
 {
 int Log::logging_level_ = LOG_DEBUG;

@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "EnvironmentInfo.h"
-#include <utility>
 #include "Environment.h"
 #include "Grid.h"
 #include "Log.h"

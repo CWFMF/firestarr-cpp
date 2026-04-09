@@ -2,13 +2,9 @@
 #ifndef FS_ARGUMENT_PARSER_H
 #define FS_ARGUMENT_PARSER_H
 #include "stdafx.h"
-#include "FWI.h"
-#include "Log.h"
 #include "Settings.h"
-#include "Weather.h"
 namespace fs::settings
 {
-using fs::logging::Log;
 struct Usage
 {
   string description{};

@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "debug_settings.h"
+#ifdef DEBUG_ANY
 #include <cstdio>
 #include <format>
 #include <iostream>
 #include <string>
+#endif
 namespace fs
 {
 void show_debug_settings()
@@ -20,7 +22,6 @@ void show_debug_settings()
   std::cout << hr;
   printf_centered("DEBUG OPTIONS");
   std::cout << hr;
-#endif
 #ifndef NDEBUG
   printf_centered("DEBUG");
 #endif
@@ -51,7 +52,6 @@ void show_debug_settings()
 #ifdef DEBUG_WEATHER
   printf_centered("DEBUG_WEATHER");
 #endif
-#ifdef DEBUG_ANY
   std::cout << hr;
 #endif
 }

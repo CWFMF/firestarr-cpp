@@ -1,13 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "ArgumentParser.h"
-#include <filesystem>
-#include <utility>
 #include "Log.h"
 #include "Settings.h"
-#include "TimeUtil.h"
 #include "Util.h"
 namespace fs::settings
 {
+using logging::Log;
 static map<std::string, std::function<void()>> PARSE_FCT{};
 static vector<std::pair<std::string, std::string>> PARSE_HELP{};
 static map<std::string, bool> PARSE_REQUIRED{};

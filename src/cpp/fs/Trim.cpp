@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Trim.h"
-#include <algorithm>
-#include <cctype>
 // from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
 namespace fs
 {

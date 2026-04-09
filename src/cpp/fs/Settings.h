@@ -2,9 +2,7 @@
 #ifndef FS_SETTINGS_H
 #define FS_SETTINGS_H
 #include "stdafx.h"
-#include <string>
 #include "FuelLookup.h"
-#include "unstable.h"
 namespace fs
 {
 namespace settings

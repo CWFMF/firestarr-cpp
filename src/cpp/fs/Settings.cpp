@@ -1,12 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Settings.h"
-#include <exception>
-#include <filesystem>
-#include <mutex>
 #include "FuelLookup.h"
 #include "Log.h"
 #include "Trim.h"
-#include "unstable.h"
 #include "Util.h"
 namespace fs::settings
 {

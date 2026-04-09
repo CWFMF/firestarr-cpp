@@ -2,10 +2,6 @@
 #ifndef FS_MERGEITERATOR_H
 #define FS_MERGEITERATOR_H
 #include "stdafx.h"
-#include "Cell.h"
-#include "CellPoints.h"
-#include "InnerPos.h"
-#include "Location.h"
 namespace fs
 {
 // mangled version of std::transform_reduce() that calls .begin() and .end()
