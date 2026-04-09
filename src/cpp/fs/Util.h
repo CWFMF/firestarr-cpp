@@ -17,29 +17,6 @@ public:
 #endif
 };
 /**
- * Call snprintf() but show where and throw exception when anything gets cut off.
- */
-int sxprintf(char* buffer, size_t N, const char* format, va_list* args);
-int sxprintf(char* buffer, size_t N, const char* format, ...);
-/**
- * Call snprintf() but don't need to determine size of array when calling
- * and complain when anything gets cut off.
- */
-template <std::size_t N>
-int sxprintf(char (&buffer)[N], const char* format, va_list* args)
-{
-  return sxprintf(&buffer[0], N, format, args);
-}
-template <std::size_t N>
-int sxprintf(char (&buffer)[N], const char* format, ...)
-{
-  va_list args;
-  va_start(args, format);
-  auto r = sxprintf(buffer, format, &args);
-  va_end(args);
-  return r;
-}
-/**
  * \brief Convert day and hour to DurationSize representing time
  * \tparam T Type used for representing day
  * \param day Day
@@ -174,7 +151,7 @@ void make_directory(const char* dir) noexcept;
  * \brief Make the given directory and any parent directories that do not exist
  * \param dir Directory to create
  */
-void make_directory_recursive(const char* dir) noexcept;
+void make_directory_recursive(string dir) noexcept;
 /**
  * \brief Square a number
  * \param x number to square

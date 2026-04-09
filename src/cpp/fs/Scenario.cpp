@@ -477,9 +477,10 @@ FileList Scenario::saveObservers(const string_view output_directory, const strin
 }
 FileList Scenario::saveObservers(const string_view output_directory, const DurationSize time) const
 {
-  char buffer[64]{0};
-  sxprintf(buffer, "%03zu_%06ld_%03d", id(), simulation(), static_cast<int>(time));
-  return saveObservers(output_directory, string(buffer));
+  return saveObservers(
+    output_directory,
+    std::format("{:03d}_{:06d}_{:03d}", id(), simulation(), static_cast<int>(time))
+  );
 }
 FileList Scenario::saveIntensity(const string_view output_directory, const string_view base_name)
   const
@@ -564,12 +565,9 @@ bool Scenario::isSurrounded(const Location& location) const
 Cell Scenario::cell(const InnerPos& p) const noexcept { return cell(p.second, p.first); }
 string Scenario::add_log(const char* format) const noexcept
 {
-  const string tmp;
-  stringstream iss(tmp);
-  static char buffer[1024]{0};
-  sxprintf(buffer, "Scenario %4ld.%04ld (%3f): ", id(), simulation(), current_time_);
-  iss << buffer << format;
-  return iss.str();
+  return std::format(
+    "Scenario {:4d}.{:04d} ({:3f}): {:s}", id(), simulation(), current_time_, format
+  );
 }
 #ifdef DEBUG_PROBABILITY
 void saveProbabilities(
@@ -706,11 +704,16 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   // nice to have this get output when debugging, but only need it in extreme cases
   if (logging::Log::getLogLevel() <= logging::LOG_EXTENSIVE)
   {
-    char buffer[64]{0};
-    sxprintf(buffer, "%03zu_%06ld_extinction", id(), simulation());
-    saveProbabilities(model().outputDirectory(), string(buffer), extinction_thresholds_);
-    sxprintf(buffer, "%03zu_%06ld_spread", id(), simulation());
-    saveProbabilities(model().outputDirectory(), string(buffer), spread_thresholds_by_ros_);
+    saveProbabilities(
+      model().outputDirectory(),
+      std::format("{:03d}_{:06d}_extinction", id(), simulation()),
+      extinction_thresholds_
+    );
+    saveProbabilities(
+      model().outputDirectory(),
+      std::format("{:03d}_{:06d}_spread", id(), simulation()),
+      spread_thresholds_by_ros_
+    );
   }
 #endif
   if (oob_spread_ > 0)

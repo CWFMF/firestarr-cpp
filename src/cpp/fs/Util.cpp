@@ -5,42 +5,6 @@
 #include "TimeUtil.h"
 namespace fs
 {
-int sxprintf(char* buffer, size_t N, const char* format, va_list* args)
-{
-  if (nullptr == format)
-  {
-    return 0;
-  }
-  auto r = vsnprintf(buffer, N, format, *args);
-  if (!(r < static_cast<int>(N)))
-  {
-    cout << "**************** ERROR ****************\n";
-    cout << std::format(
-      "\tTrying to write to buffer resulted in string being cut off at {:d} characters\n", N
-    );
-    cout << "Should have written:\n\t\"";
-    vprintf(format, *args);
-    cout << std::format("\"\n\t\"{:s}\"", buffer);
-    // HACK: just loop
-    cout << "\n\t";
-    for (size_t i = 0; i < (N - 1); ++i)
-    {
-      cout << " ";
-    }
-    cout << std::format("^-- cut off here at character {:d}\n", N);
-    cout << "**************** ERROR ****************\n";
-    throw std::runtime_error("String buffer overflow avoided");
-  }
-  return r;
-}
-int sxprintf(char* buffer, size_t N, const char* format, ...)
-{
-  va_list args;
-  va_start(args, format);
-  auto r = sxprintf(buffer, N, format, &args);
-  va_end(args);
-  return r;
-}
 FileList read_directory(const string_view name, const string_view match, const bool for_files)
 {
   FileList files{};
@@ -125,21 +89,19 @@ void make_directory(const char* dir) noexcept
     }
   }
 }
-void make_directory_recursive(const char* dir) noexcept
+void make_directory_recursive(string dir) noexcept
 {
-  char tmp[256];
-  sxprintf(tmp, "%s", dir);
-  const auto len = strlen(tmp);
-  if (tmp[len - 1] == '/')
-    tmp[len - 1] = 0;
-  for (auto p = tmp + 1; *p; ++p)
+  const auto len = dir.length();
+  if (dir[len - 1] == '/')
+    dir[len - 1] = 0;
+  for (auto p = &dir[0] + 1; *p; ++p)
     if (*p == '/')
     {
       *p = 0;
-      make_directory(tmp);
+      make_directory(dir.c_str());
       *p = '/';
     }
-  make_directory(tmp);
+  make_directory(dir.c_str());
 }
 tm to_tm(const YearSize year, const int month, const int day, const int hour, const int minute)
 {
@@ -289,9 +251,7 @@ string make_timestamp(const YearSize year, const DurationSize time)
   size_t month;
   size_t day_of_month;
   month_and_day(year, day, &month, &day_of_month);
-  char buffer[128];
-  sxprintf(buffer, "%4d-%02ld-%02ld %02ld:%02ld", year, month, day_of_month, hour, minute);
-  return {buffer};
+  return std::format("{:4d}-{:02d}-{:02d} {:02d}:{:02d}", year, month, day_of_month, hour, minute);
 }
 string get_canonical_path(const char* const dir_root, string path)
 {

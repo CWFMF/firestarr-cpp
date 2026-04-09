@@ -20,7 +20,7 @@ unique_ptr<FullCoordinates> to_proj4(
   P = proj_create_crs_to_crs(C, "EPSG:4326", proj4.c_str(), nullptr);
   if (nullptr == P)
   {
-    fprintf(stderr, "Failed to create transformation object.\n");
+    std::cerr << "Failed to create transformation object.\n";
     return {};
   }
   /* This will ensure that the order of coordinates for the input CRS */
@@ -29,7 +29,7 @@ unique_ptr<FullCoordinates> to_proj4(
   norm = proj_normalize_for_visualization(C, P);
   if (nullptr == norm)
   {
-    fprintf(stderr, "Failed to normalize transformation object.\n");
+    std::cerr << "Failed to normalize transformation object.\n";
     return {};
   }
   proj_destroy(P);
