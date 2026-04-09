@@ -57,15 +57,14 @@ public:
    */
   static int closeLogFile() noexcept;
 };
-string format_log_message(const char* prefix, const char* const format, va_list* args);
 /**
  * \brief Output a message to the log
  * \param log_level Log level to use for label
  * \param format Format string for message
  * \param args Arguments to use in format string
- * \return None
+ * \return the message that was output
  */
-void output(int log_level, const char* const format, va_list* args)
+string output(int log_level, const char* const format, va_list* args)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -75,9 +74,9 @@ void output(int log_level, const char* const format, va_list* args)
  * \param log_level Log level to use for label
  * \param format Format string for message
  * \param ... Arguments to format message with
- * \return None
+ * \return the message that was output
  */
-void output(int log_level, const char* const format, ...)
+string output(int log_level, const char* const format, ...)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -247,9 +246,7 @@ T fatal(const char* const format, va_list* args)
   noexcept
 #endif
 {
-  // format message and then output so we don't parse args twice and can use for error
-  auto msg = format_log_message("", format, args);
-  output(LOG_FATAL, msg.c_str());
+  auto msg = output(LOG_FATAL, format, args);
   fflush(stdout);
   Log::closeLogFile();
 #ifdef NDEBUG

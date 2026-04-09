@@ -75,7 +75,7 @@ string format_log_message(const char* prefix, const char* const format, va_list*
   iss << buffer;
   return iss.str();
 }
-void output(const int log_level, const char* const format, va_list* args)
+string output(const int log_level, const char* const format, va_list* args)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -83,7 +83,7 @@ void output(const int log_level, const char* const format, va_list* args)
 #ifdef NDEBUG
   if (Log::getLogLevel() > log_level)
   {
-    return;
+    return "";
   }
 #endif
   try
@@ -112,6 +112,7 @@ void output(const int log_level, const char* const format, va_list* args)
         pre_file_log << msg << "\n";
       }
     }
+    return msg;
   }
   catch (const std::exception& ex)
   {
@@ -119,14 +120,14 @@ void output(const int log_level, const char* const format, va_list* args)
     std::terminate();
   }
 }
-void output(const int log_level, const char* const format, ...)
+string output(const int log_level, const char* const format, ...)
 #ifdef NDEBUG
   noexcept
 #endif
 {
   va_list args;
   va_start(args, format);
-  output(log_level, format, &args);
+  return output(log_level, format, &args);
   va_end(args);
 }
 void extensive(const char* const format, ...) noexcept
