@@ -121,22 +121,14 @@ string generate_test_name(
 )
 {
   // wind speed & direction can be decimal values, but slope and aspect are int
-  constexpr auto mask = "%s_S%03d_A%03d_WD%05.1f_WS%05.1f";
-  auto simple_fuel_name = simplify_fuel_name(fuel);
-  const size_t out_length = simple_fuel_name.length() + 27 + 1;
-  vector<char> out{};
-  out.resize(out_length);
-  sxprintf(
-    &(out[0]),
-    out_length,
-    mask,
-    simple_fuel_name.c_str(),
+  return std::format(
+    "{:s}_S{:03d}_A{:03d}_WD{:05.1f}_WS{:05.1f}",
+    simplify_fuel_name(fuel),
     slope,
     aspect,
     wind.direction.asDegrees(),
     wind.speed.value
   );
-  return string(&(out[0]));
 };
 string run_test(
   const string_view base_directory,
