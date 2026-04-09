@@ -2,7 +2,8 @@
 #include "Log.h"
 namespace fs::logging
 {
-int Log::logging_level_ = LOG_DEBUG;
+// Current logging level
+int logging_level_ = LOG_DEBUG;
 // do this in .cpp so that we don't get unused warnings including the .h
 static const char* LOG_LABELS[] = {
   "EXTENSIVE: ",
@@ -17,20 +18,21 @@ static const char* LOG_LABELS[] = {
 };
 stringstream pre_file_log{};
 mutex mutex_;
-void Log::setLogLevel(const int log_level) noexcept { logging_level_ = log_level; }
-void Log::increaseLogLevel() noexcept
+void set_log_level(const int log_level) noexcept { logging_level_ = log_level; }
+void increase_log_level() noexcept
 {
   // HACK: make sure we never go below 0
-  logging_level_ = max(0, getLogLevel() - 1);
+  logging_level_ = max(0, get_log_level() - 1);
 }
-void Log::decreaseLogLevel() noexcept
+void decrease_log_level() noexcept
 {
   // HACK: make sure we never go above silent
-  logging_level_ = min(LOG_SILENT, getLogLevel() + 1);
+  logging_level_ = min(LOG_SILENT, get_log_level() + 1);
 }
-int Log::getLogLevel() noexcept { return logging_level_; }
-static ofstream out_{};
-int Log::openLogFile(const char* filename) noexcept
+int get_log_level() noexcept { return logging_level_; }
+// closes automatically when ofstream is deconstructed
+ofstream out_{};
+int open_log_file(const char* filename) noexcept
 {
   // turn off buffering so lines write to file immediately
   out_.rdbuf()->pubsetbuf(0, 0);
@@ -47,7 +49,7 @@ int Log::openLogFile(const char* filename) noexcept
   }
   return true;
 }
-int Log::closeLogFile() noexcept
+int close_log_file() noexcept
 {
   if (out_.is_open())
   {
@@ -81,7 +83,7 @@ string output(const int log_level, const char* const format, va_list* args)
 #endif
 {
 #ifdef NDEBUG
-  if (Log::getLogLevel() > log_level)
+  if (get_log_level() > log_level)
   {
     return "";
   }
@@ -92,7 +94,7 @@ string output(const int log_level, const char* const format, va_list* args)
     auto msg = format_log_message(LOG_LABELS[log_level], format, args);
 #ifndef NDEBUG
     // if debugging then output everything to log file but not necessarily stdout
-    if (log_level >= Log::getLogLevel())
+    if (log_level >= get_log_level())
 #endif
     {
       cout << msg << "\n";
@@ -116,7 +118,7 @@ string output(const int log_level, const char* const format, va_list* args)
   }
   catch (const std::exception& ex)
   {
-    logging::fatal(ex);
+    fatal(ex);
     std::terminate();
   }
 }
@@ -132,7 +134,7 @@ string output(const int log_level, const char* const format, ...)
 }
 void extensive(const char* const format, ...) noexcept
 {
-  if (Log::getLogLevel() <= LOG_EXTENSIVE)
+  if (get_log_level() <= LOG_EXTENSIVE)
   {
     va_list args;
     va_start(args, format);
@@ -142,7 +144,7 @@ void extensive(const char* const format, ...) noexcept
 }
 void verbose(const char* const format, ...) noexcept
 {
-  if (Log::getLogLevel() <= LOG_VERBOSE)
+  if (get_log_level() <= LOG_VERBOSE)
   {
     va_list args;
     va_start(args, format);
@@ -152,7 +154,7 @@ void verbose(const char* const format, ...) noexcept
 }
 void debug(const char* const format, ...) noexcept
 {
-  if (Log::getLogLevel() <= LOG_DEBUG)
+  if (get_log_level() <= LOG_DEBUG)
   {
     va_list args;
     va_start(args, format);
@@ -162,7 +164,7 @@ void debug(const char* const format, ...) noexcept
 }
 void info(const char* const format, ...) noexcept
 {
-  if (Log::getLogLevel() <= LOG_INFO)
+  if (get_log_level() <= LOG_INFO)
   {
     va_list args;
     va_start(args, format);
@@ -172,7 +174,7 @@ void info(const char* const format, ...) noexcept
 }
 void note(const char* const format, ...) noexcept
 {
-  if (Log::getLogLevel() <= LOG_NOTE)
+  if (get_log_level() <= LOG_NOTE)
   {
     va_list args;
     va_start(args, format);
@@ -182,7 +184,7 @@ void note(const char* const format, ...) noexcept
 }
 void warning(const char* const format, ...) noexcept
 {
-  if (Log::getLogLevel() <= LOG_WARNING)
+  if (get_log_level() <= LOG_WARNING)
   {
     va_list args;
     va_start(args, format);
@@ -192,7 +194,7 @@ void warning(const char* const format, ...) noexcept
 }
 void error(const char* const format, ...) noexcept
 {
-  if (Log::getLogLevel() <= LOG_ERROR)
+  if (get_log_level() <= LOG_ERROR)
   {
     va_list args;
     va_start(args, format);
@@ -221,7 +223,7 @@ void fatal(const char* const format, ...)
 void fatal(const std::exception& ex)
 {
   output(LOG_FATAL, "%s", ex.what());
-  Log::closeLogFile();
+  close_log_file();
 #ifdef NDEBUG
   exit(EXIT_FAILURE);
 #endif
@@ -262,14 +264,14 @@ void check_equal(const MathSize lhs, const MathSize rhs, const char* name)
   noexcept
 #endif
 {
-  logging::check_fatal(lhs != rhs, "Expected %s to be %f but got %f", name, rhs, lhs);
+  check_fatal(lhs != rhs, "Expected %s to be %f but got %f", name, rhs, lhs);
 }
 void check_equal(const char* lhs, const char* rhs, const char* name)
 #ifdef NDEBUG
   noexcept
 #endif
 {
-  logging::check_fatal(0 != strcmp(lhs, rhs), "Expected %s to be %s got %s", name, rhs, lhs);
+  check_fatal(0 != strcmp(lhs, rhs), "Expected %s to be %s got %s", name, rhs, lhs);
 }
 void check_equal(const bool lhs, const bool rhs, const char* name)
 #ifdef NDEBUG
@@ -278,7 +280,7 @@ void check_equal(const bool lhs, const bool rhs, const char* name)
 {
   bool a = lhs ? true : false;
   bool b = rhs ? true : false;
-  logging::check_fatal(
+  check_fatal(
     a != b, "Expected %s to be %s but got %s", name, a ? "true" : "false", b ? "true" : "false"
   );
 }
@@ -288,7 +290,7 @@ void SelfLogger::log_output(const int level, const char* const format, ...) cons
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::output(level, fmt.c_str(), &args);
+  output(level, fmt.c_str(), &args);
   va_end(args);
 }
 void SelfLogger::log_extensive(const char* const format, ...) const noexcept
@@ -296,7 +298,7 @@ void SelfLogger::log_extensive(const char* const format, ...) const noexcept
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::output(LOG_EXTENSIVE, fmt.c_str(), &args);
+  output(LOG_EXTENSIVE, fmt.c_str(), &args);
   va_end(args);
 }
 void SelfLogger::log_verbose(const char* const format, ...) const noexcept
@@ -304,7 +306,7 @@ void SelfLogger::log_verbose(const char* const format, ...) const noexcept
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::output(LOG_VERBOSE, fmt.c_str(), &args);
+  output(LOG_VERBOSE, fmt.c_str(), &args);
   va_end(args);
 }
 void SelfLogger::log_debug(const char* const format, ...) const noexcept
@@ -312,7 +314,7 @@ void SelfLogger::log_debug(const char* const format, ...) const noexcept
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::output(LOG_DEBUG, fmt.c_str(), &args);
+  output(LOG_DEBUG, fmt.c_str(), &args);
   va_end(args);
 }
 void SelfLogger::log_info(const char* const format, ...) const noexcept
@@ -320,7 +322,7 @@ void SelfLogger::log_info(const char* const format, ...) const noexcept
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::output(LOG_INFO, fmt.c_str(), &args);
+  output(LOG_INFO, fmt.c_str(), &args);
   va_end(args);
 }
 void SelfLogger::log_note(const char* const format, ...) const noexcept
@@ -328,7 +330,7 @@ void SelfLogger::log_note(const char* const format, ...) const noexcept
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::output(LOG_NOTE, fmt.c_str(), &args);
+  output(LOG_NOTE, fmt.c_str(), &args);
   va_end(args);
 }
 void SelfLogger::log_warning(const char* const format, ...) const noexcept
@@ -336,7 +338,7 @@ void SelfLogger::log_warning(const char* const format, ...) const noexcept
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::output(LOG_WARNING, fmt.c_str(), &args);
+  output(LOG_WARNING, fmt.c_str(), &args);
   va_end(args);
 }
 void SelfLogger::log_error(const char* const format, ...) const noexcept
@@ -344,7 +346,7 @@ void SelfLogger::log_error(const char* const format, ...) const noexcept
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::output(LOG_ERROR, fmt.c_str(), &args);
+  output(LOG_ERROR, fmt.c_str(), &args);
   va_end(args);
 }
 void SelfLogger::log_check_fatal(bool condition, const char* const format, ...) const
@@ -357,7 +359,7 @@ void SelfLogger::log_check_fatal(bool condition, const char* const format, ...) 
     va_list args;
     va_start(args, format);
     const auto fmt = add_log(format);
-    logging::fatal(fmt.c_str(), &args);
+    fatal(fmt.c_str(), &args);
     va_end(args);
   }
 }
@@ -369,10 +371,9 @@ void SelfLogger::log_fatal(const char* const format, ...) const
   va_list args;
   va_start(args, format);
   const auto fmt = add_log(format);
-  logging::fatal(fmt.c_str(), &args);
+  fatal(fmt.c_str(), &args);
   va_end(args);
 }
-Log::~Log() noexcept { closeLogFile(); };
 void check_tolerance(
   const MathSize epsilon,
   const MathSize lhs,
@@ -384,7 +385,7 @@ void check_tolerance(
 #endif
 {
   const auto difference = abs(lhs - rhs);
-  logging::check_fatal(
+  check_fatal(
     difference >= epsilon,
     "Difference too big for %s: (%g > %g) for %g vs %g",
     name,

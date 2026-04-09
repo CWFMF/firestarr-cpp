@@ -702,7 +702,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   ran_ = true;
 #ifdef DEBUG_PROBABILITY
   // nice to have this get output when debugging, but only need it in extreme cases
-  if (logging::Log::getLogLevel() <= logging::LOG_EXTENSIVE)
+  if (logging::get_log_level() <= logging::LOG_EXTENSIVE)
   {
     saveProbabilities(
       model().outputDirectory(),
