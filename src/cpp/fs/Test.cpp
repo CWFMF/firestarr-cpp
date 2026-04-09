@@ -111,7 +111,7 @@ void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelTyp
   add_col("ROS", std::format("{:6.4g}", spread.headRos()));
   add_col("SFC", std::format("{:6.4g}", spread.surfaceFuelConsumption()));
   add_col("TFC", std::format("{:6.4g}", spread.totalFuelConsumption()));
-  printf("Calculated spread is:\n%s\n%s\n", ROW_HEADER.str().c_str(), ROW_DATA.str().c_str());
+  cout << std::format("Calculated spread is:\n{:s}\n{:s}\n", ROW_HEADER.str(), ROW_DATA.str());
 }
 string generate_test_name(
   const auto& fuel,
@@ -233,17 +233,17 @@ string run_test_ignore_existing(
 template <class V>
 void show_options(const char* name, const vector<V>& values, std::function<string(V&)> convert)
 {
-  printf("\t%ld %s: ", values.size(), name);
+  cout << std::format("\t{:d} {:s}: ", values.size(), name);
   // HACK: always print something before but avoid extra comma
   const char* prefix_open = "[";
   const char* prefix_comma = ", ";
   const char** p = &prefix_open;
   for (auto v : values)
   {
-    printf("%s%s", *p, convert(v).c_str());
+    cout << std::format("{:s}{:s}", *p, convert(v));
     p = &prefix_comma;
   }
-  printf("]\n");
+  cout << "]\n";
 };
 template <class V>
 void show_options(const char* name, const vector<V>& values)
@@ -374,7 +374,7 @@ int test(Settings& settings)
       values *= aspects.size();
       values *= wind_directions.size();
       values *= wind_speeds.size();
-      printf("There are %ld options to try based on:\n", values);
+      cout << std::format("There are {:d} options to try based on:\n", values);
       show_options("fuels", fuel_names);
       show_options("slopes", slopes);
       show_options("aspects", aspects);

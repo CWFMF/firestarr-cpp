@@ -43,8 +43,8 @@ unique_ptr<FullCoordinates> to_proj4(
   *x = b.enu.e;
   *y = b.enu.n;
   c = proj_trans(P, PJ_INV, b);
-  printf(
-    "longitude: %f, latitude: %f => easting: %.3f, northing: %.3f => x: %.3f, y: %.3f => longitude: %g, latitude: %g\n",
+  cout << std::format(
+    "longitude: {:f}, latitude: {:f} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}\n",
     point.longitude(),
     point.latitude(),
     b.enu.e,

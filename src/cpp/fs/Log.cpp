@@ -84,7 +84,7 @@ void output(const int log_level, const char* format, va_list* args)
     if (log_level >= Log::getLogLevel())
 #endif
     {
-      printf("%s\n", msg.c_str());
+      cout << msg << "\n";
     }
 #ifndef NDEBUG
     // if debugging then output everything to log file but not necessarily stdout

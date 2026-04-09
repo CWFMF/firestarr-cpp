@@ -50,7 +50,7 @@ void do_par(T& for_list, F fct)
 }
 void IObserver_deleter::operator()(IObserver* ptr) const
 {
-  // printf("Deleting\n");
+  // cout << "Deleting\n";
   delete ptr;
 }
 void Scenario::clear() noexcept

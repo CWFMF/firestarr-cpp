@@ -80,6 +80,7 @@ public:
   bool help_requested() { return help_requested_; }
   void mark_parsed(const string arg);
   bool was_parsed(const string arg);
+  string format_args();
   void show_args();
   void log_args();
   void show_usage_and_exit(int exit_code);

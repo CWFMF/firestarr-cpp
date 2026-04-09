@@ -27,7 +27,7 @@ T parse_once(auto fct)
   auto& parser = *PARSER;
   if (parser.was_parsed(parser.cur_arg()))
   {
-    printf("\nArgument %s already specified\n\n", parser.cur_arg().c_str());
+    cout << "\nArgument " << parser.cur_arg() << " already specified\n\n";
     parser.show_usage_and_exit();
   }
   // HACK: use auto instead of std::function<T()> so call is easier
@@ -119,17 +119,12 @@ string ArgumentParser::get_args()
   }
   return args;
 }
-constexpr auto FMT_ARGS{"Arguments are:\n  %s\n\n"};
-void ArgumentParser::show_args()
+string ArgumentParser::format_args()
 {
-  auto args = get_args();
-  printf(FMT_ARGS, args.c_str());
+  return std::format("Arguments are:\n  {:s}\n\n", get_args());
 }
-void ArgumentParser::log_args()
-{
-  auto args = get_args();
-  fs::logging::note(FMT_ARGS, args.c_str());
-}
+void ArgumentParser::show_args() { cout << format_args(); }
+void ArgumentParser::log_args() { fs::logging::note(format_args().c_str()); }
 static vector<Usage> USAGES{};
 void add_usage(const Usage usage) { USAGES.emplace_back(usage); }
 void add_usages(const vector<Usage> usages)
@@ -146,18 +141,18 @@ void ArgumentParser::show_usage_and_exit(int exit_code)
   for (const auto& usage : USAGES)
   {
     // FIX: extra space if no positional args
-    printf(
-      "Usage: %s %s [OPTION]...\n\n%s\n\n",
-      binary_name_.c_str(),
-      usage.positional_arg_summary.c_str(),
-      usage.description.c_str()
+    cout << std::format(
+      "Usage: {:s} {:s} [OPTION]...\n\n{:s}\n\n",
+      binary_name_,
+      usage.positional_arg_summary,
+      usage.description
     );
   }
-  printf(" Input Options\n");
+  cout << " Input Options\n";
   // FIX: this should show arguments specific to mode, but it doesn't indicate that on the outputs
   for (auto& kv : PARSE_HELP)
   {
-    printf("   %-25s %s\n", kv.first.c_str(), kv.second.c_str());
+    cout << std::format("   {:<25s} {:s}\n", kv.first, kv.second);
   }
   exit(exit_code);
 }
@@ -367,10 +362,8 @@ Settings& ArgumentParser::parse_args()
         catch (std::exception&)
         {
           // cur_arg_ would be incremented while trying to parse at this point, so -1 is 'arg'
-          printf(
-            "\n'%s' is not a valid value for argument %s\n\n",
-            args.at(cur_arg_).c_str(),
-            arg.c_str()
+          cout << std::format(
+            "\n'{:s}' is not a valid value for argument {:s}\n\n", args.at(cur_arg_), arg
           );
           show_usage_and_exit();
         }
@@ -380,7 +373,7 @@ Settings& ArgumentParser::parse_args()
         if (arg.starts_with("--"))
         {
           // anything starting with '--' should be a flag, but it's not a valid one so complain
-          printf("\n'%s' is not a valid option\n\n", arg.c_str());
+          cout << std::format("\n'{:s}' is not a valid option\n\n", arg);
           show_usage_and_exit();
         }
         is_positional = true;
