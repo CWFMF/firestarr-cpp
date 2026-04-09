@@ -57,7 +57,7 @@ public:
    */
   static int closeLogFile() noexcept;
 };
-string format_log_message(const char* prefix, const char* format, va_list* args);
+string format_log_message(const char* prefix, const char* const format, va_list* args);
 /**
  * \brief Output a message to the log
  * \param log_level Log level to use for label
@@ -65,7 +65,7 @@ string format_log_message(const char* prefix, const char* format, va_list* args)
  * \param args Arguments to use in format string
  * \return None
  */
-void output(int log_level, const char* format, va_list* args)
+void output(int log_level, const char* const format, va_list* args)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -77,7 +77,7 @@ void output(int log_level, const char* format, va_list* args)
  * \param ... Arguments to format message with
  * \return None
  */
-void output(int log_level, const char* format, ...)
+void output(int log_level, const char* const format, ...)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -87,50 +87,50 @@ void output(int log_level, const char* format, ...)
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void extensive(const char* format, ...) noexcept;
+void extensive(const char* const format, ...) noexcept;
 /**
  * \brief Log with VERBOSE level
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void verbose(const char* format, ...) noexcept;
+void verbose(const char* const format, ...) noexcept;
 /**
  * \brief Log with DEBUG level
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void debug(const char* format, ...) noexcept;
+void debug(const char* const format, ...) noexcept;
 /**
  * \brief Log with INFO level
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void info(const char* format, ...) noexcept;
+void info(const char* const format, ...) noexcept;
 /**
  * \brief Log with NOTE level
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void note(const char* format, ...) noexcept;
+void note(const char* const format, ...) noexcept;
 /**
  * \brief Log with WARNING level
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void warning(const char* format, ...) noexcept;
+void warning(const char* const format, ...) noexcept;
 /**
  * \brief Log with ERROR level
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void error(const char* format, ...) noexcept;
+void error(const char* const format, ...) noexcept;
 /**
  * \brief Check condition and log and exit if true
  * \param condition Condition to check (true ends program after logging)
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void check_fatal(bool condition, const char* format, ...)
+void check_fatal(bool condition, const char* const format, ...)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -215,7 +215,7 @@ void check_tolerance(
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void fatal(const char* format, ...)
+void fatal(const char* const format, ...)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -231,7 +231,7 @@ void fatal(const std::exception& ex);
  * \param format Format string for message
  * \param ... Arguments to format message with
  */
-void fatal(const std::exception& ex, const char* format, ...);
+void fatal(const std::exception& ex, const char* const format, ...);
 // templated so we can return it from any function and not get an error
 // about not returning on all paths
 /**
@@ -242,7 +242,7 @@ void fatal(const std::exception& ex, const char* format, ...);
  * \return Nothing, because this ends the program
  */
 template <class T>
-T fatal(const char* format, va_list* args)
+T fatal(const char* const format, va_list* args)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -267,7 +267,7 @@ T fatal(const char* format, va_list* args)
  * \return Nothing, because this ends the program
  */
 template <class T>
-T fatal(const char* format, ...)
+T fatal(const char* const format, ...)
 #ifdef NDEBUG
   noexcept
 #endif
@@ -280,21 +280,21 @@ class SelfLogger
 {
 public:
   virtual ~SelfLogger() = default;
-  virtual string add_log(const char* format) const noexcept = 0;
-  void log_output(const int level, const char* format, ...) const noexcept;
-  void log_extensive(const char* format, ...) const noexcept;
-  void log_verbose(const char* format, ...) const noexcept;
-  void log_debug(const char* format, ...) const noexcept;
-  void log_info(const char* format, ...) const noexcept;
-  void log_note(const char* format, ...) const noexcept;
-  void log_warning(const char* format, ...) const noexcept;
-  void log_error(const char* format, ...) const noexcept;
-  void log_check_fatal(bool condition, const char* format, ...) const
+  virtual string add_log(const char* const format) const noexcept = 0;
+  void log_output(const int level, const char* const format, ...) const noexcept;
+  void log_extensive(const char* const format, ...) const noexcept;
+  void log_verbose(const char* const format, ...) const noexcept;
+  void log_debug(const char* const format, ...) const noexcept;
+  void log_info(const char* const format, ...) const noexcept;
+  void log_note(const char* const format, ...) const noexcept;
+  void log_warning(const char* const format, ...) const noexcept;
+  void log_error(const char* const format, ...) const noexcept;
+  void log_check_fatal(bool condition, const char* const format, ...) const
 #ifdef NDEBUG
     noexcept
 #endif
     ;
-  void log_fatal(const char* format, ...) const
+  void log_fatal(const char* const format, ...) const
 #ifdef NDEBUG
     noexcept
 #endif
