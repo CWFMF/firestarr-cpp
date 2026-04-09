@@ -15,6 +15,7 @@ static const char* LOG_LABELS[] = {
   "FATAL:     ",
   "SILENT:    "
 };
+stringstream pre_file_log{};
 mutex mutex_;
 void Log::setLogLevel(const int log_level) noexcept { logging_level_ = log_level; }
 void Log::increaseLogLevel() noexcept
@@ -34,7 +35,17 @@ int Log::openLogFile(const char* filename) noexcept
   // turn off buffering so lines write to file immediately
   out_.rdbuf()->pubsetbuf(0, 0);
   out_.open(filename);
-  return out_.is_open();
+  if (!out_.is_open())
+  {
+    return false;
+  }
+  const auto log_so_far = pre_file_log.str();
+  if (!log_so_far.empty())
+  {
+    out_ << log_so_far;
+    pre_file_log.clear();
+  }
+  return true;
 }
 int Log::closeLogFile() noexcept
 {
@@ -95,6 +106,10 @@ void output(const int log_level, const char* const format, va_list* args)
       {
         out_ << msg << "\n";
         out_.flush();
+      }
+      else
+      {
+        pre_file_log << msg << "\n";
       }
     }
   }
