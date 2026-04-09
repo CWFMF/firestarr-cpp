@@ -38,7 +38,6 @@ using fs::StartPoint;
 using fs::Temperature;
 using fs::ThresholdSize;
 using fs::Wind;
-using fs::logging::Log;
 int main(const int argc, const char* const argv[])
 {
   using namespace fs::settings;
@@ -71,7 +70,7 @@ int main(const int argc, const char* const argv[])
         dir_out.c_str()
       );
     }
-    const auto opened_log = Log::openLogFile(settings.log_file.c_str());
+    const auto opened_log = logging::open_log_file(settings.log_file.c_str());
     if (!opened_log)
     {
       logging::fatal("Can't open log file %s", settings.log_file.c_str());
@@ -125,7 +124,7 @@ int main(const int argc, const char* const argv[])
         settings.perimeter,
         settings.initial_size.value_or(0)
       );
-      Log::closeLogFile();
+      logging::close_log_file();
     }
     else
     {

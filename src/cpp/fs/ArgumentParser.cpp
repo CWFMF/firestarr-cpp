@@ -5,7 +5,6 @@
 #include "Util.h"
 namespace fs::settings
 {
-using logging::Log;
 static map<std::string, std::function<void()>> PARSE_FCT{};
 static vector<std::pair<std::string, std::string>> PARSE_HELP{};
 static map<std::string, bool> PARSE_REQUIRED{};
@@ -296,7 +295,7 @@ ArgumentParser::ArgumentParser(
     return {};
   }();   // HACK: count -v and -q before anything to get right log level
   constexpr auto log_default = fs::logging::LOG_NOTE;
-  logging::Log::setLogLevel(log_default);
+  logging::set_log_level(log_default);
   for (const auto& arg : arguments)
   {
     if (arg.starts_with("-") && !arg.starts_with(("--")))
@@ -307,11 +306,11 @@ ArgumentParser::ArgumentParser(
       {
         if ('q' == c)
         {
-          logging::Log::decreaseLogLevel();
+          logging::decrease_log_level();
         }
         else if ('v' == c)
         {
-          logging::Log::increaseLogLevel();
+          logging::increase_log_level();
         }
       }
     }
@@ -326,12 +325,12 @@ ArgumentParser::ArgumentParser(
   fs::show_debug_settings();
   assert(1 == cur_arg_);
   // HACK: revert log level so -v and -q set it
-  logging::Log::setLogLevel(log_default);
+  logging::set_log_level(log_default);
   register_flag(help_requested_, true, "-h", "Show help");
   // can be used multiple times
-  register_argument("-v", "Increase output level", false, &Log::increaseLogLevel);
+  register_argument("-v", "Increase output level", false, &logging::increase_log_level);
   // if they want to specify -v and -q then that's fine
-  register_argument("-q", "Decrease output level", false, &Log::decreaseLogLevel);
+  register_argument("-q", "Decrease output level", false, &logging::decrease_log_level);
 }
 Settings& ArgumentParser::parse_args()
 {

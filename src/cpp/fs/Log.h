@@ -4,59 +4,47 @@
 #include "stdafx.h"
 namespace fs::logging
 {
-static const int LOG_EXTENSIVE = 0;
-static const int LOG_VERBOSE = 1;
-static const int LOG_DEBUG = 2;
-static const int LOG_INFO = 3;
-static const int LOG_NOTE = 4;
-static const int LOG_WARNING = 5;
-static const int LOG_ERROR = 6;
-static const int LOG_FATAL = 7;
-static const int LOG_SILENT = 8;
+static constexpr int LOG_EXTENSIVE = 0;
+static constexpr int LOG_VERBOSE = 1;
+static constexpr int LOG_DEBUG = 2;
+static constexpr int LOG_INFO = 3;
+static constexpr int LOG_NOTE = 4;
+static constexpr int LOG_WARNING = 5;
+static constexpr int LOG_ERROR = 6;
+static constexpr int LOG_FATAL = 7;
+static constexpr int LOG_SILENT = 8;
+// Provides logging functionality.
 /**
- * \brief Provides logging functionality.
+ * \brief Set logging level to a specific level
+ * \param log_level Log level to use
+ * \return None
  */
-class Log
-{
-  /**
-   * \brief Current logging level
-   */
-  static int logging_level_;
-
-public:
-  ~Log() noexcept;
-  /**
-   * \brief Set logging level to a specific level
-   * \param log_level Log level to use
-   * \return None
-   */
-  static void setLogLevel(int log_level) noexcept;
-  /**
-   * \brief Increase amount of logging output by one level
-   * \return None
-   */
-  static void increaseLogLevel() noexcept;
-  /**
-   * \brief Decrease amount of logging output by one level
-   * \return None
-   */
-  static void decreaseLogLevel() noexcept;
-  /**
-   * \brief Get current logging level
-   * \return Current logging level
-   */
-  static int getLogLevel() noexcept;
-  /**
-   * \brief Set output log file
-   * \return Return value of open()
-   */
-  static int openLogFile(const char* filename) noexcept;
-  /**
-   * \brief Set output log file
-   * \return Return value of close()
-   */
-  static int closeLogFile() noexcept;
-};
+void set_log_level(int log_level) noexcept;
+/**
+ * \brief Increase amount of logging output by one level
+ * \return None
+ */
+void increase_log_level() noexcept;
+/**
+ * \brief Decrease amount of logging output by one level
+ * \return None
+ */
+void decrease_log_level() noexcept;
+/**
+ * \brief Get current logging level
+ * \return Current logging level
+ */
+int get_log_level() noexcept;
+/**
+ * \brief Set output log file
+ * \return Return value of open()
+ */
+int open_log_file(const char* filename) noexcept;
+/**
+ * \brief Set output log file
+ * \return Return value of close()
+ */
+int close_log_file() noexcept;
 /**
  * \brief Output a message to the log
  * \param log_level Log level to use for label
@@ -175,7 +163,7 @@ void check_equal(const V& lhs, const V& rhs, const char* name)
 {
   const auto fmt = typeid(lhs) == typeid(size_t) ? "Expected %s to be %ld but got %ld"
                                                  : "Expected %s to be %d but got %d";
-  logging::check_fatal(lhs != rhs, fmt, name, rhs, lhs);
+  check_fatal(lhs != rhs, fmt, name, rhs, lhs);
 }
 /**
  * \brief Check if items are not equal and log and exit if true
@@ -248,7 +236,7 @@ T fatal(const char* const format, va_list* args)
 {
   auto msg = output(LOG_FATAL, format, args);
   fflush(stdout);
-  Log::closeLogFile();
+  close_log_file();
 #ifdef NDEBUG
   exit(EXIT_FAILURE);
 #else
