@@ -80,6 +80,11 @@ public:
 class CellPoints
 {
   SpreadData check_spread(const SpreadData& spread_current) noexcept;
+  std::array<bool, NUM_DIRECTIONS> find_closest(
+    const SpreadData& spread_current,
+    const XYSize x,
+    const XYSize y
+  ) noexcept;
 
 public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
