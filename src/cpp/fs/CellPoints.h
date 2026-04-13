@@ -79,6 +79,8 @@ public:
  */
 class CellPoints
 {
+  SpreadData check_spread(const SpreadData& spread_current) noexcept;
+
 public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
   CellPoints() noexcept;

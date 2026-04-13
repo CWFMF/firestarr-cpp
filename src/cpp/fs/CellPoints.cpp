@@ -106,6 +106,59 @@ constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
   // north-northwest is closest to point (0.5 - 0.207, 1.0)
   D_PTS(M_0_5, 1.0)
 };
+SpreadData CellPoints::check_spread(const SpreadData& spread_current) noexcept
+{   // count things as the same time if within a tolerance
+  constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
+  constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
+  if (0 < spread_current.time() && 0 > spread_arrival_.time())
+  {
+    logging::extensive(
+      "No time so setting ros to %f at time %f", spread_current.ros(), spread_current.time()
+    );
+    // record ros and time if nothing yet
+    return spread_current;
+  }
+  // initial burn will have an invalid direction, so needs to burn everywhere
+  const auto is_initial = Direction::Invalid() == spread_current.direction_previous();
+  // only spread in a direction that's in front of the normal to the angle it came from
+  // i.e. the 90 degrees on either side of the raz
+  const auto dir_diff =
+    abs(spread_current.direction().asDegrees() - spread_current.direction_previous().asDegrees());
+  const auto MAX_DEGREES = 90.0;
+  // NOTE: there should be no change in the extent of the fire if we exclude things behind the
+  // normal to the direction it came from
+  //       - but if we exclude too much then it can change how things spread, even if it is a more
+  //       representative angle for the grids
+  if (is_initial || MAX_DEGREES >= dir_diff)
+  {
+    if (abs(spread_current.time() - spread_arrival_.time()) <= TIME_EPSILON)
+    // else if (arrival_time == arrival_time_)
+    {
+      logging::verbose(
+        "Same time so setting ros to max(%f, %f) at time %f",
+        spread_current.ros(),
+        spread_arrival_.ros(),
+        spread_current.time()
+      );
+      // the same time so pick higher ros
+      if (
+          (spread_arrival_.ros() < spread_current.ros())
+          || (spread_arrival_.ros() == spread_current.ros()
+              && spread_current.intensity() > spread_arrival_.intensity()))
+      {
+        // NOTE: keep track of original time so this doesn't just always happen
+        return SpreadData(
+          spread_arrival_.time(),
+          spread_current.intensity(),
+          spread_current.ros(),
+          spread_current.direction(),
+          spread_current.direction_previous()
+        );
+      }
+    }
+  }
+  return spread_arrival_;
+}
 // TODO: add angle
 CellPoints& CellPoints::insert(
   const XYPos& src,
@@ -125,60 +178,8 @@ CellPoints& CellPoints::insert(
     raz.asDegrees()
   );
 #endif
-  // count things as the same time if within a tolerance
-  constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
-  constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
-  if (0 < spread_current.time() && 0 > spread_arrival_.time())
-  {
-    logging::extensive(
-      "No time so setting ros to %f at time %f", spread_current.ros(), spread_current.time()
-    );
-    // record ros and time if nothing yet
-    spread_arrival_ = spread_current;
-  }
-  else
-  {
-    // initial burn will have an invalid direction, so needs to burn everywhere
-    const auto is_initial = Direction::Invalid() == spread_current.direction_previous();
-    // only spread in a direction that's in front of the normal to the angle it came from
-    // i.e. the 90 degrees on either side of the raz
-    const auto dir_diff =
-      abs(spread_current.direction().asDegrees() - spread_current.direction_previous().asDegrees());
-    const auto MAX_DEGREES = 90.0;
-    // NOTE: there should be no change in the extent of the fire if we exclude things behind the
-    // normal to the direction it came from
-    //       - but if we exclude too much then it can change how things spread, even if it is a more
-    //       representative angle for the grids
-    if (is_initial || MAX_DEGREES >= dir_diff)
-    {
-      if (abs(spread_current.time() - spread_arrival_.time()) <= TIME_EPSILON)
-      // else if (arrival_time == arrival_time_)
-      {
-        logging::verbose(
-          "Same time so setting ros to max(%f, %f) at time %f",
-          spread_current.ros(),
-          spread_arrival_.ros(),
-          spread_current.time()
-        );
-        // the same time so pick higher ros
-        if (
-          (spread_arrival_.ros() < spread_current.ros())
-          || (spread_arrival_.ros() == spread_current.ros()
-              && spread_current.intensity() > spread_arrival_.intensity()))
-        {
-          // NOTE: keep track of original time so this doesn't just always happen
-          spread_arrival_ = SpreadData(
-            spread_arrival_.time(),
-            spread_current.intensity(),
-            spread_current.ros(),
-            spread_current.direction(),
-            spread_current.direction_previous()
-          );
-        }
-      }
-    }
-  }
   // NOTE: use location inside cell so smaller types can be more precise
+  spread_arrival_ = check_spread(spread_current);
   // since digits aren't wasted on cell
   const auto p0 = InnerPos(
     static_cast<InnerSize>(x - cell_x_y_.first), static_cast<InnerSize>(y - cell_x_y_.second)
