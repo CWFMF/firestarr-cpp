@@ -141,39 +141,6 @@ public:
 #ifdef DEBUG_CELLPOINTS
   size_t size() const noexcept;
 #endif
-  // bool operator<(const CellPoints& rhs) const noexcept
-  // {
-  //   if (cell_x_y_ == rhs.cell_x_y_)
-  //   {
-  //     for (size_t i = 0; i < pts_.size(); ++i)
-  //     {
-  //       const auto& p0 = pts_[i].point;
-  //       const auto& p1 = rhs.pts_[i].point;
-  //       if (p0 != p1)
-  //       {
-  //         return p0 < p1;
-  //       }
-  //     }
-  //     return cell_x_y_ < rhs.cell_x_y_;
-  //   }
-  // }
-  // bool operator==(const CellPoints& rhs) const noexcept
-  // {
-  //   if (cell_x_y_ != rhs.cell_x_y_)
-  //   {
-  //     return false;
-  //   }
-  //   for (size_t i = 0; i < pts_.size(); ++i)
-  //   {
-  //     const auto& p0 = pts_[i].point;
-  //     const auto& p1 = rhs.pts_[i].point;
-  //     if (p0 != p1)
-  //     {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
   std::partial_ordering operator<=>(const CellPoints& rhs) const noexcept
   {
     if (const auto cmp = cell_x_y_ <=> rhs.cell_x_y_; cmp.equivalent != cmp)

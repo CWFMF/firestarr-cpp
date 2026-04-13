@@ -176,9 +176,6 @@ void CellPoints::find_closest(
     p_p = (d < p_d) ? p0 : p_p;
     p_d = (d < p_d) ? d : p_d;
     p_a = (d < p_d) ? spread_current.direction().asDegrees() : p_a;
-    // logging::check_equal(p_p, pts_[i].point, "point");
-    // logging::check_equal(p_d, pts_[i].distance, "distance");
-    // logging::check_equal(p_a, pts_[i].direction, "direction");
   }
 #ifdef DEBUG_CELLPOINTS
   logging::note("now have %ld points", size());
@@ -267,10 +264,6 @@ CellPoints& CellPoints::merge(const CellPoints& rhs)
 #endif
   // either both invalid or lower one is valid
   cell_x_y_ = min(cell_x_y_, rhs.cell_x_y_);
-  // auto& d0 = pts_.distances();
-  // auto& d1 = rhs.pts_.distances();
-  // auto& p0 = pts_.points();
-  // auto& p1 = rhs.pts_.points();
   // we know distances in each direction so just pick closer
   for (size_t i = 0; i < pts_.size(); ++i)
   {
