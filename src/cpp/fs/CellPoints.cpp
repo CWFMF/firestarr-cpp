@@ -193,28 +193,12 @@ std::array<bool, NUM_DIRECTIONS> CellPoints::find_closest(
 #endif
   return closer;
 }
-// TODO: add angle
-CellPoints& CellPoints::insert(
+void CellPoints::find_internal(
   const XYPos& src,
   const SpreadData& spread_current,
-  const XYSize x,
-  const XYSize y
+  const std::array<bool, NUM_DIRECTIONS>& closer
 ) noexcept
 {
-#ifdef DEBUG_CELLPOINTS
-  logging::note(
-    "Insert (%f, %f) at time %f with ROS %f, Intensity %d, RAZ %f",
-    x,
-    y,
-    arrival_time,
-    ros,
-    intensity,
-    raz.asDegrees()
-  );
-#endif
-  // NOTE: use location inside cell so smaller types can be more precise
-  spread_arrival_ = check_spread(spread_current);
-  const auto closer = find_closest(spread_current, x, y);
   const Location& dst = location();
   // adds 0 if the same so try without checking
   {
@@ -246,6 +230,30 @@ CellPoints& CellPoints::insert(
       }
     }
   }
+}
+// TODO: add angle
+CellPoints& CellPoints::insert(
+  const XYPos& src,
+  const SpreadData& spread_current,
+  const XYSize x,
+  const XYSize y
+) noexcept
+{
+#ifdef DEBUG_CELLPOINTS
+  logging::note(
+    "Insert (%f, %f) at time %f with ROS %f, Intensity %d, RAZ %f",
+    x,
+    y,
+    arrival_time,
+    ros,
+    intensity,
+    raz.asDegrees()
+  );
+#endif
+  // NOTE: use location inside cell so smaller types can be more precise
+  spread_arrival_ = check_spread(spread_current);
+  const auto closer = find_closest(spread_current, x, y);
+  find_internal(src, spread_current, closer);
   // FIX: do something with spread on exit
   return *this;
 }

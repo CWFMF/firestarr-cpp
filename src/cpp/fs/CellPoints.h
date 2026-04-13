@@ -85,6 +85,11 @@ class CellPoints
     const XYSize x,
     const XYSize y
   ) noexcept;
+  void find_internal(
+    const XYPos& src,
+    const SpreadData& spread_current,
+    const std::array<bool, NUM_DIRECTIONS>& closer
+  ) noexcept;
 
 public:
   using spreading_points = map<SpreadKey, vector<pair<Location, CellPoints>>>;
