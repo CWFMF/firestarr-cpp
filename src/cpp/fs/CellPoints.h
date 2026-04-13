@@ -79,12 +79,8 @@ public:
  */
 class CellPoints
 {
-  SpreadData check_spread(const SpreadData& spread_current) noexcept;
-  std::array<bool, NUM_DIRECTIONS> find_closest(
-    const SpreadData& spread_current,
-    const XYSize x,
-    const XYSize y
-  ) noexcept;
+  void check_spread(const SpreadData& spread_current) noexcept;
+  void find_closest(const SpreadData& spread_current, const XYSize x, const XYSize y) noexcept;
   void find_internal(
     const XYPos& src,
     const SpreadData& spread_current,
@@ -128,6 +124,7 @@ public:
   SpreadData spread_arrival_;
   SpreadData spread_internal_;
   SpreadData spread_exit_;
+  std::array<bool, NUM_DIRECTIONS> closer{};
   // FIX: just access directly for now
 public:
   CellPointArrays pts_;

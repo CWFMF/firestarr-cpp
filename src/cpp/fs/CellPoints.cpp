@@ -106,7 +106,7 @@ constexpr std::array<DISTANCE_PAIR, NUM_DIRECTIONS> POINTS_OUTER{
   // north-northwest is closest to point (0.5 - 0.207, 1.0)
   D_PTS(M_0_5, 1.0)
 };
-SpreadData CellPoints::check_spread(const SpreadData& spread_current) noexcept
+void CellPoints::check_spread(const SpreadData& spread_current) noexcept
 {   // count things as the same time if within a tolerance
   constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
   constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
@@ -116,7 +116,8 @@ SpreadData CellPoints::check_spread(const SpreadData& spread_current) noexcept
       "No time so setting ros to %f at time %f", spread_current.ros(), spread_current.time()
     );
     // record ros and time if nothing yet
-    return spread_current;
+    spread_arrival_ = spread_current;
+    return;
   }
   // initial burn will have an invalid direction, so needs to burn everywhere
   const auto is_initial = Direction::Invalid() == spread_current.direction_previous();
@@ -147,7 +148,7 @@ SpreadData CellPoints::check_spread(const SpreadData& spread_current) noexcept
               && spread_current.intensity() > spread_arrival_.intensity()))
       {
         // NOTE: keep track of original time so this doesn't just always happen
-        return SpreadData(
+        spread_arrival_ = SpreadData(
           spread_arrival_.time(),
           spread_current.intensity(),
           spread_current.ros(),
@@ -157,9 +158,8 @@ SpreadData CellPoints::check_spread(const SpreadData& spread_current) noexcept
       }
     }
   }
-  return spread_arrival_;
 }
-std::array<bool, NUM_DIRECTIONS> CellPoints::find_closest(
+void CellPoints::find_closest(
   const SpreadData& spread_current,
   const XYSize x,
   const XYSize y
@@ -172,7 +172,6 @@ std::array<bool, NUM_DIRECTIONS> CellPoints::find_closest(
   const auto x0 = static_cast<DistanceSize>(p0.first);
   const auto y0 = static_cast<DistanceSize>(p0.second);
   // CHECK: FIX: is this initializing everything to false or just one element?
-  std::array<bool, NUM_DIRECTIONS> closer{};
   std::fill_n(closer.begin(), NUM_DIRECTIONS, false);
   for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
   {
@@ -191,7 +190,6 @@ std::array<bool, NUM_DIRECTIONS> CellPoints::find_closest(
 #ifdef DEBUG_CELLPOINTS
   logging::note("now have %ld points", size());
 #endif
-  return closer;
 }
 void CellPoints::find_internal(
   const XYPos& src,
@@ -251,8 +249,8 @@ CellPoints& CellPoints::insert(
   );
 #endif
   // NOTE: use location inside cell so smaller types can be more precise
-  spread_arrival_ = check_spread(spread_current);
-  const auto closer = find_closest(spread_current, x, y);
+  check_spread(spread_current);
+  find_closest(spread_current, x, y);
   find_internal(src, spread_current, closer);
   // FIX: do something with spread on exit
   return *this;
