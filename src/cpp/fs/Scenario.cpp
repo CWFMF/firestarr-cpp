@@ -769,12 +769,11 @@ CellPointsMap apply_offsets_spreadkey(
 #endif
       continue;
     }
-    auto& pts = cell_pts.pts_.points();
-    auto& dirs = cell_pts.pts_.directions();
+    const auto& pts = cell_pts.pts_;
     std::array<std::pair<InnerPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
     for (size_t i = 0; i < pts.size(); ++i)
     {
-      pt_dirs[i] = {pts[i], dirs[i]};
+      pt_dirs[i] = {pts[i].point, pts[i].direction};
     }
     std::sort(pt_dirs.begin(), pt_dirs.end());
     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());

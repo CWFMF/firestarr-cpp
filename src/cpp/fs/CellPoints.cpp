@@ -8,13 +8,6 @@ constexpr InnerSize DIST_22_5 =
   static_cast<InnerSize>(0.2071067811865475244008443621048490392848359376884740365883398689);
 constexpr InnerSize P_0_5 = static_cast<InnerSize>(0.5) + DIST_22_5;
 constexpr InnerSize M_0_5 = static_cast<InnerSize>(0.5) - DIST_22_5;
-// not sure what's going on with this and wondering if it doesn't keep number exactly
-// shouldn't be any way to be further than twice the entire width of the area
-static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
-static const XYPos INVALID_XY_POSITION{};
-static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, {}};
-static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.first;
-static const InnerPos INVALID_INNER_POSITION{};
 // static const pair<DistanceSize, InnerPos> INVALID_INNER_PAIR{INVALID_DISTANCE, {}};
 // static const InnerSize INVALID_INNER_LOCATION = INVALID_INNER_PAIR.second.first;
 static const SpreadData INVALID_SPREAD_DATA{
@@ -27,14 +20,14 @@ static const SpreadData INVALID_SPREAD_DATA{
 set<XYPos> CellPoints::unique() const noexcept
 {
   // // if any point is invalid then they all have to be
-  if (INVALID_DISTANCE == pts_.distances()[0])
+  if (INVALID_DISTANCE == pts_[0].distance)
   {
     return {};
   }
   else
   {
-    const auto& pts_all = std::views::transform(pts_.points(), [this](const auto& p) {
-      return XYPos(p.first + cell_x_y_.first, p.second + cell_x_y_.second);
+    const auto& pts_all = std::views::transform(pts_, [this](const auto& p) {
+      return XYPos(p.point.first + cell_x_y_.first, p.point.second + cell_x_y_.second);
     });
     return {pts_all.begin(), pts_all.end()};
   }
@@ -46,9 +39,8 @@ CellPoints::CellPoints(const Idx cell_x, const Idx cell_y) noexcept
   : spread_arrival_(INVALID_SPREAD_DATA), spread_internal_(INVALID_SPREAD_DATA),
     spread_exit_(INVALID_SPREAD_DATA), pts_({}), cell_x_y_(cell_x, cell_y), src_(DIRECTION_NONE)
 {
-  std::fill(pts_.distances().begin(), pts_.distances().end(), INVALID_DISTANCE);
-  std::fill(pts_.points().begin(), pts_.points().end(), INVALID_INNER_POSITION);
-  std::fill(pts_.directions().begin(), pts_.directions().end(), INVALID_DIRECTION.value);
+  static const PointDistanceDirection INVALID_PDD{};
+  std::fill(pts_.begin(), pts_.end(), INVALID_PDD);
 #ifdef DEBUG_CELLPOINTS
   logging::note("CellPoints is size %ld after creation and should be empty", size());
 #endif
@@ -179,13 +171,14 @@ void CellPoints::find_closest(
     const auto& x1 = p1.first;
     const auto& y1 = p1.second;
     const auto d = ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
-    auto& p_d = pts_.distances()[i];
-    auto& p_p = pts_.points()[i];
-    auto& p_a = pts_.directions()[i];
+    auto& [p_p, p_d, p_a] = pts_[i];
     closer[i] = (d < p_d);
     p_p = (d < p_d) ? p0 : p_p;
     p_d = (d < p_d) ? d : p_d;
     p_a = (d < p_d) ? spread_current.direction().asDegrees() : p_a;
+    // logging::check_equal(p_p, pts_[i].point, "point");
+    // logging::check_equal(p_d, pts_[i].distance, "distance");
+    // logging::check_equal(p_a, pts_[i].direction, "direction");
   }
 #ifdef DEBUG_CELLPOINTS
   logging::note("now have %ld points", size());
@@ -274,17 +267,19 @@ CellPoints& CellPoints::merge(const CellPoints& rhs)
 #endif
   // either both invalid or lower one is valid
   cell_x_y_ = min(cell_x_y_, rhs.cell_x_y_);
-  auto& d0 = pts_.distances();
-  auto& d1 = rhs.pts_.distances();
-  auto& p0 = pts_.points();
-  auto& p1 = rhs.pts_.points();
+  // auto& d0 = pts_.distances();
+  // auto& d1 = rhs.pts_.distances();
+  // auto& p0 = pts_.points();
+  // auto& p1 = rhs.pts_.points();
   // we know distances in each direction so just pick closer
-  for (size_t i = 0; i < d0.size(); ++i)
+  for (size_t i = 0; i < pts_.size(); ++i)
   {
-    if (d1[i] < d0[i])
+    auto& [p0, d0, a0] = pts_[i];
+    auto& [p1, d1, a1] = rhs.pts_[i];
+    if (d1 < d0)
     {
-      d0[i] = d1[i];
-      p0[i] = p1[i];
+      d0 = d1;
+      p0 = p1;
     }
   }
   add_source(rhs.src_);
@@ -293,22 +288,10 @@ CellPoints& CellPoints::merge(const CellPoints& rhs)
 #endif
   return *this;
 }
-bool CellPoints::operator<(const CellPoints& rhs) const noexcept
-{
-  if (cell_x_y_ == rhs.cell_x_y_)
-  {
-    return pts_.points() < rhs.pts_.points();
-  }
-  return cell_x_y_ < rhs.cell_x_y_;
-}
-bool CellPoints::operator==(const CellPoints& rhs) const noexcept
-{
-  return (cell_x_y_ == rhs.cell_x_y_ && pts_.points() == rhs.pts_.points());
-}
 bool CellPoints::empty() const
 {
   // NOTE: if anything is invalid then everything must be
-  return (INVALID_DISTANCE == pts_.distances()[0]);
+  return (INVALID_DISTANCE == pts_[0].distance);
 }
 [[nodiscard]] Location CellPoints::location() const noexcept
 {

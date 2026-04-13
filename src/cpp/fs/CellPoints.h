@@ -2,9 +2,12 @@
 #ifndef FS_CELLPOINTS_H
 #define FS_CELLPOINTS_H
 #include "stdafx.h"
+#include <compare>
 #include "BurnedData.h"
 #include "Cell.h"
 #include "InnerPos.h"
+#include "Radians.h"
+#include "unstable.h"
 namespace fs
 {
 using fs::Direction;
@@ -59,21 +62,43 @@ static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
   MASK_NW
 };
 class CellPointsMap;
-using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
-using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
-using array_dirs = std::array<MathSize, NUM_DIRECTIONS>;
-using array_cellpts = std::tuple<array_dists, array_pts, array_dirs>;
-class CellPointArrays : public array_cellpts
+// not sure what's going on with this and wondering if it doesn't keep number exactly
+// shouldn't be any way to be further than twice the entire width of the area
+static const auto INVALID_DISTANCE = static_cast<DistanceSize>(MAX_ROWS * MAX_ROWS);
+static const XYPos INVALID_XY_POSITION{};
+static const pair<DistanceSize, XYPos> INVALID_XY_PAIR{INVALID_DISTANCE, {}};
+static const XYSize INVALID_XY_LOCATION = INVALID_XY_PAIR.second.first;
+static const InnerPos INVALID_INNER_POSITION{};
+struct PointDistanceDirection
 {
-public:
-  using array_cellpts::array_cellpts;
-  inline const array_dists& distances() const { return std::get<0>(*this); }
-  inline const array_pts& points() const { return std::get<1>(*this); }
-  inline const array_dirs& directions() const { return std::get<2>(*this); }
-  inline array_dists& distances() { return std::get<0>(*this); }
-  inline array_pts& points() { return std::get<1>(*this); }
-  inline array_dirs& directions() { return std::get<2>(*this); }
+  InnerPos point{};
+  DistanceSize distance{INVALID_DISTANCE};
+  MathSize direction{INVALID_DIRECTION.value};
 };
+// // equality solely on point value
+// static std::partial_ordering operator<=>(
+//   const PointDistanceDirection& lhs,
+//   const PointDistanceDirection& rhs
+// ) noexcept
+// {
+//   return lhs.point <=> rhs.point;
+// }
+// using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
+// using array_pts = std::array<InnerPos, NUM_DIRECTIONS>;
+// using array_dirs = std::array<MathSize, NUM_DIRECTIONS>;
+// using array_cellpts = std::tuple<array_dists, array_pts, array_dirs>;
+using array_cellpts = std::array<PointDistanceDirection, NUM_DIRECTIONS>;
+// class CellPointArrays : public array_cellpts
+// {
+// public:
+//   using array_cellpts::array_cellpts;
+//   inline const array_dists& distances() const { return std::get<0>(*this); }
+//   inline const array_pts& points() const { return std::get<1>(*this); }
+//   inline const array_dirs& directions() const { return std::get<2>(*this); }
+//   inline array_dists& distances() { return std::get<0>(*this); }
+//   inline array_pts& points() { return std::get<1>(*this); }
+//   inline array_dirs& directions() { return std::get<2>(*this); }
+// };
 /**
  * Points in a cell furthest in each direction
  */
@@ -116,8 +141,56 @@ public:
 #ifdef DEBUG_CELLPOINTS
   size_t size() const noexcept;
 #endif
-  bool operator<(const CellPoints& rhs) const noexcept;
-  bool operator==(const CellPoints& rhs) const noexcept;
+  // bool operator<(const CellPoints& rhs) const noexcept
+  // {
+  //   if (cell_x_y_ == rhs.cell_x_y_)
+  //   {
+  //     for (size_t i = 0; i < pts_.size(); ++i)
+  //     {
+  //       const auto& p0 = pts_[i].point;
+  //       const auto& p1 = rhs.pts_[i].point;
+  //       if (p0 != p1)
+  //       {
+  //         return p0 < p1;
+  //       }
+  //     }
+  //     return cell_x_y_ < rhs.cell_x_y_;
+  //   }
+  // }
+  // bool operator==(const CellPoints& rhs) const noexcept
+  // {
+  //   if (cell_x_y_ != rhs.cell_x_y_)
+  //   {
+  //     return false;
+  //   }
+  //   for (size_t i = 0; i < pts_.size(); ++i)
+  //   {
+  //     const auto& p0 = pts_[i].point;
+  //     const auto& p1 = rhs.pts_[i].point;
+  //     if (p0 != p1)
+  //     {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // }
+  std::partial_ordering operator<=>(const CellPoints& rhs) const noexcept
+  {
+    if (const auto cmp = cell_x_y_ <=> rhs.cell_x_y_; cmp.equivalent != cmp)
+    {
+      return cmp;
+    }
+    for (size_t i = 0; i < pts_.size(); ++i)
+    {
+      const auto& p0 = pts_[i].point;
+      const auto& p1 = rhs.pts_[i].point;
+      if (const auto cmp = p0 <=> p1; cmp.equivalent != cmp)
+      {
+        return cmp;
+      }
+    }
+    return std::partial_ordering::equivalent;
+  }
   [[nodiscard]] Location location() const noexcept;
   void clear();
   bool empty() const;
@@ -127,10 +200,10 @@ public:
   std::array<bool, NUM_DIRECTIONS> closer{};
   // FIX: just access directly for now
 public:
-  CellPointArrays pts_;
+  array_cellpts pts_{};
   // use Idx instead of Location so it can be negative (invalid)
-  CellPos cell_x_y_;
-  CellIndex src_;
+  CellPos cell_x_y_{};
+  CellIndex src_{};
 
 private:
   CellPoints(const Idx cell_x, const Idx cell_y) noexcept;
