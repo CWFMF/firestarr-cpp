@@ -19,7 +19,11 @@ pushd ${DIR_ROOT}
 # git restore settings.ini
 
 VARIANT="$1"
-if ( [ -z "${VARIANT}" ] || ( [ "Release" != "${VARIANT}" ] && [ "Debug" != ${VARIANT} ] && [ "Test" != "${VARIANT}" ]) ); then
+if ( [ -z "${VARIANT}" ] \
+  || ( [ "Release" != "${VARIANT}" ] \
+    && [ "RelWithDebInfo" != ${VARIANT} ] \
+    && [ "Debug" != ${VARIANT} ] \
+    && [ "Test" != "${VARIANT}" ]) ); then
   # assume that argument is an arg to pass to cmake
   VARIANT="Release"
   echo "${@}"
@@ -38,6 +42,12 @@ else
   shift;
 fi
 
+OPTS=""
+while [[ "$1" =~ -D* ]]
+do
+  OPTS="${OPTS} $1"
+  shift;
+done
 echo "DAYS=${DAYS}"
 
 # USE_TIME=
