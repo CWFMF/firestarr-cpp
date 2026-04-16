@@ -291,7 +291,7 @@ int compare_fuel_valid(
   const char* msg = ""
 )
 {
-  logging::info([&]() { return std::format("Checking {:s}: {:s}", name, msg); });
+  logging::info("Checking {:s}: {:s}", name, msg);
   //
   // FuelType
   //
@@ -548,7 +548,7 @@ vector<int> find_nd_values()
   {
     for (auto nd_ref : nd_ref_values)
     {
-      logging::verbose([&]() { return std::format("jd {:d}", day); });
+      logging::verbose("jd {:d}", day);
       // from calculate_nd_for_point(const Day day, const int elevation, const Point& point)
       const auto nd = static_cast<int>(abs(day - nd_ref));
       nd_values.emplace(nd);

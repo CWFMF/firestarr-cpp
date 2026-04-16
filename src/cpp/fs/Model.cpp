@@ -104,7 +104,7 @@ void Model::readWeather(
     out << "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\r\n";
 #endif
     string str;
-    logging::info([&]() { return std::format("Reading scenarios from '{:s}'", filename); });
+    logging::info("Reading scenarios from '{:s}'", filename);
     // read header line
     getline(in, str);
     // get rid of whitespace
@@ -129,7 +129,7 @@ void Model::readWeather(
       {
         // HACK: ignore date and just worry about relative order??
         // Scenario
-        logging::verbose([&]() { return std::format("Scenario is {:s}", str); });
+        logging::verbose("Scenario is {:s}", str);
         size_t cur = 0;
         try
         {
@@ -146,7 +146,7 @@ void Model::readWeather(
         }
         if (wx.find(cur) == wx.end())
         {
-          logging::debug([&]() { return std::format("Loading scenario {:d}...", cur); });
+          logging::debug("Loading scenario {:d}...", cur);
           wx.emplace(cur, vector<FwiWeather>{});
           prev_time = std::numeric_limits<time_t>::min();
           logging::check_fatal(wx_daily.find(cur) != wx_daily.end(), [&]() {
@@ -206,7 +206,7 @@ void Model::readWeather(
         {
           s.resize(new_size);
         }
-        logging::verbose([&]() { return std::format("for_time == {:d}", for_time); });
+        logging::verbose("for_time == {:d}", for_time);
         FwiWeather w{read_fwi_weather(&iss, &str)};
         s.at(for_time) = w;
         logging::check_fatal(0 > w.prec.value, [&]() {
@@ -339,7 +339,7 @@ void Model::findAllStarts()
       }
     }
   }
-  logging::info([&]() { return std::format("Using {:d} start locations:", ignitionScenarios()); });
+  logging::info("Using {:d} start locations:", ignitionScenarios());
 }
 void Model::makeStarts(
   Coordinates coordinates,
@@ -1176,7 +1176,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         else
         {
           runs_left = runs_required(iterations_done_, &all_sizes, &means, &pct, *this);
-          logging::note([&]() { return std::format("Need another {:d} iterations", runs_left); });
+          logging::note("Need another {:d} iterations", runs_left);
         }
       }
       if (runs_left > 0)
@@ -1206,7 +1206,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     logging::note("Running in synchronous mode");
     while (runs_left > 0)
     {
-      logging::note([&]() { return std::format("Running iteration {:d}", iterations_done_ + 1); });
+      logging::note("Running iteration {:d}", iterations_done_ + 1);
       if (reset_iter(iteration))
       {
         for (auto s : iteration.getScenarios())
@@ -1226,7 +1226,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         else
         {
           runs_left = runs_required(iterations_done_, &all_sizes, &means, &pct, *this);
-          logging::note([&]() { return std::format("Need another {:d} iterations", runs_left); });
+          logging::note("Need another {:d} iterations", runs_left);
         }
       }
     }
@@ -1342,7 +1342,7 @@ int Model::runScenarios(
   });
   model.makeStarts(*position, start_point, perimeter, size);
   auto probabilities = model.runIterations(start_point, start, start_day);
-  logging::note([&]() { return std::format("Ran {:d} simulations", Scenario::completed()); });
+  logging::note("Ran {:d} simulations", Scenario::completed());
   const auto run_time_seconds = model.runTime();
   const size_t time_left = settings.maximum_time_seconds - run_time_seconds.count();
   logging::debug([&]() {

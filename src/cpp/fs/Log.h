@@ -34,13 +34,94 @@ inline string output(int log_level, std::function<string()> fct) DEBUG_NOEXCEPT_
 {
   return output(log_level, fct());
 }
-inline void extensive(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_EXTENSIVE, msg); }
-inline void verbose(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_VERBOSE, msg); }
-inline void debug(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_DEBUG, msg); }
-inline void info(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_INFO, msg); }
-inline void note(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_NOTE, msg); }
-inline void warning(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_WARNING, msg); }
-inline void error(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_ERROR, msg); }
+template <typename... Args>
+inline string output(int log_level, std::format_string<Args...> format, Args&&... args)
+  DEBUG_NOEXCEPT_OFF
+{
+  // HACK: check log_level here too for now
+  if (get_log_level() > log_level)
+  {
+    return "";
+  }
+  return output(log_level, std::format(format, std::forward<Args>(args)...));
+}
+template <typename... Args>
+inline void extensive(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
+{
+  constexpr auto log_level = LOG_EXTENSIVE;
+  // HACK: check log_level here too for now
+  if (get_log_level() > log_level)
+  {
+    return;
+  }
+  output(log_level, std::format(format, std::forward<Args>(args)...));
+}
+template <typename... Args>
+inline void verbose(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
+{
+  constexpr auto log_level = LOG_VERBOSE;
+  // HACK: check log_level here too for now
+  if (get_log_level() > log_level)
+  {
+    return;
+  }
+  output(log_level, std::format(format, std::forward<Args>(args)...));
+}
+template <typename... Args>
+inline void debug(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
+{
+  constexpr auto log_level = LOG_DEBUG;
+  // HACK: check log_level here too for now
+  if (get_log_level() > log_level)
+  {
+    return;
+  }
+  output(log_level, std::format(format, std::forward<Args>(args)...));
+}
+template <typename... Args>
+inline void info(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
+{
+  constexpr auto log_level = LOG_INFO;
+  // HACK: check log_level here too for now
+  if (get_log_level() > log_level)
+  {
+    return;
+  }
+  output(log_level, std::format(format, std::forward<Args>(args)...));
+}
+template <typename... Args>
+inline void note(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
+{
+  constexpr auto log_level = LOG_NOTE;
+  // HACK: check log_level here too for now
+  if (get_log_level() > log_level)
+  {
+    return;
+  }
+  output(log_level, std::format(format, std::forward<Args>(args)...));
+}
+template <typename... Args>
+inline void warning(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
+{
+  constexpr auto log_level = LOG_WARNING;
+  // HACK: check log_level here too for now
+  if (get_log_level() > log_level)
+  {
+    return;
+  }
+  output(log_level, std::format(format, std::forward<Args>(args)...));
+}
+template <typename... Args>
+inline void error(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
+{
+  constexpr auto log_level = LOG_ERROR;
+  // HACK: check log_level here too for now
+  if (get_log_level() > log_level)
+  {
+    return;
+  }
+  output(log_level, std::format(format, std::forward<Args>(args)...));
+}
 inline void extensive(std::function<string()> fct) DEBUG_NOEXCEPT_OFF
 {
   output(LOG_EXTENSIVE, fct);

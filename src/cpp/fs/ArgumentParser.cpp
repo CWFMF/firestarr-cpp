@@ -202,7 +202,7 @@ void register_argument(string v, string help, bool required, std::function<void(
   }();
   PARSE_FCT.emplace(v, fct);
   PARSE_HELP.emplace_back(v, help);
-  logging::debug([&]() { return std::format("Checking if already have {:s}", as_setting); });
+  logging::debug("Checking if already have {:s}", as_setting);
   required = required && !settings.found(as_setting);
   PARSE_REQUIRED.emplace(v, required);
 }
@@ -353,7 +353,7 @@ Settings& ArgumentParser::parse_args()
       // check for single letter flags or '--'
       if (PARSE_FCT.find(arg) != PARSE_FCT.end())
       {
-        logging::debug([&]() { return std::format("Found option for argument '{:s}'", arg); });
+        logging::debug("Found option for argument '{:s}'", arg);
         try
         {
           PARSE_FCT[arg]();
@@ -382,7 +382,7 @@ Settings& ArgumentParser::parse_args()
     {
       // this is a positional argument so add to that list
       positional_args_.emplace_back(arg);
-      logging::debug([&]() { return std::format("Found positional argument '{:s}'", arg); });
+      logging::debug("Found positional argument '{:s}'", arg);
     }
     ++cur_arg_;
   }

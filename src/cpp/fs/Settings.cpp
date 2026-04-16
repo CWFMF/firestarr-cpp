@@ -185,7 +185,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     {
       logging::fatal([&]() { return std::format("Unable to read settings from {:s}", filename); });
     }
-    logging::debug([&]() { return std::format("Initializing settings from {:s}", filename); });
+    logging::debug("Initializing settings from {:s}", filename);
     settings_ =
       make_pair<string_map<string>, string_map<string>>(string_map<string>{}, string_map<string>{});
     ;
@@ -194,7 +194,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     if (in.is_open())
     {
       string str;
-      logging::info([&]() { return std::format("Reading settings from '{:s}'", filename); });
+      logging::info("Reading settings from '{:s}'", filename);
       while (getline(in, str))
       {
         istringstream iss(str);
@@ -208,7 +208,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
           getline(iss, str, '\n');
           const auto value = trim_copy(str);
           settings_.first.emplace(key, value);
-          logging::debug([&]() { return std::format("{:s}: {:s}", key, value); });
+          logging::debug("{:s}: {:s}", key, value);
         }
       }
       in.close();
@@ -216,7 +216,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     if (settings_.first.empty())
     {
       // could work if all arguments were specified as cli args (not currently possible)
-      logging::warning([&]() { return std::format("Settings file {:s} is empty", filename); });
+      logging::warning("Settings file {:s} is empty", filename);
     }
     if (const auto value = get_value(settings_, "OUTPUT_DIRECTORY", false); "INVALID" != value)
     {

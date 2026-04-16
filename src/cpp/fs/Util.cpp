@@ -10,7 +10,7 @@ FileList read_directory(const string_view name, const string_view match, const b
 {
   FileList files{};
   string full_match = ".*/" + string(match);
-  logging::verbose([&]() { return std::format("Matching '{:s}'", full_match); });
+  logging::verbose("Matching '{:s}'", full_match);
   const std::regex re(full_match, std::regex_constants::icase);
   for (const auto& entry : std::filesystem::directory_iterator(name))
   {
@@ -46,15 +46,15 @@ FileList find_rasters(const string_view dir, const YearSize year)
                              ? for_year
                              : (directory_exists(for_default.c_str()) ? for_default : path);
   FileList files{};
-  logging::info([&]() { return std::format("Raster root is {:s}", raster_root); });
+  logging::info("Raster root is {:s}", raster_root);
   try
   {
     files.append_range(read_directory(raster_root, "fuel.*\\.tif"));
   }
   catch (const std::exception& ex)
   {
-    logging::error([&]() { return std::format("Unable to read directory {:s}", raster_root); });
-    logging::error([&]() { return std::format("{:s}", ex.what()); });
+    logging::error("Unable to read directory {:s}", raster_root);
+    logging::error("{:s}", ex.what());
   }
   return files;
 }
@@ -196,12 +196,9 @@ void read_date(istringstream* iss, string* str, tm* t)
   t->tm_mday = stoi(ds);
   getline(dss, ds, ':');
   t->tm_hour = stoi(ds);
-  logging::verbose([&]() { return std::format("Date is {:s}", format_datetime(*t)); });
+  logging::verbose("Date is {:s}", format_datetime(*t));
 }
-UsageCount::~UsageCount()
-{
-  logging::note([&]() { return std::format("{:s} called {:d} times", for_what_, count_.load()); });
-}
+UsageCount::~UsageCount() { logging::note("{:s} called {:d} times", for_what_, count_.load()); }
 UsageCount::UsageCount(string for_what) noexcept : count_(0), for_what_(std::move(for_what)) { }
 UsageCount& UsageCount::operator++() noexcept
 {
@@ -280,12 +277,12 @@ string get_canonical_path(const char* const dir_root, string path)
     {
       // not an absolute path so should be relative to root
       const pushd dir{dir_root};
-      logging::note([&]() { return std::format("dir_root = {:s}", dir_root); });
+      logging::note("dir_root = {:s}", dir_root);
       auto p_rel = std::filesystem::relative(path);
-      logging::verbose([&]() { return std::format("p_rel = {:s}", p_rel.c_str()); });
+      logging::verbose("p_rel = {:s}", p_rel.c_str());
       auto p_abs =
         p_rel.empty() ? dir.current_directory : std::filesystem::absolute(p_rel).generic_string();
-      logging::verbose([&]() { return std::format("p_abs = {:s}", p_abs); });
+      logging::verbose("p_abs = {:s}", p_abs);
       // auto p_can = std::filesystem::canonical(p_rel);
       // logging::note("p_can = {:s}", p_can.c_str());
       logging::debug([&]() {

@@ -16,7 +16,7 @@ PJ_CONTEXT* get_context()
   string db_path = settings.getBinaryDirectory() + "proj.db";
   // HACK: only do once
   static const auto showed_once = [&]() {
-    logging::debug([&]() { return std::format("Trying to set db path to {:s}", db_path); });
+    logging::debug("Trying to set db path to {:s}", db_path);
     return true;
   }();
   std::ignore = showed_once;
@@ -84,7 +84,7 @@ fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize 
   // Given that we have used proj_normalize_for_visualization(), the order
   // of coordinates is longitude, latitude, and values are expressed in
   // degrees.
-  logging::verbose([&]() { return std::format("proj_coord({:f}, {:f}, 0, 0)", x, y); });
+  logging::verbose("proj_coord({:f}, {:f}, 0, 0)", x, y);
   const PJ_COORD a = proj_coord(x, y, 0, 0);
   // transform to  geographical
   const PJ_COORD b = proj_trans(P, PJ_FWD, a);

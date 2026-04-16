@@ -88,23 +88,17 @@ string saveToTiffFile(
     );
   });
 #endif
-  logging::extensive([&]() {
-    return std::format("({:d}, {:d}) => ({:d}, {:d})", min_column, min_row, max_column, max_row);
-  });
+  logging::extensive("({:d}, {:d}) => ({:d}, {:d})", min_column, min_row, max_column, max_row);
   logging::check_fatal((max_row - min_row) % tileHeight != 0, "Invalid start and end rows");
   logging::check_fatal(
     (max_column - min_column) % tileHeight != 0, "Invalid start and end columns"
   );
-  logging::extensive([&]() {
-    return std::format("Lower left corner is ({:d}, {:d})", min_column, min_row);
-  });
-  logging::extensive([&]() {
-    return std::format("Upper right corner is ({:d}, {:d})", max_column, max_row);
-  });
+  logging::extensive("Lower left corner is ({:d}, {:d})", min_column, min_row);
+  logging::extensive("Upper right corner is ({:d}, {:d})", max_column, max_row);
   const MathSize xll = grid.xllcorner() + min_column * grid.cellSize();
   // offset is different for y since it's flipped
   const MathSize yll = grid.yllcorner() + (min_row)*grid.cellSize();
-  logging::extensive([&]() { return std::format("Lower left corner is ({:f}, {:f})", xll, yll); });
+  logging::extensive("Lower left corner is ({:f}, {:f})", xll, yll);
   const auto num_rows = static_cast<size_t>(max_row - min_row);
   const auto num_columns = static_cast<size_t>(max_column - min_column);
   // ensure this is always divisible by tile size
@@ -137,9 +131,7 @@ string saveToTiffFile(
     return std::format("Cannot have mismatched bps and type ({:d} != {:d})", bps, bits_per_sample);
   });
   TIFFSetField(tif, TIFFTAG_GDAL_NODATA, nodata_str.c_str());
-  logging::extensive([&]() {
-    return std::format("{:s} takes {:d} bits", base_name, bits_per_sample);
-  });
+  logging::extensive("{:s} takes {:d} bits", base_name, bits_per_sample);
   TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);
   TIFFSetField(tif, TIFFTAG_IMAGELENGTH, num_rows);
   TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
@@ -154,8 +146,7 @@ string saveToTiffFile(
   TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
   size_t tileSize = tileWidth * tileHeight;
   const auto buf_size = tileSize * sizeof(R);
-  logging::extensive([&]() { return std::format("{:s} has buffer size {:d}", base_name, buf_size); }
-  );
+  logging::extensive("{:s} has buffer size {:d}", base_name, buf_size);
   // HACK: using R means size changes on different cpu types
   auto buf = static_cast<R*>(_TIFFmalloc(buf_size));
   for (uint32_t co = 0; co < num_columns; co += tileWidth)
@@ -370,7 +361,7 @@ void GridBase::createPrj(const string_view dir, const string_view base_name) con
   logging::check_fatal(!out.is_open(), [&]() {
     return std::format("Unable to write to {:s}", filename);
   });
-  logging::extensive(proj4_);
+  logging::extensive("{:s}", proj4_);
   // HACK: use what we know is true for the grids that were generated and
   // hope it's correct otherwise
   const auto proj = find_value("+proj=", proj4_);
@@ -558,7 +549,7 @@ void write_ascii_header(
     });
     const auto cell_height = y - adf_coefficient[5];
     logging::check_fatal(cell_width != -cell_height, "Can only use grids with square pixels");
-    logging::debug([&]() { return std::format("Cell size is {:f}", cell_width); });
+    logging::debug("Cell size is {:f}", cell_width);
     // HACK: GTIFGetProj4Defn uses malloc
     std::unique_ptr<char, decltype(std::free)*> proj4_char{
       GTIFGetProj4Defn(&definition), std::free

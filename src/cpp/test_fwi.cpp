@@ -139,7 +139,7 @@ int test_fwi_file(
 }
 int compare_files(const string file0, const string file1)
 {
-  logging::info([&]() { return std::format("Comparing {:s} to {:s}", file0, file1); });
+  logging::info("Comparing {:s} to {:s}", file0, file1);
   ifstream input0(file0.c_str());
   if (!input0.is_open())
   {
@@ -162,7 +162,7 @@ int compare_files(const string file0, const string file1)
     }
     if (auto cmp = line0.compare(line1); 0 != cmp)
     {
-      logging::error([&]() { return std::format("\t{:s}\n!=\t{:s}", line0, line1); });
+      logging::error("\t{:s}\n!=\t{:s}", line0, line1);
       return cmp;
     }
   }

@@ -446,17 +446,12 @@ protected:
       );
     });
 #endif
-    logging::extensive([&]() {
-      return std::format("Lower left corner is ({:d}, {:d})", min_column, min_row);
-    });
-    logging::extensive([&]() {
-      return std::format("Upper right corner is ({:d}, {:d})", max_column, max_row);
-    });
+    logging::extensive("Lower left corner is ({:d}, {:d})", min_column, min_row);
+    logging::extensive("Upper right corner is ({:d}, {:d})", max_column, max_row);
     const MathSize xll = this->xllcorner() + min_column * this->cellSize();
     // offset is different for y since it's flipped
     const MathSize yll = this->yllcorner() + (min_row) * this->cellSize();
-    logging::extensive([&]() { return std::format("Lower left corner is ({:f}, {:f})", xll, yll); }
-    );
+    logging::extensive("Lower left corner is ({:f}, {:f})", xll, yll);
     // HACK: make sure it's always at least 1
     const auto num_rows = static_cast<MathSize>(max_row) - min_row + 1;
     const auto num_columns = static_cast<MathSize>(max_column) - min_column + 1;

@@ -130,11 +130,9 @@ CellPoints& CellPoints::insert(
   constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
   if (0 < spread_current.time() && 0 > spread_arrival_.time())
   {
-    logging::extensive([&]() {
-      return std::format(
-        "No time so setting ros to {:f} at time {:f}", spread_current.ros(), spread_current.time()
-      );
-    });
+    logging::extensive(
+      "No time so setting ros to {:f} at time {:f}", spread_current.ros(), spread_current.time()
+    );
     // record ros and time if nothing yet
     spread_arrival_ = spread_current;
   }
