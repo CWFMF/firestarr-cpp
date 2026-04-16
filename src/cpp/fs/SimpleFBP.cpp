@@ -276,7 +276,7 @@ namespace fs::testing
 using fs::FuelBase;
 using fs::FuelType;
 // check %, so 1 decimal is fine
-static constexpr MathSize EPSILON = 1e-1f;
+static constexpr auto EPSILON = static_cast<MathSize>(1e-1);
 auto check_equal(const auto& lhs, const auto& rhs, const char* name)
 {
   logging::check_equal_verbose(logging::LOG_DEBUG, lhs, rhs, name);
