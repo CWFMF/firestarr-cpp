@@ -2,6 +2,11 @@
 #ifndef FS_LOG_H
 #define FS_LOG_H
 #include "stdafx.h"
+#ifdef NDEBUG
+#define DEBUG_NOEXCEPT_OFF noexcept
+#else
+#undef DEBUG_NOEXCEPT_OFF
+#endif
 namespace fs::logging
 {
 static constexpr int LOG_EXTENSIVE = 0;
@@ -13,226 +18,50 @@ static constexpr int LOG_WARNING = 5;
 static constexpr int LOG_ERROR = 6;
 static constexpr int LOG_FATAL = 7;
 static constexpr int LOG_SILENT = 8;
-// Provides logging functionality.
-/**
- * \brief Set logging level to a specific level
- * \param log_level Log level to use
- * \return None
- */
 void set_log_level(int log_level) noexcept;
-/**
- * \brief Increase amount of logging output by one level
- * \return None
- */
 void increase_log_level() noexcept;
-/**
- * \brief Decrease amount of logging output by one level
- * \return None
- */
 void decrease_log_level() noexcept;
-/**
- * \brief Get current logging level
- * \return Current logging level
- */
 int get_log_level() noexcept;
-/**
- * \brief Set output log file
- * \return Return value of open()
- */
 int open_log_file(const char* filename) noexcept;
-/**
- * \brief Set output log file
- * \return Return value of close()
- */
 int close_log_file() noexcept;
-/**
- * \brief Output a message to the log
- * \param log_level Log level to use for label
- * \param format Format string for message
- * \param args Arguments to use in format string
- * \return the message that was output
- */
-string output(int log_level, const char* const format, va_list* args)
-#ifdef NDEBUG
-  noexcept
-#endif
-  ;
-/**
- * \brief Output a message to the log
- * \param log_level Log level to use for label
- * \param format Format string for message
- * \param ... Arguments to format message with
- * \return the message that was output
- */
-string output(int log_level, const char* const format, ...)
-#ifdef NDEBUG
-  noexcept
-#endif
-  ;
-/**
- * \brief Log with EXTENSIVE level
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
+string output(int log_level, const char* const format, va_list* args) DEBUG_NOEXCEPT_OFF;
+string output(int log_level, const char* const format, ...) DEBUG_NOEXCEPT_OFF;
 void extensive(const char* const format, ...) noexcept;
-/**
- * \brief Log with VERBOSE level
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
 void verbose(const char* const format, ...) noexcept;
-/**
- * \brief Log with DEBUG level
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
 void debug(const char* const format, ...) noexcept;
-/**
- * \brief Log with INFO level
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
 void info(const char* const format, ...) noexcept;
-/**
- * \brief Log with NOTE level
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
 void note(const char* const format, ...) noexcept;
-/**
- * \brief Log with WARNING level
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
 void warning(const char* const format, ...) noexcept;
-/**
- * \brief Log with ERROR level
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
 void error(const char* const format, ...) noexcept;
-/**
- * \brief Check condition and log and exit if true
- * \param condition Condition to check (true ends program after logging)
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
-void check_fatal(bool condition, const char* const format, ...)
-#ifdef NDEBUG
-  noexcept
-#endif
-  ;
-/**
- * \brief Check if items are not equal and log and exit if true
- * \param lhs first value
- * \param rhs second value
- * \param name String for message describing what's being compared
- */
-void check_equal(const MathSize lhs, const MathSize rhs, const char* name)
-#ifdef NDEBUG
-  noexcept
-#endif
-  ;
-/**
- * \brief Check if items are not equal and log and exit if true
- * \param lhs first value
- * \param rhs second value
- * \param name String for message describing what's being compared
- */
-void check_equal(const char* lhs, const char* rhs, const char* name)
-#ifdef NDEBUG
-  noexcept
-#endif
-  ;
-void check_equal(const bool lhs, const bool rhs, const char* name)
-#ifdef NDEBUG
-  noexcept
-#endif
-  ;
-/**
- * \brief Check if items are not equal and log and exit if true
- * \param lhs first value
- * \param rhs second value
- * \param name String for message describing what's being compared
- */
+void check_fatal(bool condition, const char* const format, ...) DEBUG_NOEXCEPT_OFF;
+void check_equal(const MathSize lhs, const MathSize rhs, const char* name) DEBUG_NOEXCEPT_OFF;
+void check_equal(const char* lhs, const char* rhs, const char* name) DEBUG_NOEXCEPT_OFF;
+void check_equal(const bool lhs, const bool rhs, const char* name) DEBUG_NOEXCEPT_OFF;
 template <class V>
-void check_equal(const V& lhs, const V& rhs, const char* name)
-#ifdef NDEBUG
-  noexcept
-#endif
+void check_equal(const V& lhs, const V& rhs, const char* name) DEBUG_NOEXCEPT_OFF
 {
   const auto fmt = typeid(lhs) == typeid(size_t) ? "Expected %s to be %ld but got %ld"
                                                  : "Expected %s to be %d but got %d";
   check_fatal(lhs != rhs, fmt, name, rhs, lhs);
 }
-/**
- * \brief Check if items are not equal and log and exit if true
- * \param lhs first value
- * \param rhs second value
- * \param name String for message describing what's being compared
- */
 template <class V>
 void check_equal_verbose(const int log_level, const V& lhs, const V& rhs, const char* name)
-#ifdef NDEBUG
-  noexcept
-#endif
+  DEBUG_NOEXCEPT_OFF
 {
   check_equal(lhs, rhs, name);
   output(log_level, "%s matches", name);
 }
-/**
- * \brief Check if items are not equal and log and exit if true
- * \param epsilon difference between values tolerance
- * \param lhs first value
- * \param rhs second value
- * \param name String for message describing what's being compared
- */
 void check_tolerance(
   const MathSize epsilon,
   const MathSize lhs,
   const MathSize rhs,
   const char* name
-)
-#ifdef NDEBUG
-  noexcept
-#endif
-  ;
-/**
- * \brief Log with FATAL level and exit
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
-void fatal(const char* const format, ...)
-#ifdef NDEBUG
-  noexcept
-#endif
-  ;
-/**
- * \brief Log with FATAL level and exit
- * \param ex Exception that is causing fatal error
- */
+) DEBUG_NOEXCEPT_OFF;
+void fatal(const char* const format, ...) DEBUG_NOEXCEPT_OFF;
 void fatal(const std::exception& ex);
-/**
- * \brief Log with FATAL level and exit
- * \param ex Exception that is causing fatal error
- * \param format Format string for message
- * \param ... Arguments to format message with
- */
 void fatal(const std::exception& ex, const char* const format, ...);
-// templated so we can return it from any function and not get an error
-// about not returning on all paths
-/**
- * \brief Log a fatal error and quit
- * \tparam T Type to return (so that it can be used to avoid no return value warning)
- * \param format Format string for message
- * \param args Arguments to format message with
- * \return Nothing, because this ends the program
- */
 template <class T>
-T fatal(const char* const format, va_list* args)
-#ifdef NDEBUG
-  noexcept
-#endif
+T fatal(const char* const format, va_list* args) DEBUG_NOEXCEPT_OFF
 {
   auto msg = output(LOG_FATAL, format, args);
   fflush(stdout);
@@ -244,18 +73,8 @@ T fatal(const char* const format, va_list* args)
   throw std::runtime_error(msg);
 #endif
 }
-/**
- * \brief Log a fatal error and quit
- * \tparam T Type to return (so that it can be used to avoid no return value warning)
- * \param format Format string for message
- * \param ... Arguments to format message with
- * \return Nothing, because this ends the program
- */
 template <class T>
-T fatal(const char* const format, ...)
-#ifdef NDEBUG
-  noexcept
-#endif
+T fatal(const char* const format, ...) DEBUG_NOEXCEPT_OFF
 {
   va_list args;
   va_start(args, format);
@@ -274,16 +93,8 @@ public:
   void log_note(const char* const format, ...) const noexcept;
   void log_warning(const char* const format, ...) const noexcept;
   void log_error(const char* const format, ...) const noexcept;
-  void log_check_fatal(bool condition, const char* const format, ...) const
-#ifdef NDEBUG
-    noexcept
-#endif
-    ;
-  void log_fatal(const char* const format, ...) const
-#ifdef NDEBUG
-    noexcept
-#endif
-    ;
+  void log_check_fatal(bool condition, const char* const format, ...) const DEBUG_NOEXCEPT_OFF;
+  void log_fatal(const char* const format, ...) const DEBUG_NOEXCEPT_OFF;
 };
 }
 #endif
