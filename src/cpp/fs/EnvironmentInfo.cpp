@@ -17,24 +17,20 @@ EnvironmentInfo::EnvironmentInfo(
   : fuel_(fuel), elevation_(elevation), in_fuel_(std::move(in_fuel)),
     in_elevation_(std::move(in_elevation))
 {
-  logging::debug([&]() {
-    return std::format(
-      "fuel: {:d}{:d} => ({:f}, {:f})",
-      fuel.calculateColumns(),
-      fuel.calculateRows(),
-      fuel.xllcorner(),
-      fuel.yllcorner()
-    );
-  });
-  logging::debug([&]() {
-    return std::format(
-      "elevation: {:d}{:d} => ({:f}, {:f})",
-      elevation.calculateColumns(),
-      elevation.calculateRows(),
-      elevation.xllcorner(),
-      elevation.yllcorner()
-    );
-  });
+  logging::debug(
+    "fuel: {:d}{:d} => ({:f}, {:f})",
+    fuel.calculateColumns(),
+    fuel.calculateRows(),
+    fuel.xllcorner(),
+    fuel.yllcorner()
+  );
+  logging::debug(
+    "elevation: {:d}{:d} => ({:f}, {:f})",
+    elevation.calculateColumns(),
+    elevation.calculateRows(),
+    elevation.xllcorner(),
+    elevation.yllcorner()
+  );
   logging::check_fatal(
     !(fuel.calculateRows() == elevation.calculateRows()
       && fuel.calculateColumns() == elevation.calculateColumns()

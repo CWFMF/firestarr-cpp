@@ -2,6 +2,7 @@
 #ifndef FS_LOG_H
 #define FS_LOG_H
 #include "stdafx.h"
+#include <cstdlib>
 #include <format>
 #include <tuple>
 #ifdef NDEBUG
@@ -132,6 +133,17 @@ inline void info(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_IN
 inline void note(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_NOTE, fct); }
 inline void warning(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_WARNING, fct); }
 inline void error(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_ERROR, fct); }
+template <typename... Args>
+inline int fatal(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
+{
+  auto msg = output(LOG_FATAL, std::format(format, std::forward<Args>(args)...));
+#ifndef NDEBUG
+  // HACK: just throw the format for a start - just want to see stack traces when debugging
+  throw std::runtime_error(msg);
+#endif
+  exit(EXIT_FAILURE);
+  return EXIT_FAILURE;
+}
 template <typename T>
 inline T fatal(const string msg, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
 {
@@ -167,20 +179,25 @@ inline T fatal(const std::exception& ex, std::function<string()> fct)
   return fatal<T>(ex);
 }
 // overrides for void return
-inline void fatal(const string msg, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
+inline int fatal(const string msg, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
 {
   std::ignore = fatal<int>(msg, throw_msg);
+  return EXIT_FAILURE;
 }
 inline void fatal(std::function<string()> fct, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
 {
   // HACK: just need any template
   std::ignore = fatal<int>(fct, throw_msg);
 }
-inline void fatal(const std::exception& ex) { std::ignore = fatal<int>(ex); }
-inline void fatal(const std::exception& ex, std::function<string()> fct)
+inline int fatal(const std::exception& ex)
+{
+  std::ignore = fatal<int>(ex);
+  return EXIT_FAILURE;
+}
+inline int fatal(const std::exception& ex, std::function<string()> fct)
 {
   fatal(fct(), false);
-  fatal(ex);
+  return fatal(ex);
 }
 inline void check_fatal(bool condition, std::function<string()> fct) DEBUG_NOEXCEPT_OFF
 {

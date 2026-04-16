@@ -385,8 +385,7 @@ public:
     if (in.is_open())
     {
       string str;
-      logging::info([&]() { return std::format("Reading fuel lookup table from '{:s}'", filename); }
-      );
+      logging::info("Reading fuel lookup table from '{:s}'", filename);
       // read header line
       getline(in, str);
       while (getline(in, str))
@@ -416,50 +415,42 @@ public:
                 || "Not Available" == name || "Non-fuel" == name || "Unclassified" == name
                 || "Urban" == name || "Unknown" == name || "Vegetated Non-Fuel" == name)
             {
-              logging::note([&]() {
-                return std::format(
-                  "Fuel ({:d}, '{:s}') is treated like '{:s}' with internal code {:d}",
-                  value,
-                  name,
-                  fuel,
-                  fuel_obj->code()
-                );
-              });
+              logging::note(
+                "Fuel ({:d}, '{:s}') is treated like '{:s}' with internal code {:d}",
+                value,
+                name,
+                fuel,
+                fuel_obj->code()
+              );
             }
             else
             {
-              logging::debug([&]() {
-                return std::format(
-                  "Fuel ({:d}, '{:s}') is treated like '{:s}' with internal code {:d}",
-                  value,
-                  name,
-                  fuel,
-                  fuel_obj->code()
-                );
-              });
+              logging::debug(
+                "Fuel ({:d}, '{:s}') is treated like '{:s}' with internal code {:d}",
+                value,
+                name,
+                fuel,
+                fuel_obj->code()
+              );
             }
             auto emplaced = fuel_grid_codes_.try_emplace(fuel_obj, value);
             if (!emplaced.second)
             {
-              logging::debug([&]() {
-                return std::format(
-                  "Fuel ({:d}, '{:s}') is treated like '{:s}' with internal code {:d} and tried to replace value {:d} for {:d}",
-                  value,
-                  name,
-                  fuel,
-                  fuel_obj->code(),
-                  value,
-                  emplaced.first->second
-                );
-              });
+              logging::debug(
+                "Fuel ({:d}, '{:s}') is treated like '{:s}' with internal code {:d} and tried to replace value {:d} for {:d}",
+                value,
+                name,
+                fuel,
+                fuel_obj->code(),
+                value,
+                emplaced.first->second
+              );
             }
             fuel_good_values_[value].push_back(str);
           }
           else
           {
-            logging::warning([&]() {
-              return std::format("Unknown fuel type '{:s}' in fuel lookup table", str);
-            });
+            logging::warning("Unknown fuel type '{:s}' in fuel lookup table", str);
             fuel_bad_values_[value].push_back(str);
           }
           read_ok = true;
@@ -469,7 +460,7 @@ public:
     }
     if (!read_ok)
     {
-      logging::fatal([&]() { return std::format("Unable to read file {:s}", filename); });
+      exit(logging::fatal("Unable to read file {:s}", filename));
     }
   }
   ~FuelLookupImpl() { delete fuel_types_; }
@@ -487,14 +478,12 @@ public:
   {
     fuel_by_name_.emplace(name, fuel);
     const auto simple_name = simplify_fuel_name(fuel->name());
-    logging::verbose([&]() {
-      return std::format(
-        "'{:s}' being registered as '{:s}' with simplified name '{:s}'",
-        fuel->name(),
-        name,
-        simple_name
-      );
-    });
+    logging::verbose(
+      "'{:s}' being registered as '{:s}' with simplified name '{:s}'",
+      fuel->name(),
+      name,
+      simple_name
+    );
     fuel_by_simplified_name_.emplace(simple_name, fuel);
   }
   /**
@@ -568,14 +557,12 @@ public:
     {
       return seek->second;
     }
-    logging::warning([&]() {
-      return std::format(
-        "Invalid FuelType lookup: ({:s}, {:d}) was never used in grid with {:d} fuel codes defined",
-        value->name(),
-        value->code(),
-        fuel_grid_codes_.size()
-      );
-    });
+    logging::warning(
+      "Invalid FuelType lookup: ({:s}, {:d}) was never used in grid with {:d} fuel codes defined",
+      value->name(),
+      value->code(),
+      fuel_grid_codes_.size()
+    );
     throw runtime_error("Converting fuel that wasn't in input grid to code");
     return 0;
   }

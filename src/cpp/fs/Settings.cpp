@@ -14,7 +14,7 @@ Settings& instance() noexcept
   static const bool not_initialized = nullptr == INSTANCE;
   if (not_initialized)
   {
-    logging::fatal("Expected settings to be loaded, but no root directory specified yet");
+    exit(logging::fatal("Expected settings to be loaded, but no root directory specified yet"));
   }
   return *INSTANCE;
 };
@@ -63,7 +63,7 @@ string get_value(
   }
   if (required)
   {
-    logging::fatal("Missing setting for {:s}", string(key).c_str());
+    exit(logging::fatal("Missing setting for {:s}", string(key).c_str()));
   }
   // HACK: use return to avoid compiler warning
   static const auto Invalid = "INVALID";
@@ -89,11 +89,9 @@ bool get_flag(
   {
     return false;
   }
-  return logging::fatal<bool>([&]() {
-    return std::format(
-      "Only valid values for {:s} are 0 (false) or 1 (true) but got {:s}", key, value
-    );
-  });
+  exit(
+    logging::fatal("Only valid values for {:s} are 0 (false) or 1 (true) but got {:s}", key, value)
+  );
 }
 constexpr string to_string(const Mode mode)
 {
@@ -106,7 +104,7 @@ constexpr string to_string(const Mode mode)
     case Mode::Surface:
       return "SURFACE";
   }
-  return logging::fatal<string>([&]() { return std::format("Mode not handled"); });
+  exit(logging::fatal("Mode not handled"));
 };
 string ModeOptions()
 {
@@ -139,11 +137,9 @@ Mode get_mode(
   {
     return Mode::Test;
   }
-  return logging::fatal<Mode>([&]() {
-    return std::format(
-      "Only valid value for {:s} is one of {:s} but got {:s}", key, ModeOptions(), value
-    );
-  });
+  exit(logging::fatal(
+    "Only valid value for {:s} is one of {:s} but got {:s}", key, ModeOptions(), value
+  ));
 }
 const string Settings::getRoot() const noexcept { return dir_root_; }
 const string Settings::getBinaryDirectory() const noexcept { return dir_binary_; }
@@ -162,16 +158,12 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     auto filename = dir_root_ + "settings.ini";
     if (!std::filesystem::exists(filename))
     {
-      logging::debug([&]() {
-        return std::format("No exisiting settings file to read at {:s}", filename);
-      });
+      logging::debug("No exisiting settings file to read at {:s}", filename);
       // ensure directory exists and then copy settings.ini from beside binary to start
       const auto default_settings = dir_binary + "settings.ini";
       if (!std::filesystem::exists(default_settings))
       {
-        logging::fatal([&]() {
-          return std::format("No default settings found at {:s}", default_settings);
-        });
+        exit(logging::fatal("No default settings found at {:s}", default_settings));
       }
       dir_settings = dir_binary;
       filename = default_settings;
@@ -183,7 +175,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     }
     if (!std::filesystem::exists(filename))
     {
-      logging::fatal([&]() { return std::format("Unable to read settings from {:s}", filename); });
+      exit(logging::fatal("Unable to read settings from {:s}", filename));
     }
     logging::debug("Initializing settings from {:s}", filename);
     settings_ =
@@ -285,11 +277,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
       salt = static_cast<size_t>(abs(v));
       if (v < 0)
       {
-        logging::warning([&]() {
-          return std::format(
-            "Negative salt value '{:d}' converted to positive value {:d}", v, salt
-          );
-        });
+        logging::warning("Negative salt value '{:d}' converted to positive value {:d}", v, salt);
       }
     }
     if (const auto value = get_value(settings_, "WX", false); "INVALID" != value)

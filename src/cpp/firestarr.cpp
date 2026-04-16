@@ -64,27 +64,21 @@ int main(const int argc, const char* const argv[])
     if (dir_log != dir_out)
     {
       make_directory_recursive(dir_log);
-      logging::warning([&]() {
-        return std::format(
-          "Log file ({:s}) is being written outside the output directory ({:s})",
-          settings.log_file,
-          dir_out
-        );
-      });
+      logging::warning(
+        "Log file ({:s}) is being written outside the output directory ({:s})",
+        settings.log_file,
+        dir_out
+      );
     }
     const auto opened_log = logging::open_log_file(settings.log_file.c_str());
     if (!opened_log)
     {
-      return logging::fatal<int>([&]() {
-        return std::format("Can't open log file {:s}", settings.log_file);
-      });
+      exit(logging::fatal("Can't open log file {:s}", settings.log_file));
     }
     logging::note("Specific revision is {:s}", SPECIFIC_REVISION);
     logging::debug("Full hash is: {:s}", FULL_HASH);
     logging::debug("Compiled on: {:s}", COMPILED_ON);
-    logging::note([&]() {
-      return std::format("Output directory is {:s}", settings.output_directory);
-    });
+    logging::note("Output directory is {:s}", settings.output_directory);
     logging::note("Output log is {:s}", settings.log_file);
     // at this point we've parsed positional args and know we're not in test mode
     if (!parser.was_parsed("--apcp_prev"))
@@ -102,11 +96,9 @@ int main(const int argc, const char* const argv[])
       const FwiWeather yesterday{settings.get_weather()};
       auto& start_date = settings.start_date.value();
       fs::fix_tm(&start_date);
-      logging::debug([&]() {
-        return std::format(
-          "Simulation start time after fix_tm() again is {:s}", format_datetime(start_date)
-        );
-      });
+      logging::debug(
+        "Simulation start time after fix_tm() again is {:s}", format_datetime(start_date)
+      );
       // we were given a time, so number of days is until end of year
       tm start = start_date;
       const auto start_t = mktime(&start);
@@ -117,9 +109,7 @@ int main(const int argc, const char* const argv[])
       // start day counts too, so +1
       // HACK: but we don't want to go to Jan 1 so don't add 1
       size_t num_days = static_cast<size_t>(seconds / fs::DAY_SECONDS);
-      logging::debug([&]() {
-        return std::format("Calculated number of days until end of year: {:d}", num_days);
-      });
+      logging::debug("Calculated number of days until end of year: {:d}", num_days);
       // +1 because day 1 counts too
       // +2 so that results don't change when we change number of days
       num_days = min(num_days, static_cast<size_t>(settings.output_date_offsets.max()) + 2);
@@ -146,8 +136,7 @@ int main(const int argc, const char* const argv[])
   }
   catch (const std::exception& ex)
   {
-    std::ignore = logging::fatal<int>(ex);
-    std::terminate();
+    exit(logging::fatal(ex));
   }
 #endif
   return result;

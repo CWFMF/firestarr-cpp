@@ -78,7 +78,7 @@ static MathSize day_length_factor(const MathSize latitude, const int month) noex
   {
     return LfS[month];
   }
-  return logging::fatal<MathSize>("Unable to calculate DayLengthFactor");
+  exit(logging::fatal("Unable to calculate DayLengthFactor"));
 }
 using MonthArray = array<MathSize, 12>;
 static constexpr MonthArray
@@ -129,7 +129,7 @@ static MathSize day_length(const MathSize latitude, const int month) noexcept
   {
     return DAY_LENGTH20_S.at(static_cast<size_t>(month) - 1);
   }
-  return logging::fatal<MathSize>("Unable to calculate DayLength");
+  exit(logging::fatal("Unable to calculate DayLength"));
 }
 MathSize find_m(
   const Temperature temperature,

@@ -154,14 +154,12 @@ CellPoints& CellPoints::insert(
       if (abs(spread_current.time() - spread_arrival_.time()) <= TIME_EPSILON)
       // else if (arrival_time == arrival_time_)
       {
-        logging::verbose([&]() {
-          return std::format(
-            "Same time so setting ros to max({:f}, {:f}) at time {:f}",
-            spread_current.ros(),
-            spread_arrival_.ros(),
-            spread_current.time()
-          );
-        });
+        logging::verbose(
+          "Same time so setting ros to max({:f}, {:f}) at time {:f}",
+          spread_current.ros(),
+          spread_arrival_.ros(),
+          spread_current.time()
+        );
         // the same time so pick higher ros
         if (
           (spread_arrival_.ros() < spread_current.ros())

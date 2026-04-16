@@ -152,11 +152,7 @@ public:
     std::function<T(V, V)> convert
   )
   {
-    logging::debug([&]() {
-      return std::format(
-        "Reading a raster where T = {:s}, V = {:s}", typeid(T).name(), typeid(V).name()
-      );
-    });
+    logging::debug("Reading a raster where T = {:s}, V = {:s}", typeid(T).name(), typeid(V).name());
     auto grid = readTiffInt(filename, point);
     const auto nodata_input = grid.nodataInput();
     T nodata_value = convert(nodata_input, nodata_input);

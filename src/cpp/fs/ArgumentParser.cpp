@@ -318,9 +318,7 @@ ArgumentParser::ArgumentParser(
   }
   // FIX: doing this here means we always see the settings if we haven't adjusted log level
   // if there is a settings.ini in the output directory then use that
-  logging::note([&]() {
-    return std::format("Checking for {:s}", output_directory + "settings.ini");
-  });
+  logging::note("Checking for {:s}", output_directory + "settings.ini");
   Settings::setRoot(binary_directory_, output_directory);
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
@@ -394,7 +392,7 @@ Settings& ArgumentParser::parse_args()
   {
     if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
     {
-      logging::fatal([&]() { return std::format("{:s} must be specified", kv.first); });
+      exit(logging::fatal("{:s} must be specified", kv.first));
     }
   }
   if ((PositionalArgumentsRequired::Required == require_positional_)
@@ -671,12 +669,10 @@ Settings& MainArgumentParser::parse_args()
       const auto arg = get_positional();
       if (0 != strcmp(arg.c_str(), "all"))
       {
-        logging::error([&]() {
-          return std::format(
-            "Only positional argument allowed for test mode aside from output directory is 'all' but got '{:s}'",
-            arg
-          );
-        });
+        logging::error(
+          "Only positional argument allowed for test mode aside from output directory is 'all' but got '{:s}'",
+          arg
+        );
         show_usage_and_exit();
       }
       settings.test_all = true;
@@ -718,11 +714,9 @@ vector<string>& ArgumentParser::args_expanded()
             }
             else
             {
-              return logging::fatal<vector<string>>([&]() {
-                return std::format(
-                  "Invalid argument {:s} found as part of combined flag argument {:s}", arg, s
-                );
-              });
+              exit(logging::fatal(
+                "Invalid argument {:s} found as part of combined flag argument {:s}", arg, s
+              ));
             }
           }
         }

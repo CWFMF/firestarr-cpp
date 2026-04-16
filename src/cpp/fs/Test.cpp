@@ -153,9 +153,7 @@ string run_test(
   if (ignore_existing && directory_exists(output_directory.c_str()))
   {
     // skip if directory exists
-    logging::warning([&]() {
-      return std::format("Skipping existing directory {:s}", output_directory);
-    });
+    logging::warning("Skipping existing directory {:s}", output_directory);
     return output_directory;
   }
   // delay instantiation so things only get made when executed
@@ -202,15 +200,9 @@ string run_test(
   logging::debug("Starting simulation");
   // NOTE: don't want to reset first because TestScenabuirio handles what that does
   scenario.run(&probabilities);
-  logging::note([&]() {
-    return std::format("Saving results for {:s} in {:s}", test_name, output_directory);
-  });
+  logging::note("Saving results for {:s} in {:s}", test_name, output_directory);
   std::ignore = scenario.saveObservers(output_directory, test_name);
-  logging::note([&]() {
-    return std::format(
-      "Final Size: {:0.0f}, ROS: {:0.2f}", scenario.currentFireSize(), info.headRos()
-    );
-  });
+  logging::note("Final Size: {:0.0f}, ROS: {:0.2f}", scenario.currentFireSize(), info.headRos());
   return string(output_directory);
 }
 string run_test_ignore_existing(
@@ -435,20 +427,18 @@ int test(Settings& settings)
     }
     else
     {
-      logging::note([&]() {
-        return std::format(
-          "Running tests with constant inputs for {:f} hours:\n\tFBP Fuel:\t\t{:s}\n\tFFMC:\t\t\t{:f}\n\tDMC:\t\t\t{:f}\n\tDC:\t\t\t{:f}\n\tWind Speed:\t\t{:f}\n\tWind Direction:\t\t{:f}\n\tSlope:\t\t\t{:d}\n\tAspect:\t\t\t{:d}\n",
-          hours,
-          fuel,
-          ffmc.value,
-          dmc.value,
-          dc.value,
-          wind_speed.value,
-          wind_direction.value,
-          slope,
-          aspect
-        );
-      });
+      logging::note(
+        "Running tests with constant inputs for {:f} hours:\n\tFBP Fuel:\t\t{:s}\n\tFFMC:\t\t\t{:f}\n\tDMC:\t\t\t{:f}\n\tDC:\t\t\t{:f}\n\tWind Speed:\t\t{:f}\n\tWind Direction:\t\t{:f}\n\tSlope:\t\t\t{:d}\n\tAspect:\t\t\t{:d}\n",
+        hours,
+        fuel,
+        ffmc.value,
+        dmc.value,
+        dc.value,
+        wind_speed.value,
+        wind_direction.value,
+        slope,
+        aspect
+      );
       auto dir_result = run_test(
         output_directory, fuel, slope, aspect, hours, dc, dmc, ffmc, wind, &final_sizes, false
       );
@@ -459,7 +449,7 @@ int test(Settings& settings)
   }
   catch (const runtime_error& err)
   {
-    logging::fatal(err);
+    exit(logging::fatal(err));
   }
   return 0;
 }
