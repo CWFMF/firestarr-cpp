@@ -50,7 +50,7 @@ CellPoints::CellPoints(const Idx cell_x, const Idx cell_y) noexcept
   std::fill(pts_.points().begin(), pts_.points().end(), INVALID_INNER_POSITION);
   std::fill(pts_.directions().begin(), pts_.directions().end(), INVALID_DIRECTION.value);
 #ifdef DEBUG_CELLPOINTS
-  logging::note("CellPoints is size %ld after creation and should be empty", size());
+  logging::note("CellPoints is size {:d} after creation and should be empty", size());
 #endif
 }
 CellPoints::CellPoints() noexcept
@@ -116,7 +116,7 @@ CellPoints& CellPoints::insert(
 {
 #ifdef DEBUG_CELLPOINTS
   logging::note(
-    "Insert (%f, %f) at time %f with ROS %f, Intensity %d, RAZ %f",
+    "Insert ({:f}, {:f}) at time {:f} with ROS {:f}, Intensity {:d}, RAZ {:f}",
     x,
     y,
     arrival_time,
@@ -130,9 +130,11 @@ CellPoints& CellPoints::insert(
   constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
   if (0 < spread_current.time() && 0 > spread_arrival_.time())
   {
-    logging::extensive(
-      "No time so setting ros to %f at time %f", spread_current.ros(), spread_current.time()
-    );
+    logging::extensive([&]() {
+      return std::format(
+        "No time so setting ros to {:f} at time {:f}", spread_current.ros(), spread_current.time()
+      );
+    });
     // record ros and time if nothing yet
     spread_arrival_ = spread_current;
   }
@@ -154,12 +156,14 @@ CellPoints& CellPoints::insert(
       if (abs(spread_current.time() - spread_arrival_.time()) <= TIME_EPSILON)
       // else if (arrival_time == arrival_time_)
       {
-        logging::verbose(
-          "Same time so setting ros to max(%f, %f) at time %f",
-          spread_current.ros(),
-          spread_arrival_.ros(),
-          spread_current.time()
-        );
+        logging::verbose([&]() {
+          return std::format(
+            "Same time so setting ros to max({:f}, {:f}) at time {:f}",
+            spread_current.ros(),
+            spread_arrival_.ros(),
+            spread_current.time()
+          );
+        });
         // the same time so pick higher ros
         if (
           (spread_arrival_.ros() < spread_current.ros())
@@ -203,7 +207,7 @@ CellPoints& CellPoints::insert(
     p_a = (d < p_d) ? spread_current.direction().asDegrees() : p_a;
   }
 #ifdef DEBUG_CELLPOINTS
-  logging::note("now have %ld points", size());
+  logging::note("now have {:d} points", size());
 #endif
   const Location& dst = location();
   // adds 0 if the same so try without checking
@@ -273,7 +277,7 @@ CellPoints& CellPoints::merge(const CellPoints& rhs)
   }
   add_source(rhs.src_);
 #ifdef DEBUG_CELLPOINTS
-  logging::note("Merging %ld with %ld gives %ld pts", n0, n1, size());
+  logging::note("Merging {:d} with {:d} gives {:d} pts", n0, n1, size());
 #endif
   return *this;
 }
@@ -320,7 +324,7 @@ CellPoints& CellPointsMap::insert(
   }
 #ifdef DEBUG_CELLPOINTS
   logging::note(
-    "insert with size %ld of (%f, %f) at time %f with ROS %f gives size %ld",
+    "insert with size {:d} of ({:f}, {:f}) at time {:f} with ROS {:f} gives size {:d}",
     n0,
     x,
     y,

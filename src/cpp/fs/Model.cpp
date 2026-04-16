@@ -36,18 +36,24 @@ Model::Model(
     active_simulations_still_required_(settings.minimum_active_simulation_count),
     latitude_(start_point.latitude()), longitude_(start_point.longitude())
 {
-  logging::debug("Calculating for (%f, %f)", start_point.latitude(), start_point.longitude());
+  logging::debug([&]() {
+    return std::format(
+      "Calculating for ({:f}, {:f})", start_point.latitude(), start_point.longitude()
+    );
+  });
   const auto nd_for_point = calculate_nd_ref_for_point(env->elevation(), start_point);
   for (auto day = 0; day < MAX_DAYS; ++day)
   {
     nd_.at(static_cast<size_t>(day)) = static_cast<int>(day - nd_for_point);
-    logging::verbose(
-      "Day %d has nd %d, is%s green, %d%% curing",
-      day,
-      nd_.at(static_cast<size_t>(day)),
-      calculate_is_green(nd_.at(static_cast<size_t>(day))) ? "" : " not",
-      calculate_grass_curing(nd_.at(static_cast<size_t>(day)))
-    );
+    logging::verbose([&]() {
+      return std::format(
+        "Day {:d} has nd {:d}, is{:s} green, {:d}% curing",
+        day,
+        nd_.at(static_cast<size_t>(day)),
+        calculate_is_green(nd_.at(static_cast<size_t>(day))) ? "" : " not",
+        calculate_grass_curing(nd_.at(static_cast<size_t>(day)))
+      );
+    });
   }
 }
 void Model::setWeather(const FwiWeather& weather, const Day start_day)
@@ -86,17 +92,19 @@ void Model::readWeather(
   Day max_date = numeric_limits<Day>::min();
   time_t prev_time = numeric_limits<time_t>::min();
   ifstream in{filename};
-  logging::check_fatal(!in.is_open(), "Could not open input weather file %s", filename.c_str());
+  logging::check_fatal(!in.is_open(), [&]() {
+    return std::format("Could not open input weather file {:s}", filename);
+  });
   if (in.is_open())
   {
 #ifdef DEBUG_WEATHER
     const auto file_out = string(output_directory_) + "/wx_hourly_out_read.csv";
     ofstream out{file_out};
-    logging::check_fatal(!out.is_open(), "Cannot open file %s for output", file_out.c_str());
+    logging::check_fatal(!out.is_open(), "Cannot open file {:s} for output", file_out.c_str());
     out << "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI\r\n";
 #endif
     string str;
-    logging::info("Reading scenarios from '%s'", filename.c_str());
+    logging::info([&]() { return std::format("Reading scenarios from '{:s}'", filename); });
     // read header line
     getline(in, str);
     // get rid of whitespace
@@ -104,12 +112,13 @@ void Model::readWeather(
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     constexpr auto expected_header = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
-    logging::check_fatal(
-      expected_header != str,
-      "Input CSV must have columns in this order:\n'%s'\n but got:\n'%s'",
-      expected_header,
-      str.c_str()
-    );
+    logging::check_fatal(expected_header != str, [&]() {
+      return std::format(
+        "Input CSV must have columns in this order:\n'{:s}'\n but got:\n'{:s}'",
+        expected_header,
+        str
+      );
+    });
     auto prev = &yesterday;
     // HACK: adding to original object if we don't do this?
     auto apcp_24h = yesterday.prec.value;
@@ -120,7 +129,7 @@ void Model::readWeather(
       {
         // HACK: ignore date and just worry about relative order??
         // Scenario
-        logging::verbose("Scenario is %s", str.c_str());
+        logging::verbose([&]() { return std::format("Scenario is {:s}", str); });
         size_t cur = 0;
         try
         {
@@ -129,28 +138,29 @@ void Model::readWeather(
         catch (const std::exception& ex)
         {
           // HACK: somehow stoi() is still getting empty strings
-          logging::fatal(
-            ex,
-            "Error reading weather file %s: %s is not a valid integer",
-            filename.c_str(),
-            str.c_str()
-          );
+          logging::fatal(ex, [&]() {
+            return std::format(
+              "Error reading weather file {:s}: {:s} is not a valid integer", filename, str
+            );
+          });
         }
         if (wx.find(cur) == wx.end())
         {
-          logging::debug("Loading scenario %d...", cur);
+          logging::debug([&]() { return std::format("Loading scenario {:d}...", cur); });
           wx.emplace(cur, vector<FwiWeather>{});
           prev_time = std::numeric_limits<time_t>::min();
-          logging::check_fatal(
-            wx_daily.find(cur) != wx_daily.end(),
-            "Somehow have daily weather for scenario %ld before hourly weather",
-            cur
-          );
+          logging::check_fatal(wx_daily.find(cur) != wx_daily.end(), [&]() {
+            return std::format(
+              "Somehow have daily weather for scenario {:d} before hourly weather", cur
+            );
+          });
           wx_daily.emplace(cur, map<Day, FwiWeather>());
           prev = &yesterday;
-          logging::extensive(
-            "Resetting new scenario precip to %f from %f", yesterday.prec.value, apcp_24h
-          );
+          logging::extensive([&]() {
+            return std::format(
+              "Resetting new scenario precip to {:f} from {:f}", yesterday.prec.value, apcp_24h
+            );
+          });
           apcp_24h = yesterday.prec.value;
         }
         auto& s = wx.at(cur);
@@ -160,10 +170,18 @@ void Model::readWeather(
         const auto ticks = mktime(&t);
         if (1 == cur)
         {
-          logging::debug("Date '%s' is %ld and calculated jd is %d", str.c_str(), ticks, t.tm_yday);
+          logging::debug([&]() {
+            return std::format(
+              "Date '{:s}' is {:d} and calculated jd is {:d}", str, ticks, t.tm_yday
+            );
+          });
           if (!s.empty() && t.tm_yday < min_date)
           {
-            logging::fatal("Weather input file crosses year boundary or dates are not sequential");
+            logging::fatal([&]() {
+              return std::format(
+                "Weather input file crosses year boundary or dates are not sequential"
+              );
+            });
           }
         }
         min_date = min(min_date, static_cast<Day>(t.tm_yday));
@@ -172,11 +190,12 @@ void Model::readWeather(
         if (prev_time != std::numeric_limits<time_t>::min())
         {
           auto seconds_diff = (cur_time - prev_time);
-          logging::check_fatal(
-            seconds_diff != HOUR_SECONDS,
-            "Expected sequential hours in weather input but rows are %f hours away from each other",
-            seconds_diff / static_cast<MathSize>(HOUR_SECONDS)
-          );
+          logging::check_fatal(seconds_diff != HOUR_SECONDS, [&]() {
+            return std::format(
+              "Expected sequential hours in weather input but rows are {:f} hours away from each other",
+              seconds_diff / static_cast<MathSize>(HOUR_SECONDS)
+            );
+          });
         }
         prev_time = cur_time;
         const auto for_time = (t.tm_yday - min_date) * DAY_HOURS + t.tm_hour;
@@ -187,16 +206,18 @@ void Model::readWeather(
         {
           s.resize(new_size);
         }
-        logging::verbose("for_time == %d", for_time);
+        logging::verbose([&]() { return std::format("for_time == {:d}", for_time); });
         FwiWeather w{read_fwi_weather(&iss, &str)};
         s.at(for_time) = w;
-        logging::check_fatal(
-          0 > w.prec.value, "Hourly weather precip %f is negative", w.prec.value
-        );
+        logging::check_fatal(0 > w.prec.value, [&]() {
+          return std::format("Hourly weather precip {:f} is negative", w.prec.value);
+        });
         apcp_24h += w.prec.value;
-        logging::extensive(
-          "Adding %f to precip results in accumulation of %f", w.prec.value, apcp_24h
-        );
+        logging::extensive([&]() {
+          return std::format(
+            "Adding {:f} to precip results in accumulation of {:f}", w.prec.value, apcp_24h
+          );
+        });
         if (12 == t.tm_hour)
         {
           // we just hit noon on a new day, so add the daily value
@@ -209,7 +230,9 @@ void Model::readWeather(
             FwiWeather{*prev, month, latitude, w.temperature, w.rh, w.wind, Precipitation(apcp_24h)}
           );
           // new 24 hour period
-          logging::extensive("Resetting daily precip to %f from %f", 0.0, apcp_24h);
+          logging::extensive([&]() {
+            return std::format("Resetting daily precip to {:f} from {:f}", 0.0, apcp_24h);
+          });
           apcp_24h = 0;
           prev = &s_daily.at(static_cast<Day>(t.tm_yday));
         }
@@ -243,7 +266,9 @@ void Model::readWeather(
     }
 #ifdef DEBUG_WEATHER
     out.close();
-    logging::check_fatal(out.fail(), "Could not close file %s", file_out.c_str());
+    logging::check_fatal(out.fail(), [&]() {
+      return std::format("Could not close file {:s}", file_out.c_str());
+    });
 #endif
     in.close();
   }
@@ -290,11 +315,15 @@ void Model::findStarts(const Location location)
     ++range;
   }
   logging::check_fatal(starts_.empty(), "Fuel grid is empty");
-  logging::info("Using %d start locations:", ignitionScenarios());
-  for (const auto& s : starts_)
-  {
-    logging::info("\t%d, %d", s->row(), s->column());
-  }
+  logging::info([&]() {
+    stringstream ss{};
+    ss << std::format("Using {:d} start locations:\n", ignitionScenarios());
+    for (const auto& s : starts_)
+    {
+      ss << std::format("\t{:d}, {:d}\n", s->row(), s->column());
+    }
+    return ss.str();
+  });
 }
 void Model::findAllStarts()
 {
@@ -310,7 +339,7 @@ void Model::findAllStarts()
       }
     }
   }
-  logging::info("Using %d start locations:", ignitionScenarios());
+  logging::info([&]() { return std::format("Using {:d} start locations:", ignitionScenarios()); });
 }
 void Model::makeStarts(
   Coordinates coordinates,
@@ -324,7 +353,9 @@ void Model::makeStarts(
   Location location(std::get<0>(coordinates), std::get<1>(coordinates));
   if (!perim.empty())
   {
-    logging::note("Initializing from perimeter %s", perim.canonical());
+    logging::note([&]() {
+      return std::format("Initializing from perimeter {:s}", perim.canonical());
+    });
     perimeter_ = make_shared<Perimeter>(perim, point, *env_);
     // HACK: if perimeter is only one cell then use position not perimeter so it can bounce if
     // non-fuel
@@ -332,7 +363,9 @@ void Model::makeStarts(
     const auto s = burned.size();
     if (1 >= s)
     {
-      logging::note("Converting perimeter into point since size is %ld cell(s)", s);
+      logging::note([&]() {
+        return std::format("Converting perimeter into point since size is {:d} cell(s)", s);
+      });
       // use whatever the one cell is instead of the lat/long
       if (1 == s)
       {
@@ -346,7 +379,9 @@ void Model::makeStarts(
   // use if instead of else if in case perimeter was a single point and got switched
   if (size > 0)
   {
-    logging::note("Initializing from size %f ha", env_->to_hectares(size));
+    logging::note([&]() {
+      return std::format("Initializing from size {:f} ha", env_->to_hectares(size));
+    });
     perimeter_ = make_shared<Perimeter>(location, size, *env_);
   }
   // figure out where the fire can exist
@@ -356,7 +391,11 @@ void Model::makeStarts(
     // we have a perimeter to start from
     // HACK: make sure this isn't empty
     starts_.push_back(make_shared<Cell>(cell(location)));
-    logging::note("Fire starting with size %0.1f ha", env_->to_hectares(perimeter_->burned.size()));
+    logging::note([&]() {
+      return std::format(
+        "Fire starting with size {:0.1f} ha", env_->to_hectares(perimeter_->burned.size())
+      );
+    });
   }
   else
   {
@@ -374,7 +413,9 @@ void Model::makeStarts(
     }
     else
     {
-      logging::note("Fire starting with size %0.1f ha", env_->to_hectares(1));
+      logging::note([&]() {
+        return std::format("Fire starting with size {:0.1f} ha", env_->to_hectares(1));
+      });
       if (0 == size && is_null_fuel(cell(location)))
       {
         findStarts(location);
@@ -385,13 +426,15 @@ void Model::makeStarts(
       }
     }
   }
-  logging::note(
-    "Creating %ld streams x %ld location%s = %ld scenarios",
-    wx_.size(),
-    ignitionScenarios(),
-    ignitionScenarios() > 1 ? "s" : "",
-    wx_.size() * ignitionScenarios()
-  );
+  logging::note([&]() {
+    return std::format(
+      "Creating {:d} streams x {:d} location{:s} = {:d} scenarios",
+      wx_.size(),
+      ignitionScenarios(),
+      ignitionScenarios() > 1 ? "s" : "",
+      wx_.size() * ignitionScenarios()
+    );
+  });
 }
 Iteration Model::readScenarios(
   const StartPoint& start_point,
@@ -567,9 +610,11 @@ bool Model::add_statistics(
         return num_left;
       }
     }
-    logging::note(
-      "Not enough active simulations out of %ld results to meet minimum", all_sizes->size()
-    );
+    logging::note([&]() {
+      return std::format(
+        "Not enough active simulations out of {:d} results to meet minimum", all_sizes->size()
+      );
+    });
     return num_left;
   }();
   if (0 < activeSimulationsStillRequired())
@@ -579,20 +624,24 @@ bool Model::add_statistics(
   is_over_simulation_count_ = all_sizes->size() >= settings.maximum_simulation_count;
   if (isOverSimulationCountMaximum())
   {
-    logging::note(
-      "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
-      i,
-      +settings.maximum_simulation_count
-    );
+    logging::note([&]() {
+      return std::format(
+        "Stopping after {:d} iterations. Simulation limit of {:d} simulations has been reached.",
+        i,
+        +settings.maximum_simulation_count
+      );
+    });
     return false;
   }
   if (isOutOfTime())
   {
-    logging::note(
-      "Stopping after %d iterations. Time limit of %d seconds has been reached.",
-      i,
-      +settings.maximum_time_seconds
-    );
+    logging::note([&]() {
+      return std::format(
+        "Stopping after {:d} iterations. Time limit of {:d} seconds has been reached.",
+        i,
+        +settings.maximum_time_seconds
+      );
+    });
     return false;
   }
   return true;
@@ -620,45 +669,55 @@ size_t runs_required(
   static const auto& settings = fs::settings::instance();
   if (settings.deterministic)
   {
-    logging::note("Stopping after iteration %ld because running in deterministic mode", i);
+    logging::note([&]() {
+      return std::format("Stopping after iteration {:d} because running in deterministic mode", i);
+    });
     return 0;
   }
   if (model.isOverSimulationCountMaximum())
   {
-    logging::note(
-      "Stopping after %d iterations. Simulation limit of %d simulations has been reached.",
-      i,
-      +settings.maximum_simulation_count
-    );
+    logging::note([&]() {
+      return std::format(
+        "Stopping after {:d} iterations. Simulation limit of {:d} simulations has been reached.",
+        i,
+        +settings.maximum_simulation_count
+      );
+    });
     return 0;
   }
   if (model.isOutOfTime())
   {
-    logging::note(
-      "Stopping after %d iterations. Time limit of %d seconds has been reached.",
-      i,
-      +settings.maximum_time_seconds
-    );
+    logging::note([&]() {
+      return std::format(
+        "Stopping after {:d} iterations. Time limit of {:d} seconds has been reached.",
+        i,
+        +settings.maximum_time_seconds
+      );
+    });
     return 0;
   }
   const auto max_sims_left = settings.maximum_simulation_count - i;
   if (model.isUnderSimulationCountMinimum())
   {
-    logging::debug(
-      "Continuing after %d iterations. Simulation minimum of %d simulations has not been reached.",
-      i,
-      +settings.minimum_simulation_count
-    );
+    logging::debug([&]() {
+      return std::format(
+        "Continuing after {:d} iterations. Simulation minimum of {:d} simulations has not been reached.",
+        i,
+        +settings.minimum_simulation_count
+      );
+    });
     return min(max_sims_left, settings.minimum_simulation_count - i);
   }
   const auto active_still_required = model.activeSimulationsStillRequired();
   if (0 < active_still_required)
   {
-    logging::debug(
-      "Continuing after %d iterations. Active simulation minimum of %d simulations has not been reached.",
-      i,
-      +settings.minimum_active_simulation_count
-    );
+    logging::debug([&]() {
+      return std::format(
+        "Continuing after {:d} iterations. Active simulation minimum of {:d} simulations has not been reached.",
+        i,
+        +settings.minimum_active_simulation_count
+      );
+    });
     // HACK: if we have n active sims so far then expect that many per i simulations?
     return min(max_sims_left, i * active_still_required);
   }
@@ -666,7 +725,9 @@ size_t runs_required(
   const auto min_values = min(min(all_sizes->size(), means->size()), pct->size());
   if (1 >= min_values)
   {
-    logging::note("Cannot calculate statistics with only %ld value", min_values);
+    logging::note([&]() {
+      return std::format("Cannot calculate statistics with only {:d} value", min_values);
+    });
     return 1;
   }
   const auto for_sizes = Statistics{*all_sizes};
@@ -681,18 +742,22 @@ size_t runs_required(
   const auto runs_for_means = for_means.runsRequired(settings.confidence_level);
   const auto runs_for_pct = for_pct.runsRequired(settings.confidence_level);
   const auto runs_for_sizes = for_sizes.runsRequired(settings.confidence_level);
-  logging::debug(
-    "Runs required based on criteria: { means: %ld, pct: %ld, sizes: %ld}",
-    runs_for_means,
-    runs_for_pct,
-    runs_for_sizes
-  );
-  logging::debug(
-    "Number of values based on criteria: { means: %ld, pct: %ld, sizes: %ld}",
-    for_means.n(),
-    for_pct.n(),
-    for_sizes.n()
-  );
+  logging::debug([&]() {
+    return std::format(
+      "Runs required based on criteria: {{ means: {:d}, pct: {:d}, sizes: {:d} }}",
+      runs_for_means,
+      runs_for_pct,
+      runs_for_sizes
+    );
+  });
+  logging::debug([&]() {
+    return std::format(
+      "Number of values based on criteria: {{ means: {:d}, pct: {:d}, sizes: {:d} }}",
+      for_means.n(),
+      for_pct.n(),
+      for_sizes.n()
+    );
+  });
   const auto left = max(max(runs_for_means, runs_for_pct), runs_for_sizes);
   return left;
 }
@@ -714,23 +779,27 @@ DurationSize Model::saveProbabilities(
     // HACK: use max as "never saved" and replace with 0 on first save
     if (is_being_cancelled_)
     {
-      logging::info(
-        "Saving%s results for (%ld of %ld) required scenarios%s",
-        is_interim ? " interim" : "",
-        +scenarios_required_done_,
-        +scenarios_per_iteration_,
-        is_being_cancelled_ ? " because cancelling" : ""
-      );
+      logging::info([&]() {
+        return std::format(
+          "Saving{:s} results for ({:d} of {:d}) required scenarios{:s}",
+          is_interim ? " interim" : "",
+          +scenarios_required_done_,
+          +scenarios_per_iteration_,
+          is_being_cancelled_ ? " because cancelling" : ""
+        );
+      });
     }
     else
     {
-      logging::info(
-        "Saving%s results for %ld scenarios (%ld new in %lds since last save)",
-        is_interim ? " interim" : "",
-        +scenarios_done_,
-        +scenarios_done_ - scenarios_last_save_,
-        timeSinceLastSave().count()
-      );
+      logging::info([&]() {
+        return std::format(
+          "Saving{:s} results for {:d} scenarios ({:d} new in {:d} since last save)",
+          is_interim ? " interim" : "",
+          +scenarios_done_,
+          +scenarios_done_ - scenarios_last_save_,
+          timeSinceLastSave().count()
+        );
+      });
     }
     for (const auto& [t, prob] : probabilities)
     {
@@ -739,17 +808,19 @@ DurationSize Model::saveProbabilities(
       std::ignore = prob->saveAll(outputDirectory(), this->start_time_, time, processing_status);
       if (processing_status == processed)
       {
-        const auto day = static_cast<int>(round(time));
-        const auto n = nd(day);
-        logging::note(
-          "Fuels for day %d are %s green-up and grass has %d%% curing",
-          day - static_cast<int>(start_day),
-          calculate_is_green(n) ? "after" : "before",
-          calculate_grass_curing(n)
-        );
+        logging::note([&]() {
+          const auto day = static_cast<int>(round(time));
+          const auto n = nd(day);
+          return std::format(
+            "Fuels for day {:d} are {:s} green-up and grass has {:d}% curing",
+            day - static_cast<int>(start_day),
+            calculate_is_green(n) ? "after" : "before",
+            calculate_grass_curing(n)
+          );
+        });
       }
     }
-    logging::debug("Done saving proabability grids");
+    logging::debug("Done saving probability grids");
     interim_changed_ = false;
     should_output_interim_ = false;
     scenarios_last_save_ = +scenarios_done_;
@@ -793,26 +864,30 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   static_assert(std::numeric_limits<size_t>::digits10 >= precision);
   const auto lat = static_cast<size_t>(abs(start_point.latitude()) * pow(10, precision));
   const auto lon = static_cast<size_t>(abs(start_point.longitude()) * pow(10, precision));
-  logging::debug(
-    "lat/long (%f, %f) converted to (%zu, %zu)",
-    start_point.latitude(),
-    start_point.longitude(),
-    lat,
-    lon
-  );
-  const size_t base_salt = settings.salt;
-  auto make_seed = [&](const char* name, const size_t salt) {
-    const auto d = static_cast<size_t>(start_day);
-    logging::info(
-      "Seed inputs using precision of %ld with base_salt %zu for %s: %zu, %zu, %zu, %zu",
-      precision,
-      base_salt,
-      name,
-      salt,
-      d,
+  logging::debug([&]() {
+    return std::format(
+      "lat/long ({:f}, {:f}) converted to ({:d}, {:d})",
+      start_point.latitude(),
+      start_point.longitude(),
       lat,
       lon
     );
+  });
+  const size_t base_salt = settings.salt;
+  auto make_seed = [&](const char* name, const size_t salt) {
+    const auto d = static_cast<size_t>(start_day);
+    logging::info([&]() {
+      return std::format(
+        "Seed inputs using precision of {:d} with base_salt {:d} for {:s}: {:d}, {:d}, {:d}, {:d}",
+        precision,
+        base_salt,
+        name,
+        salt,
+        d,
+        lat,
+        lon
+      );
+    });
     // size_t will wrap around so don't need to worry about overflow
     const size_t use_salt = base_salt + salt;
     return std::seed_seq{use_salt, d, lat, lon};
@@ -887,7 +962,9 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
       {
         saveProbabilities(all_probabilities[0], start_day, true);
       }
-      logging::verbose("Checking clock [%ld of %ld]", runTime(), timeLimit());
+      logging::verbose([&]() {
+        return std::format("Checking clock [{:d} of {:d}]", runTime().count(), timeLimit().count());
+      });
       keep_checking = (runs_left > 0 && !shouldStop());
     }
     if (isOutOfTime())
@@ -916,19 +993,23 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
       is_being_cancelled = true;
       if (scenarios_required_done_ > 0)
       {
-        logging::info(
-          "Saving interim results for (%ld of %ld) scenarios in timer thread",
-          +scenarios_required_done_,
-          +scenarios_per_iteration_
-        );
+        logging::info([&]() {
+          return std::format(
+            "Saving interim results for ({:d} of {:d}) scenarios in timer thread",
+            +scenarios_required_done_,
+            +scenarios_per_iteration_
+          );
+        });
         saveProbabilities(all_probabilities[0], start_day, true);
       }
     }
     const auto run_time_seconds = runTime().count();
     const auto time_left = settings.maximum_time_seconds - run_time_seconds;
-    logging::debug(
-      "Ending timer after %ld seconds with %ld seconds left", run_time_seconds, time_left
-    );
+    logging::debug([&]() {
+      return std::format(
+        "Ending timer after {:d} seconds with {:d} seconds left", run_time_seconds, time_left
+      );
+    });
   });
   auto threads = list<std::thread>{};
   const auto finalize_probabilities = [&]() {
@@ -972,9 +1053,12 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     const auto MAX_THREADS = max(HARDWARE_THREADS, scenarios_per_iteration_);
     if (MAX_THREADS > HARDWARE_THREADS)
     {
-      logging::note(
-        "Increasing to use at least one thread for each of %ld scenarios", +scenarios_per_iteration_
-      );
+      logging::note([&]() {
+        return std::format(
+          "Increasing to use at least one thread for each of {:d} scenarios",
+          +scenarios_per_iteration_
+        );
+      });
       Model::task_limiter.set_limit(static_cast<int>(MAX_THREADS));
     }
     // no point in running multiple iterations if deterministic
@@ -995,44 +1079,54 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     auto run_scenario = [&](Scenario* s, size_t i, bool is_required) {
       const auto result = s->run(&all_probabilities[i]);
       ++scenarios_done_;
-      logging::extensive(
-        "Done %ld scenarios in iteration %ld which %s required",
-        +scenarios_done_,
-        i,
-        (is_required ? "is" : "is not")
-      );
-      if (is_required)
-      {
-        logging::verbose(
-          "Done %ld scenarios in iteration %ld which %s required",
+      logging::extensive([&]() {
+        return std::format(
+          "Done {:d} scenarios in iteration {:d} which {:s} required",
           +scenarios_done_,
           i,
           (is_required ? "is" : "is not")
         );
+      });
+      if (is_required)
+      {
+        logging::verbose([&]() {
+          return std::format(
+            "Done {:d} scenarios in iteration {:d} which {:s} required",
+            +scenarios_done_,
+            i,
+            (is_required ? "is" : "is not")
+          );
+        });
         ++scenarios_required_done_;
-        logging::debug(
-          "Have (%ld of %ld) scenarios and %s being cancelled",
-          +scenarios_required_done_,
-          +scenarios_per_iteration_,
-          (is_being_cancelled ? "is" : "not")
-        );
+        logging::debug([&]() {
+          return std::format(
+            "Have ({:d} of {:d}) scenarios and {:s} being cancelled",
+            +scenarios_required_done_,
+            +scenarios_per_iteration_,
+            (is_being_cancelled ? "is" : "not")
+          );
+        });
         if (is_being_cancelled)
         {
           // no point in saving interim if final is done
           if (scenarios_per_iteration_ != scenarios_required_done_)
           {
-            logging::info(
-              "Saving interim results for (%ld of %ld) scenarios",
-              +scenarios_required_done_,
-              +scenarios_per_iteration_
-            );
+            logging::info([&]() {
+              return std::format(
+                "Saving interim results for ({:d} of {:d}) scenarios",
+                +scenarios_required_done_,
+                +scenarios_per_iteration_
+              );
+            });
             saveProbabilities(all_probabilities[0], start_day, true);
           }
         }
       }
       return result;
     };
-    logging::debug("Created %d iterations to run concurrently", all_iterations.size());
+    logging::debug([&]() {
+      return std::format("Created {:d} iterations to run concurrently", all_iterations.size());
+    });
     size_t cur_iter = 0;
     for (auto& iter : all_iterations)
     {
@@ -1082,7 +1176,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         else
         {
           runs_left = runs_required(iterations_done_, &all_sizes, &means, &pct, *this);
-          logging::note("Need another %d iterations", runs_left);
+          logging::note([&]() { return std::format("Need another {:d} iterations", runs_left); });
         }
       }
       if (runs_left > 0)
@@ -1112,7 +1206,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
     logging::note("Running in synchronous mode");
     while (runs_left > 0)
     {
-      logging::note("Running iteration %d", iterations_done_ + 1);
+      logging::note([&]() { return std::format("Running iteration {:d}", iterations_done_ + 1); });
       if (reset_iter(iteration))
       {
         for (auto s : iteration.getScenarios())
@@ -1132,7 +1226,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
         else
         {
           runs_left = runs_required(iterations_done_, &all_sizes, &means, &pct, *this);
-          logging::note("Need another %d iterations", runs_left);
+          logging::note([&]() { return std::format("Need another {:d} iterations", runs_left); });
         }
       }
     }
@@ -1152,9 +1246,11 @@ int Model::runScenarios(
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
-  fs::logging::note(
-    "Simulation start time at start of runScenarios() is %s", format_datetime(start_time).c_str()
-  );
+  fs::logging::note([&]() {
+    return std::format(
+      "Simulation start time at start of runScenarios() is {:s}", format_datetime(start_time)
+    );
+  });
   auto env = Environment::loadEnvironment(
     raster_root, start_point, perimeter, start_time.tm_year + TM_YEAR_OFFSET
   );
@@ -1165,26 +1261,40 @@ int Model::runScenarios(
 #ifndef NDEBUG
   logging::check_fatal(
     std::get<0>(*position) > MAX_ROWS || std::get<1>(*position) > MAX_COLUMNS,
-    "Location loaded outside of grid at position (%d, %d)",
-    std::get<0>(*position),
-    std::get<1>(*position)
+    [&]() {
+      return std::format(
+        "Location loaded outside of grid at position ({:d}, {:d})",
+        std::get<0>(*position),
+        std::get<1>(*position)
+      );
+    }
   );
 #endif
-  logging::info("Position is (%d, %d)", std::get<0>(*position), std::get<1>(*position));
+  logging::info([&]() {
+    return std::format("Position is ({:d}, {:d})", std::get<0>(*position), std::get<1>(*position));
+  });
   const Location location{std::get<0>(*position), std::get<1>(*position)};
   Model model(start_time, output_directory, start_point, &env);
-  logging::note("Grid has size (%d, %d)", env.rows(), env.columns());
-  logging::note("Fire start position is cell (%d, %d)", location.row(), location.column());
+  logging::note([&]() {
+    return std::format("Grid has size ({:d}, {:d})", env.rows(), env.columns());
+  });
+  logging::note([&]() {
+    return std::format(
+      "Fire start position is cell ({:d}, {:d})", location.row(), location.column()
+    );
+  });
   auto start_hour =
     ((start_time.tm_hour + (static_cast<DurationSize>(start_time.tm_min) / 60)) / DAY_HOURS);
-  logging::note(
-    "Simulation start time is %d-%02d-%02d %02d:%02d",
-    start_time.tm_year + TM_YEAR_OFFSET,
-    start_time.tm_mon + TM_MONTH_OFFSET,
-    start_time.tm_mday,
-    start_time.tm_hour,
-    start_time.tm_min
-  );
+  logging::note([&]() {
+    return std::format(
+      "Simulation start time is {:d}-{:02d}-{:02d} {:02d}:{:02d}",
+      start_time.tm_year + TM_YEAR_OFFSET,
+      start_time.tm_mon + TM_MONTH_OFFSET,
+      start_time.tm_mday,
+      start_time.tm_hour,
+      start_time.tm_min
+    );
+  });
   const auto start = start_time.tm_yday + start_hour;
   const auto start_day = static_cast<Day>(start);
   if (settings.is_surface())
@@ -1201,14 +1311,18 @@ int Model::runScenarios(
       logging::fatal("No weather provided");
     }
     const auto& w = model.wx_.begin()->second;
-    logging::debug("Have weather from day %d to %d", w.minDate(), w.maxDate());
+    logging::debug([&]() {
+      return std::format("Have weather from day {:d} to {:d}", w.minDate(), w.maxDate());
+    });
     const auto numDays = (w.maxDate() - w.minDate() + 1);
     const auto needDays = settings.output_date_offsets.max();
     if (numDays < needDays)
     {
-      logging::fatal(
-        "Not enough weather to proceed - have %d days but looking for %d", numDays, needDays
-      );
+      logging::fatal([&]() {
+        return std::format(
+          "Not enough weather to proceed - have {:d} days but looking for {:d}", numDays, needDays
+        );
+      });
     }
     // want to output internal representation of weather to file
 #ifdef DEBUG_WEATHER
@@ -1221,26 +1335,36 @@ int Model::runScenarios(
     logging::check_fatal(start < w.minDate(), "Start time is before weather streams start");
     logging::check_fatal(start > w.maxDate(), "Start time is after weather streams end");
   }
-  logging::note(
-    "Simulation start time of %f is %s", start, make_timestamp(model.year(), start).c_str()
-  );
+  logging::note([&]() {
+    return std::format(
+      "Simulation start time of {:f} is {:s}", start, make_timestamp(model.year(), start)
+    );
+  });
   model.makeStarts(*position, start_point, perimeter, size);
   auto probabilities = model.runIterations(start_point, start, start_day);
-  logging::note("Ran %d simulations", Scenario::completed());
+  logging::note([&]() { return std::format("Ran {:d} simulations", Scenario::completed()); });
   const auto run_time_seconds = model.runTime();
   const size_t time_left = settings.maximum_time_seconds - run_time_seconds.count();
-  logging::debug(
-    "Finished successfully after %ld seconds with %ld seconds left",
-    run_time_seconds.count(),
-    time_left
-  );
-  logging::debug("Processed %ld spread events between all scenarios", Scenario::total_steps());
+  logging::debug([&]() {
+    return std::format(
+      "Finished successfully after {:d} seconds with {:d} seconds left",
+      run_time_seconds.count(),
+      time_left
+    );
+  });
+  logging::debug([&]() {
+    return std::format(
+      "Processed {:d} spread events between all scenarios", Scenario::total_steps()
+    );
+  });
   show_probabilities(probabilities);
   // auto final_time =
   model.saveProbabilities(probabilities, start_day, false);
   // HACK: update last checked time to use in calculation
   model.last_checked_ = Clock::now();
-  logging::note("Total simulation time was %ld seconds", model.runTime());
+  logging::note([&]() {
+    return std::format("Total simulation time was {:d} seconds", model.runTime().count());
+  });
   return 0;
 }
 #ifdef DEBUG_WEATHER
@@ -1254,9 +1378,13 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
   const auto file_out = string(output_directory_) + file_name;
   const auto file_out_fbp = string(output_directory_) + string("fbp_") + file_name;
   ofstream out{file_out};
-  logging::check_fatal(!out.is_open(), "Unable to write to %s", file_out.c_str());
+  logging::check_fatal(!out.is_open(), [&]() {
+    return std::format("Unable to write to {:s}", file_out.c_str());
+  });
   ofstream out_fbp{file_out_fbp};
-  logging::check_fatal(!out_fbp.is_open(), "Unable to write to %s", file_out.c_str());
+  logging::check_fatal(!out_fbp.is_open(), [&]() {
+    return std::format("Unable to write to {:s}", file_out.c_str());
+  });
   constexpr auto HEADER_FWI = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
   constexpr auto HEADER_FBP_PRIMARY = "CFB,CFC,FD,HFI,RAZ,ROS,SFC,TFC";
   out << HEADER_FWI << "\r\n";
@@ -1372,8 +1500,12 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
   }
   out.close();
   out_fbp.close();
-  logging::check_fatal(out.fail(), "Could not close file %s", file_out.c_str());
-  logging::check_fatal(out_fbp.fail(), "Could not close file %s", file_out_fbp.c_str());
+  logging::check_fatal(out.fail(), [&]() {
+    return std::format("Could not close file {:s}", file_out.c_str());
+  });
+  logging::check_fatal(out_fbp.fail(), [&]() {
+    return std::format("Could not close file {:s}", file_out_fbp.c_str());
+  });
 }
 #endif
 }

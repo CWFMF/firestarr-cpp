@@ -16,7 +16,7 @@ PJ_CONTEXT* get_context()
   string db_path = settings.getBinaryDirectory() + "proj.db";
   // HACK: only do once
   static const auto showed_once = [&]() {
-    logging::debug("Trying to set db path to %s", db_path.c_str());
+    logging::debug([&]() { return std::format("Trying to set db path to {:s}", db_path); });
     return true;
   }();
   std::ignore = showed_once;
@@ -24,7 +24,8 @@ PJ_CONTEXT* get_context()
   {
     logging::fatal("Can't set proj.db path");
   }
-  logging::verbose("Succeeded trying to set db path to %s", db_path.c_str());
+  logging::verbose([&]() { return std::format("Succeeded trying to set db path to {:s}", db_path); }
+  );
   return pjc;
 }
 class Point;
@@ -57,17 +58,19 @@ void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x,
   *y = b.enu.n;
   // #ifdef DEBUG_PROJ
   PJ_COORD c = proj_trans(P, PJ_INV, b);
-  fs::logging::verbose(
-    "longitude: %f, latitude: %f => easting: %.3f, northing: %.3f => x: %.3f, y: %.3f => longitude: %g, latitude: %g",
-    point.longitude(),
-    point.latitude(),
-    b.enu.e,
-    b.enu.n,
-    b.xy.x,
-    b.xy.y,
-    c.lp.lam,
-    c.lp.phi
-  );
+  fs::logging::verbose([&]() {
+    return std::format(
+      "longitude: {:f}, latitude: {:f} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}",
+      point.longitude(),
+      point.latitude(),
+      b.enu.e,
+      b.enu.n,
+      b.xy.x,
+      b.xy.y,
+      c.lp.lam,
+      c.lp.phi
+    );
+  });
   // #endif
   proj_destroy(P);
   proj_context_destroy(C);
@@ -81,7 +84,7 @@ fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize 
   // Given that we have used proj_normalize_for_visualization(), the order
   // of coordinates is longitude, latitude, and values are expressed in
   // degrees.
-  logging::verbose("proj_coord(%f, %f, 0, 0)", x, y);
+  logging::verbose([&]() { return std::format("proj_coord({:f}, {:f}, 0, 0)", x, y); });
   const PJ_COORD a = proj_coord(x, y, 0, 0);
   // transform to  geographical
   const PJ_COORD b = proj_trans(P, PJ_FWD, a);
@@ -107,7 +110,9 @@ string try_fix_meridian(const string_view proj4)
       // zone 15 is -93 and other zones are 6 degrees difference
       const auto z = stod(zone);
       const auto lon_0 = fs::utm_central_meridian(z);
-      logging::debug("UTM zone %s == %f turned into meridian %f", zone.c_str(), z, lon_0);
+      logging::debug([&]() {
+        return std::format("UTM zone {:s} == {:f} turned into meridian {:f}", zone, z, lon_0);
+      });
       return {0.0, lon_0, 0.9996, 500000.0, 0.0};
     }
     // HACK: only do once

@@ -322,7 +322,7 @@ SpreadInfo::SpreadInfo(
       return;
     }
   }
-  logging::verbose("initial ros is %f", head_ros_);
+  logging::verbose([&]() { return std::format("initial ros is {:f}", head_ros_); });
   const auto back_isi = ffmc_effect * STANDARD_BACK_ISI_WSV(wsv);
   auto back_ros = fuel->calculateRos(nd, *weather, back_isi) * bui_eff;
   if (is_crown_)

@@ -2,10 +2,12 @@
 #ifndef FS_LOG_H
 #define FS_LOG_H
 #include "stdafx.h"
+#include <format>
+#include <tuple>
 #ifdef NDEBUG
 #define DEBUG_NOEXCEPT_OFF noexcept
 #else
-#undef DEBUG_NOEXCEPT_OFF
+#define DEBUG_NOEXCEPT_OFF
 #endif
 namespace fs::logging
 {
@@ -24,32 +26,124 @@ void decrease_log_level() noexcept;
 int get_log_level() noexcept;
 int open_log_file(const char* filename) noexcept;
 int close_log_file() noexcept;
-string output(int log_level, const char* const format, va_list* args) DEBUG_NOEXCEPT_OFF;
-string output(int log_level, const char* const format, ...) DEBUG_NOEXCEPT_OFF;
-void extensive(const char* const format, ...) noexcept;
-void verbose(const char* const format, ...) noexcept;
-void debug(const char* const format, ...) noexcept;
-void info(const char* const format, ...) noexcept;
-void note(const char* const format, ...) noexcept;
-void warning(const char* const format, ...) noexcept;
-void error(const char* const format, ...) noexcept;
-void check_fatal(bool condition, const char* const format, ...) DEBUG_NOEXCEPT_OFF;
-void check_equal(const MathSize lhs, const MathSize rhs, const char* name) DEBUG_NOEXCEPT_OFF;
-void check_equal(const char* lhs, const char* rhs, const char* name) DEBUG_NOEXCEPT_OFF;
-void check_equal(const bool lhs, const bool rhs, const char* name) DEBUG_NOEXCEPT_OFF;
-template <class V>
-void check_equal(const V& lhs, const V& rhs, const char* name) DEBUG_NOEXCEPT_OFF
+// log takes either a message that's ready to output, or a function that creates one
+// HACK: this means we don't care how the message is generated, and none of the arguments should get
+// resolved unless necessary
+string output(int log_level, const string msg) DEBUG_NOEXCEPT_OFF;
+inline string output(int log_level, std::function<string()> fct) DEBUG_NOEXCEPT_OFF
 {
-  const auto fmt = typeid(lhs) == typeid(size_t) ? "Expected %s to be %ld but got %ld"
-                                                 : "Expected %s to be %d but got %d";
-  check_fatal(lhs != rhs, fmt, name, rhs, lhs);
+  return output(log_level, fct());
+}
+inline void extensive(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_EXTENSIVE, msg); }
+inline void verbose(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_VERBOSE, msg); }
+inline void debug(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_DEBUG, msg); }
+inline void info(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_INFO, msg); }
+inline void note(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_NOTE, msg); }
+inline void warning(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_WARNING, msg); }
+inline void error(const string msg) DEBUG_NOEXCEPT_OFF { output(LOG_ERROR, msg); }
+inline void extensive(std::function<string()> fct) DEBUG_NOEXCEPT_OFF
+{
+  output(LOG_EXTENSIVE, fct);
+}
+inline void verbose(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_VERBOSE, fct); }
+inline void debug(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_DEBUG, fct); }
+inline void info(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_INFO, fct); }
+inline void note(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_NOTE, fct); }
+inline void warning(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_WARNING, fct); }
+inline void error(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_ERROR, fct); }
+template <typename T>
+inline T fatal(const string msg, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
+{
+  output(LOG_FATAL, msg);
+#ifndef NDEBUG
+  if (throw_msg)
+  {
+    // HACK: just throw the format for a start - just want to see stack traces when debugging
+    throw std::runtime_error(msg);
+  }
+#else
+  std::ignore = throw_msg;
+#endif
+  exit(EXIT_FAILURE);
+}
+template <typename T>
+inline T fatal(std::function<string()> fct, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
+{
+  return fatal<T>(fct(), throw_msg);
+}
+template <typename T>
+inline T fatal(const std::exception& ex)
+{
+  auto r = fatal<T>(ex.what(), false);
+  throw ex;
+  // HACK: to satisfy return type
+  return r;
+}
+template <typename T>
+inline T fatal(const std::exception& ex, std::function<string()> fct)
+{
+  std::ignore = fatal<T>(fct(), false);
+  return fatal<T>(ex);
+}
+// overrides for void return
+inline void fatal(const string msg, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
+{
+  std::ignore = fatal<int>(msg, throw_msg);
+}
+inline void fatal(std::function<string()> fct, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
+{
+  // HACK: just need any template
+  std::ignore = fatal<int>(fct, throw_msg);
+}
+inline void fatal(const std::exception& ex) { std::ignore = fatal<int>(ex); }
+inline void fatal(const std::exception& ex, std::function<string()> fct)
+{
+  fatal(fct(), false);
+  fatal(ex);
+}
+inline void check_fatal(bool condition, std::function<string()> fct) DEBUG_NOEXCEPT_OFF
+{
+  if (condition)
+  {
+    std::ignore = fatal<int>(fct);
+  }
+}
+inline void check_fatal(bool condition, const string msg) DEBUG_NOEXCEPT_OFF
+{
+  if (condition)
+  {
+    std::ignore = fatal<int>(msg);
+  }
+}
+template <typename T>
+inline void check_equal(const T lhs, const T rhs, const char* name) DEBUG_NOEXCEPT_OFF
+{
+  check_fatal(lhs != rhs, [&]() {
+    return std::format("Expected {:s} to be {} but got {}", name, rhs, lhs);
+  });
+}
+inline void check_equal(const char* lhs, const char* rhs, const char* name) DEBUG_NOEXCEPT_OFF
+{
+  check_fatal(0 != strcmp(lhs, rhs), [&]() {
+    return std::format("Expected {:s} to be {:s} got {:s}", name, rhs, lhs);
+  });
+}
+inline void check_equal(const bool lhs, const bool rhs, const char* name) DEBUG_NOEXCEPT_OFF
+{
+  bool a = lhs ? true : false;
+  bool b = rhs ? true : false;
+  check_fatal(a != b, [&]() {
+    return std::format(
+      "Expected {:s} to be {:s} but got {:s}", name, a ? "true" : "false", b ? "true" : "false"
+    );
+  });
 }
 template <class V>
-void check_equal_verbose(const int log_level, const V& lhs, const V& rhs, const char* name)
+inline void check_equal_verbose(const int log_level, const V& lhs, const V& rhs, const char* name)
   DEBUG_NOEXCEPT_OFF
 {
   check_equal(lhs, rhs, name);
-  output(log_level, "%s matches", name);
+  output(log_level, std::format("{:s} matches", name));
 }
 void check_tolerance(
   const MathSize epsilon,
@@ -57,44 +151,5 @@ void check_tolerance(
   const MathSize rhs,
   const char* name
 ) DEBUG_NOEXCEPT_OFF;
-void fatal(const char* const format, ...) DEBUG_NOEXCEPT_OFF;
-void fatal(const std::exception& ex);
-void fatal(const std::exception& ex, const char* const format, ...);
-template <class T>
-T fatal(const char* const format, va_list* args) DEBUG_NOEXCEPT_OFF
-{
-  auto msg = output(LOG_FATAL, format, args);
-  fflush(stdout);
-  close_log_file();
-#ifdef NDEBUG
-  exit(EXIT_FAILURE);
-#else
-  // HACK: just throw the format for a start - just want to see stack traces when debugging
-  throw std::runtime_error(msg);
-#endif
-}
-template <class T>
-T fatal(const char* const format, ...) DEBUG_NOEXCEPT_OFF
-{
-  va_list args;
-  va_start(args, format);
-  return fatal<T>(format, &args);
-}
-class SelfLogger
-{
-public:
-  virtual ~SelfLogger() = default;
-  virtual string add_log(const char* const format) const noexcept = 0;
-  void log_output(const int level, const char* const format, ...) const noexcept;
-  void log_extensive(const char* const format, ...) const noexcept;
-  void log_verbose(const char* const format, ...) const noexcept;
-  void log_debug(const char* const format, ...) const noexcept;
-  void log_info(const char* const format, ...) const noexcept;
-  void log_note(const char* const format, ...) const noexcept;
-  void log_warning(const char* const format, ...) const noexcept;
-  void log_error(const char* const format, ...) const noexcept;
-  void log_check_fatal(bool condition, const char* const format, ...) const DEBUG_NOEXCEPT_OFF;
-  void log_fatal(const char* const format, ...) const DEBUG_NOEXCEPT_OFF;
-};
 }
 #endif

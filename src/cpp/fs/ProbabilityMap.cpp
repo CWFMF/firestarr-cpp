@@ -93,7 +93,7 @@ void ProbabilityMap::addProbability(const IntensityMap& for_time)
       }
       else
       {
-        logging::fatal("Value %d doesn't fit into any range", v);
+        logging::fatal("Value {:d} doesn't fit into any range", v);
       }
     }
   });
@@ -110,14 +110,16 @@ void ProbabilityMap::show() const
   // with different randomThreshold values
   const auto day = static_cast<int>(time - floor(start_time));
   const auto s = getStatistics();
-  logging::note(
-    "Fire size at end of day %d: %0.1f ha - %0.1f ha (mean %0.1f ha, median %0.1f ha)",
-    day,
-    s.min(),
-    s.max(),
-    s.mean(),
-    s.median()
-  );
+  logging::note([&]() {
+    return std::format(
+      "Fire size at end of day {:d}: {:0.1f} ha - {:0.1f} ha (mean {:0.1f} ha, median {:0.1f} ha)",
+      day,
+      s.min(),
+      s.max(),
+      s.mean(),
+      s.median()
+    );
+  });
 }
 [[nodiscard]] FileList ProbabilityMap::record_if_interim(
   FileList&& files,
@@ -131,12 +133,12 @@ void ProbabilityMap::show() const
   lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
   for (const auto& filename : files)
   {
-    logging::verbose("Recording %s as interim", filename.c_str());
+    logging::verbose([&]() { return std::format("Recording {:s} as interim", filename); });
     // is an interim file, so keep path for later deleting
     PATHS_INTERIM.emplace(filename);
-    logging::check_fatal(
-      !PATHS_INTERIM.contains(filename), "Expected %s to be in interim files list", filename.c_str()
-    );
+    logging::check_fatal(!PATHS_INTERIM.contains(filename), [&]() {
+      return std::format("Expected {:s} to be in interim files list", filename);
+    });
   }
   return files;
 }
@@ -177,7 +179,7 @@ void ProbabilityMap::deleteInterim()
   lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
   for (const auto& path : PATHS_INTERIM)
   {
-    logging::debug("Removing interim file %s", path.c_str());
+    logging::debug([&]() { return std::format("Removing interim file {:s}", path); });
     if (file_exists(path.c_str()))
     {
       try
@@ -186,7 +188,7 @@ void ProbabilityMap::deleteInterim()
       }
       catch (const std::exception& err)
       {
-        logging::error("Error trying to remove %s", path.c_str());
+        logging::error([&]() { return std::format("Error trying to remove {:s}", path); });
         logging::error(err.what());
       }
     }

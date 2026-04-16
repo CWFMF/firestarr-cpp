@@ -26,7 +26,7 @@ struct IObserver_deleter
 /**
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
  */
-class Scenario : public logging::SelfLogger
+class Scenario
 {
 public:
   /**
@@ -212,6 +212,7 @@ public:
    * \return Simulation number
    */
   [[nodiscard]] constexpr int64_t simulation() const { return simulation_; }
+  [[nodiscard]] constexpr DurationSize current_time() const { return current_time_; }
   /**
    * \brief StartPoint that provides sunrise/sunset times
    * \return StartPoint
@@ -494,7 +495,6 @@ public:
   void clear() noexcept;
 
 protected:
-  string add_log(const char* format) const noexcept override;
   /**
    * \brief Constructor
    * \param model Model running this Scenario

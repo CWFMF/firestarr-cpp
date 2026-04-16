@@ -63,7 +63,7 @@ string get_value(
   }
   if (required)
   {
-    logging::fatal("Missing setting for %s", string(key).c_str());
+    logging::fatal("Missing setting for {:s}", string(key).c_str());
   }
   // HACK: use return to avoid compiler warning
   static const auto Invalid = "INVALID";
@@ -89,9 +89,11 @@ bool get_flag(
   {
     return false;
   }
-  return logging::fatal<bool>(
-    "Only valid values for %s are 0 (false) or 1 (true) but got %s", key.c_str(), value.c_str()
-  );
+  return logging::fatal<bool>([&]() {
+    return std::format(
+      "Only valid values for {:s} are 0 (false) or 1 (true) but got {:s}", key, value
+    );
+  });
 }
 constexpr string to_string(const Mode mode)
 {
@@ -104,7 +106,7 @@ constexpr string to_string(const Mode mode)
     case Mode::Surface:
       return "SURFACE";
   }
-  return logging::fatal<string>("Mode %s not handled", mode);
+  return logging::fatal<string>([&]() { return std::format("Mode not handled"); });
 };
 string ModeOptions()
 {
@@ -137,12 +139,11 @@ Mode get_mode(
   {
     return Mode::Test;
   }
-  return logging::fatal<Mode>(
-    "Only valid value for %s is one of %s but got %s",
-    key.c_str(),
-    ModeOptions().c_str(),
-    value.c_str()
-  );
+  return logging::fatal<Mode>([&]() {
+    return std::format(
+      "Only valid value for {:s} is one of {:s} but got {:s}", key, ModeOptions(), value
+    );
+  });
 }
 const string Settings::getRoot() const noexcept { return dir_root_; }
 const string Settings::getBinaryDirectory() const noexcept { return dir_binary_; }
@@ -161,26 +162,30 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     auto filename = dir_root_ + "settings.ini";
     if (!std::filesystem::exists(filename))
     {
-      logging::debug("No exisiting settings file to read at %s", filename.c_str());
+      logging::debug([&]() {
+        return std::format("No exisiting settings file to read at {:s}", filename);
+      });
       // ensure directory exists and then copy settings.ini from beside binary to start
       const auto default_settings = dir_binary + "settings.ini";
       if (!std::filesystem::exists(default_settings))
       {
-        logging::fatal("No default settings found at %s", default_settings.c_str());
+        logging::fatal([&]() {
+          return std::format("No default settings found at {:s}", default_settings);
+        });
       }
       dir_settings = dir_binary;
       filename = default_settings;
       // logging::note(
-      //   "Copying default settings from %s to %s", default_settings.c_str(), filename.c_str()
+      //   "Copying default settings from {:s} to {:s}", default_settings.c_str(), filename.c_str()
       // );
       // make_directory_recursive(dir_root_.c_str());
       // std::filesystem::copy(default_settings, filename);
     }
     if (!std::filesystem::exists(filename))
     {
-      logging::fatal("Unable to read settings from %s", filename.c_str());
+      logging::fatal([&]() { return std::format("Unable to read settings from {:s}", filename); });
     }
-    logging::debug("Initializing settings from %s", filename.c_str());
+    logging::debug([&]() { return std::format("Initializing settings from {:s}", filename); });
     settings_ =
       make_pair<string_map<string>, string_map<string>>(string_map<string>{}, string_map<string>{});
     ;
@@ -189,7 +194,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     if (in.is_open())
     {
       string str;
-      logging::info("Reading settings from '%s'", filename.c_str());
+      logging::info([&]() { return std::format("Reading settings from '{:s}'", filename); });
       while (getline(in, str))
       {
         istringstream iss(str);
@@ -203,7 +208,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
           getline(iss, str, '\n');
           const auto value = trim_copy(str);
           settings_.first.emplace(key, value);
-          logging::debug("%s: %s", key.c_str(), value.c_str());
+          logging::debug([&]() { return std::format("{:s}: {:s}", key, value); });
         }
       }
       in.close();
@@ -211,7 +216,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     if (settings_.first.empty())
     {
       // could work if all arguments were specified as cli args (not currently possible)
-      logging::warning("Settings file %s is empty", filename.c_str());
+      logging::warning([&]() { return std::format("Settings file {:s} is empty", filename); });
     }
     if (const auto value = get_value(settings_, "OUTPUT_DIRECTORY", false); "INVALID" != value)
     {
@@ -280,7 +285,11 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
       salt = static_cast<size_t>(abs(v));
       if (v < 0)
       {
-        logging::warning("Negative salt value '%d' converted to positive value %zu", v, salt);
+        logging::warning([&]() {
+          return std::format(
+            "Negative salt value '{:d}' converted to positive value {:d}", v, salt
+          );
+        });
       }
     }
     if (const auto value = get_value(settings_, "WX", false); "INVALID" != value)
@@ -330,14 +339,15 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
           {
             have_mode = !have_mode;
           }
-          logging::check_fatal(
-            !have_mode,
-            "Value for %s found but mode is %s and needs to be%s %s",
-            key,
-            to_string(mode).c_str(),
-            inverse ? " not" : "",
-            to_string(mode_required).c_str()
-          );
+          logging::check_fatal(!have_mode, [&]() {
+            return std::format(
+              "Value for {:s} found but mode is {:s} and needs to be{:s} {:s}",
+              key,
+              to_string(mode),
+              inverse ? " not" : "",
+              to_string(mode_required)
+            );
+          });
         }
         return value;
       };
@@ -380,11 +390,15 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     }
     if (!settings_.first.empty())
     {
-      logging::warning("Unused settings in settings file %s", filename.c_str());
-      for (const auto& kv : settings_.first)
-      {
-        logging::warning("%s = %s", kv.first.c_str(), kv.second.c_str());
-      }
+      logging::warning([&]() {
+        stringstream ss{};
+        ss << std::format("Unused settings in settings file {:s}", filename);
+        for (const auto& kv : settings_.first)
+        {
+          ss << std::format("{:s} = {:s}", kv.first, kv.second);
+        }
+        return ss.str();
+      });
     }
   }
   catch (const std::exception& ex)
@@ -404,7 +418,7 @@ string format_section_header(const string& section, int width = 80, int side_wid
 }
 void Settings::saveTo(const string& output_directory) const noexcept
 {
-  make_directory_recursive(output_directory.c_str());
+  make_directory_recursive(output_directory);
   const pushd dir{output_directory};
   const auto filename = "settings.ini";
   ofstream out{filename};

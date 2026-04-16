@@ -148,23 +148,25 @@ string run_test(
   static auto& settings = fs::settings::instance();
   static const auto& lookup = settings.fuel_lookup.lookup();
   string test_name = generate_test_name(fuel_name, slope, aspect, wind);
-  logging::verbose("Queueing test for %s", &(test_name[0]));
+  logging::verbose([&]() { return std::format("Queueing test for {:s}", &(test_name[0])); });
   const string output_directory = string(base_directory) + test_name + "/";
   if (ignore_existing && directory_exists(output_directory.c_str()))
   {
     // skip if directory exists
-    logging::warning("Skipping existing directory %s", output_directory.c_str());
+    logging::warning([&]() {
+      return std::format("Skipping existing directory {:s}", output_directory);
+    });
     return output_directory;
   }
   // delay instantiation so things only get made when executed
   static Semaphore num_concurrent{10 * static_cast<int>(std::thread::hardware_concurrency())};
   CriticalSection _(num_concurrent);
-  // logging::debug("Concurrent test limit is %d", num_concurrent.limit());
-  logging::note("Running test for %s", string(output_directory).c_str());
+  // logging::debug("Concurrent test limit is {:d}", num_concurrent.limit());
+  logging::note([&]() { return std::format("Running test for {:s}", output_directory); });
   static const StartPoint ForPoint(settings.latitude.value(), settings.longitude.value());
   const auto start_date = settings.start_date.value().tm_yday;
   const auto end_date = start_date + static_cast<DurationSize>(num_hours) / DAY_HOURS;
-  make_directory_recursive(string(output_directory).c_str());
+  make_directory_recursive(output_directory);
   const auto fuel = lookup.bySimplifiedName(simplify_fuel_name(fuel_name));
   auto values = vector<Cell>();
   for (Idx r = 0; r < MAX_ROWS; ++r)
@@ -200,9 +202,15 @@ string run_test(
   logging::debug("Starting simulation");
   // NOTE: don't want to reset first because TestScenabuirio handles what that does
   scenario.run(&probabilities);
-  logging::note("Saving results for %s in %s", test_name.c_str(), output_directory.c_str());
+  logging::note([&]() {
+    return std::format("Saving results for {:s} in {:s}", test_name, output_directory);
+  });
   std::ignore = scenario.saveObservers(output_directory, test_name);
-  logging::note("Final Size: %0.0f, ROS: %0.2f", scenario.currentFireSize(), info.headRos());
+  logging::note([&]() {
+    return std::format(
+      "Final Size: {:0.0f}, ROS: {:0.2f}", scenario.currentFireSize(), info.headRos()
+    );
+  });
   return string(output_directory);
 }
 string run_test_ignore_existing(
@@ -414,52 +422,39 @@ int test(Settings& settings)
       {
         r.wait();
         auto output_directory = r.get();
-        logging::check_fatal(
-          !directory_exists(output_directory.c_str()),
-          "Directory for test is missing: %s\n",
-          output_directory.c_str()
-        );
+        logging::check_fatal(!directory_exists(output_directory.c_str()), [&]() {
+          return std::format("Directory for test is missing: {:s}\n", output_directory);
+        });
         ++result;
       }
       auto directories = read_directory(output_directory, "*", false);
-      logging::check_fatal(
-        directories.size() != result,
-        "Expected %ld directories but have %ld",
-        result,
-        directories.size()
-      );
-      logging::note("Successfully ran %ld tests", result);
+      logging::check_fatal(directories.size() != result, [&]() {
+        return std::format("Expected {:d} directories but have {:d}", result, directories.size());
+      });
+      logging::note([&]() { return std::format("Successfully ran {:d} tests", result); });
     }
     else
     {
-      logging::note(
-        "Running tests with constant inputs for %f hours:\n"
-        "\tFBP Fuel:\t\t%s\n"
-        "\tFFMC:\t\t\t%f\n"
-        "\tDMC:\t\t\t%f\n"
-        "\tDC:\t\t\t%f\n"
-        "\tWind Speed:\t\t%f\n"
-        "\tWind Direction:\t\t%f\n"
-        "\tSlope:\t\t\t%d\n"
-        "\tAspect:\t\t\t%d\n",
-        fuel.c_str(),
-        hours,
-        ffmc.value,
-        dmc.value,
-        dc.value,
-        wind_speed,
-        wind_direction,
-        slope,
-        aspect
-      );
+      logging::note([&]() {
+        return std::format(
+          "Running tests with constant inputs for {:f} hours:\n\tFBP Fuel:\t\t{:s}\n\tFFMC:\t\t\t{:f}\n\tDMC:\t\t\t{:f}\n\tDC:\t\t\t{:f}\n\tWind Speed:\t\t{:f}\n\tWind Direction:\t\t{:f}\n\tSlope:\t\t\t{:d}\n\tAspect:\t\t\t{:d}\n",
+          hours,
+          fuel,
+          ffmc.value,
+          dmc.value,
+          dc.value,
+          wind_speed.value,
+          wind_direction.value,
+          slope,
+          aspect
+        );
+      });
       auto dir_result = run_test(
         output_directory, fuel, slope, aspect, hours, dc, dmc, ffmc, wind, &final_sizes, false
       );
-      logging::check_fatal(
-        !directory_exists(dir_result.c_str()),
-        "Directory for test is missing: %s\n",
-        dir_result.c_str()
-      );
+      logging::check_fatal(!directory_exists(dir_result.c_str()), [&]() {
+        return std::format("Directory for test is missing: {:s}\n", dir_result);
+      });
     }
   }
   catch (const runtime_error& err)

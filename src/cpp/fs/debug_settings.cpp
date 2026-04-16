@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 #endif
-namespace fs
+namespace fs::debug
 {
 void show_debug_settings()
 {

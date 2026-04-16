@@ -3,6 +3,9 @@
 #define FS_STATISTICS_H
 #include "stdafx.h"
 #include "Util.h"
+#ifdef DEBUG_STATISTICS
+#include "Log.h"
+#endif
 namespace fs
 {
 /**
@@ -67,9 +70,9 @@ public:
   [[nodiscard]] MathSize percentile(const uint8_t i) const noexcept
   {
 #ifdef DEBUG_STATISTICS
-    logging::check_fatal(
-      static_cast<size_t>(i) >= percentiles_.size(), "Invalid percentile %d requested", i
-    );
+    logging::check_fatal(static_cast<size_t>(i) >= percentiles_.size(), [&]() {
+      return std::format("Invalid percentile {:d} requested", i);
+    });
 #endif
     return percentiles_.at(i);
   }

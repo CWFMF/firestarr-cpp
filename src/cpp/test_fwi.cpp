@@ -62,7 +62,9 @@ int test_fwi_file(
       return 1;
     }
   }
-  logging::debug("Testing FWI generated from %s for latitude %g", file_in, latitude);
+  logging::debug([&]() {
+    return std::format("Testing FWI generated from {:s} for latitude {:g}", file_in, latitude);
+  });
   const Latitude latitude_{latitude};
   /* Main loop for calculating indices */
   for (auto row : buffer)
@@ -103,7 +105,17 @@ int test_fwi_file(
     ffmc0_ = ffmc_;
     dmc0_ = dmc_;
     dc0_ = dc_;
-    logging::verbose("%0.1f %0.1f %0.1f %0.1f %0.1f %0.1f", ffmc, dmc, dc, isi, bui, fwi);
+    logging::verbose([&]() {
+      return std::format(
+        "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}",
+        ffmc.value,
+        dmc.value,
+        dc.value,
+        isi.value,
+        bui.value,
+        fwi.value
+      );
+    });
     if (nullptr != file_out)
     {
       outputFile << std::format(
@@ -127,7 +139,7 @@ int test_fwi_file(
 }
 int compare_files(const string file0, const string file1)
 {
-  logging::info("Comparing %s to %s", file0.c_str(), file1.c_str());
+  logging::info([&]() { return std::format("Comparing {:s} to {:s}", file0, file1); });
   ifstream input0(file0.c_str());
   if (!input0.is_open())
   {
@@ -150,7 +162,7 @@ int compare_files(const string file0, const string file1)
     }
     if (auto cmp = line0.compare(line1); 0 != cmp)
     {
-      logging::error("\t%s\n!=\t%s", line0.c_str(), line1.c_str());
+      logging::error([&]() { return std::format("\t{:s}\n!=\t{:s}", line0, line1); });
       return cmp;
     }
   }
@@ -165,14 +177,18 @@ int test_fwi_files(const string file_expected, const string file_in, const strin
   // FIX: other tests use test/input but want to switch to test/data
   if (auto ret = test_fwi_file(file_in.c_str(), file_out.c_str()); ret != 0)
   {
-    logging::error("Generating %s from %s failed", file_out.c_str(), file_in.c_str());
+    logging::error([&]() {
+      return std::format("Generating {:s} from {:s} failed", file_out, file_in);
+    });
     return ret;
   }
   if (auto cmp = compare_files(file_expected, file_out); 0 != cmp)
   {
-    logging::error(
-      "Comparison between files [%s, %s] gives %d", file_expected.c_str(), file_out.c_str(), cmp
-    );
+    logging::error([&]() {
+      return std::format(
+        "Comparison between files [{:s}, {:s}] gives {:d}", file_expected, file_out, cmp
+      );
+    });
     return cmp;
   }
   return 0;
@@ -193,13 +209,20 @@ int test_fwi(const int argc, const char* const argv[])
   {
     return ret;
   }
-  logging::info(
-    "Testing across latitude range [%+g, %+g] with step %g", LATITUDE_MIN, LATITUDE_MAX, STEP
-  );
-  auto check_latitude = [](const MathSize latitude) {
+  logging::info([&]() {
+    return std::format(
+      "Testing across latitude range [{:+g}, {:+g}] with step {:g}",
+      LATITUDE_MIN,
+      LATITUDE_MAX,
+      STEP
+    );
+  });
+  auto check_latitude = [&](const MathSize latitude) {
     if (auto ret = test_fwi_file(FILE_IN, nullptr, latitude); ret != 0)
     {
-      logging::error("Generating from %s with latitude %g failed", FILE_IN, latitude);
+      logging::error([&]() {
+        return std::format("Generating from {:s} with latitude {:g} failed", FILE_IN, latitude);
+      });
       return ret;
     }
     return 0;
