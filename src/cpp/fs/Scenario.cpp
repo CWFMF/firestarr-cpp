@@ -611,7 +611,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
     return std::format("{:s} Scenario has already run", add_log(*this));
   });
 #endif
-  logging::verbose([&]() { return std::format("{:s} Starting", add_log(*this)); });
+  logging::verbose("{:s} Starting", add_log(*this));
   CriticalSection _(Model::task_limiter);
   // HACK: only do once
   static const auto showed_once = [&]() {
@@ -623,7 +623,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   std::ignore = showed_once;
   unburnable_ = model_->environment().unburnable();
   probabilities_ = probabilities;
-  logging::verbose([&]() { return std::format("{:s} Setting save points", add_log(*this)); });
+  logging::verbose("{:s} Setting save points", add_log(*this));
   for (auto time : save_points_)
   {
     // NOTE: these happen in this order because of the way they sort based on type
@@ -635,11 +635,11 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   else
   {
-    logging::verbose([&]() { return std::format("{:s} Applying perimeter", add_log(*this)); });
+    logging::verbose("{:s} Applying perimeter", add_log(*this));
     intensity_->applyPerimeter(*perimeter_);
-    logging::verbose([&]() { return std::format("{:s} Perimeter applied", add_log(*this)); });
+    logging::verbose("{:s} Perimeter applied", add_log(*this));
     const auto& env = model().environment();
-    logging::verbose([&]() { return std::format("{:s} Igniting points", add_log(*this)); });
+    logging::verbose("{:s} Igniting points", add_log(*this));
     for (const auto& location : perimeter_->edge)
     {
       const auto cell = env.cell(location);
@@ -773,7 +773,7 @@ CellPointsMap apply_offsets_spreadkey(
   // in a cell for it to work well
   CellPointsMap r1{};
   OffsetSet offsets_after_duration{};
-  logging::verbose([&]() { return std::format("Applying {:d} offsets", offsets.size()); });
+  logging::verbose("Applying {:d} offsets", offsets.size());
   // std::transform(
   //   offsets.cbegin(),
   //   offsets.cend(),
@@ -1087,7 +1087,7 @@ bool Scenario::canBurn(const Cell& location) const { return intensity_->canBurn(
 bool Scenario::hasBurned(const Location& location) const { return intensity_->hasBurned(location); }
 void Scenario::endSimulation() noexcept
 {
-  logging::verbose([&]() { return std::format("{:s} Ending simulation", add_log(*this)); });
+  logging::verbose("{:s} Ending simulation", add_log(*this));
   scheduler_ = set<Event>();
 }
 void Scenario::addSaveByOffset(const int offset)
@@ -1122,7 +1122,7 @@ void Scenario::cancel(bool show_warning) noexcept
     cancelled_ = true;
     if (show_warning)
     {
-      logging::warning([&]() { return std::format("{:s} Simulation cancelled", add_log(*this)); });
+      logging::warning("{:s} Simulation cancelled", add_log(*this));
     }
   }
 }

@@ -18,7 +18,7 @@ Environment Environment::load(
   const string_view in_elevation
 )
 {
-  logging::note([&]() { return std::format("Fuel raster is {:s}", string(in_fuel)); });
+  logging::note("Fuel raster is {:s}", string(in_fuel));
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
   static const auto& lookup = settings.fuel_lookup.lookup();
@@ -73,7 +73,7 @@ Environment Environment::loadEnvironment(
   if (!perimeter.empty())
   {
     for_info = make_unique<GridBase>(read_header(perimeter.canonical()));
-    logging::info([&]() { return std::format("Perimeter projection is {:s}", for_info->proj4()); });
+    logging::info("Perimeter projection is {:s}", for_info->proj4());
   }
   for (const auto& raster : rasters)
   {
@@ -147,7 +147,7 @@ Environment Environment::loadEnvironment(
   }
   if (nullptr == env_info && found_best)
   {
-    logging::note([&]() { return std::format("Loading info for fuel {:s}", best_fuel); });
+    logging::note("Loading info for fuel {:s}", best_fuel);
     env_info = EnvironmentInfo::loadInfo(best_fuel, best_elevation);
   }
   logging::check_fatal(nullptr == env_info, [&]() {
@@ -163,7 +163,7 @@ Environment Environment::loadEnvironment(
       env_info->proj4()
     );
   });
-  logging::note([&]() { return std::format("Projection is {:s}", env_info->proj4()); });
+  logging::note("Projection is {:s}", env_info->proj4());
   // envInfo should get deleted automatically because it uses unique_ptr
   return env_info->load(point);
 }
@@ -323,7 +323,7 @@ Environment::Environment(
     )
 {
   // take elevation at point so that if max grid size changes elevation doesn't
-  logging::note([&]() { return std::format("Start elevation is {:d}", elevation_); });
+  logging::note("Start elevation is {:d}", elevation_);
 }
 Cell Environment::offset(const Event& event, const Idx row, const Idx column) const
 {

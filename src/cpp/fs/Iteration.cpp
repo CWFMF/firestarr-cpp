@@ -28,7 +28,7 @@ Iteration* Iteration::reset_with_new_start(const shared_ptr<Cell>& start_cell)
   // could have multiple weather scenarios so this still makes sense to loop
   for (auto& scenario : scenarios_)
   {
-    logging::extensive([&]() { return std::format("Resetting scenario {:d}", i); });
+    logging::extensive("Resetting scenario {:d}", i);
     std::ignore = scenario->reset_with_new_start(start_cell, &final_sizes_);
     ++i;
   }

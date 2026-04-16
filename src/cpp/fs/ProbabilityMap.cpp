@@ -133,7 +133,7 @@ void ProbabilityMap::show() const
   lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
   for (const auto& filename : files)
   {
-    logging::verbose([&]() { return std::format("Recording {:s} as interim", filename); });
+    logging::verbose("Recording {:s} as interim", filename);
     // is an interim file, so keep path for later deleting
     PATHS_INTERIM.emplace(filename);
     logging::check_fatal(!PATHS_INTERIM.contains(filename), [&]() {
@@ -179,7 +179,7 @@ void ProbabilityMap::deleteInterim()
   lock_guard<mutex> lock_interim(PATHS_INTERIM_MUTEX);
   for (const auto& path : PATHS_INTERIM)
   {
-    logging::debug([&]() { return std::format("Removing interim file {:s}", path); });
+    logging::debug("Removing interim file {:s}", path);
     if (file_exists(path.c_str()))
     {
       try
@@ -188,8 +188,7 @@ void ProbabilityMap::deleteInterim()
       }
       catch (const std::exception& err)
       {
-        logging::error([&]() { return std::format("Error trying to remove {:s}", path); });
-        logging::error(err.what());
+        logging::error("Error trying to remove {:s}:\n{:s}", path, err.what());
       }
     }
   }

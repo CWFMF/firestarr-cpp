@@ -229,12 +229,12 @@ auto check_range(
   const T& it
 )
 {
-  logging::debug([&]() { return std::format("Checking {:s}", name_fct); });
+  logging::debug("Checking {:s}", name_fct);
   for (auto v : it)
   {
     const auto msg = std::format("{} ({} = {})", name_fct, name_param, v);
     logging::check_tolerance(epsilon, fct_a(v), fct_b(v), msg.c_str());
-    logging::verbose(msg.c_str());
+    logging::verbose("{:s}", msg);
   }
 }
 }

@@ -464,7 +464,7 @@ inline bool find_value(
   if (!str.empty())
   {
     *result = convert(str);
-    // logging::extensive([&]() { return std::format("{:s} '{:s}'\n", key, str); });
+    // logging::extensive("{:s} '{:s}'\n", key, str);
     return true;
   }
   return false;

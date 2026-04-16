@@ -45,13 +45,13 @@ int value_at_int(void* const buf, const FullIdx offset)
   uint32_t count;
   TIFFGetField(tif, TIFFTAG_GDAL_NODATA, &count, &data);
   logging::check_fatal(0 == count, "NODATA value is not set in input");
-  logging::debug([&]() { return std::format("NODATA value is '{:s}'", static_cast<char*>(data)); });
+  logging::debug("NODATA value is '{:s}'", static_cast<char*>(data));
   const auto nodata_orig = stoi(string(static_cast<char*>(data)));
   logging::debug([&]() {
     return std::format("NODATA value is originally parsed as {:d}", nodata_orig);
   });
   const auto nodata_input = static_cast<int>(stoi(string(static_cast<char*>(data))));
-  logging::debug([&]() { return std::format("NODATA value is parsed as {:d}", nodata_input); });
+  logging::debug("NODATA value is parsed as {:d}", nodata_input);
   auto actual_rows = grid_info.calculateRows();
   auto actual_columns = grid_info.calculateColumns();
   const auto coordinates = grid_info.findFullCoordinates(point, true);
@@ -110,7 +110,7 @@ int value_at_int(void* const buf, const FullIdx offset)
   });
 #endif
   vector<int> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, nodata_input);
-  logging::verbose([&]() { return std::format("{:s}: malloc start", geotiff.filename()); });
+  logging::verbose("{:s}: malloc start", geotiff.filename());
   int bps = std::numeric_limits<int>::digits + (1 * std::numeric_limits<int>::is_signed);
   uint16_t sample_format;
   logging::check_fatal(
@@ -150,7 +150,7 @@ int value_at_int(void* const buf, const FullIdx offset)
     return std::format("Tile size for reading {:s} is {:d}", geotiff.filename(), tile_size);
   });
   const auto buf = _TIFFmalloc(tile_size);
-  logging::verbose([&]() { return std::format("{:s}: read start", geotiff.filename()); });
+  logging::verbose("{:s}: read start", geotiff.filename());
   const tsample_t smp{};
   logging::debug([&]() {
     return std::format(
@@ -262,9 +262,9 @@ int value_at_int(void* const buf, const FullIdx offset)
       }
     }
   }
-  logging::verbose([&]() { return std::format("{:s}: read end", geotiff.filename()); });
+  logging::verbose("{:s}: read end", geotiff.filename());
   _TIFFfree(buf);
-  logging::verbose([&]() { return std::format("{:s}: free end", geotiff.filename()); });
+  logging::verbose("{:s}: free end", geotiff.filename());
   const auto new_xll =
     grid_info.xllcorner() + (static_cast<MathSize>(min_column) * grid_info.cellSize());
   const auto new_yll =

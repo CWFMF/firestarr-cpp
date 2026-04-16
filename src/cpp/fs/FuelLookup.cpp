@@ -404,7 +404,7 @@ public:
           // fuel_type
           getline(iss, str, ',');
           const auto fuel = str;
-          logging::debug([&]() { return std::format("Fuel {:s} has code {:d}", fuel, value); });
+          logging::debug("Fuel {:s} has code {:d}", fuel, value);
           const auto by_name = fuel_by_name_.find(str);
           if (by_name != fuel_by_name_.end())
           {
@@ -547,7 +547,7 @@ public:
     {
       for (const auto& name : kv.second)
       {
-        logging::note([&]() { return std::format("{:d} => {:s}", kv.first, name); });
+        logging::note("{:d} => {:s}", kv.first, name);
       }
     }
   }

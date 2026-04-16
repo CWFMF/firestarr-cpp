@@ -148,7 +148,7 @@ string run_test(
   static auto& settings = fs::settings::instance();
   static const auto& lookup = settings.fuel_lookup.lookup();
   string test_name = generate_test_name(fuel_name, slope, aspect, wind);
-  logging::verbose([&]() { return std::format("Queueing test for {:s}", &(test_name[0])); });
+  logging::verbose("Queueing test for {:s}", &(test_name[0]));
   const string output_directory = string(base_directory) + test_name + "/";
   if (ignore_existing && directory_exists(output_directory.c_str()))
   {
@@ -162,7 +162,7 @@ string run_test(
   static Semaphore num_concurrent{10 * static_cast<int>(std::thread::hardware_concurrency())};
   CriticalSection _(num_concurrent);
   // logging::debug("Concurrent test limit is {:d}", num_concurrent.limit());
-  logging::note([&]() { return std::format("Running test for {:s}", output_directory); });
+  logging::note("Running test for {:s}", output_directory);
   static const StartPoint ForPoint(settings.latitude.value(), settings.longitude.value());
   const auto start_date = settings.start_date.value().tm_yday;
   const auto end_date = start_date + static_cast<DurationSize>(num_hours) / DAY_HOURS;
@@ -431,7 +431,7 @@ int test(Settings& settings)
       logging::check_fatal(directories.size() != result, [&]() {
         return std::format("Expected {:d} directories but have {:d}", result, directories.size());
       });
-      logging::note([&]() { return std::format("Successfully ran {:d} tests", result); });
+      logging::note("Successfully ran {:d} tests", result);
     }
     else
     {

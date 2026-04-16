@@ -41,7 +41,7 @@ using fs::Wind;
 int main(const int argc, const char* const argv[])
 {
   using namespace fs::settings;
-  logging::note([&]() { return std::format("FireSTARR {:s}\n", SPECIFIC_REVISION); });
+  logging::note("FireSTARR {:s}\n", SPECIFIC_REVISION);
   MainArgumentParser parser{argc, argv};
   // HACK: resolve once and fail if not set already
   static auto& settings = fs::settings::instance();
@@ -54,8 +54,8 @@ int main(const int argc, const char* const argv[])
     // HACK: check here so verbosity can affect showing compile info
     if (parser.help_requested())
     {
-      logging::debug([&]() { return std::format("Full hash is: {:s}", FULL_HASH); });
-      logging::debug([&]() { return std::format("Compiled on: {:s}", COMPILED_ON); });
+      logging::debug("Full hash is: {:s}", FULL_HASH);
+      logging::debug("Compiled on: {:s}", COMPILED_ON);
       parser.show_help_and_exit();
     }
     // HACK: know saving settings made output_directory already
@@ -79,13 +79,13 @@ int main(const int argc, const char* const argv[])
         return std::format("Can't open log file {:s}", settings.log_file);
       });
     }
-    logging::note([&]() { return std::format("Specific revision is {:s}", SPECIFIC_REVISION); });
-    logging::debug([&]() { return std::format("Full hash is: {:s}", FULL_HASH); });
-    logging::debug([&]() { return std::format("Compiled on: {:s}", COMPILED_ON); });
+    logging::note("Specific revision is {:s}", SPECIFIC_REVISION);
+    logging::debug("Full hash is: {:s}", FULL_HASH);
+    logging::debug("Compiled on: {:s}", COMPILED_ON);
     logging::note([&]() {
       return std::format("Output directory is {:s}", settings.output_directory);
     });
-    logging::note([&]() { return std::format("Output log is {:s}", settings.log_file); });
+    logging::note("Output log is {:s}", settings.log_file);
     // at this point we've parsed positional args and know we're not in test mode
     if (!parser.was_parsed("--apcp_prev"))
     {
