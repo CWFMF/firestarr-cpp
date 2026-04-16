@@ -183,7 +183,7 @@ int compare_duff(
   static constexpr int RESOLUTION = 10000;
   static constexpr MathSize RANGE = 250.0;
   // check %, so 1 decimal is fine
-  static constexpr MathSize EPSILON = 1e-1f;
+  static constexpr auto EPSILON = static_cast<MathSize>(1e-1);
   logging::output(log_level, "Checking %s", name.c_str());
   logging::check_equal_verbose(logging::LOG_DEBUG, a.ash, b.ash, "ash");
   logging::check_equal_verbose(logging::LOG_DEBUG, a.rho, b.rho, "rho");
