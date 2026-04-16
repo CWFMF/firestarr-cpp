@@ -25,6 +25,7 @@ struct std::hash<fs::Location>
 };
 namespace fs
 {
+using namespace logging;
 using fs::Location;
 using fs::Position;
 using NodataIntType = int64_t;
@@ -276,8 +277,12 @@ protected:
       nodata_input_(nodata_input), nodata_value_(nodata_value), rows_(rows), columns_(columns)
   {
 #ifdef DEBUG_GRIDS
-    logging::check_fatal(rows > MAX_ROWS, "Too many rows (%d > %d)", rows, MAX_ROWS);
-    logging::check_fatal(columns > MAX_COLUMNS, "Too many columns (%d > %d)", columns, MAX_COLUMNS);
+    logging::check_fatal(rows > MAX_ROWS, [&]() {
+      return std::format("Too many rows ({:d} > {:d})", rows, MAX_ROWS);
+    });
+    logging::check_fatal(columns > MAX_COLUMNS, [&]() {
+      return std::format("Too many columns ({:d} > {:d})", columns, MAX_COLUMNS);
+    });
 #endif
 #ifdef DEBUG_GRIDS
     // enforce converting to an int and back produces same V
@@ -435,14 +440,23 @@ protected:
     auto max_column = std::get<2>(bounds);
     auto max_row = std::get<3>(bounds);
 #ifdef DEBUG_GRIDS
-    logging::debug("Bounds are (%d, %d), (%d, %d)", min_column, min_row, max_column, max_row);
+    logging::debug([&]() {
+      return std::format(
+        "Bounds are ({:d}, {:d}), ({:d}, {:d})", min_column, min_row, max_column, max_row
+      );
+    });
 #endif
-    logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
-    logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
+    logging::extensive([&]() {
+      return std::format("Lower left corner is ({:d}, {:d})", min_column, min_row);
+    });
+    logging::extensive([&]() {
+      return std::format("Upper right corner is ({:d}, {:d})", max_column, max_row);
+    });
     const MathSize xll = this->xllcorner() + min_column * this->cellSize();
     // offset is different for y since it's flipped
     const MathSize yll = this->yllcorner() + (min_row) * this->cellSize();
-    logging::extensive("Lower left corner is (%f, %f)", xll, yll);
+    logging::extensive([&]() { return std::format("Lower left corner is ({:f}, {:f})", xll, yll); }
+    );
     // HACK: make sure it's always at least 1
     const auto num_rows = static_cast<MathSize>(max_row) - min_row + 1;
     const auto num_columns = static_cast<MathSize>(max_column) - min_column + 1;
@@ -592,12 +606,11 @@ public:
     }
     catch (const std::exception& err)
     {
-      logging::error(
-        "Error trying to write %s to %s so retrying\n%s",
-        string(base_name).c_str(),
-        string(dir).c_str(),
-        err.what()
-      );
+      logging::error([&]() {
+        return std::format(
+          "Error trying to write {:s} to {:s} so retrying\n{:s}", base_name, dir, err.what()
+        );
+      });
       try
       {
         return this->template saveToFileWithoutRetry<R>(dir, base_name, convert, no_data);
@@ -605,12 +618,11 @@ public:
       catch (const std::exception& err_fatal)
       {
         // will exit if not supposed to retry
-        return logging::fatal<FileList>(
-          "Error trying to write %s to %s\n%s",
-          string(base_name).c_str(),
-          string(dir).c_str(),
-          err_fatal.what()
-        );
+        return logging::fatal<FileList>([&]() {
+          return std::format(
+            "Error trying to write {:s} to {:s}\n{:s}", base_name, dir, err_fatal.what()
+          );
+        });
       }
     }
   }

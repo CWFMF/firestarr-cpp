@@ -272,10 +272,12 @@ public:
         edge.push_back(loc);
       }
     }
-    logging::info(
-      "Created edge for perimeter with length %lu m",
-      static_cast<size_t>(this->cellSize() * edge.size())
-    );
+    logging::info([&]() {
+      return std::format(
+        "Created edge for perimeter with length {:d} m",
+        static_cast<size_t>(this->cellSize() * edge.size())
+      );
+    });
     return edge;
   }
   /**

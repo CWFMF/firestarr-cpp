@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Util.h"
+#include <regex>
 #include "Log.h"
 #include "TimeUtil.h"
 namespace fs
@@ -9,15 +10,18 @@ FileList read_directory(const string_view name, const string_view match, const b
 {
   FileList files{};
   string full_match = ".*/" + string(match);
-  logging::verbose(("Matching '" + full_match + "'").c_str());
+  logging::verbose([&]() { return std::format("Matching '{:s}'", full_match); });
   const std::regex re(full_match, std::regex_constants::icase);
   for (const auto& entry : std::filesystem::directory_iterator(name))
   {
-    logging::verbose(("Checking if file: " + entry.path().string()).c_str());
+    logging::verbose([&]() { return std::format("Checking if file: {:s}", entry.path().string()); }
+    );
     if ((for_files && std::filesystem::is_regular_file(entry))
         || (!for_files && std::filesystem::is_directory(entry)))
     {
-      logging::extensive(("Checking regex match: " + entry.path().string()).c_str());
+      logging::extensive([&]() {
+        return std::format("Checking regex match: {:s}", entry.path().string());
+      });
       if (std::regex_match(entry.path().string(), re))
       {
         files.emplace_back(entry
@@ -42,15 +46,15 @@ FileList find_rasters(const string_view dir, const YearSize year)
                              ? for_year
                              : (directory_exists(for_default.c_str()) ? for_default : path);
   FileList files{};
-  logging::info("Raster root is %s", raster_root.c_str());
+  logging::info([&]() { return std::format("Raster root is {:s}", raster_root); });
   try
   {
     files.append_range(read_directory(raster_root, "fuel.*\\.tif"));
   }
   catch (const std::exception& ex)
   {
-    logging::error("Unable to read directory %s", string(raster_root).c_str());
-    logging::error("%s", ex.what());
+    logging::error([&]() { return std::format("Unable to read directory {:s}", raster_root); });
+    logging::error([&]() { return std::format("{:s}", ex.what()); });
   }
   return files;
 }
@@ -72,12 +76,14 @@ void make_directory(const char* dir) noexcept
   {
     if (ec)
     {
-      logging::fatal("Error %d creating directory %s", ec.value(), dir);
+      logging::fatal([&]() {
+        return std::format("Error {:d} creating directory {:s}", ec.value(), dir);
+      });
     }
     struct stat dir_info{};
     if (stat(dir, &dir_info) != 0)
     {
-      logging::fatal("Cannot create directory %s", dir);
+      logging::fatal([&]() { return std::format("Cannot create directory {:s}", dir); });
     }
     else if (dir_info.st_mode & S_IFDIR)
     {
@@ -85,7 +91,7 @@ void make_directory(const char* dir) noexcept
     }
     else
     {
-      logging::fatal("%s is not a directory\n", dir);
+      logging::fatal([&]() { return std::format("{:s} is not a directory\n", dir); });
     }
   }
 }
@@ -145,22 +151,20 @@ void add_time(tm& date, const string value)
 {
   // if this is a time then we aren't just running the weather
   date.tm_hour = stoi(value.substr(0, 2));
-  fs::logging::check_fatal(
-    date.tm_hour < 0 || date.tm_hour > 23,
-    "Simulation start time has an invalid hour (%d)",
-    date.tm_hour
-  );
+  fs::logging::check_fatal(date.tm_hour < 0 || date.tm_hour > 23, [&]() {
+    return std::format("Simulation start time has an invalid hour ({:d})", date.tm_hour);
+  });
   date.tm_min = stoi(value.substr(3, 2));
-  fs::logging::check_fatal(
-    date.tm_min < 0 || date.tm_min > 59,
-    "Simulation start time has an invalid minute (%d)",
-    date.tm_min
-  );
-  fs::logging::verbose(
-    "Simulation start time before fix_tm() is %s", format_datetime(date).c_str()
-  );
+  fs::logging::check_fatal(date.tm_min < 0 || date.tm_min > 59, [&]() {
+    return std::format("Simulation start time has an invalid minute ({:d})", date.tm_min);
+  });
+  fs::logging::verbose([&]() {
+    return std::format("Simulation start time before fix_tm() is {:s}", format_datetime(date));
+  });
   fs::fix_tm(&date);
-  fs::logging::verbose("Simulation start time after fix_tm() is %s", format_datetime(date).c_str());
+  fs::logging::verbose([&]() {
+    return std::format("Simulation start time after fix_tm() is {:s}", format_datetime(date));
+  });
 }
 DurationSize to_time(const tm& t)
 {
@@ -192,9 +196,12 @@ void read_date(istringstream* iss, string* str, tm* t)
   t->tm_mday = stoi(ds);
   getline(dss, ds, ':');
   t->tm_hour = stoi(ds);
-  logging::verbose("Date is %s", format_datetime(*t).c_str());
+  logging::verbose([&]() { return std::format("Date is {:s}", format_datetime(*t)); });
 }
-UsageCount::~UsageCount() { logging::note("%s called %d times", for_what_.c_str(), count_.load()); }
+UsageCount::~UsageCount()
+{
+  logging::note([&]() { return std::format("{:s} called {:d} times", for_what_, count_.load()); });
+}
 UsageCount::UsageCount(string for_what) noexcept : count_(0), for_what_(std::move(for_what)) { }
 UsageCount& UsageCount::operator++() noexcept
 {
@@ -263,7 +270,7 @@ string get_canonical_path(const char* const dir_root, string path)
 #ifdef _WIN32
   if (':' == path.at(1))
   {
-    logging::note("Absolute path use on windows: %s", path.c_str());
+    logging::note("Absolute path use on windows: {:s}", path.c_str());
   }
   else
 #endif
@@ -273,25 +280,31 @@ string get_canonical_path(const char* const dir_root, string path)
     {
       // not an absolute path so should be relative to root
       const pushd dir{dir_root};
-      logging::note("dir_root = %s", dir_root);
+      logging::note([&]() { return std::format("dir_root = {:s}", dir_root); });
       auto p_rel = std::filesystem::relative(path);
-      logging::verbose("p_rel = %s", p_rel.c_str());
+      logging::verbose([&]() { return std::format("p_rel = {:s}", p_rel.c_str()); });
       auto p_abs =
         p_rel.empty() ? dir.current_directory : std::filesystem::absolute(p_rel).generic_string();
-      logging::verbose("p_abs = %s", p_abs.c_str());
+      logging::verbose([&]() { return std::format("p_abs = {:s}", p_abs); });
       // auto p_can = std::filesystem::canonical(p_rel);
-      // logging::note("p_can = %s", p_can.c_str());
-      logging::debug(
-        "Relative to %s path %s becomes %s", dir_root, p_rel.c_str(), p_abs.c_str()
-        // ,
-        // p_can.c_str()
-      );
+      // logging::note("p_can = {:s}", p_can.c_str());
+      logging::debug([&]() {
+        return std::format(
+          "Relative to {:s} path {:s} becomes {:s}", dir_root, p_rel.c_str(), p_abs
+          // ,
+          // p_can.c_str()
+        );
+      });
       path = p_abs;
-      logging::info("Converted relative path to absolute path %s", path.c_str());
+      logging::info([&]() {
+        return std::format("Converted relative path to absolute path {:s}", path);
+      });
     }
     catch (std::exception&)
     {
-      logging::fatal("Unable to convert relative path to canonical for %s", path.c_str());
+      logging::fatal([&]() {
+        return std::format("Unable to convert relative path to canonical for {:s}", path);
+      });
       path = "";
     }
   }

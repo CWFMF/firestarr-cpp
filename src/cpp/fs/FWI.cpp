@@ -353,14 +353,11 @@ Isi check_isi(
 #endif
 #endif
 #ifdef CHECK_CALCULATION
-  logging::check_fatal(
-    abs(isi.value - cmp) >= CHECK_EPSILON,
-    "ISI is incorrect %f, %f => %f not %f",
-    wind.value,
-    ffmc.value,
-    isi.value,
-    cmp
-  );
+  logging::check_fatal(abs(isi.value - cmp) >= CHECK_EPSILON, [&]() {
+    return std::format(
+      "ISI is incorrect {:f}, {:f} => {:f} not {:f}", wind.value, ffmc.value, isi.value, cmp
+    );
+  });
 #endif
   return isi;
 }
@@ -422,14 +419,11 @@ Bui check_bui(
 #endif
 #endif
 #ifdef CHECK_CALCULATION
-  logging::check_fatal(
-    abs(bui.value - cmp) >= CHECK_EPSILON,
-    "BUI is incorrect %f, %f => %f not %f",
-    dmc.value,
-    dc.value,
-    bui.value,
-    cmp
-  );
+  logging::check_fatal(abs(bui.value - cmp) >= CHECK_EPSILON, [&]() {
+    return std::format(
+      "BUI is incorrect {:f}, {:f} => {:f} not {:f}", dmc.value, dc.value, bui.value, cmp
+    );
+  });
 #endif
   return bui;
 }
@@ -487,14 +481,11 @@ Fwi check_fwi(
 #endif
 #endif
 #ifdef CHECK_CALCULATION
-  logging::check_fatal(
-    abs(fwi.value - cmp) >= CHECK_EPSILON,
-    "FWI is incorrect %f, %f => %f not %f",
-    isi.value,
-    bui.value,
-    fwi.value,
-    cmp
-  );
+  logging::check_fatal(abs(fwi.value - cmp) >= CHECK_EPSILON, [&]() {
+    return std::format(
+      "FWI is incorrect {:f}, {:f} => {:f} not {:f}", isi.value, bui.value, fwi.value, cmp
+    );
+  });
 #endif
   return fwi;
 }

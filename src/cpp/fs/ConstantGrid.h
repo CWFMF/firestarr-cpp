@@ -30,9 +30,7 @@ public:
 #ifdef DEBUG_GRIDS
     logging::check_fatal(
       location.row() >= this->rows() || location.column() >= this->columns(),
-      "Out of bounds (%d, %d)",
-      location.row(),
-      location.column()
+      [&]() { return std::format("Out of bounds ({:d}, {:d})", location.row(), location.column()); }
     );
 #endif
 #ifdef DEBUG_POINTS
@@ -154,7 +152,11 @@ public:
     std::function<T(V, V)> convert
   )
   {
-    logging::debug("Reading a raster where T = %s, V = %s", typeid(T).name(), typeid(V).name());
+    logging::debug([&]() {
+      return std::format(
+        "Reading a raster where T = {:s}, V = {:s}", typeid(T).name(), typeid(V).name()
+      );
+    });
     auto grid = readTiffInt(filename, point);
     const auto nodata_input = grid.nodataInput();
     T nodata_value = convert(nodata_input, nodata_input);

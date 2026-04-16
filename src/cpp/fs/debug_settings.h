@@ -49,7 +49,7 @@
   || defined(DEBUG_WEATHER)
 #define DEBUG_ANY
 #endif
-namespace fs
+namespace fs::debug
 {
 void show_debug_settings();
 }

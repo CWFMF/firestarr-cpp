@@ -120,7 +120,10 @@ string ArgumentParser::get_args()
 }
 string ArgumentParser::format_args() { return std::format("Arguments are:\n  {:s}\n", get_args()); }
 void ArgumentParser::show_args() { cout << format_args() << "\n"; }
-void ArgumentParser::log_args() { fs::logging::note(format_args().c_str()); }
+void ArgumentParser::log_args()
+{
+  logging::note([&]() { return format_args(); });
+}
 static vector<Usage> USAGES{};
 void add_usage(const Usage usage) { USAGES.emplace_back(usage); }
 void add_usages(const vector<Usage> usages)
@@ -165,11 +168,9 @@ void ArgumentParser::show_help_and_exit()
 string ArgumentParser::get_arg() noexcept
 {
   // check if we don't have any more arguments
-  fs::logging::check_fatal(
-    cur_arg_ + 1 >= args_expanded().size(),
-    "Missing argument to --%s",
-    args_expanded().at(cur_arg_).c_str()
-  );
+  logging::check_fatal(cur_arg_ + 1 >= args_expanded().size(), [&]() {
+    return std::format("Missing argument to --{:s}", args_expanded().at(cur_arg_));
+  });
   return args_expanded().at(++cur_arg_);
 }
 size_t parse_size_t()
@@ -201,7 +202,7 @@ void register_argument(string v, string help, bool required, std::function<void(
   }();
   PARSE_FCT.emplace(v, fct);
   PARSE_HELP.emplace_back(v, help);
-  logging::debug("Checking if already have %s", as_setting.c_str());
+  logging::debug([&]() { return std::format("Checking if already have {:s}", as_setting); });
   required = required && !settings.found(as_setting);
   PARSE_REQUIRED.emplace(v, required);
 }
@@ -294,7 +295,7 @@ ArgumentParser::ArgumentParser(
     }
     return {};
   }();   // HACK: count -v and -q before anything to get right log level
-  constexpr auto log_default = fs::logging::LOG_NOTE;
+  constexpr auto log_default = logging::LOG_NOTE;
   logging::set_log_level(log_default);
   for (const auto& arg : arguments)
   {
@@ -317,7 +318,9 @@ ArgumentParser::ArgumentParser(
   }
   // FIX: doing this here means we always see the settings if we haven't adjusted log level
   // if there is a settings.ini in the output directory then use that
-  logging::note("Checking for %s", (output_directory + "settings.ini").c_str());
+  logging::note([&]() {
+    return std::format("Checking for {:s}", output_directory + "settings.ini");
+  });
   Settings::setRoot(binary_directory_, output_directory);
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
@@ -350,7 +353,7 @@ Settings& ArgumentParser::parse_args()
       // check for single letter flags or '--'
       if (PARSE_FCT.find(arg) != PARSE_FCT.end())
       {
-        fs::logging::debug("Found option for argument '%s'", arg.c_str());
+        logging::debug([&]() { return std::format("Found option for argument '{:s}'", arg); });
         try
         {
           PARSE_FCT[arg]();
@@ -379,7 +382,7 @@ Settings& ArgumentParser::parse_args()
     {
       // this is a positional argument so add to that list
       positional_args_.emplace_back(arg);
-      fs::logging::debug("Found positional argument '%s'", arg.c_str());
+      logging::debug([&]() { return std::format("Found positional argument '{:s}'", arg); });
     }
     ++cur_arg_;
   }
@@ -391,7 +394,7 @@ Settings& ArgumentParser::parse_args()
   {
     if (kv.second && PARSE_HAVE.end() == PARSE_HAVE.find(kv.first))
     {
-      fs::logging::fatal("%s must be specified", kv.first.c_str());
+      logging::fatal([&]() { return std::format("{:s} must be specified", kv.first); });
     }
   }
   if ((PositionalArgumentsRequired::Required == require_positional_)
@@ -407,7 +410,7 @@ string ArgumentParser::get_positional()
 {
   if (!has_positional())
   {
-    fs::logging::error("Not enough positional arguments");
+    logging::error("Not enough positional arguments");
     show_usage_and_exit();
   }
   // return from front and advance to next
@@ -418,7 +421,7 @@ void ArgumentParser::done_positional()
   // should be exactly at size since increments after getting argument
   if (positional_args_.size() != cur_positional_)
   {
-    fs::logging::error("Too many positional arguments");
+    logging::error("Too many positional arguments");
     show_usage_and_exit();
   }
   // HACK: resolve once and fail if not set already
@@ -471,7 +474,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     settings.start_date = to_tm(year, month, day, hour, minute);
     settings.latitude = 49.3911;
     settings.longitude = -84.7395;
-    fs::logging::note("Running in test mode");
+    logging::note("Running in test mode");
     // if we have a directory and nothing else then use defaults for single run
     // if we have 'all' then overrride specified indices, but then filter down to the subset that
     // matches what was specified
@@ -547,7 +550,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     );
     if (Mode::Surface == settings.mode)
     {
-      fs::logging::note("Running in probability surface mode");
+      logging::note("Running in probability surface mode");
       register_index<Ffmc>(settings.ffmc, "--ffmc", "Constant Fine Fuel Moisture Code", true);
       register_index<Dmc>(settings.dmc, "--dmc", "Constant Duff Moisture Code", true);
       register_index<Dc>(settings.dc, "--dc", "Constant Drought Code", true);
@@ -650,11 +653,9 @@ Settings& MainArgumentParser::parse_args()
     else
     {
       auto check_have = [&](const string& v) {
-        logging::check_fatal(
-          !settings.found(v),
-          "No positional arguments specified and missing value for %s",
-          v.c_str()
-        );
+        logging::check_fatal(!settings.found(v), [&]() {
+          return std::format("No positional arguments specified and missing value for {:s}", v);
+        });
       };
       for (const auto& k : {"START_DATE", "LATITUDE", "LONGITUDE", "START_TIME"})
       {
@@ -670,10 +671,12 @@ Settings& MainArgumentParser::parse_args()
       const auto arg = get_positional();
       if (0 != strcmp(arg.c_str(), "all"))
       {
-        fs::logging::error(
-          "Only positional argument allowed for test mode aside from output directory is 'all' but got '%s'",
-          arg.c_str()
-        );
+        logging::error([&]() {
+          return std::format(
+            "Only positional argument allowed for test mode aside from output directory is 'all' but got '{:s}'",
+            arg
+          );
+        });
         show_usage_and_exit();
       }
       settings.test_all = true;
@@ -715,11 +718,11 @@ vector<string>& ArgumentParser::args_expanded()
             }
             else
             {
-              return logging::fatal<vector<string>>(
-                "Invalid argument %s found as part of combined flag argument %s",
-                arg.c_str(),
-                s.c_str()
-              );
+              return logging::fatal<vector<string>>([&]() {
+                return std::format(
+                  "Invalid argument {:s} found as part of combined flag argument {:s}", arg, s
+                );
+              });
             }
           }
         }

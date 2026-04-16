@@ -34,16 +34,18 @@ string saveToTiffFile(
   auto min_row = std::get<1>(bounds);
   auto max_column = std::get<2>(bounds);
   auto max_row = std::get<3>(bounds);
-  logging::check_fatal(
-    min_column > max_column, "Invalid bounds for columns with %d => %d", min_column, max_column
-  );
-  logging::check_fatal(
-    min_row > max_row, "Invalid bounds for rows with %d => %d", min_row, max_row
-  );
+  logging::check_fatal(min_column > max_column, [&]() {
+    return std::format("Invalid bounds for columns with {:d} => {:d}", min_column, max_column);
+  });
+  logging::check_fatal(min_row > max_row, [&]() {
+    return std::format("Invalid bounds for rows with {:d} => {:d}", min_row, max_row);
+  });
 #ifdef DEBUG_GRIDS
-  logging::debug(
-    "Bounds are (%d, %d), (%d, %d) initially", min_column, min_row, max_column, max_row
-  );
+  logging::debug([&]() {
+    return std::format(
+      "Bounds are ({:d}, {:d}), ({:d}, {:d}) initially", min_column, min_row, max_column, max_row
+    );
+  });
 #endif
   Idx c_min = 0;
   while (c_min + static_cast<Idx>(tileWidth) <= min_column)
@@ -69,40 +71,56 @@ string saveToTiffFile(
   }
   min_row = r_min;
   max_row = r_max;
-  logging::check_fatal(
-    min_column >= max_column, "Invalid bounds for columns with %d => %d", min_column, max_column
-  );
-  logging::check_fatal(
-    min_row >= max_row, "Invalid bounds for rows with %d => %d", min_row, max_row
-  );
+  logging::check_fatal(min_column >= max_column, [&]() {
+    return std::format("Invalid bounds for columns with {:d} => {:d}", min_column, max_column);
+  });
+  logging::check_fatal(min_row >= max_row, [&]() {
+    return std::format("Invalid bounds for rows with {:d} => {:d}", min_row, max_row);
+  });
 #ifdef DEBUG_GRIDS
-  logging::debug(
-    "Bounds are (%d, %d), (%d, %d) after correction", min_column, min_row, max_column, max_row
-  );
+  logging::debug([&]() {
+    return std::format(
+      "Bounds are ({:d}, {:d}), ({:d}, {:d}) after correction",
+      min_column,
+      min_row,
+      max_column,
+      max_row
+    );
+  });
 #endif
-  logging::extensive("(%d, %d) => (%d, %d)", min_column, min_row, max_column, max_row);
+  logging::extensive([&]() {
+    return std::format("({:d}, {:d}) => ({:d}, {:d})", min_column, min_row, max_column, max_row);
+  });
   logging::check_fatal((max_row - min_row) % tileHeight != 0, "Invalid start and end rows");
   logging::check_fatal(
     (max_column - min_column) % tileHeight != 0, "Invalid start and end columns"
   );
-  logging::extensive("Lower left corner is (%d, %d)", min_column, min_row);
-  logging::extensive("Upper right corner is (%d, %d)", max_column, max_row);
+  logging::extensive([&]() {
+    return std::format("Lower left corner is ({:d}, {:d})", min_column, min_row);
+  });
+  logging::extensive([&]() {
+    return std::format("Upper right corner is ({:d}, {:d})", max_column, max_row);
+  });
   const MathSize xll = grid.xllcorner() + min_column * grid.cellSize();
   // offset is different for y since it's flipped
   const MathSize yll = grid.yllcorner() + (min_row)*grid.cellSize();
-  logging::extensive("Lower left corner is (%f, %f)", xll, yll);
+  logging::extensive([&]() { return std::format("Lower left corner is ({:f}, {:f})", xll, yll); });
   const auto num_rows = static_cast<size_t>(max_row - min_row);
   const auto num_columns = static_cast<size_t>(max_column - min_column);
   // ensure this is always divisible by tile size
-  logging::check_fatal(0 != (num_rows % tileWidth), "%d rows not divisible by tiles", num_rows);
-  logging::check_fatal(
-    0 != (num_columns % tileHeight), "%d columns not divisible by tiles", num_columns
-  );
+  logging::check_fatal(0 != (num_rows % tileWidth), [&]() {
+    return std::format("{:d} rows not divisible by tiles", num_rows);
+  });
+  logging::check_fatal(0 != (num_columns % tileHeight), [&]() {
+    return std::format("{:d} columns not divisible by tiles", num_columns);
+  });
   const auto filename = create_file_name(dir, base_name, "tif");
   GeoTiff geotiff{filename, "w"};
   auto tif = geotiff.tiff();
   auto gtif = geotiff.gtif();
-  logging::check_fatal(!gtif, "Cannot open file %s as a GEOTIFF", filename.c_str());
+  logging::check_fatal(!gtif, [&]() {
+    return std::format("Cannot open file {:s} as a GEOTIFF", filename);
+  });
   const double xul = xll;
   const double yul = grid.yllcorner() + (grid.cellSize() * max_row);
   double tiePoints[6] = {0.0, 0.0, 0.0, xul, yul, 0.0};
@@ -115,11 +133,13 @@ string saveToTiffFile(
   static_assert(n > 0);
   const auto nodata_str = std::format("{:d}.000", nodata_as_int);
   constexpr auto bps = sizeof(R) * 8;
-  logging::check_fatal(
-    bps != bits_per_sample, "Cannot have mismatched bps and type (%ld != %ld)", bps, bits_per_sample
-  );
+  logging::check_fatal(bps != bits_per_sample, [&]() {
+    return std::format("Cannot have mismatched bps and type ({:d} != {:d})", bps, bits_per_sample);
+  });
   TIFFSetField(tif, TIFFTAG_GDAL_NODATA, nodata_str.c_str());
-  logging::extensive("%s takes %d bits", string(base_name).c_str(), bits_per_sample);
+  logging::extensive([&]() {
+    return std::format("{:s} takes {:d} bits", base_name, bits_per_sample);
+  });
   TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);
   TIFFSetField(tif, TIFFTAG_IMAGELENGTH, num_rows);
   TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
@@ -134,7 +154,8 @@ string saveToTiffFile(
   TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, pixelScale);
   size_t tileSize = tileWidth * tileHeight;
   const auto buf_size = tileSize * sizeof(R);
-  logging::extensive("%s has buffer size %d", string(base_name).c_str(), buf_size);
+  logging::extensive([&]() { return std::format("{:s} has buffer size {:d}", base_name, buf_size); }
+  );
   // HACK: using R means size changes on different cpu types
   auto buf = static_cast<R*>(_TIFFmalloc(buf_size));
   for (uint32_t co = 0; co < num_columns; co += tileWidth)
@@ -160,9 +181,10 @@ string saveToTiffFile(
           }
         }
       }
-      logging::check_fatal(
-        TIFFWriteTile(tif, buf, co, ro, 0, 0) < 0, "Cannot write tile to %s", filename.c_str()
-      );
+      const auto write_result = TIFFWriteTile(tif, buf, co, ro, 0, 0);
+      logging::check_fatal(write_result < 0, [&]() {
+        return std::format("Cannot write tile to {:s}", filename);
+      });
     }
   }
   GTIFWriteKeys(gtif);
@@ -184,13 +206,16 @@ string GridBase::saveToTiffFileInt(
 {
   // logging::check_fatal(
   //   SAMPLEFORMAT_INT != sample_format && SAMPLEFORMAT_UINT != sample_format,
-  //   "Expected int for SAMPLEFORMAT but got value %d",
+  //   "Expected int for SAMPLEFORMAT but got value {:d}",
   //   bits_per_sample
   // );
   logging::check_fatal(
     8 != bits_per_sample && 16 != bits_per_sample && 32 != bits_per_sample,
-    "Expected integer to have 8, 16, or 32 bits but got %d",
-    bits_per_sample
+    [&]() {
+      return std::format(
+        "Expected integer to have 8, 16, or 32 bits but got {:d}", bits_per_sample
+      );
+    }
   );
   const auto sample_format = is_unsigned ? SAMPLEFORMAT_UINT : SAMPLEFORMAT_INT;
   if (is_unsigned)
@@ -291,11 +316,13 @@ string GridBase::saveToTiffFileInt(
       );
     }
   }
-  return logging::fatal<string>(
-    "Invalid combination of BITSPERSAMPLE (%d) and SAMPLEFORMAT (%d)",
-    bits_per_sample,
-    sample_format
-  );
+  return logging::fatal<string>([&]() {
+    return std::format(
+      "Invalid combination of BITSPERSAMPLE ({:d}) and SAMPLEFORMAT ({:d})",
+      bits_per_sample,
+      sample_format
+    );
+  });
 }
 string GridBase::saveToTiffFileFloat(
   const Idx columns,
@@ -340,8 +367,10 @@ void GridBase::createPrj(const string_view dir, const string_view base_name) con
 {
   const auto filename = string(dir) + string(base_name) + ".prj";
   ofstream out{filename};
-  logging::check_fatal(!out.is_open(), "Unable to write to %s", filename.c_str());
-  logging::extensive(proj4_.c_str());
+  logging::check_fatal(!out.is_open(), [&]() {
+    return std::format("Unable to write to {:s}", filename);
+  });
+  logging::extensive(proj4_);
   // HACK: use what we know is true for the grids that were generated and
   // hope it's correct otherwise
   const auto proj = find_value("+proj=", proj4_);
@@ -353,7 +382,7 @@ void GridBase::createPrj(const string_view dir, const string_view base_name) con
   const auto y_0 = find_value("+y_0=", proj4_);
   if (proj.empty() || k.empty() || lat_0.empty() || lon_0.empty() || x_0.empty() || y_0.empty())
   {
-    logging::fatal("Cannot convert proj4 '%s' into .prj file", proj4_.c_str());
+    logging::fatal("Cannot convert proj4 '{:s}' into .prj file", proj4_.c_str());
   }
   out << "Projection    TRANSVERSE\n";
   out << "Datum         AI_CSRS\n";
@@ -393,9 +422,15 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const Point& point, co
   MathSize x;
   MathSize y;
   from_lat_long(this->proj4_, point, &x, &y);
-  logging::debug(
-    "Coordinates (%f, %f) converted to (%f, %f)", point.latitude(), point.longitude(), x, y
-  );
+  logging::debug([&]() {
+    return std::format(
+      "Coordinates ({:f}, {:f}) converted to ({:f}, {:f})",
+      point.latitude(),
+      point.longitude(),
+      x,
+      y
+    );
+  });
   // check that north is the top of the raster at least along center
   const auto x_mid = (xllcorner_ + xurcorner_) / 2.0;
   Point south = to_lat_long(proj4_, x_mid, yllcorner_);
@@ -411,27 +446,33 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const Point& point, co
   const auto deviation = x_n - x_s;
   if (abs(deviation) > MAX_DEVIATION)
   {
-    logging::note(
-      "Due north is not the top of the raster for (%f, %f) with proj4 '%s' - %f vs %f gives deviation of %f degrees which exceeds maximum of %f degrees",
-      point.latitude(),
-      point.longitude(),
-      this->proj4_.c_str(),
-      x_n,
-      x_s,
-      deviation,
-      MAX_DEVIATION
-    );
+    logging::note([&]() {
+      return std::format(
+        "Due north is not the top of the raster for ({:f}, {:f}) with proj4 '{:s}' - {:f} vs {:f} gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
+        point.latitude(),
+        point.longitude(),
+        this->proj4_,
+        x_n,
+        x_s,
+        deviation,
+        MAX_DEVIATION
+      );
+    });
     return nullptr;
   }
   else if (abs(deviation * 10) > MAX_DEVIATION)
   {
     // if we're within an order of magnitude of an unacceptable deviation then warn about it
-    logging::warning(
-      "Due north deviates by %f degrees from South to North along the middle of the raster",
-      deviation
-    );
+    logging::warning([&]() {
+      return std::format(
+        "Due north deviates by {:f} degrees from South to North along the middle of the raster",
+        deviation
+      );
+    });
   }
-  logging::verbose("Lower left is (%f, %f)", this->xllcorner_, this->yllcorner_);
+  logging::verbose([&]() {
+    return std::format("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
+  });
   // convert coordinates into cell position
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
@@ -441,13 +482,15 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const Point& point, co
   const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
-    logging::verbose(
-      "Returning nullptr from findFullCoordinates() for (%f, %f) => (%d, %d)",
-      actual_x,
-      actual_y,
-      column,
-      row
-    );
+    logging::verbose([&]() {
+      return std::format(
+        "Returning nullptr from findFullCoordinates() for ({:f}, {:f}) => ({:d}, {:d})",
+        actual_x,
+        actual_y,
+        column,
+        row
+      );
+    });
     return nullptr;
   }
   const auto sub_x = static_cast<SubSize>((actual_x - column) * 1000);
@@ -491,7 +534,9 @@ void write_ascii_header(
     );
     const auto yllcorner = y;
     const auto xllcorner = x;
-    logging::debug("Lower left for header is (%f, %f)", xllcorner, yllcorner);
+    logging::debug([&]() {
+      return std::format("Lower left for header is ({:f}, {:f})", xllcorner, yllcorner);
+    });
     double adf_coefficient[6] = {0};
     x = 0.5;
     y = 0.5;
@@ -502,18 +547,18 @@ void write_ascii_header(
     adf_coefficient[5] = y;
     x = 1.5;
     y = 0.5;
-    logging::check_fatal(
-      !GTIFImageToPCS(gtif, &x, &y), "Unable to translate image to PCS coordinates."
-    );
+    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y), [&]() {
+      return std::format("Unable to translate image to PCS coordinates.");
+    });
     const auto cell_width = x - adf_coefficient[4];
     x = 0.5;
     y = 1.5;
-    logging::check_fatal(
-      !GTIFImageToPCS(gtif, &x, &y), "Unable to translate image to PCS coordinates."
-    );
+    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y), [&]() {
+      return std::format("Unable to translate image to PCS coordinates.");
+    });
     const auto cell_height = y - adf_coefficient[5];
     logging::check_fatal(cell_width != -cell_height, "Can only use grids with square pixels");
-    logging::debug("Cell size is %f", cell_width);
+    logging::debug([&]() { return std::format("Cell size is {:f}", cell_width); });
     // HACK: GTIFGetProj4Defn uses malloc
     std::unique_ptr<char, decltype(std::free)*> proj4_char{
       GTIFGetProj4Defn(&definition), std::free

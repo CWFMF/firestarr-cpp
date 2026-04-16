@@ -2,9 +2,7 @@
 #ifndef FS_LOCATION_H
 #define FS_LOCATION_H
 #include "stdafx.h"
-#ifdef DEBUG_POINTS
 #include "Log.h"
-#endif
 #include "Util.h"
 namespace fs
 {
@@ -231,21 +229,15 @@ public:
     : Location(hash & HashMask)
   {
 #ifdef DEBUG_GRIDS
-    logging::check_fatal(
-      row < 0 || row >= MAX_ROWS, "Row %d is out of bounds (%d, %d)", row, 0, MAX_ROWS
-    );
-    logging::check_fatal(
-      column < 0 || column >= MAX_COLUMNS,
-      "Column %d is out of bounds (%d, %d)",
-      column,
-      0,
-      MAX_COLUMNS
-    );
+    logging::check_fatal(row < 0 || row >= MAX_ROWS, [&]() {
+      return std::format("Row {:d} is out of bounds ({:d}, {:d})", row, 0, MAX_ROWS);
+    });
+    logging::check_fatal(column < 0 || column >= MAX_COLUMNS, [&]() {
+      return std::format("Column {:d} is out of bounds ({:d}, {:d})", column, 0, MAX_COLUMNS);
+    });
     logging::check_fatal(
       (row != unhashRow(topo_data_)) || column != unhashColumn(topo_data_),
-      "Hash is incorrect (%d, %d)",
-      row,
-      column
+      [&]() { return std::format("Hash is incorrect ({:d}, {:d})", row, column); }
     );
 #endif
   }
@@ -258,9 +250,9 @@ public:
     : Location(row, column, doHash(row, column) & HashMask)
   {
 #ifdef DEBUG_GRIDS
-    logging::check_fatal(
-      row >= MAX_ROWS || column >= MAX_COLUMNS, "Location out of bounds (%d, %d)", row, column
-    );
+    logging::check_fatal(row >= MAX_ROWS || column >= MAX_COLUMNS, [&]() {
+      return std::format("Location out of bounds ({:d}, {:d})", row, column);
+    });
 #endif
   }
   Location(const Coordinates& coord) : Location(std::get<0>(coord), std::get<1>(coord)) { }

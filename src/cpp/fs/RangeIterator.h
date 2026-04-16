@@ -3,6 +3,8 @@
 #define FS_RANGEITERATOR_H
 #include "stdafx.h"
 #include "Log.h"
+// HACK: don't use until logging causing issues with constexpr is fixed
+#undef DEBUG_ITERATOR
 namespace fs
 {
 template <class T = MathSize>
@@ -22,14 +24,16 @@ public:
   )
     : start_(start), end_(end), increment_(increment), inclusive_(inclusive)
   {
-#ifndef DEBUG_ITERATOR
-    logging::verbose(
-      "Range is from %f to %f with step %f %s",
-      start_,
-      end_,
-      increment_,
-      inclusive_ ? "inclusive" : "exclusive"
-    );
+#ifdef DEBUG_ITERATOR
+    logging::verbose([&]() {
+      return std::format(
+        "Range is from {:f} to {:f} with step {:f} {:s}",
+        start_,
+        end_,
+        increment_,
+        inclusive_ ? "inclusive" : "exclusive"
+      );
+    });
 #endif
   }
   constexpr RangeIterator() = default;
@@ -46,26 +50,28 @@ public:
     inline RangeIterator&
     operator++()
   {
-#ifndef DEBUG_ITERATOR
-    logging::check_fatal(
-      *(*this) < start_,
-      "operator++() %g less than start value %g (+%g) for step %d",
-      *(*this),
-      start_,
-      (*(*this) - start_),
-      step_
-    );
+#ifdef DEBUG_ITERATOR
+    logging::check_fatal(*(*this) < start_, [&]() {
+      return std::format(
+        "operator++() {:g} less than start value {:g} ({:+g}) for step {:d}",
+        *(*this),
+        start_,
+        (*(*this) - start_),
+        step_
+      );
+    });
 #endif
     step_++;
-#ifndef DEBUG_ITERATOR
-    logging::check_fatal(
-      *this > end(),
-      "operator++() %g more than end value %g (%+g) for step %d",
-      *(*this),
-      *end(),
-      (*(*this) - *end()),
-      step_
-    );
+#ifdef DEBUG_ITERATOR
+    logging::check_fatal(*this > end(), [&]() {
+      return std::format(
+        "operator++() {:g} more than end value {:g} ({:+g}) for step {:d}",
+        *(*this),
+        *end(),
+        (*(*this) - *end()),
+        step_
+      );
+    });
 #endif
     return *this;
   }
@@ -75,25 +81,27 @@ public:
     inline RangeIterator
     operator++(int)
   {
-#ifndef DEBUG_ITERATOR
-    logging::check_fatal(
-      *(*this) < start_,
-      "operator++(int) %g less than start value %g (+%g) for step %d",
-      *(*this),
-      start_,
-      step_
-    );
+#ifdef DEBUG_ITERATOR
+    logging::check_fatal(*(*this) < start_, [&]() {
+      return std::format(
+        "operator++(int) {:g} less than start value {:g} ({:+g}) for step {:d}",
+        *(*this),
+        start_,
+        step_
+      );
+    });
 #endif
     RangeIterator oTmp = *(*this);
     *(*this) += increment_;
-#ifndef DEBUG_ITERATOR
-    logging::check_fatal(
-      *this > end(),
-      "operator++(int) %g more than end value %g (%+g) for step %d",
-      *(*this),
-      *end(),
-      step_
-    );
+#ifdef DEBUG_ITERATOR
+    logging::check_fatal(*this > end(), [&]() {
+      return std::format(
+        "operator++(int) {:g} more than end value {:g} ({:+g}) for step {:d}",
+        *(*this),
+        *end(),
+        step_
+      );
+    });
 #endif
     return oTmp;
   }
@@ -103,24 +111,23 @@ public:
     inline RangeIterator&
     operator--()
   {
-#ifndef DEBUG_ITERATOR
-    logging::check_fatal(
-      *this > end(),
-      "operator--() %g more than end value %g (%+g) for step %d",
-      *(*this),
-      *end(),
-      step_
-    );
+#ifdef DEBUG_ITERATOR
+    logging::check_fatal(*this > end(), [&]() {
+      return std::format(
+        "operator--() {:g} more than end value {:g} ({:+g}) for step {:d}", *(*this), *end(), step_
+      );
+    });
 #endif
     *(*this) -= increment_;
-#ifndef DEBUG_ITERATOR
-    logging::check_fatal(
-      *(*this) < start_,
-      "operator--() %g less than start value %g (+%g) for step %d",
-      *(*this),
-      start_,
-      step_
-    );
+#ifdef DEBUG_ITERATOR
+    logging::check_fatal(*(*this) < start_, [&]() {
+      return std::format(
+        "operator--() {:g} less than start value {:g} ({:+g}) for step {:d}",
+        *(*this),
+        start_,
+        step_
+      );
+    });
 #endif
     return *this;
   }
@@ -131,24 +138,26 @@ public:
     operator--(int)
   {
     RangeIterator oTmp = *(*this);
-#ifndef DEBUG_ITERATOR
-    logging::check_fatal(
-      *this > end(),
-      "operator--(int) %g more than end value %g (%+g) for step %d",
-      *(*this),
-      *end(),
-      step_
-    );
+#ifdef DEBUG_ITERATOR
+    logging::check_fatal(*this > end(), [&]() {
+      return std::format(
+        "operator--(int) {:g} more than end value {:g} ({:+g}) for step {:d}",
+        *(*this),
+        *end(),
+        step_
+      );
+    });
 #endif
     *(*this) -= increment_;
-#ifndef DEBUG_ITERATOR
-    logging::check_fatal(
-      *(*this) < start_,
-      "operator--(int) %g less than start value %g (+%g) for step %d",
-      *(*this),
-      start_,
-      step_
-    );
+#ifdef DEBUG_ITERATOR
+    logging::check_fatal(*(*this) < start_, [&]() {
+      return std::format(
+        "operator--(int) {:g} less than start value {:g} ({:+g}) for step {:d}",
+        *(*this),
+        start_,
+        step_
+      );
+    });
 #endif
     return oTmp;
   }
@@ -220,7 +229,7 @@ auto check_range(
   const T& it
 )
 {
-  logging::debug("Checking %s", name_fct);
+  logging::debug([&]() { return std::format("Checking {:s}", name_fct); });
   for (auto v : it)
   {
     const auto msg = std::format("{} ({} = {})", name_fct, name_param, v);

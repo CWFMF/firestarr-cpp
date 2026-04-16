@@ -50,6 +50,8 @@
 #include "unstable.h"
 namespace fs
 {
+// HACK: avoid warning about unused include
+using fs::debug::show_debug_settings;
 using std::abs;
 using std::array;
 using std::async;

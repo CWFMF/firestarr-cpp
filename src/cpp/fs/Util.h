@@ -2,6 +2,7 @@
 #ifndef FS_UTIL_H
 #define FS_UTIL_H
 #include "stdafx.h"
+#include <filesystem>
 #include "Radians.h"
 namespace fs
 {
@@ -463,7 +464,7 @@ inline bool find_value(
   if (!str.empty())
   {
     *result = convert(str);
-    // logging::extensive("%s '%s'\n", string(key).c_str(), str.c_str());
+    // logging::extensive([&]() { return std::format("{:s} '{:s}'\n", key, str); });
     return true;
   }
   return false;
