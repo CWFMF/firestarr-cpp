@@ -14,14 +14,11 @@ FileList read_directory(const string_view name, const string_view match, const b
   const std::regex re(full_match, std::regex_constants::icase);
   for (const auto& entry : std::filesystem::directory_iterator(name))
   {
-    logging::verbose([&]() { return std::format("Checking if file: {:s}", entry.path().string()); }
-    );
+    logging::verbose("Checking if file: {:s}", entry.path().string());
     if ((for_files && std::filesystem::is_regular_file(entry))
         || (!for_files && std::filesystem::is_directory(entry)))
     {
-      logging::extensive([&]() {
-        return std::format("Checking regex match: {:s}", entry.path().string());
-      });
+      logging::extensive("Checking regex match: {:s}", entry.path().string());
       if (std::regex_match(entry.path().string(), re))
       {
         files.emplace_back(entry
@@ -76,14 +73,12 @@ void make_directory(const char* dir) noexcept
   {
     if (ec)
     {
-      logging::fatal([&]() {
-        return std::format("Error {:d} creating directory {:s}", ec.value(), dir);
-      });
+      exit(logging::fatal("Error {:d} creating directory {:s}", ec.value(), dir));
     }
     struct stat dir_info{};
     if (stat(dir, &dir_info) != 0)
     {
-      logging::fatal([&]() { return std::format("Cannot create directory {:s}", dir); });
+      exit(logging::fatal("Cannot create directory {:s}", dir));
     }
     else if (dir_info.st_mode & S_IFDIR)
     {
@@ -91,7 +86,7 @@ void make_directory(const char* dir) noexcept
     }
     else
     {
-      logging::fatal([&]() { return std::format("{:s} is not a directory\n", dir); });
+      exit(logging::fatal("{:s} is not a directory\n", dir));
     }
   }
 }
@@ -158,13 +153,9 @@ void add_time(tm& date, const string value)
   fs::logging::check_fatal(date.tm_min < 0 || date.tm_min > 59, [&]() {
     return std::format("Simulation start time has an invalid minute ({:d})", date.tm_min);
   });
-  fs::logging::verbose([&]() {
-    return std::format("Simulation start time before fix_tm() is {:s}", format_datetime(date));
-  });
+  fs::logging::verbose("Simulation start time before fix_tm() is {:s}", format_datetime(date));
   fs::fix_tm(&date);
-  fs::logging::verbose([&]() {
-    return std::format("Simulation start time after fix_tm() is {:s}", format_datetime(date));
-  });
+  fs::logging::verbose("Simulation start time after fix_tm() is {:s}", format_datetime(date));
 }
 DurationSize to_time(const tm& t)
 {
@@ -285,23 +276,17 @@ string get_canonical_path(const char* const dir_root, string path)
       logging::verbose("p_abs = {:s}", p_abs);
       // auto p_can = std::filesystem::canonical(p_rel);
       // logging::note("p_can = {:s}", p_can.c_str());
-      logging::debug([&]() {
-        return std::format(
-          "Relative to {:s} path {:s} becomes {:s}", dir_root, p_rel.c_str(), p_abs
-          // ,
-          // p_can.c_str()
-        );
-      });
+      logging::debug(
+        "Relative to {:s} path {:s} becomes {:s}", dir_root, p_rel.c_str(), p_abs
+        // ,
+        // p_can.c_str()
+      );
       path = p_abs;
-      logging::info([&]() {
-        return std::format("Converted relative path to absolute path {:s}", path);
-      });
+      logging::info("Converted relative path to absolute path {:s}", path);
     }
     catch (std::exception&)
     {
-      logging::fatal([&]() {
-        return std::format("Unable to convert relative path to canonical for {:s}", path);
-      });
+      exit(logging::fatal("Unable to convert relative path to canonical for {:s}", path));
       path = "";
     }
   }

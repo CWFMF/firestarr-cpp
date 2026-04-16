@@ -31,9 +31,7 @@ public:
   Semaphore& operator=(Semaphore&& rhs) = delete;
   void set_limit(int limit)
   {
-    logging::debug([&]() {
-      return std::format("Changing Semaphore limit from {:d} to {:d}", limit_, limit);
-    });
+    logging::debug("Changing Semaphore limit from {:d} to {:d}", limit_, limit);
     // NOTE: won't drop threads if set lower but won't give out more until below limit
     limit_ = limit;
   }
@@ -104,8 +102,7 @@ public:
     }
     catch (const std::exception& ex)
     {
-      logging::fatal(ex);
-      std::terminate();
+      exit(logging::fatal(ex));
     }
   }
 };

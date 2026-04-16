@@ -58,11 +58,8 @@ Environment Environment::loadEnvironment(
   const YearSize year
 )
 {
-  logging::note([&]() {
-    return std::format("Using ignition point ({:f}, {:f})", point.latitude(), point.longitude());
-  });
-  logging::info([&]() { return std::format("Running using inputs directory '{:s}'", string(path)); }
-  );
+  logging::note("Using ignition point ({:f}, {:f})", point.latitude(), point.longitude());
+  logging::info("Running using inputs directory '{:s}'", string(path));
   auto rasters = find_rasters(path, year);
   auto best_score = numeric_limits<MathSize>::min();
   unique_ptr<const EnvironmentInfo> env_info = nullptr;
@@ -78,9 +75,7 @@ Environment Environment::loadEnvironment(
   for (const auto& raster : rasters)
   {
     auto fuel = raster;
-    logging::verbose([&]() {
-      return std::format("Replacing directory separators in path for: {:s}\n", fuel);
-    });
+    logging::verbose("Replacing directory separators in path for: {:s}\n", fuel);
     // make sure we're using a consistent directory separator
     std::replace(fuel.begin(), fuel.end(), '\\', '/');
     // HACK: assume there's only one instance of 'fuel' in the file name we want to change
@@ -108,15 +103,13 @@ Environment Environment::loadEnvironment(
       auto actual_columns = cur_info->calculateColumns();
       const auto x = std::get<0>(*coordinates);
       const auto y = std::get<1>(*coordinates);
-      logging::note([&]() {
-        return std::format(
-          "Coordinates before reading are ({:d}, {:d} => {:f}, {:f})",
-          x,
-          y,
-          x + std::get<2>(*coordinates) / 1000.0,
-          y + std::get<3>(*coordinates) / 1000.0
-        );
-      });
+      logging::note(
+        "Coordinates before reading are ({:d}, {:d} => {:f}, {:f})",
+        x,
+        y,
+        x + std::get<2>(*coordinates) / 1000.0,
+        y + std::get<3>(*coordinates) / 1000.0
+      );
       // if it's not in the raster then this is not an option
       // FIX: are these +/-1 because of counting the cell itself and starting from 0?
       const auto dist_W = x;
@@ -125,15 +118,13 @@ Environment Environment::loadEnvironment(
       const auto dist_S = y;
       // FIX: should take size of cells into account too? But is largest areas or highest resolution
       // the priority?
-      logging::note([&]() {
-        return std::format(
-          "Coordinates distance to bottom left is: ({:d}, {:d}) and top right is ({:d}, {:d})",
-          dist_W,
-          dist_S,
-          dist_E,
-          dist_N
-        );
-      });
+      logging::note(
+        "Coordinates distance to bottom left is: ({:d}, {:d}) and top right is ({:d}, {:d})",
+        dist_W,
+        dist_S,
+        dist_E,
+        dist_N
+      );
       // shortest hypoteneuse is the closest corner to the origin, so want highest value for this
       const auto cur_score = sq(min(dist_W, dist_E)) + sq(min(dist_N, dist_S));
       if (cur_score > best_score)
@@ -155,14 +146,12 @@ Environment Environment::loadEnvironment(
       "Could not find an environment to use for ({:f}, {:f})", point.latitude(), point.longitude()
     );
   });
-  logging::debug([&]() {
-    return std::format(
-      "Best match for ({:f}, {:f}) has projection '{:s}'",
-      point.latitude(),
-      point.longitude(),
-      env_info->proj4()
-    );
-  });
+  logging::debug(
+    "Best match for ({:f}, {:f}) has projection '{:s}'",
+    point.latitude(),
+    point.longitude(),
+    env_info->proj4()
+  );
   logging::note("Projection is {:s}", env_info->proj4());
   // envInfo should get deleted automatically because it uses unique_ptr
   return env_info->load(point);

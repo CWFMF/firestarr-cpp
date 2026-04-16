@@ -513,15 +513,13 @@ vector<int> find_nd_values()
   // const auto longitudes = range(-180.0, 180.0, DEGREE_INCREMENT);
   const auto longitudes = range(BOUNDS_CANADA_LON_MIN, BOUNDS_CANADA_LON_MAX, DEGREE_INCREMENT);
   const auto elevations = range(ELEVATION_EARTH_MIN, ELEVATION_EARTH_MAX, ELEVATION_INCREMENT);
-  logging::info([&]() {
-    return std::format(
-      "Checking ({:d} latitudes X {:d} longitudes X {:d} elevations) = {:d} combinations",
-      latitudes.size(),
-      longitudes.size(),
-      elevations.size(),
-      latitudes.size() * longitudes.size() * elevations.size()
-    );
-  });
+  logging::info(
+    "Checking ({:d} latitudes X {:d} longitudes X {:d} elevations) = {:d} combinations",
+    latitudes.size(),
+    longitudes.size(),
+    elevations.size(),
+    latitudes.size() * longitudes.size() * elevations.size()
+  );
   for (auto latitude : latitudes)
   {
     for (auto longitude : longitudes)
@@ -531,16 +529,14 @@ vector<int> find_nd_values()
         const Point pt{latitude, longitude};
         const auto nd_ref = calculate_nd_ref_for_point(elevation, pt);
         nd_ref_values.emplace(nd_ref);
-        logging::verbose([&]() {
-          return std::format(
-            "now have {:d} values for nd: {:g}, {:g}, {:g} gives nd_ref {:d}",
-            nd_ref_values.size(),
-            latitude,
-            longitude,
-            elevation,
-            nd_ref
-          );
-        });
+        logging::verbose(
+          "now have {:d} values for nd: {:g}, {:g}, {:g} gives nd_ref {:d}",
+          nd_ref_values.size(),
+          latitude,
+          longitude,
+          elevation,
+          nd_ref
+        );
       }
     }
   }
@@ -562,15 +558,13 @@ vector<int> find_nd_values()
     max_nd = max(max_nd, nd);
   }
   const bool is_consecutive{static_cast<size_t>(max_nd - min_nd + 1) == nd_values.size()};
-  logging::info([&]() {
-    return std::format(
-      "Have {:d} nd values between {:d} and {:d} that are {:s}",
-      nd_values.size(),
-      min_nd,
-      max_nd,
-      is_consecutive ? "consecutive" : "non-consecutive"
-    );
-  });
+  logging::info(
+    "Have {:d} nd values between {:d} and {:d} that are {:s}",
+    nd_values.size(),
+    min_nd,
+    max_nd,
+    is_consecutive ? "consecutive" : "non-consecutive"
+  );
   return {nd_values.begin(), nd_values.end()};
 }
 int test_fbp(const int argc, const char* const argv[])

@@ -363,20 +363,16 @@ void Scenario::evaluate(const Event& event)
       );
       if (is_null_fuel(event.cell))
       {
-        logging::fatal([&]() {
-          return std::format("{:s} Trying to start a fire in non-fuel", add_log(*this));
-        });
+        exit(logging::fatal("{:s} Trying to start a fire in non-fuel", add_log(*this)));
       }
-      logging::verbose([&]() {
-        return std::format(
-          "{:s} Starting fire at point ({:f}, {:f}) in fuel type {:s} at time {:f}",
-          add_log(*this),
-          x,
-          y,
-          FuelType::safeName(check_fuel(event.cell)),
-          event.time
-        );
-      });
+      logging::verbose(
+        "{:s} Starting fire at point ({:f}, {:f}) in fuel type {:s} at time {:f}",
+        add_log(*this),
+        x,
+        y,
+        FuelType::safeName(check_fuel(event.cell)),
+        event.time
+      );
       if (!survives(event.time, event.cell, event.time_at_location))
       {
         logging::info([&]() {
@@ -397,9 +393,7 @@ void Scenario::evaluate(const Event& event)
       scheduleFireSpread(event);
       break;
     case Event::Type::EndSimulation:
-      logging::verbose([&]() {
-        return std::format("{:s} End simulation event reached at {:f}", add_log(*this), event.time);
-      });
+      logging::verbose("{:s} End simulation event reached at {:f}", add_log(*this), event.time);
       endSimulation();
       break;
     default:
@@ -615,9 +609,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   CriticalSection _(Model::task_limiter);
   // HACK: only do once
   static const auto showed_once = [&]() {
-    logging::debug([&]() {
-      return std::format("Concurrent Scenario limit is {:d}", Model::task_limiter.limit());
-    });
+    logging::debug("Concurrent Scenario limit is {:d}", Model::task_limiter.limit());
     return true;
   }();
   std::ignore = showed_once;
@@ -652,9 +644,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
       const auto y = cell.row() + CELL_CENTER;
       const XYPos p0{x, y};
       // log_verbose(*this, "Adding point ({:d}, {:d})",
-      logging::extensive([&]() {
-        return std::format("{:s} Adding point ({:f}, {:f})", add_log(*this), x, y);
-      });
+      logging::extensive("{:s} Adding point ({:f}, {:f})", add_log(*this), x, y);
       points_.insert(
         p0,
         SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
@@ -667,9 +657,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   // HACK: make a copy of the event so that it still exists after it gets processed
   // NOTE: sorted so that EventSaveASCII is always just before this
   // Only run until last time we asked for a save for
-  logging::verbose([&]() {
-    return std::format("{:s} Creating simulation end event for {:f}", add_log(*this), last_save_);
-  });
+  logging::verbose("{:s} Creating simulation end event for {:f}", add_log(*this), last_save_);
   addEvent(Event{.time = last_save_, .type = Event::Type::EndSimulation});
   // mark all original points as burned at start
   for (auto& kv : points_.map_)
@@ -754,11 +742,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
 #endif
   if (oob_spread_ > 0)
   {
-    logging::warning([&]() {
-      return std::format(
-        "{:s} Tried to spread out of bounds {:d} times", add_log(*this), oob_spread_
-      );
-    });
+    logging::warning("{:s} Tried to spread out of bounds {:d} times", add_log(*this), oob_spread_);
   }
   return this;
 }
@@ -791,30 +775,23 @@ CellPointsMap apply_offsets_spreadkey(
       return ROSOffset(intensity, ros, raz, Offset(p.first * duration, p.second * duration));
     }
   );
-  logging::verbose([&]() {
-    return std::format(
-      "Calculated {:d} offsets after duration {:f}", offsets_after_duration.size(), duration
-    );
-  });
-  logging::verbose([&]() { return std::format("cell_pts_map has {:d} items", cell_pts_map.size()); }
+  logging::verbose(
+    "Calculated {:d} offsets after duration {:f}", offsets_after_duration.size(), duration
   );
+  logging::verbose("cell_pts_map has {:d} items", cell_pts_map.size());
   for (auto& pts_for_cell : cell_pts_map)
   {
     const Location& location = std::get<0>(pts_for_cell);
     CellPoints& cell_pts = std::get<1>(pts_for_cell);
 #ifdef DEBUG_CELLPOINTS
-    logging::note([&]() {
-      return std::format(
-        "cell_pts for ({:d}, {:d}) has {:d} items", src.column(), src.row(), cell_pts.size()
-      );
-    });
+    logging::note(
+      "cell_pts for ({:d}, {:d}) has {:d} items", src.column(), src.row(), cell_pts.size()
+    );
 #endif
     if (cell_pts.empty())
     {
 #ifdef DEBUG_CELLPOINTS
-      logging::note([&]() {
-        return std::format("Cell ({:d}, {:d}) ignored because empty", src.column(), src.row());
-      });
+      logging::note("Cell ({:d}, {:d}) ignored because empty", src.column(), src.row());
 #endif
       continue;
     }
@@ -848,21 +825,19 @@ CellPointsMap apply_offsets_spreadkey(
         const auto& y_o = out.second;
         const auto dir_diff = abs(raz.asDegrees() - dir);
         // #ifdef DEBUG_CELLPOINTS
-        logging::verbose([&]() {
-          return std::format(
-            "location.x {:d}; location.y {:d};"
-            "cell_x {:d}; cell_y {:d};"
-            " ros {:f}; x {:f}; y {:f}; duration {:f};\n",
-            location.column(),
-            location.row(),
-            cell_x,
-            cell_y,
-            ros,
-            pt.first,
-            pt.second,
-            duration
-          );
-        });
+        logging::verbose(
+          "location.x {:d}; location.y {:d};"
+          "cell_x {:d}; cell_y {:d};"
+          " ros {:f}; x {:f}; y {:f}; duration {:f};\n",
+          location.column(),
+          location.row(),
+          cell_x,
+          cell_y,
+          ros,
+          pt.first,
+          pt.second,
+          duration
+        );
         // // NOTE: there should be no change in the extent of the fire if we exclude things
         // behind the normal to the direction it came from
         // //       - but if we exclude too much then it can change how things spread, even if it
@@ -870,23 +845,21 @@ CellPointsMap apply_offsets_spreadkey(
         {
           const auto new_x = x_o + pt.first + cell_x;
           const auto new_y = y_o + pt.second + cell_y;
-          logging::verbose([&]() {
-            return std::format(
-              "({:d}, {:d}): {:f}: [{:f} => ({:f}, {:f})] + [{:f} => ({:f}, {:f})] = [{:f} => ({:f}, {:f})]",
-              cell_x,
-              cell_y,
-              dir_diff,
-              dir,
-              x_o,
-              y_o,
-              raz.asDegrees(),
-              pt.first,
-              pt.second,
-              raz.asDegrees(),
-              new_x,
-              new_y
-            );
-          });
+          logging::verbose(
+            "({:d}, {:d}): {:f}: [{:f} => ({:f}, {:f})] + [{:f} => ({:f}, {:f})] = [{:f} => ({:f}, {:f})]",
+            cell_x,
+            cell_y,
+            dir_diff,
+            dir,
+            x_o,
+            y_o,
+            raz.asDegrees(),
+            pt.first,
+            pt.second,
+            raz.asDegrees(),
+            new_x,
+            new_y
+          );
           r1.insert(
             src,
             SpreadData(arrival_time, intensity, ros, raz, Direction(Degrees{dir})),
@@ -923,9 +896,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   if (wx_daily->ffmc.value < minimumFfmcForSpread(time))
   {
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
-    logging::extensive([&]() {
-      return std::format("{:s} Waiting until {:f} because of FFMC", add_log(*this), max_time);
-    });
+    logging::extensive("{:s} Waiting until {:f} because of FFMC", add_log(*this), max_time);
     return;
   }
   if (current_time_index_ != this_time)
@@ -988,9 +959,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   if (to_spread.empty())
   {
     // if no spread then we left everything back in points_ still
-    logging::verbose([&]() {
-      return std::format("{:s} Waiting until {:f}", add_log(*this), max_time);
-    });
+    logging::verbose("{:s} Waiting until {:f}", add_log(*this), max_time);
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     return;
   }
@@ -1075,11 +1044,9 @@ void Scenario::scheduleFireSpread(const Event& event)
       // not swapping means these points get dropped
     }
   });
-  logging::extensive([&]() {
-    return std::format(
-      "{:s} Spreading {:d} cells until {:f}", add_log(*this), points_.map_.size(), new_time
-    );
-  });
+  logging::extensive(
+    "{:s} Spreading {:d} cells until {:f}", add_log(*this), points_.map_.size(), new_time
+  );
   addEvent(Event{.time = new_time, .type = Event::Type::FireSpread});
 }
 MathSize Scenario::currentFireSize() const { return intensity_->fireSize(); }

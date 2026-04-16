@@ -16,8 +16,7 @@ SafeVector& SafeVector::operator=(const SafeVector& rhs) noexcept
   }
   catch (const std::exception& ex)
   {
-    logging::fatal(ex);
-    std::terminate();
+    exit(logging::fatal(ex));
   }
 }
 SafeVector& SafeVector::operator=(SafeVector&& rhs) noexcept
@@ -30,8 +29,7 @@ SafeVector& SafeVector::operator=(SafeVector&& rhs) noexcept
   }
   catch (const std::exception& ex)
   {
-    logging::fatal(ex);
-    std::terminate();
+    exit(logging::fatal(ex));
   }
 }
 void SafeVector::addValue(const MathSize value)

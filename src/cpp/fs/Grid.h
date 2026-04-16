@@ -440,11 +440,9 @@ protected:
     auto max_column = std::get<2>(bounds);
     auto max_row = std::get<3>(bounds);
 #ifdef DEBUG_GRIDS
-    logging::debug([&]() {
-      return std::format(
-        "Bounds are ({:d}, {:d}), ({:d}, {:d})", min_column, min_row, max_column, max_row
-      );
-    });
+    logging::debug(
+      "Bounds are ({:d}, {:d}), ({:d}, {:d})", min_column, min_row, max_column, max_row
+    );
 #endif
     logging::extensive("Lower left corner is ({:d}, {:d})", min_column, min_row);
     logging::extensive("Upper right corner is ({:d}, {:d})", max_column, max_row);
@@ -601,11 +599,9 @@ public:
     }
     catch (const std::exception& err)
     {
-      logging::error([&]() {
-        return std::format(
-          "Error trying to write {:s} to {:s} so retrying\n{:s}", base_name, dir, err.what()
-        );
-      });
+      logging::error(
+        "Error trying to write {:s} to {:s} so retrying\n{:s}", base_name, dir, err.what()
+      );
       try
       {
         return this->template saveToFileWithoutRetry<R>(dir, base_name, convert, no_data);
@@ -613,11 +609,9 @@ public:
       catch (const std::exception& err_fatal)
       {
         // will exit if not supposed to retry
-        return logging::fatal<FileList>([&]() {
-          return std::format(
-            "Error trying to write {:s} to {:s}\n{:s}", base_name, dir, err_fatal.what()
-          );
-        });
+        exit(logging::fatal(
+          "Error trying to write {:s} to {:s}\n{:s}", base_name, dir, err_fatal.what()
+        ));
       }
     }
   }

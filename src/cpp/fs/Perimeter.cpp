@@ -34,9 +34,7 @@ BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const
   const auto max_columns = min(this->columns(), perim_grid.columns());
   const auto min_row = static_cast<Idx>(offset_y < 0 ? abs(offset_y) : 0);
   const auto max_rows = min(this->rows(), static_cast<Idx>(perim_grid.rows() - abs(offset_y)));
-  logging::note([&]() {
-    return std::format("Correcting perimeter raster offset by {:d}{:d} cells", offset_x, offset_y);
-  });
+  logging::note("Correcting perimeter raster offset by {:d}{:d} cells", offset_x, offset_y);
   size_t count = 0;
   // since it was read in as a vector we need to check all the cells
   for (auto r = min_row; r < max_rows; ++r)
@@ -60,8 +58,7 @@ BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const
     logging::check_fatal(is_null_fuel(env.cell(kv.first)), "Null fuel in BurnedData");
   }
 #endif
-  logging::info([&]() { return std::format("Loaded burned area of size {:d} ha", size_hectares_); }
-  );
+  logging::info("Loaded burned area of size {:d} ha", size_hectares_);
 }
 Perimeter::Perimeter(const BurnedMap& burned_map)
   : burned(burned_map.makeList()), edge(burned_map.makeEdge())

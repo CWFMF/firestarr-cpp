@@ -22,10 +22,9 @@ PJ_CONTEXT* get_context()
   std::ignore = showed_once;
   if (!proj_context_set_database_path(pjc, db_path.c_str(), NULL, NULL))
   {
-    logging::fatal("Can't set proj.db path");
+    exit(logging::fatal("Can't set proj.db path"));
   }
-  logging::verbose([&]() { return std::format("Succeeded trying to set db path to {:s}", db_path); }
-  );
+  logging::verbose("Succeeded trying to set db path to {:s}", db_path);
   return pjc;
 }
 class Point;
@@ -58,19 +57,17 @@ void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x,
   *y = b.enu.n;
   // #ifdef DEBUG_PROJ
   PJ_COORD c = proj_trans(P, PJ_INV, b);
-  fs::logging::verbose([&]() {
-    return std::format(
-      "longitude: {:f}, latitude: {:f} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}",
-      point.longitude(),
-      point.latitude(),
-      b.enu.e,
-      b.enu.n,
-      b.xy.x,
-      b.xy.y,
-      c.lp.lam,
-      c.lp.phi
-    );
-  });
+  fs::logging::verbose(
+    "longitude: {:f}, latitude: {:f} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}",
+    point.longitude(),
+    point.latitude(),
+    b.enu.e,
+    b.enu.n,
+    b.xy.x,
+    b.xy.y,
+    c.lp.lam,
+    c.lp.phi
+  );
   // #endif
   proj_destroy(P);
   proj_context_destroy(C);
@@ -110,9 +107,7 @@ string try_fix_meridian(const string_view proj4)
       // zone 15 is -93 and other zones are 6 degrees difference
       const auto z = stod(zone);
       const auto lon_0 = fs::utm_central_meridian(z);
-      logging::debug([&]() {
-        return std::format("UTM zone {:s} == {:f} turned into meridian {:f}", zone, z, lon_0);
-      });
+      logging::debug("UTM zone {:s} == {:f} turned into meridian {:f}", zone, z, lon_0);
       return {0.0, lon_0, 0.9996, 500000.0, 0.0};
     }
     // HACK: only do once

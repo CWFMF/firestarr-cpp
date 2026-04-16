@@ -29,13 +29,11 @@ int value_at_int(void* const buf, const FullIdx offset)
   auto min_value = std::numeric_limits<int>::max();
   auto max_value = std::numeric_limits<int>::min();
 #endif
-  logging::debug([&]() {
-    return std::format(
-      "Raster type int has limits {:d}, {:d}",
-      std::numeric_limits<int>::min(),
-      std::numeric_limits<int>::max()
-    );
-  });
+  logging::debug(
+    "Raster type int has limits {:d}, {:d}",
+    std::numeric_limits<int>::min(),
+    std::numeric_limits<int>::max()
+  );
   const GridBase grid_info = read_header(geotiff);
   uint32_t tile_width;
   uint32_t tile_length;
@@ -47,23 +45,19 @@ int value_at_int(void* const buf, const FullIdx offset)
   logging::check_fatal(0 == count, "NODATA value is not set in input");
   logging::debug("NODATA value is '{:s}'", static_cast<char*>(data));
   const auto nodata_orig = stoi(string(static_cast<char*>(data)));
-  logging::debug([&]() {
-    return std::format("NODATA value is originally parsed as {:d}", nodata_orig);
-  });
+  logging::debug("NODATA value is originally parsed as {:d}", nodata_orig);
   const auto nodata_input = static_cast<int>(stoi(string(static_cast<char*>(data))));
   logging::debug("NODATA value is parsed as {:d}", nodata_input);
   auto actual_rows = grid_info.calculateRows();
   auto actual_columns = grid_info.calculateColumns();
   const auto coordinates = grid_info.findFullCoordinates(point, true);
-  logging::note([&]() {
-    return std::format(
-      "Coordinates before reading are ({:d}, {:d} => {:f}, {:f})",
-      std::get<0>(*coordinates),
-      std::get<1>(*coordinates),
-      std::get<0>(*coordinates) + std::get<2>(*coordinates) / 1000.0,
-      std::get<1>(*coordinates) + std::get<3>(*coordinates) / 1000.0
-    );
-  });
+  logging::note(
+    "Coordinates before reading are ({:d}, {:d} => {:f}, {:f})",
+    std::get<0>(*coordinates),
+    std::get<1>(*coordinates),
+    std::get<0>(*coordinates) + std::get<2>(*coordinates) / 1000.0,
+    std::get<1>(*coordinates) + std::get<3>(*coordinates) / 1000.0
+  );
   auto min_column = max(
     static_cast<FullIdx>(0),
     static_cast<FullIdx>(
@@ -132,189 +126,166 @@ int value_at_int(void* const buf, const FullIdx offset)
 #ifdef DEBUG_GRIDS
   int bps_int16_t =
     std::numeric_limits<int16_t>::digits + (1 * std::numeric_limits<int16_t>::is_signed);
-  logging::debug([&]() {
-    return std::format("Size of pointer to int is {:d} vs {:d}", sizeof(int16_t*), sizeof(int*));
-  });
-  logging::debug([&]() {
-    return std::format(
-      "Raster {:s} calculated bps for type int is {:d}; tif says bps is {:d}; int16_t is {:d}",
-      geotiff.filename(),
-      bps,
-      bps_file,
-      bps_int16_t
-    );
-  });
+  logging::debug("Size of pointer to int is {:d} vs {:d}", sizeof(int16_t*), sizeof(int*));
+});
+logging::debug(
+  "Raster {:s} calculated bps for type int is {:d}; tif says bps is {:d}; int16_t is {:d}",
+  geotiff.filename(),
+  bps,
+  bps_file,
+  bps_int16_t
+);
 #endif
-  const auto tile_size = TIFFTileSize(tif);
-  logging::debug([&]() {
-    return std::format("Tile size for reading {:s} is {:d}", geotiff.filename(), tile_size);
-  });
-  const auto buf = _TIFFmalloc(tile_size);
-  logging::verbose("{:s}: read start", geotiff.filename());
-  const tsample_t smp{};
-  logging::debug([&]() {
-    return std::format(
-      "Want to clip grid to ({:d}, {:d}) => ({:d}, {:d}) for a {:d}{:d} raster",
-      min_row,
-      min_column,
-      max_row,
-      max_column,
-      actual_rows,
-      actual_columns
-    );
-  });
-  // HACK: it really feels like there should be a better way to do this
-  switch (sample_format)
+const auto tile_size = TIFFTileSize(tif);
+logging::debug("Tile size for reading {:s} is {:d}", geotiff.filename(), tile_size);
+const auto buf = _TIFFmalloc(tile_size);
+logging::verbose("{:s}: read start", geotiff.filename());
+const tsample_t smp{};
+logging::debug(
+  "Want to clip grid to ({:d}, {:d}) => ({:d}, {:d}) for a {:d}{:d} raster",
+  min_row,
+  min_column,
+  max_row,
+  max_column,
+  actual_rows,
+  actual_columns
+);
+// HACK: it really feels like there should be a better way to do this
+switch (sample_format)
+{
+  case SAMPLEFORMAT_VOID:
+    exit(logging::fatal("SAMPLEFORMAT_VOID unsupported"));
+  case SAMPLEFORMAT_UINT:
+    break;
+  case SAMPLEFORMAT_INT:
+    break;
+  case SAMPLEFORMAT_IEEEFP:
+    exit(logging::fatal("Expected integer raster but got SAMPLEFORMAT_IEEEFP"));
+  case SAMPLEFORMAT_COMPLEXINT:
+    exit(logging::fatal("Expected integer raster but got SAMPLEFORMAT_COMPLEXINT"));
+  case SAMPLEFORMAT_COMPLEXIEEEFP:
+    exit(logging::fatal("Expected integer raster but got SAMPLEFORMAT_COMPLEXIEEEFP"));
+  default:
+    exit(logging::fatal("Unknown TIFFTAG_SAMPLEFORMAT value {:d}", sample_format));
+}
+auto value_at = [&]() {
+  if (SAMPLEFORMAT_UINT == sample_format)
   {
-    case SAMPLEFORMAT_VOID:
-      return logging::fatal<ConstantGrid<int, int>>("SAMPLEFORMAT_VOID unsupported");
-    case SAMPLEFORMAT_UINT:
-      break;
-    case SAMPLEFORMAT_INT:
-      break;
-    case SAMPLEFORMAT_IEEEFP:
-      return logging::fatal<ConstantGrid<int, int>>(
-        "Expected integer raster but got SAMPLEFORMAT_IEEEFP"
-      );
-    case SAMPLEFORMAT_COMPLEXINT:
-      return logging::fatal<ConstantGrid<int, int>>(
-        "Expected integer raster but got SAMPLEFORMAT_COMPLEXINT"
-      );
-    case SAMPLEFORMAT_COMPLEXIEEEFP:
-      return logging::fatal<ConstantGrid<int, int>>(
-        "Expected integer raster but got SAMPLEFORMAT_COMPLEXIEEEFP"
-      );
-    default:
-      return logging::fatal<ConstantGrid<int, int>>(
-        "Unknown TIFFTAG_SAMPLEFORMAT value {:d}", sample_format
-      );
+    // unsigned int
+    if (8 == bps_file)
+    {
+      return &value_at_int<uint8_t>;
+    }
+    if (16 == bps_file)
+    {
+      return &value_at_int<uint16_t>;
+    }
+    if (32 == bps_file)
+    {
+      return &value_at_int<uint32_t>;
+    }
   }
-  auto value_at = [&]() {
-    if (SAMPLEFORMAT_UINT == sample_format)
-    {
-      // unsigned int
-      if (8 == bps_file)
-      {
-        return &value_at_int<uint8_t>;
-      }
-      if (16 == bps_file)
-      {
-        return &value_at_int<uint16_t>;
-      }
-      if (32 == bps_file)
-      {
-        return &value_at_int<uint32_t>;
-      }
-    }
-    else if (SAMPLEFORMAT_INT == sample_format)
-    {
-      // signed int
-      if (8 == bps_file)
-      {
-        return &value_at_int<int8_t>;
-      }
-      if (16 == bps_file)
-      {
-        return &value_at_int<int16_t>;
-      }
-      if (32 == bps_file)
-      {
-        return &value_at_int<int32_t>;
-      }
-    }
-    // return &value_at_int<int32_t>;
-    return logging::fatal<int (*)(void*, const FullIdx)>([&]() {
-      return std::format(
-        "SAMPLEFORMAT {:d} has invalid TIFFTAG_BITSPERSAMPLE {:d}", sample_format, bps_file
-      );
-    });
-  }();
-  for (auto h = tile_row; h <= max_row; h += tile_length)
+  else if (SAMPLEFORMAT_INT == sample_format)
   {
-    for (auto w = tile_column; w <= max_column; w += tile_width)
+    // signed int
+    if (8 == bps_file)
     {
-      std::ignore =
-        TIFFReadTile(tif, buf, static_cast<uint32_t>(w), static_cast<uint32_t>(h), 0, smp);
-      for (FullIdx y = 0; (y < static_cast<FullIdx>(tile_length)) && (y + h <= max_row); ++y)
+      return &value_at_int<int8_t>;
+    }
+    if (16 == bps_file)
+    {
+      return &value_at_int<int16_t>;
+    }
+    if (32 == bps_file)
+    {
+      return &value_at_int<int32_t>;
+    }
+  }
+  // return &value_at_int<int32_t>;
+  exit(logging::fatal(
+    "SAMPLEFORMAT {:d} has invalid TIFFTAG_BITSPERSAMPLE {:d}", sample_format, bps_file
+  ));
+}();
+for (auto h = tile_row; h <= max_row; h += tile_length)
+{
+  for (auto w = tile_column; w <= max_column; w += tile_width)
+  {
+    std::ignore =
+      TIFFReadTile(tif, buf, static_cast<uint32_t>(w), static_cast<uint32_t>(h), 0, smp);
+    for (FullIdx y = 0; (y < static_cast<FullIdx>(tile_length)) && (y + h <= max_row); ++y)
+    {
+      // read in so that (0, 0) has a hash of 0
+      const auto y_row = static_cast<HashSize>((h - min_row) + y);
+      const auto actual_row = (max_row - min_row) - y_row;
+      if (actual_row >= 0 && actual_row < MAX_ROWS)
       {
-        // read in so that (0, 0) has a hash of 0
-        const auto y_row = static_cast<HashSize>((h - min_row) + y);
-        const auto actual_row = (max_row - min_row) - y_row;
-        if (actual_row >= 0 && actual_row < MAX_ROWS)
+        for (auto x = 0; (x < static_cast<FullIdx>(tile_width)) && (x + w <= max_column); ++x)
         {
-          for (auto x = 0; (x < static_cast<FullIdx>(tile_width)) && (x + w <= max_column); ++x)
+          const auto offset = y * tile_width + x;
+          const auto actual_column = ((w - min_column) + x);
+          if (actual_column >= 0 && actual_column < MAX_ROWS)
           {
-            const auto offset = y * tile_width + x;
-            const auto actual_column = ((w - min_column) + x);
-            if (actual_column >= 0 && actual_column < MAX_ROWS)
-            {
-              const auto cur_hash = actual_row * MAX_COLUMNS + actual_column;
-              // auto cur = *(static_cast<int*>(buf) + offset);
-              auto cur = value_at(buf, offset);
+            const auto cur_hash = actual_row * MAX_COLUMNS + actual_column;
+            // auto cur = *(static_cast<int*>(buf) + offset);
+            auto cur = value_at(buf, offset);
 #ifdef DEBUG_GRIDS
-              min_value = min(cur, min_value);
-              max_value = max(cur, max_value);
+            min_value = min(cur, min_value);
+            max_value = max(cur, max_value);
 #endif
-              values.at(cur_hash) = cur;
-            }
+            values.at(cur_hash) = cur;
           }
         }
       }
     }
   }
-  logging::verbose("{:s}: read end", geotiff.filename());
-  _TIFFfree(buf);
-  logging::verbose("{:s}: free end", geotiff.filename());
-  const auto new_xll =
-    grid_info.xllcorner() + (static_cast<MathSize>(min_column) * grid_info.cellSize());
-  const auto new_yll =
-    grid_info.yllcorner()
-    + (static_cast<MathSize>(actual_rows) - static_cast<MathSize>(max_row)) * grid_info.cellSize();
+}
+logging::verbose("{:s}: read end", geotiff.filename());
+_TIFFfree(buf);
+logging::verbose("{:s}: free end", geotiff.filename());
+const auto new_xll =
+  grid_info.xllcorner() + (static_cast<MathSize>(min_column) * grid_info.cellSize());
+const auto new_yll =
+  grid_info.yllcorner()
+  + (static_cast<MathSize>(actual_rows) - static_cast<MathSize>(max_row)) * grid_info.cellSize();
 #ifdef DEBUG_GRIDS
-  logging::check_fatal(new_yll < grid_info.yllcorner(), "New yllcorner is outside original grid");
+logging::check_fatal(new_yll < grid_info.yllcorner(), "New yllcorner is outside original grid");
 #endif
-  logging::verbose([&]() {
-    return std::format(
-      "Translated lower left is ({:f}, {:f}) from ({:f}, {:f})",
-      new_xll,
-      new_yll,
-      grid_info.xllcorner(),
-      grid_info.yllcorner()
-    );
-  });
-  const auto num_rows = max_row - min_row + 1;
-  const auto num_columns = max_column - min_column + 1;
-  ConstantGrid<int, int> result{
-    grid_info.cellSize(),
-    static_cast<Idx>(num_rows),
-    static_cast<Idx>(num_columns),
-    nodata_input,
-    nodata_input,
-    new_xll,
-    new_yll,
-    new_xll + (static_cast<MathSize>(num_columns) + 1) * grid_info.cellSize(),
-    new_yll + (static_cast<MathSize>(num_rows) + 1) * grid_info.cellSize(),
-    string(grid_info.proj4()),
-    std::move(values)
-  };
-  auto new_location = result.findCoordinates(point, false);
+logging::verbose(
+  "Translated lower left is ({:f}, {:f}) from ({:f}, {:f})",
+  new_xll,
+  new_yll,
+  grid_info.xllcorner(),
+  grid_info.yllcorner()
+);
+const auto num_rows = max_row - min_row + 1;
+const auto num_columns = max_column - min_column + 1;
+ConstantGrid<int, int> result{
+  grid_info.cellSize(),
+  static_cast<Idx>(num_rows),
+  static_cast<Idx>(num_columns),
+  nodata_input,
+  nodata_input,
+  new_xll,
+  new_yll,
+  new_xll + (static_cast<MathSize>(num_columns) + 1) * grid_info.cellSize(),
+  new_yll + (static_cast<MathSize>(num_rows) + 1) * grid_info.cellSize(),
+  string(grid_info.proj4()),
+  std::move(values)
+};
+auto new_location = result.findCoordinates(point, false);
 #ifdef DEBUG_GRIDS
-  logging::check_fatal(nullptr == new_location, "Invalid location after reading");
+logging::check_fatal(nullptr == new_location, "Invalid location after reading");
 #endif
-  logging::note([&]() {
-    return std::format(
-      "Coordinates are ({:d}, {:d} => {:f}, {:f})",
-      std::get<0>(*new_location),
-      std::get<1>(*new_location),
-      std::get<0>(*new_location) + std::get<2>(*new_location) / 1000.0,
-      std::get<1>(*new_location) + std::get<3>(*new_location) / 1000.0
-    );
-  });
+logging::note(
+  "Coordinates are ({:d}, {:d} => {:f}, {:f})",
+  std::get<0>(*new_location),
+  std::get<1>(*new_location),
+  std::get<0>(*new_location) + std::get<2>(*new_location) / 1000.0,
+  std::get<1>(*new_location) + std::get<3>(*new_location) / 1000.0
+);
 #ifdef DEBUG_GRIDS
-  logging::note([&]() {
-    return std::format("Values for {:s} range from {:d} to {:d}", filename, min_value, max_value);
-  });
+logging::note("Values for {:s} range from {:d} to {:d}", filename, min_value, max_value);
 #endif
-  return result;
+return result;
 }
 }

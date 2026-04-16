@@ -62,9 +62,7 @@ int test_fwi_file(
       return 1;
     }
   }
-  logging::debug([&]() {
-    return std::format("Testing FWI generated from {:s} for latitude {:g}", file_in, latitude);
-  });
+  logging::debug("Testing FWI generated from {:s} for latitude {:g}", file_in, latitude);
   const Latitude latitude_{latitude};
   /* Main loop for calculating indices */
   for (auto row : buffer)
@@ -105,17 +103,15 @@ int test_fwi_file(
     ffmc0_ = ffmc_;
     dmc0_ = dmc_;
     dc0_ = dc_;
-    logging::verbose([&]() {
-      return std::format(
-        "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}",
-        ffmc.value,
-        dmc.value,
-        dc.value,
-        isi.value,
-        bui.value,
-        fwi.value
-      );
-    });
+    logging::verbose(
+      "{:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f} {:0.1f}",
+      ffmc.value,
+      dmc.value,
+      dc.value,
+      isi.value,
+      bui.value,
+      fwi.value
+    );
     if (nullptr != file_out)
     {
       outputFile << std::format(
@@ -177,18 +173,14 @@ int test_fwi_files(const string file_expected, const string file_in, const strin
   // FIX: other tests use test/input but want to switch to test/data
   if (auto ret = test_fwi_file(file_in.c_str(), file_out.c_str()); ret != 0)
   {
-    logging::error([&]() {
-      return std::format("Generating {:s} from {:s} failed", file_out, file_in);
-    });
+    logging::error("Generating {:s} from {:s} failed", file_out, file_in);
     return ret;
   }
   if (auto cmp = compare_files(file_expected, file_out); 0 != cmp)
   {
-    logging::error([&]() {
-      return std::format(
-        "Comparison between files [{:s}, {:s}] gives {:d}", file_expected, file_out, cmp
-      );
-    });
+    logging::error(
+      "Comparison between files [{:s}, {:s}] gives {:d}", file_expected, file_out, cmp
+    );
     return cmp;
   }
   return 0;
@@ -209,20 +201,13 @@ int test_fwi(const int argc, const char* const argv[])
   {
     return ret;
   }
-  logging::info([&]() {
-    return std::format(
-      "Testing across latitude range [{:+g}, {:+g}] with step {:g}",
-      LATITUDE_MIN,
-      LATITUDE_MAX,
-      STEP
-    );
-  });
+  logging::info(
+    "Testing across latitude range [{:+g}, {:+g}] with step {:g}", LATITUDE_MIN, LATITUDE_MAX, STEP
+  );
   auto check_latitude = [&](const MathSize latitude) {
     if (auto ret = test_fwi_file(FILE_IN, nullptr, latitude); ret != 0)
     {
-      logging::error([&]() {
-        return std::format("Generating from {:s} with latitude {:g} failed", FILE_IN, latitude);
-      });
+      logging::error("Generating from {:s} with latitude {:g} failed", FILE_IN, latitude);
       return ret;
     }
     return 0;

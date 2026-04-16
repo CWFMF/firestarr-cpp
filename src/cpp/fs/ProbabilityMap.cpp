@@ -93,7 +93,7 @@ void ProbabilityMap::addProbability(const IntensityMap& for_time)
       }
       else
       {
-        logging::fatal("Value {:d} doesn't fit into any range", v);
+        exit(logging::fatal("Value {:d} doesn't fit into any range", v));
       }
     }
   });
@@ -110,16 +110,14 @@ void ProbabilityMap::show() const
   // with different randomThreshold values
   const auto day = static_cast<int>(time - floor(start_time));
   const auto s = getStatistics();
-  logging::note([&]() {
-    return std::format(
-      "Fire size at end of day {:d}: {:0.1f} ha - {:0.1f} ha (mean {:0.1f} ha, median {:0.1f} ha)",
-      day,
-      s.min(),
-      s.max(),
-      s.mean(),
-      s.median()
-    );
-  });
+  logging::note(
+    "Fire size at end of day {:d}: {:0.1f} ha - {:0.1f} ha (mean {:0.1f} ha, median {:0.1f} ha)",
+    day,
+    s.min(),
+    s.max(),
+    s.mean(),
+    s.median()
+  );
 }
 [[nodiscard]] FileList ProbabilityMap::record_if_interim(
   FileList&& files,

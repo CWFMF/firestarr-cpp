@@ -41,11 +41,9 @@ string saveToTiffFile(
     return std::format("Invalid bounds for rows with {:d} => {:d}", min_row, max_row);
   });
 #ifdef DEBUG_GRIDS
-  logging::debug([&]() {
-    return std::format(
-      "Bounds are ({:d}, {:d}), ({:d}, {:d}) initially", min_column, min_row, max_column, max_row
-    );
-  });
+  logging::debug(
+    "Bounds are ({:d}, {:d}), ({:d}, {:d}) initially", min_column, min_row, max_column, max_row
+  );
 #endif
   Idx c_min = 0;
   while (c_min + static_cast<Idx>(tileWidth) <= min_column)
@@ -78,15 +76,13 @@ string saveToTiffFile(
     return std::format("Invalid bounds for rows with {:d} => {:d}", min_row, max_row);
   });
 #ifdef DEBUG_GRIDS
-  logging::debug([&]() {
-    return std::format(
-      "Bounds are ({:d}, {:d}), ({:d}, {:d}) after correction",
-      min_column,
-      min_row,
-      max_column,
-      max_row
-    );
-  });
+  logging::debug(
+    "Bounds are ({:d}, {:d}), ({:d}, {:d}) after correction",
+    min_column,
+    min_row,
+    max_column,
+    max_row
+  );
 #endif
   logging::extensive("({:d}, {:d}) => ({:d}, {:d})", min_column, min_row, max_column, max_row);
   logging::check_fatal((max_row - min_row) % tileHeight != 0, "Invalid start and end rows");
@@ -307,13 +303,11 @@ string GridBase::saveToTiffFileInt(
       );
     }
   }
-  return logging::fatal<string>([&]() {
-    return std::format(
-      "Invalid combination of BITSPERSAMPLE ({:d}) and SAMPLEFORMAT ({:d})",
-      bits_per_sample,
-      sample_format
-    );
-  });
+  exit(logging::fatal(
+    "Invalid combination of BITSPERSAMPLE ({:d}) and SAMPLEFORMAT ({:d})",
+    bits_per_sample,
+    sample_format
+  ));
 }
 string GridBase::saveToTiffFileFloat(
   const Idx columns,
@@ -373,7 +367,7 @@ void GridBase::createPrj(const string_view dir, const string_view base_name) con
   const auto y_0 = find_value("+y_0=", proj4_);
   if (proj.empty() || k.empty() || lat_0.empty() || lon_0.empty() || x_0.empty() || y_0.empty())
   {
-    logging::fatal("Cannot convert proj4 '{:s}' into .prj file", proj4_.c_str());
+    exit(logging::fatal("Cannot convert proj4 '{:s}' into .prj file", proj4_.c_str()));
   }
   out << "Projection    TRANSVERSE\n";
   out << "Datum         AI_CSRS\n";
@@ -413,15 +407,9 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const Point& point, co
   MathSize x;
   MathSize y;
   from_lat_long(this->proj4_, point, &x, &y);
-  logging::debug([&]() {
-    return std::format(
-      "Coordinates ({:f}, {:f}) converted to ({:f}, {:f})",
-      point.latitude(),
-      point.longitude(),
-      x,
-      y
-    );
-  });
+  logging::debug(
+    "Coordinates ({:f}, {:f}) converted to ({:f}, {:f})", point.latitude(), point.longitude(), x, y
+  );
   // check that north is the top of the raster at least along center
   const auto x_mid = (xllcorner_ + xurcorner_) / 2.0;
   Point south = to_lat_long(proj4_, x_mid, yllcorner_);
@@ -437,33 +425,27 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const Point& point, co
   const auto deviation = x_n - x_s;
   if (abs(deviation) > MAX_DEVIATION)
   {
-    logging::note([&]() {
-      return std::format(
-        "Due north is not the top of the raster for ({:f}, {:f}) with proj4 '{:s}' - {:f} vs {:f} gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
-        point.latitude(),
-        point.longitude(),
-        this->proj4_,
-        x_n,
-        x_s,
-        deviation,
-        MAX_DEVIATION
-      );
-    });
+    logging::note(
+      "Due north is not the top of the raster for ({:f}, {:f}) with proj4 '{:s}' - {:f} vs {:f} gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
+      point.latitude(),
+      point.longitude(),
+      this->proj4_,
+      x_n,
+      x_s,
+      deviation,
+      MAX_DEVIATION
+    );
     return nullptr;
   }
   else if (abs(deviation * 10) > MAX_DEVIATION)
   {
     // if we're within an order of magnitude of an unacceptable deviation then warn about it
-    logging::warning([&]() {
-      return std::format(
-        "Due north deviates by {:f} degrees from South to North along the middle of the raster",
-        deviation
-      );
-    });
+    logging::warning(
+      "Due north deviates by {:f} degrees from South to North along the middle of the raster",
+      deviation
+    );
   }
-  logging::verbose([&]() {
-    return std::format("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
-  });
+  logging::verbose("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
   const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
@@ -473,15 +455,13 @@ unique_ptr<FullCoordinates> GridBase::findFullCoordinates(const Point& point, co
   const auto row = static_cast<FullIdx>(round(actual_y - 0.5));
   if (0 > column || column >= calculateColumns() || 0 > row || row >= calculateRows())
   {
-    logging::verbose([&]() {
-      return std::format(
-        "Returning nullptr from findFullCoordinates() for ({:f}, {:f}) => ({:d}, {:d})",
-        actual_x,
-        actual_y,
-        column,
-        row
-      );
-    });
+    logging::verbose(
+      "Returning nullptr from findFullCoordinates() for ({:f}, {:f}) => ({:d}, {:d})",
+      actual_x,
+      actual_y,
+      column,
+      row
+    );
     return nullptr;
   }
   const auto sub_x = static_cast<SubSize>((actual_x - column) * 1000);
@@ -525,9 +505,7 @@ void write_ascii_header(
     );
     const auto yllcorner = y;
     const auto xllcorner = x;
-    logging::debug([&]() {
-      return std::format("Lower left for header is ({:f}, {:f})", xllcorner, yllcorner);
-    });
+    logging::debug("Lower left for header is ({:f}, {:f})", xllcorner, yllcorner);
     double adf_coefficient[6] = {0};
     x = 0.5;
     y = 0.5;

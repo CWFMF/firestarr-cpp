@@ -25,15 +25,13 @@ public:
     : start_(start), end_(end), increment_(increment), inclusive_(inclusive)
   {
 #ifdef DEBUG_ITERATOR
-    logging::verbose([&]() {
-      return std::format(
-        "Range is from {:f} to {:f} with step {:f} {:s}",
-        start_,
-        end_,
-        increment_,
-        inclusive_ ? "inclusive" : "exclusive"
-      );
-    });
+    logging::verbose(
+      "Range is from {:f} to {:f} with step {:f} {:s}",
+      start_,
+      end_,
+      increment_,
+      inclusive_ ? "inclusive" : "exclusive"
+    );
 #endif
   }
   constexpr RangeIterator() = default;
