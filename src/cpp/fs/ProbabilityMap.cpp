@@ -2,6 +2,7 @@
 #include "ProbabilityMap.h"
 #include "GridMap.h"
 #include "IntensityMap.h"
+#include "TimeUtil.h"
 namespace fs
 {
 /**
@@ -207,7 +208,10 @@ void ProbabilityMap::deleteInterim()
   auto ticks = mktime(&t);
   const auto day = static_cast<int>(round(time));
   ticks += (static_cast<size_t>(day) - t.tm_yday - 1) * DAY_SECONDS;
-  t = *localtime(&ticks);
+  if (!localtime_r(&ticks, &t))
+  {
+    logging::fatal("Unable to convert time from {}", ticks);
+  }
   auto fix_string = [=](const string prefix) {
     const auto text = (is_interim ? "interim_" : "") + prefix;
     return make_string(text.c_str(), t, day);
