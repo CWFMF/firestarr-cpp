@@ -136,10 +136,6 @@ inline void error(std::format_string<Args...> format, Args&&... args) DEBUG_NOEX
   }
   output(log_level, std::format(format, std::forward<Args>(args)...));
 }
-inline void extensive(std::function<string()> fct) DEBUG_NOEXCEPT_OFF
-{
-  output(logging::level::extensive, fct);
-}
 template <typename... Args>
 inline int fatal(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
@@ -213,35 +209,34 @@ inline void check_fatal(bool condition, std::function<string()> fct) DEBUG_NOEXC
     std::ignore = fatal<int>(fct);
   }
 }
-inline void check_fatal(bool condition, const string msg) DEBUG_NOEXCEPT_OFF
+template <typename... Args>
+inline void check_fatal(bool condition, std::format_string<Args...> format, Args&&... args)
+  DEBUG_NOEXCEPT_OFF
 {
-  if (condition)
+  if (!condition)
   {
-    std::ignore = fatal<int>(msg);
+    return;
   }
+  fatal(format, std::forward<Args>(args)...);
 }
 template <typename T>
 inline void check_equal(const T lhs, const T rhs, const char* name) DEBUG_NOEXCEPT_OFF
 {
-  check_fatal(lhs != rhs, [&]() {
-    return std::format("Expected {:s} to be {} but got {}", name, rhs, lhs);
-  });
+  check_fatal(lhs != rhs, "Expected {:s} to be {} but got {}", name, rhs, lhs);
 }
 inline void check_equal(const char* lhs, const char* rhs, const char* name) DEBUG_NOEXCEPT_OFF
 {
-  check_fatal(0 != strcmp(lhs, rhs), [&]() {
-    return std::format("Expected {:s} to be {:s} got {:s}", name, rhs, lhs);
-  });
+  check_fatal(0 != strcmp(lhs, rhs), "Expected {:s} to be {:s} got {:s}", name, rhs, lhs);
 }
 inline void check_equal(const bool lhs, const bool rhs, const char* name) DEBUG_NOEXCEPT_OFF
 {
-  bool a = lhs ? true : false;
-  bool b = rhs ? true : false;
-  check_fatal(a != b, [&]() {
-    return std::format(
-      "Expected {:s} to be {:s} but got {:s}", name, a ? "true" : "false", b ? "true" : "false"
-    );
-  });
+  check_fatal(
+    lhs != rhs,
+    "Expected {:s} to be {:s} but got {:s}",
+    name,
+    lhs ? "true" : "false",
+    rhs ? "true" : "false"
+  );
 }
 template <class V>
 inline void check_equal_verbose(
