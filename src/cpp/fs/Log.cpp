@@ -6,7 +6,7 @@
 namespace fs::logging
 {
 // Current logging level
-int logging_level_ = LOG_DEBUG;
+logging::level logging_level_ = logging::level::debug;
 // do this in .cpp so that we don't get unused warnings including the .h
 static const char* LOG_LABELS[] = {
   "EXTENSIVE: ",
@@ -21,18 +21,20 @@ static const char* LOG_LABELS[] = {
 };
 stringstream pre_file_log{};
 mutex mutex_;
-void set_log_level(const int log_level) noexcept { logging_level_ = log_level; }
+void set_log_level(const logging::level log_level) noexcept { logging_level_ = log_level; }
 void increase_log_level() noexcept
 {
   // HACK: make sure we never go below 0
-  logging_level_ = max(0, get_log_level() - 1);
+  logging_level_ = logging::level{max(0, static_cast<int>(get_log_level()) - 1)};
 }
 void decrease_log_level() noexcept
 {
   // HACK: make sure we never go above silent
-  logging_level_ = min(LOG_SILENT, get_log_level() + 1);
+  logging_level_ = logging::level{
+    min(static_cast<int>(logging::level::silent), static_cast<int>(get_log_level()) + 1)
+  };
 }
-int get_log_level() noexcept { return logging_level_; }
+logging::level get_log_level() noexcept { return logging_level_; }
 // closes automatically when ofstream is deconstructed
 ofstream out_{};
 int open_log_file(const char* filename) noexcept
@@ -78,7 +80,7 @@ string format_log_message(const char* prefix, const string msg)
   iss << msg;
   return iss.str();
 }
-string output(const int log_level, const string msg) DEBUG_NOEXCEPT_OFF
+string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_OFF
 {
 #ifdef NDEBUG
   if (should_not_log(log_level))
@@ -89,7 +91,7 @@ string output(const int log_level, const string msg) DEBUG_NOEXCEPT_OFF
   try
   {
     lock_guard<mutex> lock(mutex_);
-    auto msg_fmt = format_log_message(LOG_LABELS[log_level], msg);
+    auto msg_fmt = format_log_message(LOG_LABELS[static_cast<int>(log_level)], msg);
 #ifndef NDEBUG
     // if debugging then output everything to log file but not necessarily stdout
     if (should_log(log_level))

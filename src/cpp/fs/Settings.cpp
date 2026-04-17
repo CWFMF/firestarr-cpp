@@ -378,7 +378,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     }
     if (!settings_.first.empty())
     {
-      if (logging::should_log(logging::LOG_WARNING))
+      if (logging::should_log(logging::level::warning))
       {
         logging::warning("Unused settings in settings file {:s}", filename);
         for (const auto& kv : settings_.first)

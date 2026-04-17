@@ -177,20 +177,20 @@ int compare_duff(
   const string name,
   const TypeA& a,
   const TypeB& b,
-  const int log_level = logging::LOG_INFO
+  const logging::level log_level = logging::level::info
 )
 {
   static constexpr int RESOLUTION = 10000;
   static constexpr MathSize RANGE = 250.0;
   // check %, so 1 decimal is fine
   static constexpr auto EPSILON = static_cast<MathSize>(1e-1);
-  logging::output(log_level, [&]() { return std::format("Checking {:s}", name); });
-  logging::check_equal_verbose(logging::LOG_DEBUG, a.ash, b.ash, "ash");
-  logging::check_equal_verbose(logging::LOG_DEBUG, a.rho, b.rho, "rho");
-  logging::check_equal_verbose(logging::LOG_DEBUG, a.b0, b.b0, "b0");
-  logging::check_equal_verbose(logging::LOG_DEBUG, a.b1, b.b1, "b1");
-  logging::check_equal_verbose(logging::LOG_DEBUG, a.b2, b.b2, "b2");
-  logging::check_equal_verbose(logging::LOG_DEBUG, a.b3, b.b3, "b3");
+  logging::output(log_level, "Checking {:s}", name);
+  logging::check_equal_verbose(logging::level::debug, a.ash, b.ash, "ash");
+  logging::check_equal_verbose(logging::level::debug, a.rho, b.rho, "rho");
+  logging::check_equal_verbose(logging::level::debug, a.b0, b.b0, "b0");
+  logging::check_equal_verbose(logging::level::debug, a.b1, b.b1, "b1");
+  logging::check_equal_verbose(logging::level::debug, a.b2, b.b2, "b2");
+  logging::check_equal_verbose(logging::level::debug, a.b3, b.b3, "b3");
   for (auto i = 0; i < RESOLUTION; ++i)
   {
     const MathSize mc = RANGE * i / RESOLUTION;

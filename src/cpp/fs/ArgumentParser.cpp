@@ -292,7 +292,7 @@ ArgumentParser::ArgumentParser(
     }
     return {};
   }();   // HACK: count -v and -q before anything to get right log level
-  constexpr auto log_default = logging::LOG_NOTE;
+  constexpr auto log_default = logging::level::note;
   logging::set_log_level(log_default);
   for (const auto& arg : arguments)
   {
