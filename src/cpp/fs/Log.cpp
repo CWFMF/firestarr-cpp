@@ -108,12 +108,13 @@ string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_O
     {   // fflush(stdout);
       if (out_.is_open())
       {
-        out_ << msg << "\n";
+        out_ << msg_fmt << "\n";
         out_.flush();
       }
       else
       {
-        pre_file_log << msg << "\n";
+        pre_file_log << msg_fmt << "\n";
+        pre_file_log.clear();
       }
     }
     return msg_fmt;
