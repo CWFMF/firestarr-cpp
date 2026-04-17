@@ -495,6 +495,7 @@ public:
   void clear() noexcept;
 
 protected:
+  string log_prefix_{};
   /**
    * \brief Constructor
    * \param model Model running this Scenario
