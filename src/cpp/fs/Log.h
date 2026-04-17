@@ -14,15 +14,17 @@ namespace fs::logging
 {
 enum class level
 {
-  extensive = 0,
-  verbose,
-  debug,
-  info,
-  note,
-  warning,
-  error,
-  fatal,
-  silent
+  silent = 0,
+  fatal = 1,
+  error = 2,
+  warning = 3,
+  note = 4,
+  info = 5,
+  debug = 6,
+  verbose = 7,
+  extensive = 8,
+  min = silent,
+  max = extensive
 };
 void set_log_level(const logging::level log_level) noexcept;
 void increase_log_level() noexcept;
@@ -30,11 +32,11 @@ void decrease_log_level() noexcept;
 logging::level get_log_level() noexcept;
 inline bool should_log(const logging::level log_level) noexcept
 {
-  return get_log_level() <= log_level;
+  return get_log_level() >= log_level;
 }
 inline bool should_not_log(const logging::level log_level) noexcept
 {
-  return get_log_level() > log_level;
+  return get_log_level() < log_level;
 }
 int open_log_file(const char* filename) noexcept;
 int close_log_file() noexcept;
