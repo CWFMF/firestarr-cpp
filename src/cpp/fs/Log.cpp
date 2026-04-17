@@ -9,30 +9,32 @@ namespace fs::logging
 logging::level logging_level_ = logging::level::debug;
 // do this in .cpp so that we don't get unused warnings including the .h
 static const char* LOG_LABELS[] = {
-  "EXTENSIVE: ",
-  "VERBOSE:   ",
-  "DEBUG:     ",
-  "INFO:      ",
-  "NOTE:      ",
-  "WARNING:   ",
-  "ERROR:     ",
+  "SILENT:    ",
   "FATAL:     ",
-  "SILENT:    "
+  "ERROR:     ",
+  "WARNING:   ",
+  "NOTE:      ",
+  "INFO:      ",
+  "DEBUG:     ",
+  "VERBOSE:   ",
+  "EXTENSIVE: "
 };
 stringstream pre_file_log{};
 mutex mutex_;
 void set_log_level(const logging::level log_level) noexcept { logging_level_ = log_level; }
 void increase_log_level() noexcept
 {
-  // HACK: make sure we never go below 0
-  logging_level_ = logging::level{max(0, static_cast<int>(get_log_level()) - 1)};
+  // HACK: make sure we never go above max
+  logging_level_ =
+    logging::level{min(static_cast<int>(logging::level::max), static_cast<int>(get_log_level()) + 1)
+    };
 }
 void decrease_log_level() noexcept
 {
-  // HACK: make sure we never go above silent
-  logging_level_ = logging::level{
-    min(static_cast<int>(logging::level::silent), static_cast<int>(get_log_level()) + 1)
-  };
+  // HACK: make sure we never go below min
+  logging_level_ =
+    logging::level{max(static_cast<int>(logging::level::min), static_cast<int>(get_log_level()) - 1)
+    };
 }
 logging::level get_log_level() noexcept { return logging_level_; }
 // closes automatically when ofstream is deconstructed
