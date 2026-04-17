@@ -20,8 +20,6 @@ static const char* LOG_LABELS[] = {
   "VERBOSE:   ",
   "EXTENSIVE: "
 };
-stringstream pre_file_log{};
-mutex mutex_;
 void set_log_level(const logging::level log_level) noexcept { logging_level_ = log_level; }
 void increase_log_level() noexcept
 {
@@ -38,33 +36,50 @@ void decrease_log_level() noexcept
     };
 }
 logging::level get_log_level() noexcept { return logging_level_; }
-// closes automatically when ofstream is deconstructed
-ofstream out_{};
+// HACK: use function to ensure initialization
+stringstream* pre_file_log() noexcept
+{
+  static stringstream pre_file_log_{};
+  return &pre_file_log_;
+}
+ofstream* out_file() noexcept
+{
+  // closes automatically when ofstream is deconstructed
+  static ofstream out_file_{};
+  return &out_file_;
+}
+mutex mutex_{};
+ostream* output_{pre_file_log()};
 int open_log_file(const char* filename) noexcept
 {
   lock_guard<mutex> lock(mutex_);
   // turn off buffering so lines write to file immediately
-  out_.rdbuf()->pubsetbuf(0, 0);
-  out_.open(filename);
-  if (!out_.is_open())
+  auto outfile = out_file();
+  outfile->rdbuf()->pubsetbuf(0, 0);
+  outfile->open(filename);
+  if (!outfile->is_open())
   {
     return false;
   }
-  const auto log_so_far = pre_file_log.str();
+  auto prefile = pre_file_log();
+  const auto log_so_far = prefile->str();
   if (!log_so_far.empty())
   {
-    out_ << log_so_far;
-    pre_file_log.clear();
+    *outfile << log_so_far;
+    prefile->clear();
   }
+  output_ = outfile;
   return true;
 }
 int close_log_file() noexcept
 {
   lock_guard<mutex> lock(mutex_);
-  if (out_.is_open())
+  auto outfile = out_file();
+  output_ = pre_file_log();
+  if (outfile->is_open())
   {
-    out_.close();
-    return out_.fail();
+    outfile->close();
+    return outfile->fail();
   }
   return 0;
 }
@@ -99,16 +114,9 @@ string output_no_check(const logging::level log_level, const string msg) DEBUG_N
     // if debugging then output everything to log file but not necessarily stdout
     if (should_log(max(logging::get_log_level(), logging::level::verbose)))
 #endif
-    {   // fflush(stdout);
-      if (out_.is_open())
-      {
-        out_ << msg_fmt << "\n";
-        out_.flush();
-      }
-      else
-      {
-        pre_file_log << msg_fmt << "\n";
-      }
+    {
+      // output is out_file_ or pre_file_log_ if not open yet
+      *output_ << msg_fmt << "\n";
     }
     return msg_fmt;
   }
