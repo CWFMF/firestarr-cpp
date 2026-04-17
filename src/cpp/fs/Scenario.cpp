@@ -683,14 +683,14 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   // HACK: use + to pull value out of atomic
   const auto count = (settings.is_surface()) ? model_->scenarioCount() : (+COUNT);
   const auto log_level = (0 == (completed % 1000)) ? logging::level::note : logging::level::info;
-  if (settings.is_surface())
+  if (logging::should_log(log_level))
   {
-    if (logging::should_log(log_level))
+    if (settings.is_surface())
     {
       const auto ratio_done = static_cast<MathSize>(completed) / count;
       const auto s = model_->runTime().count();
       const auto r = static_cast<size_t>(s / ratio_done) - s;
-      logging::output(
+      std::ignore = logging::output_no_check(
         log_level,
         "{:s} [{:d} of {:d}] ({:0.2f}%) <{:d} : {:d} remaining> Completed with final size {:0.1f} ha",
         add_log(*this),
@@ -702,24 +702,24 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
         currentFireSize()
       );
     }
-  }
-  else
-  {
+    else
+    {
 #ifdef NDEBUG
-    logging::output(
-      log_level,
-      "{:s} [{:d} of {:d}] Completed with final size {:0.1f} ha",
-      add_log(*this),
-      completed,
-      count,
-      currentFireSize()
-    );
+      std::ignore = logging::output_no_check(
+        log_level,
+        "{:s} [{:d} of {:d}] Completed with final size {:0.1f} ha",
+        add_log(*this),
+        completed,
+        count,
+        currentFireSize()
+      );
 #else
-    // try to make output consistent if in debug mode
-    logging::output(
-      log_level, "{:s} Completed with final size {:0.1f} ha", add_log(*this), currentFireSize()
-    );
+      // try to make output consistent if in debug mode
+      std::ignore = logging::output_no_check(
+        log_level, "{:s} Completed with final size {:0.1f} ha", add_log(*this), currentFireSize()
+      );
 #endif
+    }
   }
   ran_ = true;
 #ifdef DEBUG_PROBABILITY
