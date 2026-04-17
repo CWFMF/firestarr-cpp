@@ -123,22 +123,4 @@ string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_O
     exit(fatal(ex));
   }
 }
-void check_tolerance(
-  const MathSize epsilon,
-  const MathSize lhs,
-  const MathSize rhs,
-  const char* name
-) DEBUG_NOEXCEPT_OFF
-{
-  const auto difference = abs(lhs - rhs);
-  check_fatal(
-    difference >= epsilon,
-    "Difference too big for {:s}: ({:g} > {:g}) for {:g} vs {:g}",
-    name,
-    difference,
-    epsilon,
-    rhs,
-    lhs
-  );
-}
 }
