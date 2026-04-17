@@ -81,7 +81,7 @@ string format_log_message(const char* prefix, const string msg)
 string output(const int log_level, const string msg) DEBUG_NOEXCEPT_OFF
 {
 #ifdef NDEBUG
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return "";
   }
@@ -92,7 +92,7 @@ string output(const int log_level, const string msg) DEBUG_NOEXCEPT_OFF
     auto msg_fmt = format_log_message(LOG_LABELS[log_level], msg);
 #ifndef NDEBUG
     // if debugging then output everything to log file but not necessarily stdout
-    if (log_level >= get_log_level())
+    if (should_log(log_level))
 #endif
     {
       cout << msg_fmt << "\n";

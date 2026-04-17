@@ -375,17 +375,18 @@ void Scenario::evaluate(const Event& event)
       );
       if (!survives(event.time, event.cell, event.time_at_location))
       {
-        logging::info([&]() {
+        if (should_log(LOG_INFO))
+        {
           // HACK: show daily values since that's what survival uses
           const auto wx = weather_daily(event.time);
-          return std::format(
+          logging::info(
             "{:s} Didn't survive ignition in {:s} with weather {:f}, {:f}",
             add_log(*this),
             FuelType::safeName(check_fuel(event.cell)),
             wx->ffmc.value,
             wx->dmc.value
           );
-        });
+        }
         // HACK: we still want the fire to have existed, so set the intensity of the origin
       }
       // fires start with intensity of 1
@@ -726,7 +727,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   ran_ = true;
 #ifdef DEBUG_PROBABILITY
   // nice to have this get output when debugging, but only need it in extreme cases
-  if (logging::get_log_level() <= logging::LOG_EXTENSIVE)
+  if (should_log(LOG_EXTENSIVE))
   {
     saveProbabilities(
       model().outputDirectory(),

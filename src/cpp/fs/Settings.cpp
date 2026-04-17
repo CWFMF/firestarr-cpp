@@ -378,15 +378,14 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     }
     if (!settings_.first.empty())
     {
-      logging::warning([&]() {
-        stringstream ss{};
-        ss << std::format("Unused settings in settings file {:s}", filename);
+      if (logging::should_log(logging::LOG_WARNING))
+      {
+        logging::warning("Unused settings in settings file {:s}", filename);
         for (const auto& kv : settings_.first)
         {
-          ss << std::format("{:s} = {:s}", kv.first, kv.second);
+          logging::warning("{:s} = {:s}", kv.first, kv.second);
         }
-        return ss.str();
-      });
+      }
     }
   }
   catch (const std::exception& ex)

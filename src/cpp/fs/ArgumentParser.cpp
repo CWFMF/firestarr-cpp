@@ -120,10 +120,7 @@ string ArgumentParser::get_args()
 }
 string ArgumentParser::format_args() { return std::format("Arguments are:\n  {:s}\n", get_args()); }
 void ArgumentParser::show_args() { cout << format_args() << "\n"; }
-void ArgumentParser::log_args()
-{
-  logging::note([&]() { return format_args(); });
-}
+void ArgumentParser::log_args() { logging::note("Arguments are:\n  {:s}\n", get_args()); }
 static vector<Usage> USAGES{};
 void add_usage(const Usage usage) { USAGES.emplace_back(usage); }
 void add_usages(const vector<Usage> usages)
