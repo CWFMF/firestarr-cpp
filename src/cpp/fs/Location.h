@@ -2,6 +2,9 @@
 #ifndef FS_LOCATION_H
 #define FS_LOCATION_H
 #include "stdafx.h"
+#ifdef DEBUG_GRIDS
+#include "Log.h"
+#endif
 #include "Util.h"
 namespace fs
 {
