@@ -274,14 +274,14 @@ string get_canonical_path(const char* const dir_root, string path)
       const pushd dir{dir_root};
       logging::note("dir_root = {:s}", dir_root);
       auto p_rel = std::filesystem::relative(path);
-      logging::verbose("p_rel = {:s}", p_rel.c_str());
+      logging::verbose("p_rel = {:s}", p_rel.generic_string());
       auto p_abs =
         p_rel.empty() ? dir.current_directory : std::filesystem::absolute(p_rel).generic_string();
       logging::verbose("p_abs = {:s}", p_abs);
       // auto p_can = std::filesystem::canonical(p_rel);
       // logging::note("p_can = {:s}", p_can.c_str());
       logging::debug(
-        "Relative to {:s} path {:s} becomes {:s}", dir_root, p_rel.c_str(), p_abs
+        "Relative to {:s} path {:s} becomes {:s}", dir_root, p_rel.generic_string(), p_abs
         // ,
         // p_can.c_str()
       );
