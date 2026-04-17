@@ -375,7 +375,7 @@ void Scenario::evaluate(const Event& event)
       );
       if (!survives(event.time, event.cell, event.time_at_location))
       {
-        if (should_log(LOG_INFO))
+        if (should_log(logging::level::info))
         {
           // HACK: show daily values since that's what survival uses
           const auto wx = weather_daily(event.time);
@@ -684,7 +684,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   const auto completed = ++COMPLETED;
   // HACK: use + to pull value out of atomic
   const auto count = (settings.is_surface()) ? model_->scenarioCount() : (+COUNT);
-  const auto log_level = (0 == (completed % 1000)) ? logging::LOG_NOTE : logging::LOG_INFO;
+  const auto log_level = (0 == (completed % 1000)) ? logging::level::note : logging::level::info;
   if (settings.is_surface())
   {
     logging::output(log_level, [&]() {
@@ -727,7 +727,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   ran_ = true;
 #ifdef DEBUG_PROBABILITY
   // nice to have this get output when debugging, but only need it in extreme cases
-  if (should_log(LOG_EXTENSIVE))
+  if (should_log(logging::level::extensive))
   {
     saveProbabilities(
       model().outputDirectory(),

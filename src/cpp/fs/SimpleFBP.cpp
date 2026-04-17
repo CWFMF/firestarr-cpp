@@ -279,7 +279,7 @@ using fs::FuelType;
 static constexpr auto EPSILON = static_cast<MathSize>(1e-1);
 auto check_equal(const auto& lhs, const auto& rhs, const char* name)
 {
-  logging::check_equal_verbose(logging::LOG_DEBUG, lhs, rhs, name);
+  logging::check_equal_verbose(logging::level::debug, lhs, rhs, name);
 }
 template <class TypeA, class TypeB>
 int compare_fuel_valid(
@@ -417,7 +417,7 @@ int compare_fuel_basic(
         const FwiWeather wx{
           Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
         };
-        const string msg = logging::should_log(logging::LOG_VERBOSE)
+        const string msg = logging::should_log(logging::level::verbose)
                            ? std::format("calculateRos(nd={}, bui={}, dc={})", nd, bui, dc)
                            : "calculateRos()";
         check_range(
@@ -467,8 +467,10 @@ int compare_fuel(
   check_equal(a.bulkDensity(), b.bulkDensity(), "bulkDensity");
   check_equal(a.inorganicPercent(), b.inorganicPercent(), "inorganicPercent");
   check_equal(a.duffDepth(), b.duffDepth(), "duffDepth");
-  testing::compare_duff("duffDmcType", *a.duffDmcType(), *b.duffDmcType(), logging::LOG_DEBUG);
-  testing::compare_duff("duffFfmcType", *a.duffFfmcType(), *b.duffFfmcType(), logging::LOG_DEBUG);
+  testing::compare_duff("duffDmcType", *a.duffDmcType(), *b.duffDmcType(), logging::level::debug);
+  testing::compare_duff(
+    "duffFfmcType", *a.duffFfmcType(), *b.duffFfmcType(), logging::level::debug
+  );
   check_equal(a.ffmcRatio(), b.ffmcRatio(), "ffmcRatio");
   check_equal(a.dmcRatio(), b.dmcRatio(), "dmcRatio");
   //

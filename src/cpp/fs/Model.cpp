@@ -298,11 +298,11 @@ void Model::findStarts(const Location location)
   }
   logging::check_fatal(starts_.empty(), "Fuel grid is empty");
   logging::info("Using {:d} start locations:", ignitionScenarios());
-  if (should_log(LOG_INFO))
+  if (should_log(logging::level::info))
   {
     for (const auto& s : starts_)
     {
-      logging::output(LOG_INFO, "\t{:d}, {:d}", s->row(), s->column());
+      logging::output(logging::level::info, "\t{:d}, {:d}", s->row(), s->column());
     }
   }
 }
@@ -751,7 +751,7 @@ DurationSize Model::saveProbabilities(
       std::ignore = prob->saveAll(outputDirectory(), this->start_time_, time, processing_status);
       if (processing_status == processed)
       {
-        if (should_log(LOG_NOTE))
+        if (should_log(logging::level::note))
         {
           const auto day = static_cast<int>(round(time));
           const auto n = nd(day);
