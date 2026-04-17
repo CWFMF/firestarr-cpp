@@ -30,7 +30,9 @@ public:
 #ifdef DEBUG_GRIDS
     logging::check_fatal(
       location.row() >= this->rows() || location.column() >= this->columns(),
-      [&]() { return std::format("Out of bounds ({:d}, {:d})", location.row(), location.column()); }
+      "Out of bounds ({:d}, {:d})",
+      location.row(),
+      location.column()
     );
 #endif
 #ifdef DEBUG_POINTS

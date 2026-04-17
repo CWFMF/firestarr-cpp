@@ -32,14 +32,10 @@ LogPoints::LogPoints(
 #endif
     const auto file_points = std::format("{:s}/scenario_{:05d}_points.txt", output_directory, id);
     log_points_.open(file_points);
-    logging::check_fatal(!log_points_.is_open(), [&]() {
-      return std::format("Unable to write to {:s}", file_points);
-    });
+    logging::check_fatal(!log_points_.is_open(), "Unable to write to {:s}", file_points);
     const auto file_stages = std::format("{:s}/scenario_{:05d}_stages.txt", output_directory, id);
     log_stages_.open(file_stages);
-    logging::check_fatal(!log_stages_.is_open(), [&]() {
-      return std::format("Unable to write to {:s}", file_stages);
-    });
+    logging::check_fatal(!log_stages_.is_open(), "Unable to write to {:s}", file_stages);
     log_points_ << HEADER_POINTS;
     log_stages_ << HEADER_STAGES;
   }
@@ -90,9 +86,9 @@ void LogPoints::log_unchecked(
   }
   else
   {
-    logging::check_fatal(t != last_time_, [&]() {
-      return std::format("Expected {:s} to have time {:f} but got {:f}", stage_id_, last_time_, t);
-    });
+    logging::check_fatal(
+      t != last_time_, "Expected {:s} to have time {:f} but got {:f}", stage_id_, last_time_, t
+    );
 #endif
   }
   log_points_ << std::format(

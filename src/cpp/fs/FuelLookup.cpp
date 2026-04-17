@@ -357,9 +357,9 @@ public:
     }
     // HACK: use offset from base fuel type
     const int pc = settings.default_percent_conifer;
-    logging::check_fatal(0 >= pc || 100 <= pc || (pc % 5) != 0, [&]() {
-      return std::format("Invalid default percent conifer ({:d})", pc);
-    });
+    logging::check_fatal(
+      0 >= pc || 100 <= pc || (pc % 5) != 0, "Invalid default percent conifer ({:d})", pc
+    );
     const auto pc_offset = (static_cast<size_t>(pc) / 5) - 1;
     emplaceFuel("M-1", FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M1_05)));
     emplaceFuel("M-2", FuelLookup::Fuels.at(pc_offset + FuelType::safeCode(&M2_05)));
@@ -372,9 +372,9 @@ public:
     emplaceFuel("M-4 (00 PDF)", &D1_D2);
     emplaceFuel("M-3/M-4 (00 PDF)", &D1_D2);
     const int pdf = settings.default_percent_dead_fir;
-    logging::check_fatal(0 > pdf || 100 < pdf || (pdf % 5) != 0, [&]() {
-      return std::format("Invalid default percent dead fir ({:d})", pdf);
-    });
+    logging::check_fatal(
+      0 > pdf || 100 < pdf || (pdf % 5) != 0, "Invalid default percent dead fir ({:d})", pdf
+    );
     const auto pdf_offset = static_cast<size_t>(pdf) / 5 - 1;
     emplaceFuel("M-3", FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M3_05)));
     emplaceFuel("M-4", FuelLookup::Fuels.at(pdf_offset + FuelType::safeCode(&M4_05)));

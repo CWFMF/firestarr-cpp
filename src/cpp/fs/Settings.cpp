@@ -327,15 +327,14 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
           {
             have_mode = !have_mode;
           }
-          logging::check_fatal(!have_mode, [&]() {
-            return std::format(
-              "Value for {:s} found but mode is {:s} and needs to be{:s} {:s}",
-              key,
-              to_string(mode),
-              inverse ? " not" : "",
-              to_string(mode_required)
-            );
-          });
+          logging::check_fatal(
+            !have_mode,
+            "Value for {:s} found but mode is {:s} and needs to be{:s} {:s}",
+            key,
+            to_string(mode),
+            inverse ? " not" : "",
+            to_string(mode_required)
+          );
         }
         return value;
       };

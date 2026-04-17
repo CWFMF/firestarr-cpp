@@ -165,9 +165,11 @@ void ArgumentParser::show_help_and_exit()
 string ArgumentParser::get_arg() noexcept
 {
   // check if we don't have any more arguments
-  logging::check_fatal(cur_arg_ + 1 >= args_expanded().size(), [&]() {
-    return std::format("Missing argument to --{:s}", args_expanded().at(cur_arg_));
-  });
+  logging::check_fatal(
+    cur_arg_ + 1 >= args_expanded().size(),
+    "Missing argument to --{:s}",
+    args_expanded().at(cur_arg_)
+  );
   return args_expanded().at(++cur_arg_);
 }
 size_t parse_size_t()
@@ -648,9 +650,9 @@ Settings& MainArgumentParser::parse_args()
     else
     {
       auto check_have = [&](const string& v) {
-        logging::check_fatal(!settings.found(v), [&]() {
-          return std::format("No positional arguments specified and missing value for {:s}", v);
-        });
+        logging::check_fatal(
+          !settings.found(v), "No positional arguments specified and missing value for {:s}", v
+        );
       };
       for (const auto& k : {"START_DATE", "LATITUDE", "LONGITUDE", "START_TIME"})
       {

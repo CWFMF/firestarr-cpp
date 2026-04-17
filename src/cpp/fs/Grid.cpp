@@ -34,12 +34,12 @@ string saveToTiffFile(
   auto min_row = std::get<1>(bounds);
   auto max_column = std::get<2>(bounds);
   auto max_row = std::get<3>(bounds);
-  logging::check_fatal(min_column > max_column, [&]() {
-    return std::format("Invalid bounds for columns with {:d} => {:d}", min_column, max_column);
-  });
-  logging::check_fatal(min_row > max_row, [&]() {
-    return std::format("Invalid bounds for rows with {:d} => {:d}", min_row, max_row);
-  });
+  logging::check_fatal(
+    min_column > max_column, "Invalid bounds for columns with {:d} => {:d}", min_column, max_column
+  );
+  logging::check_fatal(
+    min_row > max_row, "Invalid bounds for rows with {:d} => {:d}", min_row, max_row
+  );
 #ifdef DEBUG_GRIDS
   logging::debug(
     "Bounds are ({:d}, {:d}), ({:d}, {:d}) initially", min_column, min_row, max_column, max_row
@@ -69,12 +69,12 @@ string saveToTiffFile(
   }
   min_row = r_min;
   max_row = r_max;
-  logging::check_fatal(min_column >= max_column, [&]() {
-    return std::format("Invalid bounds for columns with {:d} => {:d}", min_column, max_column);
-  });
-  logging::check_fatal(min_row >= max_row, [&]() {
-    return std::format("Invalid bounds for rows with {:d} => {:d}", min_row, max_row);
-  });
+  logging::check_fatal(
+    min_column >= max_column, "Invalid bounds for columns with {:d} => {:d}", min_column, max_column
+  );
+  logging::check_fatal(
+    min_row >= max_row, "Invalid bounds for rows with {:d} => {:d}", min_row, max_row
+  );
 #ifdef DEBUG_GRIDS
   logging::debug(
     "Bounds are ({:d}, {:d}), ({:d}, {:d}) after correction",
@@ -98,19 +98,15 @@ string saveToTiffFile(
   const auto num_rows = static_cast<size_t>(max_row - min_row);
   const auto num_columns = static_cast<size_t>(max_column - min_column);
   // ensure this is always divisible by tile size
-  logging::check_fatal(0 != (num_rows % tileWidth), [&]() {
-    return std::format("{:d} rows not divisible by tiles", num_rows);
-  });
-  logging::check_fatal(0 != (num_columns % tileHeight), [&]() {
-    return std::format("{:d} columns not divisible by tiles", num_columns);
-  });
+  logging::check_fatal(0 != (num_rows % tileWidth), "{:d} rows not divisible by tiles", num_rows);
+  logging::check_fatal(
+    0 != (num_columns % tileHeight), "{:d} columns not divisible by tiles", num_columns
+  );
   const auto filename = create_file_name(dir, base_name, "tif");
   GeoTiff geotiff{filename, "w"};
   auto tif = geotiff.tiff();
   auto gtif = geotiff.gtif();
-  logging::check_fatal(!gtif, [&]() {
-    return std::format("Cannot open file {:s} as a GEOTIFF", filename);
-  });
+  logging::check_fatal(!gtif, "Cannot open file {:s} as a GEOTIFF", filename);
   const double xul = xll;
   const double yul = grid.yllcorner() + (grid.cellSize() * max_row);
   double tiePoints[6] = {0.0, 0.0, 0.0, xul, yul, 0.0};
@@ -123,9 +119,12 @@ string saveToTiffFile(
   static_assert(n > 0);
   const auto nodata_str = std::format("{:d}.000", nodata_as_int);
   constexpr auto bps = sizeof(R) * 8;
-  logging::check_fatal(bps != bits_per_sample, [&]() {
-    return std::format("Cannot have mismatched bps and type ({:d} != {:d})", bps, bits_per_sample);
-  });
+  logging::check_fatal(
+    bps != bits_per_sample,
+    "Cannot have mismatched bps and type ({:d} != {:d})",
+    bps,
+    bits_per_sample
+  );
   TIFFSetField(tif, TIFFTAG_GDAL_NODATA, nodata_str.c_str());
   logging::extensive("{:s} takes {:d} bits", base_name, bits_per_sample);
   TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, num_columns);
@@ -169,9 +168,7 @@ string saveToTiffFile(
         }
       }
       const auto write_result = TIFFWriteTile(tif, buf, co, ro, 0, 0);
-      logging::check_fatal(write_result < 0, [&]() {
-        return std::format("Cannot write tile to {:s}", filename);
-      });
+      logging::check_fatal(write_result < 0, "Cannot write tile to {:s}", filename);
     }
   }
   GTIFWriteKeys(gtif);
@@ -198,11 +195,8 @@ string GridBase::saveToTiffFileInt(
   // );
   logging::check_fatal(
     8 != bits_per_sample && 16 != bits_per_sample && 32 != bits_per_sample,
-    [&]() {
-      return std::format(
-        "Expected integer to have 8, 16, or 32 bits but got {:d}", bits_per_sample
-      );
-    }
+    "Expected integer to have 8, 16, or 32 bits but got {:d}",
+    bits_per_sample
   );
   const auto sample_format = is_unsigned ? SAMPLEFORMAT_UINT : SAMPLEFORMAT_INT;
   if (is_unsigned)
@@ -352,9 +346,7 @@ void GridBase::createPrj(const string_view dir, const string_view base_name) con
 {
   const auto filename = string(dir) + string(base_name) + ".prj";
   ofstream out{filename};
-  logging::check_fatal(!out.is_open(), [&]() {
-    return std::format("Unable to write to {:s}", filename);
-  });
+  logging::check_fatal(!out.is_open(), "Unable to write to {:s}", filename);
   logging::extensive("{:s}", proj4_);
   // HACK: use what we know is true for the grids that were generated and
   // hope it's correct otherwise
@@ -516,15 +508,15 @@ void write_ascii_header(
     adf_coefficient[5] = y;
     x = 1.5;
     y = 0.5;
-    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y), [&]() {
-      return std::format("Unable to translate image to PCS coordinates.");
-    });
+    logging::check_fatal(
+      !GTIFImageToPCS(gtif, &x, &y), "Unable to translate image to PCS coordinates."
+    );
     const auto cell_width = x - adf_coefficient[4];
     x = 0.5;
     y = 1.5;
-    logging::check_fatal(!GTIFImageToPCS(gtif, &x, &y), [&]() {
-      return std::format("Unable to translate image to PCS coordinates.");
-    });
+    logging::check_fatal(
+      !GTIFImageToPCS(gtif, &x, &y), "Unable to translate image to PCS coordinates."
+    );
     const auto cell_height = y - adf_coefficient[5];
     logging::check_fatal(cell_width != -cell_height, "Can only use grids with square pixels");
     logging::debug("Cell size is {:f}", cell_width);

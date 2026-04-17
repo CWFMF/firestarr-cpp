@@ -414,15 +414,20 @@ int test(Settings& settings)
       {
         r.wait();
         auto output_directory = r.get();
-        logging::check_fatal(!directory_exists(output_directory.c_str()), [&]() {
-          return std::format("Directory for test is missing: {:s}\n", output_directory);
-        });
+        logging::check_fatal(
+          !directory_exists(output_directory.c_str()),
+          "Directory for test is missing: {:s}\n",
+          output_directory
+        );
         ++result;
       }
       auto directories = read_directory(output_directory, "*", false);
-      logging::check_fatal(directories.size() != result, [&]() {
-        return std::format("Expected {:d} directories but have {:d}", result, directories.size());
-      });
+      logging::check_fatal(
+        directories.size() != result,
+        "Expected {:d} directories but have {:d}",
+        result,
+        directories.size()
+      );
       logging::note("Successfully ran {:d} tests", result);
     }
     else
@@ -442,9 +447,9 @@ int test(Settings& settings)
       auto dir_result = run_test(
         output_directory, fuel, slope, aspect, hours, dc, dmc, ffmc, wind, &final_sizes, false
       );
-      logging::check_fatal(!directory_exists(dir_result.c_str()), [&]() {
-        return std::format("Directory for test is missing: {:s}\n", dir_result);
-      });
+      logging::check_fatal(
+        !directory_exists(dir_result.c_str()), "Directory for test is missing: {:s}\n", dir_result
+      );
     }
   }
   catch (const runtime_error& err)

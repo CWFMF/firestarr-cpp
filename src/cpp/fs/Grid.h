@@ -277,12 +277,10 @@ protected:
       nodata_input_(nodata_input), nodata_value_(nodata_value), rows_(rows), columns_(columns)
   {
 #ifdef DEBUG_GRIDS
-    logging::check_fatal(rows > MAX_ROWS, [&]() {
-      return std::format("Too many rows ({:d} > {:d})", rows, MAX_ROWS);
-    });
-    logging::check_fatal(columns > MAX_COLUMNS, [&]() {
-      return std::format("Too many columns ({:d} > {:d})", columns, MAX_COLUMNS);
-    });
+    logging::check_fatal(rows > MAX_ROWS, "Too many rows ({:d} > {:d})", rows, MAX_ROWS);
+    logging::check_fatal(
+      columns > MAX_COLUMNS, "Too many columns ({:d} > {:d})", columns, MAX_COLUMNS
+    );
 #endif
 #ifdef DEBUG_GRIDS
     // enforce converting to an int and back produces same V
