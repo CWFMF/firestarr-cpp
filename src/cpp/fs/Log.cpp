@@ -120,7 +120,6 @@ string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_O
       else
       {
         pre_file_log << msg_fmt << "\n";
-        pre_file_log.clear();
       }
     }
     return msg_fmt;
