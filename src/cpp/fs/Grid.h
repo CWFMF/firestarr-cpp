@@ -493,7 +493,7 @@ protected:
     // constexpr auto bps = 16;
     // auto bps = sizeof(R) * 8;
     // logging::check_fatal(
-    //   bps != 16, "Only float16_t supported for output tiff but BITSPERSAMPLE is %d", bps
+    //   bps != 16, "Only float16_t supported for output tiff but BITSPERSAMPLE is {:d}", bps
     // );
     // HACK: output is using internal nodata representation right now, but that shouldn't change
     // anything FIX: use original input nodata value
