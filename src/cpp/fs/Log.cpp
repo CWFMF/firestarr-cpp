@@ -66,7 +66,7 @@ int close_log_file() noexcept
   }
   return 0;
 }
-string format_log_message(const char* prefix, const string msg)
+inline string format_log_message(const char* prefix, const string msg)
 {
   // do this separately from output() so we can redo it for fatal errors
   // NOTE: create string first so that entire line writes
@@ -96,8 +96,8 @@ string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_O
 #endif
   try
   {
-    lock_guard<mutex> lock(mutex_);
     auto msg_fmt = format_log_message(LOG_LABELS[static_cast<int>(log_level)], msg);
+    lock_guard<mutex> lock(mutex_);
 #ifndef NDEBUG
     // if debugging then output everything to log file but not necessarily stdout
     if (should_log(log_level))
