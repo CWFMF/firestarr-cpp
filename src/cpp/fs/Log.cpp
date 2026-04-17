@@ -42,6 +42,7 @@ logging::level get_log_level() noexcept { return logging_level_; }
 ofstream out_{};
 int open_log_file(const char* filename) noexcept
 {
+  lock_guard<mutex> lock(mutex_);
   // turn off buffering so lines write to file immediately
   out_.rdbuf()->pubsetbuf(0, 0);
   out_.open(filename);
@@ -59,6 +60,7 @@ int open_log_file(const char* filename) noexcept
 }
 int close_log_file() noexcept
 {
+  lock_guard<mutex> lock(mutex_);
   if (out_.is_open())
   {
     out_.close();
