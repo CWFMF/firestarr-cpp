@@ -89,18 +89,17 @@ inline string format_log_message(const char* prefix, const string msg)
   // NOTE: create string first so that entire line writes
   // (otherwise threads might mix lines)
   stringstream iss{};
-  iss
   // try to make output consistent if in debug mode
 #ifdef NDEBUG
-    << put_time(
-         [&]() {
-           const time_t now = time(nullptr);
-           return localtime(&now);
-         }(),
-         "[%F %T] "
-       )
+  tm out{};
+  const time_t now = time(nullptr);
+  if (!localtime_r(&now, &out))
+  {
+    logging::fatal("Error formatting time {}", now);
+  }
+  iss << put_time(&out, "[%F %T] ");
 #endif
-    << prefix << msg;
+  iss << prefix << msg;
   return iss.str();
 }
 string output_no_check(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_OFF
