@@ -127,12 +127,6 @@ inline void extensive(std::function<string()> fct) DEBUG_NOEXCEPT_OFF
 {
   output(LOG_EXTENSIVE, fct);
 }
-inline void verbose(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_VERBOSE, fct); }
-inline void debug(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_DEBUG, fct); }
-inline void info(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_INFO, fct); }
-inline void note(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_NOTE, fct); }
-inline void warning(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_WARNING, fct); }
-inline void error(std::function<string()> fct) DEBUG_NOEXCEPT_OFF { output(LOG_ERROR, fct); }
 template <typename... Args>
 inline int fatal(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
