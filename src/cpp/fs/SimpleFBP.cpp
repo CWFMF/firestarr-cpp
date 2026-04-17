@@ -417,7 +417,7 @@ int compare_fuel_basic(
         const FwiWeather wx{
           Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
         };
-        const string msg = logging::get_log_level() >= logging::LOG_VERBOSE
+        const string msg = logging::should_log(logging::LOG_VERBOSE)
                            ? std::format("calculateRos(nd={}, bui={}, dc={})", nd, bui, dc)
                            : "calculateRos()";
         check_range(

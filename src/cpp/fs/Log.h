@@ -25,6 +25,8 @@ void set_log_level(int log_level) noexcept;
 void increase_log_level() noexcept;
 void decrease_log_level() noexcept;
 int get_log_level() noexcept;
+inline bool should_log(const int log_level) noexcept { return get_log_level() <= log_level; }
+inline bool should_not_log(const int log_level) noexcept { return get_log_level() > log_level; }
 int open_log_file(const char* filename) noexcept;
 int close_log_file() noexcept;
 // log takes either a message that's ready to output, or a function that creates one
@@ -40,7 +42,7 @@ inline string output(int log_level, std::format_string<Args...> format, Args&&..
   DEBUG_NOEXCEPT_OFF
 {
   // HACK: check log_level here too for now
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return "";
   }
@@ -51,7 +53,7 @@ inline void extensive(std::format_string<Args...> format, Args&&... args) DEBUG_
 {
   constexpr auto log_level = LOG_EXTENSIVE;
   // HACK: check log_level here too for now
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return;
   }
@@ -62,7 +64,7 @@ inline void verbose(std::format_string<Args...> format, Args&&... args) DEBUG_NO
 {
   constexpr auto log_level = LOG_VERBOSE;
   // HACK: check log_level here too for now
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return;
   }
@@ -73,7 +75,7 @@ inline void debug(std::format_string<Args...> format, Args&&... args) DEBUG_NOEX
 {
   constexpr auto log_level = LOG_DEBUG;
   // HACK: check log_level here too for now
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return;
   }
@@ -84,7 +86,7 @@ inline void info(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXC
 {
   constexpr auto log_level = LOG_INFO;
   // HACK: check log_level here too for now
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return;
   }
@@ -95,7 +97,7 @@ inline void note(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXC
 {
   constexpr auto log_level = LOG_NOTE;
   // HACK: check log_level here too for now
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return;
   }
@@ -106,7 +108,7 @@ inline void warning(std::format_string<Args...> format, Args&&... args) DEBUG_NO
 {
   constexpr auto log_level = LOG_WARNING;
   // HACK: check log_level here too for now
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return;
   }
@@ -117,7 +119,7 @@ inline void error(std::format_string<Args...> format, Args&&... args) DEBUG_NOEX
 {
   constexpr auto log_level = LOG_ERROR;
   // HACK: check log_level here too for now
-  if (get_log_level() > log_level)
+  if (should_not_log(log_level))
   {
     return;
   }

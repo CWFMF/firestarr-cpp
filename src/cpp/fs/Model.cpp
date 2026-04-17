@@ -297,15 +297,14 @@ void Model::findStarts(const Location location)
     ++range;
   }
   logging::check_fatal(starts_.empty(), "Fuel grid is empty");
-  logging::info([&]() {
-    stringstream ss{};
-    ss << std::format("Using {:d} start locations:\n", ignitionScenarios());
+  logging::info("Using {:d} start locations:", ignitionScenarios());
+  if (should_log(LOG_INFO))
+  {
     for (const auto& s : starts_)
     {
-      ss << std::format("\t{:d}, {:d}\n", s->row(), s->column());
+      logging::output(LOG_INFO, "\t{:d}, {:d}", s->row(), s->column());
     }
-    return ss.str();
-  });
+  }
 }
 void Model::findAllStarts()
 {
@@ -752,16 +751,17 @@ DurationSize Model::saveProbabilities(
       std::ignore = prob->saveAll(outputDirectory(), this->start_time_, time, processing_status);
       if (processing_status == processed)
       {
-        logging::note([&]() {
+        if (should_log(LOG_NOTE))
+        {
           const auto day = static_cast<int>(round(time));
           const auto n = nd(day);
-          return std::format(
+          logging::note(
             "Fuels for day {:d} are {:s} green-up and grass has {:d}% curing",
             day - static_cast<int>(start_day),
             calculate_is_green(n) ? "after" : "before",
             calculate_grass_curing(n)
           );
-        });
+        }
       }
     }
     logging::debug("Done saving probability grids");
