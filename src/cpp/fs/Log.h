@@ -40,102 +40,60 @@ inline bool should_not_log(const logging::level log_level) noexcept
 }
 int open_log_file(const char* filename) noexcept;
 int close_log_file() noexcept;
-// log takes either a message that's ready to output, or a function that creates one
-// HACK: this means we don't care how the message is generated, and none of the arguments should get
-// resolved unless necessary
-string output(logging::level log_level, const string msg) DEBUG_NOEXCEPT_OFF;
+// since we're not checking log level at this point the message can be resolved to a string
+string output_no_check(logging::level log_level, const string msg) DEBUG_NOEXCEPT_OFF;
 template <typename... Args>
 inline string output(logging::level log_level, std::format_string<Args...> format, Args&&... args)
   DEBUG_NOEXCEPT_OFF
 {
-  // HACK: check log_level here too for now
+  // log everything in debug build
+#ifdef NDEBUG
   if (should_not_log(log_level))
   {
     return "";
   }
-  return output(log_level, std::format(format, std::forward<Args>(args)...));
+#endif
+  return output_no_check(log_level, std::format(format, std::forward<Args>(args)...));
 }
 template <typename... Args>
 inline void extensive(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
-  constexpr auto log_level = logging::level::extensive;
-  // HACK: check log_level here too for now
-  if (should_not_log(log_level))
-  {
-    return;
-  }
-  output(log_level, std::format(format, std::forward<Args>(args)...));
+  output(logging::level::extensive, format, std::forward<Args>(args)...);
 }
 template <typename... Args>
 inline void verbose(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
-  constexpr auto log_level = logging::level::verbose;
-  // HACK: check log_level here too for now
-  if (should_not_log(log_level))
-  {
-    return;
-  }
-  output(log_level, std::format(format, std::forward<Args>(args)...));
+  output(logging::level::verbose, format, std::forward<Args>(args)...);
 }
 template <typename... Args>
 inline void debug(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
-  constexpr auto log_level = logging::level::debug;
-  // HACK: check log_level here too for now
-  if (should_not_log(log_level))
-  {
-    return;
-  }
-  output(log_level, std::format(format, std::forward<Args>(args)...));
+  output(logging::level::debug, format, std::forward<Args>(args)...);
 }
 template <typename... Args>
 inline void info(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
-  constexpr auto log_level = logging::level::info;
-  // HACK: check log_level here too for now
-  if (should_not_log(log_level))
-  {
-    return;
-  }
-  output(log_level, std::format(format, std::forward<Args>(args)...));
+  output(logging::level::info, format, std::forward<Args>(args)...);
 }
 template <typename... Args>
 inline void note(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
-  constexpr auto log_level = logging::level::note;
-  // HACK: check log_level here too for now
-  if (should_not_log(log_level))
-  {
-    return;
-  }
-  output(log_level, std::format(format, std::forward<Args>(args)...));
+  output(logging::level::note, format, std::forward<Args>(args)...);
 }
 template <typename... Args>
 inline void warning(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
-  constexpr auto log_level = logging::level::warning;
-  // HACK: check log_level here too for now
-  if (should_not_log(log_level))
-  {
-    return;
-  }
-  output(log_level, std::format(format, std::forward<Args>(args)...));
+  output(logging::level::warning, format, std::forward<Args>(args)...);
 }
 template <typename... Args>
 inline void error(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
-  constexpr auto log_level = logging::level::error;
-  // HACK: check log_level here too for now
-  if (should_not_log(log_level))
-  {
-    return;
-  }
-  output(log_level, std::format(format, std::forward<Args>(args)...));
+  output(logging::level::error, format, std::forward<Args>(args)...);
 }
 template <typename... Args>
 inline int fatal(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXCEPT_OFF
 {
-  auto msg = output(logging::level::fatal, std::format(format, std::forward<Args>(args)...));
+  auto msg = output(logging::level::fatal, format, std::forward<Args>(args)...);
 #ifndef NDEBUG
   // HACK: just throw the format for a start - just want to see stack traces when debugging
   throw std::runtime_error(msg);
@@ -200,7 +158,7 @@ inline void check_equal_verbose(
 ) DEBUG_NOEXCEPT_OFF
 {
   check_equal(lhs, rhs, name);
-  output(log_level, std::format("{:s} matches", name));
+  output(log_level, "{:s} matches", name);
 }
 inline void check_tolerance(
   const MathSize epsilon,

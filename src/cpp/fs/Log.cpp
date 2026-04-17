@@ -88,28 +88,16 @@ inline string format_log_message(const char* prefix, const string msg)
     << prefix << msg;
   return iss.str();
 }
-string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_OFF
+string output_no_check(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_OFF
 {
-#ifdef NDEBUG
-  if (should_not_log(log_level))
-  {
-    return "";
-  }
-#endif
   try
   {
     auto msg_fmt = format_log_message(LOG_LABELS[static_cast<int>(log_level)], msg);
     lock_guard<mutex> lock(mutex_);
+    cout << msg_fmt << "\n";
 #ifndef NDEBUG
     // if debugging then output everything to log file but not necessarily stdout
-    if (should_log(log_level))
-#endif
-    {
-      cout << msg_fmt << "\n";
-    }
-#ifndef NDEBUG
-    // if debugging then output everything to log file but not necessarily stdout
-    if (should_log(logging::level::verbose))
+    if (should_log(max(logging::get_log_level(), logging::level::verbose)))
 #endif
     {   // fflush(stdout);
       if (out_.is_open())
