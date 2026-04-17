@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Log.h"
+#include <ctime>
 #ifndef DEBUG_NOEXCEPT_OFF
 #error DEBUG_NOEXCEPT_OFF not defined
 #endif
@@ -70,16 +71,19 @@ string format_log_message(const char* prefix, const string msg)
   // do this separately from output() so we can redo it for fatal errors
   // NOTE: create string first so that entire line writes
   // (otherwise threads might mix lines)
-  const string tmp;
-  stringstream iss(tmp);
-#ifdef NDEBUG
-  const time_t now = time(nullptr);
-  auto buf = localtime(&now);
-  iss << put_time(buf, "[%F %T] ");
-#endif
+  stringstream iss{};
+  iss
   // try to make output consistent if in debug mode
-  iss << prefix;
-  iss << msg;
+#ifdef NDEBUG
+    << put_time(
+         [&]() {
+           const time_t now = time(nullptr);
+           return localtime(&now);
+         }(),
+         "[%F %T] "
+       )
+#endif
+    << prefix << msg;
   return iss.str();
 }
 string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_OFF
