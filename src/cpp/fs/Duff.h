@@ -184,7 +184,7 @@ int compare_duff(
   static constexpr MathSize RANGE = 250.0;
   // check %, so 1 decimal is fine
   static constexpr auto EPSILON = static_cast<MathSize>(1e-1);
-  logging::output(log_level, "Checking {:s}", name);
+  std::ignore = logging::output(log_level, "Checking {:s}", name);
   logging::check_equal_verbose(logging::level::debug, a.ash, b.ash, "ash");
   logging::check_equal_verbose(logging::level::debug, a.rho, b.rho, "rho");
   logging::check_equal_verbose(logging::level::debug, a.b0, b.b0, "b0");

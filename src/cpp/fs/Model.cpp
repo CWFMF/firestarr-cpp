@@ -289,12 +289,15 @@ void Model::findStarts(const Location location)
     ++range;
   }
   logging::check_fatal(starts_.empty(), "Fuel grid is empty");
-  logging::info("Using {:d} start locations:", ignitionScenarios());
   if (should_log(logging::level::info))
   {
+    std::ignore = logging::output_no_check(
+      logging::level::info, "Using {:d} start locations:", ignitionScenarios()
+    );
     for (const auto& s : starts_)
     {
-      logging::output(logging::level::info, "\t{:d}, {:d}", s->row(), s->column());
+      std::ignore =
+        logging::output_no_check(logging::level::info, "\t{:d}, {:d}", s->row(), s->column());
     }
   }
 }
