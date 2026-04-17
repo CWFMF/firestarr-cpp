@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <exception>
 #include <format>
-#include <tuple>
 #ifdef NDEBUG
 #define DEBUG_NOEXCEPT_OFF noexcept
 #else
@@ -45,10 +44,6 @@ int close_log_file() noexcept;
 // HACK: this means we don't care how the message is generated, and none of the arguments should get
 // resolved unless necessary
 string output(logging::level log_level, const string msg) DEBUG_NOEXCEPT_OFF;
-inline string output(logging::level log_level, std::function<string()> fct) DEBUG_NOEXCEPT_OFF
-{
-  return output(log_level, fct());
-}
 template <typename... Args>
 inline string output(logging::level log_level, std::format_string<Args...> format, Args&&... args)
   DEBUG_NOEXCEPT_OFF
