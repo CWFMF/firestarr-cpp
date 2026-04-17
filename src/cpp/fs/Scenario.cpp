@@ -54,12 +54,6 @@ void IObserver_deleter::operator()(IObserver* ptr) const
   // cout << "Deleting\n";
   delete ptr;
 }
-inline string add_log(const Scenario& scenario) noexcept
-{
-  return std::format(
-    "Scenario {:4d}.{:04d} ({:3f}): ", scenario.id(), scenario.simulation(), scenario.current_time()
-  );
-}
 void Scenario::clear() noexcept
 {
   // HACK: resolve once and fail if not set already
@@ -77,7 +71,7 @@ void Scenario::clear() noexcept
   max_ros_ = 0;
 #ifdef DEBUG_SIMULATION
   logging::check_fatal(
-    !scheduler_.empty(), "{:s} Scheduler isn't empty after clear()", add_log(*this)
+    !scheduler_.empty(), "{:s} Scheduler isn't empty after clear()", log_prefix_
   );
 #endif
   step_ = 0;
@@ -321,13 +315,21 @@ Scenario* Scenario::reset(
   }
   return this;
 }
+inline string get_log_prefix(const Scenario& scenario) noexcept
+{
+  return std::format(
+    "Scenario {:4d}.{:04d} ({:3f}): ", scenario.id(), scenario.simulation(), scenario.current_time()
+  );
+}
 void Scenario::evaluate(const Event& event)
 {
+  // log prefix is static if scenario time doesn't change
+  log_prefix_ = get_log_prefix(*this);
 #ifdef DEBUG_SIMULATION
   logging::check_fatal(
     event.time < current_time_,
     "{:s} Expected time to be > {:f} but got {:f}",
-    add_log(*this),
+    log_prefix_,
     current_time_,
     event.time
   );
@@ -365,11 +367,11 @@ void Scenario::evaluate(const Event& event)
       );
       if (is_null_fuel(event.cell))
       {
-        exit(logging::fatal("{:s} Trying to start a fire in non-fuel", add_log(*this)));
+        exit(logging::fatal("{:s} Trying to start a fire in non-fuel", log_prefix_));
       }
       logging::verbose(
         "{:s} Starting fire at point ({:f}, {:f}) in fuel type {:s} at time {:f}",
-        add_log(*this),
+        log_prefix_,
         x,
         y,
         FuelType::safeName(check_fuel(event.cell)),
@@ -383,7 +385,7 @@ void Scenario::evaluate(const Event& event)
           const auto wx = weather_daily(event.time);
           logging::info(
             "{:s} Didn't survive ignition in {:s} with weather {:f}, {:f}",
-            add_log(*this),
+            log_prefix_,
             FuelType::safeName(check_fuel(event.cell)),
             wx->ffmc.value,
             wx->dmc.value
@@ -396,7 +398,7 @@ void Scenario::evaluate(const Event& event)
       scheduleFireSpread(event);
       break;
     case Event::Type::EndSimulation:
-      logging::verbose("{:s} End simulation event reached at {:f}", add_log(*this), event.time);
+      logging::verbose("{:s} End simulation event reached at {:f}", log_prefix_, event.time);
       endSimulation();
       break;
     default:
@@ -554,7 +556,7 @@ void Scenario::burn(const Event& event)
   logging::check_fatal(
     intensity_->hasBurned(event.cell),
     "{:s} Re-burning cell ({:d}, {:d})",
-    add_log(*this),
+    log_prefix_,
     event.cell.column(),
     event.cell.row()
   );
@@ -563,7 +565,7 @@ void Scenario::burn(const Event& event)
   //   logging::check_fatal((*unburnable_)[event.cell().hash()], [&]() {
   //     return std::format(
   //       "{:s} Burning unburnable cell ({:d}, {:d})",
-  //       add_log(*this),
+  //       log_prefix_,
   //       event.cell().column(),
   //       event.cell().row()
   //     );
@@ -574,7 +576,7 @@ void Scenario::burn(const Event& event)
   intensity_->burn(event.cell, event.intensity, event.ros, event.raz);
 #ifdef DEBUG_GRIDS
   logging::check_fatal(
-    !intensity_->hasBurned(event.cell), "{:s} Wasn't marked as burned after burn", add_log(*this)
+    !intensity_->hasBurned(event.cell), "{:s} Wasn't marked as burned after burn", log_prefix_
   );
 #endif
   arrival_[event.cell] = event.time;
@@ -604,9 +606,9 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
 #ifdef DEBUG_SIMULATION
-  logging::check_fatal(ran(), "{:s} Scenario has already run", add_log(*this));
+  logging::check_fatal(ran(), "{:s} Scenario has already run", log_prefix_);
 #endif
-  logging::verbose("{:s} Starting", add_log(*this));
+  logging::verbose("{:s} Starting", log_prefix_);
   CriticalSection _(Model::task_limiter);
   // HACK: only do once
   static const auto showed_once = [&]() {
@@ -616,7 +618,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   std::ignore = showed_once;
   unburnable_ = model_->environment().unburnable();
   probabilities_ = probabilities;
-  logging::verbose("{:s} Setting save points", add_log(*this));
+  logging::verbose("{:s} Setting save points", log_prefix_);
   for (auto time : save_points_)
   {
     // NOTE: these happen in this order because of the way they sort based on type
@@ -628,22 +630,22 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   else
   {
-    logging::verbose("{:s} Applying perimeter", add_log(*this));
+    logging::verbose("{:s} Applying perimeter", log_prefix_);
     intensity_->applyPerimeter(*perimeter_);
-    logging::verbose("{:s} Perimeter applied", add_log(*this));
+    logging::verbose("{:s} Perimeter applied", log_prefix_);
     const auto& env = model().environment();
-    logging::verbose("{:s} Igniting points", add_log(*this));
+    logging::verbose("{:s} Igniting points", log_prefix_);
     for (const auto& location : perimeter_->edge)
     {
       const auto cell = env.cell(location);
 #ifdef DEBUG_SIMULATION
-      logging::check_fatal(is_null_fuel(cell), "{:s} Null fuel in perimeter", add_log(*this));
+      logging::check_fatal(is_null_fuel(cell), "{:s} Null fuel in perimeter", log_prefix_);
 #endif
       const auto x = cell.column() + CELL_CENTER;
       const auto y = cell.row() + CELL_CENTER;
       const XYPos p0{x, y};
       // log_verbose(*this, "Adding point ({:d}, {:d})",
-      logging::extensive("{:s} Adding point ({:f}, {:f})", add_log(*this), x, y);
+      logging::extensive("{:s} Adding point ({:f}, {:f})", log_prefix_, x, y);
       points_.insert(
         p0,
         SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
@@ -656,7 +658,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   // HACK: make a copy of the event so that it still exists after it gets processed
   // NOTE: sorted so that EventSaveASCII is always just before this
   // Only run until last time we asked for a save for
-  logging::verbose("{:s} Creating simulation end event for {:f}", add_log(*this), last_save_);
+  logging::verbose("{:s} Creating simulation end event for {:f}", log_prefix_, last_save_);
   addEvent(Event{.time = last_save_, .type = Event::Type::EndSimulation});
   // mark all original points as burned at start
   for (auto& kv : points_.map_)
@@ -693,7 +695,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
       std::ignore = logging::output_no_check(
         log_level,
         "{:s} [{:d} of {:d}] ({:0.2f}%) <{:d} : {:d} remaining> Completed with final size {:0.1f} ha",
-        add_log(*this),
+        log_prefix_,
         completed,
         count,
         100 * ratio_done,
@@ -708,7 +710,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
       std::ignore = logging::output_no_check(
         log_level,
         "{:s} [{:d} of {:d}] Completed with final size {:0.1f} ha",
-        add_log(*this),
+        log_prefix_,
         completed,
         count,
         currentFireSize()
@@ -716,7 +718,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
 #else
       // try to make output consistent if in debug mode
       std::ignore = logging::output_no_check(
-        log_level, "{:s} Completed with final size {:0.1f} ha", add_log(*this), currentFireSize()
+        log_level, "{:s} Completed with final size {:0.1f} ha", log_prefix_, currentFireSize()
       );
 #endif
     }
@@ -740,7 +742,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
 #endif
   if (oob_spread_ > 0)
   {
-    logging::warning("{:s} Tried to spread out of bounds {:d} times", add_log(*this), oob_spread_);
+    logging::warning("{:s} Tried to spread out of bounds {:d} times", log_prefix_, oob_spread_);
   }
   return this;
 }
@@ -883,6 +885,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto wx = settings.is_surface() ? model_->yesterday() : weather(time);
   const auto wx_daily = settings.is_surface() ? model_->yesterday() : weather_daily(time);
   current_time_ = time;
+  log_prefix_ = get_log_prefix(*this);
   logging::check_fatal(nullptr == wx, "No weather available for time {:f}", time);
   const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
@@ -892,7 +895,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   if (wx_daily->ffmc.value < minimumFfmcForSpread(time))
   {
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
-    logging::extensive("{:s} Waiting until {:f} because of FFMC", add_log(*this), max_time);
+    logging::extensive("{:s} Waiting until {:f} because of FFMC", log_prefix_, max_time);
     return;
   }
   if (current_time_index_ != this_time)
@@ -955,7 +958,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   if (to_spread.empty())
   {
     // if no spread then we left everything back in points_ still
-    logging::verbose("{:s} Waiting until {:f}", add_log(*this), max_time);
+    logging::verbose("{:s} Waiting until {:f}", log_prefix_, max_time);
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     return;
   }
@@ -1041,7 +1044,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     }
   });
   logging::extensive(
-    "{:s} Spreading {:d} cells until {:f}", add_log(*this), points_.map_.size(), new_time
+    "{:s} Spreading {:d} cells until {:f}", log_prefix_, points_.map_.size(), new_time
   );
   addEvent(Event{.time = new_time, .type = Event::Type::FireSpread});
 }
@@ -1050,7 +1053,7 @@ bool Scenario::canBurn(const Cell& location) const { return intensity_->canBurn(
 bool Scenario::hasBurned(const Location& location) const { return intensity_->hasBurned(location); }
 void Scenario::endSimulation() noexcept
 {
-  logging::verbose("{:s} Ending simulation", add_log(*this));
+  logging::verbose("{:s} Ending simulation", log_prefix_);
   scheduler_ = set<Event>();
 }
 void Scenario::addSaveByOffset(const int offset)
@@ -1085,7 +1088,7 @@ void Scenario::cancel(bool show_warning) noexcept
     cancelled_ = true;
     if (show_warning)
     {
-      logging::warning("{:s} Simulation cancelled", add_log(*this));
+      logging::warning("{:s} Simulation cancelled", log_prefix_);
     }
   }
 }
