@@ -202,11 +202,23 @@ inline void check_equal_verbose(
   check_equal(lhs, rhs, name);
   output(log_level, std::format("{:s} matches", name));
 }
-void check_tolerance(
+inline void check_tolerance(
   const MathSize epsilon,
   const MathSize lhs,
   const MathSize rhs,
   const char* name
-) DEBUG_NOEXCEPT_OFF;
+) DEBUG_NOEXCEPT_OFF
+{
+  const auto difference = abs(lhs - rhs);
+  check_fatal(
+    difference >= epsilon,
+    "Difference too big for {:s}: ({:g} > {:g}) for {:g} vs {:g}",
+    name,
+    difference,
+    epsilon,
+    rhs,
+    lhs
+  );
+}
 }
 #endif
