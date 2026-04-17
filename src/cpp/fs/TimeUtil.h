@@ -4,6 +4,9 @@
 #include <ctime>
 namespace fs
 {
+#ifdef _WIN32
+struct tm* localtime_r(const time_t* timer, struct tm* result);
+#endif
 /**
  * \brief Calculate tm fields from values already there
  * @param t tm object to update
