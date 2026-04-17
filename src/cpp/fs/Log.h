@@ -3,6 +3,7 @@
 #define FS_LOG_H
 #include "stdafx.h"
 #include <cstdlib>
+#include <exception>
 #include <format>
 #include <tuple>
 #ifdef NDEBUG
@@ -143,71 +144,28 @@ inline int fatal(std::format_string<Args...> format, Args&&... args) DEBUG_NOEXC
 #ifndef NDEBUG
   // HACK: just throw the format for a start - just want to see stack traces when debugging
   throw std::runtime_error(msg);
-#endif
-  exit(EXIT_FAILURE);
-  return EXIT_FAILURE;
-}
-template <typename T>
-inline T fatal(const string msg, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
-{
-  output(logging::level::fatal, msg);
-#ifndef NDEBUG
-  if (throw_msg)
-  {
-    // HACK: just throw the format for a start - just want to see stack traces when debugging
-    throw std::runtime_error(msg);
-  }
 #else
-  std::ignore = throw_msg;
-#endif
   exit(EXIT_FAILURE);
+  return EXIT_FAILURE;
+#endif
 }
-template <typename T>
-inline T fatal(std::function<string()> fct, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
+inline int fatal(const std::exception& ex) DEBUG_NOEXCEPT_OFF
 {
-  return fatal<T>(fct(), throw_msg);
-}
-template <typename T>
-inline T fatal(const std::exception& ex)
-{
-  auto r = fatal<T>(ex.what(), false);
+  output(logging::level::fatal, "{:s}", ex.what());
+#ifndef NDEBUG
   throw ex;
+#else
+  exit(EXIT_FAILURE);
   // HACK: to satisfy return type
-  return r;
-}
-template <typename T>
-inline T fatal(const std::exception& ex, std::function<string()> fct)
-{
-  std::ignore = fatal<T>(fct(), false);
-  return fatal<T>(ex);
-}
-// overrides for void return
-inline int fatal(const string msg, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
-{
-  std::ignore = fatal<int>(msg, throw_msg);
   return EXIT_FAILURE;
+#endif
 }
-inline void fatal(std::function<string()> fct, const bool throw_msg = true) DEBUG_NOEXCEPT_OFF
+template <typename... Args>
+inline int fatal(const std::exception& ex, std::format_string<Args...> format, Args&&... args)
+  DEBUG_NOEXCEPT_OFF
 {
-  // HACK: just need any template
-  std::ignore = fatal<int>(fct, throw_msg);
-}
-inline int fatal(const std::exception& ex)
-{
-  std::ignore = fatal<int>(ex);
-  return EXIT_FAILURE;
-}
-inline int fatal(const std::exception& ex, std::function<string()> fct)
-{
-  fatal(fct(), false);
+  output(logging::level::fatal, format, std::forward<Args>(args)...);
   return fatal(ex);
-}
-inline void check_fatal(bool condition, std::function<string()> fct) DEBUG_NOEXCEPT_OFF
-{
-  if (condition)
-  {
-    std::ignore = fatal<int>(fct);
-  }
 }
 template <typename... Args>
 inline void check_fatal(bool condition, std::format_string<Args...> format, Args&&... args)

@@ -665,9 +665,7 @@ FireWeather::FireWeather(
 ptr<const FwiWeather> FireWeather::at(const DurationSize time) const
 {
 #ifdef DEBUG_FWI_WEATHER
-  logging::check_fatal(time < 0 || time >= MAX_DAYS, [&]() {
-    return std::format("Invalid weather time {:f}", time);
-  });
+  logging::check_fatal(time < 0 || time >= MAX_DAYS, "Invalid weather time {:f}", time);
 #endif
   return weather_by_hour_by_day_.at(time_index(time, min_date_));
 }

@@ -141,11 +141,12 @@ Environment Environment::loadEnvironment(
     logging::note("Loading info for fuel {:s}", best_fuel);
     env_info = EnvironmentInfo::loadInfo(best_fuel, best_elevation);
   }
-  logging::check_fatal(nullptr == env_info, [&]() {
-    return std::format(
-      "Could not find an environment to use for ({:f}, {:f})", point.latitude(), point.longitude()
-    );
-  });
+  logging::check_fatal(
+    nullptr == env_info,
+    "Could not find an environment to use for ({:f}, {:f})",
+    point.latitude(),
+    point.longitude()
+  );
   logging::debug(
     "Best match for ({:f}, {:f}) has projection '{:s}'",
     point.latitude(),

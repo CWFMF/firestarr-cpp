@@ -9,20 +9,18 @@ BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const
   : GridMap<unsigned char, unsigned char>(env.makeMap<unsigned char>(static_cast<unsigned char>(0)))
 {
   // HACK: fix offset if the perimeter raster is different from this one
-  logging::check_fatal(0 != strcmp(perim_grid.proj4().c_str(), this->proj4().c_str()), [&]() {
-    return std::format(
-      "Invalid projection for input perimeter raster - {:s} instead of {:s}",
-      perim_grid.proj4(),
-      this->proj4()
-    );
-  });
-  logging::check_fatal(perim_grid.cellSize() != this->cellSize(), [&]() {
-    return std::format(
-      "Invalid cell size for input perimeter raster - {:f} instead of {:f}",
-      perim_grid.cellSize(),
-      this->cellSize()
-    );
-  });
+  logging::check_fatal(
+    0 != strcmp(perim_grid.proj4().c_str(), this->proj4().c_str()),
+    "Invalid projection for input perimeter raster - {:s} instead of {:s}",
+    perim_grid.proj4(),
+    this->proj4()
+  );
+  logging::check_fatal(
+    perim_grid.cellSize() != this->cellSize(),
+    "Invalid cell size for input perimeter raster - {:f} instead of {:f}",
+    perim_grid.cellSize(),
+    this->cellSize()
+  );
   const auto offset_x =
     static_cast<Idx>((this->xllcorner() - perim_grid.xllcorner()) / this->cellSize());
   const auto perim_origin =

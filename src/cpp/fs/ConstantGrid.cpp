@@ -73,12 +73,12 @@ int value_at_int(void* const buf, const FullIdx offset)
   const auto max_column = static_cast<FullIdx>(min(min_column + MAX_COLUMNS - 1, actual_columns));
 #ifdef DEBUG_GRIDS
   logging::check_fatal(min_column < 0, "Column can't be less than 0");
-  logging::check_fatal(max_column - min_column > MAX_COLUMNS, [&]() {
-    return std::format("Can't have more than {:d} columns", MAX_COLUMNS);
-  });
-  logging::check_fatal(max_column > actual_columns, [&]() {
-    return std::format("Can't have more than actual {:d} columns", actual_columns);
-  });
+  logging::check_fatal(
+    max_column - min_column > MAX_COLUMNS, "Can't have more than {:d} columns", MAX_COLUMNS
+  );
+  logging::check_fatal(
+    max_column > actual_columns, "Can't have more than actual {:d} columns", actual_columns
+  );
 #endif
   auto min_row = max(
     static_cast<FullIdx>(0),
@@ -93,15 +93,14 @@ int value_at_int(void* const buf, const FullIdx offset)
   const auto tile_row = tile_width * static_cast<FullIdx>(min_row / tile_width);
   const auto max_row = static_cast<FullIdx>(min(min_row + MAX_ROWS - 1, actual_rows));
 #ifdef DEBUG_GRIDS
-  logging::check_fatal(min_row < 0, [&]() {
-    return std::format("Row can't be less than 0 but is {:d}", min_row);
-  });
-  logging::check_fatal(max_row - min_row > MAX_ROWS, [&]() {
-    return std::format("Can't have more than {:d} rows but have {:d}", MAX_ROWS, max_row - min_row);
-  });
-  logging::check_fatal(max_row > actual_rows, [&]() {
-    return std::format("Can't have more than actual {:d} rows", actual_rows);
-  });
+  logging::check_fatal(min_row < 0, "Row can't be less than 0 but is {:d}", min_row);
+  logging::check_fatal(
+    max_row - min_row > MAX_ROWS,
+    "Can't have more than {:d} rows but have {:d}",
+    MAX_ROWS,
+    max_row - min_row
+  );
+  logging::check_fatal(max_row > actual_rows, "Can't have more than actual {:d} rows", actual_rows);
 #endif
   vector<int> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, nodata_input);
   logging::verbose("{:s}: malloc start", geotiff.filename());
@@ -115,14 +114,13 @@ int value_at_int(void* const buf, const FullIdx offset)
   logging::check_fatal(
     !TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps_file), "Cannot determine TIFFTAG_BITSPERSAMPLE"
   );
-  logging::check_fatal(bps < bps_file, [&]() {
-    return std::format(
-      "Raster {:s} type is larger than expected type ({:d} bits instead of {:d})",
-      geotiff.filename(),
-      bps_file,
-      bps
-    );
-  });
+  logging::check_fatal(
+    bps < bps_file,
+    "Raster {:s} type is larger than expected type ({:d} bits instead of {:d})",
+    geotiff.filename(),
+    bps_file,
+    bps
+  );
 #ifdef DEBUG_GRIDS
   int bps_int16_t =
     std::numeric_limits<int16_t>::digits + (1 * std::numeric_limits<int16_t>::is_signed);

@@ -86,9 +86,7 @@ void Model::readWeather(
   Day max_date = numeric_limits<Day>::min();
   time_t prev_time = numeric_limits<time_t>::min();
   ifstream in{filename};
-  logging::check_fatal(!in.is_open(), [&]() {
-    return std::format("Could not open input weather file {:s}", filename);
-  });
+  logging::check_fatal(!in.is_open(), "Could not open input weather file {:s}", filename);
   if (in.is_open())
   {
 #ifdef DEBUG_WEATHER
@@ -106,13 +104,12 @@ void Model::readWeather(
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     constexpr auto expected_header = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
-    logging::check_fatal(expected_header != str, [&]() {
-      return std::format(
-        "Input CSV must have columns in this order:\n'{:s}'\n but got:\n'{:s}'",
-        expected_header,
-        str
-      );
-    });
+    logging::check_fatal(
+      expected_header != str,
+      "Input CSV must have columns in this order:\n'{:s}'\n but got:\n'{:s}'",
+      expected_header,
+      str
+    );
     auto prev = &yesterday;
     // HACK: adding to original object if we don't do this?
     auto apcp_24h = yesterday.prec.value;
@@ -132,22 +129,20 @@ void Model::readWeather(
         catch (const std::exception& ex)
         {
           // HACK: somehow stoi() is still getting empty strings
-          logging::fatal(ex, [&]() {
-            return std::format(
-              "Error reading weather file {:s}: {:s} is not a valid integer", filename, str
-            );
-          });
+          logging::fatal(
+            ex, "Error reading weather file {:s}: {:s} is not a valid integer", filename, str
+          );
         }
         if (wx.find(cur) == wx.end())
         {
           logging::debug("Loading scenario {:d}...", cur);
           wx.emplace(cur, vector<FwiWeather>{});
           prev_time = std::numeric_limits<time_t>::min();
-          logging::check_fatal(wx_daily.find(cur) != wx_daily.end(), [&]() {
-            return std::format(
-              "Somehow have daily weather for scenario {:d} before hourly weather", cur
-            );
-          });
+          logging::check_fatal(
+            wx_daily.find(cur) != wx_daily.end(),
+            "Somehow have daily weather for scenario {:d} before hourly weather",
+            cur
+          );
           wx_daily.emplace(cur, map<Day, FwiWeather>());
           prev = &yesterday;
           logging::extensive(
@@ -176,12 +171,11 @@ void Model::readWeather(
         if (prev_time != std::numeric_limits<time_t>::min())
         {
           auto seconds_diff = (cur_time - prev_time);
-          logging::check_fatal(seconds_diff != HOUR_SECONDS, [&]() {
-            return std::format(
-              "Expected sequential hours in weather input but rows are {:f} hours away from each other",
-              seconds_diff / static_cast<MathSize>(HOUR_SECONDS)
-            );
-          });
+          logging::check_fatal(
+            seconds_diff != HOUR_SECONDS,
+            "Expected sequential hours in weather input but rows are {:f} hours away from each other",
+            seconds_diff / static_cast<MathSize>(HOUR_SECONDS)
+          );
         }
         prev_time = cur_time;
         const auto for_time = (t.tm_yday - min_date) * DAY_HOURS + t.tm_hour;
@@ -195,9 +189,9 @@ void Model::readWeather(
         logging::verbose("for_time == {:d}", for_time);
         FwiWeather w{read_fwi_weather(&iss, &str)};
         s.at(for_time) = w;
-        logging::check_fatal(0 > w.prec.value, [&]() {
-          return std::format("Hourly weather precip {:f} is negative", w.prec.value);
-        });
+        logging::check_fatal(
+          0 > w.prec.value, "Hourly weather precip {:f} is negative", w.prec.value
+        );
         apcp_24h += w.prec.value;
         logging::extensive(
           "Adding {:f} to precip results in accumulation of {:f}", w.prec.value, apcp_24h
@@ -248,9 +242,7 @@ void Model::readWeather(
     }
 #ifdef DEBUG_WEATHER
     out.close();
-    logging::check_fatal(out.fail(), [&]() {
-      return std::format("Could not close file {:s}", file_out.c_str());
-    });
+    logging::check_fatal(out.fail(), "Could not close file {:s}", file_out.c_str());
 #endif
     in.close();
   }
@@ -1181,13 +1173,9 @@ int Model::runScenarios(
 #ifndef NDEBUG
   logging::check_fatal(
     std::get<0>(*position) > MAX_ROWS || std::get<1>(*position) > MAX_COLUMNS,
-    [&]() {
-      return std::format(
-        "Location loaded outside of grid at position ({:d}, {:d})",
-        std::get<0>(*position),
-        std::get<1>(*position)
-      );
-    }
+    "Location loaded outside of grid at position ({:d}, {:d})",
+    std::get<0>(*position),
+    std::get<1>(*position)
   );
 #endif
   logging::info("Position is ({:d}, {:d})", std::get<0>(*position), std::get<1>(*position));
@@ -1274,13 +1262,9 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
   const auto file_out = string(output_directory_) + file_name;
   const auto file_out_fbp = string(output_directory_) + string("fbp_") + file_name;
   ofstream out{file_out};
-  logging::check_fatal(!out.is_open(), [&]() {
-    return std::format("Unable to write to {:s}", file_out.c_str());
-  });
+  logging::check_fatal(!out.is_open(), "Unable to write to {:s}", file_out);
   ofstream out_fbp{file_out_fbp};
-  logging::check_fatal(!out_fbp.is_open(), [&]() {
-    return std::format("Unable to write to {:s}", file_out.c_str());
-  });
+  logging::check_fatal(!out_fbp.is_open(), "Unable to write to {:s}", file_out);
   constexpr auto HEADER_FWI = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
   constexpr auto HEADER_FBP_PRIMARY = "CFB,CFC,FD,HFI,RAZ,ROS,SFC,TFC";
   out << HEADER_FWI << "\r\n";

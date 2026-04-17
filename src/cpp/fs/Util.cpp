@@ -146,13 +146,17 @@ void add_time(tm& date, const string value)
 {
   // if this is a time then we aren't just running the weather
   date.tm_hour = stoi(value.substr(0, 2));
-  fs::logging::check_fatal(date.tm_hour < 0 || date.tm_hour > 23, [&]() {
-    return std::format("Simulation start time has an invalid hour ({:d})", date.tm_hour);
-  });
+  fs::logging::check_fatal(
+    date.tm_hour < 0 || date.tm_hour > 23,
+    "Simulation start time has an invalid hour ({:d})",
+    date.tm_hour
+  );
   date.tm_min = stoi(value.substr(3, 2));
-  fs::logging::check_fatal(date.tm_min < 0 || date.tm_min > 59, [&]() {
-    return std::format("Simulation start time has an invalid minute ({:d})", date.tm_min);
-  });
+  fs::logging::check_fatal(
+    date.tm_min < 0 || date.tm_min > 59,
+    "Simulation start time has an invalid minute ({:d})",
+    date.tm_min
+  );
   fs::logging::verbose("Simulation start time before fix_tm() is {:s}", format_datetime(date));
   fs::fix_tm(&date);
   fs::logging::verbose("Simulation start time after fix_tm() is {:s}", format_datetime(date));

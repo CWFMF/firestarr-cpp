@@ -103,7 +103,7 @@ string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_O
     }
 #ifndef NDEBUG
     // if debugging then output everything to log file but not necessarily stdout
-    if (log_level >= LOG_VERBOSE)
+    if (should_log(logging::level::verbose))
 #endif
     {   // fflush(stdout);
       if (out_.is_open())
@@ -120,8 +120,7 @@ string output(const logging::level log_level, const string msg) DEBUG_NOEXCEPT_O
   }
   catch (const std::exception& ex)
   {
-    fatal(ex);
-    std::terminate();
+    exit(fatal(ex));
   }
 }
 void check_tolerance(
@@ -132,15 +131,14 @@ void check_tolerance(
 ) DEBUG_NOEXCEPT_OFF
 {
   const auto difference = abs(lhs - rhs);
-  check_fatal(difference >= epsilon, [&]() {
-    return std::format(
-      "Difference too big for {:s}: ({:g} > {:g}) for {:g} vs {:g}",
-      name,
-      difference,
-      epsilon,
-      rhs,
-      lhs
-    );
-  });
+  check_fatal(
+    difference >= epsilon,
+    "Difference too big for {:s}: ({:g} > {:g}) for {:g} vs {:g}",
+    name,
+    difference,
+    epsilon,
+    rhs,
+    lhs
+  );
 }
 }

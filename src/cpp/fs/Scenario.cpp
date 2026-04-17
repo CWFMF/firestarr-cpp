@@ -76,9 +76,9 @@ void Scenario::clear() noexcept
   spread_thresholds_by_ros_.clear();
   max_ros_ = 0;
 #ifdef DEBUG_SIMULATION
-  logging::check_fatal(!scheduler_.empty(), [&]() {
-    return std::format("{:s} Scheduler isn't empty after clear()", add_log(*this));
-  });
+  logging::check_fatal(
+    !scheduler_.empty(), "{:s} Scheduler isn't empty after clear()", add_log(*this)
+  );
 #endif
   step_ = 0;
   oob_spread_ = 0;
@@ -324,11 +324,13 @@ Scenario* Scenario::reset(
 void Scenario::evaluate(const Event& event)
 {
 #ifdef DEBUG_SIMULATION
-  logging::check_fatal(event.time < current_time_, [&]() {
-    return std::format(
-      "{:s} Expected time to be > {:f} but got {:f}", add_log(*this), current_time_, event.time
-    );
-  });
+  logging::check_fatal(
+    event.time < current_time_,
+    "{:s} Expected time to be > {:f} but got {:f}",
+    add_log(*this),
+    current_time_,
+    event.time
+  );
 #endif
   const auto& p = event.cell;
   const auto x = p.column() + CELL_CENTER;
@@ -449,18 +451,16 @@ Scenario::Scenario(
     points_log_(LogPoints{model_->outputDirectory(), settings.save_points, id_, start_time_})
 {
   const auto wx = weather_->at(start_time_);
-  logging::check_fatal(nullptr == wx, [&]() {
-    return std::format(
-      "No weather for start time {:s}", make_timestamp(model->year(), start_time_)
-    );
-  });
+  logging::check_fatal(
+    nullptr == wx, "No weather for start time {:s}", make_timestamp(model->year(), start_time_)
+  );
   const auto saves = settings.output_date_offsets.offsets();
   const auto last_save = start_day_ + saves[saves.size() - 1];
-  logging::check_fatal(last_save > weather_->maxDate(), [&]() {
-    return std::format(
-      "No weather for last save time {:s}", make_timestamp(model->year(), last_save)
-    );
-  });
+  logging::check_fatal(
+    last_save > weather_->maxDate(),
+    "No weather for last save time {:s}",
+    make_timestamp(model->year(), last_save)
+  );
 }
 void Scenario::saveStats(const DurationSize time) const
 {
@@ -551,11 +551,13 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
 void Scenario::burn(const Event& event)
 {
 #ifdef DEBUG_SIMULATION
-  logging::check_fatal(intensity_->hasBurned(event.cell), [&]() {
-    return std::format(
-      "{:s} Re-burning cell ({:d}, {:d})", add_log(*this), event.cell.column(), event.cell.row()
-    );
-  });
+  logging::check_fatal(
+    intensity_->hasBurned(event.cell),
+    "{:s} Re-burning cell ({:d}, {:d})",
+    add_log(*this),
+    event.cell.column(),
+    event.cell.row()
+  );
 #endif
   // #ifdef DEBUG_POINTS
   //   logging::check_fatal((*unburnable_)[event.cell().hash()], [&]() {
@@ -571,9 +573,9 @@ void Scenario::burn(const Event& event)
   notify(event);
   intensity_->burn(event.cell, event.intensity, event.ros, event.raz);
 #ifdef DEBUG_GRIDS
-  logging::check_fatal(!intensity_->hasBurned(event.cell), [&]() {
-    return std::format("{:s} Wasn't marked as burned after burn", add_log(*this));
-  });
+  logging::check_fatal(
+    !intensity_->hasBurned(event.cell), "{:s} Wasn't marked as burned after burn", add_log(*this)
+  );
 #endif
   arrival_[event.cell] = event.time;
 }
@@ -602,9 +604,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
 #ifdef DEBUG_SIMULATION
-  logging::check_fatal(ran(), [&]() {
-    return std::format("{:s} Scenario has already run", add_log(*this));
-  });
+  logging::check_fatal(ran(), "{:s} Scenario has already run", add_log(*this));
 #endif
   logging::verbose("{:s} Starting", add_log(*this));
   CriticalSection _(Model::task_limiter);
@@ -637,9 +637,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
     {
       const auto cell = env.cell(location);
 #ifdef DEBUG_SIMULATION
-      logging::check_fatal(is_null_fuel(cell), [&]() {
-        return std::format("{:s} Null fuel in perimeter", add_log(*this));
-      });
+      logging::check_fatal(is_null_fuel(cell), "{:s} Null fuel in perimeter", add_log(*this));
 #endif
       const auto x = cell.column() + CELL_CENTER;
       const auto y = cell.row() + CELL_CENTER;
@@ -706,22 +704,19 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   else
   {
 #ifdef NDEBUG
-    logging::output(log_level, [&]() {
-      return std::format(
-        "{:s} [{:d} of {:d}] Completed with final size {:0.1f} ha",
-        add_log(*this),
-        completed,
-        count,
-        currentFireSize()
-      );
-    });
+    logging::output(
+      log_level,
+      "{:s} [{:d} of {:d}] Completed with final size {:0.1f} ha",
+      add_log(*this),
+      completed,
+      count,
+      currentFireSize()
+    );
 #else
     // try to make output consistent if in debug mode
-    logging::output(log_level, [&]() {
-      return std::format(
-        "{:s} Completed with final size {:0.1f} ha", add_log(*this), currentFireSize()
-      );
-    });
+    logging::output(
+      log_level, "{:s} Completed with final size {:0.1f} ha", add_log(*this), currentFireSize()
+    );
 #endif
   }
   ran_ = true;
@@ -886,9 +881,7 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto wx = settings.is_surface() ? model_->yesterday() : weather(time);
   const auto wx_daily = settings.is_surface() ? model_->yesterday() : weather_daily(time);
   current_time_ = time;
-  logging::check_fatal(nullptr == wx, [&]() {
-    return std::format("No weather available for time {:f}", time);
-  });
+  logging::check_fatal(nullptr == wx, "No weather available for time {:f}", time);
   const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
   const auto max_duration = (next_time - time) * DAY_MINUTES;

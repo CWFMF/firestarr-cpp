@@ -39,9 +39,9 @@ public:
   StaticCuring(const int value) noexcept
     : value_{[&]() {
         // HACK: enforce bounds
-        logging::check_fatal(0 > value || 100 < value, [&]() {
-          return std::format("Grass curing (%) must be in range [0-100] but got {:d}", value);
-        });
+        logging::check_fatal(
+          0 > value || 100 < value, "Grass curing (%) must be in range [0-100] but got {:d}", value
+        );
         return value;
       }()}
   { }

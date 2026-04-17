@@ -134,9 +134,9 @@ void ProbabilityMap::show() const
     logging::verbose("Recording {:s} as interim", filename);
     // is an interim file, so keep path for later deleting
     PATHS_INTERIM.emplace(filename);
-    logging::check_fatal(!PATHS_INTERIM.contains(filename), [&]() {
-      return std::format("Expected {:s} to be in interim files list", filename);
-    });
+    logging::check_fatal(
+      !PATHS_INTERIM.contains(filename), "Expected {:s} to be in interim files list", filename
+    );
   }
   return files;
 }

@@ -53,16 +53,12 @@ GeoTiff::GeoTiff(const string_view filename, const char* const mode)
       // suppress warnings about geotiff tags that aren't found
       TIFFSetWarningHandler(nullptr);
       auto tiff = GeoTiffOpen(filename_.c_str(), mode);
-      logging::check_fatal(!tiff, [&]() {
-        return std::format("Cannot open file {:s} as a TIF", filename_);
-      });
+      logging::check_fatal(!tiff, "Cannot open file {:s} as a TIF", filename_);
       return tiff;
     }()),
     gtif_([&]() {
       auto gtif = GTIFNew(tiff_);
-      logging::check_fatal(!gtif, [&]() {
-        return std::format("Cannot open file {:s} as a GEOTIFF", filename_);
-      });
+      logging::check_fatal(!gtif, "Cannot open file {:s} as a GEOTIFF", filename_);
       return gtif;
     }())
 { }
