@@ -67,6 +67,7 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
     return Radians{static_cast<AspectSize>(aspect)};
   }
 };
+static constexpr Radians operator-(const Radians& rhs) { return Radians::D_360() - rhs; }
 static constexpr Degrees INVALID_DIRECTION{std::numeric_limits<DirectionSize>::max()};
 static constexpr Radians abs(const Radians& radians) { return Radians{radians.value}; };
 static inline MathSize tan(const Radians& radians) { return std::tan(radians.value); };

@@ -2,6 +2,7 @@
 #include "FireSpread.h"
 #include "FuelLookup.h"
 #include "FuelType.h"
+#include "Log.h"
 #include "LookupTable.h"
 #include "Scenario.h"
 #include "Settings.h"
@@ -343,10 +344,15 @@ SpreadInfo::SpreadInfo(
   l_b_ = fuel->lengthToBreadth(wsv);
   const HorizontalAdjustment correction_factor =
     horizontal_adjustment(slope_azimuth, percentSlope());
-  const auto spread_algorithm = WidestEllipseAlgorithm(MAX_SPREAD_ANGLE, cell_size, min_ros);
+  // const auto spread_old = WidestEllipseAlgorithm(MAX_SPREAD_ANGLE, cell_size, min_ros);
+  // const auto offsets_old = spread_old.calculate_offsets(
+  //   correction_factor, tfc_, Radians{raz_.asRadians()}, head_ros_, back_ros, l_b_
+  // );
+  const auto spread_algorithm = ParametricEllipseAlgorithm(MAX_SPREAD_ANGLE, cell_size, min_ros);
   offsets_ = spread_algorithm.calculate_offsets(
     correction_factor, tfc_, Radians{raz_.asRadians()}, head_ros_, back_ros, l_b_
   );
+  // logging::check_equal(offsets_parametric.size(), offsets_.size(), "offsets size");
   // #endif
   // if no offsets then not spreading so invalidate head_ros_
   if (0 == offsets_.size())
