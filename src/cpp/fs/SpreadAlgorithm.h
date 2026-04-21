@@ -5,7 +5,7 @@
 #include "InnerPos.h"
 namespace fs
 {
-using HorizontalAdjustment = std::function<MathSize(const Radians&)>;
+using HorizontalAdjustment = std::function<std::tuple<MathSize, MathSize>(const Radians&)>;
 HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const SlopeSize slope);
 class SpreadAlgorithm
 {
@@ -46,19 +46,6 @@ public:
   ) const noexcept override;
 };
 class WidestEllipseAlgorithm : public BaseSpreadAlgorithm
-{
-public:
-  using BaseSpreadAlgorithm::BaseSpreadAlgorithm;
-  [[nodiscard]] OffsetSet calculate_offsets(
-    HorizontalAdjustment correction_factor,
-    MathSize tfc,
-    const Radians& head_raz,
-    MathSize head_ros,
-    MathSize back_ros,
-    MathSize length_to_breadth
-  ) const noexcept override;
-};
-class ParametricEllipseAlgorithm : public BaseSpreadAlgorithm
 {
 public:
   using BaseSpreadAlgorithm::BaseSpreadAlgorithm;
