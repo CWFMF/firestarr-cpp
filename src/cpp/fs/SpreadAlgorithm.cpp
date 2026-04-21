@@ -301,4 +301,78 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 #endif
   return offsets;
 }
+[[nodiscard]] OffsetSet ParametricEllipseAlgorithm::calculate_offsets(
+  HorizontalAdjustment correction_factor,
+  MathSize tfc,
+  const Radians& head_raz,
+  MathSize head_ros,
+  MathSize back_ros,
+  MathSize length_to_breadth
+) const noexcept
+{
+  if (head_ros < min_ros_)
+  {
+    return {};
+  }
+  OffsetSet offsets{};
+  const auto cos_raz = cos(head_raz);
+  const auto sin_raz = sin(head_raz);
+  // calculate centered on (0, 0) first
+  const auto axis_major = head_ros + back_ros;
+  const auto a = axis_major / 2;
+  const auto b = a * length_to_breadth * length_to_breadth;
+  // origin relative to (0, 0) is back_ros + part of head_ros that gets to (0, 0)
+  const auto origin = a - back_ros;
+  assert((0 == origin) == (0 == length_to_breadth));
+  const auto eccentricity = sqrt(a * a - b * b);
+  // center is (0, 0) so focii are just +/- eccentricity
+  const auto f0 = -eccentricity;
+  const auto f1 = eccentricity;
+  constexpr auto STEPS = 10;
+  const auto step = axis_major / STEPS;
+  auto add_offset = [&](const auto x, const auto y) {
+    // translate x coordinate by distance between origin and (0, 0)
+    assert((x == foci0) == (y == 0));
+    // figure out if we're below min_ros by calculating line distance
+    const auto ros = sqrt(x * x + y * y);
+    if (ros >= min_ros_)
+    {
+      // FIX: check this
+      const auto theta = Radians{acos(y / x)};
+      // spread is symmetrical across the center axis, but needs to be adjusted if on a slope
+      const auto h_adj = correction_factor(theta);
+      // convert into distance within a cell
+      const auto ros_cell = ros / cell_size_;
+      // FIX: this needs to be used properly
+      const auto ros_horizontal_cell = ros_cell * h_adj;
+      const auto intensity = fire_intensity(tfc, ros);
+      const auto x0 = x + origin;
+      const Offset offset_cell{ros_cell * x0, y * ros_cell};
+      // need to rotate around origin
+      // const Offset rotated{Offset{x * cos_raz - y * sin_raz, x * sin_raz + y * cos_raz}};
+      const Offset rotated{0, 0};
+      // spreading, so figure out offset from current point
+      offsets.emplace_back(
+        intensity,
+        ros,
+        theta,   // is this right?
+        // direction.asDegrees(),
+        rotated
+      );
+    }
+  };
+  auto x = f0;
+  while (x < f1)
+  {
+    auto y = sqrt(a * a - x * x) * (1 - eccentricity);
+    add_offset(x, y);
+  }
+  x += step;
+  if (x != f1)
+  {
+    // probably didn't hit exactly
+    add_offset(f1 + origin, 0);
+  }
+  return offsets;
+}
 }
