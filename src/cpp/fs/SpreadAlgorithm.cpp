@@ -881,28 +881,24 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   );
 #endif
   constexpr Degrees degrees{360.0 / N};
-  constexpr Radians radians{degrees};
 #ifdef DEBUG_POINTS
+  constexpr Radians radians{degrees};
   logging::debug(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees.value, radians.value);
 #endif
-  const auto R = a;
 #ifdef DEBUG_POINTS
+  const auto R = a;
   logging::debug(" 3:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
   vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step3{};
-#endif
-  const auto origin = std::pair{-c, 0.0};
+#else
   const auto cos_t = cos(theta);
   const auto sin_t = sin(theta);
-  const auto origin_rot = std::pair{origin.first * cos_t, origin.first * sin_t};
-  const auto x_o = origin_rot.first;
-  const auto y_o = origin_rot.second;
-  const auto origin_shift = std::pair{origin_rot.first - x_o, origin_rot.second - y_o};
-  const auto Rx = a;
-  const auto Ry = b;
-  const auto Rx_cos = Rx * cos_t;
-  const auto Rx_sin = Rx * sin_t;
-  const auto Ry_cos = Ry * cos_t;
-  const auto Ry_sin = Ry * sin_t;
+  const auto Rx_cos = a * cos_t;
+  const auto Rx_sin = a * sin_t;
+  const auto Ry_cos = b * cos_t;
+  const auto Ry_sin = b * sin_t;
+  const auto x_o = -c * cos_t;
+  const auto y_o = -c * sin_t;
+#endif
   auto d = 0.0;
   while (d <= 360.0)
   {
@@ -926,6 +922,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   logging::debug(" 4:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
 #endif
 #ifdef DEBUG_POINTS
+  const auto origin = std::pair{-c, 0.0};
   logging::debug(
     // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
     " 4:    {:>10} {:>10} {:10.3f} {:10.3f}",
@@ -936,6 +933,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   );
 #endif
 #ifdef DEBUG_POINTS
+  const auto Rx = a;
+  const auto Ry = b;
   for (auto [deg, rad, x0, y0] : step3)
   {
     const auto x1 = Rx * cos(rad);
@@ -956,6 +955,11 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   logging::debug(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
 #endif
 #ifdef DEBUG_POINTS
+  const auto cos_t = cos(theta);
+  const auto sin_t = sin(theta);
+  const auto origin_rot = std::pair{origin.first * cos_t, origin.first * sin_t};
+  const auto x_o = origin_rot.first;
+  const auto y_o = origin_rot.second;
   logging::debug(
     // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
     " 5:    {:>10} {:>10} {:10.3f} {:10.3f}",
@@ -964,6 +968,10 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     origin_rot.first,
     origin_rot.second
   );
+  const auto Rx_cos = a * cos_t;
+  const auto Rx_sin = a * sin_t;
+  const auto Ry_cos = b * cos_t;
+  const auto Ry_sin = b * sin_t;
 #endif
 #ifdef DEBUG_POINTS
   for (auto [deg, rad, x1, y1] : step4)
@@ -982,6 +990,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   logging::debug(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
 #endif
 #ifdef DEBUG_POINTS
+  const auto origin_shift = std::pair{origin_rot.first - x_o, origin_rot.second - y_o};
   logging::debug(
     // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
     " 6:    {:>10} {:>10} {:10.3f} {:10.3f}",
