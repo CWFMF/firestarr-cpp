@@ -817,7 +817,6 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   MathSize length_to_breadth
 ) const noexcept
 {
-  static bool once = false;
   OffsetSet offsets{};
   const auto add_offset = [&, tfc](const Radians& direction, const MathSize x0, const MathSize y0) {
 #ifdef DEBUG_POINTS
