@@ -818,12 +818,14 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [&, tfc](const Radians& direction, const MathSize x0, const MathSize y0) {
+  const auto add_offset = [&,
+                           tfc](const AspectSize direction, const MathSize x0, const MathSize y0) {
 #ifdef DEBUG_POINTS
     const auto s0 = offsets.size();
 #endif
     // these should be ratios to multiply the x & y values by
-    const auto [xc, yc] = correction_factor_xy(direction);
+    const Radians t{Degrees{direction}};
+    const auto [xc, yc] = correction_factor_xy(t);
     const auto x = xc * x0;
     const auto y = yc * y0;
     const auto ros = sqrt(x * x + y * y);
@@ -836,7 +838,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     offsets.emplace_back(
       intensity,
       ros,
-      Direction{direction},
+      Direction{t},
       Offset{static_cast<DistanceSize>(x / cell_size_), static_cast<DistanceSize>(y / cell_size_)}
     );
 #ifdef DEBUG_POINTS
@@ -846,7 +848,6 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 #endif
     return true;
   };
-  constexpr auto N = 24;
 #ifdef DEBUG_POINTS
   logging::debug("{:>10} {:>10} {:>10} {:>10} {:>10}", "HROS", "BROS", "LBR", "RAZ", "N");
   logging::debug(
@@ -880,10 +881,21 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     theta.value
   );
 #endif
-  constexpr Degrees degrees{360.0 / N};
+  constexpr auto N = 24;
 #ifdef DEBUG_POINTS
+  constexpr Degrees degrees{360.0 / N};
   constexpr Radians radians{degrees};
   logging::debug(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees.value, radians.value);
+#else
+  static const auto directions = []() {
+    std::array<std::tuple<AspectSize, MathSize, MathSize>, 360 / N> result{};
+    for (size_t i = 0; i < result.size(); ++i)
+    {
+      const auto d = i * N;
+      result[i] = std::tuple{d, cos(static_cast<MathSize>(d)), sin(static_cast<MathSize>(d))};
+    }
+    return result;
+  }();
 #endif
 #ifdef DEBUG_POINTS
   const auto R = a;
@@ -899,12 +911,16 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   const auto x_o = -c * cos_t;
   const auto y_o = -c * sin_t;
 #endif
+#ifdef DEBUG_POINTS
   auto d = 0.0;
   while (d <= 360.0)
+#else
+  for (auto [d, cos_r, sin_r] : directions)
+#endif
   {
+#ifdef DEBUG_POINTS
     const auto deg = Degrees{d};
     const auto rad = Radians{deg};
-#ifdef DEBUG_POINTS
     const auto x0 = R * cos(rad);
     const auto y0 = R * sin(rad);
     logging::debug(
@@ -977,10 +993,12 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   for (auto [deg, rad, x1, y1] : step4)
   {
 #endif
-    const auto r_cos = cos(rad);
-    const auto r_sin = sin(rad);
-    const auto x2 = Rx_cos * r_cos - Ry_sin * r_sin;
-    const auto y2 = Rx_sin * r_cos + Ry_cos * r_sin;
+#ifdef DEBUG_POINTS
+    const auto cos_r = cos(rad);
+    const auto sin_r = sin(rad);
+#endif
+    const auto x2 = Rx_cos * cos_r - Ry_sin * sin_r;
+    const auto y2 = Rx_sin * cos_r + Ry_cos * sin_r;
 #ifdef DEBUG_POINTS
     logging::debug(" 5:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x2, y2);
     step5.emplace_back(deg, rad, x2, y2);
@@ -1007,10 +1025,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 #ifdef DEBUG_POINTS
     logging::debug(" 6:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x3, y3);
     step6.emplace_back(deg, rad, x3, y3);
-#else
-    d += degrees.value;
 #endif
-    add_offset(rad, x3, y3);
+    add_offset(d, x3, y3);
   }
   return offsets;
 }
