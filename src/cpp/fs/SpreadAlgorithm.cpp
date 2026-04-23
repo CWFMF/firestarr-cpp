@@ -851,8 +851,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     return true;
   };
   constexpr auto N = 24;
-  logging::note("{:>10} {:>10} {:>10} {:>10} {:>10}", "HROS", "BROS", "LBR", "RAZ", "N");
-  logging::note(
+  logging::debug("{:>10} {:>10} {:>10} {:>10} {:>10}", "HROS", "BROS", "LBR", "RAZ", "N");
+  logging::debug(
     "{:10f} {:10f} {:10f} {:10f}",
     head_ros,
     back_ros,
@@ -873,7 +873,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     // convert compass to math angle
     const auto c = a - back_ros;
     const auto theta = Radians::D_090() - head_raz;
-    logging::note(
+    logging::debug(
       " 1:    a = {:0.3f}, b = {:0.3f}, c = {:0.3f}, theta = {:0.1f} deg / {:0.6f} rad",
       a,
       b,
@@ -883,9 +883,9 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     );
     constexpr Degrees degrees{360.0 / N};
     constexpr Radians radians{degrees};
-    logging::note(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees.value, radians.value);
+    logging::debug(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees.value, radians.value);
     const auto R = a;
-    logging::note(" 3:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
+    logging::debug(" 3:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
     vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step3{};
     auto d = 0.0;
     while (d <= 360.0)
@@ -894,7 +894,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       const auto rad = Radians{deg};
       const auto x0 = R * cos(rad);
       const auto y0 = R * sin(rad);
-      logging::note(
+      logging::debug(
         // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
         " 3:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}",
         deg.value,
@@ -906,9 +906,9 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       d += degrees.value;
     }
     vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step4{};
-    logging::note(" 4:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
+    logging::debug(" 4:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
     const auto origin = std::pair{-c, 0.0};
-    logging::note(
+    logging::debug(
       // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
       " 4:    {:>10} {:>10} {:10.3f} {:10.3f}",
       "n/a",
@@ -922,7 +922,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     {
       const auto x1 = Rx * cos(rad);
       const auto y1 = Ry * sin(rad);
-      logging::note(
+      logging::debug(
         // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
         " 4:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}",
         deg.value,
@@ -933,11 +933,11 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       step4.emplace_back(deg, rad, x1, y1);
     }
     vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step5{};
-    logging::note(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
+    logging::debug(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
     const auto cos_t = cos(theta);
     const auto sin_t = sin(theta);
     const auto origin_rot = std::pair{origin.first * cos_t, origin.first * sin_t};
-    logging::note(
+    logging::debug(
       // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
       " 5:    {:>10} {:>10} {:10.3f} {:10.3f}",
       "n/a",
@@ -955,16 +955,16 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       const auto r_sin = sin(rad);
       const auto x2 = Rx_cos * r_cos - Ry_sin * r_sin;
       const auto y2 = Rx_sin * r_cos + Ry_cos * r_sin;
-      logging::note(" 5:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x2, y2);
+      logging::debug(" 5:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x2, y2);
       step5.emplace_back(deg, rad, x2, y2);
     }
     ///////////////////////////////////////
     vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step6{};
-    logging::note(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
+    logging::debug(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
     const auto x_o = origin_rot.first;
     const auto y_o = origin_rot.second;
     const auto origin_shift = std::pair{origin_rot.first - x_o, origin_rot.second - y_o};
-    logging::note(
+    logging::debug(
       // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
       " 6:    {:>10} {:>10} {:10.3f} {:10.3f}",
       "n/a",
@@ -976,7 +976,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     {
       const auto x3 = x2 - x_o;
       const auto y3 = y2 - y_o;
-      logging::note(" 6:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x3, y3);
+      logging::debug(" 6:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x3, y3);
       step6.emplace_back(deg, rad, x3, y3);
       add_offset(rad, x3, y3);
     }
