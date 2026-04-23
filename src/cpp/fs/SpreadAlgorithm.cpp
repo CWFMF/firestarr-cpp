@@ -847,6 +847,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     return true;
   };
   constexpr auto N = 24;
+#ifdef DEBUG_POINTS
   logging::debug("{:>10} {:>10} {:>10} {:>10} {:>10}", "HROS", "BROS", "LBR", "RAZ", "N");
   logging::debug(
     "{:10f} {:10f} {:10f} {:10f}",
@@ -856,126 +857,151 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     head_raz.asDegrees().value,
     N
   );
+#endif
+  const auto dist_total = (head_ros + back_ros);
+  const auto a = dist_total / 2;
+  const auto b = a / length_to_breadth;
+  // convert compass (C) to math (M) angle
+  //       C    M   diff  90-M
+  // N    90    0 = 90      90
+  // E     0   90 = -90      0
+  // S   270  180 = 90     -90
+  // W   180  270 = -90   -180
+  // convert compass to math angle
+  const auto c = a - back_ros;
+  const auto theta = Radians::D_090() - head_raz;
+#ifdef DEBUG_POINTS
+  logging::debug(
+    " 1:    a = {:0.3f}, b = {:0.3f}, c = {:0.3f}, theta = {:0.1f} deg / {:0.6f} rad",
+    a,
+    b,
+    c,
+    theta.asDegrees().value,
+    theta.value
+  );
+#endif
+  constexpr Degrees degrees{360.0 / N};
+  constexpr Radians radians{degrees};
+#ifdef DEBUG_POINTS
+  logging::debug(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees.value, radians.value);
+#endif
+  const auto R = a;
+#ifdef DEBUG_POINTS
+  logging::debug(" 3:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
+  vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step3{};
+#endif
+  const auto origin = std::pair{-c, 0.0};
+  const auto cos_t = cos(theta);
+  const auto sin_t = sin(theta);
+  const auto origin_rot = std::pair{origin.first * cos_t, origin.first * sin_t};
+  const auto x_o = origin_rot.first;
+  const auto y_o = origin_rot.second;
+  const auto origin_shift = std::pair{origin_rot.first - x_o, origin_rot.second - y_o};
+  const auto Rx = a;
+  const auto Ry = b;
+  const auto Rx_cos = Rx * cos_t;
+  const auto Rx_sin = Rx * sin_t;
+  const auto Ry_cos = Ry * cos_t;
+  const auto Ry_sin = Ry * sin_t;
+  auto d = 0.0;
+  while (d <= 360.0)
   {
-    const auto dist_total = (head_ros + back_ros);
-    const auto a = dist_total / 2;
-    const auto b = a / length_to_breadth;
-    // convert compass (C) to math (M) angle
-    //       C    M   diff  90-M
-    // N    90    0 = 90      90
-    // E     0   90 = -90      0
-    // S   270  180 = 90     -90
-    // W   180  270 = -90   -180
-    // convert compass to math angle
-    const auto c = a - back_ros;
-    const auto theta = Radians::D_090() - head_raz;
-    logging::debug(
-      " 1:    a = {:0.3f}, b = {:0.3f}, c = {:0.3f}, theta = {:0.1f} deg / {:0.6f} rad",
-      a,
-      b,
-      c,
-      theta.asDegrees().value,
-      theta.value
-    );
-    constexpr Degrees degrees{360.0 / N};
-    constexpr Radians radians{degrees};
-    logging::debug(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees.value, radians.value);
-    const auto R = a;
-    logging::debug(" 3:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
-    vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step3{};
-    auto d = 0.0;
-    while (d <= 360.0)
-    {
-      const auto deg = Degrees{d};
-      const auto rad = Radians{deg};
-      const auto x0 = R * cos(rad);
-      const auto y0 = R * sin(rad);
-      logging::debug(
-        // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
-        " 3:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}",
-        deg.value,
-        rad.value,
-        x0,
-        y0
-      );
-      step3.emplace_back(deg, rad, x0, y0);
-      d += degrees.value;
-    }
-    vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step4{};
-    logging::debug(" 4:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
-    const auto origin = std::pair{-c, 0.0};
+    const auto deg = Degrees{d};
+    const auto rad = Radians{deg};
+#ifdef DEBUG_POINTS
+    const auto x0 = R * cos(rad);
+    const auto y0 = R * sin(rad);
     logging::debug(
       // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
-      " 4:    {:>10} {:>10} {:10.3f} {:10.3f}",
-      "n/a",
-      "n/a",
-      origin.first,
-      origin.second
+      " 3:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}",
+      deg.value,
+      rad.value,
+      x0,
+      y0
     );
-    const auto Rx = a;
-    const auto Ry = b;
-    for (auto [deg, rad, x0, y0] : step3)
-    {
-      const auto x1 = Rx * cos(rad);
-      const auto y1 = Ry * sin(rad);
-      logging::debug(
-        // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
-        " 4:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}",
-        deg.value,
-        rad.value,
-        x1,
-        y1
-      );
-      step4.emplace_back(deg, rad, x1, y1);
-    }
-    vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step5{};
-    logging::debug(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
-    const auto cos_t = cos(theta);
-    const auto sin_t = sin(theta);
-    const auto origin_rot = std::pair{origin.first * cos_t, origin.first * sin_t};
+    step3.emplace_back(deg, rad, x0, y0);
+    d += degrees.value;
+  }
+  vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step4{};
+  logging::debug(" 4:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
+#endif
+#ifdef DEBUG_POINTS
+  logging::debug(
+    // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
+    " 4:    {:>10} {:>10} {:10.3f} {:10.3f}",
+    "n/a",
+    "n/a",
+    origin.first,
+    origin.second
+  );
+#endif
+#ifdef DEBUG_POINTS
+  for (auto [deg, rad, x0, y0] : step3)
+  {
+    const auto x1 = Rx * cos(rad);
+    const auto y1 = Ry * sin(rad);
+#endif
+#ifdef DEBUG_POINTS
     logging::debug(
       // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
-      " 5:    {:>10} {:>10} {:10.3f} {:10.3f}",
-      "n/a",
-      "n/a",
-      origin_rot.first,
-      origin_rot.second
+      " 4:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}",
+      deg.value,
+      rad.value,
+      x1,
+      y1
     );
-    const auto Rx_cos = Rx * cos_t;
-    const auto Rx_sin = Rx * sin_t;
-    const auto Ry_cos = Ry * cos_t;
-    const auto Ry_sin = Ry * sin_t;
-    for (auto [deg, rad, x1, y1] : step4)
-    {
-      const auto r_cos = cos(rad);
-      const auto r_sin = sin(rad);
-      const auto x2 = Rx_cos * r_cos - Ry_sin * r_sin;
-      const auto y2 = Rx_sin * r_cos + Ry_cos * r_sin;
-      logging::debug(" 5:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x2, y2);
-      step5.emplace_back(deg, rad, x2, y2);
-    }
-    ///////////////////////////////////////
-    vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step6{};
-    logging::debug(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
-    const auto x_o = origin_rot.first;
-    const auto y_o = origin_rot.second;
-    const auto origin_shift = std::pair{origin_rot.first - x_o, origin_rot.second - y_o};
-    logging::debug(
-      // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
-      " 6:    {:>10} {:>10} {:10.3f} {:10.3f}",
-      "n/a",
-      "n/a",
-      origin_shift.first,
-      origin_shift.second
-    );
-    for (auto [deg, rad, x2, y2] : step5)
-    {
-      const auto x3 = x2 - x_o;
-      const auto y3 = y2 - y_o;
-      logging::debug(" 6:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x3, y3);
-      step6.emplace_back(deg, rad, x3, y3);
-      add_offset(rad, x3, y3);
-    }
+    step4.emplace_back(deg, rad, x1, y1);
+  }
+  vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step5{};
+  logging::debug(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
+#endif
+#ifdef DEBUG_POINTS
+  logging::debug(
+    // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
+    " 5:    {:>10} {:>10} {:10.3f} {:10.3f}",
+    "n/a",
+    "n/a",
+    origin_rot.first,
+    origin_rot.second
+  );
+#endif
+#ifdef DEBUG_POINTS
+  for (auto [deg, rad, x1, y1] : step4)
+  {
+#endif
+    const auto r_cos = cos(rad);
+    const auto r_sin = sin(rad);
+    const auto x2 = Rx_cos * r_cos - Ry_sin * r_sin;
+    const auto y2 = Rx_sin * r_cos + Ry_cos * r_sin;
+#ifdef DEBUG_POINTS
+    logging::debug(" 5:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x2, y2);
+    step5.emplace_back(deg, rad, x2, y2);
+  }
+  ///////////////////////////////////////
+  vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step6{};
+  logging::debug(" 5:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
+#endif
+#ifdef DEBUG_POINTS
+  logging::debug(
+    // " 3:    t({:0.1f} deg, {:0.6f} rad) => (x0, y0) = ({:0.3f}, {:0.3f})",
+    " 6:    {:>10} {:>10} {:10.3f} {:10.3f}",
+    "n/a",
+    "n/a",
+    origin_shift.first,
+    origin_shift.second
+  );
+  for (auto [deg, rad, x2, y2] : step5)
+  {
+#endif
+    const auto x3 = x2 - x_o;
+    const auto y3 = y2 - y_o;
+#ifdef DEBUG_POINTS
+    logging::debug(" 6:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x3, y3);
+    step6.emplace_back(deg, rad, x3, y3);
+#else
+    d += degrees.value;
+#endif
+    add_offset(rad, x3, y3);
   }
   return offsets;
 }
