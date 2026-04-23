@@ -835,13 +835,12 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       // #endif
       return false;
     }
-    const auto ros_cell = ros / cell_size_;
     const auto intensity = fire_intensity(tfc, ros);
     offsets.emplace_back(
       intensity,
       ros,
       Direction{direction},
-      Offset{static_cast<DistanceSize>(ros_cell * x), static_cast<DistanceSize>(ros_cell * y)}
+      Offset{static_cast<DistanceSize>(x / cell_size_), static_cast<DistanceSize>(y / cell_size_)}
     );
 #ifdef DEBUG_POINTS
     const auto s1 = offsets.size();
