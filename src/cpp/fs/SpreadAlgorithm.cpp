@@ -818,17 +818,15 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 ) const noexcept
 {
   static bool once = false;
-  auto correction_factor = [&](const Radians& theta) {
-    const auto [x, y] = correction_factor_xy(theta);
-    // CHECK: Pretty sure you can't spread farther horizontally than the spread distance, regardless
-    // of angle?
-    return min(1.0, sqrt(x * x + y * y));
-  };
   OffsetSet offsets{};
-  const auto add_offset = [&, tfc](const Radians& direction, const MathSize x, const MathSize y) {
+  const auto add_offset = [&, tfc](const Radians& direction, const MathSize x0, const MathSize y0) {
 #ifdef DEBUG_POINTS
     const auto s0 = offsets.size();
 #endif
+    // these should be ratios to multiply the x & y values by
+    const auto [xc, yc] = correction_factor_xy(direction);
+    const auto x = xc * x0;
+    const auto y = yc * y0;
     const auto ros = sqrt(x * x + y * y);
     if (ros < min_ros_)
     {
