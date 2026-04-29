@@ -818,27 +818,35 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 ) const noexcept
 {
   OffsetSet offsets{};
-  const auto add_offset = [&,
-                           tfc](const AspectSize direction, const MathSize x0, const MathSize y0) {
+  const auto min_ros_sq = min_ros_ * min_ros_;
+  auto correction_factor = [&](const Radians& theta) {
+    const auto [x, y] = correction_factor_xy(theta);
+    // CHECK: Pretty sure you can't spread farther horizontally than the spread distance, regardless
+    // of angle?
+    return min(1.0, sqrt(x * x + y * y));
+  };
+  const auto add_offset = [&, tfc](const Radians& direction, const MathSize x0, const MathSize y0) {
 #ifdef DEBUG_POINTS
     const auto s0 = offsets.size();
 #endif
-    // these should be ratios to multiply the x & y values by
-    const Radians t{Degrees{direction}};
-    const auto [xc, yc] = correction_factor_xy(t);
-    const auto x = xc * x0;
-    const auto y = yc * y0;
-    const auto ros = sqrt(x * x + y * y);
-    if (ros < min_ros_)
+    const auto cf = correction_factor(direction);
+    const auto x = x0 * cf;
+    const auto y = y0 * cf;
+    // compare squared instead of doing sqrt
+    const auto ros_sq = x * x + y * y;
+    if (ros_sq < min_ros_sq)
     {
       // #endif
       return false;
     }
+    // need actual ros now for fire intensity
+    // FIX: could omit this if not looking for FI or ROS outputs?
+    const auto ros = sqrt(ros_sq);
     const auto intensity = fire_intensity(tfc, ros);
     offsets.emplace_back(
       intensity,
       ros,
-      Direction{t},
+      direction,
       Offset{static_cast<DistanceSize>(x / cell_size_), static_cast<DistanceSize>(y / cell_size_)}
     );
 #ifdef DEBUG_POINTS
@@ -1027,7 +1035,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     logging::debug(" 6:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x3, y3);
     step6.emplace_back(deg, rad, x3, y3);
 #endif
-    add_offset(d, x3, y3);
+    add_offset((rad + head_raz).fix(), x3, y3);
   }
   return offsets;
 }
