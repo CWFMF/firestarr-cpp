@@ -914,7 +914,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 #endif
 #ifdef DEBUG_POINTS
   auto d = 0.0;
-  while (d <= 360.0)
+  while (d < 360.0)
 #else
   for (auto [d, cos_r, sin_r] : directions)
 #endif
