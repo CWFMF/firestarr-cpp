@@ -12,9 +12,11 @@ fi
 
 dates="[$(seq -s, ${DAYS})]"
 
+d_fmt=$(printf "%03d" ${DAYS})
 DIR_CMP=cmp
-mkdir -p ${DIR_CMP}
-log=$(printf ${DIR_CMP}/times_%03d.log ${DAYS})
+dir_cur=${DIR_CMP}/${d_fmt}
+mkdir -p ${dir_cur}
+log=${DIR_CMP}/times_${d_fmt}.log
 rm "${log}"
 
 git restore src
