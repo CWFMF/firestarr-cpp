@@ -883,8 +883,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 #endif
   constexpr auto N = 24;
   constexpr Degrees degrees{360.0 / N};
-#ifdef DEBUG_POINTS
   constexpr Radians radians{degrees};
+#ifdef DEBUG_POINTS
   logging::debug(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees.value, radians.value);
 #else
   static const auto directions = []() {
@@ -892,7 +892,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     for (size_t i = 0; i < result.size(); ++i)
     {
       const auto d = i * degrees.value;
-      result[i] = std::tuple{d, cos(static_cast<MathSize>(d)), sin(static_cast<MathSize>(d))};
+      const auto r = i * radians.value;
+      result[i] = std::tuple{d, cos(r), sin(r)};
     }
     return result;
   }();
