@@ -848,6 +848,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 #endif
     return true;
   };
+  constexpr auto N = 360;
 #ifdef DEBUG_POINTS
   logging::debug("{:>10} {:>10} {:>10} {:>10} {:>10}", "HROS", "BROS", "LBR", "RAZ", "N");
   logging::debug(
@@ -881,18 +882,17 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     theta.value
   );
 #endif
-  constexpr auto N = 24;
-  constexpr Degrees degrees{360.0 / N};
-  constexpr Radians radians{degrees};
+  constexpr MathSize degrees{360.0 / N};
+  constexpr MathSize radians = Radians{Degrees{degrees}}.value;
 #ifdef DEBUG_POINTS
-  logging::debug(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees.value, radians.value);
+  logging::debug(" 2:    degrees = {:0.1f}, radians = {:0.6f}", degrees, radians);
 #else
   static const auto directions = []() {
     std::array<std::tuple<AspectSize, MathSize, MathSize>, N> result{};
     for (size_t i = 0; i < result.size(); ++i)
     {
-      const auto d = i * degrees.value;
-      const auto r = i * radians.value;
+      const auto d = i * degrees;
+      const auto r = i * radians;
       result[i] = std::tuple{d, cos(r), sin(r)};
     }
     return result;
@@ -933,7 +933,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       y0
     );
     step3.emplace_back(deg, rad, x0, y0);
-    d += degrees.value;
+    d += degrees;
   }
   vector<std::tuple<Degrees, Radians, MathSize, MathSize>> step4{};
   logging::debug(" 4:    {:>10} {:>10} {:>10} {:>10}", "degrees", "radians", "x", "y");
