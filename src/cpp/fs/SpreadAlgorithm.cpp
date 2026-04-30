@@ -927,9 +927,9 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
   for (auto [d, cos_r, sin_r] : directions)
 #endif
   {
-#ifdef DEBUG_POINTS
     const auto deg = Degrees{d};
     const auto rad = Radians{deg};
+#ifdef DEBUG_POINTS
     const auto x0 = R * cos(rad);
     const auto y0 = R * sin(rad);
     logging::debug(
