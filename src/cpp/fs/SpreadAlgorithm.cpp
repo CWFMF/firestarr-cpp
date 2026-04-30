@@ -1035,7 +1035,8 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
     logging::debug(" 6:    {:10.1f} {:10.6f} {:10.3f} {:10.3f}", deg.value, rad.value, x3, y3);
     step6.emplace_back(deg, rad, x3, y3);
 #endif
-    add_offset((rad + head_raz).fix(), x3, y3);
+    const auto theta = Radians{atan2(y3, x3)};
+    add_offset((Radians::D_090() - theta).fix(), x3, y3);
   }
   return offsets;
 }
