@@ -54,6 +54,7 @@ do
     --raster-root /appl/firestarr/test/input/10N_50651/ \
     --perim /appl/firestarr/test/input/10N_50651/10N_50651.tif \
     --deterministic \
+    -i \
     > ${DIR_CMP}/cur.log 2>&1
   # only want the last part of the log from "Ran <N> simulations"
   sed -n "/Ran .* simulations$/,/Exit status:.*/{p}" ${DIR_CMP}/cur.log | tee -a "${log}"
