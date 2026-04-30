@@ -44,7 +44,7 @@ do
   echo "#######################################################################" | tee -a "${log}"
   scripts/build.sh > /dev/null 2>&1
   /usr/bin/time -v \
-    /appl/firestarr/firestarr ${DIR_CMP}/${dir} 2024-06-03 \
+    /appl/firestarr/firestarr ${dir_cur}/${dir} 2024-06-03 \
     58.81228184403946 -122.9117103995713 01:00 \
     --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 \
     -v \
