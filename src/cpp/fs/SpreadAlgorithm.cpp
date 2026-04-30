@@ -856,7 +856,7 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
 #endif
     return true;
   };
-  constexpr auto N = 360;
+  constexpr auto N = 24;
 #ifdef DEBUG_POINTS
   logging::debug("{:>10} {:>10} {:>10} {:>10} {:>10}", "HROS", "BROS", "LBR", "RAZ", "N");
   logging::debug(
