@@ -16,7 +16,6 @@ services:
       - ./test:/appl/firestarr/test:z
       - ./grid:/appl/firestarr/grid:z
       - ./data:/appl/data:z
-      - ./sims:/appl/data/sims:z
     env_file:
       - .env
 
@@ -37,7 +36,6 @@ services:
       - ./test:/appl/firestarr/test:z
       - ./grid:/appl/firestarr/grid:z
       - ./data:/appl/data:z
-      - ./sims:/appl/data/sims:z
     env_file:
       - .env
 
@@ -64,7 +62,6 @@ services:
         source: ./
         target: /appl/firestarr
       - ./data:/appl/data:z
-      - ./sims:/appl/data/sims:z
     restart: always
     cap_add:
       - PERFMON
