@@ -33,7 +33,8 @@ public:
   ArgumentParser(
     const vector<Usage> usages,
     const vector<string> arguments,
-    const pair<string, string> binary,
+    const string binary_directory,
+    const string binary_name,
     const PositionalArgumentsRequired require_positional
   );
   ArgumentParser(
@@ -60,6 +61,14 @@ public:
   virtual Settings& parse_args();
 
 protected:
+  ArgumentParser(
+    const vector<Usage> usages,
+    const vector<string> arguments,
+    const pair<string, string> binary,
+    const PositionalArgumentsRequired require_positional
+  )
+    : ArgumentParser(usages, arguments, binary.first, binary.second, require_positional)
+  { }
   /**
    * \brief If any more positional arguments are available
    */

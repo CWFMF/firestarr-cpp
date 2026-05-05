@@ -267,12 +267,13 @@ ArgumentParser::ArgumentParser(
 ArgumentParser::ArgumentParser(
   const vector<Usage> usages,
   const vector<string> arguments,
-  const pair<string, string> binary,
+  const string binary_directory,
+  const string binary_name,
   const PositionalArgumentsRequired require_positional
 )
   : require_positional_{require_positional}, cur_arg_{1}, arguments_{arguments},
     // HACK: already parsed binary from arg 0
-    binary_directory_{std::get<0>(binary)}, binary_name_{std::get<1>(binary)}
+    binary_directory_{binary_directory}, binary_name_{binary_name}
 {
   // HACK: need output directory so find first thing without a -
   auto output_directory = [&]() -> string {
