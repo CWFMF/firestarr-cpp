@@ -105,6 +105,11 @@ set(FILE_UNSTABLE_CPP ${DIR_SRC_COMMON}/unstable.cpp)
 set_source_files_properties(${FILE_UNSTABLE_CPP} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}")
 
 if(NOT ASAN_ARGS)
+  file(GLOB FILES_CPP ${DIR_SRC}/*.cpp)
+  file(GLOB FILES_H ${DIR_SRC}/*.h)
+  file(GLOB FILES_CPP_COMMON ${DIR_SRC_COMMON}/*.cpp)
+  file(GLOB FILES_H_COMMON ${DIR_SRC_COMMON}/*.h)
+  set(FILES_FORMAT ${FILES_CPP} ${FILES_H} ${FILES_CPP_COMMON} ${FILES_H_COMMON})
   include(cmake/TidyFormat.cmake)
 endif()
 
