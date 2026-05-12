@@ -34,11 +34,15 @@ if (LINUX)
         DEPENDS ${PROJECT_NAME}
       )
 
-      # HACK: clang-tidy not applying format?
-      add_custom_target(clang_format ALL
-        COMMAND ${CLANG_FORMAT} --style=file -i ${FILES_USED}
-        DEPENDS ${PROJECT_NAME}
-      )
+      if(FILES_FORMAT)
+        # HACK: clang-tidy not applying format?
+        add_custom_target(clang_format ALL
+          COMMAND ${CLANG_FORMAT} --style=file -i ${FILES_FORMAT}
+          DEPENDS apply_clang_tidy_fixes
+        )
+      else()
+        message("ERROR: FILES_FORMAT undefined so not calling ${CLANG_FORMAT}")
+      endif()
     endif()
   endif()
 endif()
