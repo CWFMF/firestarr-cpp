@@ -59,13 +59,10 @@ template <typename... Args>
   Args&&... args
 ) DEBUG_NOEXCEPT_OFF
 {
-  // log everything in debug build
-#ifdef NDEBUG
   if (should_not_log(log_level))
   {
     return "";
   }
-#endif
   return output_no_check(log_level, format, std::forward<Args>(args)...);
 }
 template <typename... Args>
@@ -134,8 +131,11 @@ inline int fatal(const std::exception& ex, std::format_string<Args...> format, A
   return fatal(ex);
 }
 template <typename... Args>
-inline void check_fatal(bool condition, std::format_string<Args...> format, Args&&... args)
-  DEBUG_NOEXCEPT_OFF
+inline constexpr void check_fatal(
+  bool condition,
+  std::format_string<Args...> format,
+  Args&&... args
+) DEBUG_NOEXCEPT_OFF
 {
   if (!condition)
   {
