@@ -59,7 +59,7 @@ int open_log_file(const char* filename) noexcept
   lock_guard<mutex> lock(mutex_);
   // turn off buffering so lines write to file immediately
   auto outfile = out_file();
-  outfile->rdbuf()->pubsetbuf(0, 0);
+  outfile->rdbuf()->pubsetbuf(nullptr, 0);
   outfile->open(filename);
   if (!outfile->is_open())
   {
@@ -113,14 +113,8 @@ string output_no_check(const logging::level log_level, const string msg) DEBUG_N
     auto msg_fmt = format_log_message(LOG_LABELS[static_cast<int>(log_level)], msg);
     lock_guard<mutex> lock(mutex_);
     cout << msg_fmt << "\n";
-#ifndef NDEBUG
-    // if debugging then output everything to log file but not necessarily stdout
-    if (should_log(max(logging::get_log_level(), logging::level::verbose)))
-#endif
-    {
-      // output is out_file_ or pre_file_log_ if not open yet
-      *output_ << msg_fmt << "\n";
-    }
+    // output is out_file_ or pre_file_log_ if not open yet
+    *output_ << msg_fmt << "\n";
     return msg_fmt;
   }
   catch (const std::exception& ex)
