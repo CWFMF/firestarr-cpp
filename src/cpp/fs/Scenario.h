@@ -5,8 +5,8 @@
 #include "CellPoints.h"
 #include "FireSpread.h"
 #include "FireWeather.h"
-#include "InnerPos.h"
 #include "IntensityMap.h"
+#include "Location.h"
 #include "LogPoints.h"
 #include "Model.h"
 #include "Settings.h"
@@ -15,7 +15,6 @@ namespace fs
 {
 class IObserver;
 struct Event;
-using PointSet = vector<InnerPos>;
 /**
  * \brief Deleter for IObserver to get around incomplete class with unique_ptr
  */
@@ -45,95 +44,6 @@ public:
    */
   [[nodiscard]] static size_t total_steps() noexcept;
   virtual ~Scenario();
-  /**
-   * \brief Constructor
-   * \param model Model running this Scenario
-   * \param id Identifier
-   * \param weather Wather stream to use
-   * \param start_time Start time for simulation
-   * \param perimeter Perimeter to initialize with
-   * \param start_point StartPoint to use sunrise/sunset times from
-   * \param start_day First day of simulation
-   * \param last_date Last day of simulation
-   */
-  Scenario(
-    Model* model,
-    size_t id,
-    const ptr<const FireWeather> weather,
-    DurationSize start_time,
-    const shared_ptr<Perimeter>& perimeter,
-    const StartPoint& start_point,
-    Day start_day,
-    Day last_date
-  );
-  /**
-   * \brief Constructor
-   * \param model Model running this Scenario
-   * \param id Identifier
-   * \param weather Hourly weather stream to use
-   * \param weather Weather stream to use for spread and extinction probability
-   * \param start_time Start time for simulation
-   * \param start_cell Cell to start ignition in
-   * \param start_point StartPoint to use sunrise/sunset times from
-   * \param start_day First day of simulation
-   * \param last_date Last day of simulation
-   */
-  Scenario(
-    Model* model,
-    size_t id,
-    ptr<const FireWeather> weather,
-    DurationSize start_time,
-    const shared_ptr<Cell>& start_cell,
-    const StartPoint& start_point,
-    Day start_day,
-    Day last_date
-  );
-  /**
-   * \brief Constructor
-   * \param model Model running this Scenario
-   * \param id Identifier
-   * \param weather Hourly weather stream to use
-   * \param weather Weather stream to use for spread and extinction probability
-   * \param start_time Start time for simulation
-   * \param perimeter Perimeter to initialize with
-   * \param start_point StartPoint to use sunrise/sunset times from
-   * \param start_day First day of simulation
-   * \param last_date Last day of simulation
-   */
-  Scenario(
-    Model* model,
-    size_t id,
-    ptr<const FireWeather> weather,
-    ptr<const FireWeather> weather_daily,
-    DurationSize start_time,
-    const shared_ptr<Perimeter>& perimeter,
-    const StartPoint& start_point,
-    Day start_day,
-    Day last_date
-  );
-  /**
-   * \brief Constructor
-   * \param model Model running this Scenario
-   * \param id Identifier
-   * \param weather Hourly weather stream to use
-   * \param weather Weather stream to use for spread and extinction probability
-   * \param start_time Start time for simulation
-   * \param start_cell Cell to start ignition in
-   * \param start_point StartPoint to use sunrise/sunset times from
-   * \param start_day First day of simulation
-   * \param last_date Last day of simulation
-   */
-  Scenario(
-    Model* model,
-    size_t id,
-    const ptr<const FireWeather> weather,
-    const ptr<const FireWeather> weather_daily,
-    DurationSize start_time,
-    const shared_ptr<Cell>& start_cell,
-    const StartPoint& start_point,
-    Day start_day,
-    Day last_date
-  );
   Scenario(Scenario&& rhs) noexcept;
   Scenario(const Scenario& rhs) = delete;
   Scenario& operator=(Scenario&& rhs) noexcept;
@@ -146,7 +56,7 @@ public:
    * \return This
    */
   [[nodiscard]] Scenario* reset_with_new_start(
-    const shared_ptr<Cell>& start_cell,
+    const XYIdx& start_cell,
     ptr<SafeVector> final_sizes
   );
   /**
@@ -171,37 +81,13 @@ public:
    * \param Whether to log a warning about this being cancelled
    */
   void cancel(bool show_warning) noexcept;
-  /**
-   * \brief Get Cell for given row and column
-   * \param row Row
-   * \param column Column
-   * \return Cell for given row and column
-   */
   [[nodiscard]]
-  Cell cell(const Idx row, const Idx column) const
+  Cell cell(const XYIdx xy) const
   {
-    return model_->cell(row, column);
+    return model_->cell(xy);
   }
-  /**
-   * \brief Get Cell for given Location
-   * \param location Location
-   * \return Cell for given Location
-   */
-  template <class P>
-  [[nodiscard]] constexpr Cell cell(const Position<P>& position) const
-  {
-    return model_->cell(position);
-  }
-  /**
-   * \brief Number of rows
-   * \return Number of rows
-   */
-  [[nodiscard]] constexpr Idx rows() const { return model_->rows(); }
-  /**
-   * \brief Number of columns
-   * \return Number of columns
-   */
-  [[nodiscard]] constexpr Idx columns() const { return model_->columns(); }
+  [[nodiscard]] constexpr Idx height() const { return model_->height(); }
+  [[nodiscard]] constexpr Idx width() const { return model_->width(); }
   /**
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
@@ -315,18 +201,7 @@ public:
    * \param location Location to check if is surrounded
    * \return Whether or not the given Location is surrounded by cells that are burnt
    */
-  [[nodiscard]] bool isSurrounded(const Location& location) const;
-  template <class P>
-  [[nodiscard]] bool isSurrounded(const Position<P>& position) const
-  {
-    return isSurrounded(Location{position.hash()});
-  }
-  /**
-   * \brief Cell that InnerPos falls within
-   * \param p InnerPos
-   * \return Cell that InnerPos falls within
-   */
-  [[nodiscard]] Cell cell(const InnerPos& p) const noexcept;
+  [[nodiscard]] bool isSurrounded(const XYIdx& location) const;
   /**
    * \brief Run the Scenario
    * \param probabilities map to update ProbabilityMap for times base on Scenario results
@@ -348,18 +223,13 @@ public:
    * \param location Cell
    * \return Whether or not a Cell can burn
    */
-  [[nodiscard]] bool canBurn(const Cell& location) const;
+  [[nodiscard]] bool canBurn(const XYIdx& location) const;
   /**
    * \brief Whether or not Location has burned already
    * \param location Location to check
    * \return Whether or not Location has burned already
    */
-  [[nodiscard]] bool hasBurned(const Location& location) const;
-  template <class P>
-  [[nodiscard]] bool hasBurned(const Position<P>& position) const
-  {
-    return hasBurned(Location{position.hash()});
-  }
+  [[nodiscard]] bool hasBurned(const XYIdx& location) const;
   /**
    * \brief Add an Event to the queue
    * \param event Event to add
@@ -496,6 +366,8 @@ public:
 
 protected:
   string log_prefix_{};
+
+public:
   /**
    * \brief Constructor
    * \param model Model running this Scenario
@@ -514,24 +386,13 @@ protected:
     const ptr<const FireWeather> weather_daily,
     DurationSize start_time,
     const shared_ptr<Perimeter>& perimeter,
-    const shared_ptr<Cell>& start_cell,
+    const XYIdx& start_xy,
     StartPoint start_point,
     Day start_day,
     Day last_date
   );
-  Scenario(
-    Model* model,
-    size_t id,
-    const ptr<const FireWeather> weather,
-    const ptr<const FireWeather> weather_daily,
-    DurationSize start_time,
-    const shared_ptr<Perimeter>& perimeter,
-    const shared_ptr<Cell>& start_cell,
-    StartPoint start_point,
-    Day start_day,
-    Day last_date,
-    const Settings& settings
-  );
+
+protected:
   /**
    * \brief Observers to be notified when cells burn
    */
@@ -552,9 +413,6 @@ protected:
    * \brief Current time for this Scenario
    */
   DurationSize current_time_;
-  /**
-   * \brief Map of Cells to the PointSets within them
-   */
   CellPointsMap points_;
   /**
    * \brief Contains information on cells that are not burnable
@@ -579,7 +437,7 @@ protected:
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
-  map<Cell, DurationSize> arrival_{};
+  map<XYIdx, DurationSize> arrival_{};
   /**
    * \brief Maximum rate of spread for current time
    */
@@ -587,7 +445,7 @@ protected:
   /**
    * \brief Cell that the Scenario starts from if no Perimeter
    */
-  shared_ptr<Cell> start_cell_{nullptr};
+  XYIdx start_xy_{};
   /**
    * \brief Hourly weather to use for this Scenario
    */

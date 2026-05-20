@@ -73,22 +73,14 @@ public:
    * \param flipped Whether the grid data is flipped across the horizontal axis
    * \return Coordinates that would be at Point within this EnvironmentInfo, or nullptr if it is not
    */
-  [[nodiscard]] unique_ptr<Coordinates> findCoordinates(const Point& point, bool flipped) const;
+  [[nodiscard]] std::optional<Coordinates> findCoordinates(const Point& point, bool flipped) const;
   /**
    * \brief UTM projection that this uses
    * \return UTM projection that this uses
    */
   [[nodiscard]] constexpr string_view proj4() const { return cells_.proj4(); }
-  /**
-   * \brief Number of rows in grid
-   * \return Number of rows in grid
-   */
-  [[nodiscard]] constexpr Idx rows() const { return cells_.rows(); }
-  /**
-   * \brief Number of columns in grid
-   * \return Number of columns in grid
-   */
-  [[nodiscard]] constexpr Idx columns() const { return cells_.columns(); }
+  [[nodiscard]] constexpr Idx height() const { return cells_.height(); }
+  [[nodiscard]] constexpr Idx width() const { return cells_.width(); }
   /**
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
@@ -99,34 +91,8 @@ public:
    * \return Elevation of the origin Point
    */
   [[nodiscard]] constexpr ElevationSize elevation() const { return elevation_; };
-  /**
-   * \brief Cell at given row and column
-   * \param row Row
-   * \param column Column
-   * \return Cell at given row and column
-   */
-  [[nodiscard]] Cell cell(const Idx row, const Idx column) const
-  {
-    return cells_.at(Location(row, column));
-  }
-  /**
-   * \brief Cell at given Location
-   * \param location Location
-   * \return Cell at given Location
-   */
-  template <class P>
-  [[nodiscard]] Cell cell(const Position<P>& position) const
-  {
-    return cells_.at(position);
-  }
-  /**
-   * \brief Cell at Location with offset of row and column from Location of Event
-   * \param event Event to use for base Location
-   * \param row
-   * \param column
-   * \return
-   */
-  [[nodiscard]] Cell offset(const Event& event, const Idx row, const Idx column) const;
+  [[nodiscard]] Cell cell(const XYIdx& xy) const { return cells_.at(xy); }
+  [[nodiscard]] Cell offset(const Event& event, const Idx x, const Idx y) const;
   /**
    * \brief Make a ProbabilityMap that covers this Environment
    * \param time Time in simulation this ProbabilityMap represents

@@ -2,7 +2,6 @@
 #ifndef FS_CELL_H
 #define FS_CELL_H
 #include "stdafx.h"
-#include "Location.h"
 #include "Util.h"
 namespace fs
 {
@@ -10,32 +9,33 @@ using SpreadKey = uint32_t;
 /**
  * \brief A Position with a Slope, Aspect, and Fuel.
  */
-class Cell : public Position<Topo>
+class Cell
 {
+protected:
+  /**
+   * \brief Stored hash that contains x and y data
+   */
+  SpreadKey data_;
+
 public:
-  auto operator<=>(const Cell& rhs) const { return hash() <=> rhs.hash(); }
-  constexpr Cell() noexcept
-    : Cell(
-        -1,
-        -1,
-        numeric_limits<SlopeSize>::min(),
-        numeric_limits<AspectSize>::min(),
-        numeric_limits<FuelCodeSize>::min()
-      )
-  { }
   /**
    * \brief Full stored hash that may contain data from subclasses
    * \return Full stored hash that may contain data from subclasses
    */
-  [[nodiscard]] constexpr Topo fullHash() const { return topo_data_; }
+  [[nodiscard]] constexpr SpreadKey fullHash() const { return data_; }
   /**
-   * \brief Hash attributes into a Topo value
+   * \brief Construct from hash value
+   * \param hash Hash defining all attributes
+   */
+  explicit constexpr Cell(const SpreadKey hash) noexcept : data_{hash} { }
+  /**
+   * \brief Hash attributes into a SpreadKey value
    * \param slope Slope
    * \param aspect Aspect
    * \param fuel Fuel
    * \return Hash
    */
-  [[nodiscard]] static constexpr Topo hashCell(
+  [[nodiscard]] static constexpr SpreadKey hashCell(
     const SlopeSize slope,
     const AspectSize aspect,
     const FuelCodeSize& fuel
@@ -44,8 +44,8 @@ public:
     // HACK: so we can call and set it all invalid if anything is
     // if any are invalid then they all should be
     const auto do_hash_cell = [](const SlopeSize s, const AspectSize a, const FuelCodeSize f) {
-      return static_cast<Topo>(f) << FuelShift | static_cast<Topo>(s) << SlopeShift
-           | static_cast<Topo>(a) << AspectShift;
+      return static_cast<SpreadKey>(f) << FuelShift | static_cast<SpreadKey>(s) << SlopeShift
+           | static_cast<SpreadKey>(a) << AspectShift;
     };
     if (INVALID_SLOPE == slope || INVALID_ASPECT == aspect || INVALID_FUEL_CODE == fuel)
     {
@@ -54,49 +54,29 @@ public:
     // if slope is 0 make aspect north so less unique keys
     return do_hash_cell(slope, 0 == slope ? 0 : aspect, fuel);
   }
-  /**
-   * \brief Construct from hash value
-   * \param hash Hash defining all attributes
-   */
-  explicit constexpr Cell(const Topo hash) noexcept : Position<Topo>(hash) { }
-  /**
-   * \brief Construct based on given attributes
-   * \param hash Hash of row and column
-   * \param slope Slope
-   * \param aspect Aspect
-   * \param fuel Fuel
-   */
-  constexpr Cell(
-    const HashSize hash_value,
-    const SlopeSize slope,
-    const AspectSize aspect,
-    const FuelCodeSize& fuel
-  ) noexcept
-    : Position<Topo>((hash_value & HashMask) | hashCell(slope, aspect, fuel))
+  constexpr Cell() noexcept
+    : Cell(
+        numeric_limits<SlopeSize>::min(),
+        numeric_limits<AspectSize>::min(),
+        numeric_limits<FuelCodeSize>::min()
+      )
   { }
   /**
-   * \brief Constructor
-   * \param row Row
-   * \param column Column
+   * \brief Construct based on given attributes
+   * \param hash Hash of x and y
    * \param slope Slope
    * \param aspect Aspect
    * \param fuel Fuel
    */
-  constexpr Cell(
-    const Idx row,
-    const Idx column,
-    const SlopeSize slope,
-    const AspectSize aspect,
-    const FuelCodeSize& fuel
-  ) noexcept
-    : Position<Topo>(static_cast<Topo>(doHash(row, column)) | hashCell(slope, aspect, fuel))
+  constexpr Cell(const SlopeSize slope, const AspectSize aspect, const FuelCodeSize& fuel) noexcept
+    : Cell(hashCell(slope, aspect, fuel))
   { }
   /**
    * \brief A key defining Slope, Aspect, and Fuel, used for determining Cells that spread the same
-   * \param value Topo to extract from
+   * \param value SpreadKey to extract from
    * \return A key defining Slope, Aspect, and Fuel
    */
-  [[nodiscard]] static constexpr SpreadKey key(const Topo value) noexcept
+  [[nodiscard]] static constexpr SpreadKey key(const SpreadKey value) noexcept
   {
     // can just shift since these are the only bits left after
     return static_cast<SpreadKey>(value >> FuelShift);
@@ -108,9 +88,7 @@ public:
    */
   [[nodiscard]] static constexpr AspectSize aspect(const SpreadKey value) noexcept
   {
-    return static_cast<AspectSize>(
-      (value & (AspectMask >> FuelShift)) >> (AspectShift - FuelShift)
-    );
+    return static_cast<AspectSize>((value & AspectMask) >> AspectShift);
   }
   /**
    * \brief Fuel
@@ -119,7 +97,7 @@ public:
    */
   [[nodiscard]] static constexpr FuelCodeSize fuelCode(const SpreadKey value) noexcept
   {
-    return static_cast<FuelCodeSize>((value & (FuelMask >> FuelShift)) >> (FuelShift - FuelShift));
+    return static_cast<FuelCodeSize>((value & FuelMask) >> FuelShift);
   }
   /**
    * \brief Slope (degrees)
@@ -128,85 +106,41 @@ public:
    */
   [[nodiscard]] static constexpr SlopeSize slope(const SpreadKey value) noexcept
   {
-    return static_cast<SlopeSize>((value & (SlopeMask >> FuelShift)) >> (SlopeShift - FuelShift));
-  }
-  /**
-   * \brief Aspect (degrees)
-   * \param value Topo to extract from
-   * \return Aspect (degrees)
-   */
-  [[nodiscard]] static constexpr AspectSize aspect(const Topo value) noexcept
-  {
-    return static_cast<AspectSize>((value & AspectMask) >> AspectShift);
-  }
-  /**
-   * \brief Fuel
-   * \param value Topo to extract from
-   * \return Fuel
-   */
-  [[nodiscard]] static constexpr FuelCodeSize fuelCode(const Topo value) noexcept
-  {
-    return static_cast<FuelCodeSize>((value & FuelMask) >> FuelShift);
-  }
-  /**
-   * \brief Slope (degrees)
-   * \param value Topo to extract from
-   * \return Slope (degrees)
-   */
-  [[nodiscard]] static constexpr SlopeSize slope(const Topo value) noexcept
-  {
     return static_cast<SlopeSize>((value & SlopeMask) >> SlopeShift);
-  }
-  /**
-   * \brief Topo that contains Cell data
-   * \param value Topo to extract from
-   * \return Topo that contains Cell data
-   */
-  [[nodiscard]] static constexpr Topo topoHash(const Topo value) noexcept
-  {
-    return static_cast<Topo>(value) & CellMask;
   }
   /**
    * \brief A key defining Slope, Aspect, and Fuel, used for determining Cells that spread the same
    * \return A key defining Slope, Aspect, and Fuel
    */
-  [[nodiscard]] constexpr SpreadKey key() const noexcept { return Cell::key(topo_data_); }
+  [[nodiscard]] constexpr SpreadKey key() const noexcept { return Cell::key(data_); }
   /**
    * \brief Aspect (degrees)
    * \return Aspect (degrees)
    */
-  [[nodiscard]] constexpr AspectSize aspect() const noexcept { return Cell::aspect(topo_data_); }
+  [[nodiscard]] constexpr AspectSize aspect() const noexcept { return Cell::aspect(data_); }
   /**
    * \brief Fuel
    * \return Fuel
    */
-  [[nodiscard]] constexpr FuelCodeSize fuelCode() const noexcept
-  {
-    return Cell::fuelCode(topo_data_);
-  }
+  [[nodiscard]] constexpr FuelCodeSize fuelCode() const noexcept { return Cell::fuelCode(data_); }
   /**
    * \brief Slope (degrees)
    * \return Slope (degrees)
    */
-  [[nodiscard]] constexpr SlopeSize slope() const noexcept { return Cell::slope(topo_data_); }
-  /**
-   * \brief Topo that contains Cell data
-   * \return Topo that contains Cell data
-   */
-  [[nodiscard]] constexpr Topo topoHash() const noexcept { return Cell::topoHash(topo_data_); }
+  [[nodiscard]] constexpr SlopeSize slope() const noexcept { return Cell::slope(data_); }
 
 protected:
   /*
    * Field                    Natural Range     Used Range      Bits    Bit Range
-   * Row                      0 - 4095          0 - 4095        12      0 - 4095
-   * Column                   0 - 4095          0 - 4095        12      0 - 4095
+   * Y                        0 - 4095          0 - 4095        12      0 - 4095
+   * X                        0 - 4095          0 - 4095        12      0 - 4095
    * PADDING                                                    10
    * Fuel                     0 - 140           0 - 140         8       0 - 255
    * Aspect                   0 - 359           0 - 359         9       0 - 511
    * Slope                    0 - infinity      0 - 511         9       0 - 511
    * Extra                                                      8
    *
-   * Rows and Columns are restricted to 4096 since that's what gets clipped out of
+   * X and Y are restricted to 4096 since that's what gets clipped out of
    * the GIS outputs.
    *
    * Fuel is tied to how many variations of percent conifer/dead fir we want to use, and
@@ -223,23 +157,23 @@ protected:
   /**
    * \brief Shift for fuel bitmask
    */
-  static constexpr uint32_t FuelShift = 32;
-  // Need to make sure that fuel, slope & aspect aren't in first 32 bits
-  static_assert(32 <= FuelShift);
+  static constexpr uint32_t FuelShift = 0;
+  // // Need to make sure that fuel, slope & aspect aren't in first 32 bits
+  // static_assert(32 <= FuelShift);
   /**
    * \brief Number of bits in fuel bitmask
    */
   static constexpr uint32_t FuelBits = std::bit_width<uint32_t>(NUMBER_OF_FUELS);
   /**
-   * \brief Bitmask for fuel information in Topo before shift
+   * \brief Bitmask for fuel information in SpreadKey before shift
    */
-  static constexpr Topo FuelBitMask = bit_mask<FuelBits, Topo>();
+  static constexpr SpreadKey FuelBitMask = bit_mask<FuelBits, SpreadKey>();
   static_assert(FuelBitMask == 0xFF);
   static_assert(FuelBitMask >= NUMBER_OF_FUELS);
   /**
-   * \brief Bitmask for fuel information in Topo
+   * \brief Bitmask for fuel information in SpreadKey
    */
-  static constexpr Topo FuelMask = FuelBitMask << FuelShift;
+  static constexpr SpreadKey FuelMask = FuelBitMask << FuelShift;
   /**
    * \brief Shift for aspect bitmask
    */
@@ -249,15 +183,15 @@ protected:
    */
   static constexpr uint32_t AspectBits = std::bit_width<uint32_t>(MAX_ASPECT);
   /**
-   * \brief Bitmask for aspect in Topo before shift
+   * \brief Bitmask for aspect in SpreadKey before shift
    */
-  static constexpr Topo AspectBitMask = bit_mask<AspectBits, Topo>();
+  static constexpr SpreadKey AspectBitMask = bit_mask<AspectBits, SpreadKey>();
   static_assert(AspectBitMask == 0x1FF);
   static_assert(AspectBitMask >= INVALID_ASPECT);
   /**
-   * \brief Bitmask for aspect in Topo
+   * \brief Bitmask for aspect in SpreadKey
    */
-  static constexpr Topo AspectMask = AspectBitMask << AspectShift;
+  static constexpr SpreadKey AspectMask = AspectBitMask << AspectShift;
   /**
    * \brief Shift for slope bitmask
    */
@@ -268,48 +202,19 @@ protected:
   static constexpr uint32_t SlopeBits = std::bit_width<uint32_t>(MAX_SLOPE_FOR_DISTANCE);
   static_assert(SlopeBits == 9);
   /**
-   * \brief Bitmask for slope in Topo before shift
+   * \brief Bitmask for slope in SpreadKey before shift
    */
-  static constexpr Topo SlopeBitMask = bit_mask<SlopeBits, Topo>();
+  static constexpr SpreadKey SlopeBitMask = bit_mask<SlopeBits, SpreadKey>();
   static_assert(SlopeBitMask == 0x1FF);
   static_assert(SlopeBitMask >= INVALID_SLOPE);
   /**
-   * \brief Bitmask for slope in Topo
+   * \brief Bitmask for slope in SpreadKey
    */
-  static constexpr Topo SlopeMask = SlopeBitMask << SlopeShift;
-  /**
-   * \brief Bitmask for Cell information in Topo
-   */
-  static constexpr Topo CellMask = HashMask | FuelMask | AspectMask | SlopeMask;
+  static constexpr SpreadKey SlopeMask = SlopeBitMask << SlopeShift;
   static_assert(
-    static_cast<size_t>(std::bit_width(std::numeric_limits<Topo>::max())) >= SlopeBits + SlopeShift
+    static_cast<size_t>(std::bit_width(std::numeric_limits<SpreadKey>::max()))
+    >= SlopeBits + SlopeShift
   );
-};
-/**
- * \brief Less than operator
- * \param lhs First Cell
- * \param rhs Second Cell
- * \return Whether or not first is less than second
- */
-constexpr bool operator<(const Cell& lhs, const Cell& rhs)
-{
-  return lhs.topoHash() < rhs.topoHash();
-}
-}
-namespace std
-{
-/**
- * \brief Provides hashing of Cell objects
- */
-template <>
-struct hash<fs::Cell>
-{
-  /**
-   * \brief Provides hash for Cell objects
-   * \param k Cell to get hash for
-   * \return Hash value
-   */
-  std::size_t operator()(const fs::Cell& k) const noexcept { return k.fullHash(); }
 };
 }
 #endif

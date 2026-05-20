@@ -7,7 +7,7 @@ namespace fs
 {
 using fs::FullCoordinates;
 using fs::MathSize;
-unique_ptr<FullCoordinates> to_proj4(
+std::optional<FullCoordinates> to_proj4(
   const string& proj4,
   const fs::Point& point,
   MathSize* x,

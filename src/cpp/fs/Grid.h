@@ -7,27 +7,9 @@
 #include "Point.h"
 #include "Settings.h"
 #include "tiff.h"
-/**
- * \brief Provides hash function for Location.
- */
-template <>
-struct std::hash<fs::Location>
-{
-  /**
-   * \brief Get hash value for a Location
-   * \param location Location to get value for
-   * \return Hash value for a Location
-   */
-  [[nodiscard]] constexpr fs::HashSize operator()(const fs::Location& location) const noexcept
-  {
-    return location.hash();
-  }
-};
 namespace fs
 {
 using namespace logging;
-using fs::Location;
-using fs::Position;
 using NodataIntType = int64_t;
 string create_file_name(
   const string_view dir,
@@ -50,19 +32,11 @@ public:
    * \return Cell height and width in metres.
    */
   [[nodiscard]] constexpr MathSize cellSize() const noexcept { return cell_size_; }
-  /**
-   * \brief Number of rows in the GridBase.
-   * \return Number of rows in the GridBase.
-   */
-  [[nodiscard]] constexpr FullIdx calculateRows() const noexcept
+  [[nodiscard]] constexpr FullIdx calculateHeight() const noexcept
   {
     return static_cast<FullIdx>((yurcorner() - yllcorner()) / cellSize()) - 1;
   }
-  /**
-   * \brief Number of columns in the GridBase.
-   * \return Number of columns in the GridBase.
-   */
-  [[nodiscard]] constexpr FullIdx calculateColumns() const noexcept
+  [[nodiscard]] constexpr FullIdx calculateWidth() const noexcept
   {
     return static_cast<FullIdx>((xurcorner() - xllcorner()) / cellSize()) - 1;
   }
@@ -121,35 +95,35 @@ public:
    * \param flipped Whether or not Grid data is flipped along x axis
    * \return Coordinates for Point translated to Grid
    */
-  [[nodiscard]] unique_ptr<Coordinates> findCoordinates(const Point& point, bool flipped) const;
+  [[nodiscard]] std::optional<Coordinates> findCoordinates(const Point& point, bool flipped) const;
   /**
    * \brief Find FullCoordinates for Point
    * \param point Point to translate to Grid Coordinate
    * \param flipped Whether or not Grid data is flipped along x axis
    * \return Coordinates for Point translated to Grid
    */
-  [[nodiscard]] unique_ptr<FullCoordinates> findFullCoordinates(const Point& point, bool flipped)
+  [[nodiscard]] std::optional<FullCoordinates> findFullCoordinates(const Point& point, bool flipped)
     const;
   string saveToTiffFileInt(
-    const Idx columns,
-    const Idx rows,
+    const Idx width,
+    const Idx height,
     const tuple<Idx, Idx, Idx, Idx> bounds,
     const string_view dir,
     const string_view base_name,
     const uint16_t bits_per_sample,
     const bool is_unsigned,
-    std::function<int(Location)> value_at,
+    std::function<int(const XYIdx&)> value_at,
     const int nodata_as_int
   ) const;
   string saveToTiffFileFloat(
-    const Idx columns,
-    const Idx rows,
+    const Idx width,
+    const Idx height,
     const tuple<Idx, Idx, Idx, Idx> bounds,
     const string_view dir,
     const string_view base_name,
     // const uint16_t bits_per_sample,
     // const uint16_t sample_format,
-    std::function<double(Location)> value_at,
+    std::function<double(const XYIdx&)> value_at,
     const int nodata_as_int
   ) const;
 
@@ -181,8 +155,8 @@ private:
 };
 void write_ascii_header(
   ofstream& out,
-  MathSize num_columns,
-  MathSize num_rows,
+  MathSize width,
+  MathSize height,
   MathSize xll,
   MathSize yll,
   MathSize cell_size,
@@ -199,16 +173,8 @@ template <class T, class V = T>
 class Grid : public GridBase
 {
 public:
-  /**
-   * \brief Number of rows in the GridBase.
-   * \return Number of rows in the GridBase.
-   */
-  [[nodiscard]] constexpr Idx rows() const noexcept { return rows_; }
-  /**
-   * \brief Number of columns in the GridBase.
-   * \return Number of columns in the GridBase.
-   */
-  [[nodiscard]] constexpr Idx columns() const noexcept { return columns_; }
+  [[nodiscard]] constexpr Idx height() const noexcept { return height_; }
+  [[nodiscard]] constexpr Idx width() const noexcept { return width_; }
   /**
    * \brief Value used for grid locations that have no data.
    * \return Value used for grid locations that have no data.
@@ -222,49 +188,16 @@ public:
   {
     return nodata_value_;
   }   // NOTE: only use this for simple types because it's returning by value
-  /**
-   * \brief Value for grid at given Location.
-   * \param location Location to get value for.
-   * \return Value at grid Location.
-   */
-  [[nodiscard]] virtual T at(const Location& location) const = 0;
-  template <class P>
-  [[nodiscard]] T at(const Position<P>& position) const
-  {
-    return at(Location{position.hash()});
-  }
+  [[nodiscard]] virtual T at(const XYIdx& location) const = 0;
   // NOTE: use set instead of at to avoid issues with bool
-  /**
-   * \brief Set value for grid at given Location.
-   * \param location Location to set value for.
-   * \param value Value to set at grid Location.
-   * \return None
-   */
-  virtual void set(const Location& location, T value) = 0;
-  template <class P>
-  void set(const Position<P>& position, const T value)
-  {
-    set(Location{position.hash()}, value);
-  }
+  virtual void set(const XYIdx& location, T value) = 0;
 
 protected:
   Grid() = default;
-  /**
-   * \brief Constructor
-   * \param cell_size Cell width and height (m)
-   * \param rows Number of rows
-   * \param columns Number of columns
-   * \param nodata_input Value that represents no data for type V
-   * \param nodata_value Value that represents no data for type T
-   * \param nodata Integer value that represents no data
-   * \param xllcorner Lower left corner X coordinate (m)
-   * \param yllcorner Lower left corner Y coordinate (m)
-   * \param proj4 Proj4 projection definition
-   */
   Grid(
     const MathSize cell_size,
-    const Idx rows,
-    const Idx columns,
+    const Idx width,
+    const Idx height,
     const V nodata_input,
     const T nodata_value,
     const MathSize xllcorner,
@@ -274,13 +207,11 @@ protected:
     const string_view proj4
   ) noexcept
     : GridBase(cell_size, xllcorner, yllcorner, xurcorner, yurcorner, proj4),
-      nodata_input_(nodata_input), nodata_value_(nodata_value), rows_(rows), columns_(columns)
+      nodata_input_(nodata_input), nodata_value_(nodata_value), height_(height), width_(width)
   {
 #ifdef DEBUG_GRIDS
-    logging::check_fatal(rows > MAX_ROWS, "Too many rows ({:d} > {:d})", rows, MAX_ROWS);
-    logging::check_fatal(
-      columns > MAX_COLUMNS, "Too many columns ({:d} > {:d})", columns, MAX_COLUMNS
-    );
+    logging::check_fatal(height > MAX_HEIGHT, "Height too large ({:d} > {:d})", height, MAX_HEIGHT);
+    logging::check_fatal(width > MAX_WIDTH, "Width too large ({:d} > {:d})", width, MAX_WIDTH);
 #endif
 #ifdef DEBUG_GRIDS
     // enforce converting to an int and back produces same V
@@ -300,8 +231,8 @@ protected:
   Grid(const GridBase& grid_info, V no_data) noexcept
     : Grid(
         grid_info.cellSize(),
-        static_cast<Idx>(grid_info.calculateRows()),
-        static_cast<Idx>(grid_info.calculateColumns()),
+        static_cast<Idx>(grid_info.calculateHeight()),
+        static_cast<Idx>(grid_info.calculateWidth()),
         no_data,
         to_string(no_data),
         grid_info.xllcorner(),
@@ -321,14 +252,8 @@ private:
    * \brief Value to use for representing no data at a Location.
    */
   T nodata_value_;
-  /**
-   * \brief Number of rows in the grid.
-   */
-  Idx rows_{};
-  /**
-   * \brief Number of columns in the grid.
-   */
-  Idx columns_{};
+  Idx height_{};
+  Idx width_{};
 };
 /**
  * \brief A Grid that defines the data structure used for storing values.
@@ -341,24 +266,10 @@ class GridData : public Grid<T, V>
 {
 public:
   using Grid<T, V>::Grid;
-  /**
-   * \brief Constructor
-   * \param cell_size Cell width and height (m)
-   * \param rows Number of rows
-   * \param columns Number of columns
-   * \param nodata_input Value that represents no data for type V
-   * \param nodata_value Value that represents no data for type T
-   * \param xllcorner Lower left corner X coordinate (m)
-   * \param yllcorner Lower left corner Y coordinate (m)
-   * \param xurcorner Upper right corner X coordinate (m)
-   * \param yurcorner Upper right corner Y coordinate (m)
-   * \param proj4 Proj4 projection definition
-   * \param data Data to populate GridData with
-   */
   GridData(
     const MathSize cell_size,
-    const Idx rows,
-    const Idx columns,
+    const Idx width,
+    const Idx height,
     const V nodata_input,
     const T nodata_value,
     const MathSize xllcorner,
@@ -370,8 +281,8 @@ public:
   )
     : Grid<T, V>(
         cell_size,
-        rows,
-        columns,
+        width,
+        height,
         nodata_input,
         nodata_value,
         xllcorner,
@@ -432,38 +343,37 @@ protected:
     const R no_data
   ) const
   {
-    tuple<Idx, Idx, Idx, Idx> bounds = dataBounds();
-    auto min_column = std::get<0>(bounds);
-    auto min_row = std::get<1>(bounds);
-    auto max_column = std::get<2>(bounds);
-    auto max_row = std::get<3>(bounds);
+    const auto [min_x, min_y, max_x, max_y] = dataBounds();
+    // auto bounds = dataBounds();
+    // auto min_x = std::get<0>(bounds);
+    // auto min_y = std::get<1>(bounds);
+    // auto max_x = std::get<2>(bounds);
+    // auto max_y = std::get<3>(bounds);
 #ifdef DEBUG_GRIDS
-    logging::debug(
-      "Bounds are ({:d}, {:d}), ({:d}, {:d})", min_column, min_row, max_column, max_row
-    );
+    logging::debug("Bounds are ({:d}, {:d}), ({:d}, {:d})", min_x, min_y, max_x, max_y);
 #endif
-    logging::extensive("Lower left corner is ({:d}, {:d})", min_column, min_row);
-    logging::extensive("Upper right corner is ({:d}, {:d})", max_column, max_row);
-    const MathSize xll = this->xllcorner() + min_column * this->cellSize();
+    logging::extensive("Lower left corner is ({:d}, {:d})", min_x, min_y);
+    logging::extensive("Upper right corner is ({:d}, {:d})", max_x, max_y);
+    const MathSize xll = this->xllcorner() + min_x * this->cellSize();
     // offset is different for y since it's flipped
-    const MathSize yll = this->yllcorner() + (min_row) * this->cellSize();
+    const MathSize yll = this->yllcorner() + (min_y) * this->cellSize();
     logging::extensive("Lower left corner is ({:f}, {:f})", xll, yll);
     // HACK: make sure it's always at least 1
-    const auto num_rows = static_cast<MathSize>(max_row) - min_row + 1;
-    const auto num_columns = static_cast<MathSize>(max_column) - min_column + 1;
+    const auto height_calc = static_cast<MathSize>(max_y) - min_y + 1;
+    const auto width_calc = static_cast<MathSize>(max_x) - min_x + 1;
     const auto filename = create_file_name(dir, base_name, "asc");
     ofstream out{filename};
     write_ascii_header(
-      out, num_columns, num_rows, xll, yll, this->cellSize(), static_cast<MathSize>(no_data)
+      out, width_calc, height_calc, xll, yll, this->cellSize(), static_cast<MathSize>(no_data)
     );
-    for (Idx ro = 0; ro < num_rows; ++ro)
+    for (Idx y0 = 0; y0 < height_calc; ++y0)
     {
       // HACK: do this so that we always get at least one pixel in output
       // need to output in reverse order since (0,0) is bottom left
-      const Idx r = static_cast<Idx>(max_row) - ro;
-      for (Idx co = 0; co < num_columns; ++co)
+      const Idx y1 = static_cast<Idx>(max_y) - y0;
+      for (Idx x0 = 0; x0 < width_calc; ++x0)
       {
-        const Location idx(static_cast<Idx>(r), static_cast<Idx>(min_column + co));
+        const XYIdx idx{static_cast<Idx>(min_x + x0), static_cast<Idx>(y1)};
         // HACK: use + here so that it gets promoted to a printable number
         //       prevents char type being output as characters
         out << +(convert(this->at(idx))) << " ";
@@ -501,14 +411,14 @@ protected:
     //   static_cast<int>(no_data), static_cast<int>(this->nodataInput()), "integer nodata"
     // );
     return GridBase::saveToTiffFileFloat(
-      this->columns(),
-      this->rows(),
+      this->width(),
+      this->height(),
       this->dataBounds(),
       dir,
       base_name,
       // bps,
       // SAMPLEFORMAT_IEEEFP,
-      [&](Location idx) { return static_cast<double>(convert(this->at(idx))); },
+      [&](const XYIdx& idx) { return static_cast<double>(convert(this->at(idx))); },
       no_data
     );
   }
@@ -528,14 +438,14 @@ protected:
     //   static_cast<int>(no_data), static_cast<int>(this->nodataInput()), "integer nodata"
     // );
     return GridBase::saveToTiffFileInt(
-      this->columns(),
-      this->rows(),
+      this->width(),
+      this->height(),
       this->dataBounds(),
       dir,
       base_name,
       bps,
       std::is_unsigned_v<R>,
-      [&](Location idx) { return static_cast<int>(convert(this->at(idx))); },
+      [&](const XYIdx& idx) { return static_cast<int>(convert(this->at(idx))); },
       no_data
     );
   }

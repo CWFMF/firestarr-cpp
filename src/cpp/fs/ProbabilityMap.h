@@ -31,9 +31,9 @@ public:
   ProbabilityMap() = delete;
   ~ProbabilityMap();
   ProbabilityMap(const ProbabilityMap& rhs) noexcept = delete;
-  ProbabilityMap(ProbabilityMap&& rhs) noexcept = default;
+  ProbabilityMap(ProbabilityMap&& rhs) noexcept = delete;
   ProbabilityMap& operator=(const ProbabilityMap& rhs) noexcept = delete;
-  ProbabilityMap& operator=(ProbabilityMap&& rhs) noexcept = default;
+  ProbabilityMap& operator=(ProbabilityMap&& rhs) noexcept = delete;
   /**
    * \brief Constructor
    * \param time Time in simulation this ProbabilityMap represents

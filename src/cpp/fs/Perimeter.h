@@ -41,21 +41,15 @@ public:
    * \param env Environment to apply Perimeter to
    */
   Perimeter(const LazyPath& perim, const Point& point, const Environment& env);
-  /**
-   * \brief Create a Perimeter of the given size at the given Location
-   * \param location Location to center Perimeter on
-   * \param size Size of Perimeter to create
-   * \param env Environment to apply Perimeter to
-   */
-  Perimeter(const Location& location, const size_t size, const Environment& env);
+  Perimeter(const XYIdx& location, const size_t size, const Environment& env);
   /**
    * \brief List of all burned Locations
    */
-  const list<Location> burned;
+  const list<XYIdx> burned;
   /**
    * \brief List of all Locations along the edge of this Perimeter
    */
-  const list<Location> edge;
+  const list<XYIdx> edge;
 
 private:
   Perimeter(const BurnedMap& burned_map);

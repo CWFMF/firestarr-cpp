@@ -1,16 +1,32 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "IntensityMap.h"
+#include "Location.h"
 #include "Model.h"
 #include "Perimeter.h"
 #include "unstable.h"
+#include "Util.h"
 #include "Weather.h"
 namespace fs
 {
+template <class T>
+std::optional<GridMap<T>> make_if_saving(const Model& model)
+{
+  // HACK: resolve once and fail if not set already
+  static auto& settings = fs::settings::instance();
+  const auto calc_fi_ros_raz = settings.save_individual || settings.save_intensity;
+  if (calc_fi_ros_raz)
+  {
+    return model.environment().makeMap<T>(false);
+  }
+  return {};
+}
 IntensityMap::IntensityMap(const Model& model) noexcept
-  : model_(model), intensity_max_(model.environment().makeMap<IntensitySize>(false)),
-    rate_of_spread_at_max_(model.environment().makeMap<MathSize>(false)),
-    direction_of_spread_at_max_(model.environment().makeMap<DegreesSize>(false)),
+  : model_{model},
+    // HACK: always assign this so we can use the iterator
+    intensity_max_{model.environment().makeMap<IntensitySize>(false)},
+    rate_of_spread_at_max_{make_if_saving<MathSize>(model)},
+    direction_of_spread_at_max_{make_if_saving<DegreesSize>(model)},
     is_burned_{model.environment().unburnable()}
 { }
 IntensityMap::IntensityMap(const IntensityMap& rhs)
@@ -34,28 +50,28 @@ void IntensityMap::applyPerimeter(const Perimeter& perimeter) noexcept
     [this](const auto& location) { ignite(location); }
   );
 }
-bool IntensityMap::canBurn(const Location& location) const { return !hasBurned(location); }
-bool IntensityMap::hasBurned(const Location& location) const
+bool IntensityMap::canBurn(const XYIdx& location) const { return !hasBurned(location); }
+bool IntensityMap::hasBurned(const XYIdx& location) const
 {
   lock_guard<mutex> lock(mutex_);
-  return is_burned_.at(location.hash());
+  return is_burned_.at(location);
 }
-bool IntensityMap::isSurrounded(const Location& location) const
+bool IntensityMap::isSurrounded(const XYIdx& location) const
 {
   // implement here so we can just lock once
   lock_guard<mutex> lock(mutex_);
-  const auto x = location.column();
-  const auto y = location.row();
-  const auto min_row = static_cast<Idx>(max(y - 1, 0));
-  const auto max_row = min(y + 1, this->rows() - 1);
-  const auto min_column = static_cast<Idx>(max(x - 1, 0));
-  const auto max_column = min(x + 1, this->columns() - 1);
-  for (auto r = min_row; r <= max_row; ++r)
+  // FIX: same logic as makeEdge()
+  const auto [x0, y0] = hash_to_xy_value(location);
+  const auto min_y = static_cast<Idx>(max(y0 - 1, 0));
+  const auto max_y = min(y0 + 1, this->height() - 1);
+  const auto min_x = static_cast<Idx>(max(x0 - 1, 0));
+  const auto max_x = min(x0 + 1, this->width() - 1);
+  for (auto y1 = min_y; y1 <= max_y; ++y1)
   {
-    for (auto c = min_column; c <= max_column; ++c)
+    for (auto x1 = min_x; x1 <= max_x; ++x1)
     {
       // actually check x, y too since we care if the cell itself is burned
-      if (!is_burned_.at(Location(r, c).hash()))
+      if (!is_burned_.at(XYIdx{x1, y1}))
       {
         return false;
       }
@@ -63,43 +79,57 @@ bool IntensityMap::isSurrounded(const Location& location) const
   }
   return true;
 }
-void IntensityMap::ignite(const Location& location)
-{
-  burn(location, 1, 0, fs::Direction::Invalid());
-}
+void IntensityMap::ignite(const XYIdx& location) { burn(location, 1, 0, fs::Direction::Invalid()); }
 void IntensityMap::burn(
-  const Location& location,
+  const XYIdx& location,
   IntensitySize intensity,
   MathSize ros,
   fs::Direction raz
 )
 {
+  // HACK: resolve once and fail if not set already
+  static auto& settings = fs::settings::instance();
   lock_guard<mutex> lock(mutex_);
-  if (!is_burned_.at(location.hash()))
+  if (!is_burned_.at(location))
   {
     intensity_max_.set(location, intensity);
-    rate_of_spread_at_max_.set(location, ros);
-    direction_of_spread_at_max_.set(location, raz.asDegreesSize());
-    is_burned_.set(location.hash());
+    if (rate_of_spread_at_max_.has_value())
+    {
+      rate_of_spread_at_max_->set(location, ros);
+      direction_of_spread_at_max_->set(location, raz.asDegreesSize());
+    }
+    is_burned_.set(location);
   }
-  else
+  // HACK: don't bother updating intensity if not saving
+  else if (settings.save_intensity)
   {
     const auto intensity_old = intensity_max_.at(location);
     if (intensity_old < intensity)
     {
       intensity_max_.set(location, intensity);
     }
-    // update ros and direction if higher ros
-    const auto ros_old = rate_of_spread_at_max_.at(location);
-    if (ros_old < ros)
+    if (rate_of_spread_at_max_.has_value())
     {
-      rate_of_spread_at_max_.set(location, ros);
-      direction_of_spread_at_max_.set(location, raz.asDegreesSize());
+      // update ros and direction if higher ros
+      const auto ros_old = rate_of_spread_at_max_->at(location);
+      if (ros_old < ros)
+      {
+        rate_of_spread_at_max_->set(location, ros);
+        direction_of_spread_at_max_->set(location, raz.asDegreesSize());
+      }
     }
   }
 }
 FileList IntensityMap::save(const string_view dir, const string_view base_name) const
 {
+  // HACK: resolve once and fail if not set already
+  static auto& settings = fs::settings::instance();
+  // HACK: intensity_max_ will have values so we can iterate for probability grid, but we don't want
+  // to save intensity grids
+  if (!settings.save_intensity)
+  {
+    return FileList{};
+  }
   lock_guard<mutex> lock(mutex_);
   const auto name_intensity = string(base_name) + "_intensity";
   const auto name_ros = string(base_name) + "_ros";
@@ -108,20 +138,15 @@ FileList IntensityMap::save(const string_view dir, const string_view base_name) 
   auto files = intensity_max_.saveToFile(dir, name_intensity);
   // // HACK: writing a double to a tiff seems to not work?
   // double is way too much precision for outputs
-  files.append_range(rate_of_spread_at_max_.saveToFile<float>(dir, name_ros));
-  files.append_range(direction_of_spread_at_max_.saveToFile(dir, name_raz));
+  files.append_range(rate_of_spread_at_max_->saveToFile<float>(dir, name_ros));
+  files.append_range(direction_of_spread_at_max_->saveToFile(dir, name_raz));
   return files;
 }
-MathSize IntensityMap::fireSize() const
-{
-  lock_guard<mutex> lock(mutex_);
-  return intensity_max_.fireSize();
-}
-map<Location, IntensitySize>::const_iterator IntensityMap::cend() const noexcept
+map<XYIdx, IntensitySize>::const_iterator IntensityMap::cend() const noexcept
 {
   return intensity_max_.data.cend();
 }
-map<Location, IntensitySize>::const_iterator IntensityMap::cbegin() const noexcept
+map<XYIdx, IntensitySize>::const_iterator IntensityMap::cbegin() const noexcept
 {
   return intensity_max_.data.cbegin();
 }

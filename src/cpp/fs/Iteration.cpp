@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Iteration.h"
-#include "Cell.h"
 #include "Scenario.h"
 namespace fs
 {
@@ -12,7 +11,7 @@ Iteration::~Iteration()
   }
 }
 Iteration::Iteration(vector<Scenario*> scenarios) noexcept : scenarios_(std::move(scenarios)) { }
-Iteration* Iteration::reset_with_new_start(const shared_ptr<Cell>& start_cell)
+Iteration* Iteration::reset_with_new_start(const XYIdx& start_cell)
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();

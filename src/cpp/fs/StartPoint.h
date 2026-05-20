@@ -47,12 +47,11 @@ public:
   {
     return get<1>(days_.at(day));
   }
-
-private:
-  /**
-   * \brief Offset from UTC (hours)
-   */
-  MathSize utc_offset_;
+  // private:
+  //   /**
+  //    * \brief Offset from UTC (hours)
+  //    */
+  //   MathSize utc_offset_;
 };
 }
 #endif

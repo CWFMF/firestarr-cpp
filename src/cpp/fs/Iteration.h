@@ -2,7 +2,7 @@
 #ifndef FS_ITERATION_H
 #define FS_ITERATION_H
 #include "stdafx.h"
-#include "Cell.h"
+#include "Location.h"
 #include "SafeVector.h"
 namespace fs
 {
@@ -29,7 +29,7 @@ public:
    * \param start_cell Cell to start ignition in
    * \return This
    */
-  Iteration* reset_with_new_start(const shared_ptr<Cell>& start_cell);
+  Iteration* reset_with_new_start(const XYIdx& start_cell);
   /**
    * \brief Create new thresholds for use in each Scenario
    * \param mt_extinction Extinction thresholds

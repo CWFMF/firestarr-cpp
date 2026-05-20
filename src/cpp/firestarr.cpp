@@ -108,7 +108,7 @@ int main(const int argc, const char* const argv[])
       const auto seconds = difftime(mktime(&year_end), start_t);
       // start day counts too, so +1
       // HACK: but we don't want to go to Jan 1 so don't add 1
-      size_t num_days = static_cast<size_t>(seconds / fs::DAY_SECONDS);
+      auto num_days = static_cast<size_t>(seconds / fs::DAY_SECONDS);
       logging::debug("Calculated number of days until end of year: {:d}", num_days);
       // +1 because day 1 counts too
       // +2 so that results don't change when we change number of days

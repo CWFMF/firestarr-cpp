@@ -20,7 +20,7 @@ PJ_CONTEXT* get_context()
     return true;
   }();
   std::ignore = showed_once;
-  if (!proj_context_set_database_path(pjc, db_path.c_str(), NULL, NULL))
+  if (!proj_context_set_database_path(pjc, db_path.c_str(), nullptr, nullptr))
   {
     exit(logging::fatal("Can't set proj.db path"));
   }

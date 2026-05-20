@@ -139,14 +139,10 @@ static constexpr CellIndex DIRECTION_SW = 0b00010000;
 static constexpr CellIndex DIRECTION_NE = 0b00100000;
 static constexpr CellIndex DIRECTION_NW = 0b01000000;
 static constexpr CellIndex DIRECTION_SE = 0b10000000;
-/**
- * \brief A row or column index for a grid
- */
+// x or y index for a grid
 using Idx = int16_t;
 constexpr auto INVALID_INDEX = std::numeric_limits<Idx>::min();
-/**
- * \brief A row or column index for a grid not in memory yet
- */
+// x or y index for a grid not in memory yet
 using FullIdx = int64_t;
 /**
  * \brief Type used for perimeter raster values (uses [0, 1])
@@ -182,10 +178,6 @@ using SlopeSize = uint16_t;
  */
 using IntensitySize = uint32_t;
 /**
- * \brief Type used for storing distances within cells
- */
-using DistanceSize = double;
-/**
  * \brief Type used for storing locations within cells
  */
 using InnerSize = double;
@@ -210,16 +202,10 @@ constexpr auto NO_ROS = static_cast<ROSSize>(0.0);
  */
 using Day = uint16_t;
 static constexpr Day MAX_DAYS = 366;
-/**
- * \brief Maximum number of columns for an Environment
- */
-static constexpr Idx MAX_COLUMNS = 4096;
-/**
- * \brief Maximum number of rows for an Environment
- */
-static constexpr Idx MAX_ROWS = MAX_COLUMNS;
+static constexpr Idx MAX_WIDTH = 4096;
+static constexpr Idx MAX_HEIGHT = MAX_WIDTH;
 static constexpr Idx PREFERRED_TILE_WIDTH = 256;
-static constexpr Idx TILE_WIDTH = min(MAX_COLUMNS, static_cast<Idx>(PREFERRED_TILE_WIDTH));
+static constexpr Idx TILE_WIDTH = min(MAX_WIDTH, static_cast<Idx>(PREFERRED_TILE_WIDTH));
 /**
  * \brief Maximum aspect value (360 == 0)
  */
@@ -293,21 +279,29 @@ using DegreesSize = uint16_t;
  */
 using AngleTableArray = array<double, 361>;
 /**
- * \brief Size to use for representing the data in a Cell
- */
-using Topo = uint64_t;
-/**
  * \brief Size to use for representing sub-coordinates for location within a Cell
  */
 using SubSize = uint16_t;
 /**
- * \brief Coordinates (row, column, sub-row, sub-column)
+ * \brief Coordinates ((x, y), (sub-x, sub-y))
  */
-using Coordinates = tuple<Idx, Idx, SubSize, SubSize>;
+struct Coordinates
+{
+  Idx x;
+  Idx y;
+  SubSize x_sub;
+  SubSize y_sub;
+};
 /**
- * \brief FullCoordinates (row, column, sub-row, sub-column)
+ * \brief FullCoordinates ((x, y), (sub-x, sub-y))
  */
-using FullCoordinates = tuple<FullIdx, FullIdx, SubSize, SubSize>;
+struct FullCoordinates
+{
+  FullIdx x;
+  FullIdx y;
+  SubSize x_sub;
+  SubSize y_sub;
+};
 /**
  * \brief Type of clock to use for times
  */

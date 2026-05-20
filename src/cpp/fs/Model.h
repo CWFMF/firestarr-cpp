@@ -135,37 +135,13 @@ public:
     const LazyPath& perimeter,
     const size_t size
   );
-  /**
-   * \brief Cell at the given row and column
-   * \param row Row
-   * \param column Column
-   * \return Cell at the given row and column
-   */
   [[nodiscard]]
-  Cell cell(const Idx row, const Idx column) const
+  Cell cell(const XYIdx xy) const
   {
-    return env_->cell(row, column);
+    return env_->cell(xy);
   }
-  /**
-   * \brief Cell at the given Location
-   * \param location Location to get Cell for
-   * \return Cell at the given Location
-   */
-  template <class P>
-  [[nodiscard]] constexpr Cell cell(const Position<P>& position) const
-  {
-    return env_->cell(position);
-  }
-  /**
-   * \brief Number of rows in extent
-   * \return Number of rows in extent
-   */
-  [[nodiscard]] constexpr Idx rows() const { return env_->rows(); }
-  /**
-   * \brief Number of columns in extent
-   * \return Number of columns in extent
-   */
-  [[nodiscard]] constexpr Idx columns() const { return env_->columns(); }
+  [[nodiscard]] constexpr Idx height() const { return env_->height(); }
+  [[nodiscard]] constexpr Idx width() const { return env_->width(); }
   /**
    * \brief Cell width and height (m)
    * \return Cell width and height (m)
@@ -390,7 +366,7 @@ private:
    * \brief Find Cell(s) that can burn closest to Location
    * \param location Location to look for start Cells
    */
-  void findStarts(Location location);
+  void findStarts(const XYIdx& location);
   /**
    * \brief Differences between date and the date of minimum foliar moisture content
    */
@@ -406,7 +382,7 @@ private:
   /**
    * \brief Cell(s) that can burn closest to start Location
    */
-  vector<shared_ptr<Cell>> starts_{};
+  vector<XYIdx> starts_{};
   /**
    * \brief Time to use for simulation start
    */
