@@ -19,21 +19,21 @@ EnvironmentInfo::EnvironmentInfo(
 {
   logging::debug(
     "fuel: {:d}{:d} => ({:f}, {:f})",
-    fuel.calculateColumns(),
-    fuel.calculateRows(),
+    fuel.calculateWidth(),
+    fuel.calculateHeight(),
     fuel.xllcorner(),
     fuel.yllcorner()
   );
   logging::debug(
     "elevation: {:d}{:d} => ({:f}, {:f})",
-    elevation.calculateColumns(),
-    elevation.calculateRows(),
+    elevation.calculateWidth(),
+    elevation.calculateHeight(),
     elevation.xllcorner(),
     elevation.yllcorner()
   );
   logging::check_fatal(
-    !(fuel.calculateRows() == elevation.calculateRows()
-      && fuel.calculateColumns() == elevation.calculateColumns()
+    !(fuel.calculateHeight() == elevation.calculateHeight()
+      && fuel.calculateWidth() == elevation.calculateWidth()
       && fuel.cellSize() == elevation.cellSize() && fuel.xllcorner() == elevation.xllcorner()
       && fuel.yllcorner() == elevation.yllcorner()),
     "Grids are not aligned"
@@ -66,12 +66,12 @@ Environment EnvironmentInfo::load(const Point& point) const
 {
   return Environment::load(point, in_fuel_, in_elevation_);
 }
-unique_ptr<Coordinates> EnvironmentInfo::findCoordinates(const Point& point, const bool flipped)
+std::optional<Coordinates> EnvironmentInfo::findCoordinates(const Point& point, const bool flipped)
   const
 {
   return fuel_.findCoordinates(point, flipped);
 }
-unique_ptr<FullCoordinates> EnvironmentInfo::findFullCoordinates(
+std::optional<FullCoordinates> EnvironmentInfo::findFullCoordinates(
   const Point& point,
   const bool flipped
 ) const

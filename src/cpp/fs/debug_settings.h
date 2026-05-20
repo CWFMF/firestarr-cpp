@@ -3,7 +3,6 @@
 #define FS_DEBUG_SETTINGS_H
 // if in debug mode then set everything, otherwise uncomment turning things off if trying to debug
 // specific things
-#define DEBUG_DIRECTIONS
 #define DEBUG_FUEL_VARIABLE
 #define DEBUG_FWI_WEATHER
 #define DEBUG_GRIDS
@@ -18,7 +17,6 @@
 #define DEBUG_ITERATOR
 // #define DEBUG_WEATHER
 #ifdef NDEBUG
-#undef DEBUG_DIRECTIONS
 #undef DEBUG_FUEL_VARIABLE
 #undef DEBUG_FWI_WEATHER
 #undef DEBUG_GRIDS
@@ -43,10 +41,9 @@
 #undef DEBUG_NEW_SPREAD_CHECK
 #undef DEBUG_NEW_SPREAD_VERBOSE
 #endif
-#if !defined(NDEBUG) || defined(DEBUG_DIRECTIONS) || defined(DEBUG_FUEL_VARIABLE)                  \
-  || defined(DEBUG_FWI_WEATHER) || defined(DEBUG_GRIDS) || defined(DEBUG_POINTS)                   \
-  || defined(DEBUG_PROBABILITY) || defined(DEBUG_SIMULATION) || defined(DEBUG_STATISTICS)          \
-  || defined(DEBUG_WEATHER)
+#if !defined(NDEBUG) || defined(DEBUG_FUEL_VARIABLE) || defined(DEBUG_FWI_WEATHER)                 \
+  || defined(DEBUG_GRIDS) || defined(DEBUG_POINTS) || defined(DEBUG_PROBABILITY)                   \
+  || defined(DEBUG_SIMULATION) || defined(DEBUG_STATISTICS) || defined(DEBUG_WEATHER)
 #define DEBUG_ANY
 #endif
 namespace fs::debug

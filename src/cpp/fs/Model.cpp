@@ -4,6 +4,7 @@
 #include "FireWeather.h"
 #include "FWI.h"
 #include "Input.h"
+#include "Location.h"
 #include "Log.h"
 #include "Observer.h"
 #include "Perimeter.h"
@@ -214,7 +215,7 @@ void Model::readWeather(
         }
 #ifdef DEBUG_WEATHER
         const auto month = t.tm_mon + 1;
-        const auto row_fmt = std::format(
+        const auto fmt_line = std::format(
           "{:d},{:d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f}",
           cur,
           year_,
@@ -235,8 +236,8 @@ void Model::readWeather(
           w.bui.value,
           w.fwi.value
         );
-        logging::debug(row_fmt.c_str());
-        out << row_fmt << "\r\n";
+        logging::debug(fmt_line.c_str());
+        out << fmt_line << "\r\n";
 #endif
       }
     }
@@ -264,12 +265,13 @@ void Model::readWeather(
     }
   }
 }
-void Model::findStarts(const Location location)
+void Model::findStarts(const XYIdx& location)
 {
   logging::error("Trying to start a fire in non-fuel");
   Idx range = 1;
   // HACK: should always be centered in the grid
-  while (starts_.empty() && (range < (MAX_COLUMNS / 2)))
+  auto [x_loc, y_loc] = hash_to_xy(location);
+  while (starts_.empty() && (range < (MAX_WIDTH / 2)))
   {
     for (Idx x = -range; x <= range; ++x)
     {
@@ -278,10 +280,13 @@ void Model::findStarts(const Location location)
         // make sure we only look at the outside of the box
         if (1 == range || abs(x) == range || abs(y) == range)
         {
-          const auto loc = env_->cell(Location(location.row() + y, location.column() + x));
-          if (!is_null_fuel(loc))
+          // is this going to work if negative?
+          // const auto xy = location + XIdx{x} + YIdx{y};
+          const XYIdx xy{x_loc + XIdx{x}, y_loc + YIdx{y}};
+          const auto for_cell = env_->cell(xy);
+          if (!is_null_fuel(for_cell))
           {
-            starts_.push_back(make_shared<Cell>(cell(loc)));
+            starts_.push_back(xy);
           }
         }
       }
@@ -297,21 +302,22 @@ void Model::findStarts(const Location location)
     for (const auto& s : starts_)
     {
       std::ignore =
-        logging::output_no_check(logging::level::info, "\t{:d}, {:d}", s->row(), s->column());
+        logging::output_no_check(logging::level::info, "\t{:d}, {:d}", s.x_value(), s.y_value());
     }
   }
 }
 void Model::findAllStarts()
 {
   logging::note("Running scenarios for every possible start location");
-  for (Idx x = 0; x < env_->columns(); ++x)
+  for (Idx x = 0; x < env_->width(); ++x)
   {
-    for (Idx y = 0; y < env_->rows(); ++y)
+    for (Idx y = 0; y < env_->height(); ++y)
     {
-      const auto loc = env_->cell(Location(y, x));
-      if (!is_null_fuel(loc))
+      const XYIdx xy{x, y};
+      const auto for_cell = env_->cell(xy);
+      if (!is_null_fuel(for_cell))
       {
-        starts_.push_back(make_shared<Cell>(cell(loc)));
+        starts_.push_back(xy);
       }
     }
   }
@@ -326,7 +332,7 @@ void Model::makeStarts(
 {
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
-  Location location(std::get<0>(coordinates), std::get<1>(coordinates));
+  XYIdx location{coordinates.x, coordinates.y};
   if (!perim.empty())
   {
     logging::note("Initializing from perimeter {:s}", perim.canonical());
@@ -337,7 +343,9 @@ void Model::makeStarts(
     const auto s = burned.size();
     if (1 >= s)
     {
-      logging::note("Converting perimeter into point since size is {:d} cell(s)", s);
+      logging::note(
+        "Converting perimeter into point since size is {:d} cell{:s}", s, (1 == s ? "" : "s")
+      );
       // use whatever the one cell is instead of the lat/long
       if (1 == s)
       {
@@ -360,7 +368,7 @@ void Model::makeStarts(
     logging::check_fatal(size != 0 && !perim.empty(), "Can't specify size and perimeter");
     // we have a perimeter to start from
     // HACK: make sure this isn't empty
-    starts_.push_back(make_shared<Cell>(cell(location)));
+    starts_.push_back(location);
     logging::note(
       "Fire starting with size {:0.1f} ha", env_->to_hectares(perimeter_->burned.size())
     );
@@ -382,13 +390,14 @@ void Model::makeStarts(
     else
     {
       logging::note("Fire starting with size {:0.1f} ha", env_->to_hectares(1));
-      if (0 == size && is_null_fuel(cell(location)))
+      const auto for_cell = cell(location);
+      if (0 == size && is_null_fuel(for_cell))
       {
         findStarts(location);
       }
       else
       {
-        starts_.push_back(make_shared<Cell>(cell(location)));
+        starts_.push_back(location);
       }
     }
   }
@@ -429,7 +438,16 @@ Iteration Model::readScenarios(
   if (settings.is_surface())
   {
     setup_scenario(new Scenario(
-      this, 0, &wx_.at(0), &wx_daily_.at(0), start, starts_.at(0), start_point, start_day, last_date
+      this,
+      0,
+      &wx_.at(0),
+      &wx_daily_.at(0),
+      start,
+      nullptr,
+      starts_.at(0),
+      start_point,
+      start_day,
+      last_date
     ));
   }
   else
@@ -439,10 +457,24 @@ Iteration Model::readScenarios(
       const auto id = kv.first;
       const auto* cur_wx = &kv.second;
       const auto* cur_daily = &wx_daily_.at(id);
+      // FIX: this should simplify to the loop and passing both location & perim
       if (nullptr != perimeter_)
       {
+        logging::check_equal(
+          starts_.size(), static_cast<size_t>(1), "start locations with perimeter"
+        );
+        const auto& cur_start = starts_.at(0);
         setup_scenario(new Scenario(
-          this, id, cur_wx, cur_daily, start, perimeter_, start_point, start_day, last_date
+          this,
+          id,
+          cur_wx,
+          cur_daily,
+          start,
+          perimeter_,
+          cur_start,
+          start_point,
+          start_day,
+          last_date
         ));
       }
       else
@@ -451,7 +483,16 @@ Iteration Model::readScenarios(
         {
           // should always have at least the day before the fire in the weather stream
           setup_scenario(new Scenario(
-            this, id, cur_wx, cur_daily, start, cur_start, start_point, start_day, last_date
+            this,
+            id,
+            cur_wx,
+            cur_daily,
+            start,
+            perimeter_,
+            cur_start,
+            start_point,
+            start_day,
+            last_date
           ));
         }
       }
@@ -1175,17 +1216,17 @@ int Model::runScenarios(
   const auto position = env.findCoordinates(start_point, false);
 #ifndef NDEBUG
   logging::check_fatal(
-    std::get<0>(*position) > MAX_ROWS || std::get<1>(*position) > MAX_COLUMNS,
+    position->y > MAX_HEIGHT || position->x > MAX_WIDTH,
     "Location loaded outside of grid at position ({:d}, {:d})",
-    std::get<0>(*position),
-    std::get<1>(*position)
+    position->y,
+    position->x
   );
 #endif
-  logging::info("Position is ({:d}, {:d})", std::get<0>(*position), std::get<1>(*position));
-  const Location location{std::get<0>(*position), std::get<1>(*position)};
+  logging::info("Position is ({:d}, {:d})", position->x, position->y);
+  const XYIdx location{position->x, position->y};
   Model model(start_time, output_directory, start_point, &env);
-  logging::note("Grid has size ({:d}, {:d})", env.rows(), env.columns());
-  logging::note("Fire start position is cell ({:d}, {:d})", location.row(), location.column());
+  logging::note("Grid has size ({:d}, {:d})", env.width(), env.height());
+  logging::note("Fire start position is cell ({:d}, {:d})", location.x_value(), location.y_value());
   auto start_hour =
     ((start_time.tm_hour + (static_cast<DurationSize>(start_time.tm_min) / 60)) / DAY_HOURS);
   logging::note(
@@ -1291,7 +1332,7 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
       month_and_day(year_, day, &month, &day_of_month);
       if (nullptr != w)
       {
-        const auto fmt_row = std::format(
+        const auto fmt_line = std::format(
           "{:d},{:d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f},{:1.6f}",
           i,
           year_,
@@ -1312,7 +1353,7 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
           w->bui.value,
           w->fwi.value
         );
-        out << fmt_row << "\r\n";
+        out << fmt_line << "\r\n";
         SlopeSize SLOPE_MAX = MAX_SLOPE_FOR_DISTANCE;
         SlopeSize SLOPE_INCREMENT = 200;
         AspectSize ASPECT_MAX = 360;
@@ -1342,7 +1383,7 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
                 fuel_name,
                 w
               );
-              const auto fmt_row = std::format(
+              const auto fmt_line = std::format(
                 "{:d},{:d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:c},{:1.6g},{:1.6g},{:1.6g},{:1.6g},{:1.6g}\r\n",
                 i,
                 year_,
@@ -1371,8 +1412,8 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
                 spread.surfaceFuelConsumption(),
                 spread.totalFuelConsumption()
               );
-              cout << fmt_row;
-              out_fbp << fmt_row;
+              cout << fmt_line;
+              out_fbp << fmt_line;
             }
           }
         }

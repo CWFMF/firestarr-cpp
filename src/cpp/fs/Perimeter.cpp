@@ -24,27 +24,30 @@ BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const
   const auto offset_x =
     static_cast<Idx>((this->xllcorner() - perim_grid.xllcorner()) / this->cellSize());
   const auto perim_origin =
-    static_cast<Idx>(perim_grid.rows() + perim_grid.yllcorner() / this->cellSize());
-  const auto this_origin = static_cast<Idx>(this->rows() + this->yllcorner() / this->cellSize());
+    static_cast<Idx>(perim_grid.height() + perim_grid.yllcorner() / this->cellSize());
+  const auto this_origin = static_cast<Idx>(this->height() + this->yllcorner() / this->cellSize());
   const auto offset_y = static_cast<Idx>((perim_origin - this_origin));
   // make sure we don't go out of bounds on grid
-  const auto min_column = static_cast<Idx>(offset_x < 0 ? abs(offset_x) : 0);
-  const auto max_columns = min(this->columns(), perim_grid.columns());
-  const auto min_row = static_cast<Idx>(offset_y < 0 ? abs(offset_y) : 0);
-  const auto max_rows = min(this->rows(), static_cast<Idx>(perim_grid.rows() - abs(offset_y)));
+  const auto min_x = static_cast<Idx>(offset_x < 0 ? abs(offset_x) : 0);
+  const auto max_width = min(this->width(), perim_grid.width());
+  const auto min_y = static_cast<Idx>(offset_y < 0 ? abs(offset_y) : 0);
+  const auto max_height =
+    min(this->height(), static_cast<Idx>(perim_grid.height() - abs(offset_y)));
   logging::note("Correcting perimeter raster offset by {:d}{:d} cells", offset_x, offset_y);
   size_t count = 0;
   // since it was read in as a vector we need to check all the cells
-  for (auto r = min_row; r < max_rows; ++r)
+  for (auto y = min_y; y < max_height; ++y)
   {
-    for (auto c = min_column; c < max_columns; ++c)
+    for (auto x = min_x; x < max_width; ++x)
     {
-      const auto loc = env.cell(r, c);
-      const Location fixed_loc(static_cast<Idx>(r + offset_y), static_cast<Idx>(c + offset_x));
+      const auto x0 = static_cast<Idx>(x + offset_x);
+      const auto y0 = static_cast<Idx>(y + offset_y);
+      const XYIdx fixed_loc{x0, y0};
+      const auto for_cell = env.cell(fixed_loc);
       const auto value = perim_grid.at(fixed_loc);
-      if (value != perim_grid.nodataValue() && !is_null_fuel(loc))
+      if (value != perim_grid.nodataValue() && !is_null_fuel(for_cell))
       {
-        this->GridMap<unsigned char, unsigned char>::set(loc, value);
+        this->GridMap<unsigned char, unsigned char>::set(fixed_loc, value);
         ++count;
       }
     }
@@ -53,7 +56,8 @@ BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const
 #ifdef DEBUG_GRIDS
   for (auto& kv : data)
   {
-    logging::check_fatal(is_null_fuel(env.cell(kv.first)), "Null fuel in BurnedData");
+    auto& loc = kv.first;
+    logging::check_fatal(is_null_fuel(env.cell(loc)), "Null fuel in BurnedData");
   }
 #endif
   logging::info("Loaded burned area of size {:d} ha", size_hectares_);
@@ -69,7 +73,7 @@ BurnedMap make_burned_map(const LazyPath& perim, const Point& point, const Envir
 Perimeter::Perimeter(const LazyPath& perim, const Point& point, const Environment& env)
   : Perimeter(make_burned_map(perim, point, env))
 { }
-BurnedMap make_burned_map(const Location& location, const size_t size, const Environment& env)
+BurnedMap make_burned_map(const XYIdx& location, const size_t size, const Environment& env)
 {
   // NOTE: FwiWeather is unused but could change this to try doing length to breadth ratio
   auto perim_grid = env.makeMap<unsigned char>(0);
@@ -80,23 +84,22 @@ BurnedMap make_burned_map(const Location& location, const size_t size, const Env
   auto max_distance = sqrt(num_cells / M_PI);
   perim_grid.set(location, 1);
   ++count;
+  const auto [x_loc, y_loc] = hash_to_xy_value(location);
   // HACK: assume fuel for origin matches the rest of the fire
   while (num_cells > count)
   {
     const auto range = static_cast<Idx>(ceil(max_distance));
-    for (auto x = -range; x <= range && num_cells > count; ++x)
+    for (auto y = -range; y <= range && num_cells > count; ++y)
     {
-      for (auto y = -range; y <= range && num_cells > count; ++y)
+      for (auto x = -range; x <= range && num_cells > count; ++x)
       {
         // look at any cell that's within the range
         if (sqrt(pow_int<2>(x) + pow_int<2>(y)) < max_distance)
         {
-          const auto r = static_cast<Idx>(location.row() + x);
-          const auto c = static_cast<Idx>(location.column() + y);
-          const auto loc = env.cell(r, c);
-          if (1 != perim_grid.at(loc) && !is_null_fuel(loc))
+          const XYIdx xy{x_loc + x, y_loc + y};
+          if (1 != perim_grid.at(xy) && !is_null_fuel(env.cell(xy)))
           {
-            perim_grid.set(loc, 1);
+            perim_grid.set(xy, 1);
             ++count;
           }
         }
@@ -106,7 +109,7 @@ BurnedMap make_burned_map(const Location& location, const size_t size, const Env
   }
   return BurnedMap(perim_grid, env);
 }
-Perimeter::Perimeter(const Location& location, const size_t size, const Environment& env)
+Perimeter::Perimeter(const XYIdx& location, const size_t size, const Environment& env)
   : Perimeter(make_burned_map(location, size, env))
 { }
 }

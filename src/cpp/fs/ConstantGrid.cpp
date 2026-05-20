@@ -48,61 +48,59 @@ int value_at_int(void* const buf, const FullIdx offset)
   logging::debug("NODATA value is originally parsed as {:d}", nodata_orig);
   const auto nodata_input = static_cast<int>(stoi(string(static_cast<char*>(data))));
   logging::debug("NODATA value is parsed as {:d}", nodata_input);
-  auto actual_rows = grid_info.calculateRows();
-  auto actual_columns = grid_info.calculateColumns();
+  auto actual_height = grid_info.calculateHeight();
+  auto actual_width = grid_info.calculateWidth();
   const auto coordinates = grid_info.findFullCoordinates(point, true);
   logging::note(
     "Coordinates before reading are ({:d}, {:d} => {:f}, {:f})",
-    std::get<0>(*coordinates),
-    std::get<1>(*coordinates),
-    std::get<0>(*coordinates) + std::get<2>(*coordinates) / 1000.0,
-    std::get<1>(*coordinates) + std::get<3>(*coordinates) / 1000.0
+    coordinates->x,
+    coordinates->y,
+    coordinates->x + coordinates->x_sub / 1000.0,
+    coordinates->y + coordinates->y_sub / 1000.0
   );
-  auto min_column = max(
+  auto min_x = max(
     static_cast<FullIdx>(0),
-    static_cast<FullIdx>(
-      std::get<1>(*coordinates) - static_cast<FullIdx>(MAX_COLUMNS) / static_cast<FullIdx>(2)
-    )
+    static_cast<FullIdx>(coordinates->x - static_cast<FullIdx>(MAX_WIDTH) / static_cast<FullIdx>(2))
   );
-  if (min_column + MAX_COLUMNS >= actual_columns)
+  if (min_x + MAX_WIDTH >= actual_width)
   {
-    min_column = max(static_cast<FullIdx>(0), actual_columns - MAX_COLUMNS);
+    min_x = max(static_cast<FullIdx>(0), actual_width - MAX_WIDTH);
   }
   // make sure we're at the start of a tile
-  const auto tile_column = tile_width * static_cast<FullIdx>(min_column / tile_width);
-  const auto max_column = static_cast<FullIdx>(min(min_column + MAX_COLUMNS - 1, actual_columns));
+  const auto tile_x = tile_width * static_cast<FullIdx>(min_x / tile_width);
+  const auto max_x = static_cast<FullIdx>(min(min_x + MAX_WIDTH - 1, actual_width));
 #ifdef DEBUG_GRIDS
-  logging::check_fatal(min_column < 0, "Column can't be less than 0");
+  logging::check_fatal(min_x < 0, "X can't be less than 0");
+  logging::check_fatal(max_x - min_x > MAX_WIDTH, "Can't have width more than {:d}", MAX_WIDTH);
   logging::check_fatal(
-    max_column - min_column > MAX_COLUMNS, "Can't have more than {:d} columns", MAX_COLUMNS
-  );
-  logging::check_fatal(
-    max_column > actual_columns, "Can't have more than actual {:d} columns", actual_columns
+    max_x > actual_width, "Can't have more than actual width {:d}", actual_width
   );
 #endif
-  auto min_row = max(
+  auto min_y = max(
     static_cast<FullIdx>(0),
     static_cast<FullIdx>(
-      std::get<0>(*coordinates) - static_cast<FullIdx>(MAX_ROWS) / static_cast<FullIdx>(2)
+      coordinates->y - static_cast<FullIdx>(MAX_HEIGHT) / static_cast<FullIdx>(2)
     )
   );
-  if (min_row + MAX_COLUMNS >= actual_rows)
+  if (min_y + MAX_WIDTH >= actual_height)
   {
-    min_row = max(static_cast<FullIdx>(0), actual_rows - MAX_ROWS);
+    min_y = max(static_cast<FullIdx>(0), actual_height - MAX_HEIGHT);
   }
-  const auto tile_row = tile_width * static_cast<FullIdx>(min_row / tile_width);
-  const auto max_row = static_cast<FullIdx>(min(min_row + MAX_ROWS - 1, actual_rows));
+  const auto tile_y = tile_width * static_cast<FullIdx>(min_y / tile_width);
+  const auto max_y = static_cast<FullIdx>(min(min_y + MAX_HEIGHT - 1, actual_height));
 #ifdef DEBUG_GRIDS
-  logging::check_fatal(min_row < 0, "Row can't be less than 0 but is {:d}", min_row);
+  logging::check_fatal(min_y < 0, "Y can't be less than 0 but is {:d}", min_y);
   logging::check_fatal(
-    max_row - min_row > MAX_ROWS,
-    "Can't have more than {:d} rows but have {:d}",
-    MAX_ROWS,
-    max_row - min_row
+    max_y - min_y > MAX_HEIGHT,
+    "Can't have height more than {:d} but have {:d}",
+    MAX_HEIGHT,
+    max_y - min_y
   );
-  logging::check_fatal(max_row > actual_rows, "Can't have more than actual {:d} rows", actual_rows);
+  logging::check_fatal(
+    max_y > actual_height, "Can't have more than actual height {:d}", actual_height
+  );
 #endif
-  vector<int> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, nodata_input);
+  vector<int> values(static_cast<size_t>(MAX_HEIGHT) * MAX_WIDTH, nodata_input);
   logging::verbose("{:s}: malloc start", geotiff.filename());
   int bps = std::numeric_limits<int>::digits + (1 * std::numeric_limits<int>::is_signed);
   uint16_t sample_format;
@@ -140,12 +138,12 @@ int value_at_int(void* const buf, const FullIdx offset)
   const tsample_t smp{};
   logging::debug(
     "Want to clip grid to ({:d}, {:d}) => ({:d}, {:d}) for a {:d}{:d} raster",
-    min_row,
-    min_column,
-    max_row,
-    max_column,
-    actual_rows,
-    actual_columns
+    min_y,
+    min_x,
+    max_y,
+    max_x,
+    actual_height,
+    actual_width
   );
   // HACK: it really feels like there should be a better way to do this
   switch (sample_format)
@@ -203,26 +201,26 @@ int value_at_int(void* const buf, const FullIdx offset)
       "SAMPLEFORMAT {:d} has invalid TIFFTAG_BITSPERSAMPLE {:d}", sample_format, bps_file
     ));
   }();
-  for (auto h = tile_row; h <= max_row; h += tile_length)
+  for (auto h = tile_y; h <= max_y; h += tile_length)
   {
-    for (auto w = tile_column; w <= max_column; w += tile_width)
+    for (auto w = tile_x; w <= max_x; w += tile_width)
     {
       std::ignore =
         TIFFReadTile(tif, buf, static_cast<uint32_t>(w), static_cast<uint32_t>(h), 0, smp);
-      for (FullIdx y = 0; (y < static_cast<FullIdx>(tile_length)) && (y + h <= max_row); ++y)
+      for (FullIdx y = 0; (y < static_cast<FullIdx>(tile_length)) && (y + h <= max_y); ++y)
       {
         // read in so that (0, 0) has a hash of 0
-        const auto y_row = static_cast<HashSize>((h - min_row) + y);
-        const auto actual_row = (max_row - min_row) - y_row;
-        if (actual_row >= 0 && actual_row < MAX_ROWS)
+        const auto y0 = static_cast<HashSize>((h - min_y) + y);
+        const auto actual_y = (max_y - min_y) - y0;
+        if (actual_y >= 0 && actual_y < MAX_HEIGHT)
         {
-          for (auto x = 0; (x < static_cast<FullIdx>(tile_width)) && (x + w <= max_column); ++x)
+          for (auto x = 0; (x < static_cast<FullIdx>(tile_width)) && (x + w <= max_x); ++x)
           {
             const auto offset = y * tile_width + x;
-            const auto actual_column = ((w - min_column) + x);
-            if (actual_column >= 0 && actual_column < MAX_ROWS)
+            const auto actual_x = ((w - min_x) + x);
+            if (actual_x >= 0 && actual_x < MAX_HEIGHT)
             {
-              const auto cur_hash = actual_row * MAX_COLUMNS + actual_column;
+              const auto cur_hash = actual_y * MAX_WIDTH + actual_x;
               // auto cur = *(static_cast<int*>(buf) + offset);
               auto cur = value_at(buf, offset);
 #ifdef DEBUG_GRIDS
@@ -240,10 +238,10 @@ int value_at_int(void* const buf, const FullIdx offset)
   _TIFFfree(buf);
   logging::verbose("{:s}: free end", geotiff.filename());
   const auto new_xll =
-    grid_info.xllcorner() + (static_cast<MathSize>(min_column) * grid_info.cellSize());
+    grid_info.xllcorner() + (static_cast<MathSize>(min_x) * grid_info.cellSize());
   const auto new_yll =
     grid_info.yllcorner()
-    + (static_cast<MathSize>(actual_rows) - static_cast<MathSize>(max_row)) * grid_info.cellSize();
+    + (static_cast<MathSize>(actual_height) - static_cast<MathSize>(max_y)) * grid_info.cellSize();
 #ifdef DEBUG_GRIDS
   logging::check_fatal(new_yll < grid_info.yllcorner(), "New yllcorner is outside original grid");
 #endif
@@ -254,31 +252,31 @@ int value_at_int(void* const buf, const FullIdx offset)
     grid_info.xllcorner(),
     grid_info.yllcorner()
   );
-  const auto num_rows = max_row - min_row + 1;
-  const auto num_columns = max_column - min_column + 1;
+  const auto height_calc = max_y - min_y + 1;
+  const auto width_calc = max_x - min_x + 1;
   ConstantGrid<int, int> result{
     grid_info.cellSize(),
-    static_cast<Idx>(num_rows),
-    static_cast<Idx>(num_columns),
+    static_cast<Idx>(width_calc),
+    static_cast<Idx>(height_calc),
     nodata_input,
     nodata_input,
     new_xll,
     new_yll,
-    new_xll + (static_cast<MathSize>(num_columns) + 1) * grid_info.cellSize(),
-    new_yll + (static_cast<MathSize>(num_rows) + 1) * grid_info.cellSize(),
+    new_xll + (static_cast<MathSize>(width_calc) + 1) * grid_info.cellSize(),
+    new_yll + (static_cast<MathSize>(height_calc) + 1) * grid_info.cellSize(),
     string(grid_info.proj4()),
     std::move(values)
   };
   auto new_location = result.findCoordinates(point, false);
 #ifdef DEBUG_GRIDS
-  logging::check_fatal(nullptr == new_location, "Invalid location after reading");
+  logging::check_fatal(!new_location.has_value(), "Invalid location after reading");
 #endif
   logging::note(
     "Coordinates are ({:d}, {:d} => {:f}, {:f})",
-    std::get<0>(*new_location),
-    std::get<1>(*new_location),
-    std::get<0>(*new_location) + std::get<2>(*new_location) / 1000.0,
-    std::get<1>(*new_location) + std::get<3>(*new_location) / 1000.0
+    new_location->x,
+    new_location->y,
+    new_location->x + new_location->x_sub / 1000.0,
+    new_location->y + new_location->y_sub / 1000.0
   );
 #ifdef DEBUG_GRIDS
   logging::note("Values for {:s} range from {:d} to {:d}", filename, min_value, max_value);

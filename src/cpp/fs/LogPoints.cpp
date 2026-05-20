@@ -63,7 +63,7 @@ void LogPoints::log_unchecked(
 ) const noexcept
 {
 #ifdef LOG_POINTS_RELATIVE
-  constexpr auto MID = MAX_COLUMNS / 2;
+  constexpr auto MID = MAX_WIDTH / 2;
   const auto p_x = x - MID;
   const auto p_y = y - MID;
   const auto t = time - start_time_;

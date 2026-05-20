@@ -16,7 +16,6 @@
 namespace fs
 {
 using std::cout;
-constexpr auto CELL_CENTER = static_cast<InnerSize>(0.5);
 // constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
 static atomic<size_t> COMPLETED = 0;
@@ -155,87 +154,11 @@ static void make_threshold(
 {
   make_threshold(thresholds, mt, start_day, last_date, &same);
 }
-Scenario::Scenario(
-  Model* model,
-  const size_t id,
-  const ptr<const FireWeather> weather,
-  const DurationSize start_time,
-  const shared_ptr<Perimeter>& perimeter,
-  const StartPoint& start_point,
-  const Day start_day,
-  const Day last_date
-)
-  : Scenario(model, id, weather, weather, start_time, perimeter, start_point, start_day, last_date)
-{ }
-Scenario::Scenario(
-  Model* model,
-  const size_t id,
-  ptr<const FireWeather> weather,
-  const DurationSize start_time,
-  const shared_ptr<Cell>& start_cell,
-  const StartPoint& start_point,
-  const Day start_day,
-  const Day last_date
-)
-  : Scenario(model, id, weather, weather, start_time, start_cell, start_point, start_day, last_date)
-{ }
-Scenario::Scenario(
-  Model* model,
-  const size_t id,
-  ptr<const FireWeather> weather,
-  ptr<const FireWeather> weather_daily,
-  const DurationSize start_time,
-  const shared_ptr<Perimeter>& perimeter,
-  const StartPoint& start_point,
-  const Day start_day,
-  const Day last_date
-)
-  : Scenario(
-      model,
-      id,
-      weather,
-      weather_daily,
-      start_time,
-      perimeter,
-      nullptr,
-      start_point,
-      start_day,
-      last_date
-    )
-{ }
-Scenario::Scenario(
-  Model* model,
-  const size_t id,
-  const ptr<const FireWeather> weather,
-  const ptr<const FireWeather> weather_daily,
-  const DurationSize start_time,
-  const shared_ptr<Cell>& start_cell,
-  const StartPoint& start_point,
-  const Day start_day,
-  const Day last_date
-)
-  : Scenario(
-      model,
-      id,
-      weather,
-      weather_daily,
-      start_time,
-      // make_unique<IntensityMap>(*model, nullptr),
-      nullptr,
-      start_cell,
-      start_point,
-      start_day,
-      last_date
-    )
-{ }
 // HACK: just set next start point here for surface right now
-Scenario* Scenario::reset_with_new_start(
-  const shared_ptr<Cell>& start_cell,
-  ptr<SafeVector> final_sizes
-)
+Scenario* Scenario::reset_with_new_start(const XYIdx& start_xy, ptr<SafeVector> final_sizes)
 {
   unburnable_.clear();
-  start_cell_ = start_cell;
+  start_xy_ = start_xy;
   cancelled_ = false;
   current_time_ = start_time_;
   intensity_ = nullptr;
@@ -334,75 +257,81 @@ void Scenario::evaluate(const Event& event)
     event.time
   );
 #endif
-  const auto& p = event.cell;
-  const auto x = p.column() + CELL_CENTER;
-  const auto y = p.row() + CELL_CENTER;
-  const XYPos p0{x, y};
-  switch (event.type)
+  // HACK: handle NewFire separately since can't create variables in switch
+  if (Event::Type::NewFire == event.type)
   {
-    case Event::Type::FireSpread:
-      ++step_;
+    const auto p0 = event.xy.center();
+    const auto& x = p0.x;
+    const auto& y = p0.y;
+    const auto for_cell = model_->cell(event.xy);
+    points_log_.log(step_, STAGE_NEW, event.time, x.value, y.value);
+    // HACK: don't do this in constructor because scenario creates this in its constructor
+    // HACK: insert point as originating from itself
+    insert(
+      points_,
+      p0,
+      SpreadData{event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
+      p0
+    );
+    if (is_null_fuel(for_cell))
+    {
+      exit(logging::fatal("{:s} Trying to start a fire in non-fuel", log_prefix_));
+    }
+    logging::verbose(
+      "{:s} Starting fire at point ({:f}, {:f}) in fuel type {:s} at time {:f}",
+      log_prefix_,
+      x.value,
+      y.value,
+      FuelType::safeName(check_fuel(for_cell)),
+      event.time
+    );
+    if (!survives(event.time, for_cell, event.time_at_location))
+    {
+      if (should_log(logging::level::info))
+      {
+        // HACK: show daily values since that's what survival uses
+        const auto wx = weather_daily(event.time);
+        logging::info(
+          "{:s} Didn't survive ignition in {:s} with weather {:f}, {:f}",
+          log_prefix_,
+          FuelType::safeName(check_fuel(for_cell)),
+          wx->ffmc.value,
+          wx->dmc.value
+        );
+      }
+      // HACK: we still want the fire to have existed, so set the intensity of the origin
+    }
+    // fires start with intensity of 1
+    burn(event);
+    scheduleFireSpread(event);
+  }
+  else
+  {
+    switch (event.type)
+    {
+      case Event::Type::FireSpread:
+        ++step_;
 #ifdef DEBUG_POINTS
-      {
-        const auto ymd = fs::make_timestamp(model().year(), event.time);
-      }
-#endif
-      scheduleFireSpread(event);
-      break;
-    case Event::Type::Save:
-      std::ignore = saveObservers(model_->outputDirectory(), event.time);
-      saveStats(event.time);
-      break;
-    case Event::Type::NewFire:
-      points_log_.log(
-        step_, STAGE_NEW, event.time, p.column() + CELL_CENTER, p.row() + CELL_CENTER
-      );
-      // HACK: don't do this in constructor because scenario creates this in its constructor
-      // HACK: insert point as originating from itself
-      points_.insert(
-        p0,
-        SpreadData(event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
-        x,
-        y
-      );
-      if (is_null_fuel(event.cell))
-      {
-        exit(logging::fatal("{:s} Trying to start a fire in non-fuel", log_prefix_));
-      }
-      logging::verbose(
-        "{:s} Starting fire at point ({:f}, {:f}) in fuel type {:s} at time {:f}",
-        log_prefix_,
-        x,
-        y,
-        FuelType::safeName(check_fuel(event.cell)),
-        event.time
-      );
-      if (!survives(event.time, event.cell, event.time_at_location))
-      {
-        if (should_log(logging::level::info))
         {
-          // HACK: show daily values since that's what survival uses
-          const auto wx = weather_daily(event.time);
-          logging::info(
-            "{:s} Didn't survive ignition in {:s} with weather {:f}, {:f}",
-            log_prefix_,
-            FuelType::safeName(check_fuel(event.cell)),
-            wx->ffmc.value,
-            wx->dmc.value
-          );
+          const auto ymd = fs::make_timestamp(model().year(), event.time);
         }
-        // HACK: we still want the fire to have existed, so set the intensity of the origin
-      }
-      // fires start with intensity of 1
-      burn(event);
-      scheduleFireSpread(event);
-      break;
-    case Event::Type::EndSimulation:
-      logging::verbose("{:s} End simulation event reached at {:f}", log_prefix_, event.time);
-      endSimulation();
-      break;
-    default:
-      throw runtime_error("Invalid event type");
+#endif
+        scheduleFireSpread(event);
+        break;
+      case Event::Type::Save:
+        std::ignore = saveObservers(model_->outputDirectory(), event.time);
+        saveStats(event.time);
+        break;
+      case Event::Type::NewFire:
+        throw runtime_error("Error handling event");
+        break;
+      case Event::Type::EndSimulation:
+        logging::verbose("{:s} End simulation event reached at {:f}", log_prefix_, event.time);
+        endSimulation();
+        break;
+      default:
+        throw runtime_error("Invalid event type");
+    }
   }
 }
 Scenario::Scenario(
@@ -412,51 +341,26 @@ Scenario::Scenario(
   const ptr<const FireWeather> weather_daily,
   const DurationSize start_time,
   const shared_ptr<Perimeter>& perimeter,
-  const shared_ptr<Cell>& start_cell,
+  const XYIdx& start_cell,
   StartPoint start_point,
   const Day start_day,
   const Day last_date
 )
-  : Scenario(
-      model,
-      id,
-      weather,
-      weather_daily,
-      start_time,
-      perimeter,
-      start_cell,
-      start_point,
-      start_day,
-      last_date,
-      settings::instance()
-    )
-{ }
-Scenario::Scenario(
-  Model* model,
-  const size_t id,
-  const ptr<const FireWeather> weather,
-  const ptr<const FireWeather> weather_daily,
-  const DurationSize start_time,
-  const shared_ptr<Perimeter>& perimeter,
-  const shared_ptr<Cell>& start_cell,
-  StartPoint start_point,
-  const Day start_day,
-  const Day last_date,
-  const Settings& settings
-)
   : current_time_(start_time), unburnable_{}, intensity_(nullptr), perimeter_(perimeter),
-    max_ros_(0), start_cell_(start_cell), weather_(weather), weather_daily_(weather_daily),
+    max_ros_(0), start_xy_(start_cell), weather_(weather), weather_daily_(weather_daily),
     model_(model), probabilities_(nullptr), final_sizes_(nullptr),
     start_point_(std::move(start_point)), id_(id), start_time_(start_time),
     last_save_(weather_->minDate()), simulation_(-1), start_day_(start_day), last_date_(last_date),
     ran_(false), step_(0),
-    points_log_(LogPoints{model_->outputDirectory(), settings.save_points, id_, start_time_})
+    points_log_(
+      LogPoints{model_->outputDirectory(), settings::instance().save_points, id_, start_time_}
+    )
 {
   const auto wx = weather_->at(start_time_);
   logging::check_fatal(
     nullptr == wx, "No weather for start time {:s}", make_timestamp(model->year(), start_time_)
   );
-  const auto saves = settings.output_date_offsets.offsets();
+  const auto saves = settings::instance().output_date_offsets.offsets();
   const auto last_save = start_day_ + saves[saves.size() - 1];
   logging::check_fatal(
     last_save > weather_->maxDate(),
@@ -514,7 +418,7 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     unburnable_(std::move(rhs.unburnable_)), scheduler_(std::move(rhs.scheduler_)),
     intensity_(std::move(rhs.intensity_)), perimeter_(std::move(rhs.perimeter_)),
     spread_info_(std::move(rhs.spread_info_)), arrival_(std::move(rhs.arrival_)),
-    max_ros_(rhs.max_ros_), start_cell_(std::move(rhs.start_cell_)), weather_(rhs.weather_),
+    max_ros_(rhs.max_ros_), start_xy_(std::move(rhs.start_xy_)), weather_(rhs.weather_),
     weather_daily_(rhs.weather_daily_), model_(rhs.model_), probabilities_(rhs.probabilities_),
     final_sizes_(rhs.final_sizes_), start_point_(std::move(rhs.start_point_)), id_(rhs.id_),
     start_time_(rhs.start_time_), last_save_(rhs.last_save_), simulation_(rhs.simulation_),
@@ -533,7 +437,7 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
     scheduler_ = std::move(rhs.scheduler_);
     intensity_ = std::move(rhs.intensity_);
     perimeter_ = std::move(rhs.perimeter_);
-    start_cell_ = std::move(rhs.start_cell_);
+    start_xy_ = std::move(rhs.start_xy_);
     weather_ = rhs.weather_;
     weather_daily_ = rhs.weather_daily_;
     model_ = rhs.model_;
@@ -554,38 +458,34 @@ void Scenario::burn(const Event& event)
 {
 #ifdef DEBUG_SIMULATION
   logging::check_fatal(
-    intensity_->hasBurned(event.cell),
+    intensity_->hasBurned(event.xy),
     "{:s} Re-burning cell ({:d}, {:d})",
     log_prefix_,
-    event.cell.column(),
-    event.cell.row()
+    event.xy.x_value(),
+    event.xy.y_value()
   );
 #endif
   // #ifdef DEBUG_POINTS
-  //   logging::check_fatal((*unburnable_)[event.cell().hash()], [&]() {
+  //   logging::check_fatal((*unburnable_)[event.xy.hash()], [&]() {
   //     return std::format(
-  //       "{:s} Burning unburnable cell ({:d}, {:d})",
-  //       log_prefix_,
-  //       event.cell().column(),
-  //       event.cell().row()
+  //       "{:s} Burning unburnable cell ({:d}, {:d})", log_prefix_, event.xy.x(), event.xy.y()
   //     );
   //   });
   // #endif
   //  Observers only care about cells burning so do it here
   notify(event);
-  intensity_->burn(event.cell, event.intensity, event.ros, event.raz);
+  intensity_->burn(event.xy, event.intensity, event.ros, event.raz);
 #ifdef DEBUG_GRIDS
   logging::check_fatal(
-    !intensity_->hasBurned(event.cell), "{:s} Wasn't marked as burned after burn", log_prefix_
+    !intensity_->hasBurned(event.xy), "{:s} Wasn't marked as burned after burn", log_prefix_
   );
 #endif
-  arrival_[event.cell] = event.time;
+  arrival_[event.xy] = event.time;
 }
-bool Scenario::isSurrounded(const Location& location) const
+bool Scenario::isSurrounded(const XYIdx& location) const
 {
   return intensity_->isSurrounded(location);
 }
-Cell Scenario::cell(const InnerPos& p) const noexcept { return cell(p.second, p.first); }
 #ifdef DEBUG_PROBABILITY
 void saveProbabilities(
   const string_view dir,
@@ -626,31 +526,30 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   if (nullptr == perimeter_)
   {
-    addEvent(Event{.time = start_time_, .type = Event::Type::NewFire, .cell = cell(*start_cell_)});
+    addEvent(Event{.time = start_time_, .type = Event::Type::NewFire, .xy = start_xy_});
   }
   else
   {
     logging::verbose("{:s} Applying perimeter", log_prefix_);
     intensity_->applyPerimeter(*perimeter_);
     logging::verbose("{:s} Perimeter applied", log_prefix_);
-    const auto& env = model().environment();
     logging::verbose("{:s} Igniting points", log_prefix_);
     for (const auto& location : perimeter_->edge)
     {
-      const auto cell = env.cell(location);
 #ifdef DEBUG_SIMULATION
-      logging::check_fatal(is_null_fuel(cell), "{:s} Null fuel in perimeter", log_prefix_);
+      const auto for_cell = model_->cell(location);
+      logging::check_fatal(is_null_fuel(for_cell), "{:s} Null fuel in perimeter", log_prefix_);
 #endif
-      const auto x = cell.column() + CELL_CENTER;
-      const auto y = cell.row() + CELL_CENTER;
-      const XYPos p0{x, y};
+      const auto p0 = location.center();
+      const auto& x = p0.x;
+      const auto& y = p0.y;
       // log_verbose(*this, "Adding point ({:d}, {:d})",
-      logging::extensive("{:s} Adding point ({:f}, {:f})", log_prefix_, x, y);
-      points_.insert(
+      logging::extensive("{:s} Adding point ({:f}, {:f})", log_prefix_, x.value, y.value);
+      insert(
+        points_,
         p0,
-        SpreadData(start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()),
-        x,
-        y
+        SpreadData{start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
+        p0
       );
     }
     addEvent(Event{.time = start_time_, .type = Event::Type::FireSpread});
@@ -661,13 +560,13 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   logging::verbose("{:s} Creating simulation end event for {:f}", log_prefix_, last_save_);
   addEvent(Event{.time = last_save_, .type = Event::Type::EndSimulation});
   // mark all original points as burned at start
-  for (auto& kv : points_.map_)
+  for (auto& [loc, pts] : points_.cells_)
   {
-    const auto& location = cell(kv.first);
+    assert(loc == pts.pos());
     // would be burned already if perimeter applied
-    if (canBurn(location))
+    if (canBurn(loc))
     {
-      const Event fake_event{.time = start_time_, .cell = location, .ros = 0.0};
+      const Event fake_event{.time = start_time_, .xy = loc, .ros = 0.0};
       burn(fake_event);
     }
   }
@@ -767,12 +666,10 @@ CellPointsMap apply_offsets_spreadkey(
     offsets.cbegin(),
     offsets.cend(),
     offsets_after_duration.begin(),
-    [&](const ROSOffset& r_p) {
-      const auto& intensity = std::get<0>(r_p);
-      const auto& ros = std::get<1>(r_p);
-      const auto& raz = std::get<2>(r_p);
-      const auto& p = std::get<3>(r_p);
-      return ROSOffset(intensity, ros, raz, Offset(p.first * duration, p.second * duration));
+    [&](const ROSOffset& r) {
+      return ROSOffset{
+        r.intensity, r.ros, r.raz, Offset{r.offset.x * duration, r.offset.y * duration}
+      };
     }
   );
   logging::verbose(
@@ -781,61 +678,47 @@ CellPointsMap apply_offsets_spreadkey(
   logging::verbose("cell_pts_map has {:d} items", cell_pts_map.size());
   for (auto& pts_for_cell : cell_pts_map)
   {
-    const Location& location = std::get<0>(pts_for_cell);
-    CellPoints& cell_pts = std::get<1>(pts_for_cell);
+    auto& [location, cell_pts] = pts_for_cell;
 #ifdef DEBUG_CELLPOINTS
-    logging::note(
-      "cell_pts for ({:d}, {:d}) has {:d} items", src.column(), src.row(), cell_pts.size()
-    );
+    logging::note("cell_pts for ({:d}, {:d}) has {:d} items", src.x(), src.y(), cell_pts.size());
 #endif
     if (cell_pts.empty())
     {
 #ifdef DEBUG_CELLPOINTS
-      logging::note("Cell ({:d}, {:d}) ignored because empty", src.column(), src.row());
+      logging::note("Cell ({:d}, {:d}) ignored because empty", src.x(), src.y());
 #endif
       continue;
     }
-    auto& pts = cell_pts.pts_.points();
-    auto& dirs = cell_pts.pts_.directions();
-    std::array<std::pair<InnerPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
-    for (size_t i = 0; i < pts.size(); ++i)
-    {
-      pt_dirs[i] = {pts[i], dirs[i]};
-    }
+    //////////////////////////////////////////////////////////////////////////////////
+    auto pt_dirs = cell_pts.point_directions();
     std::sort(pt_dirs.begin(), pt_dirs.end());
     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
     auto it_pt_dirs = pt_dirs.cbegin();
     while (it_pt_dirs != it_pt_dirs_last)
     {
       const auto& pt_dir = *it_pt_dirs;
-      const auto& pt = std::get<0>(pt_dir);
-      const auto& dir = std::get<1>(pt_dir);
-      const auto& cell_x = cell_pts.cell_x_y_.first;
-      const auto& cell_y = cell_pts.cell_x_y_.second;
-      const XYPos src{pt.first + cell_x, pt.second + cell_y};
+      const auto& [pt, dir] = pt_dir;
+      const XYIdx src{pt};
+      const auto [cell_x, cell_y] = hash_to_xy_value(cell_pts.pos());
       // apply offsets to point
       // should be quicker to loop over offsets in inner loop
-      for (const ROSOffset& r_p : offsets_after_duration)
+      for (const ROSOffset& r : offsets_after_duration)
       {
-        const auto& intensity = std::get<0>(r_p);
-        const auto& ros = std::get<1>(r_p);
-        const auto& raz = std::get<2>(r_p);
-        const auto& out = std::get<3>(r_p);
-        const auto& x_o = out.first;
-        const auto& y_o = out.second;
-        const auto dir_diff = abs(raz.asDegrees() - dir);
+        const auto& x_o = r.offset.x;
+        const auto& y_o = r.offset.y;
+        const auto dir_diff = abs(r.raz.asDegrees() - dir);
         // #ifdef DEBUG_CELLPOINTS
         logging::verbose(
           "location.x {:d}; location.y {:d};"
           "cell_x {:d}; cell_y {:d};"
           " ros {:f}; x {:f}; y {:f}; duration {:f};\n",
-          location.column(),
-          location.row(),
+          location.x_value(),
+          location.y_value(),
           cell_x,
           cell_y,
-          ros,
-          pt.first,
-          pt.second,
+          r.ros,
+          pt.x.value,
+          pt.y.value,
           duration
         );
         // // NOTE: there should be no change in the extent of the fire if we exclude things
@@ -843,8 +726,17 @@ CellPointsMap apply_offsets_spreadkey(
         // //       - but if we exclude too much then it can change how things spread, even if it
         // is a more representative angle for the grids if (is_initial || MAX_DEGREES >= dir_diff)
         {
-          const auto new_x = x_o + pt.first + cell_x;
-          const auto new_y = y_o + pt.second + cell_y;
+          logging::check_fatal(
+            -1 >= pt.x.value || MAX_WIDTH <= pt.x.value,
+            "x out of bounds when applying offsets: {}",
+            pt.x.value
+          );
+          logging::check_fatal(
+            -1 >= pt.y.value || MAX_HEIGHT <= pt.y.value,
+            "y out of bounds when applying offsets: {}",
+            pt.y.value
+          );
+          const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
           logging::verbose(
             "({:d}, {:d}): {:f}: [{:f} => ({:f}, {:f})] + [{:f} => ({:f}, {:f})] = [{:f} => ({:f}, {:f})]",
             cell_x,
@@ -853,18 +745,18 @@ CellPointsMap apply_offsets_spreadkey(
             dir,
             x_o,
             y_o,
-            raz.asDegrees(),
-            pt.first,
-            pt.second,
-            raz.asDegrees(),
-            new_x,
-            new_y
+            r.raz.asDegrees(),
+            pt.x.value,
+            pt.y.value,
+            r.raz.asDegrees(),
+            pt_new.x.value,
+            pt_new.y.value
           );
-          r1.insert(
-            src,
-            SpreadData(arrival_time, intensity, ros, raz, Direction(Degrees{dir})),
-            new_x,
-            new_y
+          std::ignore = insert(
+            r1,
+            pt,
+            SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+            pt_new
           );
 #ifdef DEBUG_CELLPOINTS
           logging::note("r1 is now {:d} items", r1.size());
@@ -873,6 +765,75 @@ CellPointsMap apply_offsets_spreadkey(
       }
       ++it_pt_dirs;
     }
+    //     //////////////////////////////////////////////////////////////////////////////////
+    //     auto& pts = cell_pts.pts_.points;
+    //     std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
+    //     for (size_t i = 0; i < pts_inner.size(); ++i)
+    //     {
+    //       pt_dirs[i] = {pts[i], dirs[i]};
+    //     }
+    //     std::sort(pt_dirs.begin(), pt_dirs.end());
+    //     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
+    //     auto it_pt_dirs = pt_dirs.cbegin();
+    //     while (it_pt_dirs != it_pt_dirs_last)
+    //     {
+    //       const auto& pt_dir = *it_pt_dirs;
+    //       const auto& [src, dir] = pt_dir;
+    //       const auto [cell_x, cell_y] = hash_to_xy_value(cell_pts.cell_x_y_);
+    //       // apply offsets to point
+    //       // should be quicker to loop over offsets in inner loop
+    //       for (const ROSOffset& r : offsets_after_duration)
+    //       {
+    //         const auto& x_o = r.offset.x;
+    //         const auto& y_o = r.offset.y;
+    //         const auto dir_diff = abs(r.raz.asDegrees() - dir);
+    //         // #ifdef DEBUG_CELLPOINTS
+    //         logging::verbose(
+    //           "location.x {:d}; location.y {:d};"
+    //           "cell_x {:d}; cell_y {:d};"
+    //           " ros {:f}; x {:f}; y {:f}; duration {:f};\n",
+    //           location.x_value(),
+    //           location.y_value(),
+    //           cell_x,
+    //           cell_y,
+    //           r.ros,
+    //           src.x.value,
+    //           src.y.value,
+    //           duration
+    //         );
+    //         // // NOTE: there should be no change in the extent of the fire if we exclude things
+    //         // behind the normal to the direction it came from
+    //         // //       - but if we exclude too much then it can change how things spread, even
+    //         if it
+    //         // is a more representative angle for the grids if (is_initial || MAX_DEGREES >=
+    //         dir_diff)
+    //         {
+    //           const XPos new_x{x_o + src.x.value};
+    //           const YPos new_y{y_o + src.y.value};
+    //           logging::verbose(
+    //             "({:d}, {:d}): {:f}: [{:f} => ({:f}, {:f})] + [{:f} => ({:f}, {:f})] = [{:f} =>
+    //             ({:f}, {:f})]", cell_x, cell_y, dir_diff, dir, x_o, y_o, r.raz.asDegrees(),
+    //             src.x.value,
+    //             src.y.value,
+    //             r.raz.asDegrees(),
+    //             new_x.value,
+    //             new_y.value
+    //           );
+    //           // TODO: switch to this version and confirm identical results
+    //           // insert(
+    //           //   r1,
+    //           //   src,
+    //           //   SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+    //           //   new_x,
+    //           //   new_y
+    //           // );
+    // #ifdef DEBUG_CELLPOINTS
+    //           logging::note("r1 is now {:d} items", r1.size());
+    // #endif
+    //         }
+    //       }
+    //       ++it_pt_dirs;
+    //       //////////////////////////////////////////////////////////////////////////////////
   }
   return r1;
 }
@@ -915,10 +876,11 @@ void Scenario::scheduleFireSpread(const Event& event)
   // make block to prevent it being visible beyond use
   {
     // if we use an iterator this way we don't need to copy keys to erase things
-    auto it = points_.map_.begin();
-    while (it != points_.map_.end())
+    auto& lhs = points_.cells_;
+    auto it = lhs.begin();
+    while (it != lhs.end())
     {
-      const Location& loc = it->first;
+      auto& [loc, pts] = *it;
       const Cell for_cell = cell(loc);
       const auto key = for_cell.key();
       {
@@ -932,18 +894,14 @@ void Scenario::scheduleFireSpread(const Event& event)
         {
           max_ros_ = max(max_ros_, ros);
           // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(loc, std::move(it->second));
-          it = points_.map_.erase(it);
+          to_spread[key].emplace_back(std::move(*it));
+          it = lhs.erase(it);
 #ifdef DEBUG_CELLPOINTS
           auto& v = to_spread[key];
           const auto n = v.size();
           const auto& p = v[n - 1].second;
           logging::note(
-            "added {:d} items to to_spread[{:d}][({:d}, {:d})]",
-            p.size(),
-            key,
-            loc.column(),
-            loc.row()
+            "added {:d} items to to_spread[{:d}][({:d}, {:d})]", p.size(), key, loc.x(), loc.y()
           );
 #endif
         }
@@ -988,11 +946,10 @@ void Scenario::scheduleFireSpread(const Event& event)
 #ifdef DEBUG_CELLPOINTS
   const auto n_c = cell_pts.size();
 #endif
-  cell_pts.remove_if([this](const pair<Location, CellPoints>& kv) {
-    const auto& location = kv.first;
-    const auto h = location.hash();
+  cell_pts.remove_if([this](const CellPointsMap::map_value& kv) {
+    auto& [location, pts] = kv;
     // clear out if unburnable
-    const auto do_clear = unburnable_.at(h);
+    const auto do_clear = unburnable_.at(location);
     return do_clear;
   });
 #ifdef DEBUG_CELLPOINTS
@@ -1001,9 +958,9 @@ void Scenario::scheduleFireSpread(const Event& event)
   // need to merge new points back into cells that didn't spread
   points_.merge(unburnable_, cell_pts);
   // if we move everything out of points_ we can parallelize this check?
-  do_each(points_.map_, [&](pair<const Location, CellPoints>& kv) {
-    const auto for_cell = cell(kv.first);
-    CellPoints& pts = kv.second;
+  do_each(points_.cells_, [&](CellPointsMap::map_value& kv) {
+    auto& [loc, pts] = kv;
+    const auto for_cell = cell(loc);
     // ******************* CHECK THIS BECAUSE IF SOMETHING IS IN HERE SHOULD IT ALWAYS HAVE
     // SPREAD????? *****************8
     const auto& seek_spread = spread_info_.find(for_cell.key());
@@ -1011,46 +968,43 @@ void Scenario::scheduleFireSpread(const Event& event)
       (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
     // HACK: just use side-effect to log and check bounds
     points_log_.log(step_, STAGE_SPREAD, new_time, pts);
-    if (canBurn(for_cell) && max_intensity > 0)
+    if (canBurn(loc) && max_intensity > 0)
     {
-      const auto& spread = pts.spread_arrival_;
+      const auto& spread = pts.spread_arrival();
       const Event fake_event{
         .time = new_time,
-        .cell = for_cell,
-        .ros = spread.ros(),
-        .intensity = spread.intensity(),
-        .raz = spread.direction(),
+        .xy = loc,
+        .ros = spread.ros,
+        .intensity = spread.intensity,
+        .raz = spread.direction,
         .source = pts.sources()
       };
       burn(fake_event);
     }
-    if (!unburnable_.at(for_cell.hash())
+    if (!unburnable_.at(loc)
         // && canBurn(for_cell)
-        && ((survives(new_time, for_cell, new_time - arrival_[for_cell]) && !isSurrounded(for_cell))
-        ))
+        && ((survives(new_time, for_cell, new_time - arrival_[loc]) && !isSurrounded(loc))))
     {
       points_log_.log(step_, STAGE_CONDENSE, new_time, pts);
-      const auto r = for_cell.row();
-      const auto c = for_cell.column();
-      const Location loc{r, c};
-      std::swap(points_.map_[loc], pts);
+      // CHECK: this is already pointed at the right thing, no?
+      // std::swap(pts0.second, pts);
     }
     else
     {
       // just inserted false, so make sure unburnable gets updated
       // whether it went out or is surrounded just mark it as unburnable
-      unburnable_.set(for_cell.hash());
+      unburnable_.set(loc);
       // not swapping means these points get dropped
     }
   });
   logging::extensive(
-    "{:s} Spreading {:d} cells until {:f}", log_prefix_, points_.map_.size(), new_time
+    "{:s} Spreading {:d} cells until {:f}", log_prefix_, points_.cells_.size(), new_time
   );
   addEvent(Event{.time = new_time, .type = Event::Type::FireSpread});
 }
 MathSize Scenario::currentFireSize() const { return intensity_->fireSize(); }
-bool Scenario::canBurn(const Cell& location) const { return intensity_->canBurn(location); }
-bool Scenario::hasBurned(const Location& location) const { return intensity_->hasBurned(location); }
+bool Scenario::canBurn(const XYIdx& location) const { return intensity_->canBurn(location); }
+bool Scenario::hasBurned(const XYIdx& location) const { return intensity_->hasBurned(location); }
 void Scenario::endSimulation() noexcept
 {
   logging::verbose("{:s} Ending simulation", log_prefix_);

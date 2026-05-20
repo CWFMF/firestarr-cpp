@@ -4,6 +4,7 @@
 #include "FireSpread.h"
 #include "FireWeather.h"
 #include "FuelLookup.h"
+#include "Location.h"
 #include "Log.h"
 #include "Model.h"
 #include "Observer.h"
@@ -49,7 +50,7 @@ public:
    */
   TestScenario(
     Model* model,
-    const shared_ptr<Cell>& start_cell,
+    const XYIdx& start_xy,
     const StartPoint& start_point,
     const int start_date,
     const DurationSize end_date,
@@ -60,8 +61,10 @@ public:
         model,
         1,
         weather,
+        weather,
         start_date,
-        start_cell,
+        nullptr,
+        start_xy,
         start_point,
         static_cast<Day>(start_date),
         static_cast<Day>(end_date)
@@ -79,39 +82,39 @@ public:
 void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelType* fuel)
 {
   // HACK: make two rows and then print so columns are aligned
-  std::stringstream ROW_HEADER{};
-  std::stringstream ROW_DATA{};
-  auto add_col = [&](const char* col, const string value) {
-    ROW_DATA << " " << value;
-    ROW_HEADER << std::format(" {:>{}s}", col, value.size());
+  std::stringstream line_header{};
+  std::stringstream line_data{};
+  auto add_value = [&](const char* col, const string value) {
+    line_data << " " << value;
+    line_header << std::format(" {:>{}s}", col, value.size());
   };
-  add_col("PREC", std::format("{:5.2f}", w->prec.value));
-  add_col("TEMP", std::format("{:5.1f}", w->temperature.value));
-  add_col("RH", std::format("{:3g}", w->rh.value));
-  add_col("WS", std::format("{:5.1f}", w->wind.speed.value));
-  add_col("WD", std::format("{:3g}", w->wind.direction.value));
-  add_col("FFMC", std::format("{:5.1f}", w->ffmc.value));
-  add_col("DMC", std::format("{:5.1f}", w->dmc.value));
-  add_col("DC", std::format("{:5g}", w->dc.value));
-  add_col("ISI", std::format("{:5.1f}", w->isi.value));
-  add_col("BUI", std::format("{:5.1f}", w->bui.value));
-  add_col("FWI", std::format("{:5.1f}", w->fwi.value));
-  add_col("GS", std::format("{:3d}", spread.percentSlope()));
-  add_col("SAZ", std::format("{:3d}", spread.slopeAzimuth()));
+  add_value("PREC", std::format("{:5.2f}", w->prec.value));
+  add_value("TEMP", std::format("{:5.1f}", w->temperature.value));
+  add_value("RH", std::format("{:3g}", w->rh.value));
+  add_value("WS", std::format("{:5.1f}", w->wind.speed.value));
+  add_value("WD", std::format("{:3g}", w->wind.direction.value));
+  add_value("FFMC", std::format("{:5.1f}", w->ffmc.value));
+  add_value("DMC", std::format("{:5.1f}", w->dmc.value));
+  add_value("DC", std::format("{:5g}", w->dc.value));
+  add_value("ISI", std::format("{:5.1f}", w->isi.value));
+  add_value("BUI", std::format("{:5.1f}", w->bui.value));
+  add_value("FWI", std::format("{:5.1f}", w->fwi.value));
+  add_value("GS", std::format("{:3d}", spread.percentSlope()));
+  add_value("SAZ", std::format("{:3d}", spread.slopeAzimuth()));
   const auto simple_fuel = simplify_fuel_name(fuel->name());
-  add_col("FUEL", std::format("{:>7s}", simple_fuel));
-  add_col("GC", std::format("{:3.0g}", fuel->grass_curing(spread.nd(), *w)));
-  add_col("L:B", std::format("{:5.2f}", spread.lengthToBreadth()));
-  add_col("CBH", std::format("{:4.1f}", fuel->cbh()));
-  add_col("CFB", std::format("{:6.3f}", spread.crownFractionBurned()));
-  add_col("CFC", std::format("{:6.3f}", spread.crownFuelConsumption()));
-  add_col("FD", std::format("{:2c}", spread.fireDescription()));
-  add_col("HFI", std::format("{:6d}", static_cast<size_t>(spread.maxIntensity())));
-  add_col("RAZ", std::format("{:3d}", spread.headDirection().asDegreesSize()));
-  add_col("ROS", std::format("{:6.4g}", spread.headRos()));
-  add_col("SFC", std::format("{:6.4g}", spread.surfaceFuelConsumption()));
-  add_col("TFC", std::format("{:6.4g}", spread.totalFuelConsumption()));
-  cout << std::format("Calculated spread is:\n{:s}\n{:s}\n", ROW_HEADER.str(), ROW_DATA.str());
+  add_value("FUEL", std::format("{:>7s}", simple_fuel));
+  add_value("GC", std::format("{:3.0g}", fuel->grass_curing(spread.nd(), *w)));
+  add_value("L:B", std::format("{:5.2f}", spread.lengthToBreadth()));
+  add_value("CBH", std::format("{:4.1f}", fuel->cbh()));
+  add_value("CFB", std::format("{:6.3f}", spread.crownFractionBurned()));
+  add_value("CFC", std::format("{:6.3f}", spread.crownFuelConsumption()));
+  add_value("FD", std::format("{:2c}", spread.fireDescription()));
+  add_value("HFI", std::format("{:6d}", static_cast<size_t>(spread.maxIntensity())));
+  add_value("RAZ", std::format("{:3d}", spread.headDirection().asDegreesSize()));
+  add_value("ROS", std::format("{:6.4g}", spread.headRos()));
+  add_value("SFC", std::format("{:6.4g}", spread.surfaceFuelConsumption()));
+  add_value("TFC", std::format("{:6.4g}", spread.totalFuelConsumption()));
+  cout << std::format("Calculated spread is:\n{:s}\n{:s}\n", line_header.str(), line_data.str());
 }
 string generate_test_name(
   const auto& fuel,
@@ -167,34 +170,34 @@ string run_test(
   make_directory_recursive(output_directory);
   const auto fuel = lookup.bySimplifiedName(simplify_fuel_name(fuel_name));
   auto values = vector<Cell>();
-  for (Idx r = 0; r < MAX_ROWS; ++r)
+  for (Idx y = 0; y < MAX_HEIGHT; ++y)
   {
-    for (Idx c = 0; c < MAX_COLUMNS; ++c)
+    for (Idx x = 0; x < MAX_WIDTH; ++x)
     {
-      values.emplace_back(r, c, slope, aspect, FuelType::safeCode(fuel));
+      values.emplace_back(slope, aspect, FuelType::safeCode(fuel));
     }
   }
   const Cell cell_nodata{};
   TestEnvironment env{CellGrid{
     TEST_GRID_SIZE,
-    MAX_ROWS,
-    MAX_COLUMNS,
+    MAX_WIDTH,
+    MAX_HEIGHT,
     cell_nodata.fullHash(),
     cell_nodata,
     TEST_XLLCORNER,
     TEST_YLLCORNER,
-    TEST_XLLCORNER + TEST_GRID_SIZE * MAX_COLUMNS,
-    TEST_YLLCORNER + TEST_GRID_SIZE * MAX_ROWS,
+    TEST_XLLCORNER + TEST_GRID_SIZE * MAX_WIDTH,
+    TEST_YLLCORNER + TEST_GRID_SIZE * MAX_HEIGHT,
     TEST_PROJ4,
     std::move(values)
   }};
-  const Location start_location(static_cast<Idx>(MAX_ROWS / 2), static_cast<Idx>(MAX_COLUMNS / 2));
+  const XYIdx start_xy{static_cast<Idx>(MAX_WIDTH / 2), static_cast<Idx>(MAX_HEIGHT / 2)};
   Model model(settings.start_date.value(), output_directory, ForPoint, &env);
-  const auto start_cell = make_shared<Cell>(model.cell(start_location));
+  const auto start_cell = model.cell(start_xy);
   FireWeather weather(fuel, start_date, dc, dmc, ffmc, wind);
-  TestScenario scenario(&model, start_cell, ForPoint, start_date, end_date, &weather, final_sizes);
+  TestScenario scenario(&model, start_xy, ForPoint, start_date, end_date, &weather, final_sizes);
   const auto w = weather.at(start_date);
-  auto info = SpreadInfo(scenario, start_date, start_cell->key(), model.nd(start_date), w);
+  auto info = SpreadInfo(scenario, start_date, start_cell.key(), model.nd(start_date), w);
   showSpread(info, w, fuel);
   map<DurationSize, shared_ptr<ProbabilityMap>> probabilities{};
   logging::debug("Starting simulation");

@@ -3,6 +3,7 @@
 #define FS_GRIDMAP_H
 #include "stdafx.h"
 #include "Grid.h"
+#include "Location.h"
 namespace fs
 {
 /**
@@ -11,29 +12,14 @@ namespace fs
  * \tparam V Type of data used as an input when initializing.
  */
 template <class T, class V = T>
-class GridMap : public GridData<T, V, map<Location, T>>
+class GridMap : public GridData<T, V, map<XYIdx, T>>
 {
 public:
-  /**
-   * \brief Determine if Location has a value
-   * \param location Location to determine if present in GridMap
-   * \return Whether or not a value is present for the Location
-   */
-  [[nodiscard]] bool contains(const Location& location) const
+  [[nodiscard]] bool contains(const XYIdx& location) const
   {
     return this->data.end() != this->data.find(location);
   }
-  template <class P>
-  [[nodiscard]] bool contains(const Position<P>& position) const
-  {
-    return contains(Location{position.hash()});
-  }
-  /**
-   * \brief Retrieve value at Location
-   * \param location Location to get value for
-   * \return Value at Location
-   */
-  [[nodiscard]] T at(const Location& location) const override
+  [[nodiscard]] T at(const XYIdx& location) const override
   {
     const auto value = this->data.find(location);
     if (value == this->data.end())
@@ -42,45 +28,22 @@ public:
     }
     return get<1>(*value);
   }
-  template <class P>
-  [[nodiscard]] T at(const Position<P>& position) const
-  {
-    return at(Location{position.hash()});
-  }
   /**
    * \brief Set value at Location
    * \param location Location to set value for
    * \param value Value to set at Location
    */
-  void set(const Location& location, const T value) override
+  void set(const XYIdx& location, const T value) override
   {
     this->data[location] = value;
     assert(at(location) == value);
   }
-  template <class P>
-  void set(const Position<P>& position, const T value)
-  {
-    return set(Location{position.hash()}, value);
-  }
   GridMap() noexcept = default;
   ~GridMap() override = default;
-  /**
-   * \brief Constructor
-   * \param cell_size Cell width and height (m)
-   * \param rows Number of rows
-   * \param columns Number of columns
-   * \param no_data Value that represents no data
-   * \param nodata Integer value that represents no data
-   * \param xllcorner Lower left corner X coordinate (m)
-   * \param yllcorner Lower left corner Y coordinate (m)
-   * \param xllcorner Upper right corner X coordinate (m)
-   * \param yllcorner Upper right corner Y coordinate (m)
-   * \param proj4 Proj4 projection definition
-   */
   GridMap(
     const MathSize cell_size,
-    const Idx rows,
-    const Idx columns,
+    const Idx width,
+    const Idx height,
     T no_data,
     const int nodata,
     const MathSize xllcorner,
@@ -89,10 +52,10 @@ public:
     const MathSize yurcorner,
     const string_view proj4
   )
-    : GridData<T, V, map<Location, T>>(
+    : GridData<T, V, map<XYIdx, T>>(
         cell_size,
-        rows,
-        columns,
+        width,
+        height,
         no_data,
         nodata,
         xllcorner,
@@ -100,14 +63,14 @@ public:
         xurcorner,
         yurcorner,
         proj4,
-        map<Location, T>()
+        map<XYIdx, T>()
       )
   {
     constexpr auto max_hash = numeric_limits<HashSize>::max();
     // HACK: we don't want overflow errors, but we want to play with the hash size
-    const auto max_columns = static_cast<MathSize>(max_hash) / static_cast<MathSize>(this->rows());
+    const auto MAX_WIDTH = static_cast<MathSize>(max_hash) / static_cast<MathSize>(this->height());
     logging::check_fatal(
-      this->columns() >= max_columns,
+      this->width() >= MAX_WIDTH,
       "Grid is too big for cells to be hashed - "
       "recompile with a larger HashSize value"
     );
@@ -145,8 +108,8 @@ public:
   GridMap(const GridBase& grid_info, T no_data)
     : GridMap<T, V>(
         grid_info.cellSize(),
-        static_cast<Idx>(grid_info.calculateRows()),
-        static_cast<Idx>(grid_info.calculateColumns()),
+        static_cast<Idx>(grid_info.calculateWidth()),
+        static_cast<Idx>(grid_info.calculateHeight()),
         no_data,
         static_cast<int>(no_data),
         grid_info.xllcorner(),
@@ -156,11 +119,11 @@ public:
         string(grid_info.proj4())
       )
   { }
-  GridMap(GridMap&& rhs) noexcept : GridData<T, V, map<Location, T>>(std::move(rhs))
+  GridMap(GridMap&& rhs) noexcept : GridData<T, V, map<XYIdx, T>>(std::move(rhs))
   {
     this->data = std::move(rhs.data);
   }
-  GridMap(const GridMap& rhs) : GridData<T, V, map<Location, T>>(rhs) { this->data = rhs.data; }
+  GridMap(const GridMap& rhs) : GridData<T, V, map<XYIdx, T>>(rhs) { this->data = rhs.data; }
   GridMap& operator=(GridMap&& rhs) noexcept
   {
     if (this != &rhs)
@@ -185,30 +148,30 @@ public:
 protected:
   tuple<Idx, Idx, Idx, Idx> dataBounds() const override
   {
-    Idx min_row = this->rows();
-    Idx max_row = 0;
-    Idx min_column = this->columns();
-    Idx max_column = 0;
+    Idx min_y = this->height();
+    Idx max_y = 0;
+    Idx min_x = this->width();
+    Idx max_x = 0;
     for (const auto& kv : this->data)
     {
-      const Idx r = kv.first.row();
-      const Idx c = kv.first.column();
-      min_row = min(min_row, r);
-      max_row = max(max_row, r);
-      min_column = min(min_column, c);
-      max_column = max(max_column, c);
+      const Idx r = kv.first.y_value();
+      const Idx c = kv.first.x_value();
+      min_y = min(min_y, r);
+      max_y = max(max_y, r);
+      min_x = min(min_x, c);
+      max_x = max(max_x, c);
     }
     // do this so that we take the center point when there's no data since it should
     // stay the same if the grid is centered on the fire
-    if (min_row > max_row)
+    if (min_y > max_y)
     {
-      min_row = max_row = this->rows() / 2;
+      min_y = max_y = this->height() / 2;
     }
-    if (min_column > max_column)
+    if (min_x > max_x)
     {
-      min_column = max_column = this->columns() / 2;
+      min_x = max_x = this->width() / 2;
     }
-    return tuple<Idx, Idx, Idx, Idx>{min_column, min_row, max_column, max_row};
+    return {min_x, min_y, max_x, max_y};
   }
 
 public:
@@ -244,23 +207,24 @@ public:
    * \brief Make a list of all Locations that are on the edge of cells with a value
    * \return A list of all Locations that are on the edge of cells with a value
    */
-  [[nodiscard]] list<Location> makeEdge() const
+  [[nodiscard]] list<XYIdx> makeEdge() const
   {
-    list<Location> edge{};
+    list<XYIdx> edge{};
     for (const auto& kv : this->data)
     {
       auto loc = kv.first;
+      // FIX: any way to avoid decomposing?
+      auto [x_loc, y_loc] = hash_to_xy(loc);
       auto on_edge = false;
       for (Idx r = -1; !on_edge && r <= 1; ++r)
       {
-        const Idx row_index = loc.row() + r;
-        if (!(row_index < 0 || row_index >= this->rows()))
+        const Idx y = y_loc.value + r;
+        if (!(y < 0 || y >= this->height()))
         {
           for (Idx c = -1; !on_edge && c <= 1; ++c)
           {
-            const Idx col_index = loc.column() + c;
-            if (!(col_index < 0 || col_index >= this->columns())
-                && this->data.find(Location(row_index, col_index)) == this->data.end())
+            const Idx x = x_loc.value + c;
+            if (!(x < 0 || x >= this->width()) && this->data.find(XYIdx{x, y}) == this->data.end())
             {
               on_edge = true;
             }
@@ -282,14 +246,14 @@ public:
    * \brief Make a list of all Locations that have a value
    * \return A list of all Locations that have a value
    */
-  [[nodiscard]] list<Location> makeList() const
+  [[nodiscard]] list<XYIdx> makeList() const
   {
-    list<Location> result{this->data.size()};
+    list<XYIdx> result{this->data.size()};
     std::transform(
       this->data.begin(),
       this->data.end(),
       result.begin(),
-      [](const pair<const Location, const T>& kv) { return kv.first; }
+      [](const pair<const XYIdx, const T>& kv) { return kv.first; }
     );
     return result;
   }
