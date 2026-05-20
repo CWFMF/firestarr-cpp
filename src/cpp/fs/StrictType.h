@@ -42,7 +42,7 @@ struct StrictType
   {
     return ConcreteType{static_cast<ValueType>(InvalidValue)};
   };
-  ValueType value{0.0};
+  ValueType value{static_cast<ValueType>(0.0)};
   constexpr StrictType() = default;
   constexpr explicit StrictType(const ValueType value) noexcept : value(value)
   {
@@ -64,14 +64,17 @@ struct StrictType
   constexpr StrictType(const T& rhs) noexcept = default;
   T& operator=(T&& rhs) noexcept = default;
   T& operator=(const T& rhs) noexcept = default;
-  auto operator<=>(const T& rhs) const = default;
+  constexpr auto operator==(const T& rhs) const { return value == rhs.value; }
+  constexpr auto operator<=>(const T& rhs) const { return value <=> rhs.value; }
   [[nodiscard]] constexpr ConcreteType operator+(const T& rhs) const noexcept
   {
-    return ConcreteType{value + rhs.value};
+    // HACK: avoid narrowing conversion warning
+    return ConcreteType{static_cast<ValueType>(value + rhs.value)};
   }
   [[nodiscard]] constexpr ConcreteType operator-(const T& rhs) const noexcept
   {
-    return ConcreteType{value - rhs.value};
+    // HACK: avoid narrowing conversion warning
+    return ConcreteType{static_cast<ValueType>(value - rhs.value)};
   }
   // NOTE: should dividing by same type remove units?
   [[nodiscard]] constexpr ConcreteType operator*(const ValueType& rhs) const noexcept

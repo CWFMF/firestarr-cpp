@@ -2,7 +2,9 @@
 #ifndef FS_EVENT_H
 #define FS_EVENT_H
 #include "stdafx.h"
+#include <compare>
 #include "Cell.h"
+#include "Location.h"
 #include "Weather.h"
 namespace fs
 {
@@ -39,10 +41,7 @@ struct Event
    * \brief Duration that Event Cell has been burning (decimal days)
    */
   DurationSize time_at_location{0.0};
-  /**
-   * \brief Cell Event takes place in
-   */
-  Cell cell{};
+  XYIdx xy{};
   /**
    * \brief Head fire rate of spread (m/min)
    */
@@ -59,7 +58,18 @@ struct Event
    * \brief CellIndex for relative Cell that spread into from
    */
   CellIndex source{};
-  std::partial_ordering operator<=>(const Event& rhs) const;
+  std::partial_ordering operator<=>(const Event& rhs) const
+  {
+    if (const auto cmp = time <=> rhs.time; 0 != cmp)
+    {
+      return cmp;
+    }
+    if (const auto cmp = type <=> rhs.type; 0 != cmp)
+    {
+      return cmp;
+    }
+    return xy <=> rhs.xy;
+  }
 };
 }
 #endif

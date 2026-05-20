@@ -4,6 +4,7 @@
 #include "EnvironmentInfo.h"
 #include "FuelLookup.h"
 #include "Grid.h"
+#include "Location.h"
 #include "Log.h"
 #include "Point.h"
 #include "ProbabilityMap.h"
@@ -97,24 +98,24 @@ Environment Environment::loadEnvironment(
     // bounds of perimeter flipped because we're reading from a raster so change (left, top) to
     // (left, bottom)
     const auto coordinates = cur_info->findFullCoordinates(point, true);
-    if (nullptr != coordinates)
+    if (coordinates.has_value())
     {
-      auto actual_rows = cur_info->calculateRows();
-      auto actual_columns = cur_info->calculateColumns();
-      const auto x = std::get<0>(*coordinates);
-      const auto y = std::get<1>(*coordinates);
+      auto actual_height = cur_info->calculateHeight();
+      auto actual_width = cur_info->calculateWidth();
+      const auto x = coordinates->x;
+      const auto y = coordinates->y;
       logging::note(
         "Coordinates before reading are ({:d}, {:d} => {:f}, {:f})",
         x,
         y,
-        x + std::get<2>(*coordinates) / 1000.0,
-        y + std::get<3>(*coordinates) / 1000.0
+        x + coordinates->x_sub / 1000.0,
+        y + coordinates->y_sub / 1000.0
       );
       // if it's not in the raster then this is not an option
       // FIX: are these +/-1 because of counting the cell itself and starting from 0?
       const auto dist_W = x;
-      const auto dist_E = actual_columns - x;
-      const auto dist_N = actual_rows - y;
+      const auto dist_E = actual_width - x;
+      const auto dist_N = actual_height - y;
       const auto dist_S = y;
       // FIX: should take size of cells into account too? But is largest areas or highest resolution
       // the priority?
@@ -157,7 +158,8 @@ Environment Environment::loadEnvironment(
   // envInfo should get deleted automatically because it uses unique_ptr
   return env_info->load(point);
 }
-unique_ptr<Coordinates> Environment::findCoordinates(const Point& point, const bool flipped) const
+std::optional<Coordinates> Environment::findCoordinates(const Point& point, const bool flipped)
+  const
 {
   return cells_.findCoordinates(point, flipped);
 }
@@ -167,21 +169,19 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
   logging::check_equal(fuel.yllcorner(), elevation.yllcorner(), "yllcorner");
   static Cell nodata{};
   auto values = vector<Cell>{fuel.data.size()};
-  vector<HashSize> hashes{};
-  for (Idx r = 0; r < fuel.rows(); ++r)
+  for (Idx y = 0; y < fuel.height(); ++y)
   {
-    for (Idx c = 0; c < fuel.columns(); ++c)
+    for (Idx x = 0; x < fuel.width(); ++x)
     {
-      const auto h = hashes.emplace_back(Location(r, c).hash());
-      const Location loc{r, c, h};
-      if (r >= 0 && r < fuel.rows() && c >= 0 && c < fuel.columns())
+      const XYIdx loc{x, y};
+      if (y >= 0 && y < fuel.height() && x >= 0 && x < fuel.width())
       {
         // NOTE: this needs to translate to internal codes?
         const auto f = FuelType::safeCode(fuel.at(loc));
         auto s = static_cast<SlopeSize>(INVALID_SLOPE);
         auto a = static_cast<AspectSize>(INVALID_ASPECT);
         // HACK: don't calculate for outside box of cells
-        if (r > 0 && r < fuel.rows() - 1 && c > 0 && c < fuel.columns() - 1)
+        if (y > 0 && y < fuel.height() - 1 && x > 0 && x < fuel.width() - 1)
         {
           MathSize dem[9];
           bool valid = true;
@@ -190,9 +190,9 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
             for (int j = -1; j < 2; ++j)
             {
               // grid is (0, 0) at bottom left, but want [0] in array to be NW corner
-              auto actual_row = static_cast<Idx>(r - i);
-              auto actual_column = static_cast<Idx>(c + j);
-              auto cur_loc = Location{actual_row, actual_column};
+              auto actual_y = static_cast<Idx>(y - i);
+              auto actual_x = static_cast<Idx>(x + j);
+              XYIdx cur_loc{actual_x, actual_y};
               const auto v = elevation.at(cur_loc);
               // can't calculate slope & aspect if any surrounding cell is nodata
               if (elevation.nodataValue() == v)
@@ -239,15 +239,14 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
             a = static_cast<AspectSize>(round(aspect_azimuth));
           }
         }
-        const auto cell = Cell{h, s, a, f};
-        values.at(h) = cell;
+        const auto cell = Cell{s, a, f};
+        // NOTE: this is going to be a vector that's the same size as the max size, despite the
+        //       actual size of the contents
+        values.at(to_index(loc)) = cell;
 #ifdef DEBUG_GRIDS
 #ifndef VLD_RPTHOOK_INSTALL
-        logging::check_equal(cell.row(), r, "Cell row");
-        logging::check_equal(cell.column(), c, "Cell column");
+        const auto h = to_index(loc);
         const auto v = values.at(h);
-        logging::check_equal(v.row(), r, "Row");
-        logging::check_equal(v.column(), c, "Column");
         if (!(INVALID_SLOPE == cell.slope() || INVALID_ASPECT == cell.aspect()
               || INVALID_FUEL_CODE == cell.fuelCode()))
         {
@@ -284,8 +283,8 @@ CellGrid Environment::makeCells(const FuelGrid& fuel, const ElevationGrid& eleva
   }
   return CellGrid(
     fuel.cellSize(),
-    fuel.rows(),
-    fuel.columns(),
+    fuel.width(),
+    fuel.height(),
     nodata.fullHash(),
     nodata,
     fuel.xllcorner(),
@@ -309,16 +308,20 @@ Environment::Environment(
       (settings.save_simulation_area ? make_unique<FuelGrid>(fuel) : nullptr),
       (settings.save_simulation_area ? make_unique<ElevationGrid>(elevation) : nullptr),
       makeCells(fuel, elevation),
-      elevation.at(Location(*elevation.findCoordinates(point, false).get()))
+      elevation.at([&]() {
+        auto loc = elevation.findCoordinates(point, false);
+        return XYIdx{loc->x, loc->y};
+      }())
     )
 {
   // take elevation at point so that if max grid size changes elevation doesn't
   logging::note("Start elevation is {:d}", elevation_);
 }
-Cell Environment::offset(const Event& event, const Idx row, const Idx column) const
+Cell Environment::offset(const Event& event, const Idx x, const Idx y) const
 {
-  const auto& p = event.cell;
-  return cell(Location(p.row() + row, p.column() + column));
+  const auto& p = event.xy;
+  // return cell(XYIdx{static_cast<Idx>(p.x().value + x), static_cast<Idx>(p.y().value + y)});
+  return cell(p + XIdx{x} + YIdx{y});
 }
 void Environment::saveToFile(const string_view output_directory) const
 {

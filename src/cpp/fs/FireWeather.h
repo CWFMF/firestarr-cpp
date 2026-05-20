@@ -3,9 +3,6 @@
 #define FS_FIREWEATHER_H
 #include "stdafx.h"
 #include "FWI.h"
-#ifdef DEBUG_FWI_WEATHER
-#include "Log.h"
-#endif
 namespace fs
 {
 class FuelType;

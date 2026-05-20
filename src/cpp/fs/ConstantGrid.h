@@ -3,6 +3,7 @@
 #define FS_CONSTANTGRID_H
 #include "stdafx.h"
 #include "Grid.h"
+#include "Location.h"
 #include "Util.h"
 namespace fs
 {
@@ -20,42 +21,16 @@ class ConstantGrid : public GridData<T, V, vector<T>>
 {
 public:
   ConstantGrid() = default;
-  /**
-   * \brief Value for grid at given Location.
-   * \param location Location to get value for.
-   * \return Value at grid Location.
-   */
-  [[nodiscard]] constexpr T at(const Location& location) const noexcept override
+  [[nodiscard]] constexpr T at(const XYIdx& location) const noexcept override
   {
-#ifdef DEBUG_GRIDS
-    logging::check_fatal(
-      location.row() >= this->rows() || location.column() >= this->columns(),
-      "Out of bounds ({:d}, {:d})",
-      location.row(),
-      location.column()
-    );
-#endif
-#ifdef DEBUG_POINTS
-    {
-      const Location loc{location.row(), location.column()};
-      logging::check_equal(loc.column(), location.column(), "column");
-      logging::check_equal(loc.row(), location.row(), "row");
-      // if we're going to use the hash then we need to make sure it actually matches
-      logging::check_equal(loc.hash(), location.hash(), "hash");
-    }
-#endif
-    return this->data.at(location.hash());
-  }
-  template <class P>
-  [[nodiscard]] constexpr T at(const Position<P>& position) const noexcept
-  {
-    return at(Location{position.hash()});
+    // constant grids would use index not hash
+    return this->data.at(to_index(location));
   }
   /**
    * \brief Throw an error because ConstantGrid can't change values.
    */
   // ! @cond Doxygen_Suppress
-  void set(const Location&, const T) override
+  void set(const XYIdx&, const T) override
   // ! @endcond
   {
     throw runtime_error("Cannot change ConstantGrid");
@@ -65,24 +40,10 @@ public:
   ConstantGrid(ConstantGrid&& rhs) noexcept = default;
   ConstantGrid& operator=(const ConstantGrid& rhs) noexcept = default;
   ConstantGrid& operator=(ConstantGrid&& rhs) noexcept = default;
-  /**
-   * \brief Constructor
-   * \param cell_size Cell width and height (m)
-   * \param rows Number of rows
-   * \param columns Number of columns
-   * \param nodata_input Value that represents no data for type V
-   * \param nodata_value Value that represents no data for type T
-   * \param xllcorner Lower left corner X coordinate (m)
-   * \param yllcorner Lower left corner Y coordinate (m)
-   * \param xurcorner Upper right corner X coordinate (m)
-   * \param yurcorner Upper right corner Y coordinate (m)
-   * \param proj4 Proj4 projection definition
-   * \param data Data to set as grid data
-   */
   ConstantGrid(
     const MathSize cell_size,
-    const Idx rows,
-    const Idx columns,
+    const Idx width,
+    const Idx height,
     const V nodata_input,
     const T nodata_value,
     const MathSize xllcorner,
@@ -94,8 +55,8 @@ public:
   )
     : GridData<T, V, vector<T>>(
         cell_size,
-        rows,
-        columns,
+        width,
+        height,
         nodata_input,
         nodata_value,
         xllcorner,
@@ -106,22 +67,10 @@ public:
         std::move(data)
       )
   { }
-  /**
-   * \brief Constructor
-   * \param cell_size Cell width and height (m)
-   * \param rows Number of rows
-   * \param columns Number of columns
-   * \param nodata_input Value that represents no data for type V
-   * \param nodata_value Value that represents no data for type T
-   * \param xllcorner Lower left corner X coordinate (m)
-   * \param yllcorner Lower left corner Y coordinate (m)
-   * \param proj4 Proj4 projection definition
-   * \param initialization_value Value to initialize entire grid with
-   */
   ConstantGrid(
     const MathSize cell_size,
-    const Idx rows,
-    const Idx columns,
+    const Idx width,
+    const Idx height,
     const V nodata_input,
     const T nodata_value,
     const MathSize xllcorner,
@@ -131,14 +80,14 @@ public:
   ) noexcept
     : ConstantGrid(
         cell_size,
-        rows,
-        columns,
+        width,
+        height,
         nodata_input,
         nodata_value,
         xllcorner,
         yllcorner,
         proj4,
-        std::move(vector<T>(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, initialization_value))
+        std::move(vector<T>(static_cast<size_t>(MAX_HEIGHT) * MAX_WIDTH, initialization_value))
       )
   { }
   /**
@@ -162,14 +111,14 @@ public:
       convert(nodata_input, nodata_input) != nodata_value,
       "Expected nodata value to be returned from convert()"
     );
-    vector<T> values(static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, nodata_value);
+    vector<T> values(static_cast<size_t>(MAX_HEIGHT) * MAX_WIDTH, nodata_value);
     std::transform(grid.data.begin(), grid.data.end(), values.begin(), [&](const int v) {
       return convert(static_cast<V>(v), nodata_input);
     });
     ConstantGrid<T, V> result{
       grid.cellSize(),
-      grid.rows(),
-      grid.columns(),
+      grid.width(),
+      grid.height(),
       static_cast<V>(grid.nodataInput()),
       nodata_value,
       grid.xllcorner(),
@@ -195,12 +144,11 @@ public:
 protected:
   tuple<Idx, Idx, Idx, Idx> dataBounds() const override
   {
-    Idx min_row = 0;
-    Idx max_row = this->rows();
-    Idx min_column = 0;
-    Idx max_column = this->columns();
-    // // #endif
-    return tuple<Idx, Idx, Idx, Idx>{min_column, min_row, max_column, max_row};
+    const Idx min_y = 0;
+    const Idx max_y = this->height();
+    const Idx min_x = 0;
+    const Idx max_x = this->width();
+    return {min_x, min_y, max_x, max_y};
   }
 
 private:
@@ -231,7 +179,7 @@ private:
   {
 #ifdef DEBUG_GRIDS
     logging::check_fatal(
-      this->data.size() != static_cast<size_t>(MAX_ROWS) * MAX_COLUMNS, "Invalid grid size"
+      this->data.size() != static_cast<size_t>(MAX_HEIGHT) * MAX_WIDTH, "Invalid grid size"
     );
 #endif
   }
@@ -240,6 +188,6 @@ class FuelType;
 class Cell;
 using FuelGrid = ConstantGrid<const FuelType*, FuelSize>;
 using ElevationGrid = ConstantGrid<ElevationSize>;
-using CellGrid = ConstantGrid<Cell, Topo>;
+using CellGrid = ConstantGrid<Cell, SpreadKey>;
 }
 #endif

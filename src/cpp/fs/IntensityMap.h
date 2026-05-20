@@ -32,76 +32,19 @@ public:
   IntensityMap(IntensityMap&& rhs) = delete;
   IntensityMap& operator=(const IntensityMap& rhs) = delete;
   IntensityMap& operator=(IntensityMap&& rhs) noexcept = delete;
-  /**
-   * \brief Number of rows in this extent
-   * \return Number of rows in this extent
-   */
-  [[nodiscard]] Idx rows() const { return intensity_max_.rows(); }
-  /**
-   * \brief Number of columns in this extent
-   * \return Number of columns in this extent
-   */
-  [[nodiscard]] Idx columns() const { return intensity_max_.columns(); }
+  [[nodiscard]] Idx height() const { return is_burned_.height(); }
+  [[nodiscard]] Idx width() const { return is_burned_.width(); }
   /**
    * \brief Set cells in the map to be burned based on Perimeter
    * \param perimeter Perimeter to burn cells based on
    */
   void applyPerimeter(const Perimeter& perimeter) noexcept;
-  /**
-   * \brief Whether or not the Cell with the given hash can burn
-   * \param hash Hash for Cell to check
-   * \return Whether or not the Cell with the given hash can burn
-   */
-  [[nodiscard]] bool canBurn(const Location& location) const;
-  template <class P>
-  [[nodiscard]] bool canBurn(const Position<P>& position) const
-  {
-    return canBurn(Location{position.hash()});
-  }
-  /**
-   * \brief Whether or not the Location with the given hash can burn
-   * \param hash Hash for Location to check
-   * \return Whether or not the Location with the given hash can burn
-   */
-  [[nodiscard]] bool hasBurned(const Location& location) const;
-  template <class P>
-  [[nodiscard]] bool hasBurned(const Position<P>& position) const
-  {
-    return hasBurned(Location{position.hash()});
-  }
-  /**
-   * \brief Whether or not all Locations surrounding the given Location are burned
-   * \param location Location to check
-   * \return Whether or not all Locations surrounding the given Location are burned
-   */
-  [[nodiscard]] bool isSurrounded(const Location& location) const;
-  template <class P>
-  [[nodiscard]] bool isSurrounded(const Position<P>& position) const
-  {
-    return isSurrounded(Location{position.hash()});
-  }
-  /**
-   * \brief Mark given location as burned
-   * \param location Location to burn
-   */
-  void ignite(const Location& location);
-  template <class P>
-  void ignite(const Position<P>& position)
-  {
-    ignite(Location{position.hash()});
-  }
+  [[nodiscard]] bool canBurn(const XYIdx& location) const;
+  [[nodiscard]] bool hasBurned(const XYIdx& location) const;
+  [[nodiscard]] bool isSurrounded(const XYIdx& location) const;
+  void ignite(const XYIdx& location);
 
 public:
-  template <class P>
-  void burn(
-    const Position<P>& position,
-    const IntensitySize intensity,
-    const MathSize ros,
-    const fs::Direction& raz
-  )
-  {
-    burn(Location{position.hash()}, intensity, ros, raz);
-  }
   /**
    * \brief Update Location with specified values
    * \param location Location to burn
@@ -109,7 +52,7 @@ public:
    * \param ros Rate of spread to check against maximu (m/min)
    * \param raz Spread azimuth for ros
    */
-  void burn(const Location& location, IntensitySize intensity, MathSize ros, fs::Direction raz);
+  void burn(const XYIdx& location, IntensitySize intensity, MathSize ros, fs::Direction raz);
   /**
    * \brief Save contents to file
    * \param dir Directory to save to
@@ -121,36 +64,30 @@ public:
    * \brief Size of the fire represented by this
    * \return Size of the fire represented by this
    */
-  [[nodiscard]] MathSize fireSize() const;
+  [[nodiscard]] MathSize fireSize() const { return is_burned_.fireSize(); }
   /**
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
    */
-  [[nodiscard]] map<Location, IntensitySize>::const_iterator cbegin() const noexcept;
+  [[nodiscard]] map<XYIdx, IntensitySize>::const_iterator cbegin() const noexcept;
   /**
    * \brief Iterator for underlying GridMap
    * \return Iterator for underlying GridMap
    */
-  [[nodiscard]] map<Location, IntensitySize>::const_iterator cend() const noexcept;
+  [[nodiscard]] map<XYIdx, IntensitySize>::const_iterator cend() const noexcept;
 
 private:
   /**
    * \brief Model map is for
    */
   const Model& model_;
-  /**
-   * \brief Map of intensity that cells have burned  at
-   */
+  // Map of intensity that cells have burned  at
   GridMap<IntensitySize> intensity_max_{};
   // HACK: just add ROS/RAZ into this object for now
-  /**
-   * \brief Map of rate of spread/direction that cells have burned with at max ros
-   */
-  GridMap<MathSize> rate_of_spread_at_max_{};
-  GridMap<DegreesSize> direction_of_spread_at_max_{};
-  /**
-   * \brief bitset denoting cells that can no longer burn
-   */
+  // Map of rate of spread/direction that cells have burned with at max ros
+  std::optional<GridMap<MathSize>> rate_of_spread_at_max_{};
+  std::optional<GridMap<DegreesSize>> direction_of_spread_at_max_{};
+  // bitset denoting cells that can no longer burn
   BurnedData is_burned_{};
 };
 }

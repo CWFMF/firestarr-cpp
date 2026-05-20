@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SpreadAlgorithm.h"
+#include "FireSpread.h"
 #include "FuelType.h"
 #include "unstable.h"
 #include "Util.h"
@@ -52,17 +53,17 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       return false;
     }
     const auto ros_cell = ros / cell_size_;
-    const auto intensity = fire_intensity(tfc, ros);
+    const auto intensity = static_cast<IntensitySize>(fire_intensity(tfc, ros));
     // spreading, so figure out offset from current point
-    offsets.emplace_back(
+    offsets.push_back(ROSOffset{
       intensity,
       ros,
       direction.asDegrees(),
       Offset{
-        static_cast<DistanceSize>(ros_cell * sin(direction)),
-        static_cast<DistanceSize>(ros_cell * cos(direction))
+        static_cast<XYSize>(ros_cell * sin(direction)),
+        static_cast<XYSize>(ros_cell * cos(direction))
       }
-    );
+    });
     return true;
   };
   // if not over spread threshold then don't spread
@@ -158,17 +159,17 @@ HorizontalAdjustment horizontal_adjustment(const AspectSize slope_azimuth, const
       return false;
     }
     const auto ros_cell = ros / cell_size_;
-    const auto intensity = fire_intensity(tfc, ros);
+    const auto intensity = static_cast<IntensitySize>(fire_intensity(tfc, ros));
     // spreading, so figure out offset from current point
-    offsets.emplace_back(
+    offsets.push_back(ROSOffset{
       intensity,
       ros,
       Direction{direction},
       Offset{
-        static_cast<DistanceSize>(ros_cell * sin(direction)),
-        static_cast<DistanceSize>(ros_cell * cos(direction))
+        static_cast<XYSize>(ros_cell * sin(direction)),
+        static_cast<XYSize>(ros_cell * cos(direction))
       }
-    );
+    });
 #ifdef DEBUG_POINTS
     const auto s1 = offsets.size();
     logging::check_equal(s0 + 1, s1, "offsets.size()");

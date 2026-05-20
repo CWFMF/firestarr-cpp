@@ -163,7 +163,7 @@ public:
   {
     return static_cast<difference_type>(step_ - rhs.step_);
   }
-  inline auto operator<=>(const RangeIterator<value_type>& rhs) const = default;
+  auto operator<=>(const RangeIterator<value_type>& rhs) const = default;
   // inline bool operator==(const RangeIterator& rhs) const { return *(*this) == rhs; }
   // inline bool operator!=(const RangeIterator& rhs) const { return !(*(*this) == rhs); }
   // inline bool operator>(const RangeIterator& rhs) const { return *(*this) < *rhs; }

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_LOG_VALUE_H
 #define FS_LOG_VALUE_H
+#include <compare>
 #include "unstable.h"
 namespace fs
 {

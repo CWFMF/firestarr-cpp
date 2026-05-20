@@ -2,284 +2,167 @@
 #ifndef FS_LOCATION_H
 #define FS_LOCATION_H
 #include "stdafx.h"
-#ifdef DEBUG_GRIDS
-#include "Log.h"
-#endif
+#include "StrictType.h"
 #include "Util.h"
 namespace fs
 {
-// have static versions of these outside Position so we can test with static_assert
-/**
- * \brief Create a hash from given values
- * \param XYBits Number of bits to use for storing one coordinate of Position data
- * \param row Row
- * \param column Column
- * \return Hash
- */
-[[nodiscard]] static inline constexpr HashSize do_hash(
-  const uint32_t XYBits,
-  const Idx row,
-  const Idx column
-) noexcept
+constexpr auto CELL_CENTER = static_cast<InnerSize>(0.5);
+// Number of bits to use for storing one coordinate of Position data
+static constexpr HashSize XYBits = std::bit_width<HashSize>(MAX_HEIGHT - 1);
+static_assert(pow_int<XYBits, size_t>(2) == MAX_HEIGHT);
+static_assert(pow_int<XYBits, size_t>(2) == MAX_WIDTH);
+static constexpr HashSize ColumnMask = bit_mask<XYBits, HashSize>();
+// // Number of bits to use for storing Position data
+// static constexpr HashSize PositionBits = XYBits * 2;
+// // Hash mask for bits being used for Position data
+// static constexpr Topo HashMask = bit_mask<PositionBits, Topo>();
+// static_assert(HashMask >= static_cast<size_t>(MAX_WIDTH) * MAX_HEIGHT - 1);
+// static_assert(HashMask <= std::numeric_limits<HashSize>::max());
+// HACK: use same invalid value as Idx versions
+// decimal cell position in the X direction
+struct XPos : public StrictType<XPos, units::Unitless, XYSize, std::numeric_limits<Idx>::max()>
 {
-  return (static_cast<HashSize>(row) << XYBits) + static_cast<HashSize>(column);
-}
-/**
- * \brief Row from hash
- * \param XYBits Number of bits to use for storing one coordinate of Position data
- * \param hash hash to extract row from
- * \return Row from hash
- */
-[[nodiscard]] static inline constexpr Idx unhash_row(
-  const uint32_t XYBits,
-  const Topo hash
-) noexcept
+  using StrictType::StrictType;
+  auto operator<=>(const XPos& rhs) const = default;
+};
+// decimal cell position in the Y direction
+struct YPos : public StrictType<YPos, units::Unitless, XYSize, std::numeric_limits<Idx>::max()>
 {
-  // don't need to use mask since bits just get shifted out
-  return static_cast<Idx>(hash >> XYBits);
-}
-/**
- * \brief Column
- * \param ColumnMask Hash mask for bits being used for Position data
- * \param hash hash to extract column from
- * \return Column
- */
-[[nodiscard]] static inline constexpr Idx unhash_column(
-  const Topo ColumnMask,
-  const Topo hash
-) noexcept
+  using StrictType::StrictType;
+  auto operator<=>(const YPos& rhs) const = default;
+};
+struct XIdx : public StrictType<XIdx, units::Unitless, Idx, std::numeric_limits<Idx>::max()>
 {
-  return static_cast<Idx>(hash & ColumnMask);
-}
-/**
- * \brief A Position with a row and column.
- */
-template <class V>
-class Position
+  using StrictType::StrictType;
+  explicit constexpr XIdx(const XPos& x) : XIdx(static_cast<Idx>(x.value)) { }
+  auto operator<=>(const XIdx& rhs) const = default;
+};
+struct YIdx : public StrictType<YIdx, units::Unitless, Idx, std::numeric_limits<Idx>::max()>
+{
+  using StrictType::StrictType;
+  explicit constexpr YIdx(const YPos& y) : YIdx(static_cast<Idx>(y.value)) { }
+  auto operator<=>(const YIdx& rhs) const = default;
+};
+// HACK: don't actually have bounds for now
+// The position within the Environment that a spreading point has.
+struct XYPos
+{
+  XPos x{};
+  YPos y{};
+  static constexpr XYPos Invalid() noexcept { return XYPos{XPos::Invalid(), YPos::Invalid()}; }
+  auto operator<=>(const XYPos& rhs) const = default;
+};
+// a point that is within a set of min/max bounds
+template <class S, int XMin, int XMax, int YMin, int YMax>
+struct BoundedPoint;
+//  Offset from a position
+using Offset = BoundedPoint<XYSize, -1, 1, -1, 1>;
+// The position within the Environment that a spreading point has.
+using CellPos = BoundedPoint<Idx, 0, MAX_WIDTH, 0, MAX_HEIGHT>;
+template <class S, int XMin, int XMax, int YMin, int YMax>
+struct BoundedPoint
+{
+  S x{XMin - 1};
+  S y{YMin - 1};
+  auto operator==(const BoundedPoint& rhs) const noexcept { return x == rhs.x && y == rhs.y; }
+  auto operator<=>(const BoundedPoint& rhs) const noexcept
+  {
+    if (auto cmp = x <=> rhs.x; 0 != cmp)
+    {
+      return cmp;
+    }
+    return y <=> rhs.y;
+  }
+  using class_type = BoundedPoint<S, XMin, XMax, YMin, YMax>;
+  static constexpr auto INVALID_X = XMin - 1;
+  static constexpr auto INVALID_Y = YMin - 1;
+};
+struct XYIdx
 {
 public:
-  Position() = default;
-  /**
-   * \brief Row
-   * \return Row
-   */
-  [[nodiscard]] constexpr Idx row() const noexcept { return unhashRow(hash()); }
-  /**
-   * \brief Column
-   * \return Column
-   */
-  [[nodiscard]] constexpr Idx column() const noexcept { return unhashColumn(hash()); }
-  /**
-   * \brief Hash derived from row and column
-   * \return Hash derived from row and column
-   */
-  [[nodiscard]] constexpr HashSize hash() const noexcept
+  // access value for format
+  constexpr inline Idx x_value() const noexcept { return x.value; }
+  constexpr inline Idx y_value() const noexcept { return y.value; }
+  constexpr XYIdx() = default;
+  explicit constexpr XYIdx(const XIdx& x0, const YIdx& y0) : x{x0}, y{y0}
   {
 #ifdef DEBUG_POINTS
-    constexpr int num_bits = std::numeric_limits<HashSize>::digits;
-    constexpr Topo m = bit_mask<num_bits, Topo>();
-    logging::check_equal(
-      static_cast<HashSize>(topo_data_), static_cast<HashSize>(m & topo_data_), "hash()"
-    );
-#endif
-    // can get away with just casting because all the other bits are outside this area
-    return static_cast<HashSize>(topo_data_);
-  }
-  /**
-   * \brief Equality operator
-   * \param rhs Position to compare to
-   * \return Whether or not these are equivalent
-   */
-  [[nodiscard]] constexpr bool operator==(const Position& rhs) const noexcept
-  {
-    return hash() == rhs.hash();
-  }
-  /**
-   * \brief Inequality operator
-   * \param rhs Position to compare to
-   * \return Whether or not these are not equivalent
-   */
-  [[nodiscard]] constexpr bool operator!=(const Position& rhs) const noexcept
-  {
-    return !(*this == rhs);
-  }
-
-protected:
-  /**
-   * \brief Stored hash that contains row and column data
-   */
-  V topo_data_;
-  /**
-   * \brief Number of bits to use for storing one coordinate of Position data
-   */
-  static constexpr uint32_t XYBits = std::bit_width<uint32_t>(MAX_ROWS - 1);
-  static_assert(pow_int<XYBits, size_t>(2) == MAX_ROWS);
-  static_assert(pow_int<XYBits, size_t>(2) == MAX_COLUMNS);
-  /**
-   * \brief Number of bits to use for storing Position data
-   */
-  static constexpr uint32_t PositionBits = XYBits * 2;
-  /**
-   * \brief Hash mask for bits being used for Position data
-   */
-  static constexpr Topo ColumnMask = bit_mask<XYBits, Topo>();
-  /**
-   * \brief Hash mask for bits being used for Position data
-   */
-  static constexpr Topo HashMask = bit_mask<PositionBits, Topo>();
-  static_assert(HashMask >= static_cast<size_t>(MAX_COLUMNS) * MAX_ROWS - 1);
-  static_assert(HashMask <= std::numeric_limits<HashSize>::max());
-  /**
-   * \brief Construct with given hash that may contain data from subclasses
-   * \param topo Hash to store
-   */
-  explicit constexpr Position(const Topo& topo) noexcept : topo_data_(static_cast<V>(topo)) { }
-  /**
-   * \brief Create a hash from given values
-   * \param row Row
-   * \param column Column
-   * \return Hash
-   */
-  [[nodiscard]] static constexpr HashSize doHash(const Idx row, const Idx column) noexcept
-  {
-    return do_hash(XYBits, row, column);
-// make sure hashing/unhashing works
-#define ROW_MIN 0
-#define ROW_MAX (MAX_ROWS - 1)
-#define COL_MIN 0
-#define COL_MAX (MAX_COLUMNS - 1)
-    static_assert(ROW_MIN == unhash_row(XYBits, do_hash(XYBits, ROW_MIN, COL_MIN)));
-    static_assert(COL_MIN == unhash_column(ColumnMask, do_hash(XYBits, ROW_MIN, COL_MIN)));
-    static_assert(ROW_MIN == unhash_row(XYBits, do_hash(XYBits, ROW_MIN, COL_MAX)));
-    static_assert(COL_MAX == unhash_column(ColumnMask, do_hash(XYBits, ROW_MIN, COL_MAX)));
-    static_assert(ROW_MAX == unhash_row(XYBits, do_hash(XYBits, ROW_MAX, COL_MIN)));
-    static_assert(COL_MIN == unhash_column(ColumnMask, do_hash(XYBits, ROW_MAX, COL_MIN)));
-    static_assert(ROW_MAX == unhash_row(XYBits, do_hash(XYBits, ROW_MAX, COL_MAX)));
-    static_assert(COL_MAX == unhash_column(ColumnMask, do_hash(XYBits, ROW_MAX, COL_MAX)));
-#undef ROW_MIN
-#undef ROW_MAX
-#undef COL_MIN
-#undef COL_MAX
-  }
-  /**
-   * \brief Row from hash
-   * \param hash hash to extract row from
-   * \return Row from hash
-   */
-  [[nodiscard]] static constexpr Idx unhashRow(const Topo hash) noexcept
-  {
-    return unhash_row(XYBits, hash);
-  }
-  /**
-   * \brief Column
-   * \param hash hash to extract column from
-   * \return Column
-   */
-  [[nodiscard]] static constexpr Idx unhashColumn(const Topo hash) noexcept
-  {
-    return unhash_column(ColumnMask, hash);
-  }
-};
-template <class V>
-inline bool operator<(const Position<V>& lhs, const Position<V>& rhs)
-{
-  return lhs.hash() < rhs.hash();
-}
-template <class V>
-inline bool operator>(const Position<V>& lhs, const Position<V>& rhs)
-{
-  return rhs < lhs;
-}
-template <class V>
-inline bool operator<=(const Position<V>& lhs, const Position<V>& rhs)
-{
-  return !(lhs > rhs);
-}
-template <class V>
-inline bool operator>=(const Position<V>& lhs, const Position<V>& rhs)
-{
-  return !(lhs < rhs);
-}
-#ifdef DEBUG_DIRECTIONS
-// FIX: seems like there must be something with enum type that would be better?
-static const map<CellIndex, const char*> DIRECTION_NAMES{
-  {DIRECTION_NONE, "NONE"},
-  {DIRECTION_W, "W"},
-  {DIRECTION_E, "E"},
-  {DIRECTION_S, "S"},
-  {DIRECTION_N, "N"},
-  {DIRECTION_SW, "SW"},
-  {DIRECTION_NE, "NE"},
-  {DIRECTION_NW, "NW"},
-  {DIRECTION_SE, "SE"}
-};
-#endif
-class Location : public Position<HashSize>
-{
-public:
-  using Position::Position;
-  /**
-   * \brief Construct using hash of row and column
-   * \param hash HashSize derived form row and column
-   */
-// NOTE: do this so that we don't get warnings about unused variables in release mode
-#ifndef DEBUG_GRIDS
-  explicit constexpr Location(const Idx, const Idx, const HashSize hash) noexcept
-#else
-  explicit Location(const Idx row, const Idx column, const HashSize hash) noexcept
-#endif
-    : Location(hash & HashMask)
-  {
-#ifdef DEBUG_GRIDS
-    logging::check_fatal(
-      row < 0 || row >= MAX_ROWS, "Row {:d} is out of bounds ({:d}, {:d})", row, 0, MAX_ROWS
-    );
-    logging::check_fatal(
-      column < 0 || column >= MAX_COLUMNS,
-      "Column {:d} is out of bounds ({:d}, {:d})",
-      column,
-      0,
-      MAX_COLUMNS
-    );
-    logging::check_fatal(
-      (row != unhashRow(topo_data_)) || column != unhashColumn(topo_data_),
-      "Hash is incorrect ({:d}, {:d})",
-      row,
-      column
-    );
+    // HACK: don't use logging since breaks constexpr
+    if (-1 >= x.value || MAX_WIDTH <= x.value || -1 >= y.value || MAX_HEIGHT <= y.value)
+    {
+      cout << std::format("xy out of bounds: ({}, {})", x.value, y.value);
+      exit(-1);
+    }
 #endif
   }
-  /**
-   * \brief Constructor
-   * \param row Row
-   * \param column Column
-   */
-  Location(const Idx row, const Idx column) noexcept
-    : Location(row, column, doHash(row, column) & HashMask)
-  {
-#ifdef DEBUG_GRIDS
-    logging::check_fatal(
-      row >= MAX_ROWS || column >= MAX_COLUMNS, "Location out of bounds ({:d}, {:d})", row, column
-    );
-#endif
-  }
-  Location(const Coordinates& coord) : Location(std::get<0>(coord), std::get<1>(coord)) { }
-  /**
-   * \brief Construct with given hash that may contain data from subclasses
-   * \param hash_size Hash to store
-   */
-  explicit constexpr Location(const HashSize& hash_size) noexcept
-    : Position(static_cast<HashSize>(hash_size))
+  template <class T>
+  explicit constexpr XYIdx(const T& x0, const T& y0)
+    : XYIdx(XIdx{static_cast<Idx>(x0)}, YIdx{static_cast<Idx>(y0)})
   { }
-  /**
-   * \brief Construct with given hash that may contain data from subclasses
-   * \param hash_size Hash to store
-   */
-  template <class P>
-  explicit constexpr Location(const Position<P>& position) noexcept
-    : Position(static_cast<HashSize>(position.hash()))
+  template <class S, int XMin, int XMax, int YMin, int YMax>
+  explicit constexpr XYIdx(const BoundedPoint<S, XMin, XMax, YMin, YMax>& pt) noexcept
+    : XYIdx(pt.x, pt.y)
   { }
+  explicit constexpr XYIdx(const XYPos& xy) noexcept : XYIdx(XIdx{xy.x}, YIdx{xy.y}) { }
+  constexpr auto operator==(const XYIdx& rhs) const noexcept { return x == rhs.x && y == rhs.y; }
+  constexpr auto operator<=>(const XYIdx& rhs) const noexcept
+  {
+    // maintain same order as hash was, regardless of how actual object is stored
+    if (const auto cmp = y <=> rhs.y; 0 != cmp)
+    {
+      return cmp;
+    }
+    return x <=> rhs.x;
+  }
+  XYPos operator+(const XYPos& rhs) const noexcept
+  {
+    return XYPos{XPos{rhs.x.value + x.value}, YPos{rhs.y.value + y.value}};
+  }
+  XYPos center() const noexcept { return *this + XYPos{XPos{CELL_CENTER}, YPos{CELL_CENTER}}; }
+  XYIdx operator+(const XYIdx& rhs) const noexcept { return XYIdx{x + rhs.x, y + rhs.y}; }
+  XYIdx operator+(const XIdx& rhs) const noexcept { return XYIdx{x + rhs, y}; }
+  XYIdx operator+(const YIdx& rhs) const noexcept { return XYIdx{x, y + rhs}; }
+  /**
+   * Determine the direction that a given cell is in from another cell. This is the
+   * same convention as wind (i.e. the direction it is coming from, not the direction
+   * it is going towards).
+   * @param src The cell to find directions relative to
+   * @param dst The cell to find the direction of
+   * @return Direction that you would have to go in to get to dst from src
+   */
+  inline constexpr CellIndex relativeIndex(const XYIdx& rhs) const noexcept
+  {
+    constexpr CellIndex DIRECTIONS[9] = {
+      DIRECTION_SW,
+      DIRECTION_S,
+      DIRECTION_SE,
+      DIRECTION_W,
+      DIRECTION_NONE,
+      DIRECTION_E,
+      DIRECTION_NW,
+      DIRECTION_N,
+      DIRECTION_NE
+    };
+    return DIRECTIONS[((x - rhs.x).value + 1) + 3 * ((y - rhs.y).value + 1)];
+  }
+  XIdx x{};
+  YIdx y{};
 };
+inline XYPos operator+(const XYPos& lhs, const XYIdx& rhs) noexcept { return rhs + lhs; }
+static inline constexpr std::pair<XIdx, YIdx> hash_to_xy(const XYIdx& xy) noexcept
+{
+  return {XIdx{xy.x_value()}, YIdx{xy.y_value()}};
+}
+static inline constexpr std::pair<Idx, Idx> hash_to_xy_value(const XYIdx& xy) noexcept
+{
+  const auto [x, y] = hash_to_xy(xy);
+  return {x.value, y.value};
+}
+static inline constexpr size_t to_index(const XYIdx& xy) noexcept
+{
+  // NOTE: do this here since fixed grid is the only reason for this?
+  return (static_cast<HashSize>(xy.y_value()) << XYBits) + static_cast<HashSize>(xy.x_value());
+}
 /**
  * Determine the direction that a given cell is in from another cell. This is the
  * same convention as wind (i.e. the direction it is coming from, not the direction
@@ -288,6 +171,9 @@ public:
  * @param dst The cell to find the direction of
  * @return Direction that you would have to go in to get to dst from src
  */
-CellIndex relativeIndex(const Location& src, const Location& dst) noexcept;
+inline constexpr CellIndex relativeIndex(const XYIdx& src, const XYIdx& dst) noexcept
+{
+  return src.relativeIndex(dst);
+}
 }
 #endif

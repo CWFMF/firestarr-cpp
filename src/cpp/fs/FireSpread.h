@@ -4,11 +4,19 @@
 #include "stdafx.h"
 #include "Cell.h"
 #include "FWI.h"
-#include "InnerPos.h"
+#include "Location.h"
 #include "Point.h"
 #include "Weather.h"
 namespace fs
 {
+struct ROSOffset
+{
+  IntensitySize intensity;
+  ROSSize ros;
+  Direction raz;
+  Offset offset;
+};
+using OffsetSet = vector<ROSOffset>;
 class FuelType;
 static constexpr MathSize MAX_SPREAD_ANGLE = 5.0;
 static constexpr MathSize INVALID_ROS = -1.0;
