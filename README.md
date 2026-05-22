@@ -24,15 +24,15 @@ FireSTARR will read from this location without explicit definition
 
 `OUTPUT_DATE_OFFSETS = [1,2,3,7,14]` Days to output probability contours for. In this case, days 1, 2, 3 7 and 14 days.
 
-`FUEL_LOOKUP_TABLE = ./fuel.lut` Lookup table for fuels (prometheus format)
+`FUEL_LOOKUP_TABLE = ./fuel.lut` Lookup table (LUT) for fuels (prometheus format). The Lookup table is also the location where you would provide meaningful overrides for non-fuels. The LUT that is shipped with FireSTARR has non-fuels (except water) being turned into D-2 or some low conifer M series fuel. This ensure some spread through non-fuel.
 
-`MINIMUM_FFMC = 65.0` Minimum ffmc for fire to spread
+`MINIMUM_FFMC = 65.0` Minimum ffmc for fire to spread. This is essentially a global burning condition, without an FFMC over 65, fire will not spread.
 
-`MINIMUM_FFMC_AT_NIGHT = 85.0` Minimum ffmc for fire to spread at night
+`MINIMUM_FFMC_AT_NIGHT = 85.0` Minimum ffmc for fire to spread at night. This is essentially a global burning condition, without an FFMC over 85, fire will not spread.
 
-`OFFSET_SUNRISE = 0.0` Time after sunrise to start burning (hours)
+`OFFSET_SUNRISE = 0.0` Time after sunrise to start burning (hours). Another global burning condition to limit fire spread.
 
-`OFFSET_SUNSET = 0.0` Time before sunset to stop burning (hours)
+`OFFSET_SUNSET = 0.0` Time before sunset to stop burning (hours). Another global burning condition to limit fire spread.
 
 `THRESHOLD_SCENARIO_WEIGHT = 1.0` Weight given to the scenario thresholds
 
