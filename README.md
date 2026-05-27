@@ -34,11 +34,22 @@ FireSTARR will read from this location without explicit definition
 
 `OFFSET_SUNSET = 0.0` Time before sunset to stop burning (hours). Another global burning condition to limit fire spread.
 
+The `spread potential thresholds` are set using 3 separate random numbers, scenario, day and hour. These numbers are all drawn independently and aggregated into a total weight after being multiple against their weights as established with the `THRESHOLD_***_WEIGHT`. 
+
 `THRESHOLD_SCENARIO_WEIGHT = 1.0` Weight given to the scenario thresholds
 
 `THRESHOLD_DAILY_WEIGHT = 3.0` Weight given to the daily thresholds
 
 `THRESHOLD_HOURLY_WEIGHT = 2.0` Weight given to the hourly thresholds
+
+What this looks like in practice is as follows.
+
+Wherever the weighted simulation + daily + total threshold is above the value required for spread then the fire will spread.
+With the same scenario for weather, there can still be different outcomes. For example, if the scenario produced the sine-wave for the rate of spread, you can see that for the 2nd scenario’s 1st day, the rate of spread is above the threshold most of the time, and thus it would spread, whereas the 1st scenario would spread briefly before noon, but otherwise not spread during that day.
+
+![Spread Example 1](./images/Spread_1.png)
+![Spread Example 2](./images/Spread_2.png)
+
 
 `DEFAULT_PERCENT_CONIFER = 50` Default M-1/M-2 percent conifer if none specified
 
