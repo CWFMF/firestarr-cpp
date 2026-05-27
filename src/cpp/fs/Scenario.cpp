@@ -652,17 +652,8 @@ CellPointsMap apply_offsets_spreadkey(
   spreading_points::mapped_type& cell_pts_map
 )
 {
-  // NOTE: really tried to do this in parallel, but not enough points
-  // in a cell for it to work well
   CellPointsMap r1{};
   OffsetSet offsets_after_duration{};
-#ifdef DEBUG_CELLPOINTS
-  logging::verbose("Applying {:d} offsets", offsets.size());
-#endif
-  // std::transform(
-  //   offsets.cbegin(),
-  //   offsets.cend(),
-  //   std::back_inserter(offsets_after_duration),
   offsets_after_duration.resize(offsets.size());
   std::transform(
     offsets.cbegin(),
@@ -674,177 +665,33 @@ CellPointsMap apply_offsets_spreadkey(
       };
     }
   );
-#ifdef DEBUG_CELLPOINTS
-  logging::verbose(
-    "Calculated {:d} offsets after duration {:f}", offsets_after_duration.size(), duration
-  );
-  logging::verbose("cell_pts_map has {:d} items", cell_pts_map.size());
-#endif
-  for (auto& pts_for_cell : cell_pts_map)
+  for (auto& [location, cell_pts] : cell_pts_map)
   {
-    auto& [location, cell_pts] = pts_for_cell;
-#ifdef DEBUG_CELLPOINTS
-    logging::note("cell_pts for ({:d}, {:d}) has {:d} items", src.x(), src.y(), cell_pts.size());
-#endif
     if (cell_pts.empty())
     {
-#ifdef DEBUG_CELLPOINTS
-      logging::note("Cell ({:d}, {:d}) ignored because empty", src.x(), src.y());
-#endif
       continue;
     }
-    //////////////////////////////////////////////////////////////////////////////////
     auto pt_dirs = cell_pts.point_directions();
     std::sort(pt_dirs.begin(), pt_dirs.end());
     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
     auto it_pt_dirs = pt_dirs.cbegin();
     while (it_pt_dirs != it_pt_dirs_last)
     {
-      const auto& pt_dir = *it_pt_dirs;
-      const auto& [pt, dir] = pt_dir;
-      const XYIdx src{pt};
-#ifdef DEBUG_CELLPOINTS
-      const auto [cell_x, cell_y] = hash_to_xy_value(cell_pts.pos());
-#endif
-      // apply offsets to point
-      // should be quicker to loop over offsets in inner loop
+      const auto& [pt, dir] = *it_pt_dirs;
       for (const ROSOffset& r : offsets_after_duration)
       {
         const auto& x_o = r.offset.x;
         const auto& y_o = r.offset.y;
-#ifdef DEBUG_CELLPOINTS
-        const auto dir_diff = abs(r.raz.asDegrees() - dir);
-        logging::verbose(
-          "location.x {:d}; location.y {:d};"
-          "cell_x {:d}; cell_y {:d};"
-          " ros {:f}; x {:f}; y {:f}; duration {:f};\n",
-          location.x_value(),
-          location.y_value(),
-          cell_x,
-          cell_y,
-          r.ros,
-          pt.x.value,
-          pt.y.value,
-          duration
+        const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
+        std::ignore = insert(
+          r1,
+          pt,
+          SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+          pt_new
         );
-#endif
-        // // NOTE: there should be no change in the extent of the fire if we exclude things
-        // behind the normal to the direction it came from
-        // //       - but if we exclude too much then it can change how things spread, even if it
-        // is a more representative angle for the grids if (is_initial || MAX_DEGREES >= dir_diff)
-        {
-#ifdef DEBUG_CELLPOINTS
-          logging::check_fatal(
-            -1 >= pt.x.value || MAX_WIDTH <= pt.x.value,
-            "x out of bounds when applying offsets: {}",
-            pt.x.value
-          );
-          logging::check_fatal(
-            -1 >= pt.y.value || MAX_HEIGHT <= pt.y.value,
-            "y out of bounds when applying offsets: {}",
-            pt.y.value
-          );
-#endif
-          const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
-#ifdef DEBUG_CELLPOINTS
-          logging::verbose(
-            "({:d}, {:d}): {:f}: [{:f} => ({:f}, {:f})] + [{:f} => ({:f}, {:f})] = [{:f} => ({:f}, {:f})]",
-            cell_x,
-            cell_y,
-            dir_diff,
-            dir,
-            x_o,
-            y_o,
-            r.raz.asDegrees(),
-            pt.x.value,
-            pt.y.value,
-            r.raz.asDegrees(),
-            pt_new.x.value,
-            pt_new.y.value
-          );
-#endif
-          std::ignore = insert(
-            r1,
-            pt,
-            SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
-            pt_new
-          );
-#ifdef DEBUG_CELLPOINTS
-          logging::note("r1 is now {:d} items", r1.size());
-#endif
-        }
       }
       ++it_pt_dirs;
     }
-    //     //////////////////////////////////////////////////////////////////////////////////
-    //     auto& pts = cell_pts.pts_.points;
-    //     std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
-    //     for (size_t i = 0; i < pts_inner.size(); ++i)
-    //     {
-    //       pt_dirs[i] = {pts[i], dirs[i]};
-    //     }
-    //     std::sort(pt_dirs.begin(), pt_dirs.end());
-    //     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
-    //     auto it_pt_dirs = pt_dirs.cbegin();
-    //     while (it_pt_dirs != it_pt_dirs_last)
-    //     {
-    //       const auto& pt_dir = *it_pt_dirs;
-    //       const auto& [src, dir] = pt_dir;
-    //       const auto [cell_x, cell_y] = hash_to_xy_value(cell_pts.cell_x_y_);
-    //       // apply offsets to point
-    //       // should be quicker to loop over offsets in inner loop
-    //       for (const ROSOffset& r : offsets_after_duration)
-    //       {
-    //         const auto& x_o = r.offset.x;
-    //         const auto& y_o = r.offset.y;
-    //         const auto dir_diff = abs(r.raz.asDegrees() - dir);
-    //         // #ifdef DEBUG_CELLPOINTS
-    //         logging::verbose(
-    //           "location.x {:d}; location.y {:d};"
-    //           "cell_x {:d}; cell_y {:d};"
-    //           " ros {:f}; x {:f}; y {:f}; duration {:f};\n",
-    //           location.x_value(),
-    //           location.y_value(),
-    //           cell_x,
-    //           cell_y,
-    //           r.ros,
-    //           src.x.value,
-    //           src.y.value,
-    //           duration
-    //         );
-    //         // // NOTE: there should be no change in the extent of the fire if we exclude things
-    //         // behind the normal to the direction it came from
-    //         // //       - but if we exclude too much then it can change how things spread, even
-    //         if it
-    //         // is a more representative angle for the grids if (is_initial || MAX_DEGREES >=
-    //         dir_diff)
-    //         {
-    //           const XPos new_x{x_o + src.x.value};
-    //           const YPos new_y{y_o + src.y.value};
-    //           logging::verbose(
-    //             "({:d}, {:d}): {:f}: [{:f} => ({:f}, {:f})] + [{:f} => ({:f}, {:f})] = [{:f} =>
-    //             ({:f}, {:f})]", cell_x, cell_y, dir_diff, dir, x_o, y_o, r.raz.asDegrees(),
-    //             src.x.value,
-    //             src.y.value,
-    //             r.raz.asDegrees(),
-    //             new_x.value,
-    //             new_y.value
-    //           );
-    //           // TODO: switch to this version and confirm identical results
-    //           // insert(
-    //           //   r1,
-    //           //   src,
-    //           //   SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
-    //           //   new_x,
-    //           //   new_y
-    //           // );
-    // #ifdef DEBUG_CELLPOINTS
-    //           logging::note("r1 is now {:d} items", r1.size());
-    // #endif
-    //         }
-    //       }
-    //       ++it_pt_dirs;
-    //       //////////////////////////////////////////////////////////////////////////////////
   }
   return r1;
 }
