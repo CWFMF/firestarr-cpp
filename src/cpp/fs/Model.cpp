@@ -269,8 +269,9 @@ void Model::findStarts(const XYIdx& location)
 {
   logging::error("Trying to start a fire in non-fuel");
   Idx range = 1;
-  // HACK: should always be centered in the grid
   auto [x_loc, y_loc] = hash_to_xy(location);
+  const auto width = env_->width();
+  const auto height = env_->height();
   while (starts_.empty() && (range < (MAX_WIDTH / 2)))
   {
     for (Idx x = -range; x <= range; ++x)
@@ -282,11 +283,19 @@ void Model::findStarts(const XYIdx& location)
         {
           // is this going to work if negative?
           // const auto xy = location + XIdx{x} + YIdx{y};
-          const XYIdx xy{x_loc + XIdx{x}, y_loc + YIdx{y}};
-          const auto for_cell = env_->cell(xy);
-          if (!is_null_fuel(for_cell))
+          const XIdx x1{x_loc + XIdx{x}};
+          if (0 <= x1.value && x1.value < width)
           {
-            starts_.push_back(xy);
+            const YIdx y1{y_loc + YIdx{y}};
+            if (0 <= y1.value && y1.value < height)
+            {
+              const XYIdx xy{x1, y1};
+              const auto for_cell = env_->cell(xy);
+              if (!is_null_fuel(for_cell))
+              {
+                starts_.push_back(xy);
+              }
+            }
           }
         }
       }
