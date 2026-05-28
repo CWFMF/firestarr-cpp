@@ -151,12 +151,11 @@ public:
 inline XYPos operator+(const XYPos& lhs, const XYIdx& rhs) noexcept { return rhs + lhs; }
 static inline constexpr std::pair<XIdx, YIdx> hash_to_xy(const XYIdx& xy) noexcept
 {
-  return {XIdx{xy.x_value()}, YIdx{xy.y_value()}};
+  return {xy.x, xy.y};
 }
 static inline constexpr std::pair<Idx, Idx> hash_to_xy_value(const XYIdx& xy) noexcept
 {
-  const auto [x, y] = hash_to_xy(xy);
-  return {x.value, y.value};
+  return {xy.x_value(), xy.y_value()};
 }
 static inline constexpr size_t to_index(const XYIdx& xy) noexcept
 {
