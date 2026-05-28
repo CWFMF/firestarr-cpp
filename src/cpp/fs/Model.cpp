@@ -921,7 +921,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   bool is_being_cancelled = false;
   // HACK: use initial value for type
   auto timer = std::thread([&]() {
-    constexpr auto CHECK_INTERVAL = std::chrono::seconds(1);
+    constexpr auto CHECK_INTERVAL = 1s;
     bool keep_checking{true};
     const bool is_limited = 0 != settings.maximum_time_seconds;
     const bool with_interim = 0 != interim_save_interval_.count();
