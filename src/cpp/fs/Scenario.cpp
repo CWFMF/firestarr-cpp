@@ -680,7 +680,7 @@ CellPointsMap apply_offsets_spreadkey(
     {
       continue;
     }
-    futures.emplace_back(pool().spread(std::move(cell_pts), offsets_after_duration, arrival_time));
+    futures.emplace_back(pool().spread(std::move(cell_pts), &offsets_after_duration, arrival_time));
   }
   while (!futures.empty())
   {
