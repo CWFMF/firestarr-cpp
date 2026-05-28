@@ -11,7 +11,7 @@ class SpreadThreadPool
 {
 public:
   // get working with no return values first
-  using input_type = std::tuple<CellPoints, const OffsetSet*, DurationSize>;
+  using input_type = std::tuple<const CellPoints*, const OffsetSet*, DurationSize>;
   using promise_type = std::promise<CellPointsMap>;
   using future_type = std::future<CellPointsMap>;
 
@@ -68,7 +68,7 @@ public:
             CellPointsMap r1{};
             auto& [cell_pts, offsets_after_duration, arrival_time] = input;
             // done with list so don't need mutex
-            auto pt_dirs = cell_pts.point_directions();
+            auto pt_dirs = cell_pts->point_directions();
             std::sort(pt_dirs.begin(), pt_dirs.end());
             const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
             auto it_pt_dirs = pt_dirs.cbegin();
@@ -100,13 +100,13 @@ public:
     }
   }
   future_type spread(
-    CellPoints&& cell_pts,
+    const CellPoints* cell_pts,
     const OffsetSet* offsets,
     const DurationSize arrival_time
   ) noexcept
   {
     lock_guard<mutex> lock{mutex_};
-    jobs_.emplace_back(promise_type{}, input_type{std::move(cell_pts), offsets, arrival_time});
+    jobs_.emplace_back(promise_type{}, input_type{cell_pts, offsets, arrival_time});
     return jobs_.back().first.get_future();
   }
   void stop() noexcept { should_stop = true; }
