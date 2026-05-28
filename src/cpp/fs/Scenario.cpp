@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Scenario.h"
+#include "BurnedData.h"
 #include "Cell.h"
 #include "CellPoints.h"
 #include "FireSpread.h"
@@ -13,8 +14,14 @@
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
 #include "Settings.h"
+#include "ThreadPool.h"
 namespace fs
 {
+static SpreadThreadPool& pool() noexcept
+{
+  static SpreadThreadPool pool_{};
+  return pool_;
+}
 using std::cout;
 // constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
@@ -646,13 +653,14 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   return this;
 }
 CellPointsMap apply_offsets_spreadkey(
+  const BurnedData& unburnable,
   const DurationSize& arrival_time,
   const DurationSize& duration,
   const OffsetSet& offsets,
   spreading_points::mapped_type& cell_pts_map
 )
 {
-  CellPointsMap r1{};
+  CellPointsMap result{};
   OffsetSet offsets_after_duration{};
   offsets_after_duration.resize(offsets.size());
   std::transform(
@@ -665,35 +673,34 @@ CellPointsMap apply_offsets_spreadkey(
       };
     }
   );
+  std::vector<SpreadThreadPool::future_type> futures{};
   for (auto& [location, cell_pts] : cell_pts_map)
   {
     if (cell_pts.empty())
     {
       continue;
     }
-    auto pt_dirs = cell_pts.point_directions();
-    std::sort(pt_dirs.begin(), pt_dirs.end());
-    const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
-    auto it_pt_dirs = pt_dirs.cbegin();
-    while (it_pt_dirs != it_pt_dirs_last)
+    futures.emplace_back(pool().spread(std::move(cell_pts), offsets_after_duration, arrival_time));
+  }
+  while (!futures.empty())
+  {
+    auto it = futures.begin();
+    while (futures.end() != it)
     {
-      const auto& [pt, dir] = *it_pt_dirs;
-      for (const ROSOffset& r : offsets_after_duration)
+      auto& f = *it;
+      if (const auto status = f.wait_for(1ms); std::future_status::ready == status)
       {
-        const auto& x_o = r.offset.x;
-        const auto& y_o = r.offset.y;
-        const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
-        std::ignore = insert(
-          r1,
-          pt,
-          SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
-          pt_new
-        );
+        auto r1 = f.get();
+        result.merge(unburnable, r1);
+        it = futures.erase(it);
       }
-      ++it_pt_dirs;
+      else
+      {
+        ++it;
+      }
     }
   }
-  return r1;
+  return result;
 }
 void Scenario::scheduleFireSpread(const Event& event)
 {
@@ -788,7 +795,7 @@ void Scenario::scheduleFireSpread(const Event& event)
       auto& key = kv0.first;
       const auto& offsets = spread_info_[key].offsets();
       spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey(new_time, duration, offsets, cell_pts);
+      auto r = apply_offsets_spreadkey(unburnable_, new_time, duration, offsets, cell_pts);
       return r;
     });
   auto it = spread.begin();
