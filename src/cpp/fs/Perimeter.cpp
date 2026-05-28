@@ -40,14 +40,15 @@ BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const
   {
     for (auto x = min_x; x < max_width; ++x)
     {
+      const XYIdx xy{x, y};
+      const auto loc = env.cell(xy);
       const auto x0 = static_cast<Idx>(x + offset_x);
       const auto y0 = static_cast<Idx>(y + offset_y);
       const XYIdx fixed_loc{x0, y0};
-      const auto for_cell = env.cell(fixed_loc);
       const auto value = perim_grid.at(fixed_loc);
-      if (value != perim_grid.nodataValue() && !is_null_fuel(for_cell))
+      if (value != perim_grid.nodataValue() && !is_null_fuel(loc))
       {
-        this->GridMap<unsigned char, unsigned char>::set(fixed_loc, value);
+        this->GridMap<unsigned char, unsigned char>::set(xy, value);
         ++count;
       }
     }
