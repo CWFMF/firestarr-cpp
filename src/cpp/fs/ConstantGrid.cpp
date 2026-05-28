@@ -138,12 +138,12 @@ int value_at_int(void* const buf, const FullIdx offset)
   const tsample_t smp{};
   logging::debug(
     "Want to clip grid to ({:d}, {:d}) => ({:d}, {:d}) for a {:d}{:d} raster",
-    min_y,
     min_x,
-    max_y,
+    min_y,
     max_x,
-    actual_height,
-    actual_width
+    max_y,
+    actual_width,
+    actual_height
   );
   // HACK: it really feels like there should be a better way to do this
   switch (sample_format)
