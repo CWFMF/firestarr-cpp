@@ -306,5 +306,6 @@ struct FullCoordinates
  * \brief Type of clock to use for times
  */
 using Clock = std::chrono::steady_clock;
+using namespace std::chrono_literals;
 }
 #endif
