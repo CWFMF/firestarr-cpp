@@ -6,7 +6,6 @@
 #include <thread>
 #include "CellPoints.h"
 #include "FireSpread.h"
-#include "SafeVector.h"
 #include "Statistics.h"
 #include "unstable.h"
 #ifdef DEBUG_THREADS
@@ -43,7 +42,8 @@ public:
     std::ranges::sort(sizes_);
     Statistics s{sizes_};
     logging::note(
-      "ThreadPool queue stats: {:0.1f} - {:0.1f} (mean {:0.1f}, median {:0.1f})",
+      "ThreadPool queue stats: {:d} calls - {:0.1f} - {:0.1f} (mean {:0.1f}, median {:0.1f})",
+      sizes_.size(),
       s.min(),
       s.max(),
       s.mean(),
