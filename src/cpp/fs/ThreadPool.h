@@ -6,6 +6,9 @@
 #include <thread>
 #include "CellPoints.h"
 #include "FireSpread.h"
+#include "SafeVector.h"
+#include "Statistics.h"
+#include "unstable.h"
 #ifdef DEBUG_THREADS
 #include "Log.h"
 #endif
@@ -20,6 +23,7 @@ public:
   using future_type = std::future<CellPointsMap>;
 
 private:
+  std::vector<MathSize> sizes_{};
   mutable std::condition_variable cv_;
   mutable mutex mutex_{};
   mutable mutex mutex_check{};
@@ -36,6 +40,15 @@ public:
     std::unique_lock<mutex> lock{mutex_};
     lock.unlock();
     cv_.notify_all();
+    std::ranges::sort(sizes_);
+    Statistics s{sizes_};
+    logging::note(
+      "ThreadPool queue stats: {:0.1f} - {:0.1f} (mean {:0.1f}, median {:0.1f})",
+      s.min(),
+      s.max(),
+      s.mean(),
+      s.median()
+    );
   }
   SpreadThreadPool(const size_t num_threads = 0) noexcept
     : num_threads_(0 == num_threads ? std::thread::hardware_concurrency() : num_threads)
@@ -53,6 +66,7 @@ public:
             {
               return;
             }
+            sizes_.emplace_back(jobs_.size());
             // std::lock_guard<mutex> lock1{mutex_check};
             // if (jobs_.empty())
             // {
