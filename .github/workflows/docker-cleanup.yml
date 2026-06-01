@@ -20,7 +20,7 @@ jobs:
       DEFAULT_PACKAGES: 'firestarr-cpp/cache,firestarr-cpp/firestarr'
       DEFAULT_DRY_RUN: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
 
