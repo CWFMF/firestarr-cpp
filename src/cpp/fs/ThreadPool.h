@@ -4,6 +4,7 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <utility>
 #include "CellPoints.h"
 #include "FireSpread.h"
 #ifdef DEBUG_THREADS
@@ -43,13 +44,15 @@ static CellPointsMap spread_points(
   }
   return r1;
 }
-class SpreadThreadPool
+template <class InputType, class ReturnType>
+class ThreadPool
 {
 public:
   // get working with no return values first
-  using input_type = std::tuple<const CellPoints*, const OffsetSet*, DurationSize>;
-  using promise_type = std::promise<CellPointsMap>;
-  using future_type = std::future<CellPointsMap>;
+  using input_type = InputType;
+  using return_type = ReturnType;
+  using promise_type = std::promise<ReturnType>;
+  using future_type = std::future<ReturnType>;
 
 private:
 #ifdef THREAD_STATS
@@ -65,9 +68,10 @@ private:
   std::vector<std::jthread> threads_{};
   size_t num_threads_{};
   bool should_stop{false};
+  string name_{};
 
 public:
-  ~SpreadThreadPool() noexcept
+  virtual ~ThreadPool() noexcept
   {
     should_stop = true;
     std::unique_lock<mutex> lock{mutex_};
@@ -77,7 +81,8 @@ public:
     std::ranges::sort(sizes_);
     Statistics s{sizes_};
     logging::note(
-      "ThreadPool queue stats: {:d} calls - {:0.1f} - {:0.1f} (mean {:0.1f}, median {:0.1f})",
+      "ThreadPool for {} queue stats: {:d} calls - {:0.1f} - {:0.1f} (mean {:0.1f}, median {:0.1f})",
+      name_,
       sizes_.size(),
       s.min(),
       s.max(),
@@ -87,7 +92,8 @@ public:
     std::ranges::sort(active_);
     Statistics a{active_};
     logging::note(
-      "ThreadPool active stats: {:d} calls - {:0.1f} - {:0.1f} (mean {:0.1f}, median {:0.1f})",
+      "ThreadPool for {} active stats: {:d} calls - {:0.1f} - {:0.1f} (mean {:0.1f}, median {:0.1f})",
+      name_,
       active_.size(),
       a.min(),
       a.max(),
@@ -96,15 +102,17 @@ public:
     );
 #endif
   }
-  SpreadThreadPool(const size_t num_threads = 0) noexcept
-    : num_threads_(0 == num_threads ? std::thread::hardware_concurrency() : num_threads)
+  virtual ReturnType process(input_type input) noexcept = 0;
+  ThreadPool(string name, const size_t num_threads = 0) noexcept
+    : num_threads_{0 == num_threads ? std::thread::hardware_concurrency() : num_threads},
+      name_{std::move(name)}
   {
     for (size_t i = 0; i < num_threads_; ++i)
     {
       threads_.emplace_back([&]() {
         while (!should_stop)
         {
-          job_queue::value_type pf;
+          typename job_queue::value_type pf;
           {
             std::unique_lock<mutex> lock{mutex_};
             cv_.wait(lock, [this]() { return should_stop || !jobs_.empty(); });
@@ -117,48 +125,48 @@ public:
             sizes_.emplace_back(jobs_.size());
             active_.emplace_back(active_threads_);
 #endif
-            // std::lock_guard<mutex> lock1{mutex_check};
-            // if (jobs_.empty())
-            // {
-            //   logging::error("jobs should not be empty");
-            //   continue;
-            // }
-            // get work
             pf = std::move(jobs_.front());
             jobs_.pop();
           }
           auto& [prom, input] = pf;
-          auto& [cell_pts, offsets_after_duration, arrival_time] = input;
-          // if (!prom.get_future().valid())
-          // {
-          //   logging::error("invalid promise");
-          //   continue;
-          // }
-          // logging::note("Jobs waiting: {:d}", jobs_.size());
-          // indicate that it's done
-          prom.set_value(spread_points(*cell_pts, *offsets_after_duration, arrival_time));
+          prom.set_value(process(input));
 #ifdef THREAD_STATS
           --active_threads_;
-#endif
-#ifdef DEBUG_THREADS
-          logging::extensive("Thread {:03d} looping", n);
 #endif
         }
       });
     }
   }
+  future_type schedule(input_type inputs) noexcept
+  {
+    std::unique_lock<mutex> lock{mutex_};
+    jobs_.emplace(promise_type{}, inputs);
+    auto result = jobs_.back().first.get_future();
+    lock.unlock();
+    cv_.notify_one();
+    return result;
+  }
+};
+class SpreadThreadPool
+  : public ThreadPool<
+      std::tuple<const CellPoints*, const OffsetSet*, DurationSize>,
+      fs::CellPointsMap>
+{
+public:
+  return_type process(input_type input) noexcept override
+  {
+    auto [cell_pts, offsets_after_duration, arrival_time] = input;
+    return spread_points(*cell_pts, *offsets_after_duration, arrival_time);
+  }
+  ~SpreadThreadPool() noexcept override = default;
+  SpreadThreadPool(const size_t num_threads = 0) noexcept : ThreadPool("spread", num_threads) { }
   future_type spread(
     const CellPoints* cell_pts,
     const OffsetSet* offsets,
     const DurationSize arrival_time
   ) noexcept
   {
-    std::unique_lock<mutex> lock{mutex_};
-    jobs_.emplace(promise_type{}, input_type{cell_pts, offsets, arrival_time});
-    auto result = jobs_.back().first.get_future();
-    lock.unlock();
-    cv_.notify_one();
-    return result;
+    return schedule(input_type{cell_pts, offsets, arrival_time});
   }
 };
 }
