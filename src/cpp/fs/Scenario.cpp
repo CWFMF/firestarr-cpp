@@ -20,7 +20,7 @@ namespace fs
 {
 static SpreadThreadPool& pool() noexcept
 {
-  static SpreadThreadPool pool_{100};
+  static SpreadThreadPool pool_{500};
   return pool_;
 }
 using std::cout;
