@@ -17,11 +17,6 @@
 #include "ThreadPool.h"
 namespace fs
 {
-static SpreadThreadPool& pool() noexcept
-{
-  static SpreadThreadPool pool_{};
-  return pool_;
-}
 using std::cout;
 // constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
@@ -690,8 +685,15 @@ CellPointsMap apply_offsets_spreadkey(
       auto& f = *it;
       if (const auto status = f.wait_for(1ms); std::future_status::ready == status)
       {
+        // if (f.valid())
+        // {
         auto r1 = f.get();
         result.merge(unburnable, r1);
+        // }
+        // else
+        // {
+        //   logging::error("invalid future");
+        // }
         it = futures.erase(it);
       }
       else

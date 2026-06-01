@@ -11,6 +11,7 @@
 #include "ProbabilityMap.h"
 #include "Scenario.h"
 #include "Settings.h"
+#include "ThreadPool.h"
 namespace fs
 {
 // // HACK: assume using half the CPUs probably means that faster cores are being used?
@@ -1302,6 +1303,7 @@ int Model::runScenarios(
   // HACK: update last checked time to use in calculation
   model.last_checked_ = Clock::now();
   logging::note("Total simulation time was {:d} seconds", model.runTime().count());
+  pool().stop();
   return 0;
 }
 #ifdef DEBUG_WEATHER

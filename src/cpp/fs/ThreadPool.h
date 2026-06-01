@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
+#include <condition_variable>
+#include <mutex>
+#include <queue>
+#include <thread>
 #include "CellPoints.h"
 #include "FireSpread.h"
 #ifdef DEBUG_THREADS
@@ -16,82 +20,76 @@ public:
   using future_type = std::future<CellPointsMap>;
 
 private:
+  mutable std::condition_variable cv_;
   mutable mutex mutex_{};
-  list<std::pair<promise_type, input_type>> jobs_{};
-  std::vector<std::thread> threads_{};
+  mutable mutex mutex_check{};
+  using job_queue = std::queue<std::pair<promise_type, input_type>>;
+  job_queue jobs_{};
+  std::vector<std::jthread> threads_{};
   size_t num_threads_{};
   bool should_stop{false};
 
 public:
-  ~SpreadThreadPool() noexcept
-  {
-    should_stop = true;
-    for (auto& thread : threads_)
-    {
-      thread.join();
-    }
-  }
+  ~SpreadThreadPool() noexcept { stop(); }
   SpreadThreadPool(const size_t num_threads = 0) noexcept
     : num_threads_(0 == num_threads ? std::thread::hardware_concurrency() : num_threads)
   {
     for (size_t i = 0; i < num_threads_; ++i)
     {
       threads_.emplace_back([&]() {
-#ifdef DEBUG_THREADS
-        const auto n = i;
-#endif
-        // FIX: not interrupting task (but could?)
-        input_type input;
-        promise_type prom;
         while (!should_stop)
         {
-          bool should_wait{true};
-          // waiting to get lock for job
+          job_queue::value_type pf;
+          std::unique_lock<mutex> lock{mutex_};
+          cv_.wait(lock, [this]() { return should_stop || !jobs_.empty(); });
+          if (should_stop)
           {
-            lock_guard<mutex> lock{mutex_};
-            if (!jobs_.empty())
+            return;
+          }
+          {
+            // std::lock_guard<mutex> lock1{mutex_check};
+            // if (jobs_.empty())
+            // {
+            //   logging::error("jobs should not be empty");
+            //   continue;
+            // }
+            // get work
+            pf = std::move(jobs_.front());
+            jobs_.pop();
+          }
+          auto& [prom, input] = pf;
+          // if (!prom.get_future().valid())
+          // {
+          //   logging::error("invalid promise");
+          //   continue;
+          // }
+          // logging::note("Jobs waiting: {:d}", jobs_.size());
+          CellPointsMap r1{};
+          auto& [cell_pts, offsets_after_duration, arrival_time] = input;
+          // done with list so don't need mutex
+          auto pt_dirs = cell_pts->point_directions();
+          std::sort(pt_dirs.begin(), pt_dirs.end());
+          const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
+          auto it_pt_dirs = pt_dirs.cbegin();
+          while (it_pt_dirs != it_pt_dirs_last)
+          {
+            const auto& [pt, dir] = *it_pt_dirs;
+            for (const ROSOffset& r : *offsets_after_duration)
             {
-              should_wait = false;
-              // get work
-              auto& pf = jobs_.front();
-              prom = std::move(pf.first);
-              input = std::move(pf.second);
-              jobs_.pop_front();
+              const auto& x_o = r.offset.x;
+              const auto& y_o = r.offset.y;
+              const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
+              std::ignore = insert(
+                r1,
+                pt,
+                SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+                pt_new
+              );
             }
+            ++it_pt_dirs;
           }
-          if (should_wait)
-          {
-            std::this_thread::sleep_for(1ns);
-          }
-          else
-          {
-            CellPointsMap r1{};
-            auto& [cell_pts, offsets_after_duration, arrival_time] = input;
-            // done with list so don't need mutex
-            auto pt_dirs = cell_pts->point_directions();
-            std::sort(pt_dirs.begin(), pt_dirs.end());
-            const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
-            auto it_pt_dirs = pt_dirs.cbegin();
-            while (it_pt_dirs != it_pt_dirs_last)
-            {
-              const auto& [pt, dir] = *it_pt_dirs;
-              for (const ROSOffset& r : *offsets_after_duration)
-              {
-                const auto& x_o = r.offset.x;
-                const auto& y_o = r.offset.y;
-                const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
-                std::ignore = insert(
-                  r1,
-                  pt,
-                  SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
-                  pt_new
-                );
-              }
-              ++it_pt_dirs;
-            }
-            // indicate that it's done
-            prom.set_value(r1);
-          }
+          // indicate that it's done
+          prom.set_value(r1);
 #ifdef DEBUG_THREADS
           logging::extensive("Thread {:03d} looping", n);
 #endif
@@ -105,10 +103,24 @@ public:
     const DurationSize arrival_time
   ) noexcept
   {
-    lock_guard<mutex> lock{mutex_};
-    jobs_.emplace_back(promise_type{}, input_type{cell_pts, offsets, arrival_time});
-    return jobs_.back().first.get_future();
+    std::unique_lock<mutex> lock{mutex_};
+    jobs_.emplace(promise_type{}, input_type{cell_pts, offsets, arrival_time});
+    auto result = jobs_.back().first.get_future();
+    lock.unlock();
+    cv_.notify_one();
+    return result;
   }
-  void stop() noexcept { should_stop = true; }
+  void stop() noexcept
+  {
+    should_stop = true;
+    std::unique_lock<mutex> lock{mutex_};
+    lock.unlock();
+    cv_.notify_all();
+  }
 };
+static SpreadThreadPool& pool() noexcept
+{
+  static SpreadThreadPool pool_{};
+  return pool_;
+}
 }
