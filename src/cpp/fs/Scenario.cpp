@@ -688,7 +688,7 @@ CellPointsMap apply_offsets_spreadkey(
     while (futures.end() != it)
     {
       auto& f = *it;
-      if (const auto status = f.wait_for(1ms); std::future_status::ready == status)
+      if (const auto status = f.wait_for(1ns); std::future_status::ready == status)
       {
         // if (f.valid())
         // {
