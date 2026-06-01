@@ -454,7 +454,7 @@ public:
   CellPointsMap() noexcept = default;
   CellPointsMap& merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept
   {
-    std::lock_guard<mutex> lock{mutex_};
+    std::scoped_lock lock{mutex_, rhs.mutex_};
     // FIX: if we iterate through both they should be sorted
     for (const auto& [location, pts] : rhs.cells_)
     {
@@ -536,11 +536,13 @@ public:
   // CellPoints contains XYIdx so no need for pair
   CellPointsMap& operator=(const CellPointsMap& rhs) noexcept
   {
+    std::scoped_lock lock{mutex_, rhs.mutex_};
     cells_ = rhs.cells_;
     return *this;
   }
   CellPointsMap& operator=(CellPointsMap&& rhs) noexcept
   {
+    std::scoped_lock lock{mutex_, rhs.mutex_};
     cells_ = std::move(rhs.cells_);
     return *this;
   }
