@@ -6,10 +6,9 @@
 #include <thread>
 #include "CellPoints.h"
 #include "FireSpread.h"
-#include "Statistics.h"
-#include "unstable.h"
 #ifdef DEBUG_THREADS
 #include "Log.h"
+#include "Statistics.h"
 #endif
 namespace fs
 {
@@ -50,9 +49,11 @@ public:
   using future_type = std::future<CellPointsMap>;
 
 private:
+#ifdef DEBUG_THREADS
   std::vector<MathSize> sizes_{};
   std::vector<MathSize> active_{};
   atomic<size_t> active_threads_{0};
+#endif
   mutable std::condition_variable cv_;
   mutable mutex mutex_{};
   mutable mutex mutex_check{};
@@ -69,6 +70,7 @@ public:
     std::unique_lock<mutex> lock{mutex_};
     lock.unlock();
     cv_.notify_all();
+#ifdef DEBUG_THREADS
     std::ranges::sort(sizes_);
     Statistics s{sizes_};
     logging::note(
@@ -89,6 +91,7 @@ public:
       a.mean(),
       a.median()
     );
+#endif
   }
   SpreadThreadPool(const size_t num_threads = 0) noexcept
     : num_threads_(0 == num_threads ? std::thread::hardware_concurrency() : num_threads)
@@ -106,9 +109,11 @@ public:
             {
               return;
             }
+#ifdef DEBUG_THREADS
             ++active_threads_;
             sizes_.emplace_back(jobs_.size());
             active_.emplace_back(active_threads_);
+#endif
             // std::lock_guard<mutex> lock1{mutex_check};
             // if (jobs_.empty())
             // {
@@ -129,8 +134,8 @@ public:
           // logging::note("Jobs waiting: {:d}", jobs_.size());
           // indicate that it's done
           prom.set_value(spread_points(*cell_pts, *offsets_after_duration, arrival_time));
-          --active_threads_;
 #ifdef DEBUG_THREADS
+          --active_threads_;
           logging::extensive("Thread {:03d} looping", n);
 #endif
         }
