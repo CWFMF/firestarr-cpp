@@ -46,13 +46,13 @@ public:
         while (!should_stop)
         {
           job_queue::value_type pf;
-          std::unique_lock<mutex> lock{mutex_};
-          cv_.wait(lock, [this]() { return should_stop || !jobs_.empty(); });
-          if (should_stop)
           {
-            return;
-          }
-          {
+            std::unique_lock<mutex> lock{mutex_};
+            cv_.wait(lock, [this]() { return should_stop || !jobs_.empty(); });
+            if (should_stop)
+            {
+              return;
+            }
             // std::lock_guard<mutex> lock1{mutex_check};
             // if (jobs_.empty())
             // {
