@@ -9,7 +9,7 @@
 #ifdef DEBUG_THREADS
 #include "Log.h"
 #endif
-#define THREAD_STATS 1
+// #define THREAD_STATS 1
 #ifdef THREAD_STATS
 #include "Statistics.h"
 #endif
