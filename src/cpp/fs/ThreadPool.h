@@ -25,10 +25,8 @@ static CellPointsMap spread_points(
   CellPointsMap r1{};
   // done with list so don't need mutex
   auto pt_dirs = cell_pts.point_directions();
-  std::sort(pt_dirs.begin(), pt_dirs.end());
-  const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
   auto it_pt_dirs = pt_dirs.cbegin();
-  while (it_pt_dirs != it_pt_dirs_last)
+  while (it_pt_dirs != pt_dirs.cend())
   {
     const auto& [pt, dir] = *it_pt_dirs;
     for (const ROSOffset& r : offsets_after_duration)

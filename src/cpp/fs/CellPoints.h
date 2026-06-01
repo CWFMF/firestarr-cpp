@@ -423,14 +423,14 @@ public:
     // NOTE: if anything is invalid then everything must be
     return (XPos::Invalid().value == points[0].x.value);
   }
-  std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> point_directions() const noexcept
+  std::map<XYPos, MathSize> point_directions() const noexcept
   {
-    std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
-    auto& pts = points;
-    auto& dirs = directions;
-    for (size_t i = 0; i < pts.size(); ++i)
+    // don't care which point was closest to each compass dir, but need direction they spread from
+    // NOTE: even if point is closest to multiple compass dirs, the direction would be the same
+    std::map<XYPos, MathSize> pt_dirs{};
+    for (size_t i = 0; i < points.size(); ++i)
     {
-      pt_dirs[i] = {pts[i], dirs[i]};
+      pt_dirs[points[i]] = directions[i];
     }
     return pt_dirs;
   }
