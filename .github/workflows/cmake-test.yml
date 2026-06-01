@@ -66,7 +66,7 @@ jobs:
       OUTPUT_BINARY: firestarr-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
 
@@ -82,7 +82,7 @@ jobs:
       run: |
         echo "VCPKG_DEFAULT_BINARY_CACHE = $VCPKG_DEFAULT_BINARY_CACHE"
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         # vcpkg always builds release, so share cache between debug and release
         key: vcpkg-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ hashFiles('vcpkg.json', '.github/vcpkg_overlays/**') }}
@@ -205,7 +205,7 @@ jobs:
 
     - name: Upload artifact (non-windows)
       if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ env.OUTPUT_BINARY }}
         path: ${{ env.OUTPUT_BINARY }}.tar.gz
@@ -213,7 +213,7 @@ jobs:
 
     - name: Upload artifact (windows)
       if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ env.OUTPUT_BINARY }}
         path: ${{ env.OUTPUT_BINARY }}.zip
@@ -234,7 +234,7 @@ jobs:
 
     steps:
       # need checkout to delete release
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
 
@@ -245,7 +245,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
 
       - name: List artifacts
         run: |
@@ -253,7 +253,7 @@ jobs:
           find . -type f \( -name "*.tar.gz" -o -name "*.zip" \)
 
       - name: Publish Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: "FireSTARR ${{ github.ref_name }}"
           tag_name: ${{ env.TAG }}
