@@ -675,7 +675,7 @@ CellPointsMap apply_offsets_spreadkey(
     }
   );
   // # of items that change to use ThreadPool instead of just running
-  constexpr size_t ASYNC_THRESHOLD{5};
+  constexpr size_t ASYNC_THRESHOLD{20};
   if (cell_pts_map.size() <= ASYNC_THRESHOLD)
   {
     for (auto& [location, cell_pts] : cell_pts_map)
