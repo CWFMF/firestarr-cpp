@@ -23,6 +23,8 @@ public:
 
 private:
   std::vector<MathSize> sizes_{};
+  std::vector<MathSize> active_{};
+  atomic<size_t> active_threads_{0};
   mutable std::condition_variable cv_;
   mutable mutex mutex_{};
   mutable mutex mutex_check{};
@@ -49,6 +51,16 @@ public:
       s.mean(),
       s.median()
     );
+    std::ranges::sort(active_);
+    Statistics a{active_};
+    logging::note(
+      "ThreadPool active stats: {:d} calls - {:0.1f} - {:0.1f} (mean {:0.1f}, median {:0.1f})",
+      active_.size(),
+      a.min(),
+      a.max(),
+      a.mean(),
+      a.median()
+    );
   }
   SpreadThreadPool(const size_t num_threads = 0) noexcept
     : num_threads_(0 == num_threads ? std::thread::hardware_concurrency() : num_threads)
@@ -66,7 +78,9 @@ public:
             {
               return;
             }
+            ++active_threads_;
             sizes_.emplace_back(jobs_.size());
+            active_.emplace_back(active_threads_);
             // std::lock_guard<mutex> lock1{mutex_check};
             // if (jobs_.empty())
             // {
@@ -110,6 +124,7 @@ public:
           }
           // indicate that it's done
           prom.set_value(r1);
+          --active_threads_;
 #ifdef DEBUG_THREADS
           logging::extensive("Thread {:03d} looping", n);
 #endif
