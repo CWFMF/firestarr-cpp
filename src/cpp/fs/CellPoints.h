@@ -79,6 +79,8 @@ private:
     static auto r = settings.save_individual || settings.save_intensity;
     return r;
   }
+
+public:
   static inline constexpr DistanceSize distance(
     const DistanceSize x0,
     const DistanceSize y0,
@@ -115,11 +117,32 @@ private:
     const auto y2 = y0 - POINTS_OUTER[i].second;
     return x2 * x2 + y2 * y2;
   }
+  static inline constexpr DistanceSize distance(const XYPos& xy, const size_t i) noexcept
+  {
+    XYIdx cell_x_y{xy};
+    const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value)};
+    const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value)};
+    const auto x2 = x0 - POINTS_OUTER[i].first;
+    const auto y2 = y0 - POINTS_OUTER[i].second;
+    return x2 * x2 + y2 * y2;
+  }
+  static inline constexpr array_dists calc_distances(const XYPos& xy) noexcept
+  {
+    array_dists d{};
+    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+    {
+      d[i] = CellPoints::distance(xy, i);
+    }
+    return d;
+  }
+
+private:
   static void insert_calc(
     CellPoints& cell_pts,
     const XYPos& src,
     const SpreadData& spread_current,
-    const XYPos& xy
+    const XYPos& xy,
+    array_dists&& dists
   ) noexcept
   {
 #ifdef DEBUG_CELLPOINTS
@@ -195,16 +218,16 @@ private:
     }
     // NOTE: use location inside cell so smaller types can be more precise
     // since digits aren't wasted on cell
-    const auto& cell_x_y = cell_pts.cell_x_y_;
+    // const auto& cell_x_y = cell_pts.cell_x_y_;
     auto& directions = cell_pts.directions;
-    const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x_value())};
-    const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y_value())};
+    // const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x_value())};
+    // const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y_value())};
     // CHECK: FIX: is this initializing everything to false or just one element?
     std::array<bool, NUM_DIRECTIONS> closer{};
     std::fill_n(closer.begin(), NUM_DIRECTIONS, false);
     for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
     {
-      const auto d = distance(x0, y0, POINTS_OUTER[i].first, POINTS_OUTER[i].second);
+      const auto& d = dists[i];
       auto& p_d = cell_pts.distances[i];
       auto& p_p = cell_pts.points[i];
       auto& p_a = directions[i];
@@ -255,17 +278,19 @@ private:
     CellPoints& cell_pts,
     const XYPos&,
     const SpreadData& spread_current,
-    const XYPos& xy
+    const XYPos& xy,
+    array_dists&& dists
   ) noexcept;
   static CellPoints& insert(
     CellPoints& cell_pts,
     const XYPos& src,
     const SpreadData& spread_current,
-    const XYPos& xy
+    const XYPos& xy,
+    array_dists&& dists
   ) noexcept
   {
     static const auto fct = [&]() { return (should_save()) ? &insert_calc : &insert_basic; }();
-    fct(cell_pts, src, spread_current, xy);
+    fct(cell_pts, src, spread_current, xy, std::forward<array_dists>(dists));
     return cell_pts;
   }
 
@@ -286,7 +311,7 @@ private:
   }
   CellPoints(const XYPos& p) noexcept : CellPoints(XYIdx{p}) { }
 
-private:
+public:
   // HACK: define constants so we don't have to cast
   static constexpr auto I_0_0 = static_cast<DistanceSize>(0.0);
   static constexpr auto I_0_5 = static_cast<DistanceSize>(0.5);
@@ -339,14 +364,24 @@ public:
     logging::check_fatal(nullptr == rhs, "Initializing CellPoints from nullptr");
     *this = *rhs;
   }
-  CellPoints& insert(const XYPos& src, const SpreadData& spread_current, const XYPos& xy) noexcept
+  CellPoints& insert(
+    const XYPos& src,
+    const SpreadData& spread_current,
+    const XYPos& xy,
+    array_dists&& dists
+  ) noexcept
   {
-    return CellPoints::insert(*this, src, spread_current, xy);
+    return CellPoints::insert(*this, src, spread_current, xy, std::forward<array_dists>(dists));
   }
-  CellPoints(const XYPos& src, const SpreadData& spread_current, const XYPos& xy) noexcept
+  CellPoints(
+    const XYPos& src,
+    const SpreadData& spread_current,
+    const XYPos& xy,
+    array_dists&& dists
+  ) noexcept
     : CellPoints(XYIdx{xy})
   {
-    insert(src, spread_current, xy);
+    insert(src, spread_current, xy, std::forward<array_dists>(dists));
   }
   CellPoints(CellPoints&& rhs) noexcept = default;
   CellPoints(const CellPoints& rhs) noexcept = default;
@@ -503,7 +538,12 @@ public:
     std::lock_guard<mutex> lock{mutex_};
     std::erase_if(cells_, F);
   }
-  CellPoints& insert(const XYPos& src, const SpreadData& spread_current, const XYPos& xy) noexcept
+  CellPoints& insert(
+    const XYPos& src,
+    const SpreadData& spread_current,
+    const XYPos& xy,
+    array_dists&& dists
+  ) noexcept
   {
     std::lock_guard<mutex> lock{mutex_};
 #ifdef DEBUG_CELLPOINTS
@@ -511,13 +551,13 @@ public:
 #endif
     const XYIdx location{xy};
     auto& lhs = cells_;
-    auto e = lhs.try_emplace(location, src, spread_current, xy);
+    auto e = lhs.try_emplace(location, src, spread_current, xy, std::forward<array_dists>(dists));
     CellPoints& cell_pts = e.first->second;
     if (!e.second)
     {
       // FIX: should use max of whatever ROS has entered during this time and not just first ros
       // tried to add new CellPoints but already there
-      cell_pts.insert(src, spread_current, xy);
+      cell_pts.insert(src, spread_current, xy, std::forward<array_dists>(dists));
 #ifdef DEBUG_CELLPOINTS
       logging::note(
         "insert with size {:d} of ({:f}, {:f}) at time {:f} with ROS {:f} gives size {:d}",

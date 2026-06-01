@@ -20,7 +20,7 @@ namespace fs
 {
 static SpreadThreadPool& pool() noexcept
 {
-  static SpreadThreadPool pool_{500};
+  static SpreadThreadPool pool_{};
   return pool_;
 }
 using std::cout;
@@ -278,7 +278,8 @@ void Scenario::evaluate(const Event& event)
     points_.insert(
       p0,
       SpreadData{event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
-      p0
+      p0,
+      CellPoints::calc_distances(p0)
     );
     if (is_null_fuel(for_cell))
     {
@@ -555,7 +556,8 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
       points_.insert(
         p0,
         SpreadData{start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
-        p0
+        p0,
+        CellPoints::calc_distances(p0)
       );
     }
     addEvent(Event{.time = start_time_, .type = Event::Type::FireSpread});

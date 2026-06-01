@@ -16,32 +16,6 @@
 #endif
 namespace fs
 {
-static CellPointsMap spread_points(
-  const CellPoints& cell_pts,
-  const OffsetSet& offsets_after_duration,
-  const DurationSize arrival_time
-) noexcept
-{
-  CellPointsMap r1{};
-  // done with list so don't need mutex
-  auto pt_dirs = cell_pts.point_directions();
-  auto it_pt_dirs = pt_dirs.cbegin();
-  while (it_pt_dirs != pt_dirs.cend())
-  {
-    const auto& [pt, dir] = *it_pt_dirs;
-    for (const ROSOffset& r : offsets_after_duration)
-    {
-      const auto& x_o = r.offset.x;
-      const auto& y_o = r.offset.y;
-      const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
-      std::ignore = r1.insert(
-        pt, SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}}, pt_new
-      );
-    }
-    ++it_pt_dirs;
-  }
-  return r1;
-}
 template <class InputType, class ReturnType>
 class ThreadPool
 {
@@ -145,6 +119,69 @@ public:
     return result;
   }
 };
+class DistanceThreadPool : public ThreadPool<XYPos, array_dists>
+{
+public:
+  return_type process(input_type input) noexcept override
+  {
+    return CellPoints::calc_distances(input);
+  }
+  ~DistanceThreadPool() noexcept override = default;
+  DistanceThreadPool(const size_t num_threads = 0) noexcept
+    : ThreadPool("distance", num_threads) { }
+};
+static DistanceThreadPool& distance_pool() noexcept
+{
+  static DistanceThreadPool pool_{};
+  return pool_;
+}
+static CellPointsMap spread_points(
+  const CellPoints& cell_pts,
+  const OffsetSet& offsets_after_duration,
+  const DurationSize arrival_time
+) noexcept
+{
+  std::vector<std::tuple<XYPos, SpreadData, XYPos, std::future<array_dists>>> futures{};
+  CellPointsMap r1{};
+  // done with list so don't need mutex
+  auto pt_dirs = cell_pts.point_directions();
+  auto it_pt_dirs = pt_dirs.cbegin();
+  while (it_pt_dirs != pt_dirs.cend())
+  {
+    const auto& [pt, dir] = *it_pt_dirs;
+    for (const ROSOffset& r : offsets_after_duration)
+    {
+      const auto& x_o = r.offset.x;
+      const auto& y_o = r.offset.y;
+      const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
+      futures.emplace_back(
+        pt,
+        SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+        pt_new,
+        distance_pool().schedule(pt_new)
+      );
+    }
+    ++it_pt_dirs;
+  }
+  while (!futures.empty())
+  {
+    auto it = futures.begin();
+    while (futures.end() != it)
+    {
+      auto& [pt, spread_data, pt_new, f] = *it;
+      if (const auto status = f.wait_for(1ns); std::future_status::ready == status)
+      {
+        std::ignore = r1.insert(pt, spread_data, pt_new, f.get());
+        it = futures.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
+    }
+  }
+  return r1;
+}
 class SpreadThreadPool
   : public ThreadPool<
       std::tuple<const CellPoints*, const OffsetSet*, DurationSize>,
