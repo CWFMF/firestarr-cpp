@@ -36,7 +36,7 @@ jobs:
           #   target-os: windows
           - os: windows
             target-cpu: x64
-            os-version: latest
+            os-version: 2025-vs2026
             target-os: windows
           - compiler: clang++
             target-compiler: clang
