@@ -35,8 +35,8 @@ static CellPointsMap spread_points(
       const auto& x_o = r.offset.x;
       const auto& y_o = r.offset.y;
       const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
-      std::ignore = insert(
-        r1, pt, SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}}, pt_new
+      std::ignore = r1.insert(
+        pt, SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}}, pt_new
       );
     }
     ++it_pt_dirs;

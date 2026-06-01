@@ -275,8 +275,7 @@ void Scenario::evaluate(const Event& event)
     points_log_.log(step_, STAGE_NEW, event.time, x.value, y.value);
     // HACK: don't do this in constructor because scenario creates this in its constructor
     // HACK: insert point as originating from itself
-    insert(
-      points_,
+    points_.insert(
       p0,
       SpreadData{event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
       p0
@@ -553,8 +552,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
       const auto& y = p0.y;
       // log_verbose(*this, "Adding point ({:d}, {:d})",
       logging::extensive("{:s} Adding point ({:f}, {:f})", log_prefix_, x.value, y.value);
-      insert(
-        points_,
+      points_.insert(
         p0,
         SpreadData{start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
         p0

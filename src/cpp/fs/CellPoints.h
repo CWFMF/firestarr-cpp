@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include <algorithm>
 #include <compare>
+#include <mutex>
 #include "BurnedData.h"
 #include "Cell.h"
 namespace fs
@@ -453,6 +454,7 @@ public:
   CellPointsMap() noexcept = default;
   CellPointsMap& merge(const BurnedData& unburnable, const CellPointsMap& rhs) noexcept
   {
+    std::lock_guard<mutex> lock{mutex_};
     // FIX: if we iterate through both they should be sorted
     for (const auto& [location, pts] : rhs.cells_)
     {
@@ -482,6 +484,7 @@ public:
   }
   set<XYPos> unique() const noexcept
   {
+    std::lock_guard<mutex> lock{mutex_};
     set<XYPos> r{};
     for (auto& [loc, pts] : cells_)
     {
@@ -495,44 +498,58 @@ public:
   using map_type = std::map<XYIdx, CellPoints>;
   using map_value = map_type::value_type;
   // apply function to each CellPoints within and remove matches
-  void remove_if(std::function<bool(const map_value&)> F) noexcept { std::erase_if(cells_, F); }
-  // FIX: public for debugging right now
+  void remove_if(std::function<bool(const map_value&)> F) noexcept
+  {
+    std::lock_guard<mutex> lock{mutex_};
+    std::erase_if(cells_, F);
+  }
+  CellPoints& insert(const XYPos& src, const SpreadData& spread_current, const XYPos& xy) noexcept
+  {
+    std::lock_guard<mutex> lock{mutex_};
+#ifdef DEBUG_CELLPOINTS
+    const auto n0 = size();
+#endif
+    const XYIdx location{xy};
+    auto& lhs = cells_;
+    auto e = lhs.try_emplace(location, src, spread_current, xy);
+    CellPoints& cell_pts = e.first->second;
+    if (!e.second)
+    {
+      // FIX: should use max of whatever ROS has entered during this time and not just first ros
+      // tried to add new CellPoints but already there
+      cell_pts.insert(src, spread_current, xy);
+#ifdef DEBUG_CELLPOINTS
+      logging::note(
+        "insert with size {:d} of ({:f}, {:f}) at time {:f} with ROS {:f} gives size {:d}",
+        n0,
+        x,
+        y,
+        arrival_time,
+        ros,
+        size()
+      );
+#endif
+    }
+    return cell_pts;
+  }   // FIX: public for debugging right now
   // private:
   // CellPoints contains XYIdx so no need for pair
-  map_type cells_{};
-};
-static inline CellPoints& insert(
-  CellPointsMap& cell_pts_map,
-  const XYPos& src,
-  const SpreadData& spread_current,
-  const XYPos& xy
-) noexcept
-{
-#ifdef DEBUG_CELLPOINTS
-  const auto n0 = size();
-#endif
-  const XYIdx location{xy};
-  auto& lhs = cell_pts_map.cells_;
-  auto e = lhs.try_emplace(location, src, spread_current, xy);
-  CellPoints& cell_pts = e.first->second;
-  if (!e.second)
+  CellPointsMap& operator=(const CellPointsMap& rhs) noexcept
   {
-    // FIX: should use max of whatever ROS has entered during this time and not just first ros
-    // tried to add new CellPoints but already there
-    cell_pts.insert(src, spread_current, xy);
-#ifdef DEBUG_CELLPOINTS
-    logging::note(
-      "insert with size {:d} of ({:f}, {:f}) at time {:f} with ROS {:f} gives size {:d}",
-      n0,
-      x,
-      y,
-      arrival_time,
-      ros,
-      size()
-    );
-#endif
+    cells_ = rhs.cells_;
+    return *this;
   }
-  return cell_pts;
-}
+  CellPointsMap& operator=(CellPointsMap&& rhs) noexcept
+  {
+    cells_ = std::move(rhs.cells_);
+    return *this;
+  }
+  CellPointsMap(const CellPointsMap& rhs) noexcept : cells_{rhs.cells_} { }
+  CellPointsMap(CellPointsMap&& rhs) noexcept : cells_{std::move(rhs.cells_)} { }
+  map_type cells_{};
+
+private:
+  mutable mutex mutex_;
+};
 }
 #endif
