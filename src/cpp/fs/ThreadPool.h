@@ -30,7 +30,13 @@ private:
   bool should_stop{false};
 
 public:
-  ~SpreadThreadPool() noexcept { stop(); }
+  ~SpreadThreadPool() noexcept
+  {
+    should_stop = true;
+    std::unique_lock<mutex> lock{mutex_};
+    lock.unlock();
+    cv_.notify_all();
+  }
   SpreadThreadPool(const size_t num_threads = 0) noexcept
     : num_threads_(0 == num_threads ? std::thread::hardware_concurrency() : num_threads)
   {
@@ -110,17 +116,5 @@ public:
     cv_.notify_one();
     return result;
   }
-  void stop() noexcept
-  {
-    should_stop = true;
-    std::unique_lock<mutex> lock{mutex_};
-    lock.unlock();
-    cv_.notify_all();
-  }
 };
-static SpreadThreadPool& pool() noexcept
-{
-  static SpreadThreadPool pool_{};
-  return pool_;
-}
 }

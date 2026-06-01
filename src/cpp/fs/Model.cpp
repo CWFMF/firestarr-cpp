@@ -1303,7 +1303,6 @@ int Model::runScenarios(
   // HACK: update last checked time to use in calculation
   model.last_checked_ = Clock::now();
   logging::note("Total simulation time was {:d} seconds", model.runTime().count());
-  pool().stop();
   return 0;
 }
 #ifdef DEBUG_WEATHER

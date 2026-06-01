@@ -17,6 +17,11 @@
 #include "ThreadPool.h"
 namespace fs
 {
+static SpreadThreadPool& pool() noexcept
+{
+  static SpreadThreadPool pool_{};
+  return pool_;
+}
 using std::cout;
 // constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
