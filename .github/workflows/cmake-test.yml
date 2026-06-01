@@ -2,6 +2,9 @@ name: cmake-test
 
 on:
   push:
+    paths-ignore:
+      - '.github/workflows/*docker*.yml'
+
   pull_request:
   workflow_dispatch:
   release:
@@ -59,6 +62,7 @@ jobs:
             target-cpu: arm64
     env:
       CXX: ${{ matrix.compiler }}
+      BUILD_SETUP: ""
       # HACK: -static makes windows work right now
       VCPKG_TARGET_TRIPLET: ${{ matrix.target-cpu }}-${{ matrix.target-os }}${{ case ( matrix.os == 'windows', '-static', '' ) }}
       VCPKG_DISABLE_METRICS: true
@@ -70,7 +74,26 @@ jobs:
       with:
         submodules: true
 
-    - uses: ilammy/msvc-dev-cmd@v1
+    - name: Find build tools (windows)
+      if: ${{ matrix.os == 'windows' }}
+      run: |
+        $VSWHERE = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe"
+        If(Test-Path "${VSWHERE}")
+        {
+            # detect shell to get msvcs
+            $vsPath = &("${VSWHERE}") -property installationpath
+        }
+        If(${vsPath})
+        {
+            echo "Found path ${vsPath}"
+        } else {
+            $vsPath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools"
+            echo "Assuming path ${vsPath}"
+        }
+        $vars=(cmd /c """${vsPath}\\VC\\Auxiliary\\Build\\vcvarsall.bat"" amd64 > NUL && set")
+        foreach ($v in $vars) {
+          Add-Content -Path ${env:GITHUB_ENV} -Value "$v"
+        }
 
     - uses: friendlyanon/setup-vcpkg@v1
       with:
@@ -89,7 +112,9 @@ jobs:
         path: |
           ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
 
-    - run: cmake --preset ${{ matrix.variant }}
+    - name: Configure
+      run: |
+        cmake --preset ${{ matrix.variant }}
 
     - name: Run cmake --build --parallel --preset ${{ matrix.variant }}
       run: |
@@ -98,9 +123,11 @@ jobs:
 
     - run: ./firestarr -h
 
-    - run: ctest --output-on-failure --preset ${{ matrix.variant }}
+    - name: Test
+      run: |
+        ctest --output-on-failure --preset ${{ matrix.variant }}
 
-    - run: ./firestarr . 2024-06-03 58.81228184403946 -122.9117103995713 01:00 --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 -v --wx ./test/input/10N_50651/firestarr_10N_50651_wx.csv --output_date_offsets [1] --tz -5 --raster-root ./test/input/10N_50651/ --perim ./test/input/10N_50651/10N_50651.tif
+    - run: ./firestarr dir_test 2024-06-03 58.81228184403946 -122.9117103995713 01:00 --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 -v --wx ./test/input/10N_50651/firestarr_10N_50651_wx.csv --output_date_offsets [1] --tz -5 --raster-root ./test/input/10N_50651/ --perim ./test/input/10N_50651/10N_50651.tif
 
     - name: Locate binary (non-windows)
       if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
