@@ -49,8 +49,6 @@ jobs:
             target-cpu: x64
           - os: macos
             compiler: cl
-          - os: macos
-            compiler: clang++
           - os: ubuntu
             compiler: cl
           - os: windows
@@ -74,8 +72,8 @@ jobs:
       with:
         submodules: true
 
-    - name: Install dependencies (macos)
-      if: ${{ matrix.os == 'macos' }}
+    - name: Install dependencies (macos gcc)
+      if: ${{ matrix.os == 'macos' && matrix.target-compiler == 'gcc' }}
       run: |
         brew install gcc proj libgeotiff libtiff curl tbb
         GCC_VERSION=$(brew list --versions gcc | grep -oE '[0-9]+' | head -1)
