@@ -8,6 +8,9 @@
 #include "FireSpread.h"
 #ifdef DEBUG_THREADS
 #include "Log.h"
+#endif
+#define THREAD_STATS 1
+#ifdef THREAD_STATS
 #include "Statistics.h"
 #endif
 namespace fs
@@ -49,7 +52,7 @@ public:
   using future_type = std::future<CellPointsMap>;
 
 private:
-#ifdef DEBUG_THREADS
+#ifdef THREAD_STATS
   std::vector<MathSize> sizes_{};
   std::vector<MathSize> active_{};
   atomic<size_t> active_threads_{0};
@@ -70,7 +73,7 @@ public:
     std::unique_lock<mutex> lock{mutex_};
     lock.unlock();
     cv_.notify_all();
-#ifdef DEBUG_THREADS
+#ifdef THREAD_STATS
     std::ranges::sort(sizes_);
     Statistics s{sizes_};
     logging::note(
@@ -109,7 +112,7 @@ public:
             {
               return;
             }
-#ifdef DEBUG_THREADS
+#ifdef THREAD_STATS
             ++active_threads_;
             sizes_.emplace_back(jobs_.size());
             active_.emplace_back(active_threads_);
@@ -134,8 +137,10 @@ public:
           // logging::note("Jobs waiting: {:d}", jobs_.size());
           // indicate that it's done
           prom.set_value(spread_points(*cell_pts, *offsets_after_duration, arrival_time));
-#ifdef DEBUG_THREADS
+#ifdef THREAD_STATS
           --active_threads_;
+#endif
+#ifdef DEBUG_THREADS
           logging::extensive("Thread {:03d} looping", n);
 #endif
         }
