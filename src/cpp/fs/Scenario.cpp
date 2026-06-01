@@ -673,37 +673,54 @@ CellPointsMap apply_offsets_spreadkey(
       };
     }
   );
-  std::vector<SpreadThreadPool::future_type> futures{};
-  for (auto& [location, cell_pts] : cell_pts_map)
+  // # of items that change to use ThreadPool instead of just running
+  constexpr size_t ASYNC_THRESHOLD{5};
+  if (cell_pts_map.size() <= ASYNC_THRESHOLD)
   {
-    if (cell_pts.empty())
+    for (auto& [location, cell_pts] : cell_pts_map)
     {
-      continue;
-    }
-    futures.emplace_back(pool().spread(&cell_pts, &offsets_after_duration, arrival_time));
-  }
-  while (!futures.empty())
-  {
-    auto it = futures.begin();
-    while (futures.end() != it)
-    {
-      auto& f = *it;
-      if (const auto status = f.wait_for(1ns); std::future_status::ready == status)
+      if (cell_pts.empty())
       {
-        // if (f.valid())
-        // {
-        auto r1 = f.get();
-        result.merge(unburnable, r1);
-        // }
-        // else
-        // {
-        //   logging::error("invalid future");
-        // }
-        it = futures.erase(it);
+        continue;
       }
-      else
+      auto r1 = spread_points(cell_pts, offsets_after_duration, arrival_time);
+      result.merge(unburnable, r1);
+    }
+  }
+  else
+  {
+    std::vector<SpreadThreadPool::future_type> futures{};
+    for (auto& [location, cell_pts] : cell_pts_map)
+    {
+      if (cell_pts.empty())
       {
-        ++it;
+        continue;
+      }
+      futures.emplace_back(pool().spread(&cell_pts, &offsets_after_duration, arrival_time));
+    }
+    while (!futures.empty())
+    {
+      auto it = futures.begin();
+      while (futures.end() != it)
+      {
+        auto& f = *it;
+        if (const auto status = f.wait_for(1ns); std::future_status::ready == status)
+        {
+          // if (f.valid())
+          // {
+          auto r1 = f.get();
+          result.merge(unburnable, r1);
+          // }
+          // else
+          // {
+          //   logging::error("invalid future");
+          // }
+          it = futures.erase(it);
+        }
+        else
+        {
+          ++it;
+        }
       }
     }
   }
