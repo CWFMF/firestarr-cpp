@@ -50,7 +50,7 @@ jobs:
           - os: macos
             compiler: cl
           - os: macos
-            compiler: g++
+            compiler: clang++
           - os: ubuntu
             compiler: cl
           - os: windows
@@ -73,6 +73,18 @@ jobs:
     - uses: actions/checkout@v6
       with:
         submodules: true
+
+    - name: Install dependencies (macos)
+      if: ${{ matrix.os == 'macos' }}
+      run: |
+        brew install gcc proj libgeotiff libtiff curl tbb
+        GCC_VERSION=$(brew list --versions gcc | grep -oE '[0-9]+' | head -1)
+        echo "GCC_VERSION=$GCC_VERSION" >> $GITHUB_ENV
+        echo "CC=$(brew --prefix)/bin/gcc-${GCC_VERSION}" >> $GITHUB_ENV
+        echo "CXX=$(brew --prefix)/bin/g++-${GCC_VERSION}" >> $GITHUB_ENV
+        echo "BREW_PREFIX=$(brew --prefix)" >> $GITHUB_ENV
+        echo "TBB_ROOT=$(brew --prefix tbb)" >> $GITHUB_ENV
+
 
     - name: Find build tools (windows)
       if: ${{ matrix.os == 'windows' }}
