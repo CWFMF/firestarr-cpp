@@ -149,7 +149,7 @@ jobs:
       if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
       run: |
         $BINARY=Get-ChildItem -Path build -Recurse -Filter firestarr.exe | Select-Object -First 1 -ExpandProperty FullName
-        echo "BINARY=$BINARY" >> $GITHUB_ENV
+        Add-Content -Path ${env:GITHUB_ENV} -Value "BINARY=$BINARY"
 
     - name: Check binary dependencies (non-windows)
       if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
