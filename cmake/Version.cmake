@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.31.6)
 
 set(FILE_ENV ${CMAKE_CURRENT_SOURCE_DIR}/.env)
+set(FILE_VERSION "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
 
 
 # HACK: look for version in parent folder .env
@@ -107,4 +108,5 @@ endif()
 # if matched exiting file don't write
 if (NOT 0 EQUAL SAME_CODE)
   file(WRITE ${FILE_VERSION_CPP} "${VERSION_CODE}")
+  file(WRITE ${FILE_VERSION} "FireSTARR ${SPECIFIC_REVISION}\n")
 endif()

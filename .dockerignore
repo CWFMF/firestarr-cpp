@@ -10,3 +10,6 @@
 !./settings.ini
 !./test
 !./vcpkg*.json
+!./README.md
+!./ORIGIN.md
+!./LICENSE

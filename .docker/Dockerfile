@@ -60,6 +60,9 @@ RUN --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./test/input,target=./test/input \
     --mount=type=bind,source=./fuel.lut,target=./fuel.lut \
     --mount=type=bind,source=./settings.ini,target=./settings.ini \
+    --mount=type=bind,source=./README.md,target=./README.md \
+    --mount=type=bind,source=./ORIGIN.md,target=./ORIGIN.md \
+    --mount=type=bind,source=./LICENSE,target=./LICENSE \
     cmake --preset Release \
     && cmake --build --parallel --preset Release \
     && ctest --preset Release

@@ -194,27 +194,18 @@ message("proj.db path is ${PROJ_DB}")
 add_custom_command(
   TARGET ${PROJECT_NAME}
   POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy "${PROJ_DB}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/../")
+  COMMAND ${CMAKE_COMMAND} -E copy "${PROJ_DB}" "${CMAKE_CURRENT_SOURCE_DIR}")
 
-set(DIR_ROOT "$<TARGET_FILE_DIR:${PROJECT_NAME}>/../")
-set(DIR_DIST "$<TARGET_FILE_DIR:${PROJECT_NAME}>/../dist/")
-
-set(FILE_VERSION "${DIR_ROOT}/VERSION")
-add_custom_command(
-  TARGET ${PROJECT_NAME}
-  POST_BUILD
-  COMMAND ./firestarr -h | head -n1 | sed "s/.*NOTE: *//g" > "${FILE_VERSION}"
-  COMMENT "Creating VERSION file"
-)
+set(DIR_DIST "${CMAKE_BINARY_DIR}/dist/")
 
 set(FILES_DIST
-  "${DIR_ROOT}/README.md"
-  "${DIR_ROOT}/LICENSE"
-  "${DIR_ROOT}/ORIGIN.md"
+  "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE"
+  "${CMAKE_CURRENT_SOURCE_DIR}/ORIGIN.md"
   "${FILE_VERSION}"
-  "${DIR_ROOT}/fuel.lut"
+  "${CMAKE_CURRENT_SOURCE_DIR}/fuel.lut"
   "${PROJ_DB}"
-  "${DIR_ROOT}/settings.ini"
+  "${CMAKE_CURRENT_SOURCE_DIR}/settings.ini"
   "$<TARGET_FILE:${PROJECT_NAME}>"
 )
 make_directory("${DIR_DIST}")
@@ -223,16 +214,35 @@ add_custom_command(
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy -t "${DIR_DIST}" ${FILES_DIST})
 
+set(DIR_LICENSE "${DIR_DIST}/copyright")
+make_directory("${DIR_LICENSE}")
+
+file(GLOB_RECURSE PKG_DIRS "${VCPKG_ROOT}/packages/**/copyright")
+foreach(FILE_COPYRIGHT ${PKG_DIRS})
+  get_filename_component(LICENSE_LIB_DIR ${FILE_COPYRIGHT} DIRECTORY)
+  get_filename_component(LICENSE_LIB_NAME ${LICENSE_LIB_DIR} NAME)
+  add_custom_command(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "${FILE_COPYRIGHT}" "${DIR_LICENSE}/${LICENSE_LIB_NAME}")
+endforeach()
+
 if (WIN32)
-  set(ARCHIVE_FORMAT "zip")
+  set(ARCHIVE_SUFFIX "zip")
+  set(OUTPUT_ARCHIVE "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.${ARCHIVE_SUFFIX}")
+
+  add_custom_command(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    WORKING_DIRECTORY "${DIR_DIST}"
+    COMMAND ${CMAKE_COMMAND} -E tar -cvf "${OUTPUT_ARCHIVE}" --format=zip .)
 else()
-  set(ARCHIVE_FORMAT "tar.gz")
+  set(ARCHIVE_SUFFIX "tar.gz")
+  set(OUTPUT_ARCHIVE "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.${ARCHIVE_SUFFIX}")
+
+  add_custom_command(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    WORKING_DIRECTORY "${DIR_DIST}"
+    COMMAND ${CMAKE_COMMAND} -E tar -cvfz "${OUTPUT_ARCHIVE}" .)
 endif()
-
-set(OUTPUT_ARCHIVE "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.${ARCHIVE_FORMAT}")
-
-add_custom_command(
-  TARGET ${PROJECT_NAME}
-  POST_BUILD
-  WORKING_DIRECTORY "${DIR_DIST}"
-  COMMAND ${CMAKE_COMMAND} -E tar -czvf "${OUTPUT_ARCHIVE}" .)
