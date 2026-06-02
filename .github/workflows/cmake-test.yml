@@ -2,9 +2,6 @@ name: cmake-test
 
 on:
   push:
-    paths-ignore:
-      - '.github/workflows/*docker*.yml'
-
   pull_request:
   workflow_dispatch:
   release:
