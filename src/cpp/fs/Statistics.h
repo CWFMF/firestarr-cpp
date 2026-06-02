@@ -107,14 +107,20 @@ public:
    */
   explicit Statistics(vector<MathSize> values)
     // values should already be sorted
-    : n_(values.size()), min_(values[0]), max_(values[n_ - 1]), mean_([&]() {
+    : n_(values.size()), min_(values.empty() ? std::numeric_limits<MathSize>::max() : values[0]),
+      max_(values.empty() ? std::numeric_limits<MathSize>::min() : values[n_ - 1]), mean_([&]() {
         return std::accumulate(
                  values.begin(), values.end(), 0.0, [](const auto t, const auto x) { return t + x; }
                )
              / n_;
       }()),
-      median_(values[n_ / 2])
+      median_(values.empty() ? std::numeric_limits<MathSize>::min() : values[n_ / 2])
   {
+    if (values.empty())
+    {
+      // avoiding null reference above, but don't want this to work
+      throw std::runtime_error("Trying to create Statistics with no input values");
+    };
     for (size_t i = 0; i < percentiles_.size(); ++i)
     {
       const auto pos = std::min(
