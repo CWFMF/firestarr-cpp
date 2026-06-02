@@ -77,7 +77,7 @@ jobs:
     - name: Install dependencies (macos gcc)
       if: ${{ matrix.os == 'macos' && matrix.target-compiler == 'gcc' }}
       run: |
-        brew install gcc proj libgeotiff libtiff curl tbb
+        brew install -q gcc proj libgeotiff libtiff curl tbb
         GCC_VERSION=$(brew list --versions gcc | grep -oE '[0-9]+' | head -1)
         echo "GCC_VERSION=$GCC_VERSION" >> $GITHUB_ENV
         echo "CC=$(brew --prefix)/bin/gcc-${GCC_VERSION}" >> $GITHUB_ENV
