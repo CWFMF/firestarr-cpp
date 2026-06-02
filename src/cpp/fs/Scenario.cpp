@@ -26,7 +26,7 @@ template <typename T, typename F>
 void do_each(T& for_list, F fct)
 {
   std::for_each(
-#ifndef __APPLE__
+#if !defined(__APPLE__) || !defined(__clang__)
     // apple clang doesn't support this?
     std::execution::seq,
 #endif
@@ -39,7 +39,7 @@ template <typename T, typename F>
 void do_par(T& for_list, F fct)
 {
   std::for_each(
-#ifndef __APPLE__
+#if !defined(__APPLE__) || !defined(__clang__)
     // apple clang doesn't support this?
     std::execution::par_unseq,
 #endif

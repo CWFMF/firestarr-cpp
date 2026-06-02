@@ -41,7 +41,7 @@ IntensityMap::IntensityMap(const IntensityMap& rhs)
 void IntensityMap::applyPerimeter(const Perimeter& perimeter) noexcept
 {
   std::for_each(
-#ifndef __APPLE__
+#if !defined(__APPLE__) || !defined(__clang__)
     // apple clang doesn't support this?
     std::execution::par_unseq,
 #endif
