@@ -2,6 +2,10 @@ name: build-docker
 
 on:
   push:
+    branches:
+      - main
+      - dev
+      - unstable
     paths-ignore:
       - '.github/workflows/cmake-test.yml'
       - '.github/workflows/docker-cleanup.yml'
