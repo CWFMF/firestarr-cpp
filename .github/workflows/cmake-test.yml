@@ -141,49 +141,33 @@ jobs:
 
     - name: Locate binary (non-windows)
       if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
-      id: locate
       run: |
-        # Find the built executable
-        BINARY=$(find build -type f -name "firestarr" ${{ case ( matrix.os == 'macos', '-perm +111', '-executable' ) }} | head -1)
-        if [ -z "$BINARY" ]; then
-          echo "ERROR: Could not find firestarr binary"
-          find build -type f ${{ case ( matrix.os == 'macos', '-perm +111', '-executable' ) }}
-          exit 1
-        fi
-        echo "binary=$BINARY" >> $GITHUB_OUTPUT
-        echo "Found binary at: $BINARY"
+        BINARY=$(find build -type f -name firestarr | head -1)
+        echo "BINARY=$BINARY" >> $GITHUB_ENV
 
     - name: Locate binary (windows)
       if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
-      id: locate-windows
       run: |
-        $BINARY = Get-ChildItem -Path build -Recurse -Filter "firestarr.exe" | Select-Object -First 1 -ExpandProperty FullName
-        if (-not $BINARY) {
-          echo "ERROR: Could not find firestarr.exe"
-          Get-ChildItem -Path build -Recurse -Filter "*.exe" | Select-Object FullName
-          exit 1
-        }
-        echo "binary=$BINARY" >> $env:GITHUB_OUTPUT
-        echo "Found binary at: $BINARY"
-      shell: pwsh
+        $BINARY=Get-ChildItem -Path build -Recurse -Filter firestarr.exe | Select-Object -First 1 -ExpandProperty FullName
+        echo "BINARY=$BINARY" >> $GITHUB_ENV
 
     - name: Check binary dependencies (non-windows)
       if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
       run: |
         echo "=== Binary info ==="
-        file ${{ steps.locate.outputs.binary }}
+        file ${{ env.BINARY }}
         echo ""
         echo "=== Dynamic dependencies ==="
-        ${{ case ( matrix.os == 'macos', 'otool -L', 'ldd' ) }} ${{ steps.locate.outputs.binary }} || true
+        ${{ case ( matrix.os == 'macos', 'otool -L', 'ldd' ) }} ${{ env.BINARY }} || true
 
     - name: Check binary dependencies (windows)
       if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
       run: |
         echo "=== Binary info ==="
-        Get-Item "${{ steps.locate-windows.outputs.binary }}" | Format-List Name, Length, LastWriteTime
+        Get-Item "${{ env.BINARY }}" | Format-List Name, Length, LastWriteTime
         echo ""
         echo "=== Binary size ==="
-        (Get-Item "${{ steps.locate-windows.outputs.binary }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
+        (Get-Item "${{ env.BINARY }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
       shell: pwsh
 
     - name: Package artifact (non-windows)
@@ -191,7 +175,7 @@ jobs:
       run: |
         mkdir -p dist
         cp README.md LICENSE ORIGIN.md dist/
-        cp ${{ steps.locate.outputs.binary }} dist/firestarr
+        cp ${{ env.BINARY }} dist/firestarr
 
         # Bundle data files if they exist
         [ -f fuel.lut ] && cp fuel.lut dist/
@@ -217,7 +201,7 @@ jobs:
 
         # Including these is a requirement
         Copy-Item @("README.md", "LICENSE", "ORIGIN.md") dist\
-        Copy-Item "${{ steps.locate-windows.outputs.binary }}" dist\firestarr.exe
+        Copy-Item "${{ env.BINARY }}" dist\firestarr.exe
 
         # static build so don't need dlls
         # copy @((Get-ChildItem -Recurse vcpkg\packages\*.dll).FullName | Select-String ${{ case( matrix.variant == 'Debug', '', '-notMatch' ) }} debug | Select-String bin ) dist\
