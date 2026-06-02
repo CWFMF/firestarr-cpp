@@ -59,14 +59,15 @@ jobs:
           - os: windows
             target-cpu: arm64
     env:
-      ARCHIVE_FORMAT: ${{ case( matrix.os == 'windows', '.zip', '.tar.gz' ) }}
       CXX: ${{ matrix.compiler }}
       BUILD_SETUP: ""
       # HACK: -static makes windows work right now
       VCPKG_TARGET_TRIPLET: ${{ matrix.target-cpu }}-${{ matrix.target-os }}${{ case ( matrix.os == 'windows', '-static', '' ) }}
       VCPKG_DISABLE_METRICS: true
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-      OUTPUT_BINARY: firestarr-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
+      OUTPUT_ARCHIVE: build/firestarr${{ case( matrix.os == 'windows', '.zip', '.tar.gz' ) }}
+      RELEASE_ARCHIVE: firestarr-${{ matrix.os }}-${{ matrix.target-cpu}}-${{ matrix.target-compiler }}-${{ matrix.variant }}
+      BINARY: firestarr${{ case( matrix.os == 'windows', '.exe', '' ) }}
 
     steps:
     - uses: actions/checkout@v6
@@ -140,20 +141,6 @@ jobs:
 
     - run: ./firestarr dir_test 2024-06-03 58.81228184403946 -122.9117103995713 01:00 --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 -v --wx ./test/input/10N_50651/firestarr_10N_50651_wx.csv --output_date_offsets [1] --tz -5 --raster-root ./test/input/10N_50651/ --perim ./test/input/10N_50651/10N_50651.tif
 
-    - name: Locate binary (non-windows)
-      if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
-      run: |
-        BINARY=$(find build -type f -name firestarr | head -1)
-        echo "BINARY=$BINARY" >> $GITHUB_ENV
-        echo "OUTPUT_ARCHIVE=build/$BINARY${{ env.ARCHIVE_FORMAT }}" >> $GITHUB_ENV
-
-    - name: Locate binary (windows)
-      if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
-      run: |
-        $BINARY=Get-ChildItem -Path build -Recurse -Filter firestarr.exe | Select-Object -First 1 -ExpandProperty FullName
-        Add-Content -Path ${env:GITHUB_ENV} -Value "BINARY=$BINARY"
-        Add-Content -Path ${env:GITHUB_ENV} -Value "OUTPUT_ARCHIVE=$BINARY${{ env.ARCHIVE_FORMAT }}"
-
     - name: Check binary dependencies (non-windows)
       if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
       run: |
@@ -177,7 +164,7 @@ jobs:
       if: ${{ matrix.variant == 'Release' }}
       uses: actions/upload-artifact@v7
       with:
-        name: ${{ env.OUTPUT_BINARY }}
+        name: ${{ env.RELEASE_ARCHIVE }}
         path: ${{ env.OUTPUT_ARCHIVE }}
         retention-days: 30
 
