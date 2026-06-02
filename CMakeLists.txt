@@ -241,11 +241,11 @@ if (WIN32)
   add_custom_command(
     TARGET ${PROJECT_NAME}
     POST_BUILD
-    COMMAND Get-Item ${PROJECT_NAME} | Format-List Name, Length, LastWriteTime)
+    COMMAND pwsh -Command "Get-Item $<TARGET_FILE:${PROJECT_NAME}> | Format-List Name, Length, LastWriteTime")
   add_custom_command(
     TARGET ${PROJECT_NAME}
     POST_BUILD
-    COMMAND Get-Item ${PROJECT_NAME}.Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ })
+    COMMAND pwsh -Command "Get-Item $<TARGET_FILE:${PROJECT_NAME}>.Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }")
 else()
   add_custom_command(
     TARGET ${PROJECT_NAME}
@@ -255,11 +255,11 @@ else()
     add_custom_command(
       TARGET ${PROJECT_NAME}
       POST_BUILD
-      COMMAND otool -L ${PROJECT_NAME} || true)
+      COMMAND otool -L $<TARGET_FILE:${PROJECT_NAME}> || true)
   else()
     add_custom_command(
       TARGET ${PROJECT_NAME}
       POST_BUILD
-      COMMAND ldd ${PROJECT_NAME} || true)
+      COMMAND ldd $<TARGET_FILE:${PROJECT_NAME}> || true)
   endif()
 endif()
