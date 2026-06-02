@@ -145,12 +145,14 @@ jobs:
       run: |
         BINARY=$(find build -type f -name firestarr | head -1)
         echo "BINARY=$BINARY" >> $GITHUB_ENV
+        echo "OUTPUT_ARCHIVE=$BINARY${{ env.ARCHIVE_FORMAT }}" >> $GITHUB_ENV
 
     - name: Locate binary (windows)
       if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
       run: |
         $BINARY=Get-ChildItem -Path build -Recurse -Filter firestarr.exe | Select-Object -First 1 -ExpandProperty FullName
         Add-Content -Path ${env:GITHUB_ENV} -Value "BINARY=$BINARY"
+        Add-Content -Path ${env:GITHUB_ENV} -Value "OUTPUT_ARCHIVE=$BINARY${{ env.ARCHIVE_FORMAT }}"
 
     - name: Check binary dependencies (non-windows)
       if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
@@ -171,66 +173,25 @@ jobs:
         (Get-Item "${{ env.BINARY }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
       shell: pwsh
 
-    - name: Package artifact (non-windows)
-      if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
+    - name: Package artifact
+      if: ${{ matrix.variant == 'Release' }}
       run: |
-        mkdir -p dist
-        cp README.md LICENSE ORIGIN.md dist/
-        cp ${{ env.BINARY }} dist/firestarr
-
-        # Bundle data files if they exist
-        [ -f fuel.lut ] && cp fuel.lut dist/
-        [ -f proj.db ] && cp proj.db dist/
-        [ -f settings.ini ] && cp settings.ini dist/
-        [ -f data/fuel.lut ] && cp data/fuel.lut dist/
-        [ -f data/settings.ini ] && cp data/settings.ini dist/
-
-        # Create version info
-        ./firestarr -h | head -n1 > dist/VERSION
-
-        # List contents
         echo "=== Package contents ==="
         ls -la dist/
-
-        # Create tarball
-        tar -czvf ${{ env.OUTPUT_BINARY }}${{ env.ARCHIVE_FORMAT }} -C dist .
-
-    - name: Package artifact (windows)
-      if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
-      run: |
-        New-Item -ItemType Directory -Force -Path dist
-
-        # Including these is a requirement
-        Copy-Item @("README.md", "LICENSE", "ORIGIN.md") dist\
-        Copy-Item "${{ env.BINARY }}" dist\firestarr.exe
-
-        # static build so don't need dlls
-        # copy @((Get-ChildItem -Recurse vcpkg\packages\*.dll).FullName | Select-String ${{ case( matrix.variant == 'Debug', '', '-notMatch' ) }} debug | Select-String bin ) dist\
-
-        # Bundle data files if they exist
-        if (Test-Path fuel.lut) { Copy-Item fuel.lut dist\ }
-        if (Test-Path proj.db) { Copy-Item proj.db dist\ }
-        if (Test-Path settings.ini) { Copy-Item settings.ini dist\ }
-        if (Test-Path data\fuel.lut) { Copy-Item data\fuel.lut dist\ }
-        if (Test-Path data\settings.ini) { Copy-Item data\settings.ini dist\ }
-
-        # Create version info
-        .\firestarr.exe | select -first 1 | Out-File -FilePath dist/VERSION -Encoding utf8
-
-        # List contents
-        echo "=== Package contents ==="
-        Get-ChildItem dist
-
-        # Create zip
-        Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_BINARY }}${{ env.ARCHIVE_FORMAT }}
-      shell: pwsh
+        ${{
+          case(
+            matrix.os == 'windows',
+            'Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_ARCHIVE }}',
+            'tar -czvf ${{ env.OUTPUT_ARCHIVE }} -C dist .'
+          )
+        }}
 
     - name: Upload artifact
       if: ${{ matrix.variant == 'Release' }}
       uses: actions/upload-artifact@v7
       with:
         name: ${{ env.OUTPUT_BINARY }}
-        path: ${{ env.OUTPUT_BINARY }}${{ env.ARCHIVE_FORMAT }}
+        path: ${{ env.OUTPUT_ARCHIVE }}
         retention-days: 30
 
   build-release:
