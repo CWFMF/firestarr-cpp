@@ -181,8 +181,14 @@ jobs:
         ${{
           case(
             matrix.os == 'windows',
-            'Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_ARCHIVE }}',
-            'tar -czvf ${{ env.OUTPUT_ARCHIVE }} -C dist .'
+            'Compress-Archive -Path dist\* -DestinationPath',
+            'tar -czvf'
+          )
+        }} ${{ env.OUTPUT_ARCHIVE }} ${{
+          case(
+            matrix.os == 'windows',
+            '',
+            '-C dist .'
           )
         }}
 
