@@ -195,3 +195,44 @@ add_custom_command(
   TARGET ${PROJECT_NAME}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy "${PROJ_DB}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/../")
+
+set(DIR_ROOT "$<TARGET_FILE_DIR:${PROJECT_NAME}>/../")
+set(DIR_DIST "$<TARGET_FILE_DIR:${PROJECT_NAME}>/../dist/")
+
+set(FILE_VERSION "${DIR_ROOT}/VERSION")
+add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD
+  COMMAND ./firestarr -h | head -n1 | sed "s/.*NOTE: *//g" > "${FILE_VERSION}"
+  COMMENT "Creating VERSION file"
+)
+
+set(FILES_DIST
+  "${DIR_ROOT}/README.md"
+  "${DIR_ROOT}/LICENSE"
+  "${DIR_ROOT}/ORIGIN.md"
+  "${FILE_VERSION}"
+  "${DIR_ROOT}/fuel.lut"
+  "${PROJ_DB}"
+  "${DIR_ROOT}/settings.ini"
+  "$<TARGET_FILE:${PROJECT_NAME}>"
+)
+make_directory("${DIR_DIST}")
+add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy -t "${DIR_DIST}" ${FILES_DIST})
+
+if (WIN32)
+  set(ARCHIVE_FORMAT "zip")
+else()
+  set(ARCHIVE_FORMAT "tar.gz")
+endif()
+
+set(OUTPUT_ARCHIVE "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.${ARCHIVE_FORMAT}")
+
+add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD
+  WORKING_DIRECTORY "${DIR_DIST}"
+  COMMAND ${CMAKE_COMMAND} -E tar -czvf "${OUTPUT_ARCHIVE}" .)
