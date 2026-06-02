@@ -12,7 +12,9 @@ It focuses on the generation of burn probabilities from replicated simulation of
 
 The `settings.ini` file contains a number of definitions that allow FireSTARR to find the information it requires more rapidly as well as a number of constants for use within your simulation.
 
-Critical components are the fuel look up table (how FireStarr knows what the numbers in your fuel grid represent), the root to your raster data, and the output date offsets (what your forecast horrizons are).
+## Critical components 
+
+The fuel look up table (how FireStarr knows what the numbers in your fuel grid represent), the root to your raster data, and the output date offsets (what your forecast horrizons are). 
 
 
 `RASTER_ROOT = ./generated/grid/100m` Root directory to read rasters from.
