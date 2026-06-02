@@ -222,3 +222,17 @@ add_custom_command(
   TARGET ${PROJECT_NAME}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy -t "${DIR_DIST}" ${FILES_DIST})
+
+if (WIN32)
+  set(ARCHIVE_FORMAT "zip")
+else()
+  set(ARCHIVE_FORMAT "tar.gz")
+endif()
+
+set(OUTPUT_ARCHIVE "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.${ARCHIVE_FORMAT}")
+
+add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD
+  WORKING_DIRECTORY "${DIR_DIST}"
+  COMMAND ${CMAKE_COMMAND} -E tar -czvf "${OUTPUT_ARCHIVE}" "*")

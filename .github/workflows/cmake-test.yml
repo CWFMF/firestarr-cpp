@@ -145,7 +145,7 @@ jobs:
       run: |
         BINARY=$(find build -type f -name firestarr | head -1)
         echo "BINARY=$BINARY" >> $GITHUB_ENV
-        echo "OUTPUT_ARCHIVE=$BINARY${{ env.ARCHIVE_FORMAT }}" >> $GITHUB_ENV
+        echo "OUTPUT_ARCHIVE=build/$BINARY${{ env.ARCHIVE_FORMAT }}" >> $GITHUB_ENV
 
     - name: Locate binary (windows)
       if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
@@ -172,25 +172,6 @@ jobs:
         echo "=== Binary size ==="
         (Get-Item "${{ env.BINARY }}").Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }
       shell: pwsh
-
-    - name: Package artifact
-      if: ${{ matrix.variant == 'Release' }}
-      run: |
-        echo "=== Package contents ==="
-        ls -la dist/
-        ${{
-          case(
-            matrix.os == 'windows',
-            'Compress-Archive -Path dist\* -DestinationPath',
-            'tar -czvf'
-          )
-        }} ${{ env.OUTPUT_ARCHIVE }} ${{
-          case(
-            matrix.os == 'windows',
-            '',
-            '-C dist .'
-          )
-        }}
 
     - name: Upload artifact
       if: ${{ matrix.variant == 'Release' }}
