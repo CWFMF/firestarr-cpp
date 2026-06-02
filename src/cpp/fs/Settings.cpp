@@ -387,7 +387,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
       }
     }
   }
-  catch (const std::exception& ex)
+  catch (const std::exception&)
   {
     // failed to read settings but just use defaults
   }
