@@ -59,6 +59,7 @@ jobs:
           - os: windows
             target-cpu: arm64
     env:
+      ARCHIVE_FORMAT: ${{ case( matrix.os == 'windows', '.zip', '.tar.gz' ) }}
       CXX: ${{ matrix.compiler }}
       BUILD_SETUP: ""
       # HACK: -static makes windows work right now
@@ -192,7 +193,7 @@ jobs:
         ls -la dist/
 
         # Create tarball
-        tar -czvf ${{ env.OUTPUT_BINARY }}.tar.gz -C dist .
+        tar -czvf ${{ env.OUTPUT_BINARY }}${{ env.ARCHIVE_FORMAT }} -C dist .
 
     - name: Package artifact (windows)
       if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
@@ -221,23 +222,15 @@ jobs:
         Get-ChildItem dist
 
         # Create zip
-        Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_BINARY }}.zip
+        Compress-Archive -Path dist\* -DestinationPath ${{ env.OUTPUT_BINARY }}${{ env.ARCHIVE_FORMAT }}
       shell: pwsh
 
-    - name: Upload artifact (non-windows)
-      if: ${{ matrix.variant == 'Release' && matrix.os != 'windows' }}
+    - name: Upload artifact
+      if: ${{ matrix.variant == 'Release' }}
       uses: actions/upload-artifact@v7
       with:
         name: ${{ env.OUTPUT_BINARY }}
-        path: ${{ env.OUTPUT_BINARY }}.tar.gz
-        retention-days: 30
-
-    - name: Upload artifact (windows)
-      if: ${{ matrix.variant == 'Release' && matrix.os == 'windows' }}
-      uses: actions/upload-artifact@v7
-      with:
-        name: ${{ env.OUTPUT_BINARY }}
-        path: ${{ env.OUTPUT_BINARY }}.zip
+        path: ${{ env.OUTPUT_BINARY }}${{ env.ARCHIVE_FORMAT }}
         retention-days: 30
 
   build-release:
