@@ -236,30 +236,3 @@ add_custom_command(
   POST_BUILD
   WORKING_DIRECTORY "${DIR_DIST}"
   COMMAND ${CMAKE_COMMAND} -E tar -czvf "${OUTPUT_ARCHIVE}" .)
-
-if (WIN32)
-  add_custom_command(
-    TARGET ${PROJECT_NAME}
-    POST_BUILD
-    COMMAND pwsh -Command "Get-Item $<TARGET_FILE:${PROJECT_NAME}> | Format-List Name, Length, LastWriteTime")
-  add_custom_command(
-    TARGET ${PROJECT_NAME}
-    POST_BUILD
-    COMMAND pwsh -Command "Get-Item $<TARGET_FILE:${PROJECT_NAME}>.Length / 1MB | ForEach-Object { "{0:N2} MB" -f $_ }")
-else()
-  add_custom_command(
-    TARGET ${PROJECT_NAME}
-    POST_BUILD
-    COMMAND file ${PROJECT_NAME})
-  if (__APPLE__)
-    add_custom_command(
-      TARGET ${PROJECT_NAME}
-      POST_BUILD
-      COMMAND otool -L $<TARGET_FILE:${PROJECT_NAME}> || true)
-  else()
-    add_custom_command(
-      TARGET ${PROJECT_NAME}
-      POST_BUILD
-      COMMAND ldd $<TARGET_FILE:${PROJECT_NAME}> || true)
-  endif()
-endif()
