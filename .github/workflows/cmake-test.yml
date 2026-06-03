@@ -177,6 +177,8 @@ jobs:
 
       - name: Download all artifacts
         uses: actions/download-artifact@v8
+        with:
+          skip-decompress: true
 
       - name: List artifacts
         run: |
