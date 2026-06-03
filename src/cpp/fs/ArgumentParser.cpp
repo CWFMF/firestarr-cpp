@@ -591,6 +591,15 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       &parse_string
     );
   }
+  if (Mode::Simulation == settings.mode)
+  {
+    register_flag(
+      settings.no_search,
+      true,
+      "--no-search",
+      "Do not search for a start location if start point is non-fuel"
+    );
+  }
 }
 Settings& MainArgumentParser::parse_args()
 {
