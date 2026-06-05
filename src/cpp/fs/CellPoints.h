@@ -209,9 +209,8 @@ private:
       auto& p_a = directions[i];
       closer[i] = (d < p_d);
       p_p = (d < p_d) ? xy : p_p;
-      p_d = (d < p_d) ? d : p_d;
-      // FIX: this is going to be comparing the new p_d value so it is wrong but old behaviour
       p_a = (d < p_d) ? spread_current.direction.asDegrees() : p_a;
+      p_d = (d < p_d) ? d : p_d;
     }
 #ifdef DEBUG_CELLPOINTS
     logging::note("now have {:d} points", size());
