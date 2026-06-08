@@ -11,6 +11,7 @@
 #include "ProbabilityMap.h"
 #include "Scenario.h"
 #include "Settings.h"
+#include "ThreadPool.h"
 namespace fs
 {
 // // HACK: assume using half the CPUs probably means that faster cores are being used?

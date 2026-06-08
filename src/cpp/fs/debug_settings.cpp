@@ -46,6 +46,9 @@ void show_debug_settings()
 #ifdef DEBUG_STATISTICS
   print_centered("DEBUG_STATISTICS");
 #endif
+#ifdef DEBUG_THREADS
+  print_centered("DEBUG_THREADS");
+#endif
 #ifdef DEBUG_WEATHER
   print_centered("DEBUG_WEATHER");
 #endif

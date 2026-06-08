@@ -105,7 +105,8 @@ public:
    * \brief Calculates statistics on a vector of values
    * \param values Values to use for calculation
    */
-  explicit Statistics(vector<MathSize> values)
+  template <class T>
+  explicit Statistics(vector<T> values)
     // values should already be sorted
     : n_(values.size()), min_(values.empty() ? std::numeric_limits<MathSize>::max() : values[0]),
       max_(values.empty() ? std::numeric_limits<MathSize>::min() : values[n_ - 1]), mean_([&]() {
