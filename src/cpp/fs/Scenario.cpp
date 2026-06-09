@@ -18,11 +18,6 @@
 #include "unstable.h"
 namespace fs
 {
-// static SpreadThreadPool& pool() noexcept
-// {
-//   static SpreadThreadPool pool_{};
-//   return pool_;
-// }
 using std::cout;
 // constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
@@ -674,57 +669,15 @@ CellPointsMap apply_offsets_spreadkey(
       };
     }
   );
-  // # of items that change to use ThreadPool instead of just running
-  // constexpr size_t ASYNC_THRESHOLD{20};
-  // if (cell_pts_map.size() <= ASYNC_THRESHOLD)
+  for (auto& [location, cell_pts] : cell_pts_map)
   {
-    for (auto& [location, cell_pts] : cell_pts_map)
+    if (cell_pts.empty())
     {
-      if (cell_pts.empty())
-      {
-        continue;
-      }
-      auto r1 = spread_points(cell_pts, offsets_after_duration, arrival_time);
-      result.merge(unburnable, r1);
+      continue;
     }
+    auto r1 = spread_points(cell_pts, offsets_after_duration, arrival_time);
+    result.merge(unburnable, r1);
   }
-  // else
-  // {
-  //   std::vector<SpreadThreadPool::future_type> futures{};
-  //   for (auto& [location, cell_pts] : cell_pts_map)
-  //   {
-  //     if (cell_pts.empty())
-  //     {
-  //       continue;
-  //     }
-  //     futures.emplace_back(pool().spread(&cell_pts, &offsets_after_duration, arrival_time));
-  //   }
-  //   while (!futures.empty())
-  //   {
-  //     auto it = futures.begin();
-  //     while (futures.end() != it)
-  //     {
-  //       auto& f = *it;
-  //       if (const auto status = f.wait_for(1ns); std::future_status::ready == status)
-  //       {
-  //         // if (f.valid())
-  //         // {
-  //         auto r1 = f.get();
-  //         result.merge(unburnable, r1);
-  //         // }
-  //         // else
-  //         // {
-  //         //   logging::error("invalid future");
-  //         // }
-  //         it = futures.erase(it);
-  //       }
-  //       else
-  //       {
-  //         ++it;
-  //       }
-  //     }
-  //   }
-  // }
   return result;
 }
 CellPointsMap spread_map(
