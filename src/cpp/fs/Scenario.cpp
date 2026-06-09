@@ -12,9 +12,9 @@
 #include "Log.h"
 #include "Observer.h"
 #include "Perimeter.h"
+#include "PointSpread.h"
 #include "ProbabilityMap.h"
 #include "Settings.h"
-#include "ThreadPool.h"
 #include "unstable.h"
 namespace fs
 {
