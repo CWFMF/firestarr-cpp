@@ -79,6 +79,43 @@ static constexpr auto DIRECTION_ANGLES = []() {
   }
   return result;
 }();
+static inline const SpreadData& find_better(
+  const size_t for_direction,
+  const SpreadData& lhs,
+  const SpreadData& rhs
+) noexcept
+{
+  assert(for_direction < NUM_DIRECTIONS);
+  // either faster or higher direction since we're trying to make this reproducible
+  // regardless of order points are inserted
+  if (lhs.ros < rhs.ros)
+  {
+    return rhs;
+  }
+  else if (lhs.ros > rhs.ros)
+  {
+    return lhs;
+  }
+  // if same speed then look at intensity
+  if (lhs.intensity < rhs.intensity)
+  {
+    return rhs;
+  }
+  else if (lhs.intensity > rhs.intensity)
+  {
+    return lhs;
+  }
+  // if same intensity then look at direction
+  const auto& dir = DIRECTION_ANGLES[for_direction];
+  auto d0 = lhs.direction - dir;
+  auto d1 = rhs.direction - dir;
+  // if closer to compass direction or positive in the case of the same distance
+  if (abs(d0) > abs(d1) || (abs(d0) == abs(d1) && d0 < d1))
+  {
+    return rhs;
+  }
+  return lhs;
+}
 /**
  * Points in a cell furthest in each direction
  */
@@ -244,6 +281,7 @@ private:
       cell_pts.add_source(src_xy.relativeIndex(dst_xy));
     }
     // if (src.hash() == dst.hash())
+    // CHECK: FIX: should check for things that spread out of cell also?
     if (src_xy == dst_xy)
     {
       // if we spread from this cell to this cell again then ros could be considered for max
@@ -259,35 +297,8 @@ private:
           // at least one of the cells in this direction is not a source, so consider them
           if (closer[i])
           {
-            // point was closer to edge than what was there
-            // either faster or higher direction since we're trying to make this reproducible
-            // regardless of order points are inserted
-            auto& ros0 = cell_pts.internal_ros_[i];
-            auto& raz0 = cell_pts.internal_raz_[i];
-            auto& fi0 = cell_pts.internal_fi_[i];
-            const auto& ros1 = spread_current.ros;
-            const auto& raz1 = spread_current.direction;
-            const auto& fi1 = spread_current.intensity;
-            if (ros1 > ros0)
-            {
-              ros0 = ros1;
-              raz0 = raz1;
-              fi0 = fi1;
-            }
-            if (ros1 == ros0)
-            {
-              const auto& dir = DIRECTION_ANGLES[i];
-              auto d0 = raz1 - dir;
-              auto d1 = raz0 - dir;
-              // if closer to compass direction or positive in the case of the same distance
-              if (abs(d0) < abs(d1) || (abs(d0) == abs(d1) && d0 > d1))
-              {
-                // since we spread within cell then set internal spread
-                ros0 = ros1;
-                raz0 = raz1;
-                fi0 = fi1;
-              }
-            }
+            auto& spread_old = cell_pts.spread_internal_[i];
+            spread_old = find_better(i, spread_old, spread_current);
           }
         }
       }
@@ -419,13 +430,7 @@ public:
         p0[i] = p1[i];
         a0[i] = a1[i];
       }
-      // INVALID_ROS is -1 so just check >
-      if (rhs.internal_ros_[i] > internal_ros_[i])
-      {
-        internal_ros_[i] = rhs.internal_ros_[i];
-        internal_raz_[i] = rhs.internal_raz_[i];
-        internal_fi_[i] = rhs.internal_fi_[i];
-      }
+      spread_internal_[i] = find_better(i, spread_internal_[i], rhs.spread_internal_[i]);
     }
     add_source(rhs.src_);
     // if valid time and earlier then that would be the arrival time
@@ -489,9 +494,7 @@ private:
   CellIndex src_{DIRECTION_NONE};
   SpreadData spread_arrival_{};
   // need to keep each direction separate so filtering by direction masks when merging works
-  CompassArray<ROSSize> internal_ros_{INVALID_ROS};
-  CompassArray<Direction> internal_raz_{Direction::Invalid()};
-  CompassArray<IntensitySize> internal_fi_{0};
+  CompassArray<SpreadData> spread_internal_{SpreadData{}};
 };
 using spreading_points = CellPoints::spreading_points;
 // map that merges items when try_emplace doesn't insert
