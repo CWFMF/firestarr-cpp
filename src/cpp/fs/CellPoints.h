@@ -71,9 +71,11 @@ static constexpr CompassArray<CellIndex> DIRECTION_MASKS{
 // use direction distance towards compass point as tie-breaker when ros is the same
 static constexpr auto DIRECTION_ANGLES = []() {
   CompassArray<Direction> result{};
+  constexpr auto angle = Degrees{Radians::D_360().asDegrees().value / result.size()};
   for (size_t i = 0; i < result.size(); ++i)
   {
-    result[i] = Degrees{i * 22.5};
+    // divide circle into equal wedges
+    result[i] = angle * i;
   }
   return result;
 }();
