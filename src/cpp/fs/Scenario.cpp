@@ -689,7 +689,6 @@ CellPointsMap apply_offsets_spreadkey(
 #endif
       continue;
     }
-    //////////////////////////////////////////////////////////////////////////////////
     auto pt_dirs = cell_pts.point_directions();
     std::sort(pt_dirs.begin(), pt_dirs.end());
     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
@@ -765,75 +764,6 @@ CellPointsMap apply_offsets_spreadkey(
       }
       ++it_pt_dirs;
     }
-    //     //////////////////////////////////////////////////////////////////////////////////
-    //     auto& pts = cell_pts.pts_.points;
-    //     std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
-    //     for (size_t i = 0; i < pts_inner.size(); ++i)
-    //     {
-    //       pt_dirs[i] = {pts[i], dirs[i]};
-    //     }
-    //     std::sort(pt_dirs.begin(), pt_dirs.end());
-    //     const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
-    //     auto it_pt_dirs = pt_dirs.cbegin();
-    //     while (it_pt_dirs != it_pt_dirs_last)
-    //     {
-    //       const auto& pt_dir = *it_pt_dirs;
-    //       const auto& [src, dir] = pt_dir;
-    //       const auto [cell_x, cell_y] = hash_to_xy_value(cell_pts.cell_x_y_);
-    //       // apply offsets to point
-    //       // should be quicker to loop over offsets in inner loop
-    //       for (const ROSOffset& r : offsets_after_duration)
-    //       {
-    //         const auto& x_o = r.offset.x;
-    //         const auto& y_o = r.offset.y;
-    //         const auto dir_diff = abs(r.raz.asDegrees() - dir);
-    //         // #ifdef DEBUG_CELLPOINTS
-    //         logging::verbose(
-    //           "location.x {:d}; location.y {:d};"
-    //           "cell_x {:d}; cell_y {:d};"
-    //           " ros {:f}; x {:f}; y {:f}; duration {:f};\n",
-    //           location.x_value(),
-    //           location.y_value(),
-    //           cell_x,
-    //           cell_y,
-    //           r.ros,
-    //           src.x.value,
-    //           src.y.value,
-    //           duration
-    //         );
-    //         // // NOTE: there should be no change in the extent of the fire if we exclude things
-    //         // behind the normal to the direction it came from
-    //         // //       - but if we exclude too much then it can change how things spread, even
-    //         if it
-    //         // is a more representative angle for the grids if (is_initial || MAX_DEGREES >=
-    //         dir_diff)
-    //         {
-    //           const XPos new_x{x_o + src.x.value};
-    //           const YPos new_y{y_o + src.y.value};
-    //           logging::verbose(
-    //             "({:d}, {:d}): {:f}: [{:f} => ({:f}, {:f})] + [{:f} => ({:f}, {:f})] = [{:f} =>
-    //             ({:f}, {:f})]", cell_x, cell_y, dir_diff, dir, x_o, y_o, r.raz.asDegrees(),
-    //             src.x.value,
-    //             src.y.value,
-    //             r.raz.asDegrees(),
-    //             new_x.value,
-    //             new_y.value
-    //           );
-    //           // TODO: switch to this version and confirm identical results
-    //           // insert(
-    //           //   r1,
-    //           //   src,
-    //           //   SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
-    //           //   new_x,
-    //           //   new_y
-    //           // );
-    // #ifdef DEBUG_CELLPOINTS
-    //           logging::note("r1 is now {:d} items", r1.size());
-    // #endif
-    //         }
-    //       }
-    //       ++it_pt_dirs;
-    //       //////////////////////////////////////////////////////////////////////////////////
   }
   return r1;
 }
