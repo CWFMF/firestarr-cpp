@@ -652,15 +652,8 @@ CellPointsMap apply_offsets_spreadkey(
   spreading_points::mapped_type& cell_pts_map
 )
 {
-  // NOTE: really tried to do this in parallel, but not enough points
-  // in a cell for it to work well
   CellPointsMap r1{};
   OffsetSet offsets_after_duration{};
-  logging::verbose("Applying {:d} offsets", offsets.size());
-  // std::transform(
-  //   offsets.cbegin(),
-  //   offsets.cend(),
-  //   std::back_inserter(offsets_after_duration),
   offsets_after_duration.resize(offsets.size());
   std::transform(
     offsets.cbegin(),
@@ -672,21 +665,11 @@ CellPointsMap apply_offsets_spreadkey(
       };
     }
   );
-  logging::verbose(
-    "Calculated {:d} offsets after duration {:f}", offsets_after_duration.size(), duration
-  );
-  logging::verbose("cell_pts_map has {:d} items", cell_pts_map.size());
   for (auto& pts_for_cell : cell_pts_map)
   {
     auto& [location, cell_pts] = pts_for_cell;
-#ifdef DEBUG_CELLPOINTS
-    logging::note("cell_pts for ({:d}, {:d}) has {:d} items", src.x(), src.y(), cell_pts.size());
-#endif
     if (cell_pts.empty())
     {
-#ifdef DEBUG_CELLPOINTS
-      logging::note("Cell ({:d}, {:d}) ignored because empty", src.x(), src.y());
-#endif
       continue;
     }
     auto pt_dirs = cell_pts.point_directions();
@@ -705,61 +688,14 @@ CellPointsMap apply_offsets_spreadkey(
       {
         const auto& x_o = r.offset.x;
         const auto& y_o = r.offset.y;
-        const auto dir_diff = abs(r.raz.asDegrees() - dir);
-        // #ifdef DEBUG_CELLPOINTS
-        logging::verbose(
-          "location.x {:d}; location.y {:d};"
-          "cell_x {:d}; cell_y {:d};"
-          " ros {:f}; x {:f}; y {:f}; duration {:f};\n",
-          location.x_value(),
-          location.y_value(),
-          cell_x,
-          cell_y,
-          r.ros,
-          pt.x.value,
-          pt.y.value,
-          duration
-        );
-        // // NOTE: there should be no change in the extent of the fire if we exclude things
-        // behind the normal to the direction it came from
-        // //       - but if we exclude too much then it can change how things spread, even if it
-        // is a more representative angle for the grids if (is_initial || MAX_DEGREES >= dir_diff)
         {
-          logging::check_fatal(
-            -1 >= pt.x.value || MAX_WIDTH <= pt.x.value,
-            "x out of bounds when applying offsets: {}",
-            pt.x.value
-          );
-          logging::check_fatal(
-            -1 >= pt.y.value || MAX_HEIGHT <= pt.y.value,
-            "y out of bounds when applying offsets: {}",
-            pt.y.value
-          );
           const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
-          logging::verbose(
-            "({:d}, {:d}): {:f}: [{:f} => ({:f}, {:f})] + [{:f} => ({:f}, {:f})] = [{:f} => ({:f}, {:f})]",
-            cell_x,
-            cell_y,
-            dir_diff,
-            dir,
-            x_o,
-            y_o,
-            r.raz.asDegrees(),
-            pt.x.value,
-            pt.y.value,
-            r.raz.asDegrees(),
-            pt_new.x.value,
-            pt_new.y.value
-          );
           std::ignore = insert(
             r1,
             pt,
             SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
             pt_new
           );
-#ifdef DEBUG_CELLPOINTS
-          logging::note("r1 is now {:d} items", r1.size());
-#endif
         }
       }
       ++it_pt_dirs;
