@@ -1,9 +1,18 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_UTM_H
-#define FS_UTM_H
+#ifndef FS_PROJECTION_H
+#define FS_PROJECTION_H
 #include "stdafx.h"
+#include "Point.h"
 namespace fs
 {
+using fs::FullCoordinates;
+using fs::MathSize;
+std::optional<FullCoordinates> to_proj4(
+  const string& proj4,
+  const fs::Point& point,
+  MathSize* x,
+  MathSize* y
+);
 class Point;
 /**
  * \brief Calculate the UTM zone for the given meridian
