@@ -35,5 +35,11 @@ class Point;
 void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x, MathSize* y);
 fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize y);
 string try_fix_meridian(const string_view proj4);
+MathSize find_north_south_deviation(
+  const string_view proj4,
+  const MathSize x,
+  const MathSize y0,
+  const MathSize y1
+);
 }
 #endif

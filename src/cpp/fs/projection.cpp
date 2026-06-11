@@ -193,4 +193,21 @@ string try_fix_meridian(const string_view proj4)
     units
   );
 }
+MathSize find_north_south_deviation(
+  const string_view proj4,
+  const MathSize x,
+  const MathSize y0,
+  const MathSize y1
+)
+{
+  Point p0 = to_lat_long(proj4, x, y0);
+  Point p1 = to_lat_long(proj4, x, y1);
+  auto x_0 = static_cast<MathSize>(0.0);
+  auto y_0 = static_cast<MathSize>(0.0);
+  from_lat_long(proj4, p0, &x_0, &y_0);
+  auto x_1 = static_cast<MathSize>(0.0);
+  auto y_1 = static_cast<MathSize>(0.0);
+  from_lat_long(proj4, p1, &x_1, &y_1);
+  return x_1 - x_0;
+};
 }

@@ -5,8 +5,9 @@
 #include <tiffio.h>
 #include <xtiffio.h>
 #include "Log.h"
+#include "projection.h"
 #include "tiff.h"
-#include "UTM.h"
+#include "unstable.h"
 using fs::Idx;
 namespace fs
 {
@@ -391,38 +392,58 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   );
   // check that north is the top of the raster at least along center
   const auto x_mid = (xllcorner_ + xurcorner_) / 2.0;
-  Point south = to_lat_long(proj4_, x_mid, yllcorner_);
-  Point north = to_lat_long(proj4_, x_mid, yurcorner_);
-  auto x_s = static_cast<MathSize>(0.0);
-  auto y_s = static_cast<MathSize>(0.0);
-  from_lat_long(this->proj4_, south, &x_s, &y_s);
-  auto x_n = static_cast<MathSize>(0.0);
-  auto y_n = static_cast<MathSize>(0.0);
-  from_lat_long(this->proj4_, north, &x_n, &y_n);
   // FIX: how different is too much?
-  constexpr MathSize MAX_DEVIATION = 0.001;
-  const auto deviation = x_n - x_s;
-  if (abs(deviation) > MAX_DEVIATION)
+  auto test_deviation = [&](
+                          const string& where,
+                          const MathSize x,
+                          const MathSize y0,
+                          const MathSize y1
+                        ) {
+    constexpr MathSize MAX_DEVIATION = 0.001;
+    const auto deviation = find_north_south_deviation(proj4_, x, y0, y1);
+    if (abs(deviation) > MAX_DEVIATION)
+    {
+      logging::note(
+        "Due north is not the top of the raster for ({:f}, {:f}) with proj4 '{:s}' - gives deviation at {:s} of {:f} degrees which exceeds maximum of {:f} degrees",
+        point.latitude(),
+        point.longitude(),
+        this->proj4_,
+        where,
+        deviation,
+        MAX_DEVIATION
+      );
+      return false;
+    }
+    else if (abs(deviation * 10) > MAX_DEVIATION)
+    {
+      // if we're within an order of magnitude of an unacceptable deviation then warn about it
+      logging::warning(
+        "Due north deviates by {:f} degrees from South to North along {:s} of the raster",
+        deviation,
+        where
+      );
+    }
+    else
+    {
+      logging::debug(
+        "Due north deviates by {:f} degrees from South to North along {:s} of the raster",
+        deviation,
+        where
+      );
+    }
+    return true;
+  };
+  if (!test_deviation("middle", x_mid, yllcorner_, yurcorner_))
   {
-    logging::note(
-      "Due north is not the top of the raster for ({:f}, {:f}) with proj4 '{:s}' - {:f} vs {:f} gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
-      point.latitude(),
-      point.longitude(),
-      this->proj4_,
-      x_n,
-      x_s,
-      deviation,
-      MAX_DEVIATION
-    );
     return {};
   }
-  else if (abs(deviation * 10) > MAX_DEVIATION)
+  if (!test_deviation("west edge", xllcorner_, yllcorner_, yurcorner_))
   {
-    // if we're within an order of magnitude of an unacceptable deviation then warn about it
-    logging::warning(
-      "Due north deviates by {:f} degrees from South to North along the middle of the raster",
-      deviation
-    );
+    return {};
+  }
+  if (!test_deviation("east edge", xurcorner_, yllcorner_, yurcorner_))
+  {
+    return {};
   }
   logging::verbose("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
