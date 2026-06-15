@@ -29,8 +29,10 @@ string saveToTiffFile(
   const int nodata_as_int
 )
 {
-  uint32_t tileWidth = min(static_cast<int>(width), 256);
-  uint32_t tileHeight = min(static_cast<int>(height), 256);
+  // https://gdal.org/en/stable/drivers/raster/gtiff.html
+  // tile width/height must be divisible by 16
+  uint32_t tileWidth = min(static_cast<int>(ceil(width / 16.0) * 16), 256);
+  uint32_t tileHeight = min(static_cast<int>(ceil(height / 16.0) * 16), 256);
   auto [min_x, min_y, max_x, max_y] = bounds;
   // auto min_x = std::get<0>(bounds);
   // auto min_y = std::get<1>(bounds);
@@ -85,10 +87,16 @@ string saveToTiffFile(
   const auto width_calc = static_cast<size_t>(max_x - min_x);
   // ensure this is always divisible by tile size
   logging::check_fatal(
-    0 != (height_calc % tileWidth), "Height {:d} not divisible by tiles", height_calc
+    0 != (height_calc % tileHeight),
+    "Height {:d} not divisible by tile height {:d}",
+    height_calc,
+    tileHeight
   );
   logging::check_fatal(
-    0 != (width_calc % tileHeight), "Width {:d} not divisible by tiles", width_calc
+    0 != (width_calc % tileWidth),
+    "Width {:d} not divisible by tile width {:d}",
+    width_calc,
+    tileWidth
   );
   const auto filename = create_file_name(dir, base_name, "tif");
   GeoTiff geotiff{filename, "w"};
