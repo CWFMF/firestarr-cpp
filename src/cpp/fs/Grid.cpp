@@ -409,16 +409,19 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
                         ) {
     constexpr MathSize MAX_DEVIATION = 0.001;
     const auto deviation = find_north_south_deviation(proj4_, x, y0, y1);
+    const auto dist_m = abs(y1 - y0);
+    const auto dev_m = deviation / dist_m;
     if (abs(deviation) > MAX_DEVIATION)
     {
       logging::note(
-        "Due north is not the top of the raster for ({:f}, {:f}) with proj4 '{:s}' - gives deviation at {:s} of {:f} degrees which exceeds maximum of {:f} degrees",
+        "Due north is not the top of the raster for ({:f}, {:f}) with proj4 '{:s}' - gives deviation at {:s} of {:g} degrees which exceeds maximum of {:g} degrees ({:g} / m)",
         point.latitude(),
         point.longitude(),
         this->proj4_,
         where,
         deviation,
-        MAX_DEVIATION
+        MAX_DEVIATION,
+        dev_m
       );
       return false;
     }
@@ -426,17 +429,19 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
     {
       // if we're within an order of magnitude of an unacceptable deviation then warn about it
       logging::warning(
-        "Due north deviates by {:f} degrees from South to North along {:s} of the raster",
+        "Due north deviates by {:g} degrees from South to North along {:s} of the raster ({:g} / m)",
         deviation,
-        where
+        where,
+        dev_m
       );
     }
     else
     {
       logging::debug(
-        "Due north deviates by {:f} degrees from South to North along {:s} of the raster",
+        "Due north deviates by {:g} degrees from South to North along {:s} of the raster ({:g} / m)",
         deviation,
-        where
+        where,
+        dev_m
       );
     }
     return true;

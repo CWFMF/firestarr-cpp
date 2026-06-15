@@ -202,12 +202,27 @@ MathSize find_north_south_deviation(
 {
   Point p0 = to_lat_long(proj4, x, y0);
   Point p1 = to_lat_long(proj4, x, y1);
+  // lat/long for p0
   auto x_0 = static_cast<MathSize>(0.0);
   auto y_0 = static_cast<MathSize>(0.0);
   from_lat_long(proj4, p0, &x_0, &y_0);
+  logging::debug("p0 ({}, {}) becomes lat/long ({}, {})", x, y0, p0.latitude(), p0.longitude());
+  // lat/long for p1
   auto x_1 = static_cast<MathSize>(0.0);
   auto y_1 = static_cast<MathSize>(0.0);
   from_lat_long(proj4, p1, &x_1, &y_1);
+  logging::debug("p1 ({}, {}) becomes lat/long ({}, {})", x, y1, p1.latitude(), p1.longitude());
+  // grid point for actual south at same latitude as grid bottom
+  const Point p2{p1.latitude(), p0.longitude()};
+  auto x2 = static_cast<MathSize>(0.0);
+  auto y2 = static_cast<MathSize>(0.0);
+  from_lat_long(proj4, p2, &x2, &y2);
+  logging::debug(
+    "p2 lat/long ({}, {}) becomes grid ({}, {})", p2.latitude(), p2.longitude(), x2, y2
+  );
+  const auto angle = atan2(y2 - y0, x2 - x);
+  logging::debug("Angle is {}", Radians{angle}.asDegrees().value);
+  // now we can get the angle by doing trig?
   return x_1 - x_0;
 };
 }
