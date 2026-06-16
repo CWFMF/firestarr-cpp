@@ -40,6 +40,10 @@ jobs:
         platform: [amd64, arm64, ppc64le, riscv64, s390x]
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          submodules: true
 
       - name: Prepare
         run: |
@@ -102,6 +106,10 @@ jobs:
     needs: [ build-docker-image ]
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          submodules: true
 
       - name: Download digests
         uses: actions/download-artifact@v8
