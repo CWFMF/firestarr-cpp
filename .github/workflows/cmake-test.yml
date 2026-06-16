@@ -69,6 +69,8 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
+        fetch-depth: 0
+        fetch-tags: true
         submodules: true
 
     - name: Install dependencies (macos gcc)
@@ -167,6 +169,8 @@ jobs:
       # need checkout to delete release
       - uses: actions/checkout@v6
         with:
+          fetch-depth: 0
+          fetch-tags: true
           submodules: true
 
       - name: Delete existing tag

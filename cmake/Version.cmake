@@ -3,8 +3,19 @@ cmake_minimum_required(VERSION 3.31.6)
 set(FILE_ENV ${CMAKE_CURRENT_SOURCE_DIR}/.env)
 set(FILE_VERSION "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
 
+set(VERSION_TAG "")
 
-# HACK: look for version in parent folder .env
+# always create .env from latest git tag
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+  execute_process(COMMAND git describe --tags --abbrev=0 --match "v*" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE VERSION_TAG)
+  set(VERSION ${VERSION_TAG})
+  list(TRANSFORM VERSION REPLACE "v(.*)" "\\1")
+  message("VERSION_TAG=${VERSION}")
+  # always generate from git tag initially
+  file(WRITE ${FILE_ENV} "VERSION=${VERSION}\n")
+endif()
+
+# read from config
 if(EXISTS "${FILE_ENV}")
   file(STRINGS "${FILE_ENV}" CONFIG REGEX "^[ ]*[A-Za-z0-9_]+[ ]*=")
   list(TRANSFORM CONFIG STRIP)
@@ -12,11 +23,20 @@ if(EXISTS "${FILE_ENV}")
   message(${CONFIG})
   cmake_language(EVAL CODE ${CONFIG})
   message("Parsed config")
-else()
+endif()
+
+if(NOT VERSION)
   message(WARNING "VERSION IS NOT SET")
   # no version set
   set(VERSION "?.?")
+else()
+  project(${PROJECT_NAME} VERSION ${VERSION})
 endif()
+
+message("CMAKE_PROJECT_VERSION=${CMAKE_PROJECT_VERSION}")
+message("CMAKE_PROJECT_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}")
+message("CMAKE_PROJECT_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}")
+message("CMAKE_PROJECT_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}")
 
 set(MODIFIED_TIME "")
 
@@ -30,18 +50,33 @@ set(FILE_VERSION_CPP ${CMAKE_BINARY_DIR}/version.cpp)
 set(HASH_PREFIX "")
 set(HASH_SUFFIX "")
 set(MODIFIED_TIME "")
+set(VERSION_SUFFIX "")
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   if(EXISTS "${FILE_ENV}")
-    # check when .env last changed - if not this commit then this is version+
-    execute_process(COMMAND git log -n1 --pretty=%H ${FILE_ENV} OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE VERSION_HASH)
+    # check when tag last changed - if not this commit then this is version+
+    execute_process(COMMAND git log -n1 --pretty=%H ${VERSION_TAG} OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE VERSION_HASH)
   endif()
   execute_process(COMMAND git rev-parse --verify HEAD OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE FULL_HASH)
   message("VERSION_HASH = ${VERSION_HASH}")
   message("FULL_HASH = ${FULL_HASH}")
   if (NOT "${VERSION_HASH}" STREQUAL "${FULL_HASH}")
-    # add + to version if .env isn't from current commit
-    set(VERSION "${VERSION}+")
+    # add +1 to version if .env isn't from current commit
+    math(EXPR PATCH_INCR "${CMAKE_PROJECT_VERSION_PATCH}+1")
+    set(VERSION "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${PATCH_INCR}")
+    message("VERSION=${VERSION}")
+    project(${PROJECT_NAME} VERSION ${VERSION})
+    execute_process(COMMAND git log -n1 --pretty=%H ${VERSION_TAG} OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE VERSION_HASH)
+    # HACK: # of commits isn't always going to be unique but it's something to start with
+    execute_process(COMMAND git rev-list ${VERSION_TAG}..HEAD --count OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NUM_SINCE_TAG)
+    set(VERSION_SUFFIX "-alpha-${NUM_SINCE_TAG}")
+    # NOTE: docker and cmake don't seem to like suffixes on version
   endif()
+
+  message("CMAKE_PROJECT_VERSION=${CMAKE_PROJECT_VERSION}")
+  message("CMAKE_PROJECT_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}")
+  message("CMAKE_PROJECT_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}")
+  message("CMAKE_PROJECT_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}")
+
   # is anything in git changed?
   list(JOIN FILES_USED " " FILES_USED_STRING)
   execute_process(COMMAND git diff-index HEAD -- ${FILES_USED_STRING} RESULT_VARIABLE GIT_CHANGED)
@@ -83,9 +118,12 @@ string(TIMESTAMP COMPILE_TIME "${FMT_TIME}" UTC)
 
 set(COMPILED_ON "${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM}-${CMAKE_CXX_COMPILER_ID}")
 
+string(REGEX REPLACE "[^0-9]*([0-9]+)[^0-9]*" "\\1" MODIFIED_NUMERICAL "${MODIFIED_TIME}")
+
 message("FULL_HASH = ${FULL_HASH}")
 message("HASH = ${HASH}")
 message("MODIFIED_TIME = ${MODIFIED_TIME}")
+message("MODIFIED_NUMERICAL = ${MODIFIED_NUMERICAL}")
 message("VERSION = ${VERSION}")
 message("COMPILE_TIME = ${COMPILE_TIME}")
 message("COMPILED_ON = ${COMPILED_ON}")
@@ -94,7 +132,8 @@ if (NOT "" STREQUAL "${HASH}")
   set(HASH "[${HASH}]")
 endif()
 
-set (SPECIFIC_REVISION "v${VERSION} ${HASH} <${MODIFIED_TIME}>")
+# don't use VERSION_SUFFIX in .env
+set (SPECIFIC_REVISION "v${VERSION}${VERSION_SUFFIX} ${HASH} <${MODIFIED_TIME}>")
 message("${SPECIFIC_REVISION}")
 set(VERSION_CODE "extern \"C\" const char* const SPECIFIC_REVISION{\"${SPECIFIC_REVISION}\"}\;")
 list(APPEND VERSION_CODE "extern \"C\" const char* const FULL_HASH{\"${FULL_HASH}\"}\;")

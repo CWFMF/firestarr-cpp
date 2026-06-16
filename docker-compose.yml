@@ -47,8 +47,6 @@ services:
       dockerfile: .docker/Dockerfile.dev
       args:
         VERSION: ${VERSION}
-        USERNAME: ${USERNAME}
-        USER_ID: ${USER_ID}
       tags:
         - firestarr-dev:${VERSION}
     entrypoint: tail -f /dev/null
@@ -69,3 +67,23 @@ services:
       - SYS_ADMIN
     env_file:
       - .env
+
+  # HACK: so we can call cmake to update version
+  firestarr-build:
+    image: firestarr-build
+    build:
+      context: .
+      target: firestarr-build
+      dockerfile: .docker/Dockerfile
+    entrypoint: /appl/firestarr/scripts/build.sh
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - /etc/ssl/certs:/etc/ssl/certs
+      - ~/.ssh:/home/user/.ssh
+      - ./repo/.bash_aliases:/home/user/.bash_aliases
+      - type: bind
+        source: ./
+        target: /appl/firestarr
+      - ./data:/appl/data:z
+    restart: never

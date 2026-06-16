@@ -47,13 +47,14 @@ RUN vcpkg/vcpkg install
 # build and test
 FROM vcpkg-installed AS firestarr-build
 WORKDIR /appl/firestarr
+# HACK: copy .env here since cmake needs to write to it in github workflow
+COPY .env ./.env
 # mount instead of copy to minimize layers
 RUN --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./CMakeLists.txt,target=./CMakeLists.txt \
     --mount=type=bind,source=./CMakePresets.json,target=./CMakePresets.json \
     --mount=type=bind,source=./.clang-format,target=./.clang-format \
     --mount=type=bind,source=./.clang-tidy,target=./.clang-tidy \
-    --mount=type=bind,source=./.env,target=./.env \
     --mount=type=bind,source=./.git,target=./.git \
     --mount=type=bind,source=./src/cpp,target=./src/cpp \
     --mount=type=bind,source=./test/data,target=./test/data \
