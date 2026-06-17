@@ -84,10 +84,16 @@ string saveToTiffFile(
   const auto width_calc = static_cast<size_t>(max_x - min_x);
   // ensure this is always divisible by tile size
   logging::check_fatal(
-    0 != (height_calc % tileWidth), "Height {:d} not divisible by tiles", height_calc
+    0 != (height_calc % tileHeight),
+    "Height {:d} not divisible by tile height {:d}",
+    height_calc,
+    tileHeight
   );
   logging::check_fatal(
-    0 != (width_calc % tileHeight), "Width {:d} not divisible by tiles", width_calc
+    0 != (width_calc % tileWidth),
+    "Width {:d} not divisible by tile width {:d}",
+    width_calc,
+    tileWidth
   );
   const auto filename = create_file_name(dir, base_name, "tif");
   GeoTiff geotiff{filename, "w"};
