@@ -2,6 +2,7 @@
 #ifndef FS_PROJECTION_H
 #define FS_PROJECTION_H
 #include "stdafx.h"
+#include "Location.h"
 #include "Point.h"
 namespace fs
 {
@@ -32,8 +33,8 @@ class Point;
 {
   return -183.0 + zone * 6.0;
 }
-void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x, MathSize* y);
-fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize y);
+fs::XYPos from_lat_long(const string_view proj4, const fs::Point& point);
+fs::Point to_lat_long(const string_view proj4, const fs::XYPos xy);
 string try_fix_meridian(const string_view proj4);
 }
 #endif

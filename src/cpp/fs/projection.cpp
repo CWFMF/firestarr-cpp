@@ -97,7 +97,7 @@ PJ* normalized_context(PJ_CONTEXT* C, const string_view proj4_from, const string
   proj_destroy(P);
   return P_norm;
 }
-void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x, MathSize* y)
+fs::XYPos from_lat_long(const string_view proj4, const fs::Point& point)
 {
   // see https://proj.org/en/stable/development/quickstart.html
   // do this in a function so we can hide and clean up intial context
@@ -109,8 +109,7 @@ void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x,
   const PJ_COORD a = proj_coord(point.longitude(), point.latitude(), 0, 0);
   // transform to UTM, then back to geographical
   const PJ_COORD b = proj_trans(P, PJ_FWD, a);
-  *x = b.enu.e;
-  *y = b.enu.n;
+  XYPos result{XPos{b.enu.e}, YPos{b.enu.n}};
   // #ifdef DEBUG_PROJ
   PJ_COORD c = proj_trans(P, PJ_INV, b);
   fs::logging::verbose(
@@ -127,8 +126,9 @@ void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x,
   // #endif
   proj_destroy(P);
   proj_context_destroy(C);
+  return result;
 }
-fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize y)
+fs::Point to_lat_long(const string_view proj4, const fs::XYPos xy)
 {
   // see https://proj.org/en/stable/development/quickstart.html
   // do this in a function so we can hide and clean up intial context
@@ -137,8 +137,8 @@ fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize 
   // Given that we have used proj_normalize_for_visualization(), the order
   // of coordinates is longitude, latitude, and values are expressed in
   // degrees.
-  logging::verbose("proj_coord({:f}, {:f}, 0, 0)", x, y);
-  const PJ_COORD a = proj_coord(x, y, 0, 0);
+  logging::verbose("proj_coord({:f}, {:f}, 0, 0)", xy.x.value, xy.y.value);
+  const PJ_COORD a = proj_coord(xy.x.value, xy.y.value, 0, 0);
   // transform to  geographical
   const PJ_COORD b = proj_trans(P, PJ_FWD, a);
   // Point is (lat, lon)
