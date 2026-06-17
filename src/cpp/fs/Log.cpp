@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Log.h"
+#include <tiffio.h>
 #ifdef NDEBUG
 #ifdef _WIN32
 #include "TimeUtil.h"
@@ -54,6 +55,21 @@ ofstream* out_file() noexcept
 }
 mutex mutex_{};
 ostream* output_{pre_file_log()};
+// HACK: rely on error handler being set when log is opened
+void handle_tiff_error(const char* module, const char* fmt, va_list args)
+{
+  const string tmp;
+  stringstream iss(tmp);
+  // HACK: just use a static size instead of trying to determine
+  char buffer[1024]{0};
+  vsnprintf(buffer, std::size(buffer), fmt, args);
+  if (module && 0 < strlen(module))
+  {
+    iss << module << ": ";
+  }
+  iss << buffer;
+  std::ignore = output(logging::level::error, "{}", iss.str());
+}
 int open_log_file(const char* filename) noexcept
 {
   lock_guard<mutex> lock(mutex_);
@@ -73,6 +89,8 @@ int open_log_file(const char* filename) noexcept
     prefile->clear();
   }
   output_ = outfile;
+  // HACK: redirect TIFF errors here since log is always opened
+  TIFFSetErrorHandler(&handle_tiff_error);
   return true;
 }
 int close_log_file() noexcept
