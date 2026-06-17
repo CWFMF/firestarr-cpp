@@ -28,8 +28,10 @@ string saveToTiffFile(
   const int nodata_as_int
 )
 {
-  uint32_t tileWidth = min(static_cast<int>(width), 256);
-  uint32_t tileHeight = min(static_cast<int>(height), 256);
+  // https://gdal.org/en/stable/drivers/raster/gtiff.html
+  // tile width/height must be divisible by 16
+  uint32_t tileWidth = min(static_cast<int>(ceil(width / 16.0) * 16), 256);
+  uint32_t tileHeight = min(static_cast<int>(ceil(height / 16.0) * 16), 256);
   auto [min_x, min_y, max_x, max_y] = bounds;
   // auto min_x = std::get<0>(bounds);
   // auto min_y = std::get<1>(bounds);
