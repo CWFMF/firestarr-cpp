@@ -212,8 +212,8 @@ Degrees find_north_south_deviation(const string_view proj4, const Point& p0)
   // angle is going to be how far off North we are
   // -90 to convert from math direction
   auto deviation =
-    Radians{atan2(grid1.y.value - grid0.y.value, grid1.x.value - grid0.x.value)}.asDegrees()
-    - Radians::D_090().asDegrees();
+    Radians::D_090().asDegrees()
+    - Radians{atan2(grid1.y.value - grid0.y.value, grid1.x.value - grid0.x.value)}.asDegrees();
   logging::verbose(
     "Deviation for {} to {} with proj4 '{:s}' is {:f} degrees", p0, p1, proj4, deviation.value
   );
@@ -230,7 +230,7 @@ bool check_deviation(
   if (abs(deviation) > max_deviation)
   {
     logging::error(
-      "Due North of {:s} {} deviates from grid North by {:g} degrees which exceeds maximum of {:g} degrees",
+      "Grid North of {:s} {} deviates from true North by {:g} degrees which exceeds maximum of {:g} degrees",
       what,
       p,
       deviation,
@@ -242,7 +242,7 @@ bool check_deviation(
   {
     // if close to max deviation then warn about it
     logging::warning(
-      "Due North of {:s} {} deviates from grid North by {:g} degrees which is near maximum of {:f} degrees",
+      "Grid North of {:s} {} deviates from true North by {:g} degrees which is near maximum of {:f} degrees",
       what,
       p,
       deviation,
@@ -252,7 +252,7 @@ bool check_deviation(
   else
   {
     logging::info(
-      "Due North of {:s} {} deviates from grid North by {:g} degrees",
+      "Grid North of {:s} {} deviates from true North by {:g} degrees",
       what,
       p,
       deviation,
