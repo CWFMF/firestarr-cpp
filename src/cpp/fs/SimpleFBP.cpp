@@ -532,10 +532,9 @@ vector<int> find_nd_values()
         const auto nd_ref = calculate_nd_ref_for_point(elevation, pt);
         nd_ref_values.emplace(nd_ref);
         logging::verbose(
-          "now have {:d} values for nd: {:g}, {:g}, {:g} gives nd_ref {:d}",
+          "now have {:d} values for nd: {}, {:g} gives nd_ref {:d}",
           nd_ref_values.size(),
-          latitude,
-          longitude,
+          pt,
           elevation,
           nd_ref
         );
