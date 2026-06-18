@@ -395,7 +395,7 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   const auto xy = from_lat_long(this->proj4_, point);
   logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
   // FIX: how different is too much?
-  constexpr MathSize MAX_DEVIATION = 0.001;
+  constexpr MathSize MAX_DEVIATION = 0.1;
   auto deviation = find_north_south_deviation(this->proj4_, point).value;
   if (abs(deviation) > MAX_DEVIATION)
   {
