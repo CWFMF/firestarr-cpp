@@ -37,7 +37,7 @@ Model::Model(
     active_simulations_still_required_(settings.minimum_active_simulation_count),
     latitude_(start_point.latitude()), longitude_(start_point.longitude())
 {
-  logging::debug("Calculating for ({:f}, {:f})", start_point.latitude(), start_point.longitude());
+  logging::debug("Calculating for {}", start_point);
   const auto nd_for_point = calculate_nd_ref_for_point(env->elevation(), start_point);
   for (auto day = 0; day < MAX_DAYS; ++day)
   {
@@ -853,13 +853,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   static_assert(std::numeric_limits<size_t>::digits10 >= precision);
   const auto lat = static_cast<size_t>(abs(start_point.latitude()) * pow(10, precision));
   const auto lon = static_cast<size_t>(abs(start_point.longitude()) * pow(10, precision));
-  logging::debug(
-    "lat/long ({:f}, {:f}) converted to ({:d}, {:d})",
-    start_point.latitude(),
-    start_point.longitude(),
-    lat,
-    lon
-  );
+  logging::debug("lat/long {} converted to ({:d}, {:d})", start_point, lat, lon);
   const size_t base_salt = settings.salt;
   auto make_seed = [&](const char* name, const size_t salt) {
     const auto d = static_cast<size_t>(start_day);
