@@ -214,9 +214,51 @@ Degrees find_north_south_deviation(const string_view proj4, const Point& p0)
   auto deviation =
     Radians{atan2(grid1.y.value - grid0.y.value, grid1.x.value - grid0.x.value)}.asDegrees()
     - Radians::D_090().asDegrees();
-  logging::debug(
-    "Deviation for {} to {} with proj4 '{:s}' -  is {:f} degrees", p0, p1, proj4, deviation.value
+  logging::verbose(
+    "Deviation for {} to {} with proj4 '{:s}' is {:f} degrees", p0, p1, proj4, deviation.value
   );
   return deviation;
+};
+bool check_deviation(
+  const string_view what,
+  const string_view proj4,
+  const Point& p,
+  const MathSize max_deviation
+)
+{
+  auto deviation = find_north_south_deviation(proj4, p).value;
+  if (abs(deviation) > max_deviation)
+  {
+    logging::error(
+      "Due North of {:s} {} deviates from grid North by {:g} degrees which exceeds maximum of {:g} degrees",
+      what,
+      p,
+      deviation,
+      max_deviation
+    );
+    return false;
+  }
+  else if (abs(deviation * 2) > max_deviation)
+  {
+    // if close to max deviation then warn about it
+    logging::warning(
+      "Due North of {:s} {} deviates from grid North by {:g} degrees which is near maximum of {:f} degrees",
+      what,
+      p,
+      deviation,
+      max_deviation
+    );
+  }
+  else
+  {
+    logging::info(
+      "Due North of {:s} {} deviates from grid North by {:g} degrees",
+      what,
+      p,
+      deviation,
+      max_deviation
+    );
+  }
+  return true;
 };
 }
