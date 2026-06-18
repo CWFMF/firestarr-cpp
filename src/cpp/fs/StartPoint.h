@@ -54,4 +54,7 @@ public:
   //   MathSize utc_offset_;
 };
 }
+template <>
+struct std::formatter<fs::StartPoint> : std::formatter<fs::Point>
+{ };
 #endif

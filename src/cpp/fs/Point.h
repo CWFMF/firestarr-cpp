@@ -45,4 +45,17 @@ private:
   MathSize longitude_;
 };
 }
+template <>
+struct std::formatter<fs::Point> : std::formatter<string_view>
+{
+  constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+  auto format(const fs::Point& p, std::format_context& ctx) const
+  {
+    std::string tmp{};
+    std::format_to(
+      std::back_inserter(tmp), "({:f}\u00b0, {:f}\u00b0)", p.latitude(), p.longitude()
+    );
+    return std::formatter<string_view>::format(tmp, ctx);
+  }
+};
 #endif
