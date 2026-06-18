@@ -200,14 +200,23 @@ Degrees find_north_south_deviation(const string_view proj4, const Point& p0)
   Point p1{lat1, p0.longitude()};
   auto grid0 = from_lat_long(proj4, p0);
   auto grid1 = from_lat_long(proj4, p1);
-  logging::note("{} => ({:f}, {:f})", p0, grid0.x.value, grid0.y.value);
-  logging::note("{} => ({:f}, {:f})", p1, grid1.x.value, grid1.y.value);
+  logging::verbose(
+    "Finding deviation between [{} => ({:f}, {:f})] and [{} => ({:f}, {:f})]",
+    p0,
+    grid0.x.value,
+    grid0.y.value,
+    p1,
+    grid1.x.value,
+    grid1.y.value
+  );
   // angle is going to be how far off North we are
+  // -90 to convert from math direction
   auto deviation =
-    Radians{atan2(grid1.y.value - grid0.y.value, grid1.x.value - grid0.x.value)}.asDegrees();
-  logging::note(
+    Radians{atan2(grid1.y.value - grid0.y.value, grid1.x.value - grid0.x.value)}.asDegrees()
+    - Radians::D_090().asDegrees();
+  logging::debug(
     "Deviation for {} to {} with proj4 '{:s}' -  is {:f} degrees", p0, p1, proj4, deviation.value
   );
-  return deviation - Radians::D_090().asDegrees();
+  return deviation;
 };
 }
