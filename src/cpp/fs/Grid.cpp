@@ -398,13 +398,7 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   XYPos mid_bottom{x_mid, y_bottom};
   XYPos mid_top{x_mid, y_top};
   const auto xy = from_lat_long(this->proj4_, point);
-  logging::debug(
-    "Coordinates ({:f}, {:f}) converted to ({:f}, {:f})",
-    point.latitude(),
-    point.longitude(),
-    xy.x.value,
-    xy.y.value
-  );
+  logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
   auto south = to_lat_long(proj4_, mid_bottom);
   auto north = to_lat_long(proj4_, mid_top);
   auto grid_south = from_lat_long(this->proj4_, south);
@@ -415,9 +409,8 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   if (abs(deviation) > MAX_DEVIATION)
   {
     logging::note(
-      "Due north is not the top of the raster for ({:f}, {:f}) with proj4 '{:s}' - {:f} vs {:f} gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
-      point.latitude(),
-      point.longitude(),
+      "Due north is not the top of the raster for {} with proj4 '{:s}' - {:f} vs {:f} gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
+      point,
       this->proj4_,
       grid_north.x.value,
       grid_south.x.value,

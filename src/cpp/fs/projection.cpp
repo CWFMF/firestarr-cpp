@@ -49,9 +49,8 @@ std::optional<FullCoordinates> to_proj4(
   *y = b.enu.n;
   c = proj_trans(P, PJ_INV, b);
   cout << std::format(
-    "longitude: {:f}, latitude: {:f} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}\n",
-    point.longitude(),
-    point.latitude(),
+    "{} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}\n",
+    point,
     b.enu.e,
     b.enu.n,
     b.xy.x,
@@ -113,9 +112,8 @@ fs::XYPos from_lat_long(const string_view proj4, const fs::Point& point)
   // #ifdef DEBUG_PROJ
   PJ_COORD c = proj_trans(P, PJ_INV, b);
   fs::logging::verbose(
-    "longitude: {:f}, latitude: {:f} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}",
-    point.longitude(),
-    point.latitude(),
+    "{} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}",
+    point,
     b.enu.e,
     b.enu.n,
     b.xy.x,

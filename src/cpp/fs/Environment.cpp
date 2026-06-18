@@ -59,7 +59,7 @@ Environment Environment::loadEnvironment(
   const YearSize year
 )
 {
-  logging::note("Using ignition point ({:f}, {:f})", point.latitude(), point.longitude());
+  logging::note("Using ignition point {}", point);
   logging::info("Running using inputs directory '{:s}'", string(path));
   auto rasters = find_rasters(path, year);
   auto best_score = numeric_limits<MathSize>::min();
@@ -142,18 +142,8 @@ Environment Environment::loadEnvironment(
     logging::note("Loading info for fuel {:s}", best_fuel);
     env_info = EnvironmentInfo::loadInfo(best_fuel, best_elevation);
   }
-  logging::check_fatal(
-    nullptr == env_info,
-    "Could not find an environment to use for ({:f}, {:f})",
-    point.latitude(),
-    point.longitude()
-  );
-  logging::debug(
-    "Best match for ({:f}, {:f}) has projection '{:s}'",
-    point.latitude(),
-    point.longitude(),
-    env_info->proj4()
-  );
+  logging::check_fatal(nullptr == env_info, "Could not find an environment to use for {}", point);
+  logging::debug("Best match for {} has projection '{:s}'", point, env_info->proj4());
   logging::note("Projection is {:s}", env_info->proj4());
   // envInfo should get deleted automatically because it uses unique_ptr
   return env_info->load(point);
