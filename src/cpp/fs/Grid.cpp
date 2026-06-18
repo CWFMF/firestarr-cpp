@@ -395,26 +395,22 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   const auto xy = from_lat_long(this->proj4_, point);
   logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
   // FIX: how different is too much?
-  constexpr MathSize MAX_DEVIATION = 0.1;
-  auto deviation = find_north_south_deviation(this->proj4_, point).value;
-  if (abs(deviation) > MAX_DEVIATION)
+  constexpr MathSize MAX_DEVIATION{1};
+  if (!check_deviation("origin", proj4_, point, MAX_DEVIATION))
   {
-    logging::note(
-      "Due north is not the top of the raster for {} with proj4 '{:s}' gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
-      point,
-      this->proj4_,
-      deviation,
-      MAX_DEVIATION
-    );
     return {};
   }
-  else if (abs(deviation * 10) > MAX_DEVIATION)
+  const auto lower_left = to_lat_long(this->proj4_, XYPos{XPos{xllcorner_}, YPos{yllcorner_}});
+  // how much it can be off by at edges
+  constexpr auto MAX_DEVIATION_EDGES{10 * MAX_DEVIATION};
+  if (!check_deviation("lower left", proj4_, lower_left, MAX_DEVIATION_EDGES))
   {
-    // if we're within an order of magnitude of an unacceptable deviation then warn about it
-    logging::warning(
-      "Due north deviates by {:f} degrees from South to North along the middle of the raster",
-      deviation
-    );
+    return {};
+  }
+  const auto upper_right = to_lat_long(this->proj4_, XYPos{XPos{xurcorner_}, YPos{yurcorner_}});
+  if (!check_deviation("upper right", proj4_, upper_right, MAX_DEVIATION_EDGES))
+  {
+    return {};
   }
   logging::verbose("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
