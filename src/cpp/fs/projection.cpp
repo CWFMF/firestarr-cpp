@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#include "UTM.h"
+#include "projection.h"
 #include <proj.h>
 #include "Log.h"
 #include "Point.h"
@@ -8,6 +8,62 @@
 #include "Util.h"
 namespace fs
 {
+std::optional<FullCoordinates> to_proj4(
+  const string& proj4,
+  const fs::Point& point,
+  MathSize* x,
+  MathSize* y
+)
+{
+  PJ_CONTEXT* C;
+  PJ* P;
+  PJ* norm;
+  PJ_COORD a, b, c;
+  /* or you may set C=PJ_DEFAULT_CTX if you are sure you will     */
+  /* use PJ objects from only one thread                          */
+  C = proj_context_create();
+  P = proj_create_crs_to_crs(C, "EPSG:4326", proj4.c_str(), nullptr);
+  if (nullptr == P)
+  {
+    std::cerr << "Failed to create transformation object.\n";
+    return {};
+  }
+  /* This will ensure that the order of coordinates for the input CRS */
+  /* will be longitude, latitude, whereas EPSG:4326 mandates latitude, */
+  /* longitude */
+  norm = proj_normalize_for_visualization(C, P);
+  if (nullptr == norm)
+  {
+    std::cerr << "Failed to normalize transformation object.\n";
+    return {};
+  }
+  proj_destroy(P);
+  P = norm;
+  /* Given that we have used proj_normalize_for_visualization(), the order */
+  /* of coordinates is longitude, latitude, and values are expressed in */
+  /* degrees. */
+  a = proj_coord(point.longitude(), point.latitude(), 0, 0);
+  /* transform to UTM, then back to geographical */
+  b = proj_trans(P, PJ_FWD, a);
+  *x = b.enu.e;
+  *y = b.enu.n;
+  c = proj_trans(P, PJ_INV, b);
+  cout << std::format(
+    "longitude: {:f}, latitude: {:f} => easting: {:.3f}, northing: {:.3f} => x: {:.3f}, y: {:.3f} => longitude: {:g}, latitude: {:g}\n",
+    point.longitude(),
+    point.latitude(),
+    b.enu.e,
+    b.enu.n,
+    b.xy.x,
+    b.xy.y,
+    c.lp.lam,
+    c.lp.phi
+  );
+  /* Clean up */
+  proj_destroy(P);
+  proj_context_destroy(C); /* may be omitted in the single threaded case */
+  return {};
+}
 PJ_CONTEXT* get_context()
 {
   // HACK: resolve once and fail if not set already
@@ -41,7 +97,7 @@ PJ* normalized_context(PJ_CONTEXT* C, const string_view proj4_from, const string
   proj_destroy(P);
   return P_norm;
 }
-void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x, MathSize* y)
+fs::XYPos from_lat_long(const string_view proj4, const fs::Point& point)
 {
   // see https://proj.org/en/stable/development/quickstart.html
   // do this in a function so we can hide and clean up intial context
@@ -53,8 +109,7 @@ void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x,
   const PJ_COORD a = proj_coord(point.longitude(), point.latitude(), 0, 0);
   // transform to UTM, then back to geographical
   const PJ_COORD b = proj_trans(P, PJ_FWD, a);
-  *x = b.enu.e;
-  *y = b.enu.n;
+  XYPos result{XPos{b.enu.e}, YPos{b.enu.n}};
   // #ifdef DEBUG_PROJ
   PJ_COORD c = proj_trans(P, PJ_INV, b);
   fs::logging::verbose(
@@ -71,8 +126,9 @@ void from_lat_long(const string_view proj4, const fs::Point& point, MathSize* x,
   // #endif
   proj_destroy(P);
   proj_context_destroy(C);
+  return result;
 }
-fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize y)
+fs::Point to_lat_long(const string_view proj4, const fs::XYPos xy)
 {
   // see https://proj.org/en/stable/development/quickstart.html
   // do this in a function so we can hide and clean up intial context
@@ -81,8 +137,8 @@ fs::Point to_lat_long(const string_view proj4, const MathSize x, const MathSize 
   // Given that we have used proj_normalize_for_visualization(), the order
   // of coordinates is longitude, latitude, and values are expressed in
   // degrees.
-  logging::verbose("proj_coord({:f}, {:f}, 0, 0)", x, y);
-  const PJ_COORD a = proj_coord(x, y, 0, 0);
+  logging::verbose("proj_coord({:f}, {:f}, 0, 0)", xy.x.value, xy.y.value);
+  const PJ_COORD a = proj_coord(xy.x.value, xy.y.value, 0, 0);
   // transform to  geographical
   const PJ_COORD b = proj_trans(P, PJ_FWD, a);
   // Point is (lat, lon)

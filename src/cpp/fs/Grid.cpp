@@ -5,8 +5,8 @@
 #include <tiffio.h>
 #include <xtiffio.h>
 #include "Log.h"
+#include "projection.h"
 #include "tiff.h"
-#include "UTM.h"
 using fs::Idx;
 namespace fs
 {
@@ -391,25 +391,27 @@ std::optional<Coordinates> GridBase::findCoordinates(const Point& point, const b
 std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point, const bool flipped)
   const
 {
-  MathSize x;
-  MathSize y;
-  from_lat_long(this->proj4_, point, &x, &y);
-  logging::debug(
-    "Coordinates ({:f}, {:f}) converted to ({:f}, {:f})", point.latitude(), point.longitude(), x, y
-  );
   // check that north is the top of the raster at least along center
-  const auto x_mid = (xllcorner_ + xurcorner_) / 2.0;
-  Point south = to_lat_long(proj4_, x_mid, yllcorner_);
-  Point north = to_lat_long(proj4_, x_mid, yurcorner_);
-  auto x_s = static_cast<MathSize>(0.0);
-  auto y_s = static_cast<MathSize>(0.0);
-  from_lat_long(this->proj4_, south, &x_s, &y_s);
-  auto x_n = static_cast<MathSize>(0.0);
-  auto y_n = static_cast<MathSize>(0.0);
-  from_lat_long(this->proj4_, north, &x_n, &y_n);
+  const auto x_mid = XPos{(xllcorner_ + xurcorner_) / 2.0};
+  const auto y_bottom = YPos{yllcorner_};
+  const auto y_top = YPos{yurcorner_};
+  XYPos mid_bottom{x_mid, y_bottom};
+  XYPos mid_top{x_mid, y_top};
+  const auto xy = from_lat_long(this->proj4_, point);
+  logging::debug(
+    "Coordinates ({:f}, {:f}) converted to ({:f}, {:f})",
+    point.latitude(),
+    point.longitude(),
+    xy.x.value,
+    xy.y.value
+  );
+  auto south = to_lat_long(proj4_, mid_bottom);
+  auto north = to_lat_long(proj4_, mid_top);
+  auto grid_south = from_lat_long(this->proj4_, south);
+  auto grid_north = from_lat_long(this->proj4_, north);
   // FIX: how different is too much?
   constexpr MathSize MAX_DEVIATION = 0.001;
-  const auto deviation = x_n - x_s;
+  const auto deviation = (grid_north.x - grid_south.x).value;
   if (abs(deviation) > MAX_DEVIATION)
   {
     logging::note(
@@ -417,8 +419,8 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
       point.latitude(),
       point.longitude(),
       this->proj4_,
-      x_n,
-      x_s,
+      grid_north.x.value,
+      grid_south.x.value,
       deviation,
       MAX_DEVIATION
     );
@@ -434,10 +436,10 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   }
   logging::verbose("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
-  const auto actual_x = (x - this->xllcorner_) / this->cell_size_;
+  const auto actual_x = (xy.x.value - this->xllcorner_) / this->cell_size_;
   // these are already flipped across the y-axis on reading, so it's the same as for x now
-  auto actual_y =
-    (!flipped) ? (y - this->yllcorner_) / this->cell_size_ : (yurcorner_ - y) / cell_size_;
+  auto actual_y = (!flipped) ? (xy.y.value - this->yllcorner_) / this->cell_size_
+                             : (yurcorner_ - xy.y.value) / cell_size_;
   const auto x1 = static_cast<FullIdx>(actual_x);
   const auto y1 = static_cast<FullIdx>(round(actual_y - 0.5));
   if (0 > x1 || x1 >= calculateWidth() || 0 > y1 || y1 >= calculateHeight())
