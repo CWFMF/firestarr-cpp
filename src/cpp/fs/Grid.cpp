@@ -7,6 +7,7 @@
 #include "Log.h"
 #include "projection.h"
 #include "tiff.h"
+#include "unstable.h"
 using fs::Idx;
 namespace fs
 {
@@ -391,29 +392,17 @@ std::optional<Coordinates> GridBase::findCoordinates(const Point& point, const b
 std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point, const bool flipped)
   const
 {
-  // check that north is the top of the raster at least along center
-  const auto x_mid = XPos{(xllcorner_ + xurcorner_) / 2.0};
-  const auto y_bottom = YPos{yllcorner_};
-  const auto y_top = YPos{yurcorner_};
-  XYPos mid_bottom{x_mid, y_bottom};
-  XYPos mid_top{x_mid, y_top};
   const auto xy = from_lat_long(this->proj4_, point);
   logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
-  auto south = to_lat_long(proj4_, mid_bottom);
-  auto north = to_lat_long(proj4_, mid_top);
-  auto grid_south = from_lat_long(this->proj4_, south);
-  auto grid_north = from_lat_long(this->proj4_, north);
   // FIX: how different is too much?
   constexpr MathSize MAX_DEVIATION = 0.001;
-  const auto deviation = (grid_north.x - grid_south.x).value;
+  auto deviation = find_north_south_deviation(this->proj4_, point).value;
   if (abs(deviation) > MAX_DEVIATION)
   {
     logging::note(
-      "Due north is not the top of the raster for {} with proj4 '{:s}' - {:f} vs {:f} gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
+      "Due north is not the top of the raster for {} with proj4 '{:s}' gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
       point,
       this->proj4_,
-      grid_north.x.value,
-      grid_south.x.value,
       deviation,
       MAX_DEVIATION
     );

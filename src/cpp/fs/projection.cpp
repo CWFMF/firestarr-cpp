@@ -3,6 +3,7 @@
 #include <proj.h>
 #include "Log.h"
 #include "Point.h"
+#include "Radians.h"
 #include "Settings.h"
 #include "unstable.h"
 #include "Util.h"
@@ -191,4 +192,20 @@ string try_fix_meridian(const string_view proj4)
     units
   );
 }
+Degrees find_north_south_deviation(const string_view proj4, const Point& p0)
+{
+  constexpr auto MAX_LATITUDE{89.9};
+  constexpr auto LATITUDE_DISTANCE{10};
+  const auto lat1 = min(MAX_LATITUDE, p0.latitude() + LATITUDE_DISTANCE);
+  Point p1{lat1, p0.longitude()};
+  auto grid0 = from_lat_long(proj4, p0);
+  auto grid1 = from_lat_long(proj4, p1);
+  // angle is going to be how far off North we are
+  auto deviation =
+    Radians{atan2(grid1.y.value - grid0.y.value, grid1.x.value - grid0.x.value)}.asDegrees();
+  logging::note(
+    "Deviation for {} to {} with proj4 '{:s}' -  is {:f} degrees", p0, p1, proj4, deviation.value
+  );
+  return deviation;
+};
 }
