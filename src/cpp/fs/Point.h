@@ -45,10 +45,6 @@ private:
   MathSize longitude_;
 };
 }
-// apple clang didn't work with just extending to StartPoint with
-// template <>
-// struct std::formatter<fs::StartPoint> : std::formatter<fs::Point>
-// { };
 template <typename T>
 concept LatLong = requires(const T& p) {
   { p.latitude() } noexcept -> std::same_as<fs::MathSize>;
@@ -59,7 +55,9 @@ template <class T>
 struct std::formatter<T> : std::formatter<string_view>
 {
   constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
-  auto format(const T& p, std::format_context& ctx) const
+  // apple clang didn't work with std::format_context
+  template <class FormatContext>
+  auto format(const T& p, FormatContext& ctx) const
   {
     std::string tmp{};
     std::format_to(
