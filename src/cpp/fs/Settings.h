@@ -73,6 +73,7 @@ public:
   const string getBinaryDirectory() const noexcept;
   Settings() = delete;
   Settings(const string dir_binary, const string dir_root) noexcept;
+  string create(const pushd& dir) const;
   // save to directory in same format parse expects
   void saveTo(const string& output_directory) const noexcept;
   bool found(const string& key) const noexcept
