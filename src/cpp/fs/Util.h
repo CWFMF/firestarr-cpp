@@ -485,6 +485,7 @@ public:
     : LazyPath(string(dir_root), string(path))
   { }
   bool empty() const { return path_.empty(); }
+  string intended_path() const noexcept { return std::format("{}/{}", dir_root_, path_); }
   const char* canonical() const
   {
     if (nullptr == canonical_path_)
