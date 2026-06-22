@@ -145,7 +145,7 @@ Relative address from current working directory:
 
 Note: FireSTARR will look to the location it is invoked from for it's information to run. Any datasets the model requires need to be defined with appropriate flags.
 
-`.\firestarr.exe Output_Fire 2026-05-01 53 -100 13:00 --ffmc 80 --dmc 60 --dc 300 -tz 8`
+`.\firestarr.exe Output_Fire 2026-05-01 53 -100 13:00 --ffmc 80 --dmc 60 --dc 300 --tz 8`
 
 FFMC, DMC, DC and Timezone are mandatory fields to run FireSTARR
 
