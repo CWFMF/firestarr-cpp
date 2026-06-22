@@ -407,8 +407,9 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   {
     return {};
   }
-  const auto upper_right = to_lat_long(this->proj4_, XYPos{XPos{xurcorner_}, YPos{yurcorner_}});
-  if (!check_deviation("upper right", proj4_, upper_right, MAX_DEVIATION_EDGES))
+  // goint north of upper corners goes way off the grid, so do lower_right
+  const auto lower_right = to_lat_long(this->proj4_, XYPos{XPos{xurcorner_}, YPos{yllcorner_}});
+  if (!check_deviation("lower right", proj4_, lower_right, MAX_DEVIATION_EDGES))
   {
     return {};
   }
