@@ -72,8 +72,33 @@ public:
     {
       return 0.0;
     }
-    // NOTE: based off spread event probability from wotton
-    // should be the inverse of calculateSpreadProbability()
+    /*! \page spread Probability of fire spread
+     *
+     * Probability of spread is converted into the ROS that would give it,
+     * and then when checked the fire burns if ROS > ROS_threshold
+     *
+     * 25.0 / 4.0 * log(-(exp(41.0 / 25.0) * threshold) / (threshold - 1));
+     * Should be the inverse of:
+     * 1 / (1 + exp(1.64 - 0.16 * ros));
+     *
+     * chance of spread      ros (m/min)
+     * ~16.2465%             0
+     * ~18.5427%             1
+     * ~23.8667%             3
+     * ~30.1535%             5
+     * ~49.0000%             10
+     * ~68.1354%             15
+     * ~82.6353%             20
+     * 90%                   23.9827
+     * 95%                   28.6527
+     * 98%                   34.5739
+     * 99%                   38.9695
+     *
+     * \section References
+     *
+     * Podur, Justin & Wotton, Mike. (2011). Defining fire spread event days for fire-growth
+     * modelling. International Journal of Wildland Fire. 20. 497-507. 10.1071/WF09001.
+     */
     return 25.0 / 4.0 * log(-(exp(41.0 / 25.0) * threshold) / (threshold - 1));
   }
   /**
