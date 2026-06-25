@@ -14,6 +14,12 @@ jobs:
     - name: Install Asciidoctor
       run: sudo apt-get install -y asciidoctor
 
+    - name: Debug working directory
+      run: |
+        pwd
+        ls -la
+
+
     - name: Build README
       run: asciidoctor README.adoc -o README.md
 
