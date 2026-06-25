@@ -1,0 +1,10 @@
+// dmc.adoc
+[[arg-dmc]]
+=== --dmc
+
+Set starting Duff Moisture Code (DMC).
+
+[cols="1,3"]
+|===
+|Type |Numeric
+|===

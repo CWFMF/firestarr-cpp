@@ -1,0 +1,11 @@
+// points.adoc
+[[arg-points]]
+=== --points
+
+Save simulation point outputs to file.
+
+[cols="1,3"]
+|===
+|Type |Flag
+|Default |Disabled
+|===

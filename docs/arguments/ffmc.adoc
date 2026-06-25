@@ -1,0 +1,10 @@
+// ffmc.adoc
+[[arg-ffmc]]
+=== --ffmc
+
+Set starting Fine Fuel Moisture Code (FFMC).
+
+[cols="1,3"]
+|===
+|Type |Numeric
+|===

@@ -1,0 +1,26 @@
+name: Build Docs
+
+on:
+  push:
+    branches: [user_docs]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Asciidoctor
+      run: sudo apt-get install -y asciidoctor
+
+    - name: Build README
+      run: asciidoctor README.adoc -o README.md
+
+    - name: Commit output
+      run: |
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+        git add README.md
+        git commit -m "Auto-build README"
+        git push || true

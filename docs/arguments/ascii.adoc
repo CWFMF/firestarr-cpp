@@ -1,0 +1,11 @@
+// ascii.adoc
+[[arg-ascii]]
+=== --ascii
+
+Save output grids in ASCII (`.asc`) format.
+
+[cols="1,3"]
+|===
+|Type |Flag
+|Default |Disabled
+|===

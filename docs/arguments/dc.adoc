@@ -1,0 +1,10 @@
+// dc.adoc
+[[arg-dc]]
+=== --dc
+
+Set starting Drought Code (DC).
+
+[cols="1,3"]
+|===
+|Type |Numeric
+|===

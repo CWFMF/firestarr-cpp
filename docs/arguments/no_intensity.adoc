@@ -1,0 +1,11 @@
+// no-intensity.adoc
+[[arg-no-intensity]]
+=== --no-intensity
+
+Disable output of fire intensity grids.
+
+[cols="1,3"]
+|===
+|Type |Flag
+|Default |Enabled
+|===

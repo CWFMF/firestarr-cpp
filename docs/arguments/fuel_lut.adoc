@@ -1,0 +1,10 @@
+// fuel-lut.adoc
+[[arg-fuel-lut]]
+=== --fuel-lut
+
+Specify fuel lookup table file.
+
+[cols="1,3"]
+|===
+|Type |File path
+|===

@@ -1,0 +1,10 @@
+// size.adoc
+[[arg-size]]
+=== --size
+
+Initialize simulation using initial fire size.
+
+[cols="1,3"]
+|===
+|Type |Numeric
+|===

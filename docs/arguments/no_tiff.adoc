@@ -1,0 +1,12 @@
+// no-tiff.adoc
+[[arg-no-tiff]]
+=== --no-tiff
+
+Disable saving output grids in TIFF (`.tif`) format.
+
+[cols="1,3"]
+|===
+|Type |Flag
+|Default |TIFF enabled
+|===
+``

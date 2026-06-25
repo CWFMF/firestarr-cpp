@@ -1,0 +1,12 @@
+// wx.adoc
+[[arg-wx]]
+=== --wx
+
+Specify input weather file.
+
+[cols="1,3"]
+|===
+|Type |File path
+|Required |Yes
+|===
+``

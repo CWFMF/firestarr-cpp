@@ -1,0 +1,11 @@
+// sim-area.adoc
+[[arg-sim-area]]
+=== --sim-area
+
+Output simulation area grids.
+
+[cols="1,3"]
+|===
+|Type |Flag
+|Default |Disabled
+|===

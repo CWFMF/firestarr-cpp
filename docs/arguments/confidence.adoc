@@ -1,0 +1,10 @@
+// confidence.adoc
+[[arg-confidence]]
+=== --confidence
+
+Specify confidence level used in outputs.
+
+[cols="1,3"]
+|===
+|Type |Numeric
+|===

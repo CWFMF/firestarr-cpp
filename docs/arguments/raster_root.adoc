@@ -1,0 +1,11 @@
+// raster-root.adoc
+[[arg-raster-root]]
+=== --raster-root
+
+Specify directory to use as raster root for inputs.
+
+[cols="1,3"]
+|===
+|Type |Path
+|Required |Yes (context dependent)
+|===

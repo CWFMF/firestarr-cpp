@@ -1,0 +1,11 @@
+// no-probability.adoc
+[[arg-no-probability]]
+=== --no-probability
+
+Disable output of probability grids.
+
+[cols="1,3"]
+|===
+|Type |Flag
+|Default |Enabled
+|===

@@ -1,0 +1,10 @@
+// curing.adoc
+[[arg-curing]]
+=== --curing
+
+Specify static grass curing value.
+
+[cols="1,3"]
+|===
+|Type |Numeric
+|===

@@ -1,0 +1,11 @@
+// occurrence.adoc
+[[arg-occurrence]]
+=== --occurrence
+
+Enable output of fire occurrence grids.
+
+[cols="1,3"]
+|===
+|Type |Flag
+|Default |Disabled
+|===

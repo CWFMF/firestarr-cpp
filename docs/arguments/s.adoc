@@ -1,0 +1,11 @@
+// s.adoc
+[[arg-s]]
+=== -s
+
+Run simulation in synchronous mode.
+
+[cols="1,3"]
+|===
+|Type |Flag
+|Default |Asynchronous
+|===
