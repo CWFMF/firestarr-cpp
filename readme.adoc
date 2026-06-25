@@ -1,0 +1,41 @@
+// README.adoc
+= FireSTARR C++ CLI
+
+== Usage
+
+[source,bash]
+----
+firestarr.exe <output_dir> <yyyy-mm-dd> <lat> <lon> <HH:MM> [OPTION]...
+----
+
+== Command Line Arguments
+
+include::docs/arguments/h.adoc[]
+include::docs/arguments/v.adoc[]
+include::docs/arguments/q.adoc[]
+include::docs/arguments/ascii.adoc[]
+include::docs/arguments/no-tiff.adoc[]
+include::docs/arguments/i.adoc[]
+include::docs/arguments/s.adoc[]
+include::docs/arguments/points.adoc[]
+include::docs/arguments/no-intensity.adoc[]
+include::docs/arguments/no-probability.adoc[]
+include::docs/arguments/occurrence.adoc[]
+include::docs/arguments/sim-area.adoc[]
+include::docs/arguments/raster-root.adoc[]
+include::docs/arguments/fuel-lut.adoc[]
+include::docs/arguments/tz.adoc[]
+include::docs/arguments/curing.adoc[]
+include::docs/arguments/force-greenup.adoc[]
+include::docs/arguments/force-no-greenup.adoc[]
+include::docs/arguments/log.adoc[]
+include::docs/arguments/wx.adoc[]
+include::docs/arguments/deterministic.adoc[]
+include::docs/arguments/confidence.adoc[]
+include::docs/arguments/perim.adoc[]
+include::docs/arguments/size.adoc[]
+include::docs/arguments/ffmc.adoc[]
+include::docs/arguments/dmc.adoc[]
+include::docs/arguments/dc.adoc[]
+include::docs/arguments/apcp_prev.adoc[]
+include::docs/arguments/output_date_offsets.adoc[]
