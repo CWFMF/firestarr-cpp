@@ -1,1398 +1,2612 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.20">
-<title>FireSTARR README</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
-<style>
-/*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
-/* Uncomment the following line when using as a custom stylesheet */
-/* @import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700"; */
-html{font-family:sans-serif;-webkit-text-size-adjust:100%}
-a{background:none}
-a:focus{outline:thin dotted}
-a:active,a:hover{outline:0}
-h1{font-size:2em;margin:.67em 0}
-b,strong{font-weight:bold}
-abbr{font-size:.9em}
-abbr[title]{cursor:help;border-bottom:1px dotted #dddddf;text-decoration:none}
-dfn{font-style:italic}
-hr{height:0}
-mark{background:#ff0;color:#000}
-code,kbd,pre,samp{font-family:monospace;font-size:1em}
-pre{white-space:pre-wrap}
-q{quotes:"\201C" "\201D" "\2018" "\2019"}
-small{font-size:80%}
-sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
-sup{top:-.5em}
-sub{bottom:-.25em}
-img{border:0}
-svg:not(:root){overflow:hidden}
-figure{margin:0}
-audio,video{display:inline-block}
-audio:not([controls]){display:none;height:0}
-fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
-legend{border:0;padding:0}
-button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
-button,input{line-height:normal}
-button,select{text-transform:none}
-button,html input[type=button],input[type=reset],input[type=submit]{-webkit-appearance:button;cursor:pointer}
-button[disabled],html input[disabled]{cursor:default}
-input[type=checkbox],input[type=radio]{padding:0}
-button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
-textarea{overflow:auto;vertical-align:top}
-table{border-collapse:collapse;border-spacing:0}
-*,::before,::after{box-sizing:border-box}
-html,body{font-size:100%}
-body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;line-height:1;position:relative;cursor:auto;-moz-tab-size:4;-o-tab-size:4;tab-size:4;word-wrap:anywhere;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
-a:hover{cursor:pointer}
-img,object,embed{max-width:100%;height:auto}
-object,embed{height:100%}
-img{-ms-interpolation-mode:bicubic}
-.left{float:left!important}
-.right{float:right!important}
-.text-left{text-align:left!important}
-.text-right{text-align:right!important}
-.text-center{text-align:center!important}
-.text-justify{text-align:justify!important}
-.hide{display:none}
-img,object,svg{display:inline-block;vertical-align:middle}
-textarea{height:auto;min-height:50px}
-select{width:100%}
-.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
-div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0}
-a{color:#2156a5;text-decoration:underline;line-height:inherit}
-a:hover,a:focus{color:#1d4b8f}
-a img{border:0}
-p{line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
-p aside{font-size:.875em;line-height:1.35;font-style:italic}
-h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
-h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
-h1{font-size:2.125em}
-h2{font-size:1.6875em}
-h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
-h4,h5{font-size:1.125em}
-h6{font-size:1em}
-hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em}
-em,i{font-style:italic;line-height:inherit}
-strong,b{font-weight:bold;line-height:inherit}
-small{font-size:60%;line-height:inherit}
-code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
-ul,ol,dl{line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
-ul,ol{margin-left:1.5em}
-ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0}
-ul.circle{list-style-type:circle}
-ul.disc{list-style-type:disc}
-ul.square{list-style-type:square}
-ul.circle ul:not([class]),ul.disc ul:not([class]),ul.square ul:not([class]){list-style:inherit}
-ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
-dl dt{margin-bottom:.3125em;font-weight:bold}
-dl dd{margin-bottom:1.25em}
-blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
-blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
-@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
-h1{font-size:2.75em}
-h2{font-size:2.3125em}
-h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
-h4{font-size:1.4375em}}
-table{background:#fff;margin-bottom:1.25em;border:1px solid #dedede;word-wrap:normal}
-table thead,table tfoot{background:#f7f8f7}
-table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
-table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
-table tr.even,table tr.alt{background:#f8f8f7}
-table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{line-height:1.6}
-h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
-h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
-.center{margin-left:auto;margin-right:auto}
-.stretch{width:100%}
-.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
-.clearfix::after,.float-group::after{clear:both}
-:not(pre).nobreak{word-wrap:normal}
-:not(pre).nowrap{white-space:nowrap}
-:not(pre).pre-wrap{white-space:pre-wrap}
-:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed}
-pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
-pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
-pre>code{display:block}
-pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
-em em{font-style:normal}
-strong strong{font-weight:400}
-.keyseq{color:rgba(51,51,51,.8)}
-kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;border-radius:3px;box-shadow:0 1px 0 rgba(0,0,0,.2),inset 0 0 0 .1em #fff;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
-.keyseq kbd:first-child{margin-left:0}
-.keyseq kbd:last-child{margin-right:0}
-.menuseq,.menuref{color:#000}
-.menuseq b:not(.caret),.menuref{font-weight:inherit}
-.menuseq{word-spacing:-.02em}
-.menuseq b.caret{font-size:1.25em;line-height:.8}
-.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
-b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
-b.button::before{content:"[";padding:0 3px 0 2px}
-b.button::after{content:"]";padding:0 2px 0 3px}
-p a>code:hover{color:rgba(0,0,0,.9)}
-#header,#content,#footnotes,#footer{width:100%;margin:0 auto;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
-#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
-#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
-#content{margin-top:1.25em}
-#content::before{content:none}
-#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
-#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
-#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
-#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:flex;flex-flow:row wrap}
-#header .details span:first-child{margin-left:-.125em}
-#header .details span.email a{color:rgba(0,0,0,.85)}
-#header .details br{display:none}
-#header .details br+span::before{content:"\00a0\2013\00a0"}
-#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
-#header .details br+span#revremark::before{content:"\00a0|\00a0"}
-#header #revnumber{text-transform:capitalize}
-#header #revnumber::after{content:"\00a0"}
-#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
-#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
-#toc>ul{margin-left:.125em}
-#toc ul.sectlevel0>li>a{font-style:italic}
-#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
-#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
-#toc li{line-height:1.3334;margin-top:.3334em}
-#toc a{text-decoration:none}
-#toc a:active{text-decoration:underline}
-#toctitle{color:#7a2518;font-size:1.2em}
-@media screen and (min-width:768px){#toctitle{font-size:1.375em}
-body.toc2{padding-left:15em;padding-right:0}
-#toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
-#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
-#toc.toc2>ul{font-size:.9em;margin-bottom:0}
-#toc.toc2 ul ul{margin-left:0;padding-left:1em}
-#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
-body.toc2.toc-right{padding-left:0;padding-right:15em}
-body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
-@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
-#toc.toc2{width:20em}
-#toc.toc2 #toctitle{font-size:1.375em}
-#toc.toc2>ul{font-size:.95em}
-#toc.toc2 ul ul{padding-left:1.25em}
-body.toc2.toc-right{padding-left:0;padding-right:20em}}
-#content #toc{border:1px solid #e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;border-radius:4px}
-#content #toc>:first-child{margin-top:0}
-#content #toc>:last-child{margin-bottom:0}
-#footer{max-width:none;background:rgba(0,0,0,.8);padding:1.25em}
-#footer-text{color:hsla(0,0%,100%,.8);line-height:1.44}
-#content{margin-bottom:.625em}
-.sect1{padding-bottom:.625em}
-@media screen and (min-width:768px){#content{margin-bottom:1.25em}
-.sect1{padding-bottom:1.25em}}
-.sect1:last-child{padding-bottom:0}
-.sect1+.sect1{border-top:1px solid #e7e7e9}
-#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
-#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
-#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
-#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
-#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
-details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
-details{margin-left:1.25rem}
-details>summary{cursor:pointer;display:block;position:relative;line-height:1.6;margin-bottom:.625rem;outline:none;-webkit-tap-highlight-color:transparent}
-details>summary::-webkit-details-marker{display:none}
-details>summary::before{content:"";border:solid transparent;border-left:solid;border-width:.3em 0 .3em .5em;position:absolute;top:.5em;left:-1.25rem;transform:translateX(15%)}
-details[open]>summary::before{border:solid transparent;border-top:solid;border-width:.5em .3em 0;transform:translateY(15%)}
-details>summary::after{content:"";width:1.25rem;height:1em;position:absolute;top:.3em;left:-1.25rem}
-.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
-table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
-.paragraph.lead>p,#preamble>.sectionbody>[class=paragraph]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
-.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
-.admonitionblock>table td.icon{text-align:center;width:80px}
-.admonitionblock>table td.icon img{max-width:none}
-.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
-.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6);word-wrap:anywhere}
-.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
-.exampleblock>.content{border:1px solid #e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;border-radius:4px}
-.sidebarblock{border:1px solid #dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;border-radius:4px}
-.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
-.exampleblock>.content>:first-child,.sidebarblock>.content>:first-child{margin-top:0}
-.exampleblock>.content>:last-child,.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
-.literalblock pre,.listingblock>.content>pre{border-radius:4px;overflow-x:auto;padding:1em;font-size:.8125em}
-@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
-@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
-.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class=highlight],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
-.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
-.listingblock>.content{position:relative}
-.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
-.listingblock:hover code[data-lang]::before{display:block}
-.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
-.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
-.listingblock pre.highlightjs{padding:0}
-.listingblock pre.highlightjs>code{padding:1em;border-radius:4px}
-.listingblock pre.prettyprint{border-width:0}
-.prettyprint{background:#f7f7f8}
-pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
-pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
-pre.prettyprint li code[data-lang]::before{opacity:1}
-pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
-table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
-table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
-table.linenotable td.code{padding-left:.75em}
-table.linenotable td.linenos,pre.pygments .linenos{border-right:1px solid;opacity:.35;padding-right:.5em;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
-pre.pygments span.linenos{display:inline-block;margin-right:.75em}
-.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
-.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
-.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
-.quoteblock blockquote{margin:0;padding:0;border:0}
-.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
-.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
-.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
-.verseblock{margin:0 1em 1.25em}
-.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans-serif;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
-.verseblock pre strong{font-weight:400}
-.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
-.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
-.quoteblock .attribution br,.verseblock .attribution br{display:none}
-.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
-.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
-.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
-.quoteblock.abstract{margin:0 1em 1.25em;display:block}
-.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
-.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
-.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
-.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
-.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;font-size:.85rem;text-align:left;margin-right:0}
-p.tableblock:last-child{margin-bottom:0}
-td.tableblock>.content{margin-bottom:1.25em;word-wrap:anywhere}
-td.tableblock>.content>:last-child{margin-bottom:-1.25em}
-table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
-table.grid-all>*>tr>*{border-width:1px}
-table.grid-cols>*>tr>*{border-width:0 1px}
-table.grid-rows>*>tr>*{border-width:1px 0}
-table.frame-all{border-width:1px}
-table.frame-ends{border-width:1px 0}
-table.frame-sides{border-width:0 1px}
-table.frame-none>colgroup+*>:first-child>*,table.frame-sides>colgroup+*>:first-child>*{border-top-width:0}
-table.frame-none>:last-child>:last-child>*,table.frame-sides>:last-child>:last-child>*{border-bottom-width:0}
-table.frame-none>*>tr>:first-child,table.frame-ends>*>tr>:first-child{border-left-width:0}
-table.frame-none>*>tr>:last-child,table.frame-ends>*>tr>:last-child{border-right-width:0}
-table.stripes-all>*>tr,table.stripes-odd>*>tr:nth-of-type(odd),table.stripes-even>*>tr:nth-of-type(even),table.stripes-hover>*>tr:hover{background:#f8f8f7}
-th.halign-left,td.halign-left{text-align:left}
-th.halign-right,td.halign-right{text-align:right}
-th.halign-center,td.halign-center{text-align:center}
-th.valign-top,td.valign-top{vertical-align:top}
-th.valign-bottom,td.valign-bottom{vertical-align:bottom}
-th.valign-middle,td.valign-middle{vertical-align:middle}
-table thead th,table tfoot th{font-weight:bold}
-tbody tr th{background:#f7f8f7}
-tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
-p.tableblock>code:only-child{background:none;padding:0}
-p.tableblock{font-size:1em}
-ol{margin-left:1.75em}
-ul li ol{margin-left:1.5em}
-dl dd{margin-left:1.125em}
-dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
-li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
-ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
-ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
-ul.unstyled,ol.unstyled{margin-left:0}
-li>p:empty:only-child::before{content:"";display:inline-block}
-ul.checklist>li>p:first-child{margin-left:-1em}
-ul.checklist>li>p:first-child>.fa-square-o:first-child,ul.checklist>li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
-ul.checklist>li>p:first-child>input[type=checkbox]:first-child{margin-right:.25em}
-ul.inline{display:flex;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
-ul.inline>li{margin-left:1.25em}
-.unstyled dl dt{font-weight:400;font-style:normal}
-ol.arabic{list-style-type:decimal}
-ol.decimal{list-style-type:decimal-leading-zero}
-ol.loweralpha{list-style-type:lower-alpha}
-ol.upperalpha{list-style-type:upper-alpha}
-ol.lowerroman{list-style-type:lower-roman}
-ol.upperroman{list-style-type:upper-roman}
-ol.lowergreek{list-style-type:lower-greek}
-.hdlist>table,.colist>table{border:0;background:none}
-.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
-td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
-td.hdlist1{font-weight:bold;padding-bottom:1.25em}
-td.hdlist2{word-wrap:anywhere}
-.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
-.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
-.colist td:not([class]):first-child img{max-width:none}
-.colist td:not([class]):last-child{padding:.25em 0}
-.thumb,.th{line-height:0;display:inline-block;border:4px solid #fff;box-shadow:0 0 0 1px #ddd}
-.imageblock.left{margin:.25em .625em 1.25em 0}
-.imageblock.right{margin:.25em 0 1.25em .625em}
-.imageblock>.title{margin-bottom:0}
-.imageblock.thumb,.imageblock.th{border-width:6px}
-.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
-.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
-.image.left{margin-right:.625em}
-.image.right{margin-left:.625em}
-a.image{text-decoration:none;display:inline-block}
-a.image object{pointer-events:none}
-sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
-sup.footnote a,sup.footnoteref a{text-decoration:none}
-sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
-#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
-#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
-#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
-#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
-#footnotes .footnote:last-of-type{margin-bottom:0}
-#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
-div.unbreakable{page-break-inside:avoid}
-.big{font-size:larger}
-.small{font-size:smaller}
-.underline{text-decoration:underline}
-.overline{text-decoration:overline}
-.line-through{text-decoration:line-through}
-.aqua{color:#00bfbf}
-.aqua-background{background:#00fafa}
-.black{color:#000}
-.black-background{background:#000}
-.blue{color:#0000bf}
-.blue-background{background:#0000fa}
-.fuchsia{color:#bf00bf}
-.fuchsia-background{background:#fa00fa}
-.gray{color:#606060}
-.gray-background{background:#7d7d7d}
-.green{color:#006000}
-.green-background{background:#007d00}
-.lime{color:#00bf00}
-.lime-background{background:#00fa00}
-.maroon{color:#600000}
-.maroon-background{background:#7d0000}
-.navy{color:#000060}
-.navy-background{background:#00007d}
-.olive{color:#606000}
-.olive-background{background:#7d7d00}
-.purple{color:#600060}
-.purple-background{background:#7d007d}
-.red{color:#bf0000}
-.red-background{background:#fa0000}
-.silver{color:#909090}
-.silver-background{background:#bcbcbc}
-.teal{color:#006060}
-.teal-background{background:#007d7d}
-.white{color:#bfbfbf}
-.white-background{background:#fafafa}
-.yellow{color:#bfbf00}
-.yellow-background{background:#fafa00}
-span.icon>.fa{cursor:default}
-a span.icon>.fa{cursor:inherit}
-.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
-.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
-.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
-.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
-.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
-.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
-.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);border-radius:50%;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
-.conum[data-value] *{color:#fff!important}
-.conum[data-value]+b{display:none}
-.conum[data-value]::after{content:attr(data-value)}
-pre .conum[data-value]{position:relative;top:-.125em}
-b.conum *{color:inherit!important}
-.conum:not([data-value]):empty{display:none}
-dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
-h1,h2,p,td.content,span.alt,summary{letter-spacing:-.01em}
-p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
-p,blockquote,dt,td.content,td.hdlist1,span.alt,summary{font-size:1.0625rem}
-p{margin-bottom:1.25rem}
-.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
-.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;box-shadow:0 1px 4px #e0e0dc}
-.print-only{display:none!important}
-@page{margin:1.25cm .75cm}
-@media print{*{box-shadow:none!important;text-shadow:none!important}
-html{font-size:80%}
-a{color:inherit!important;text-decoration:underline!important}
-a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
-a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
-abbr[title]{border-bottom:1px dotted}
-abbr[title]::after{content:" (" attr(title) ")"}
-pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
-thead{display:table-header-group}
-svg{max-width:100%}
-p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
-h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
-#header,#content,#footnotes,#footer{max-width:none}
-#toc,.sidebarblock,.exampleblock>.content{background:none!important}
-#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
-body.book #header{text-align:center}
-body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
-body.book #header .details{border:0!important;display:block;padding:0!important}
-body.book #header .details span:first-child{margin-left:0!important}
-body.book #header .details br{display:block}
-body.book #header .details br+span::before{content:none!important}
-body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
-body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
-.listingblock code[data-lang]::before{display:block}
-#footer{padding:0 .9375em}
-.hide-on-print{display:none!important}
-.print-only{display:block!important}
-.hide-for-print{display:none!important}
-.show-for-print{display:inherit!important}}
-@media amzn-kf8,print{#header>h1:first-child{margin-top:1.25rem}
-.sect1{padding:0!important}
-.sect1+.sect1{border:0}
-#footer{background:none}
-#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
-@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
-</style>
-</head>
-<body class="article">
-<div id="header">
-<h1>FireSTARR README</h1>
-</div>
-<div id="content">
-<div class="sect1">
-<h2 id="_overview">Overview</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>FireSTARR is designed to support wildland fire response decision-making, and is the fire growth algorithm originally in the FireGUARD suite of programs.</p>
-</div>
-<div class="paragraph">
-<p>It focuses on the generation of burn probabilities from replicated simulation of fire growth, smouldering, and natural extinction under the weather and stochastic fire behaviour scenarios.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="usage">Usage</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Specifies the arguments for use when using FireSTARR.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```{=html}
+<?xml version="1.0" encoding="UTF-8"?>
+```
+```{=html}
+<?asciidoc-toc?>
+```
+```{=html}
+<?asciidoc-numbered?>
+```
+```{=html}
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xl="http://www.w3.org/1999/xlink" version="5.0" xml:lang="en">
+```
+`<info>`{=html}
+```{=html}
+<title>
+```
+Project Documentation
+```{=html}
+</title>
+```
+`<date>`{=html}2026-06-26`</date>`{=html} `</info>`{=html}
+```{=html}
+<section xml:id="_overview">
+```
+```{=html}
+<title>
+```
+Overview
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+FireSTARR is designed to support wildland fire response decision-making,
+and is the fire growth algorithm originally in the FireGUARD suite of
+programs.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+It focuses on the generation of burn probabilities from replicated
+simulation of fire growth, smouldering, and natural extinction under the
+weather and stochastic fire behaviour scenarios.
+```{=html}
+</simpara>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="usage">
+```
+```{=html}
+<title>
+```
+Usage
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Specifies the arguments for use when using FireSTARR.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Required</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+string
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Required
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Yes
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+None
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-<div class="paragraph">
-<p>Example:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>firestarr.exe &lt;output_dir&gt; &lt;yyyy-mm-dd&gt; &lt;lat&gt; &lt;lon&gt; &lt;HH:MM&gt; [OPTION]...</pre>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_basic_help_printout">Basic Help Printout</h3>
-<div class="paragraph">
-<p>Arguments are:</p>
-</div>
-<div class="paragraph">
-<p><code>E:\firestarr\firestarr.exe</code></p>
-</div>
-<div class="paragraph">
-<p><code>Usage: firestarr.exe &lt;output_dir&gt; &lt;yyyy-mm-dd&gt; &lt;lat&gt; &lt;lon&gt; &lt;HH:MM&gt; [OPTION]&#8230;&#8203;</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-Run simulations and save output in the specified directory" data-lang="Run simulations and save output in the specified directory">Usage: firestarr.exe surface &lt;output_dir&gt; &lt;yyyy-mm-dd&gt; &lt;lat&gt; &lt;lon&gt; &lt;HH:MM&gt; [OPTION]...
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+<simpara>
+```
+Example:
+```{=html}
+</simpara>
+```
+```{=html}
+<screen>
+```
+firestarr.exe \<output_dir\> \<yyyy-mm-dd\> \<lat\> \<lon\> \<HH:MM\>
+\[OPTION\]...
+```{=html}
+</screen>
+```
+```{=html}
+<section xml:id="_basic_help_printout">
+```
+```{=html}
+<title>
+```
+Basic Help Printout
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Arguments are:
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}E:`\firestarr`{=tex}`\firestarr`{=tex}.exe`</literal>`{=html}
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}Usage: firestarr.exe \<output_dir\> \<yyyy-mm-dd\>
+\<lat\> \<lon\> \<HH:MM\> \[OPTION\]...​`</literal>`{=html}
+```{=html}
+</simpara>
+```
+```{=html}
+<programlisting language="Run simulations and save output in the specified directory" linenumbering="unnumbered">
+```
+Usage: firestarr.exe surface \<output_dir\> \<yyyy-mm-dd\> \<lat\>
+\<lon\> \<HH:MM\> \[OPTION\]...
 
 Calculate probability surface and save output in the specified directory
 
-Usage: firestarr.exe test &lt;output_dir&gt; [OPTION]...
+Usage: firestarr.exe test \<output_dir\> \[OPTION\]...
 
 Run test cases and save output in the specified directory
 
- Input Options
-   -h                        Show help
-   -v                        Increase output level
-   -q                        Decrease output level
-   --ascii                   Save grids as .asc
-   --no-tiff                 Do not save grids as .tif
-   -i                        Save individual maps for simulations
-   -s                        Run in synchronous mode
-   --points                  Save simulation points to file
-   --no-intensity            Do not output intensity grids
-   --no-probability          Do not output probability grids
-   --occurrence              Output occurrence grids
-   --sim-area                Output simulation area grids
-   --raster-root             Use specified directory as raster root
-   --fuel-lut                Use specified fuel lookup table
-   --tz                      UTC offset (hours)
-   --curing                  Specify static grass curing
-   --force-greenup           Force green up for all fires
-   --force-no-greenup        Force no green up for all fires
-   --log                     Output log file
-   --wx                      Input weather file
-   --deterministic           Run deterministically (100% chance of spread &amp; survival)
-   --confidence              Use specified confidence level
-   --perim                   Start from perimeter
-   --size                    Start from size
-   --ffmc                    Startup Fine Fuel Moisture Code
-   --dmc                     Startup Duff Moisture Code
-   --dc                      Startup Drought Code
-   --apcp_prev               Startup precipitation between 1200 yesterday and start of hourly weather
-   --output_date_offsets     Override output date offsets</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_example_use_of_the_tool">Example use of the tool</h3>
-<div class="paragraph">
-<p>Note: FireSTARR will look to the location it is invoked from for it&#8217;s information to run. Any datasets the model requires need to be defined with appropriate flags.</p>
-</div>
-<div class="paragraph">
-<p><code>.\firestarr.exe Output_Fire 2026-05-01 53 -100 13:00 --ffmc 80 --dmc 60 --dc 300 --tz 8</code></p>
-</div>
-<div class="paragraph">
-<p>FFMC, DMC, DC and Timezone are mandatory fields to run FireSTARR</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_settings">Settings</h2>
-<div class="sectionbody">
-<div id="settings.ini" class="paragraph">
-<p>The settings.ini file contains a number of definitions that allow FireSTARR to find the information it requires more rapidly as well as a number of constants for use within your simulation.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_critical_components">Critical components</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The fuel look up table (how FireStarr knows what the numbers in your fuel grid represent), the root to your raster data, and the output date offsets (what your forecast horrizons are).</p>
-</div>
-<div class="paragraph">
-<p><code>RASTER_ROOT</code> = ./generated/grid/100m Root directory to read rasters from. FireSTARR will read from this location without explicit definition</p>
-</div>
-<div class="paragraph">
-<p><code>MINIMUM_ROS</code> = 0.0Minimum rate of spread before fire is considered to actually be spreading. If this is above 0 it would yield results where the fire is not moving so long as the rate of spread is below the value defined here.</p>
-</div>
-<div class="paragraph">
-<p><code>MAX_SPREAD_DISTANCE</code> = 0.4 Maximum distance that head can spread per step (* cell size).This setting will ensure very fast fires are polling the underlying data so it&#8217;s always spreading the fuels represented by the underlying grid. If you go beyond 1 assessments of the fuel grid would not</p>
-</div>
-<div class="paragraph">
-<p><code>OUTPUT_DATE_OFFSETS</code> = [1,2,3,7,14] Days to output probability contours for. In this case, days 1, 2, 3 7 and 14 days.</p>
-</div>
-<div class="paragraph">
-<p><code>FUEL_LOOKUP_TABLE</code> = ./fuel.lut Lookup table (LUT) for fuels (prometheus format). The Lookup table is also the location where you would provide meaningful overrides for non-fuels. The LUT that is shipped with FireSTARR has non-fuels (except water) being turned into D-2 or some low conifer M series fuel. This ensure some spread through non-fuel.</p>
-</div>
-<div class="paragraph">
-<p><code>MINIMUM_FFMC</code> = 65.0 Minimum ffmc for fire to spread. This is essentially a global burning condition, without an FFMC over 65, fire will not spread.</p>
-</div>
-<div class="paragraph">
-<p><code>MINIMUM_FFMC_AT_NIGHT</code> = 85.0 Minimum ffmc for fire to spread at night. This is essentially a global burning condition, without an FFMC over 85, fire will not spread.</p>
-</div>
-<div class="paragraph">
-<p><code>OFFSET_SUNRISE</code> = 0.0 Time after sunrise to start burning (hours). Another global burning condition to limit fire spread.</p>
-</div>
-<div class="paragraph">
-<p><code>OFFSET_SUNSET</code> = 0.0 Time before sunset to stop burning (hours). Another global burning condition to limit fire spread.</p>
-</div>
-<div class="paragraph">
-<p><code>THRESHOLD_SCENARIO_WEIGHT</code> = 1.0 Weight given to the scenario thresholds</p>
-</div>
-<div class="paragraph">
-<p><code>THRESHOLD_DAILY_WEIGHT</code> = 3.0 Weight given to the daily thresholds</p>
-</div>
-<div class="paragraph">
-<p><code>THRESHOLD_HOURLY_WEIGHT</code> = 2.0 Weight given to the hourly thresholds</p>
-</div>
-<div class="paragraph">
-<p>The spread potential thresholds are set using 3 separate random numbers, scenario, day and hour. These numbers are all drawn independently and aggregated into a total weight after being multiple against their weights as established with the THRESHOLD_***_WEIGHT.</p>
-</div>
-<div class="paragraph">
-<p>Spread Example 1</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="../images/Spread_1.png" alt="Spread Example 1">
-</div>
-</div>
-<div class="paragraph">
-<p>Spread Example 2</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="../images/Spread_2.png" alt="Spread Example 2">
-</div>
-</div>
-<div class="paragraph">
-<p>What this looks like in practice is as follows.</p>
-</div>
-<div class="paragraph">
-<p>Wherever the weighted simulation + daily + total threshold is above the value required for spread then the fire will spread. With the same scenario for weather, there can still be different outcomes. For example, if the scenario produced the sine-wave for the rate of spread, you can see that for the 2nd scenario’s 1st day, the rate of spread is above the threshold most of the time, and thus it would spread, whereas the 1st scenario would spread briefly before noon, but otherwise not spread during that day.</p>
-</div>
-<div class="paragraph">
-<p><code>DEFAULT_PERCENT_CONIFER</code> = 50 Default M-1/M-2 percent conifer if none specified</p>
-</div>
-<div class="paragraph">
-<p><code>DEFAULT_PERCENT_DEAD_FIR</code> = 30 Default M-3/M-4 percent dead fir if none specified</p>
-</div>
-<div class="paragraph">
-<p><code>MAXIMUM_TIME</code> = 0 Maximum amount of time to take for simulation (seconds) (0 is unlimited)</p>
-</div>
-<div class="paragraph">
-<p><code>INTERIM_OUTPUT_INTERVAL</code> = 240 Amount of time between generating interim outputs (seconds)</p>
-</div>
-<div class="paragraph">
-<p><code>MAXIMUM_SIMULATIONS</code> = 10000 Maximum number of simulations to do (0 is exactly 1 simulation per scenario)</p>
-</div>
-<div class="paragraph">
-<p><code>CONFIDENCE_LEVEL</code> = 0.1 Maximum percent change in statistics between runs before results are consider stable [0 - 1]</p>
-</div>
-<div class="paragraph">
-<p><code>INTENSITY_MAX_LOW</code> = 2000 Intensity considered to be top of the range (kW/m)</p>
-</div>
-<div class="paragraph">
-<p><code>INTENSITY_MAX_MODERATE</code> = 4000 Intensity considered to be top of the range (kW/m)</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+Input Options -h Show help -v Increase output level -q Decrease output
+level --ascii Save grids as .asc --no-tiff Do not save grids as .tif -i
+Save individual maps for simulations -s Run in synchronous mode --points
+Save simulation points to file --no-intensity Do not output intensity
+grids --no-probability Do not output probability grids --occurrence
+Output occurrence grids --sim-area Output simulation area grids
+--raster-root Use specified directory as raster root --fuel-lut Use
+specified fuel lookup table --tz UTC offset (hours) --curing Specify
+static grass curing --force-greenup Force green up for all fires
+--force-no-greenup Force no green up for all fires --log Output log file
+--wx Input weather file --deterministic Run deterministically (100%
+chance of spread & survival) --confidence Use specified confidence level
+--perim Start from perimeter --size Start from size --ffmc Startup Fine
+Fuel Moisture Code --dmc Startup Duff Moisture Code --dc Startup Drought
+Code --apcp_prev Startup precipitation between 1200 yesterday and start
+of hourly weather --output_date_offsets Override output date offsets
+```{=html}
+</programlisting>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="_example_use_of_the_tool">
+```
+```{=html}
+<title>
+```
+Example use of the tool
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Note: FireSTARR will look to the location it is invoked from for it's
+information to run. Any datasets the model requires need to be defined
+with appropriate flags.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}.`\firestarr`{=tex}.exe Output_Fire 2026-05-01 53 -100
+13:00 --ffmc 80 --dmc 60 --dc 300 --tz 8`</literal>`{=html}
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+FFMC, DMC, DC and Timezone are mandatory fields to run FireSTARR
+```{=html}
+</simpara>
+```
+```{=html}
+</section>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="_settings">
+```
+```{=html}
+<title>
+```
+Settings
+```{=html}
+</title>
+```
+```{=html}
+<simpara xml:id="settings.ini">
+```
+The settings.ini file contains a number of definitions that allow
+FireSTARR to find the information it requires more rapidly as well as a
+number of constants for use within your simulation.
+```{=html}
+</simpara>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="_critical_components">
+```
+```{=html}
+<title>
+```
+Critical components
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+The fuel look up table (how FireStarr knows what the numbers in your
+fuel grid represent), the root to your raster data, and the output date
+offsets (what your forecast horrizons are).
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}RASTER_ROOT`</literal>`{=html} = ./generated/grid/100m
+Root directory to read rasters from. FireSTARR will read from this
+location without explicit definition
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}MINIMUM_ROS`</literal>`{=html} = 0.0Minimum rate of
+spread before fire is considered to actually be spreading. If this is
+above 0 it would yield results where the fire is not moving so long as
+the rate of spread is below the value defined here.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}MAX_SPREAD_DISTANCE`</literal>`{=html} = 0.4 Maximum
+distance that head can spread per step (\* cell size).This setting will
+ensure very fast fires are polling the underlying data so it's always
+spreading the fuels represented by the underlying grid. If you go beyond
+1 assessments of the fuel grid would not
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}OUTPUT_DATE_OFFSETS`</literal>`{=html} =
+\[1,2,3,7,14\] Days to output probability contours for. In this case,
+days 1, 2, 3 7 and 14 days.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}FUEL_LOOKUP_TABLE`</literal>`{=html} = ./fuel.lut
+Lookup table (LUT) for fuels (prometheus format). The Lookup table is
+also the location where you would provide meaningful overrides for
+non-fuels. The LUT that is shipped with FireSTARR has non-fuels (except
+water) being turned into D-2 or some low conifer M series fuel. This
+ensure some spread through non-fuel.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}MINIMUM_FFMC`</literal>`{=html} = 65.0 Minimum ffmc
+for fire to spread. This is essentially a global burning condition,
+without an FFMC over 65, fire will not spread.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}MINIMUM_FFMC_AT_NIGHT`</literal>`{=html} = 85.0
+Minimum ffmc for fire to spread at night. This is essentially a global
+burning condition, without an FFMC over 85, fire will not spread.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}OFFSET_SUNRISE`</literal>`{=html} = 0.0 Time after
+sunrise to start burning (hours). Another global burning condition to
+limit fire spread.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}OFFSET_SUNSET`</literal>`{=html} = 0.0 Time before
+sunset to stop burning (hours). Another global burning condition to
+limit fire spread.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}THRESHOLD_SCENARIO_WEIGHT`</literal>`{=html} = 1.0
+Weight given to the scenario thresholds
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}THRESHOLD_DAILY_WEIGHT`</literal>`{=html} = 3.0 Weight
+given to the daily thresholds
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}THRESHOLD_HOURLY_WEIGHT`</literal>`{=html} = 2.0
+Weight given to the hourly thresholds
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+The spread potential thresholds are set using 3 separate random numbers,
+scenario, day and hour. These numbers are all drawn independently and
+aggregated into a total weight after being multiple against their
+weights as established with the THRESHOLD\_\*\*\*\_WEIGHT.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+Spread Example 1
+```{=html}
+</simpara>
+```
+```{=html}
+<informalfigure>
+```
+```{=html}
+<mediaobject>
+```
+`<imageobject>`{=html}
+`<imagedata fileref="../images/Spread_1.png"/>`{=html}
+`</imageobject>`{=html} `<textobject>`{=html}`<phrase>`{=html}Spread
+Example 1`</phrase>`{=html}`</textobject>`{=html}
+```{=html}
+</mediaobject>
+```
+```{=html}
+</informalfigure>
+```
+```{=html}
+<simpara>
+```
+Spread Example 2
+```{=html}
+</simpara>
+```
+```{=html}
+<informalfigure>
+```
+```{=html}
+<mediaobject>
+```
+`<imageobject>`{=html}
+`<imagedata fileref="../images/Spread_2.png"/>`{=html}
+`</imageobject>`{=html} `<textobject>`{=html}`<phrase>`{=html}Spread
+Example 2`</phrase>`{=html}`</textobject>`{=html}
+```{=html}
+</mediaobject>
+```
+```{=html}
+</informalfigure>
+```
+```{=html}
+<simpara>
+```
+What this looks like in practice is as follows.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+Wherever the weighted simulation + daily + total threshold is above the
+value required for spread then the fire will spread. With the same
+scenario for weather, there can still be different outcomes. For
+example, if the scenario produced the sine-wave for the rate of spread,
+you can see that for the 2nd scenario's 1st day, the rate of spread is
+above the threshold most of the time, and thus it would spread, whereas
+the 1st scenario would spread briefly before noon, but otherwise not
+spread during that day.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}DEFAULT_PERCENT_CONIFER`</literal>`{=html} = 50
+Default M-1/M-2 percent conifer if none specified
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}DEFAULT_PERCENT_DEAD_FIR`</literal>`{=html} = 30
+Default M-3/M-4 percent dead fir if none specified
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}MAXIMUM_TIME`</literal>`{=html} = 0 Maximum amount of
+time to take for simulation (seconds) (0 is unlimited)
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}INTERIM_OUTPUT_INTERVAL`</literal>`{=html} = 240
+Amount of time between generating interim outputs (seconds)
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}MAXIMUM_SIMULATIONS`</literal>`{=html} = 10000 Maximum
+number of simulations to do (0 is exactly 1 simulation per scenario)
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}CONFIDENCE_LEVEL`</literal>`{=html} = 0.1 Maximum
+percent change in statistics between runs before results are consider
+stable \[0 - 1\]
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}INTENSITY_MAX_LOW`</literal>`{=html} = 2000 Intensity
+considered to be top of the range (kW/m)
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}INTENSITY_MAX_MODERATE`</literal>`{=html} = 4000
+Intensity considered to be top of the range (kW/m)
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Setting</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RASTER_ROOT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">./generated/grid/100m</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MINIMUM_ROS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MAX_SPREAD_DISTANCE</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">OUTPUT_DATE_OFFSETS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[1,2,3,7,14]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FUEL_LOOKUP_TABLE</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">./fuel.lut</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MINIMUM_FFMC</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">65.0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MINIMUM_FFMC_AT_NIGHT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">85.0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">OFFSET_SUNRISE</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">OFFSET_SUNSET</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">THRESHOLD_SCENARIO_WEIGHT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">THRESHOLD_DAILY_WEIGHT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3.0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">THRESHOLD_HOURLY_WEIGHT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DEFAULT_PERCENT_CONIFER</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">50</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DEFAULT_PERCENT_DEAD_FIR</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">30</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MAXIMUM_TIME</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">INTERIM_OUTPUT_INTERVAL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">240</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MAXIMUM_SIMULATIONS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">10000</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CONFIDENCE_LEVEL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">INTENSITY_MAX_LOW</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">INTENSITY_MAX_MODERATE</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4000</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Setting
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+RASTER_ROOT
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+./generated/grid/100m
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+MINIMUM_ROS
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+0.0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+MAX_SPREAD_DISTANCE
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+0.4
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+OUTPUT_DATE_OFFSETS
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+\[1,2,3,7,14\]
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+FUEL_LOOKUP_TABLE
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+./fuel.lut
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+MINIMUM_FFMC
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+65.0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+MINIMUM_FFMC_AT_NIGHT
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+85.0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+OFFSET_SUNRISE
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+0.0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+OFFSET_SUNSET
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+0.0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+THRESHOLD_SCENARIO_WEIGHT
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+1.0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+THRESHOLD_DAILY_WEIGHT
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+3.0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+THRESHOLD_HOURLY_WEIGHT
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+2.0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+DEFAULT_PERCENT_CONIFER
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+50
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+DEFAULT_PERCENT_DEAD_FIR
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+30
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+MAXIMUM_TIME
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+0
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+INTERIM_OUTPUT_INTERVAL
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+240
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+MAXIMUM_SIMULATIONS
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+10000
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+CONFIDENCE_LEVEL
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+0.1
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+INTENSITY_MAX_LOW
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+2000
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+INTENSITY_MAX_MODERATE
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+4000
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_command_line_arguments">Command Line Arguments</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="help">-h</h3>
-<div class="paragraph">
-<p>Show help information and usage instructions.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="_command_line_arguments">
+```
+```{=html}
+<title>
+```
+Command Line Arguments
+```{=html}
+</title>
+```
+```{=html}
+<section xml:id="help">
+```
+```{=html}
+<title>
+```
+-h
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Show help information and usage instructions.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Off</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Off
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-<div class="paragraph">
-<p>``</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="verbosity-increase">-v</h3>
-<div class="paragraph">
-<p>Increase output verbosity level. Can typically be repeated for more detail. eg. <code>-vvv</code></p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+<simpara>
+```
+`</simpara> </section> <section xml:id="verbosity-increase"> <title>-v</title> <simpara>Increase output verbosity level. Can typically be repeated for more detail. eg. <literal>-vvv</literal></simpara> <informaltable frame="all" rowsep="1" colsep="1"> <tgroup cols="2"> <colspec colname="col_1" colwidth="25*"/> <colspec colname="col_2" colwidth="75*"/> <tbody> <row> <entry align="left" valign="top"><simpara>Type</simpara></entry> <entry align="left" valign="top"><simpara>Flag</simpara></entry> </row> <row> <entry align="left" valign="top"><simpara>Default</simpara></entry> <entry align="left" valign="top"><simpara>Normal verbosity</simpara></entry> </row> </tbody> </tgroup> </informaltable> </section> <section xml:id="verbosity-decrease"> <title>-q</title> <simpara>Decrease output verbosity level.</simpara> <informaltable frame="all" rowsep="1" colsep="1"> <tgroup cols="2"> <colspec colname="col_1" colwidth="25*"/> <colspec colname="col_2" colwidth="75*"/> <tbody> <row> <entry align="left" valign="top"><simpara>Type</simpara></entry> <entry align="left" valign="top"><simpara>Flag</simpara></entry> </row> <row> <entry align="left" valign="top"><simpara>Default</simpara></entry> <entry align="left" valign="top"><simpara>Normal verbosity</simpara></entry> </row> </tbody> </tgroup> </informaltable> </section> <section xml:id="arg-ascii"> <title>--ascii</title> <simpara>Save output grids in ASCII (<literal>.asc</literal>) format.</simpara> <informaltable frame="all" rowsep="1" colsep="1"> <tgroup cols="2"> <colspec colname="col_1" colwidth="25*"/> <colspec colname="col_2" colwidth="75*"/> <tbody> <row> <entry align="left" valign="top"><simpara>Type</simpara></entry> <entry align="left" valign="top"><simpara>Flag</simpara></entry> </row> <row> <entry align="left" valign="top"><simpara>Default</simpara></entry> <entry align="left" valign="top"><simpara>Disabled</simpara></entry> </row> </tbody> </tgroup> </informaltable> </section> <section xml:id="arg-no-tiff"> <title>--no-tiff</title> <simpara>Disable saving output grids in TIFF (<literal>.tif</literal>) format.</simpara> <informaltable frame="all" rowsep="1" colsep="1"> <tgroup cols="2"> <colspec colname="col_1" colwidth="25*"/> <colspec colname="col_2" colwidth="75*"/> <tbody> <row> <entry align="left" valign="top"><simpara>Type</simpara></entry> <entry align="left" valign="top"><simpara>Flag</simpara></entry> </row> <row> <entry align="left" valign="top"><simpara>Default</simpara></entry> <entry align="left" valign="top"><simpara>TIFF enabled</simpara></entry> </row> </tbody> </tgroup> </informaltable> <simpara>`
+```{=html}
+</simpara>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-i">
+```
+```{=html}
+<title>
+```
+-i
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Save individual simulation maps.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Normal verbosity</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Disabled
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="verbosity-decrease">-q</h3>
-<div class="paragraph">
-<p>Decrease output verbosity level.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-s">
+```
+```{=html}
+<title>
+```
+-s
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Run simulation in synchronous mode.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Normal verbosity</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Asynchronous
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-ascii">--ascii</h3>
-<div class="paragraph">
-<p>Save output grids in ASCII (<code>.asc</code>) format.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-points">
+```
+```{=html}
+<title>
+```
+--points
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Save simulation point outputs to file.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Disabled</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Disabled
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-no-tiff">--no-tiff</h3>
-<div class="paragraph">
-<p>Disable saving output grids in TIFF (<code>.tif</code>) format.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-no-intensity">
+```
+```{=html}
+<title>
+```
+--no-intensity
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Disable output of fire intensity grids.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">TIFF enabled</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Enabled
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-<div class="paragraph">
-<p>``</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="arg-i">-i</h3>
-<div class="paragraph">
-<p>Save individual simulation maps.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-no-probability">
+```
+```{=html}
+<title>
+```
+--no-probability
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Disable output of probability grids.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Disabled</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Enabled
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-s">-s</h3>
-<div class="paragraph">
-<p>Run simulation in synchronous mode.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-occurrence">
+```
+```{=html}
+<title>
+```
+--occurrence
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Enable output of fire occurrence grids.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Asynchronous</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Disabled
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-points">--points</h3>
-<div class="paragraph">
-<p>Save simulation point outputs to file.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-sim-area">
+```
+```{=html}
+<title>
+```
+--sim-area
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Output simulation area grids.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Disabled</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Disabled
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-no-intensity">--no-intensity</h3>
-<div class="paragraph">
-<p>Disable output of fire intensity grids.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-raster-root">
+```
+```{=html}
+<title>
+```
+--raster-root
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Root directory to read rasters from. FireSTARR will read from the
+default location without explicit definition.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enabled</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Path
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Required
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Yes (context dependent)
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+./generated/grid/100m
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-no-probability">--no-probability</h3>
-<div class="paragraph">
-<p>Disable output of probability grids.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-fuel-lut">
+```
+```{=html}
+<title>
+```
+--fuel-lut
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Specify fuel lookup table file.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enabled</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+File path
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-occurrence">--occurrence</h3>
-<div class="paragraph">
-<p>Enable output of fire occurrence grids.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-tz">
+```
+```{=html}
+<title>
+```
+--tz
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Specify UTC offset (hours).
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Disabled</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Integer
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Units
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Hours
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-sim-area">--sim-area</h3>
-<div class="paragraph">
-<p>Output simulation area grids.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-curing">
+```
+```{=html}
+<title>
+```
+--curing
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Specify static grass curing value.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Disabled</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Numeric
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-raster-root">--raster-root</h3>
-<div class="paragraph">
-<p>Root directory to read rasters from. FireSTARR will read from the default location without explicit definition.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-force-greenup">
+```
+```{=html}
+<title>
+```
+--force-greenup
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Force green-up conditions for all fires.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Path</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Required</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes (context dependent)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">./generated/grid/100m</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-fuel-lut">--fuel-lut</h3>
-<div class="paragraph">
-<p>Specify fuel lookup table file.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-force-no-greenup">
+```
+```{=html}
+<title>
+```
+--force-no-greenup
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Force no green-up conditions for all fires.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File path</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-tz">--tz</h3>
-<div class="paragraph">
-<p>Specify UTC offset (hours).</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+<simpara>
+```
+Unresolved directive in index.adoc - include::arguments/log.adoc\[\]
+```{=html}
+</simpara>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-wx">
+```
+```{=html}
+<title>
+```
+--wx
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Specify input weather file. This requires the location to and the name
+of the file with it's extension.
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+Whole address:
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}E:`\Data`{=tex}`\Burning `{=tex}Information`\Weather`{=tex}.csv`</literal>`{=html}
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+Relative address from current working directory:
+```{=html}
+</simpara>
+```
+```{=html}
+<simpara>
+```
+`<literal>`{=html}.`\Data`{=tex}`\Weather`{=tex}.csv`</literal>`{=html}
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Units</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hours</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+File path
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Required
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Yes
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Manadtory Fields
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+`<literal>`{=html}Date, Time, Temperature, Relative Humidity, Wind
+Speed, Wind Direction, Precipitation`</literal>`{=html}
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-curing">--curing</h3>
-<div class="paragraph">
-<p>Specify static grass curing value.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+<simpara>
+```
+\`\`
+```{=html}
+</simpara>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-deterministic">
+```
+```{=html}
+<title>
+```
+--deterministic
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Run simulation deterministically (100% probability of spread and
+survival).
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Flag
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Default
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Stochastic
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-force-greenup">--force-greenup</h3>
-<div class="paragraph">
-<p>Force green-up conditions for all fires.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-confidence">
+```
+```{=html}
+<title>
+```
+--confidence
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Specify confidence level used in outputs.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Numeric
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-force-no-greenup">--force-no-greenup</h3>
-<div class="paragraph">
-<p>Force no green-up conditions for all fires.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-perim">
+```
+```{=html}
+<title>
+```
+--perim
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Initialize simulation from a fire perimeter.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Input mode
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-<div class="paragraph">
-<p>Unresolved directive in README.adoc - include::docs/arguments/log.adoc[]</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="arg-wx">--wx</h3>
-<div class="paragraph">
-<p>Specify input weather file. This requires the location to and the name of the file with it&#8217;s extension.</p>
-</div>
-<div class="paragraph">
-<p>Whole address:</p>
-</div>
-<div class="paragraph">
-<p><code>E:\Data\Burning Information\Weather.csv</code></p>
-</div>
-<div class="paragraph">
-<p>Relative address from current working directory:</p>
-</div>
-<div class="paragraph">
-<p><code>.\Data\Weather.csv</code></p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-size">
+```
+```{=html}
+<title>
+```
+--size
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Initialize simulation using initial fire size.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File path</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Required</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Manadtory Fields</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Date, Time, Temperature, Relative Humidity, Wind Speed, Wind Direction, Precipitation</code></p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Numeric
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-<div class="paragraph">
-<p>``</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="arg-deterministic">--deterministic</h3>
-<div class="paragraph">
-<p>Run simulation deterministically (100% probability of spread and survival).</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-ffmc">
+```
+```{=html}
+<title>
+```
+--ffmc
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Set starting Fine Fuel Moisture Code (FFMC).
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Flag</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Stochastic</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Numeric
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-confidence">--confidence</h3>
-<div class="paragraph">
-<p>Specify confidence level used in outputs.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-dmc">
+```
+```{=html}
+<title>
+```
+--dmc
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Set starting Duff Moisture Code (DMC).
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Numeric
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-perim">--perim</h3>
-<div class="paragraph">
-<p>Initialize simulation from a fire perimeter.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-dc">
+```
+```{=html}
+<title>
+```
+--dc
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Set starting Drought Code (DC).
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Input mode</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Numeric
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-size">--size</h3>
-<div class="paragraph">
-<p>Initialize simulation using initial fire size.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-apcp-prev">
+```
+```{=html}
+<title>
+```
+--apcp_prev
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Set precipitation from 1200 previous day to start of hourly weather.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Numeric
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html} `<row>`{=html}
+`<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Units
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+mm
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-ffmc">--ffmc</h3>
-<div class="paragraph">
-<p>Set starting Fine Fuel Moisture Code (FFMC).</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="arg-output-date-offsets">
+```
+```{=html}
+<title>
+```
+--output_date_offsets
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+Override default output date offsets.
+```{=html}
+</simpara>
+```
+```{=html}
+<informaltable frame="all" rowsep="1" colsep="1">
+```
+`<tgroup cols="2">`{=html}
+`<colspec colname="col_1" colwidth="25*"/>`{=html}
+`<colspec colname="col_2" colwidth="75*"/>`{=html}
+```{=html}
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
+```
+`<row>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Type
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `<entry align="left" valign="top">`{=html}
+```{=html}
+<simpara>
+```
+Configuration
+```{=html}
+</simpara>
+```
+`</entry>`{=html} `</row>`{=html}
+```{=html}
 </tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-dmc">--dmc</h3>
-<div class="paragraph">
-<p>Set starting Duff Moisture Code (DMC).</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-dc">--dc</h3>
-<div class="paragraph">
-<p>Set starting Drought Code (DC).</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-apcp-prev">--apcp_prev</h3>
-<div class="paragraph">
-<p>Set precipitation from 1200 previous day to start of hourly weather.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Units</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">mm</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="arg-output-date-offsets">--output_date_offsets</h3>
-<div class="paragraph">
-<p>Override default output date offsets.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Configuration</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="license">License &amp; Publications</h2>
-<div class="sectionbody">
-
-</div>
-</div>
-<div class="sect1">
-<h2 id="_additional_license_condition">Additional License Condition</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>All covered works (e.g., copies of this work, derived works) must include a copy of the file (or an updated version of it) that details credits for work up to the time of the original open source release. That file is available [here](./ORIGIN.md).</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_publications">Publications</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>FireGUARD is published at the following locations:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>[Weather forecast model](<a href="https://doi.org/10.3390/fire3020016" class="bare">https://doi.org/10.3390/fire3020016</a>)</p>
-</li>
-<li>
-<p>Burn probability model (In progress)</p>
-</li>
-<li>
-<p>[Impact and likelihood-weighted impact model](<a href="https://doi.org/10.1071/WF18189" class="bare">https://doi.org/10.1071/WF18189</a>)</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div id="footer">
-<div id="footer-text">
-Last updated 2026-06-26 21:14:52 UTC
-</div>
-</div>
-</body>
-</html>
+```
+`</tgroup>`{=html}
+```{=html}
+</informaltable>
+```
+```{=html}
+</section>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="license">
+```
+```{=html}
+<title>
+```
+License & Publications
+```{=html}
+</title>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="_additional_license_condition">
+```
+```{=html}
+<title>
+```
+Additional License Condition
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+All covered works (e.g., copies of this work, derived works) must
+include a copy of the file (or an updated version of it) that details
+credits for work up to the time of the original open source release.
+That file is available [here](./ORIGIN.md).
+```{=html}
+</simpara>
+```
+```{=html}
+</section>
+```
+```{=html}
+<section xml:id="_publications">
+```
+```{=html}
+<title>
+```
+Publications
+```{=html}
+</title>
+```
+```{=html}
+<simpara>
+```
+FireGUARD is published at the following locations:
+```{=html}
+</simpara>
+```
+```{=html}
+<itemizedlist>
+```
+`<listitem>`{=html}
+```{=html}
+<simpara>
+```
+\[Weather forecast
+model\](`<link xl:href="https://doi.org/10.3390/fire3020016">`{=html}https://doi.org/10.3390/fire3020016`</link>`{=html})
+```{=html}
+</simpara>
+```
+`</listitem>`{=html} `<listitem>`{=html}
+```{=html}
+<simpara>
+```
+Burn probability model (In progress)
+```{=html}
+</simpara>
+```
+`</listitem>`{=html} `<listitem>`{=html}
+```{=html}
+<simpara>
+```
+\[Impact and likelihood-weighted impact
+model\](`<link xl:href="https://doi.org/10.1071/WF18189">`{=html}https://doi.org/10.1071/WF18189`</link>`{=html})
+```{=html}
+</simpara>
+```
+`</listitem>`{=html}
+```{=html}
+</itemizedlist>
+```
+```{=html}
+</section>
+```
+```{=html}
+</article>
+```
