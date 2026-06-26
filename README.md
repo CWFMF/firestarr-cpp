@@ -479,7 +479,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="verbosity-increase">-v</h3>
 <div class="paragraph">
-<p>Increase output verbosity level. Can typically be repeated for more detail.</p>
+<p>Increase output verbosity level. Can typically be repeated for more detail. eg. <code>-vvv</code></p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -724,7 +724,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="arg-raster-root">--raster-root</h3>
 <div class="paragraph">
-<p>Specify directory to use as raster root for inputs.</p>
+<p>Root directory to read rasters from. FireSTARR will read from the default location without explicit definition.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -739,6 +739,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Required</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Yes (context dependent)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">./generated/grid/100m</p></td>
 </tr>
 </tbody>
 </table>
@@ -843,7 +847,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="arg-wx">--wx</h3>
 <div class="paragraph">
-<p>Specify input weather file.</p>
+<p>Specify input weather file. This requires the location to and the name of the file with it&#8217;s extension.</p>
+</div>
+<div class="paragraph">
+<p>Whole address:</p>
+</div>
+<div class="paragraph">
+<p><code>E:\Data\Burning Information\Weather.csv</code></p>
+</div>
+<div class="paragraph">
+<p>Relative address from current working directory:</p>
+</div>
+<div class="paragraph">
+<p><code>.\Data\Weather.csv</code></p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -858,6 +874,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Required</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Manadtory Fields</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Date, Time, Temperature, Relative Humidity, Wind Speed, Wind Direction, Precipitation</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -1040,7 +1060,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-06-25 22:02:12 UTC
+Last updated 2026-06-26 21:10:45 UTC
 </div>
 </div>
 </body>
