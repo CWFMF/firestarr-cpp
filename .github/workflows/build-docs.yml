@@ -39,10 +39,3 @@ jobs:
         git add README.md
         git commit -m "Auto-update README" || echo "No changes"
         git push
-
-    # 🔹 Deploy Pages
-    - uses: actions/upload-pages-artifact@v3
-      with:
-        path: public
-
-    - uses: actions/deploy-pages@v4
