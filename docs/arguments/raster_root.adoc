@@ -2,10 +2,11 @@
 [[arg-raster-root]]
 === --raster-root
 
-Specify directory to use as raster root for inputs.
+Root directory to read rasters from. FireSTARR will read from the default location without explicit definition.
 
 [cols="1,3"]
 |===
 |Type |Path
 |Required |Yes (context dependent)
+|Default | ./generated/grid/100m
 |===

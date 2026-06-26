@@ -4,7 +4,16 @@
 
 == Overview
 
-include::arguments/usage.adoc[]
+FireSTARR is designed to support wildland fire response decision-making, and is the fire growth algorithm originally in the FireGUARD suite of programs.
+
+It focuses on the generation of burn probabilities from replicated simulation of fire growth, smouldering, and natural extinction under the weather and stochastic fire behaviour scenarios.
+
+
+include::usage.adoc[]
+
+== Settings
+
+include::./settings.adoc[]
 
 == Command Line Arguments
 
@@ -36,3 +45,5 @@ include::arguments/dmc.adoc[]
 include::arguments/dc.adoc[]
 include::arguments/apcp_prev.adoc[]
 include::arguments/output_date_offset.adoc[]
+
+include::license.adoc[]

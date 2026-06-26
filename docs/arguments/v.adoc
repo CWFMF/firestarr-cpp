@@ -2,7 +2,7 @@
 [[verbosity-increase]]
 === -v
 
-Increase output verbosity level. Can typically be repeated for more detail.
+Increase output verbosity level. Can typically be repeated for more detail. eg. `-vvv`
 
 [cols="1,3"]
 |===
