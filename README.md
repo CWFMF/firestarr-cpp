@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.20">
-<title>FireSTARR C++ CLI</title>
+<title>FireSTARR README</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -435,17 +435,313 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>FireSTARR C++ CLI</h1>
+<h1>FireSTARR README</h1>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_usage">Usage</h2>
+<h2 id="_overview">Overview</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>FireSTARR is designed to support wildland fire response decision-making, and is the fire growth algorithm originally in the FireGUARD suite of programs.</p>
+</div>
+<div class="paragraph">
+<p>It focuses on the generation of burn probabilities from replicated simulation of fire growth, smouldering, and natural extinction under the weather and stochastic fire behaviour scenarios.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="usage">Usage</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Specifies the arguments for use when using FireSTARR.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Example:</p>
+</div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">firestarr.exe &lt;output_dir&gt; &lt;yyyy-mm-dd&gt; &lt;lat&gt; &lt;lon&gt; &lt;HH:MM&gt; [OPTION]...</code></pre>
+<pre>firestarr.exe &lt;output_dir&gt; &lt;yyyy-mm-dd&gt; &lt;lat&gt; &lt;lon&gt; &lt;HH:MM&gt; [OPTION]...</pre>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_basic_help_printout">Basic Help Printout</h3>
+<div class="paragraph">
+<p>Arguments are:</p>
+</div>
+<div class="paragraph">
+<p><code>E:\firestarr\firestarr.exe</code></p>
+</div>
+<div class="paragraph">
+<p><code>Usage: firestarr.exe &lt;output_dir&gt; &lt;yyyy-mm-dd&gt; &lt;lat&gt; &lt;lon&gt; &lt;HH:MM&gt; [OPTION]&#8230;&#8203;</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-Run simulations and save output in the specified directory" data-lang="Run simulations and save output in the specified directory">Usage: firestarr.exe surface &lt;output_dir&gt; &lt;yyyy-mm-dd&gt; &lt;lat&gt; &lt;lon&gt; &lt;HH:MM&gt; [OPTION]...
+
+Calculate probability surface and save output in the specified directory
+
+Usage: firestarr.exe test &lt;output_dir&gt; [OPTION]...
+
+Run test cases and save output in the specified directory
+
+ Input Options
+   -h                        Show help
+   -v                        Increase output level
+   -q                        Decrease output level
+   --ascii                   Save grids as .asc
+   --no-tiff                 Do not save grids as .tif
+   -i                        Save individual maps for simulations
+   -s                        Run in synchronous mode
+   --points                  Save simulation points to file
+   --no-intensity            Do not output intensity grids
+   --no-probability          Do not output probability grids
+   --occurrence              Output occurrence grids
+   --sim-area                Output simulation area grids
+   --raster-root             Use specified directory as raster root
+   --fuel-lut                Use specified fuel lookup table
+   --tz                      UTC offset (hours)
+   --curing                  Specify static grass curing
+   --force-greenup           Force green up for all fires
+   --force-no-greenup        Force no green up for all fires
+   --log                     Output log file
+   --wx                      Input weather file
+   --deterministic           Run deterministically (100% chance of spread &amp; survival)
+   --confidence              Use specified confidence level
+   --perim                   Start from perimeter
+   --size                    Start from size
+   --ffmc                    Startup Fine Fuel Moisture Code
+   --dmc                     Startup Duff Moisture Code
+   --dc                      Startup Drought Code
+   --apcp_prev               Startup precipitation between 1200 yesterday and start of hourly weather
+   --output_date_offsets     Override output date offsets</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example_use_of_the_tool">Example use of the tool</h3>
+<div class="paragraph">
+<p>Note: FireSTARR will look to the location it is invoked from for it&#8217;s information to run. Any datasets the model requires need to be defined with appropriate flags.</p>
+</div>
+<div class="paragraph">
+<p><code>.\firestarr.exe Output_Fire 2026-05-01 53 -100 13:00 --ffmc 80 --dmc 60 --dc 300 --tz 8</code></p>
+</div>
+<div class="paragraph">
+<p>FFMC, DMC, DC and Timezone are mandatory fields to run FireSTARR</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_settings">Settings</h2>
+<div class="sectionbody">
+<div id="settings.ini" class="paragraph">
+<p>The settings.ini file contains a number of definitions that allow FireSTARR to find the information it requires more rapidly as well as a number of constants for use within your simulation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_critical_components">Critical components</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The fuel look up table (how FireStarr knows what the numbers in your fuel grid represent), the root to your raster data, and the output date offsets (what your forecast horrizons are).</p>
+</div>
+<div class="paragraph">
+<p><code>RASTER_ROOT</code> = ./generated/grid/100m Root directory to read rasters from. FireSTARR will read from this location without explicit definition</p>
+</div>
+<div class="paragraph">
+<p><code>MINIMUM_ROS</code> = 0.0Minimum rate of spread before fire is considered to actually be spreading. If this is above 0 it would yield results where the fire is not moving so long as the rate of spread is below the value defined here.</p>
+</div>
+<div class="paragraph">
+<p><code>MAX_SPREAD_DISTANCE</code> = 0.4 Maximum distance that head can spread per step (* cell size).This setting will ensure very fast fires are polling the underlying data so it&#8217;s always spreading the fuels represented by the underlying grid. If you go beyond 1 assessments of the fuel grid would not</p>
+</div>
+<div class="paragraph">
+<p><code>OUTPUT_DATE_OFFSETS</code> = [1,2,3,7,14] Days to output probability contours for. In this case, days 1, 2, 3 7 and 14 days.</p>
+</div>
+<div class="paragraph">
+<p><code>FUEL_LOOKUP_TABLE</code> = ./fuel.lut Lookup table (LUT) for fuels (prometheus format). The Lookup table is also the location where you would provide meaningful overrides for non-fuels. The LUT that is shipped with FireSTARR has non-fuels (except water) being turned into D-2 or some low conifer M series fuel. This ensure some spread through non-fuel.</p>
+</div>
+<div class="paragraph">
+<p><code>MINIMUM_FFMC</code> = 65.0 Minimum ffmc for fire to spread. This is essentially a global burning condition, without an FFMC over 65, fire will not spread.</p>
+</div>
+<div class="paragraph">
+<p><code>MINIMUM_FFMC_AT_NIGHT</code> = 85.0 Minimum ffmc for fire to spread at night. This is essentially a global burning condition, without an FFMC over 85, fire will not spread.</p>
+</div>
+<div class="paragraph">
+<p><code>OFFSET_SUNRISE</code> = 0.0 Time after sunrise to start burning (hours). Another global burning condition to limit fire spread.</p>
+</div>
+<div class="paragraph">
+<p><code>OFFSET_SUNSET</code> = 0.0 Time before sunset to stop burning (hours). Another global burning condition to limit fire spread.</p>
+</div>
+<div class="paragraph">
+<p><code>THRESHOLD_SCENARIO_WEIGHT</code> = 1.0 Weight given to the scenario thresholds</p>
+</div>
+<div class="paragraph">
+<p><code>THRESHOLD_DAILY_WEIGHT</code> = 3.0 Weight given to the daily thresholds</p>
+</div>
+<div class="paragraph">
+<p><code>THRESHOLD_HOURLY_WEIGHT</code> = 2.0 Weight given to the hourly thresholds</p>
+</div>
+<div class="paragraph">
+<p>The spread potential thresholds are set using 3 separate random numbers, scenario, day and hour. These numbers are all drawn independently and aggregated into a total weight after being multiple against their weights as established with the THRESHOLD_***_WEIGHT.</p>
+</div>
+<div class="paragraph">
+<p>Spread Example 1</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../images/Spread_1.png" alt="Spread Example 1">
+</div>
+</div>
+<div class="paragraph">
+<p>Spread Example 2</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../images/Spread_2.png" alt="Spread Example 2">
+</div>
+</div>
+<div class="paragraph">
+<p>What this looks like in practice is as follows.</p>
+</div>
+<div class="paragraph">
+<p>Wherever the weighted simulation + daily + total threshold is above the value required for spread then the fire will spread. With the same scenario for weather, there can still be different outcomes. For example, if the scenario produced the sine-wave for the rate of spread, you can see that for the 2nd scenario’s 1st day, the rate of spread is above the threshold most of the time, and thus it would spread, whereas the 1st scenario would spread briefly before noon, but otherwise not spread during that day.</p>
+</div>
+<div class="paragraph">
+<p><code>DEFAULT_PERCENT_CONIFER</code> = 50 Default M-1/M-2 percent conifer if none specified</p>
+</div>
+<div class="paragraph">
+<p><code>DEFAULT_PERCENT_DEAD_FIR</code> = 30 Default M-3/M-4 percent dead fir if none specified</p>
+</div>
+<div class="paragraph">
+<p><code>MAXIMUM_TIME</code> = 0 Maximum amount of time to take for simulation (seconds) (0 is unlimited)</p>
+</div>
+<div class="paragraph">
+<p><code>INTERIM_OUTPUT_INTERVAL</code> = 240 Amount of time between generating interim outputs (seconds)</p>
+</div>
+<div class="paragraph">
+<p><code>MAXIMUM_SIMULATIONS</code> = 10000 Maximum number of simulations to do (0 is exactly 1 simulation per scenario)</p>
+</div>
+<div class="paragraph">
+<p><code>CONFIDENCE_LEVEL</code> = 0.1 Maximum percent change in statistics between runs before results are consider stable [0 - 1]</p>
+</div>
+<div class="paragraph">
+<p><code>INTENSITY_MAX_LOW</code> = 2000 Intensity considered to be top of the range (kW/m)</p>
+</div>
+<div class="paragraph">
+<p><code>INTENSITY_MAX_MODERATE</code> = 4000 Intensity considered to be top of the range (kW/m)</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Setting</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RASTER_ROOT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">./generated/grid/100m</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MINIMUM_ROS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MAX_SPREAD_DISTANCE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OUTPUT_DATE_OFFSETS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[1,2,3,7,14]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FUEL_LOOKUP_TABLE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">./fuel.lut</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MINIMUM_FFMC</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">65.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MINIMUM_FFMC_AT_NIGHT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">85.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OFFSET_SUNRISE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OFFSET_SUNSET</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">THRESHOLD_SCENARIO_WEIGHT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">THRESHOLD_DAILY_WEIGHT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">THRESHOLD_HOURLY_WEIGHT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DEFAULT_PERCENT_CONIFER</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">50</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DEFAULT_PERCENT_DEAD_FIR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">30</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MAXIMUM_TIME</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">INTERIM_OUTPUT_INTERVAL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">240</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MAXIMUM_SIMULATIONS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10000</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CONFIDENCE_LEVEL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">INTENSITY_MAX_LOW</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">INTENSITY_MAX_MODERATE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4000</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="sect1">
@@ -1057,10 +1353,45 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="license">License &amp; Publications</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_additional_license_condition">Additional License Condition</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>All covered works (e.g., copies of this work, derived works) must include a copy of the file (or an updated version of it) that details credits for work up to the time of the original open source release. That file is available [here](./ORIGIN.md).</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_publications">Publications</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>FireGUARD is published at the following locations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>[Weather forecast model](<a href="https://doi.org/10.3390/fire3020016" class="bare">https://doi.org/10.3390/fire3020016</a>)</p>
+</li>
+<li>
+<p>Burn probability model (In progress)</p>
+</li>
+<li>
+<p>[Impact and likelihood-weighted impact model](<a href="https://doi.org/10.1071/WF18189" class="bare">https://doi.org/10.1071/WF18189</a>)</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-06-26 21:10:45 UTC
+Last updated 2026-06-26 21:14:52 UTC
 </div>
 </div>
 </body>
