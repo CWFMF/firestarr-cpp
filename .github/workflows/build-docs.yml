@@ -8,19 +8,41 @@ jobs:
   docs:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Asciidoctor
-      run: sudo apt-get install -y asciidoctor
+    - name: Install tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y asciidoctor pandoc
 
+    # 🔹 Build HTML (Pages)
+    - name: Build HTML
+      run: asciidoctor docs/index.adoc -D public
+
+    # 🔹 Build README
     - name: Build README
-      run: asciidoctor README.adoc -o README.md
+      run: |
+        asciidoctor docs/index.adoc -b docbook -o index.xml
+        pandoc index.xml -o README.md
 
-    - name: Commit output
+    # 🔹 Commit README
+    - name: Commit README
       run: |
         git config user.name "github-actions"
         git config user.email "actions@github.com"
         git add README.md
-        git commit -m "Auto-build README"
-        git push || true
+        git commit -m "Auto-update README" || echo "No changes"
+        git push
+
+    # 🔹 Deploy Pages
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: public
+
+    - uses: actions/deploy-pages@v4
