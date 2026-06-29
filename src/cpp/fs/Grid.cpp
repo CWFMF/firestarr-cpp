@@ -400,6 +400,7 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   const XPos x_right{xurcorner_};
   const YPos y_mid{(yllcorner_ + yurcorner_) / 2.0};
   const YPos y_bottom{yllcorner_};
+  const YPos y_top{yurcorner_};
   const XYPos xy_center{x_mid, y_mid};
   const XYPos xy_s{x_mid, y_bottom};
   const XYPos xy_sw{x_left, y_bottom};
@@ -436,6 +437,58 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   }
   if (!check_deviation("lower right", proj4_, pt_se, MAX_DEVIATION_EDGES))
   {
+    return {};
+  }
+  // use calculated longitude to figure out grid locations for "corners"
+  const XYPos xy_w{x_left, y_mid};
+  const XYPos xy_e{x_right, y_mid};
+  const XYPos xy_n{x_mid, y_top};
+  const auto pt_w = to_lat_long(this->proj4_, xy_w);
+  const auto pt_e = to_lat_long(this->proj4_, xy_e);
+  const auto pt_n = to_lat_long(this->proj4_, xy_n);
+  const Point corner_nw{pt_n.latitude(), pt_w.longitude()};
+  const Point corner_ne{pt_n.latitude(), pt_e.longitude()};
+  const Point corner_sw{pt_s.latitude(), pt_w.longitude()};
+  const Point corner_se{pt_s.latitude(), pt_e.longitude()};
+  // convert corners to grid positions and see how much the distance between them varies
+  const auto corner_xy_nw = from_lat_long(proj4_, corner_nw);
+  const auto corner_xy_ne = from_lat_long(proj4_, corner_ne);
+  const auto corner_xy_sw = from_lat_long(proj4_, corner_sw);
+  const auto corner_xy_se = from_lat_long(proj4_, corner_se);
+  const auto dist_mid{(x_right - x_left).value};
+  const auto dist_top{(corner_xy_ne.x - corner_xy_nw.x).value};
+  const auto dist_bottom{(corner_xy_se.x - corner_xy_sw.x).value};
+  const auto pct_top = (dist_top / dist_mid) * 100;
+  const auto pct_mid = (dist_mid / dist_mid) * 100;
+  assert(100.0 == pct_mid);
+  const auto pct_bottom = (dist_bottom / dist_mid) * 100;
+  logging::note(
+    "East-West distances are:\n\ttop:    {:>12.0f}m {:10.3f}%\n\tmid:    {:>12.0f}m {:10.3f}%\n\tbottom: {:>12.0f}m {:10.3f}%",
+    dist_top * cell_size_,
+    pct_top,
+    dist_mid * cell_size_,
+    pct_mid,
+    dist_bottom * cell_size_,
+    pct_bottom
+  );
+  // FIX: UTM grids are ~5% but they get clipped to MAX_HEIGHT and should compare clipped bounds
+  constexpr MathSize MAX_DISTORTION_PERCENT{10};
+  if (MAX_DISTORTION_PERCENT < abs(pct_top - pct_mid))
+  {
+    logging::error(
+      "Distance along top of grid is {:0.3f}% of the size of the distance across the midpoint, which is greater than the maximum of {:0.3f}%",
+      pct_top,
+      MAX_DISTORTION_PERCENT
+    );
+    return {};
+  }
+  if (MAX_DISTORTION_PERCENT < abs(pct_bottom - pct_mid))
+  {
+    logging::error(
+      "Distance along bottom of grid is {:0.3f}% of the size of the distance across the midpoint, which is greater than the maximum of {:0.3f}%",
+      pct_bottom,
+      MAX_DISTORTION_PERCENT
+    );
     return {};
   }
   logging::verbose("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
