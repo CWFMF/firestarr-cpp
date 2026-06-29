@@ -394,15 +394,36 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
 {
   const auto xy = from_lat_long(this->proj4_, point);
   logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
-  // FIX: how different is too much?
-  constexpr MathSize MAX_DEVIATION{1};
-  if (!check_deviation("origin", proj4_, point, MAX_DEVIATION))
+  // how much it can be off in grid center
+  constexpr MathSize MAX_DEVIATION{3};
+  constexpr MathSize DEVIATION_FACTOR_BOTTOM{1};
+  constexpr MathSize DEVIATION_FACTOR_ORIGIN{1.1};
+  constexpr MathSize DEVIATION_FACTOR_EDGE{2};
+  const auto center = to_lat_long(
+    this->proj4_,
+    XYPos{XPos{(xllcorner_ + xurcorner_) / 2.0}, YPos{(yllcorner_ + yurcorner_) / 2.0}}
+  );
+  if (!check_deviation("center", proj4_, center, MAX_DEVIATION))
+  {
+    return {};
+  }
+  const auto lower_center =
+    to_lat_long(this->proj4_, XYPos{XPos{(xllcorner_ + xurcorner_) / 2.0}, YPos{yllcorner_}});
+  // how much it can be off by at bottom center
+  constexpr auto MAX_DEVIATION_BOTTOM{DEVIATION_FACTOR_BOTTOM * MAX_DEVIATION};
+  if (!check_deviation("lower center", proj4_, lower_center, MAX_DEVIATION_BOTTOM))
+  {
+    return {};
+  }
+  // how much it can be off by at origin
+  constexpr auto MAX_DEVIATION_ORIGIN{DEVIATION_FACTOR_ORIGIN * MAX_DEVIATION};
+  if (!check_deviation("origin", proj4_, point, MAX_DEVIATION_ORIGIN))
   {
     return {};
   }
   const auto lower_left = to_lat_long(this->proj4_, XYPos{XPos{xllcorner_}, YPos{yllcorner_}});
   // how much it can be off by at edges
-  constexpr auto MAX_DEVIATION_EDGES{10 * MAX_DEVIATION};
+  constexpr auto MAX_DEVIATION_EDGES{DEVIATION_FACTOR_EDGE * MAX_DEVIATION};
   if (!check_deviation("lower left", proj4_, lower_left, MAX_DEVIATION_EDGES))
   {
     return {};
