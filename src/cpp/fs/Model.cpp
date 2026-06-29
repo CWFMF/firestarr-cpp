@@ -509,15 +509,26 @@ Iteration Model::readScenarios(
   }
   return Iteration(result);
 }
+std::chrono::seconds at_least_zero(const std::chrono::seconds& t)
+{
+  constexpr auto zero = std::chrono::seconds{0};
+  if (t < zero)
+  {
+    return zero;
+  }
+  return t;
+}
 [[nodiscard]] std::chrono::seconds Model::runTime() const
 {
   const auto run_time = last_checked_ - runningSince();
   const auto run_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(run_time);
-  return run_time_seconds;
+  return at_least_zero(run_time_seconds);
 }
 [[nodiscard]] std::chrono::seconds Model::timeSinceLastSave() const
 {
-  return std::chrono::duration_cast<std::chrono::seconds>(last_checked_ - no_interim_save_since_);
+  return at_least_zero(
+    std::chrono::duration_cast<std::chrono::seconds>(last_checked_ - no_interim_save_since_)
+  );
 }
 bool Model::shouldStop() const noexcept
 {
@@ -834,6 +845,11 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   const Day start_day
 )
 {
+  if (starts_.empty())
+  {
+    logging::warning("No start locations so not running");
+    return {};
+  }
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
   auto last_date = start_day;
