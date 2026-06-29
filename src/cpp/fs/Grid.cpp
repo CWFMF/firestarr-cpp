@@ -410,7 +410,7 @@ bool GridBase::validate(const Point& point) const
   const auto pt_sw = to_lat_long(this->proj4_, xy_sw);
   const auto pt_se = to_lat_long(this->proj4_, xy_se);
   // how much it can be off in grid center
-  constexpr MathSize MAX_DEVIATION{3};
+  constexpr MathSize MAX_DEVIATION{5};
   constexpr MathSize DEVIATION_FACTOR_BOTTOM{1};
   constexpr MathSize DEVIATION_FACTOR_ORIGIN{1.1};
   constexpr MathSize DEVIATION_FACTOR_EDGE{2};
