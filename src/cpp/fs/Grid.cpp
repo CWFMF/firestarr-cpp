@@ -440,6 +440,8 @@ bool GridBase::validate(const Point& point) const
   {
     invalid = true;
   }
+  constexpr auto M_PER_KM = 1000.0;
+  const auto cell_km = cell_size_ / M_PER_KM;
   // use calculated longitude to figure out grid locations for "corners"
   const XYPos xy_w{x_left, y_mid};
   const XYPos xy_e{x_right, y_mid};
@@ -456,78 +458,88 @@ bool GridBase::validate(const Point& point) const
   const auto corner_xy_ne = from_lat_long(proj4_, corner_ne);
   const auto corner_xy_sw = from_lat_long(proj4_, corner_sw);
   const auto corner_xy_se = from_lat_long(proj4_, corner_se);
-  const auto dist_mid{(x_right - x_left).value};
-  const auto dist_top{(corner_xy_ne.x - corner_xy_nw.x).value};
-  const auto dist_bottom{(corner_xy_se.x - corner_xy_sw.x).value};
+  const auto dist_mid{(x_right - x_left).value * cell_km};
+  const auto dist_top{(corner_xy_ne.x - corner_xy_nw.x).value * cell_km};
+  const auto dist_bottom{(corner_xy_se.x - corner_xy_sw.x).value * cell_km};
   const auto pct_top = (dist_top / dist_mid) * 100;
   const auto pct_mid = (dist_mid / dist_mid) * 100;
   assert(100.0 == pct_mid);
   const auto pct_bottom = (dist_bottom / dist_mid) * 100;
+  const auto diff_top = pct_top - pct_mid;
+  const auto diff_bottom = pct_bottom - pct_mid;
   logging::debug(
-    "East-West distances are:\n\ttop:    {:>12.0f}m {:10.3f}%\n\tmid:    {:>12.0f}m {:10.3f}%\n\tbottom: {:>12.0f}m {:10.3f}%",
-    dist_top * cell_size_,
+    "East-West distances are:\n\ttop:    {:>12.1f}km {:10.3f}%\n\tmid:    {:>12.1f}km {:10.3f}%\n\tbottom: {:>12.1f}km {:10.3f}%",
+    dist_top,
     pct_top,
-    dist_mid * cell_size_,
+    dist_mid,
     pct_mid,
-    dist_bottom * cell_size_,
+    dist_bottom,
     pct_bottom
   );
   // FIX: UTM grids are ~5% but they get clipped to MAX_HEIGHT and should compare clipped bounds
   constexpr MathSize MAX_DISTORTION_PERCENT{10};
-  if (MAX_DISTORTION_PERCENT < abs(pct_top - pct_mid))
+  if (MAX_DISTORTION_PERCENT < abs(diff_top))
   {
     logging::error(
-      "Distance along top of grid is {:0.3f}% of the size of the distance across the midpoint, which is greater than the maximum of {:0.3f}%",
-      pct_top,
+      "East-West distance North of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
+      dist_top,
+      diff_top,
+      dist_mid,
       MAX_DISTORTION_PERCENT
     );
     invalid = true;
   }
-  if (MAX_DISTORTION_PERCENT < abs(pct_bottom - pct_mid))
+  if (MAX_DISTORTION_PERCENT < abs(diff_bottom))
   {
     logging::error(
-      "Distance along bottom of grid is {:0.3f}% of the size of the distance across the midpoint, which is greater than the maximum of {:0.3f}%",
-      pct_bottom,
+      "East-West distance South of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
+      dist_top,
+      diff_bottom,
+      dist_mid,
       MAX_DISTORTION_PERCENT
     );
     invalid = true;
   }
+  // do North-South distance along edges
+  const auto dist_center{(y_top - y_bottom).value * cell_km};
+  const auto dist_left{(corner_xy_nw.y - corner_xy_sw.y).value * cell_km};
+  const auto dist_right{(corner_xy_ne.y - corner_xy_se.y).value * cell_km};
+  const auto pct_left = (dist_left / dist_center) * 100;
+  const auto pct_center = (dist_center / dist_center) * 100;
+  assert(100.0 == pct_mid);
+  const auto pct_right = (dist_right / dist_center) * 100;
+  const auto diff_left = pct_left - pct_center;
+  const auto diff_right = pct_right - pct_center;
+  logging::debug(
+    "North-South distances are:\n\tleft:   {:>12.1f}km {:10.3f}%\n\tcenter: {:>12.1f}km {:10.3f}%\n\tright:  {:>12.1f}km {:10.3f}%",
+    dist_left,
+    pct_left,
+    dist_center,
+    pct_center,
+    dist_right,
+    pct_right
+  );
+  if (MAX_DISTORTION_PERCENT < abs(diff_left))
   {
-    // do North-South distance along edges
-    const auto dist_center{(y_top - y_bottom).value};
-    const auto dist_left{(corner_xy_nw.y - corner_xy_sw.y).value};
-    const auto dist_right{(corner_xy_ne.y - corner_xy_se.y).value};
-    const auto pct_left = (dist_left / dist_center) * 100;
-    const auto pct_center = (dist_center / dist_center) * 100;
-    assert(100.0 == pct_mid);
-    const auto pct_right = (dist_right / dist_center) * 100;
-    logging::debug(
-      "North-South distances are:\n\tleft:   {:>12.0f}m {:10.3f}%\n\tcenter: {:>12.0f}m {:10.3f}%\n\tright:  {:>12.0f}m {:10.3f}%",
-      dist_left * cell_size_,
-      pct_left,
-      dist_center * cell_size_,
-      pct_center,
-      dist_right * cell_size_,
-      pct_right
+    logging::error(
+      "North-South distance West of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
+      dist_left,
+      diff_left,
+      dist_center,
+      MAX_DISTORTION_PERCENT
     );
-    if (MAX_DISTORTION_PERCENT < abs(pct_left - pct_center))
-    {
-      logging::error(
-        "Distance along left of grid is {:0.3f}% of the size of the distance across the midpoint, which is greater than the maximum of {:0.3f}%",
-        pct_left,
-        MAX_DISTORTION_PERCENT
-      );
-      invalid = true;
-    }
-    if (MAX_DISTORTION_PERCENT < abs(pct_right - pct_center))
-    {
-      logging::error(
-        "Distance along right of grid is {:0.3f}% of the size of the distance across the midpoint, which is greater than the maximum of {:0.3f}%",
-        pct_right,
-        MAX_DISTORTION_PERCENT
-      );
-      invalid = true;
-    }
+    invalid = true;
+  }
+  if (MAX_DISTORTION_PERCENT < abs(diff_right))
+  {
+    logging::error(
+      "North-South distance East of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
+      dist_right,
+      diff_right,
+      dist_center,
+      MAX_DISTORTION_PERCENT
+    );
+    invalid = true;
   }
   return !invalid;
 }
