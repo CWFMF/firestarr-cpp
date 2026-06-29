@@ -490,6 +490,43 @@ bool GridBase::validate(const Point& point) const
     );
     return false;
   }
+  {
+    // do North-South distance along edges
+    const auto dist_center{(y_top - y_bottom).value};
+    const auto dist_left{(corner_xy_nw.y - corner_xy_sw.y).value};
+    const auto dist_right{(corner_xy_ne.y - corner_xy_se.y).value};
+    const auto pct_left = (dist_left / dist_center) * 100;
+    const auto pct_center = (dist_center / dist_center) * 100;
+    assert(100.0 == pct_mid);
+    const auto pct_right = (dist_right / dist_center) * 100;
+    logging::note(
+      "North-South distances are:\n\tleft:   {:>12.0f}m {:10.3f}%\n\tcenter: {:>12.0f}m {:10.3f}%\n\tright:  {:>12.0f}m {:10.3f}%",
+      dist_left * cell_size_,
+      pct_left,
+      dist_center * cell_size_,
+      pct_center,
+      dist_right * cell_size_,
+      pct_right
+    );
+    if (MAX_DISTORTION_PERCENT < abs(pct_left - pct_center))
+    {
+      logging::error(
+        "Distance along left of grid is {:0.3f}% of the size of the distance across the midpoint, which is greater than the maximum of {:0.3f}%",
+        pct_left,
+        MAX_DISTORTION_PERCENT
+      );
+      return false;
+    }
+    if (MAX_DISTORTION_PERCENT < abs(pct_right - pct_center))
+    {
+      logging::error(
+        "Distance along right of grid is {:0.3f}% of the size of the distance across the midpoint, which is greater than the maximum of {:0.3f}%",
+        pct_right,
+        MAX_DISTORTION_PERCENT
+      );
+      return false;
+    }
+  }
   return true;
 }
 std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point, const bool flipped)
