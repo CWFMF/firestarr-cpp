@@ -463,7 +463,7 @@ bool GridBase::validate(const Point& point) const
   const auto pct_mid = (dist_mid / dist_mid) * 100;
   assert(100.0 == pct_mid);
   const auto pct_bottom = (dist_bottom / dist_mid) * 100;
-  logging::note(
+  logging::debug(
     "East-West distances are:\n\ttop:    {:>12.0f}m {:10.3f}%\n\tmid:    {:>12.0f}m {:10.3f}%\n\tbottom: {:>12.0f}m {:10.3f}%",
     dist_top * cell_size_,
     pct_top,
@@ -501,7 +501,7 @@ bool GridBase::validate(const Point& point) const
     const auto pct_center = (dist_center / dist_center) * 100;
     assert(100.0 == pct_mid);
     const auto pct_right = (dist_right / dist_center) * 100;
-    logging::note(
+    logging::debug(
       "North-South distances are:\n\tleft:   {:>12.0f}m {:10.3f}%\n\tcenter: {:>12.0f}m {:10.3f}%\n\tright:  {:>12.0f}m {:10.3f}%",
       dist_left * cell_size_,
       pct_left,

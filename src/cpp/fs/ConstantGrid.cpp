@@ -51,7 +51,7 @@ int value_at_int(void* const buf, const FullIdx offset)
   auto actual_height = grid_info.calculateHeight();
   auto actual_width = grid_info.calculateWidth();
   const auto coordinates = grid_info.findFullCoordinates(point, true);
-  logging::note(
+  logging::verbose(
     "Coordinates before reading are ({:d}, {:d} => {:f}, {:f})",
     coordinates->x,
     coordinates->y,
@@ -271,7 +271,7 @@ int value_at_int(void* const buf, const FullIdx offset)
 #ifdef DEBUG_GRIDS
   logging::check_fatal(!new_location.has_value(), "Invalid location after reading");
 #endif
-  logging::note(
+  logging::debug(
     "Coordinates are ({:d}, {:d} => {:f}, {:f})",
     new_location->x,
     new_location->y,

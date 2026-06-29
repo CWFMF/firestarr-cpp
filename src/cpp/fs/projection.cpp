@@ -251,7 +251,7 @@ bool check_deviation(
   }
   else
   {
-    logging::info(
+    logging::debug(
       "Grid North of {:s} {} deviates from true North by {:g} degrees",
       what,
       p,
