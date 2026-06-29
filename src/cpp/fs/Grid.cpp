@@ -391,6 +391,8 @@ std::optional<Coordinates> GridBase::findCoordinates(const Point& point, const b
 }
 bool GridBase::validate(const Point& point) const
 {
+  // TODO: refactor this to avoid duplicated code
+  bool invalid{false};
   const auto xy = from_lat_long(this->proj4_, point);
   logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
   // find positions and lat/long translations for checking bounds
@@ -417,26 +419,26 @@ bool GridBase::validate(const Point& point) const
   // different levels of deviation are acceptable at different points relative to the grid
   if (!check_deviation("center", proj4_, center, MAX_DEVIATION))
   {
-    return false;
+    invalid = true;
   }
   constexpr auto MAX_DEVIATION_BOTTOM{DEVIATION_FACTOR_BOTTOM * MAX_DEVIATION};
   if (!check_deviation("lower center", proj4_, pt_s, MAX_DEVIATION_BOTTOM))
   {
-    return false;
+    invalid = true;
   }
   constexpr auto MAX_DEVIATION_ORIGIN{DEVIATION_FACTOR_ORIGIN * MAX_DEVIATION};
   if (!check_deviation("origin", proj4_, point, MAX_DEVIATION_ORIGIN))
   {
-    return false;
+    invalid = true;
   }
   constexpr auto MAX_DEVIATION_EDGES{DEVIATION_FACTOR_EDGE * MAX_DEVIATION};
   if (!check_deviation("lower left", proj4_, pt_sw, MAX_DEVIATION_EDGES))
   {
-    return false;
+    invalid = true;
   }
   if (!check_deviation("lower right", proj4_, pt_se, MAX_DEVIATION_EDGES))
   {
-    return false;
+    invalid = true;
   }
   // use calculated longitude to figure out grid locations for "corners"
   const XYPos xy_w{x_left, y_mid};
@@ -479,7 +481,7 @@ bool GridBase::validate(const Point& point) const
       pct_top,
       MAX_DISTORTION_PERCENT
     );
-    return false;
+    invalid = true;
   }
   if (MAX_DISTORTION_PERCENT < abs(pct_bottom - pct_mid))
   {
@@ -488,7 +490,7 @@ bool GridBase::validate(const Point& point) const
       pct_bottom,
       MAX_DISTORTION_PERCENT
     );
-    return false;
+    invalid = true;
   }
   {
     // do North-South distance along edges
@@ -515,7 +517,7 @@ bool GridBase::validate(const Point& point) const
         pct_left,
         MAX_DISTORTION_PERCENT
       );
-      return false;
+      invalid = true;
     }
     if (MAX_DISTORTION_PERCENT < abs(pct_right - pct_center))
     {
@@ -524,10 +526,10 @@ bool GridBase::validate(const Point& point) const
         pct_right,
         MAX_DISTORTION_PERCENT
       );
-      return false;
+      invalid = true;
     }
   }
-  return true;
+  return !invalid;
 }
 std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point, const bool flipped)
   const
