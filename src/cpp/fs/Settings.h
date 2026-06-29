@@ -131,6 +131,8 @@ public:
   bool force_greenup{false};
   // Whether or not to force no greenup for all fires
   bool force_no_greenup{false};
+  // Whether or not to search for a start location if start point is non-fuel
+  bool no_search{false};
   // Static curing value to force for all fires
   StaticCuring static_curing{};
   // Minimum rate of spread before fire is considered to be spreading (m/min)

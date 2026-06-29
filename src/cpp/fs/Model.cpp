@@ -402,7 +402,14 @@ void Model::makeStarts(
       const auto for_cell = cell(location);
       if (0 == size && is_null_fuel(for_cell))
       {
-        findStarts(location);
+        if (!settings.no_search)
+        {
+          findStarts(location);
+        }
+        else
+        {
+          logging::warning("Start location is non-fuel and --no-search was specified");
+        }
       }
       else
       {
