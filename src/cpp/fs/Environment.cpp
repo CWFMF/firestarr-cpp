@@ -104,7 +104,7 @@ Environment Environment::loadEnvironment(
       auto actual_width = cur_info->calculateWidth();
       const auto x = coordinates->x;
       const auto y = coordinates->y;
-      logging::note(
+      logging::debug(
         "Coordinates before reading are ({:d}, {:d} => {:f}, {:f})",
         x,
         y,
@@ -119,7 +119,7 @@ Environment Environment::loadEnvironment(
       const auto dist_S = y;
       // FIX: should take size of cells into account too? But is largest areas or highest resolution
       // the priority?
-      logging::note(
+      logging::debug(
         "Coordinates distance to bottom left is: ({:d}, {:d}) and top right is ({:d}, {:d})",
         dist_W,
         dist_S,

@@ -48,6 +48,7 @@ public:
    */
   [[nodiscard]] std::optional<FullCoordinates> findFullCoordinates(const Point& point, bool flipped)
     const;
+  [[nodiscard]] bool validate(const Point& point) const;
   /**
    * \brief Load the full Environment
    * \param point Origin Point
