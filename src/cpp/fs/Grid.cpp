@@ -389,8 +389,7 @@ std::optional<Coordinates> GridBase::findCoordinates(const Point& point, const b
     static_cast<Idx>(full->x), static_cast<Idx>(full->y), full->x_sub, full->y_sub
   };
 }
-std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point, const bool flipped)
-  const
+bool GridBase::validate(const Point& point) const
 {
   const auto xy = from_lat_long(this->proj4_, point);
   logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
@@ -418,26 +417,26 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
   // different levels of deviation are acceptable at different points relative to the grid
   if (!check_deviation("center", proj4_, center, MAX_DEVIATION))
   {
-    return {};
+    return false;
   }
   constexpr auto MAX_DEVIATION_BOTTOM{DEVIATION_FACTOR_BOTTOM * MAX_DEVIATION};
   if (!check_deviation("lower center", proj4_, pt_s, MAX_DEVIATION_BOTTOM))
   {
-    return {};
+    return false;
   }
   constexpr auto MAX_DEVIATION_ORIGIN{DEVIATION_FACTOR_ORIGIN * MAX_DEVIATION};
   if (!check_deviation("origin", proj4_, point, MAX_DEVIATION_ORIGIN))
   {
-    return {};
+    return false;
   }
   constexpr auto MAX_DEVIATION_EDGES{DEVIATION_FACTOR_EDGE * MAX_DEVIATION};
   if (!check_deviation("lower left", proj4_, pt_sw, MAX_DEVIATION_EDGES))
   {
-    return {};
+    return false;
   }
   if (!check_deviation("lower right", proj4_, pt_se, MAX_DEVIATION_EDGES))
   {
-    return {};
+    return false;
   }
   // use calculated longitude to figure out grid locations for "corners"
   const XYPos xy_w{x_left, y_mid};
@@ -480,7 +479,7 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
       pct_top,
       MAX_DISTORTION_PERCENT
     );
-    return {};
+    return false;
   }
   if (MAX_DISTORTION_PERCENT < abs(pct_bottom - pct_mid))
   {
@@ -489,8 +488,22 @@ std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point,
       pct_bottom,
       MAX_DISTORTION_PERCENT
     );
-    return {};
+    return false;
   }
+  return true;
+}
+std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point, const bool flipped)
+  const
+{
+  const auto xy = from_lat_long(this->proj4_, point);
+  logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
+  // find positions and lat/long translations for checking bounds
+  const XPos x_left{xllcorner_};
+  const XPos x_mid{(xllcorner_ + xurcorner_) / 2.0};
+  const XPos x_right{xurcorner_};
+  const YPos y_mid{(yllcorner_ + yurcorner_) / 2.0};
+  const YPos y_bottom{yllcorner_};
+  const YPos y_top{yurcorner_};
   logging::verbose("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
   const auto actual_x = (xy.x.value - this->xllcorner_) / this->cell_size_;
