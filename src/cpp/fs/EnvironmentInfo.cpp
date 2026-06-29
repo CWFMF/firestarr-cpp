@@ -64,6 +64,10 @@ unique_ptr<EnvironmentInfo> EnvironmentInfo::loadInfo(
 }
 Environment EnvironmentInfo::load(const Point& point) const
 {
+  if (!validate(point))
+  {
+    logging::fatal("Grid does not meet requirements for simulation to be valid");
+  }
   return Environment::load(point, in_fuel_, in_elevation_);
 }
 std::optional<Coordinates> EnvironmentInfo::findCoordinates(const Point& point, const bool flipped)
@@ -77,5 +81,9 @@ std::optional<FullCoordinates> EnvironmentInfo::findFullCoordinates(
 ) const
 {
   return fuel_.findFullCoordinates(point, flipped);
+}
+[[nodiscard]] bool EnvironmentInfo::validate(const Point& point) const
+{
+  return fuel_.validate(point);
 }
 }

@@ -3,6 +3,7 @@
 #include <proj.h>
 #include "Log.h"
 #include "Point.h"
+#include "Radians.h"
 #include "Settings.h"
 #include "unstable.h"
 #include "Util.h"
@@ -191,4 +192,73 @@ string try_fix_meridian(const string_view proj4)
     units
   );
 }
+Degrees find_north_south_deviation(const string_view proj4, const Point& p0)
+{
+  constexpr auto MAX_LATITUDE{89.9};
+  constexpr auto LATITUDE_DISTANCE{1};
+  const auto lat1 = min(MAX_LATITUDE, p0.latitude() + LATITUDE_DISTANCE);
+  Point p1{lat1, p0.longitude()};
+  auto grid0 = from_lat_long(proj4, p0);
+  auto grid1 = from_lat_long(proj4, p1);
+  logging::verbose(
+    "Finding deviation between [{} => ({:f}, {:f})] and [{} => ({:f}, {:f})]",
+    p0,
+    grid0.x.value,
+    grid0.y.value,
+    p1,
+    grid1.x.value,
+    grid1.y.value
+  );
+  // angle is going to be how far off North we are
+  // -90 to convert from math direction
+  auto deviation =
+    Radians::D_090().asDegrees()
+    - Radians{atan2(grid1.y.value - grid0.y.value, grid1.x.value - grid0.x.value)}.asDegrees();
+  logging::verbose(
+    "Deviation for {} to {} with proj4 '{:s}' is {:f} degrees", p0, p1, proj4, deviation.value
+  );
+  return deviation;
+};
+bool check_deviation(
+  const string_view what,
+  const string_view proj4,
+  const Point& p,
+  const MathSize max_deviation
+)
+{
+  auto deviation = find_north_south_deviation(proj4, p).value;
+  if (abs(deviation) > max_deviation)
+  {
+    logging::error(
+      "Grid North of {:s} {} deviates from true North by {:g} degrees which exceeds maximum of {:g} degrees",
+      what,
+      p,
+      deviation,
+      max_deviation
+    );
+    return false;
+  }
+  else if (abs(deviation * 2) > max_deviation)
+  {
+    // if close to max deviation then warn about it
+    logging::warning(
+      "Grid North of {:s} {} deviates from true North by {:g} degrees which is near maximum of {:f} degrees",
+      what,
+      p,
+      deviation,
+      max_deviation
+    );
+  }
+  else
+  {
+    logging::debug(
+      "Grid North of {:s} {} deviates from true North by {:g} degrees",
+      what,
+      p,
+      deviation,
+      max_deviation
+    );
+  }
+  return true;
+};
 }

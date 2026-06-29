@@ -7,6 +7,7 @@
 #include "Log.h"
 #include "projection.h"
 #include "tiff.h"
+#include "unstable.h"
 using fs::Idx;
 namespace fs
 {
@@ -388,45 +389,172 @@ std::optional<Coordinates> GridBase::findCoordinates(const Point& point, const b
     static_cast<Idx>(full->x), static_cast<Idx>(full->y), full->x_sub, full->y_sub
   };
 }
+bool GridBase::validate(const Point& point) const
+{
+  // TODO: refactor this to avoid duplicated code
+  bool invalid{false};
+  const auto xy = from_lat_long(this->proj4_, point);
+  logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
+  // find positions and lat/long translations for checking bounds
+  const XPos x_left{xllcorner_};
+  const XPos x_mid{(xllcorner_ + xurcorner_) / 2.0};
+  const XPos x_right{xurcorner_};
+  const YPos y_mid{(yllcorner_ + yurcorner_) / 2.0};
+  const YPos y_bottom{yllcorner_};
+  const YPos y_top{yurcorner_};
+  const XYPos xy_center{x_mid, y_mid};
+  const XYPos xy_s{x_mid, y_bottom};
+  const XYPos xy_sw{x_left, y_bottom};
+  const XYPos xy_se{x_right, y_bottom};
+  // figure out corner points for checks
+  const auto center = to_lat_long(this->proj4_, xy_center);
+  const auto pt_s = to_lat_long(this->proj4_, xy_s);
+  const auto pt_sw = to_lat_long(this->proj4_, xy_sw);
+  const auto pt_se = to_lat_long(this->proj4_, xy_se);
+  // how much it can be off in grid center
+  constexpr MathSize MAX_DEVIATION{5};
+  constexpr MathSize DEVIATION_FACTOR_BOTTOM{1};
+  constexpr MathSize DEVIATION_FACTOR_ORIGIN{1.1};
+  constexpr MathSize DEVIATION_FACTOR_EDGE{2};
+  // different levels of deviation are acceptable at different points relative to the grid
+  if (!check_deviation("center", proj4_, center, MAX_DEVIATION))
+  {
+    invalid = true;
+  }
+  constexpr auto MAX_DEVIATION_BOTTOM{DEVIATION_FACTOR_BOTTOM * MAX_DEVIATION};
+  if (!check_deviation("lower center", proj4_, pt_s, MAX_DEVIATION_BOTTOM))
+  {
+    invalid = true;
+  }
+  constexpr auto MAX_DEVIATION_ORIGIN{DEVIATION_FACTOR_ORIGIN * MAX_DEVIATION};
+  if (!check_deviation("origin", proj4_, point, MAX_DEVIATION_ORIGIN))
+  {
+    invalid = true;
+  }
+  constexpr auto MAX_DEVIATION_EDGES{DEVIATION_FACTOR_EDGE * MAX_DEVIATION};
+  if (!check_deviation("lower left", proj4_, pt_sw, MAX_DEVIATION_EDGES))
+  {
+    invalid = true;
+  }
+  if (!check_deviation("lower right", proj4_, pt_se, MAX_DEVIATION_EDGES))
+  {
+    invalid = true;
+  }
+  constexpr auto M_PER_KM = 1000.0;
+  const auto cell_km = cell_size_ / M_PER_KM;
+  // use calculated longitude to figure out grid locations for "corners"
+  const XYPos xy_w{x_left, y_mid};
+  const XYPos xy_e{x_right, y_mid};
+  const XYPos xy_n{x_mid, y_top};
+  const auto pt_w = to_lat_long(this->proj4_, xy_w);
+  const auto pt_e = to_lat_long(this->proj4_, xy_e);
+  const auto pt_n = to_lat_long(this->proj4_, xy_n);
+  const Point corner_nw{pt_n.latitude(), pt_w.longitude()};
+  const Point corner_ne{pt_n.latitude(), pt_e.longitude()};
+  const Point corner_sw{pt_s.latitude(), pt_w.longitude()};
+  const Point corner_se{pt_s.latitude(), pt_e.longitude()};
+  // convert corners to grid positions and see how much the distance between them varies
+  const auto corner_xy_nw = from_lat_long(proj4_, corner_nw);
+  const auto corner_xy_ne = from_lat_long(proj4_, corner_ne);
+  const auto corner_xy_sw = from_lat_long(proj4_, corner_sw);
+  const auto corner_xy_se = from_lat_long(proj4_, corner_se);
+  const auto dist_mid{(x_right - x_left).value * cell_km};
+  const auto dist_top{(corner_xy_ne.x - corner_xy_nw.x).value * cell_km};
+  const auto dist_bottom{(corner_xy_se.x - corner_xy_sw.x).value * cell_km};
+  const auto pct_top = (dist_top / dist_mid) * 100;
+  const auto pct_mid = (dist_mid / dist_mid) * 100;
+  assert(100.0 == pct_mid);
+  const auto pct_bottom = (dist_bottom / dist_mid) * 100;
+  const auto diff_top = pct_top - pct_mid;
+  const auto diff_bottom = pct_bottom - pct_mid;
+  logging::debug(
+    "East-West distances are:\n\ttop:    {:>12.1f}km {:10.3f}%\n\tmid:    {:>12.1f}km {:10.3f}%\n\tbottom: {:>12.1f}km {:10.3f}%",
+    dist_top,
+    pct_top,
+    dist_mid,
+    pct_mid,
+    dist_bottom,
+    pct_bottom
+  );
+  // FIX: UTM grids are ~5% but they get clipped to MAX_HEIGHT and should compare clipped bounds
+  constexpr MathSize MAX_DISTORTION_PERCENT{10};
+  if (MAX_DISTORTION_PERCENT < abs(diff_top))
+  {
+    logging::error(
+      "East-West distance North of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
+      dist_top,
+      diff_top,
+      dist_mid,
+      MAX_DISTORTION_PERCENT
+    );
+    invalid = true;
+  }
+  if (MAX_DISTORTION_PERCENT < abs(diff_bottom))
+  {
+    logging::error(
+      "East-West distance South of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
+      dist_top,
+      diff_bottom,
+      dist_mid,
+      MAX_DISTORTION_PERCENT
+    );
+    invalid = true;
+  }
+  // do North-South distance along edges
+  const auto dist_center{(y_top - y_bottom).value * cell_km};
+  const auto dist_left{(corner_xy_nw.y - corner_xy_sw.y).value * cell_km};
+  const auto dist_right{(corner_xy_ne.y - corner_xy_se.y).value * cell_km};
+  const auto pct_left = (dist_left / dist_center) * 100;
+  const auto pct_center = (dist_center / dist_center) * 100;
+  assert(100.0 == pct_mid);
+  const auto pct_right = (dist_right / dist_center) * 100;
+  const auto diff_left = pct_left - pct_center;
+  const auto diff_right = pct_right - pct_center;
+  logging::debug(
+    "North-South distances are:\n\tleft:   {:>12.1f}km {:10.3f}%\n\tcenter: {:>12.1f}km {:10.3f}%\n\tright:  {:>12.1f}km {:10.3f}%",
+    dist_left,
+    pct_left,
+    dist_center,
+    pct_center,
+    dist_right,
+    pct_right
+  );
+  if (MAX_DISTORTION_PERCENT < abs(diff_left))
+  {
+    logging::error(
+      "North-South distance West of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
+      dist_left,
+      diff_left,
+      dist_center,
+      MAX_DISTORTION_PERCENT
+    );
+    invalid = true;
+  }
+  if (MAX_DISTORTION_PERCENT < abs(diff_right))
+  {
+    logging::error(
+      "North-South distance East of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
+      dist_right,
+      diff_right,
+      dist_center,
+      MAX_DISTORTION_PERCENT
+    );
+    invalid = true;
+  }
+  return !invalid;
+}
 std::optional<FullCoordinates> GridBase::findFullCoordinates(const Point& point, const bool flipped)
   const
 {
-  // check that north is the top of the raster at least along center
-  const auto x_mid = XPos{(xllcorner_ + xurcorner_) / 2.0};
-  const auto y_bottom = YPos{yllcorner_};
-  const auto y_top = YPos{yurcorner_};
-  XYPos mid_bottom{x_mid, y_bottom};
-  XYPos mid_top{x_mid, y_top};
   const auto xy = from_lat_long(this->proj4_, point);
   logging::debug("Coordinates {} converted to ({:f}, {:f})", point, xy.x.value, xy.y.value);
-  auto south = to_lat_long(proj4_, mid_bottom);
-  auto north = to_lat_long(proj4_, mid_top);
-  auto grid_south = from_lat_long(this->proj4_, south);
-  auto grid_north = from_lat_long(this->proj4_, north);
-  // FIX: how different is too much?
-  constexpr MathSize MAX_DEVIATION = 0.001;
-  const auto deviation = (grid_north.x - grid_south.x).value;
-  if (abs(deviation) > MAX_DEVIATION)
-  {
-    logging::note(
-      "Due north is not the top of the raster for {} with proj4 '{:s}' - {:f} vs {:f} gives deviation of {:f} degrees which exceeds maximum of {:f} degrees",
-      point,
-      this->proj4_,
-      grid_north.x.value,
-      grid_south.x.value,
-      deviation,
-      MAX_DEVIATION
-    );
-    return {};
-  }
-  else if (abs(deviation * 10) > MAX_DEVIATION)
-  {
-    // if we're within an order of magnitude of an unacceptable deviation then warn about it
-    logging::warning(
-      "Due north deviates by {:f} degrees from South to North along the middle of the raster",
-      deviation
-    );
-  }
+  // find positions and lat/long translations for checking bounds
+  const XPos x_left{xllcorner_};
+  const XPos x_mid{(xllcorner_ + xurcorner_) / 2.0};
+  const XPos x_right{xurcorner_};
+  const YPos y_mid{(yllcorner_ + yurcorner_) / 2.0};
+  const YPos y_bottom{yllcorner_};
+  const YPos y_top{yurcorner_};
   logging::verbose("Lower left is ({:f}, {:f})", this->xllcorner_, this->yllcorner_);
   // convert coordinates into cell position
   const auto actual_x = (xy.x.value - this->xllcorner_) / this->cell_size_;
