@@ -17,7 +17,14 @@ rm -rf test/output/bad_projection
   -s \
   --raster-root test/input/bad_projection \
   --perim test/input/bad_projection/perim.tif \
-  --wx test/input/bad_projection/weather.csv \
+  --wx test/input/bad_projection/wx.csv \
   --output_date_offsets [1,2,3] \
   --tz -7 \
   $@
+
+if [ "$?" -ne 0 ]; then
+  echo "Expected run to fail and it did"
+  exit 0
+fi
+echo "Expected failure but succeeded"
+exit -1
