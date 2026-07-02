@@ -79,7 +79,11 @@ PJ_CONTEXT* get_context()
   {
     exit(logging::fatal("Can't set proj.db path"));
   }
-  logging::verbose("Succeeded trying to set db path to {:s}", db_path);
+  static const auto showed_success_once = [&]() {
+    logging::verbose("Succeeded trying to set db path to {:s}", db_path);
+    return true;
+  }();
+  std::ignore = showed_success_once;
   return pjc;
 }
 class Point;
