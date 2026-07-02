@@ -458,48 +458,8 @@ bool GridBase::validate(const Point& point) const
   const auto corner_xy_ne = from_lat_long(proj4_, corner_ne);
   const auto corner_xy_sw = from_lat_long(proj4_, corner_sw);
   const auto corner_xy_se = from_lat_long(proj4_, corner_se);
-  const auto dist_mid{(x_right - x_left).value * cell_km};
-  const auto dist_top{(corner_xy_ne.x - corner_xy_nw.x).value * cell_km};
-  const auto dist_bottom{(corner_xy_se.x - corner_xy_sw.x).value * cell_km};
-  const auto pct_top = (dist_top / dist_mid) * 100;
-  const auto pct_mid = (dist_mid / dist_mid) * 100;
-  assert(100.0 == pct_mid);
-  const auto pct_bottom = (dist_bottom / dist_mid) * 100;
-  const auto diff_top = pct_top - pct_mid;
-  const auto diff_bottom = pct_bottom - pct_mid;
-  logging::debug(
-    "East-West distances are:\n\ttop:    {:>12.1f}km {:10.3f}%\n\tmid:    {:>12.1f}km {:10.3f}%\n\tbottom: {:>12.1f}km {:10.3f}%",
-    dist_top,
-    pct_top,
-    dist_mid,
-    pct_mid,
-    dist_bottom,
-    pct_bottom
-  );
   // FIX: UTM grids are ~5% but they get clipped to MAX_HEIGHT and should compare clipped bounds
   constexpr MathSize MAX_DISTORTION_PERCENT{10};
-  if (MAX_DISTORTION_PERCENT < abs(diff_top))
-  {
-    logging::error(
-      "East-West distance North of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
-      dist_top,
-      diff_top,
-      dist_mid,
-      MAX_DISTORTION_PERCENT
-    );
-    invalid = true;
-  }
-  if (MAX_DISTORTION_PERCENT < abs(diff_bottom))
-  {
-    logging::error(
-      "East-West distance South of grid ({:.1f}km) is {:+0.1f}% of the size of the distance across the midpoint ({:.1f}km), which is greater than the maximum of {:0.3f}%",
-      dist_top,
-      diff_bottom,
-      dist_mid,
-      MAX_DISTORTION_PERCENT
-    );
-    invalid = true;
-  }
   // do North-South distance along edges
   const auto dist_center{(y_top - y_bottom).value * cell_km};
   const auto dist_left{(corner_xy_nw.y - corner_xy_sw.y).value * cell_km};
