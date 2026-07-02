@@ -1,7 +1,18 @@
 {
   "dependencies": [
     "libgeotiff",
-    "tiff",
+    {
+      "name": "tiff",
+      "default-features": true,
+      "features": [
+        "lerc",
+        "libdeflate",
+        "lzma",
+        "webp",
+        "zip",
+        "zstd"
+      ]
+    },
     {
       "name": "proj",
       "default-features": false
