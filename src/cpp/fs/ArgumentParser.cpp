@@ -524,7 +524,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
       settings.fuel_lookup, "--fuel-lut", "Use specified fuel lookup table", false
     );
     register_setter<
-      DurationSize>(settings.utc_offset, "--tz", "UTC offset (hours)", true, &parse_value<DurationSize>);
+      DurationSize>(settings.utc_offset, "--tz", "UTC offset (hours)", false, &parse_value<DurationSize>);
     register_setter<size_t>(
       [&](const auto v) { settings.static_curing = v; },
       "--curing",
