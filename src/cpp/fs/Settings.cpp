@@ -402,23 +402,20 @@ string format_section_header(const string& section, int width = 80, int side_wid
     "{}\n{}{: ^{}}{}\n{}\n", hr, side, section, width - (2 * side_width), side, hr
   );
 }
-void Settings::saveTo(const string& output_directory) const noexcept
+string Settings::create(const pushd& dir) const
 {
-  make_directory_recursive(output_directory);
-  const pushd dir{output_directory};
-  const auto filename = "settings.ini";
-  ofstream out{filename};
-  auto add_comment = [&](const string& comment) { out << "#" << comment << "\n"; };
+  stringstream buffer{};
+  auto add_comment = [&](const string& comment) { buffer << "#" << comment << "\n"; };
   auto add_section = [&](const string& section) {
     auto header = format_section_header(section);
-    out << header;
+    buffer << header;
   };
   auto put = [&](const string& key, const string& comment, const auto& value) {
     // FIX: use original string instead of parsed and stringified input so nothing can change
     static constexpr auto MAX_PRECISION = std::numeric_limits<double>::digits10 + 1;
     // make sure we don't lose precision or results will differ when run with settings file
     add_comment(" " + comment);
-    out << key << " = " << std::setprecision(MAX_PRECISION) << value << "\n";
+    buffer << key << " = " << std::setprecision(MAX_PRECISION) << value << "\n";
   };
   // HACK: just hardcode how this works since it's the opposite of parsing
   // // FIX: this should always just be whatever folder the settings file is in?
@@ -441,7 +438,14 @@ void Settings::saveTo(const string& output_directory) const noexcept
   put("MODE", mode_help, to_string(mode));
   if (!wx_file_name.empty())
   {
-    put("WX", "weather file path", relative(wx_file_name.canonical()).c_str());
+    auto wx_file = relative(wx_file_name.canonical());
+    if (!file_exists(wx_file.c_str()))
+    {
+      throw std::runtime_error(
+        std::format("Weather input file {} not found", wx_file_name.intended_path())
+      );
+    }
+    put("WX", "weather file path", wx_file.c_str());
   }
   put("LOG_FILE_NAME", "log file name (created in output directoy)", log_file_name.c_str());
   if (!perimeter.empty())
@@ -608,6 +612,35 @@ void Settings::saveTo(const string& output_directory) const noexcept
     minimum_active_simulation_count
   );
   put("MAXIMUM_SIMULATIONS", "maximum number of simulations to do", maximum_simulation_count);
+  return buffer.str();
+}
+void Settings::saveTo(const string& output_directory) const noexcept
+{
+  try
+  {
+    make_directory_recursive(output_directory);
+    // HACK: create() might depend on being in directory
+    const pushd dir{output_directory};
+    const auto contents = create(dir);
+    const auto filename = "settings.ini";
+    try
+    {
+      ofstream out{filename};
+      out << contents;
+    }
+    catch (std::exception& ex)
+    {
+      if (file_exists(filename))
+      {
+        std::filesystem::remove(filename);
+      }
+      throw ex;
+    }
+  }
+  catch (std::exception& ex)
+  {
+    exit(logging::fatal(ex, "Unable to output settings file"));
+  }
 }
 FwiWeather Settings::get_weather() const
 {
