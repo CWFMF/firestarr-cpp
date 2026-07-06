@@ -94,12 +94,28 @@ static array<tuple<DurationSize, DurationSize>, MAX_DAYS> make_days(
   static const Settings& settings = settings::instance();
   array<tuple<DurationSize, DurationSize>, MAX_DAYS> days{};
   array<DurationSize, MAX_DAYS> day_length_hours{};
+  constexpr auto DEGREES_PER_TZ_HOUR = 15.0;
+  const auto tz_calculated = floor(longitude / DEGREES_PER_TZ_HOUR);
+  auto utc_offset = settings.utc_offset.value_or(tz_calculated);
+  if (!settings.utc_offset.has_value())
+  {
+    logging::note("Using calculated timezone offset of ({:0.1g}) since not specified", utc_offset);
+  }
+  else if (1 < abs(tz_calculated - utc_offset))
+  {
+    logging::warning(
+      "Specified timezone ({:0.1g}) differs from calculated timezone ({:0.1g}) by {:0.1g} hours",
+      utc_offset,
+      tz_calculated,
+      (tz_calculated - utc_offset)
+    );
+  }
   for (size_t i = 0; i < day_length_hours.size(); ++i)
   {
     const auto [sunrise, sunset] = sunrise_sunset(static_cast<int>(i), latitude, longitude);
     days[i] = make_tuple(
-      fix_hours(sunrise + settings.utc_offset + settings.offset_sunrise),
-      fix_hours(sunset + settings.utc_offset - settings.offset_sunset)
+      fix_hours(sunrise + utc_offset + settings.offset_sunrise),
+      fix_hours(sunset + utc_offset - settings.offset_sunset)
     );
     day_length_hours[i] = get<1>(days[i]) - get<0>(days[i]);
   }

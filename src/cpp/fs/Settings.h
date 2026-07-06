@@ -145,7 +145,7 @@ public:
   // Minimum Fine Fuel Moisture Code required for spread during the night
   MathSize minimum_ffmc_at_night{0.0};
   // Offset from UTC to use for entire simulation (hours)
-  DurationSize utc_offset{0.0};
+  std::optional<DurationSize> utc_offset{};
   // Offset from sunrise at which the day is considered to start (hours)
   DurationSize offset_sunrise{0.0};
   // Offset from sunrise at which the day is considered to end (hours)
