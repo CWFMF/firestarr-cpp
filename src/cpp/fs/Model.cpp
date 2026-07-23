@@ -624,9 +624,15 @@ bool Model::add_statistics(
     return true;
   }
   is_under_simulation_minimum_ = all_sizes->size() < settings.minimum_simulation_count;
-  if (isUnderSimulationCountMinimum())
+  is_over_simulation_count_ = all_sizes->size() >= settings.maximum_simulation_count;
+  if (isOverSimulationCountMaximum())
   {
-    return true;
+    logging::note(
+      "Stopping after {:d} iterations. Simulation limit of {:d} simulations has been reached.",
+      i,
+      +settings.maximum_simulation_count
+    );
+    return false;
   }
   active_simulations_still_required_ = [&]() {
     size_t num_left = settings.minimum_active_simulation_count;
@@ -651,15 +657,9 @@ bool Model::add_statistics(
   {
     return true;
   }
-  is_over_simulation_count_ = all_sizes->size() >= settings.maximum_simulation_count;
-  if (isOverSimulationCountMaximum())
+  if (isUnderSimulationCountMinimum())
   {
-    logging::note(
-      "Stopping after {:d} iterations. Simulation limit of {:d} simulations has been reached.",
-      i,
-      +settings.maximum_simulation_count
-    );
-    return false;
+    return true;
   }
   if (isOutOfTime())
   {
