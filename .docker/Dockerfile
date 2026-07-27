@@ -68,6 +68,31 @@ RUN --mount=type=bind,source=./cmake,target=./cmake \
     && cmake --build --parallel --preset Release \
     && ctest --preset Release
 
+# build and test
+FROM vcpkg-installed AS firestarr-build-azure
+WORKDIR /appl/firestarr
+# HACK: copy .env here since cmake needs to write to it in github workflow
+COPY .env ./.env
+# mount instead of copy to minimize layers
+RUN --mount=type=bind,source=./cmake,target=./cmake \
+    --mount=type=bind,source=./CMakeLists.txt,target=./CMakeLists.txt \
+    --mount=type=bind,source=./CMakePresets.json,target=./CMakePresets.json \
+    --mount=type=bind,source=./.clang-format,target=./.clang-format \
+    --mount=type=bind,source=./.clang-tidy,target=./.clang-tidy \
+    --mount=type=bind,source=./.git,target=./.git \
+    --mount=type=bind,source=./src/cpp,target=./src/cpp \
+    --mount=type=bind,source=./test/data,target=./test/data \
+    --mount=type=bind,source=./test/input,target=./test/input \
+    --mount=type=bind,source=./fuel.lut,target=./fuel.lut \
+    --mount=type=bind,source=./settings.ini,target=./settings.ini \
+    --mount=type=bind,source=./README.md,target=./README.md \
+    --mount=type=bind,source=./ORIGIN.md,target=./ORIGIN.md \
+    --mount=type=bind,source=./LICENSE,target=./LICENSE \
+    cmake --preset Release -DCPU_TARGET=skylake -DCPU_TUNE_ONLY=0 \
+    && cmake --build --parallel --preset Release -DCPU_TARGET=skylake -DCPU_TUNE_ONLY=0 \
+    && ctest --preset Release
+
+
 FROM --platform=linux/amd64 ${BASE_DISTROLESS} AS distroless-amd64
 
 # seems like we can just delete everything and then copy distroless into any platform?
@@ -109,6 +134,19 @@ COPY --from=firestarr-minimal /appl/firestarr/proj.db /appl/firestarr/proj.db
 # derive final image from base so updates to binary are small layers
 FROM scratch AS firestarr
 COPY --from=firestarr-base-cleaned / /
+RUN mkdir -p /appl/firestarr/grid
+WORKDIR /appl/firestarr
+ENTRYPOINT [ "/appl/firestarr/firestarr" ]
+
+FROM base-cleaned AS firestarr-base-azure-cleaned
+COPY ./fuel.lut /appl/firestarr/
+COPY ./settings.ini /appl/firestarr/
+COPY --from=firestarr-build-azure /appl/firestarr/firestarr /appl/firestarr/
+COPY --from=firestarr-build-azure /appl/firestarr/proj.db /appl/firestarr/proj.db
+
+# derive final image from base so updates to binary are small layers
+FROM scratch AS firestarr-azure
+COPY --from=firestarr-base-azure-cleaned / /
 RUN mkdir -p /appl/firestarr/grid
 WORKDIR /appl/firestarr
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]

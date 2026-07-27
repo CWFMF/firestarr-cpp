@@ -19,6 +19,26 @@ services:
     env_file:
       - .env
 
+  firestarr-azure:
+    image: firestarr-azure
+    build:
+      context: .
+      target: firestarr-azure
+      dockerfile: .docker/Dockerfile
+      args:
+        VERSION: ${VERSION}
+      tags:
+        - firestarr-azure:${VERSION}
+    volumes:
+      - type: bind
+        source: ./settings.ini
+        target: /appl/firestarr/settings.ini
+      - ./test:/appl/firestarr/test:z
+      - ./grid:/appl/firestarr/grid:z
+      - ./data:/appl/data:z
+    env_file:
+      - .env
+
   firestarr-minimal:
     image: firestarr-minimal
     build:
