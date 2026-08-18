@@ -442,14 +442,14 @@ public:
   const SpreadData& spread_arrival() const noexcept { return spread_arrival_; }
 
 private:
-  SpreadData spread_arrival_{};
-  SpreadData spread_internal_{};
-  array_dists distances{};
-  array_pts points{};
-  array_dirs directions{};
   // any way to get rid of this since we're using it as the map key?
   XYIdx cell_x_y_{};
+  array_pts points{};
+  array_dists distances{};
+  array_dirs directions{};
   CellIndex src_{DIRECTION_NONE};
+  SpreadData spread_arrival_{};
+  SpreadData spread_internal_{};
 };
 using spreading_points = CellPoints::spreading_points;
 // map that merges items when try_emplace doesn't insert
