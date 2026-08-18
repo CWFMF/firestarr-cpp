@@ -115,6 +115,13 @@ template <class ConcreteType, units::UnitType Units, class ValueType, int Invali
 {
   return ConcreteType{rhs * lhs.value};
 }
+template <class ConcreteType, units::UnitType Units, class ValueType, int InvalidValue>
+[[nodiscard]] constexpr ConcreteType abs(
+  const StrictType<ConcreteType, Units, ValueType, InvalidValue>& lhs
+) noexcept
+{
+  return ConcreteType{abs(lhs.value)};
+}
 // NOTE: dividing non-units by units makes no sense?
 // template <class ConcreteType, units::UnitType Units, class ValueType, int InvalidValue>
 // [[nodiscard]] constexpr ConcreteType operator/(

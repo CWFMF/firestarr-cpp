@@ -64,6 +64,15 @@ static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
   MASK_NW,
   MASK_NW
 };
+// use direction distance towards compass point as tie-breaker when ros is the same
+static constexpr auto DIRECTION_ANGLES = []() {
+  std::array<Direction, NUM_DIRECTIONS> result{};
+  for (size_t i = 0; i < result.size(); ++i)
+  {
+    result[i] = Degrees{i * 22.5};
+  }
+  return result;
+}();
 using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
 using array_pts = std::array<XYPos, NUM_DIRECTIONS>;
 using array_dirs = std::array<MathSize, NUM_DIRECTIONS>;
@@ -236,7 +245,8 @@ private:
     {
       // if we spread from this cell to this cell again then ros could be considered for max
       // need to make sure we're not spreading back towards where we came from because that doesn't
-      // matter HACK: for now look at source for this cell and exclude points in those directions
+      // matter
+      // HACK: for now look at source for this cell and exclude points in those directions
       const auto srcs = cell_pts.sources();
       for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
       {
@@ -249,15 +259,23 @@ private:
             // point was closer to edge than what was there
             // either faster or higher direction since we're trying to make this reproducible
             // regardless of order points are inserted
-            if ((spread_current.ros > cell_pts.internal_ros_)
-                || ((
-                  spread_current.ros == cell_pts.internal_ros_
-                  && (spread_current.direction > cell_pts.internal_raz_)
-                )))
+            if (spread_current.ros > cell_pts.internal_ros_)
             {
-              // since we spread within cell then set internal spread
               cell_pts.internal_ros_ = spread_current.ros;
               cell_pts.internal_raz_ = spread_current.direction;
+            }
+            if (spread_current.ros == cell_pts.internal_ros_)
+            {
+              const auto& dir = DIRECTION_ANGLES[i];
+              auto d0 = spread_current.direction - dir;
+              auto d1 = cell_pts.internal_raz_ - dir;
+              // if closer to compass direction or positive in the case of the same distance
+              if (abs(d0) < abs(d1) || (abs(d0) == abs(d1) && d0 > d1))
+              {
+                // since we spread within cell then set internal spread
+                cell_pts.internal_ros_ = spread_current.ros;
+                cell_pts.internal_raz_ = spread_current.direction;
+              }
             }
           }
         }
