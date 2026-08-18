@@ -262,22 +262,30 @@ private:
             // point was closer to edge than what was there
             // either faster or higher direction since we're trying to make this reproducible
             // regardless of order points are inserted
-            if (spread_current.ros > cell_pts.internal_ros_)
+            auto& ros0 = cell_pts.internal_ros_[i];
+            auto& raz0 = cell_pts.internal_raz_[i];
+            auto& fi0 = cell_pts.internal_fi_[i];
+            const auto& ros1 = spread_current.ros;
+            const auto& raz1 = spread_current.direction;
+            const auto& fi1 = spread_current.intensity;
+            if (ros1 > ros0)
             {
-              cell_pts.internal_ros_ = spread_current.ros;
-              cell_pts.internal_raz_ = spread_current.direction;
+              ros0 = ros1;
+              raz0 = raz1;
+              fi0 = fi1;
             }
-            if (spread_current.ros == cell_pts.internal_ros_)
+            if (ros1 == ros0)
             {
               const auto& dir = DIRECTION_ANGLES[i];
-              auto d0 = spread_current.direction - dir;
-              auto d1 = cell_pts.internal_raz_ - dir;
+              auto d0 = raz1 - dir;
+              auto d1 = raz0 - dir;
               // if closer to compass direction or positive in the case of the same distance
               if (abs(d0) < abs(d1) || (abs(d0) == abs(d1) && d0 > d1))
               {
                 // since we spread within cell then set internal spread
-                cell_pts.internal_ros_ = spread_current.ros;
-                cell_pts.internal_raz_ = spread_current.direction;
+                ros0 = ros1;
+                raz0 = raz1;
+                fi0 = fi1;
               }
             }
           }
@@ -411,6 +419,13 @@ public:
         p0[i] = p1[i];
         a0[i] = a1[i];
       }
+      // INVALID_ROS is -1 so just check >
+      if (rhs.internal_ros_[i] > internal_ros_[i])
+      {
+        internal_ros_[i] = rhs.internal_ros_[i];
+        internal_raz_[i] = rhs.internal_raz_[i];
+        internal_fi_[i] = rhs.internal_fi_[i];
+      }
     }
     add_source(rhs.src_);
     // if valid time and earlier then that would be the arrival time
@@ -418,12 +433,6 @@ public:
         && (INVALID_TIME == spread_arrival_.time || rhs.spread_arrival_.time < spread_arrival_.time))
     {
       spread_arrival_ = rhs.spread_arrival_;
-    }
-    // INVALID_ROS is -1 so just check >
-    if (rhs.internal_ros_ > internal_ros_)
-    {
-      internal_ros_ = rhs.internal_ros_;
-      internal_raz_ = rhs.internal_raz_;
     }
 #ifdef DEBUG_CELLPOINTS
     logging::note("Merging {:d} with {:d} gives {:d} pts", n0, n1, size());
@@ -480,8 +489,9 @@ private:
   CellIndex src_{DIRECTION_NONE};
   SpreadData spread_arrival_{};
   // need to keep each direction separate so filtering by direction masks when merging works
-  ROSSize internal_ros_{INVALID_ROS};
-  Direction internal_raz_{Direction::Invalid()};
+  CompassArray<ROSSize> internal_ros_{INVALID_ROS};
+  CompassArray<Direction> internal_raz_{Direction::Invalid()};
+  CompassArray<IntensitySize> internal_fi_{0};
 };
 using spreading_points = CellPoints::spreading_points;
 // map that merges items when try_emplace doesn't insert
