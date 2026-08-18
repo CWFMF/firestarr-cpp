@@ -190,6 +190,19 @@ private:
       raz.asDegrees()
     );
 #endif
+    // initial burn will have an invalid direction, so needs to burn everywhere
+    const auto is_initial = Direction::Invalid() == spread_current.direction_previous;
+    // only spread in a direction that's in front of the normal to the angle it came from
+    // i.e. the 90 degrees on either side of the raz
+    const auto dir_diff =
+      abs(spread_current.direction.asDegrees() - spread_current.direction_previous.asDegrees());
+    constexpr auto MAX_DEGREES = 90.0;
+    // NOTE: there should be no change in the extent of the fire if we exclude things behind the
+    // normal to the direction it came from
+    //       - but if we exclude too much then it can change how things spread, even if it is a
+    //       more representative angle for the grids
+    const auto is_not_backwards = MAX_DEGREES >= dir_diff;
+    const auto consider_for_spread = is_initial || is_not_backwards;
     auto& spread_arrival = cell_pts.spread_arrival_;
     // count things as the same time if within a tolerance
     constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
@@ -207,18 +220,7 @@ private:
     // no point in any of this if not outputting individual or intensity
     else
     {
-      // initial burn will have an invalid direction, so needs to burn everywhere
-      const auto is_initial = Direction::Invalid() == spread_current.direction_previous;
-      // only spread in a direction that's in front of the normal to the angle it came from
-      // i.e. the 90 degrees on either side of the raz
-      const auto dir_diff =
-        abs(spread_current.direction.asDegrees() - spread_current.direction_previous.asDegrees());
-      const auto MAX_DEGREES = 90.0;
-      // NOTE: there should be no change in the extent of the fire if we exclude things behind the
-      // normal to the direction it came from
-      //       - but if we exclude too much then it can change how things spread, even if it is a
-      //       more representative angle for the grids
-      if (is_initial || MAX_DEGREES >= dir_diff)
+      if (consider_for_spread)
       {
         if (abs(spread_current.time - spread_arrival.time) <= TIME_EPSILON)
         // else if (arrival_time == arrival_time_)
@@ -258,6 +260,7 @@ private:
     // CHECK: FIX: is this initializing everything to false or just one element?
     CompassArray<bool> closer{};
     std::fill(closer.begin(), closer.end(), false);
+    // even if !consider_for_spread, update points
     for (size_t i = 0; i < closer.size(); ++i)
     {
       const auto d = distance(x0, y0, POINTS_OUTER[i].first, POINTS_OUTER[i].second);
@@ -266,6 +269,7 @@ private:
       auto& p_a = directions[i];
       closer[i] = (d < p_d);
       p_p = (d < p_d) ? xy : p_p;
+      // always want to update with how we got here
       p_a = (d < p_d) ? spread_current.direction.asDegrees() : p_a;
       p_d = (d < p_d) ? d : p_d;
     }
@@ -280,9 +284,12 @@ private:
       // calculated the relativeIndex for this so add it to main map
       cell_pts.add_source(src_xy.relativeIndex(dst_xy));
     }
-    // if (src.hash() == dst.hash())
+    // FIX: this should be aware of where it came from
+    // have to check src vs dst is same so we know it didn't come in from outside
     // CHECK: FIX: should check for things that spread out of cell also?
-    if (src_xy == dst_xy)
+    if ((src_xy == dst_xy)
+        // if this spread isn't backwards then figure out if it's faster than previous internal
+        && consider_for_spread)
     {
       // if we spread from this cell to this cell again then ros could be considered for max
       // need to make sure we're not spreading back towards where we came from because that doesn't
