@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Scenario.h"
+#include "BurnedData.h"
 #include "Cell.h"
 #include "CellPoints.h"
 #include "FireSpread.h"
@@ -11,8 +12,10 @@
 #include "Log.h"
 #include "Observer.h"
 #include "Perimeter.h"
+#include "PointSpread.h"
 #include "ProbabilityMap.h"
 #include "Settings.h"
+#include "unstable.h"
 namespace fs
 {
 using std::cout;
@@ -646,13 +649,14 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   return this;
 }
 CellPointsMap apply_offsets_spreadkey(
+  const BurnedData& unburnable,
   const DurationSize& arrival_time,
   const DurationSize& duration,
   const OffsetSet& offsets,
-  spreading_points::mapped_type& cell_pts_map
+  const spreading_points::mapped_type& cell_pts_map
 )
 {
-  CellPointsMap r1{};
+  CellPointsMap result{};
   OffsetSet offsets_after_duration{};
   offsets_after_duration.resize(offsets.size());
   std::transform(
@@ -665,43 +669,127 @@ CellPointsMap apply_offsets_spreadkey(
       };
     }
   );
-  for (auto& pts_for_cell : cell_pts_map)
+  for (auto& [location, cell_pts] : cell_pts_map)
   {
-    auto& [location, cell_pts] = pts_for_cell;
     if (cell_pts.empty())
     {
       continue;
     }
-    auto pt_dirs = cell_pts.point_directions();
-    std::sort(pt_dirs.begin(), pt_dirs.end());
-    const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
-    auto it_pt_dirs = pt_dirs.cbegin();
-    while (it_pt_dirs != it_pt_dirs_last)
+    spread_points(result, cell_pts, offsets_after_duration, arrival_time);
+    // result.merge(unburnable, r1);
+  }
+  return result;
+}
+CellPointsMap spread_map(
+  const BurnedData& unburnable,
+  const map<SpreadKey, SpreadInfo>& spread_info,
+  const spreading_points& to_spread,
+  const DurationSize new_time,
+  const DurationSize duration
+) noexcept
+{
+  CellPointsMap cell_pts{};
+  auto spread =
+    std::views::transform(to_spread, [&](const spreading_points::value_type& kv0) -> CellPointsMap {
+      auto& key = kv0.first;
+      const auto& offsets = spread_info.at(key).offsets();
+      const spreading_points::mapped_type& cell_pts = kv0.second;
+      auto r = apply_offsets_spreadkey(unburnable, new_time, duration, offsets, cell_pts);
+      return r;
+    });
+  auto it = spread.begin();
+  while (spread.end() != it)
+  {
+    const CellPointsMap& cell_pts_cur = *it;
+    // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not
+    // adding const auto h = cell_pts.location().hash(); if (!unburnable[h])
+    // {
+    cell_pts.merge(unburnable, cell_pts_cur);
+    ++it;
+  }
+#ifdef DEBUG_CELLPOINTS
+  const auto n_c = cell_pts.size();
+#endif
+  cell_pts.remove_if([&](const CellPointsMap::map_value& kv) {
+    auto& [location, pts] = kv;
+    // clear out if unburnable
+    const auto do_clear = unburnable.at(location);
+    return do_clear;
+  });
+#ifdef DEBUG_CELLPOINTS
+  logging::note("{:d} cell_pts before remove_if() and {:d} after", n_c, cell_pts.size());
+#endif
+  return cell_pts;
+}
+// time spread went to or -1 if no spread
+DurationSize do_spread(
+  MathSize& max_ros,
+  CellPointsMap& points,
+  map<SpreadKey, SpreadInfo>& spread_info,
+  const Scenario& scenario,
+  const BurnedData& unburnable,
+  const FwiWeather* wx,
+  const DurationSize time,
+  const DurationSize max_duration
+) noexcept
+{
+  // get once and keep
+  static const auto& settings = fs::settings::instance();
+  static const MathSize ros_min = settings.minimum_ros;
+  spreading_points to_spread{};
+  // make block to prevent it being visible beyond use
+  {
+    // if we use an iterator this way we don't need to copy keys to erase things
+    auto& lhs = points.cells_;
+    auto it = lhs.begin();
+    while (it != lhs.end())
     {
-      const auto& pt_dir = *it_pt_dirs;
-      const auto& [pt, dir] = pt_dir;
-      const XYIdx src{pt};
-      const auto [cell_x, cell_y] = hash_to_xy_value(cell_pts.pos());
-      // apply offsets to point
-      // should be quicker to loop over offsets in inner loop
-      for (const ROSOffset& r : offsets_after_duration)
+      auto& [loc, pts] = *it;
+      const Cell for_cell = scenario.cell(loc);
+      const auto key = for_cell.key();
       {
-        const auto& x_o = r.offset.x;
-        const auto& y_o = r.offset.y;
+        const auto& origin_inserted =
+          spread_info.try_emplace(key, scenario, time, key, scenario.nd(time), wx);
+        // any cell that has the same fuel, slope, and aspect has the same spread
+        const auto& origin = origin_inserted.first->second;
+        // filter out things not spreading fast enough here so they get copied if they aren't
+        // isNotSpreading() had better be true if ros is lower than minimum
+        const auto ros = origin.headRos();
+        if (ros >= ros_min)
         {
-          const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
-          std::ignore = insert(
-            r1,
-            pt,
-            SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
-            pt_new
+          max_ros = max(max_ros, ros);
+          // NOTE: shouldn't be Cell if we're looking up by just Location later
+          to_spread[key].emplace_back(std::move(*it));
+          it = lhs.erase(it);
+#ifdef DEBUG_CELLPOINTS
+          auto& v = to_spread[key];
+          const auto n = v.size();
+          const auto& p = v[n - 1].second;
+          logging::note(
+            "added {:d} items to to_spread[{:d}][({:d}, {:d})]", p.size(), key, loc.x(), loc.y()
           );
+#endif
+        }
+        else
+        {
+          ++it;
         }
       }
-      ++it_pt_dirs;
     }
   }
-  return r1;
+  // if nothing in to_spread then nothing is spreading
+  if (to_spread.empty())
+  {
+    return -1;
+  }
+  const auto duration =
+    ((max_ros > 0)
+       ? min(max_duration, settings.maximum_spread_distance * scenario.cellSize() / max_ros)
+       : max_duration);
+  const auto new_time = time + duration / DAY_MINUTES;
+  // need to merge new points back into cells that didn'
+  points.merge(unburnable, spread_map(unburnable, spread_info, to_spread, new_time, duration));
+  return new_time;
 }
 void Scenario::scheduleFireSpread(const Event& event)
 {
@@ -736,93 +824,15 @@ void Scenario::scheduleFireSpread(const Event& event)
     }
     max_ros_ = 0.0;
   }
-  // get once and keep
-  const MathSize ros_min = settings.minimum_ros;
-  spreading_points to_spread{};
-  // make block to prevent it being visible beyond use
+  auto new_time =
+    do_spread(max_ros_, points_, spread_info_, *this, unburnable_, wx, time, max_duration);
+  if (-1 == new_time)
   {
-    // if we use an iterator this way we don't need to copy keys to erase things
-    auto& lhs = points_.cells_;
-    auto it = lhs.begin();
-    while (it != lhs.end())
-    {
-      auto& [loc, pts] = *it;
-      const Cell for_cell = cell(loc);
-      const auto key = for_cell.key();
-      {
-        const auto& origin_inserted = spread_info_.try_emplace(key, *this, time, key, nd(time), wx);
-        // any cell that has the same fuel, slope, and aspect has the same spread
-        const auto& origin = origin_inserted.first->second;
-        // filter out things not spreading fast enough here so they get copied if they aren't
-        // isNotSpreading() had better be true if ros is lower than minimum
-        const auto ros = origin.headRos();
-        if (ros >= ros_min)
-        {
-          max_ros_ = max(max_ros_, ros);
-          // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(std::move(*it));
-          it = lhs.erase(it);
-#ifdef DEBUG_CELLPOINTS
-          auto& v = to_spread[key];
-          const auto n = v.size();
-          const auto& p = v[n - 1].second;
-          logging::note(
-            "added {:d} items to to_spread[{:d}][({:d}, {:d})]", p.size(), key, loc.x(), loc.y()
-          );
-#endif
-        }
-        else
-        {
-          ++it;
-        }
-      }
-    }
-  }
-  // if nothing in to_spread then nothing is spreading
-  if (to_spread.empty())
-  {
-    // if no spread then we left everything back in points_ still
+    // if no spread then we left everything back in points still
     logging::verbose("{:s} Waiting until {:f}", log_prefix_, max_time);
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     return;
   }
-  const auto duration =
-    ((max_ros_ > 0) ? min(max_duration, settings.maximum_spread_distance * cellSize() / max_ros_)
-                    : max_duration);
-  const auto new_time = time + duration / DAY_MINUTES;
-  CellPointsMap cell_pts{};
-  auto spread =
-    std::views::transform(to_spread, [&](spreading_points::value_type& kv0) -> CellPointsMap {
-      auto& key = kv0.first;
-      const auto& offsets = spread_info_[key].offsets();
-      spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey(new_time, duration, offsets, cell_pts);
-      return r;
-    });
-  auto it = spread.begin();
-  while (spread.end() != it)
-  {
-    const CellPointsMap& cell_pts_cur = *it;
-    // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not
-    // adding const auto h = cell_pts.location().hash(); if (!unburnable[h])
-    // {
-    cell_pts.merge(unburnable_, cell_pts_cur);
-    ++it;
-  }
-#ifdef DEBUG_CELLPOINTS
-  const auto n_c = cell_pts.size();
-#endif
-  cell_pts.remove_if([this](const CellPointsMap::map_value& kv) {
-    auto& [location, pts] = kv;
-    // clear out if unburnable
-    const auto do_clear = unburnable_.at(location);
-    return do_clear;
-  });
-#ifdef DEBUG_CELLPOINTS
-  logging::note("{:d} cell_pts before remove_if() and {:d} after", n_c, cell_pts.size());
-#endif
-  // need to merge new points back into cells that didn't spread
-  points_.merge(unburnable_, cell_pts);
   // if we move everything out of points_ we can parallelize this check?
   do_each(points_.cells_, [&](CellPointsMap::map_value& kv) {
     auto& [loc, pts] = kv;
