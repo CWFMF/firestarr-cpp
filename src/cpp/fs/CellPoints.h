@@ -247,7 +247,13 @@ private:
           if (closer[i])
           {
             // point was closer to edge than what was there
-            if (spread_current.ros >= cell_pts.internal_ros_)
+            // either faster or higher direction since we're trying to make this reproducible
+            // regardless of order points are inserted
+            if ((spread_current.ros > cell_pts.internal_ros_)
+                || ((
+                  spread_current.ros == cell_pts.internal_ros_
+                  && (spread_current.direction > cell_pts.internal_raz_)
+                )))
             {
               // since we spread within cell then set internal spread
               cell_pts.internal_ros_ = spread_current.ros;
