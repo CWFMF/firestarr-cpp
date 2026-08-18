@@ -7,6 +7,8 @@
 #include "BurnedData.h"
 #include "Cell.h"
 #include "FireSpread.h"
+#include "Location.h"
+#include "unstable.h"
 #include "Weather.h"
 namespace fs
 {
@@ -45,8 +47,10 @@ static constexpr auto MASK_NE = DIRECTION_N & DIRECTION_NE & DIRECTION_E;
 static constexpr auto MASK_SE = DIRECTION_S & DIRECTION_SE & DIRECTION_E;
 static constexpr auto MASK_SW = DIRECTION_S & DIRECTION_SW & DIRECTION_W;
 static constexpr auto MASK_NW = DIRECTION_N & DIRECTION_NW & DIRECTION_W;
+template <class T>
+using CompassArray = std::array<T, NUM_DIRECTIONS>;
 // mask of sides that would need to be burned for direction to not matter
-static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
+static constexpr CompassArray<CellIndex> DIRECTION_MASKS{
   DIRECTION_N,
   MASK_NE,
   MASK_NE,
@@ -66,16 +70,13 @@ static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
 };
 // use direction distance towards compass point as tie-breaker when ros is the same
 static constexpr auto DIRECTION_ANGLES = []() {
-  std::array<Direction, NUM_DIRECTIONS> result{};
+  CompassArray<Direction> result{};
   for (size_t i = 0; i < result.size(); ++i)
   {
     result[i] = Degrees{i * 22.5};
   }
   return result;
 }();
-using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
-using array_pts = std::array<XYPos, NUM_DIRECTIONS>;
-using array_dirs = std::array<MathSize, NUM_DIRECTIONS>;
 /**
  * Points in a cell furthest in each direction
  */
@@ -216,9 +217,9 @@ private:
     const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x_value())};
     const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y_value())};
     // CHECK: FIX: is this initializing everything to false or just one element?
-    std::array<bool, NUM_DIRECTIONS> closer{};
-    std::fill_n(closer.begin(), NUM_DIRECTIONS, false);
-    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+    CompassArray<bool> closer{};
+    std::fill(closer.begin(), closer.end(), false);
+    for (size_t i = 0; i < closer.size(); ++i)
     {
       const auto d = distance(x0, y0, POINTS_OUTER[i].first, POINTS_OUTER[i].second);
       auto& p_d = cell_pts.distances[i];
@@ -248,7 +249,7 @@ private:
       // matter
       // HACK: for now look at source for this cell and exclude points in those directions
       const auto srcs = cell_pts.sources();
-      for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+      for (size_t i = 0; i < closer.size(); ++i)
       {
         const auto mask = DIRECTION_MASKS[i];
         if (mask != (srcs & mask))
@@ -327,7 +328,7 @@ private:
   static constexpr auto P_0_5 = static_cast<DistanceSize>(0.5) + DIST_22_5;
   static constexpr auto M_0_5 = static_cast<DistanceSize>(0.5) - DIST_22_5;
   using d = std::pair<DistanceSize, DistanceSize>;
-  static constexpr std::array<d, NUM_DIRECTIONS> POINTS_OUTER{
+  static constexpr CompassArray<d> POINTS_OUTER{
     d{I_0_5, I_1_0},
     // north-northeast is closest to point (0.5 + 0.207, 1.0)
     d{P_0_5, I_1_0},
@@ -455,9 +456,9 @@ public:
     // NOTE: if anything is invalid then everything must be
     return (XPos::Invalid().value == points[0].x.value);
   }
-  std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> point_directions() const noexcept
+  auto point_directions() const noexcept
   {
-    std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
+    CompassArray<std::pair<XYPos, MathSize>> pt_dirs{};
     auto& pts = points;
     auto& dirs = directions;
     for (size_t i = 0; i < pts.size(); ++i)
@@ -471,11 +472,12 @@ public:
 private:
   // any way to get rid of this since we're using it as the map key?
   XYIdx cell_x_y_{};
-  array_pts points{};
-  array_dists distances{};
-  array_dirs directions{};
+  CompassArray<XYPos> points{};
+  CompassArray<DistanceSize> distances{};
+  CompassArray<MathSize> directions{};
   CellIndex src_{DIRECTION_NONE};
   SpreadData spread_arrival_{};
+  // need to keep each direction separate so filtering by direction masks when merging works
   ROSSize internal_ros_{INVALID_ROS};
   Direction internal_raz_{Direction::Invalid()};
 };
