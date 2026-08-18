@@ -79,15 +79,20 @@ private:
     return r;
   }
   static inline constexpr DistanceSize distance(
+    const DistanceSize x2,
+    const DistanceSize y2
+  ) noexcept
+  {
+    return x2 * x2 + y2 * y2;
+  }
+  static inline constexpr DistanceSize distance(
     const DistanceSize x0,
     const DistanceSize y0,
     const DistanceSize x1,
     const DistanceSize y1
   ) noexcept
   {
-    const auto x2 = x0 - x1;
-    const auto y2 = y0 - y1;
-    return x2 * x2 + y2 * y2;
+    return distance(x0 - x1, y0 - y1);
   }
   static inline constexpr DistanceSize distance(
     const XYIdx& cell_x_y,
@@ -96,11 +101,12 @@ private:
     const DistanceSize y1
   ) noexcept
   {
-    const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value)};
-    const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value)};
-    const auto x2 = x0 - x1;
-    const auto y2 = y0 - y1;
-    return x2 * x2 + y2 * y2;
+    return distance(
+      static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value),
+      static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value),
+      x1,
+      y1
+    );
   }
   static inline constexpr DistanceSize distance(
     const XYIdx& cell_x_y,
@@ -108,11 +114,12 @@ private:
     const size_t i
   ) noexcept
   {
-    const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value)};
-    const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value)};
-    const auto x2 = x0 - POINTS_OUTER[i].first;
-    const auto y2 = y0 - POINTS_OUTER[i].second;
-    return x2 * x2 + y2 * y2;
+    return distance(
+      static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value),
+      static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value),
+      POINTS_OUTER[i].first,
+      POINTS_OUTER[i].second
+    );
   }
   static void insert_calc(
     CellPoints& cell_pts,
