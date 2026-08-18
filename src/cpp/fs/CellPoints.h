@@ -6,6 +6,8 @@
 #include <compare>
 #include "BurnedData.h"
 #include "Cell.h"
+#include "FireSpread.h"
+#include "Weather.h"
 namespace fs
 {
 using fs::Direction;
@@ -140,7 +142,6 @@ private:
     );
 #endif
     auto& spread_arrival = cell_pts.spread_arrival_;
-    auto& spread_internal = cell_pts.spread_internal_;
     // count things as the same time if within a tolerance
     constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
     constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
@@ -246,10 +247,11 @@ private:
           if (closer[i])
           {
             // point was closer to edge than what was there
-            if (spread_current.ros >= spread_internal.ros)
+            if (spread_current.ros >= cell_pts.internal_ros_)
             {
               // since we spread within cell then set internal spread
-              spread_internal = spread_current;
+              cell_pts.internal_ros_ = spread_current.ros;
+              cell_pts.internal_raz_ = spread_current.direction;
             }
           }
         }
@@ -391,9 +393,10 @@ public:
       spread_arrival_ = rhs.spread_arrival_;
     }
     // INVALID_ROS is -1 so just check >
-    if (rhs.spread_internal_.ros > spread_internal_.ros)
+    if (rhs.internal_ros_ > internal_ros_)
     {
-      spread_internal_ = rhs.spread_internal_;
+      internal_ros_ = rhs.internal_ros_;
+      internal_raz_ = rhs.internal_raz_;
     }
 #ifdef DEBUG_CELLPOINTS
     logging::note("Merging {:d} with {:d} gives {:d} pts", n0, n1, size());
@@ -449,7 +452,8 @@ private:
   array_dirs directions{};
   CellIndex src_{DIRECTION_NONE};
   SpreadData spread_arrival_{};
-  SpreadData spread_internal_{};
+  ROSSize internal_ros_{INVALID_ROS};
+  Direction internal_raz_{Direction::Invalid()};
 };
 using spreading_points = CellPoints::spreading_points;
 // map that merges items when try_emplace doesn't insert
