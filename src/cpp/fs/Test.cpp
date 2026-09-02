@@ -3,7 +3,7 @@
 #include "Test.h"
 #include "FireSpread.h"
 #include "FireWeather.h"
-#include "FuelLookup.h"
+#include "FuelOldLookup.h"
 #include "Location.h"
 #include "Log.h"
 #include "Model.h"
@@ -271,7 +271,7 @@ int test(Settings& settings)
   static auto FUEL_NAMES = []() -> vector<string> {
     auto it = std::views::transform(
       std::views::filter(
-        FuelLookup::Fuels, [](const FuelType* f) -> bool { return nullptr != f && f->isValid(); }
+        FuelOldLookup::Fuels, [](const FuelType* f) -> bool { return nullptr != f && f->isValid(); }
       ),
       [](const auto* f) -> string { return simplify_fuel_name(FuelType::safeName(f)); }
     );

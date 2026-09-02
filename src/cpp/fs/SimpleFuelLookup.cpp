@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SimpleFuelLookup.h"
 #include "FBP45.h"
-#include "FuelLookup.h"
+#include "FuelOldLookup.h"
 #include "Log.h"
 #include "RangeIterator.h"
 #include "Settings.h"

@@ -76,7 +76,7 @@ template <
   int BulkDensity,
   int InorganicPercent,
   int DuffDepth>
-class StandardFuel : public FuelBase<BulkDensity, InorganicPercent, DuffDepth>
+class StandardFuelOld : public FuelOldBase<BulkDensity, InorganicPercent, DuffDepth>
 {
 public:
   /**
@@ -88,7 +88,7 @@ public:
    * \param duff_ffmc Type of duff near the surface
    * \param duff_dmc Type of duff deeper underground
    */
-  constexpr StandardFuel(
+  constexpr StandardFuelOld(
     const FuelCodeSize& code,
     const char* name,
     const bool can_crown,
@@ -96,7 +96,7 @@ public:
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   ) noexcept
-    : FuelBase<BulkDensity, InorganicPercent, DuffDepth>(
+    : FuelOldBase<BulkDensity, InorganicPercent, DuffDepth>(
         code,
         name,
         can_crown,
@@ -113,19 +113,19 @@ public:
    * \param log_q Log value of q [ST-X-3 table 7]
    * \param duff Type of duff near the surface and deeper underground
    */
-  constexpr StandardFuel(
+  constexpr StandardFuelOld(
     const FuelCodeSize& code,
     const char* name,
     const bool can_crown,
     const LogValue log_q,
     const Duff* duff
   ) noexcept
-    : StandardFuel(code, name, can_crown, log_q, duff, duff)
+    : StandardFuelOld(code, name, can_crown, log_q, duff, duff)
   { }
-  StandardFuel(StandardFuel&& rhs) noexcept = delete;
-  StandardFuel(const StandardFuel& rhs) noexcept = delete;
-  StandardFuel& operator=(StandardFuel&& rhs) noexcept = delete;
-  StandardFuel& operator=(const StandardFuel& rhs) = delete;
+  StandardFuelOld(StandardFuelOld&& rhs) noexcept = delete;
+  StandardFuelOld(const StandardFuelOld& rhs) noexcept = delete;
+  StandardFuelOld& operator=(StandardFuelOld&& rhs) noexcept = delete;
+  StandardFuelOld& operator=(const StandardFuelOld& rhs) = delete;
   /**
    * \brief Initial rate of spread (m/min) [ST-X-3 eq 26]
    * \param isi Initial Spread Index
@@ -193,7 +193,7 @@ public:
   }
 
 protected:
-  ~StandardFuel() override = default;
+  ~StandardFuelOld() override = default;
 
 public:
   /**

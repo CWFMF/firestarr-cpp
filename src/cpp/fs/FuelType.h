@@ -235,10 +235,10 @@ private:
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
 template <int BulkDensity, int InorganicPercent, int DuffDepth>
-class FuelBase : public FuelType
+class FuelOldBase : public FuelType
 {
 public:
-  ~FuelBase() override = default;
+  ~FuelOldBase() override = default;
   /**
    * \brief Constructor
    * \param code Code to identify fuel with
@@ -247,7 +247,7 @@ public:
    * \param duff_ffmc Type of duff near the surface
    * \param duff_dmc Type of duff deeper underground
    */
-  constexpr FuelBase(
+  constexpr FuelOldBase(
     const FuelCodeSize& code,
     const char* name,
     const bool can_crown,
@@ -256,10 +256,10 @@ public:
   )
     : FuelType(code, name, can_crown), duff_ffmc_(duff_ffmc), duff_dmc_(duff_dmc)
   { }
-  FuelBase(FuelBase&& rhs) noexcept = delete;
-  FuelBase(const FuelBase& rhs) = delete;
-  FuelBase& operator=(FuelBase&& rhs) noexcept = delete;
-  FuelBase& operator=(const FuelBase& rhs) = delete;
+  FuelOldBase(FuelOldBase&& rhs) noexcept = delete;
+  FuelOldBase(const FuelOldBase& rhs) = delete;
+  FuelOldBase& operator=(FuelOldBase&& rhs) noexcept = delete;
+  FuelOldBase& operator=(const FuelOldBase& rhs) = delete;
   /**
    * \brief Is fuel a valid fuel type
    */

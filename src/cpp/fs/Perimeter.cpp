@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Perimeter.h"
 #include "Environment.h"
-#include "FuelLookup.h"
+#include "FuelOldLookup.h"
 #include "Location.h"
 namespace fs
 {

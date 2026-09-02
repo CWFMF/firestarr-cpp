@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "BurnedData.h"
-#include "FuelLookup.h"
+#include "FuelOldLookup.h"
 namespace fs
 {
 BurnedData::BurnedData(const CellGrid& cells) noexcept
