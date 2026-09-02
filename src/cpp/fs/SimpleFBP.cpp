@@ -283,7 +283,7 @@ namespace fs::testing
 {
 // FIX: this was used to compare to the old template version, but doesn't work now
 //      left for reference for now so idea could be used for more tests
-using fs::FuelBase;
+using fs::FuelOldBase;
 using fs::FuelType;
 // check %, so 1 decimal is fine
 static constexpr auto EPSILON = static_cast<MathSize>(1e-1);
@@ -757,431 +757,515 @@ int test_fbp(const int argc, const char* const argv[])
   static const FuelCompareOptions FUEL_COMPARE_GRASS{
     .nd_values = nd_all_values, .dc_values = DC_VALUES_GRASS
   };
-  // for (size_t i = 0; i < FuelLookup::Fuels.size(); ++i)
+  // for (size_t i = 0; i < FuelOldLookup::Fuels.size(); ++i)
   // {
   //   auto& a = *simplefbp::SimpleFuels[i];
-  //   auto& b = *dynamic_cast<fs::FuelBase*>(FuelLookup::Fuels[i]);
+  //   auto& b = *dynamic_cast<fs::FuelBase*>(FuelOldLookup::Fuels[i]);
   //   compare(a.name(), a, b);
-  //   // compare("", *simplefbp::SimpleFuels[i], *FuelLookup::Fuels[i]);
+  //   // compare("", *simplefbp::SimpleFuels[i], *FuelOldLookup::Fuels[i]);
   // }
   auto i = 0;
-  compare_fuel_valid("Non-fuel", simplefbp::NULL_FUEL, *FuelLookup::Fuels[i++], "basic test only");
-  compare_fuel_valid("Invalid", simplefbp::INVALID, *FuelLookup::Fuels[i++], "basic test only");
-  compare_fuel("C1", simplefbp::C1, *dynamic_cast<const fs::fuel::FuelC1*>(FuelLookup::Fuels[i++]));
-  compare_fuel("C2", simplefbp::C2, *dynamic_cast<const fs::FuelC2*>(FuelLookup::Fuels[i++]));
-  compare_fuel("C3", simplefbp::C3, *dynamic_cast<const fs::FuelC3*>(FuelLookup::Fuels[i++]));
-  compare_fuel("C4", simplefbp::C4, *dynamic_cast<const fs::FuelC4*>(FuelLookup::Fuels[i++]));
-  compare_fuel("C5", simplefbp::C5, *dynamic_cast<const fs::FuelC5*>(FuelLookup::Fuels[i++]));
-  compare_fuel("C6", simplefbp::C6, *dynamic_cast<const fs::FuelC6*>(FuelLookup::Fuels[i++]));
-  compare_fuel("C7", simplefbp::C7, *dynamic_cast<const fs::FuelC7*>(FuelLookup::Fuels[i++]));
+  compare_fuel_valid(
+    "Non-fuel", simplefbp::NULL_FUEL, *FuelOldLookup::Fuels[i++], "basic test only"
+  );
+  compare_fuel_valid("Invalid", simplefbp::INVALID, *FuelOldLookup::Fuels[i++], "basic test only");
+  compare_fuel(
+    "C1", simplefbp::C1, *dynamic_cast<const fs::fuel::FuelOldC1*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel("C2", simplefbp::C2, *dynamic_cast<const fs::FuelOldC2*>(FuelOldLookup::Fuels[i++]));
+  compare_fuel("C3", simplefbp::C3, *dynamic_cast<const fs::FuelOldC3*>(FuelOldLookup::Fuels[i++]));
+  compare_fuel("C4", simplefbp::C4, *dynamic_cast<const fs::FuelOldC4*>(FuelOldLookup::Fuels[i++]));
+  compare_fuel("C5", simplefbp::C5, *dynamic_cast<const fs::FuelOldC5*>(FuelOldLookup::Fuels[i++]));
+  compare_fuel("C6", simplefbp::C6, *dynamic_cast<const fs::FuelOldC6*>(FuelOldLookup::Fuels[i++]));
+  compare_fuel("C7", simplefbp::C7, *dynamic_cast<const fs::FuelOldC7*>(FuelOldLookup::Fuels[i++]));
   compare_fuel(
     "D1",
     simplefbp::D1,
-    *dynamic_cast<const fs::FuelD1*>(FuelLookup::Fuels[i++]),
+    *dynamic_cast<const fs::FuelOldD1*>(FuelOldLookup::Fuels[i++]),
     FUEL_COMPARE_DECIDUOUS
   );
   compare_fuel(
     "D2",
     simplefbp::D2,
-    *dynamic_cast<const fs::FuelD2*>(FuelLookup::Fuels[i++]),
+    *dynamic_cast<const fs::FuelOldD2*>(FuelOldLookup::Fuels[i++]),
     FUEL_COMPARE_DECIDUOUS
   );
   compare_fuel(
     "O1_A",
     simplefbp::O1_A,
-    *dynamic_cast<const fs::FuelO1A*>(FuelLookup::Fuels[i++]),
+    *dynamic_cast<const fs::FuelOldO1A*>(FuelOldLookup::Fuels[i++]),
     FUEL_COMPARE_GRASS
   );
   compare_fuel(
     "O1_B",
     simplefbp::O1_B,
-    *dynamic_cast<const fs::FuelO1B*>(FuelLookup::Fuels[i++]),
+    *dynamic_cast<const fs::FuelOldO1B*>(FuelOldLookup::Fuels[i++]),
     FUEL_COMPARE_GRASS
   );
-  compare_fuel("S1", simplefbp::S1, *dynamic_cast<const fs::FuelS1*>(FuelLookup::Fuels[i++]));
-  compare_fuel("S2", simplefbp::S2, *dynamic_cast<const fs::FuelS2*>(FuelLookup::Fuels[i++]));
-  compare_fuel("S3", simplefbp::S3, *dynamic_cast<const fs::FuelS3*>(FuelLookup::Fuels[i++]));
+  compare_fuel("S1", simplefbp::S1, *dynamic_cast<const fs::FuelOldS1*>(FuelOldLookup::Fuels[i++]));
+  compare_fuel("S2", simplefbp::S2, *dynamic_cast<const fs::FuelOldS2*>(FuelOldLookup::Fuels[i++]));
+  compare_fuel("S3", simplefbp::S3, *dynamic_cast<const fs::FuelOldS3*>(FuelOldLookup::Fuels[i++]));
   compare_fuel_variable(
     "D1_D2",
     simplefbp::D1_D2,
-    *dynamic_cast<const fs::FuelD1D2*>(FuelLookup::Fuels[i++]),
+    *dynamic_cast<const fs::FuelOldD1D2*>(FuelOldLookup::Fuels[i++]),
     FUEL_COMPARE_DECIDUOUS
   );
   compare_fuel(
-    "M1_05", simplefbp::M1_05, *dynamic_cast<const fs::FuelM1<5>*>(FuelLookup::Fuels[i++])
+    "M1_05", simplefbp::M1_05, *dynamic_cast<const fs::FuelOldM1<5>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_10", simplefbp::M1_10, *dynamic_cast<const fs::FuelM1<10>*>(FuelLookup::Fuels[i++])
+    "M1_10", simplefbp::M1_10, *dynamic_cast<const fs::FuelOldM1<10>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_15", simplefbp::M1_15, *dynamic_cast<const fs::FuelM1<15>*>(FuelLookup::Fuels[i++])
+    "M1_15", simplefbp::M1_15, *dynamic_cast<const fs::FuelOldM1<15>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_20", simplefbp::M1_20, *dynamic_cast<const fs::FuelM1<20>*>(FuelLookup::Fuels[i++])
+    "M1_20", simplefbp::M1_20, *dynamic_cast<const fs::FuelOldM1<20>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_25", simplefbp::M1_25, *dynamic_cast<const fs::FuelM1<25>*>(FuelLookup::Fuels[i++])
+    "M1_25", simplefbp::M1_25, *dynamic_cast<const fs::FuelOldM1<25>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_30", simplefbp::M1_30, *dynamic_cast<const fs::FuelM1<30>*>(FuelLookup::Fuels[i++])
+    "M1_30", simplefbp::M1_30, *dynamic_cast<const fs::FuelOldM1<30>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_35", simplefbp::M1_35, *dynamic_cast<const fs::FuelM1<35>*>(FuelLookup::Fuels[i++])
+    "M1_35", simplefbp::M1_35, *dynamic_cast<const fs::FuelOldM1<35>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_40", simplefbp::M1_40, *dynamic_cast<const fs::FuelM1<40>*>(FuelLookup::Fuels[i++])
+    "M1_40", simplefbp::M1_40, *dynamic_cast<const fs::FuelOldM1<40>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_45", simplefbp::M1_45, *dynamic_cast<const fs::FuelM1<45>*>(FuelLookup::Fuels[i++])
+    "M1_45", simplefbp::M1_45, *dynamic_cast<const fs::FuelOldM1<45>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_50", simplefbp::M1_50, *dynamic_cast<const fs::FuelM1<50>*>(FuelLookup::Fuels[i++])
+    "M1_50", simplefbp::M1_50, *dynamic_cast<const fs::FuelOldM1<50>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_55", simplefbp::M1_55, *dynamic_cast<const fs::FuelM1<55>*>(FuelLookup::Fuels[i++])
+    "M1_55", simplefbp::M1_55, *dynamic_cast<const fs::FuelOldM1<55>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_60", simplefbp::M1_60, *dynamic_cast<const fs::FuelM1<60>*>(FuelLookup::Fuels[i++])
+    "M1_60", simplefbp::M1_60, *dynamic_cast<const fs::FuelOldM1<60>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_65", simplefbp::M1_65, *dynamic_cast<const fs::FuelM1<65>*>(FuelLookup::Fuels[i++])
+    "M1_65", simplefbp::M1_65, *dynamic_cast<const fs::FuelOldM1<65>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_70", simplefbp::M1_70, *dynamic_cast<const fs::FuelM1<70>*>(FuelLookup::Fuels[i++])
+    "M1_70", simplefbp::M1_70, *dynamic_cast<const fs::FuelOldM1<70>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_75", simplefbp::M1_75, *dynamic_cast<const fs::FuelM1<75>*>(FuelLookup::Fuels[i++])
+    "M1_75", simplefbp::M1_75, *dynamic_cast<const fs::FuelOldM1<75>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_80", simplefbp::M1_80, *dynamic_cast<const fs::FuelM1<80>*>(FuelLookup::Fuels[i++])
+    "M1_80", simplefbp::M1_80, *dynamic_cast<const fs::FuelOldM1<80>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_85", simplefbp::M1_85, *dynamic_cast<const fs::FuelM1<85>*>(FuelLookup::Fuels[i++])
+    "M1_85", simplefbp::M1_85, *dynamic_cast<const fs::FuelOldM1<85>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_90", simplefbp::M1_90, *dynamic_cast<const fs::FuelM1<90>*>(FuelLookup::Fuels[i++])
+    "M1_90", simplefbp::M1_90, *dynamic_cast<const fs::FuelOldM1<90>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_95", simplefbp::M1_95, *dynamic_cast<const fs::FuelM1<95>*>(FuelLookup::Fuels[i++])
+    "M1_95", simplefbp::M1_95, *dynamic_cast<const fs::FuelOldM1<95>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_05", simplefbp::M2_05, *dynamic_cast<const fs::FuelM2<5>*>(FuelLookup::Fuels[i++])
+    "M2_05", simplefbp::M2_05, *dynamic_cast<const fs::FuelOldM2<5>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_10", simplefbp::M2_10, *dynamic_cast<const fs::FuelM2<10>*>(FuelLookup::Fuels[i++])
+    "M2_10", simplefbp::M2_10, *dynamic_cast<const fs::FuelOldM2<10>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_15", simplefbp::M2_15, *dynamic_cast<const fs::FuelM2<15>*>(FuelLookup::Fuels[i++])
+    "M2_15", simplefbp::M2_15, *dynamic_cast<const fs::FuelOldM2<15>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_20", simplefbp::M2_20, *dynamic_cast<const fs::FuelM2<20>*>(FuelLookup::Fuels[i++])
+    "M2_20", simplefbp::M2_20, *dynamic_cast<const fs::FuelOldM2<20>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_25", simplefbp::M2_25, *dynamic_cast<const fs::FuelM2<25>*>(FuelLookup::Fuels[i++])
+    "M2_25", simplefbp::M2_25, *dynamic_cast<const fs::FuelOldM2<25>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_30", simplefbp::M2_30, *dynamic_cast<const fs::FuelM2<30>*>(FuelLookup::Fuels[i++])
+    "M2_30", simplefbp::M2_30, *dynamic_cast<const fs::FuelOldM2<30>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_35", simplefbp::M2_35, *dynamic_cast<const fs::FuelM2<35>*>(FuelLookup::Fuels[i++])
+    "M2_35", simplefbp::M2_35, *dynamic_cast<const fs::FuelOldM2<35>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_40", simplefbp::M2_40, *dynamic_cast<const fs::FuelM2<40>*>(FuelLookup::Fuels[i++])
+    "M2_40", simplefbp::M2_40, *dynamic_cast<const fs::FuelOldM2<40>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_45", simplefbp::M2_45, *dynamic_cast<const fs::FuelM2<45>*>(FuelLookup::Fuels[i++])
+    "M2_45", simplefbp::M2_45, *dynamic_cast<const fs::FuelOldM2<45>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_50", simplefbp::M2_50, *dynamic_cast<const fs::FuelM2<50>*>(FuelLookup::Fuels[i++])
+    "M2_50", simplefbp::M2_50, *dynamic_cast<const fs::FuelOldM2<50>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_55", simplefbp::M2_55, *dynamic_cast<const fs::FuelM2<55>*>(FuelLookup::Fuels[i++])
+    "M2_55", simplefbp::M2_55, *dynamic_cast<const fs::FuelOldM2<55>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_60", simplefbp::M2_60, *dynamic_cast<const fs::FuelM2<60>*>(FuelLookup::Fuels[i++])
+    "M2_60", simplefbp::M2_60, *dynamic_cast<const fs::FuelOldM2<60>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_65", simplefbp::M2_65, *dynamic_cast<const fs::FuelM2<65>*>(FuelLookup::Fuels[i++])
+    "M2_65", simplefbp::M2_65, *dynamic_cast<const fs::FuelOldM2<65>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_70", simplefbp::M2_70, *dynamic_cast<const fs::FuelM2<70>*>(FuelLookup::Fuels[i++])
+    "M2_70", simplefbp::M2_70, *dynamic_cast<const fs::FuelOldM2<70>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_75", simplefbp::M2_75, *dynamic_cast<const fs::FuelM2<75>*>(FuelLookup::Fuels[i++])
+    "M2_75", simplefbp::M2_75, *dynamic_cast<const fs::FuelOldM2<75>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_80", simplefbp::M2_80, *dynamic_cast<const fs::FuelM2<80>*>(FuelLookup::Fuels[i++])
+    "M2_80", simplefbp::M2_80, *dynamic_cast<const fs::FuelOldM2<80>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_85", simplefbp::M2_85, *dynamic_cast<const fs::FuelM2<85>*>(FuelLookup::Fuels[i++])
+    "M2_85", simplefbp::M2_85, *dynamic_cast<const fs::FuelOldM2<85>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_90", simplefbp::M2_90, *dynamic_cast<const fs::FuelM2<90>*>(FuelLookup::Fuels[i++])
+    "M2_90", simplefbp::M2_90, *dynamic_cast<const fs::FuelOldM2<90>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_95", simplefbp::M2_95, *dynamic_cast<const fs::FuelM2<95>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M1_M2_05", simplefbp::M1_M2_05, *dynamic_cast<const fs::FuelM1M2<5>*>(FuelLookup::Fuels[i++])
+    "M2_95", simplefbp::M2_95, *dynamic_cast<const fs::FuelOldM2<95>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_10", simplefbp::M1_M2_10, *dynamic_cast<const fs::FuelM1M2<10>*>(FuelLookup::Fuels[i++])
+    "M1_M2_05",
+    simplefbp::M1_M2_05,
+    *dynamic_cast<const fs::FuelOldM1M2<5>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_15", simplefbp::M1_M2_15, *dynamic_cast<const fs::FuelM1M2<15>*>(FuelLookup::Fuels[i++])
+    "M1_M2_10",
+    simplefbp::M1_M2_10,
+    *dynamic_cast<const fs::FuelOldM1M2<10>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_20", simplefbp::M1_M2_20, *dynamic_cast<const fs::FuelM1M2<20>*>(FuelLookup::Fuels[i++])
+    "M1_M2_15",
+    simplefbp::M1_M2_15,
+    *dynamic_cast<const fs::FuelOldM1M2<15>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_25", simplefbp::M1_M2_25, *dynamic_cast<const fs::FuelM1M2<25>*>(FuelLookup::Fuels[i++])
+    "M1_M2_20",
+    simplefbp::M1_M2_20,
+    *dynamic_cast<const fs::FuelOldM1M2<20>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_30", simplefbp::M1_M2_30, *dynamic_cast<const fs::FuelM1M2<30>*>(FuelLookup::Fuels[i++])
+    "M1_M2_25",
+    simplefbp::M1_M2_25,
+    *dynamic_cast<const fs::FuelOldM1M2<25>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_35", simplefbp::M1_M2_35, *dynamic_cast<const fs::FuelM1M2<35>*>(FuelLookup::Fuels[i++])
+    "M1_M2_30",
+    simplefbp::M1_M2_30,
+    *dynamic_cast<const fs::FuelOldM1M2<30>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_40", simplefbp::M1_M2_40, *dynamic_cast<const fs::FuelM1M2<40>*>(FuelLookup::Fuels[i++])
+    "M1_M2_35",
+    simplefbp::M1_M2_35,
+    *dynamic_cast<const fs::FuelOldM1M2<35>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_45", simplefbp::M1_M2_45, *dynamic_cast<const fs::FuelM1M2<45>*>(FuelLookup::Fuels[i++])
+    "M1_M2_40",
+    simplefbp::M1_M2_40,
+    *dynamic_cast<const fs::FuelOldM1M2<40>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_50", simplefbp::M1_M2_50, *dynamic_cast<const fs::FuelM1M2<50>*>(FuelLookup::Fuels[i++])
+    "M1_M2_45",
+    simplefbp::M1_M2_45,
+    *dynamic_cast<const fs::FuelOldM1M2<45>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_55", simplefbp::M1_M2_55, *dynamic_cast<const fs::FuelM1M2<55>*>(FuelLookup::Fuels[i++])
+    "M1_M2_50",
+    simplefbp::M1_M2_50,
+    *dynamic_cast<const fs::FuelOldM1M2<50>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_60", simplefbp::M1_M2_60, *dynamic_cast<const fs::FuelM1M2<60>*>(FuelLookup::Fuels[i++])
+    "M1_M2_55",
+    simplefbp::M1_M2_55,
+    *dynamic_cast<const fs::FuelOldM1M2<55>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_65", simplefbp::M1_M2_65, *dynamic_cast<const fs::FuelM1M2<65>*>(FuelLookup::Fuels[i++])
+    "M1_M2_60",
+    simplefbp::M1_M2_60,
+    *dynamic_cast<const fs::FuelOldM1M2<60>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_70", simplefbp::M1_M2_70, *dynamic_cast<const fs::FuelM1M2<70>*>(FuelLookup::Fuels[i++])
+    "M1_M2_65",
+    simplefbp::M1_M2_65,
+    *dynamic_cast<const fs::FuelOldM1M2<65>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_75", simplefbp::M1_M2_75, *dynamic_cast<const fs::FuelM1M2<75>*>(FuelLookup::Fuels[i++])
+    "M1_M2_70",
+    simplefbp::M1_M2_70,
+    *dynamic_cast<const fs::FuelOldM1M2<70>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_80", simplefbp::M1_M2_80, *dynamic_cast<const fs::FuelM1M2<80>*>(FuelLookup::Fuels[i++])
+    "M1_M2_75",
+    simplefbp::M1_M2_75,
+    *dynamic_cast<const fs::FuelOldM1M2<75>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_85", simplefbp::M1_M2_85, *dynamic_cast<const fs::FuelM1M2<85>*>(FuelLookup::Fuels[i++])
+    "M1_M2_80",
+    simplefbp::M1_M2_80,
+    *dynamic_cast<const fs::FuelOldM1M2<80>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_90", simplefbp::M1_M2_90, *dynamic_cast<const fs::FuelM1M2<90>*>(FuelLookup::Fuels[i++])
+    "M1_M2_85",
+    simplefbp::M1_M2_85,
+    *dynamic_cast<const fs::FuelOldM1M2<85>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_95", simplefbp::M1_M2_95, *dynamic_cast<const fs::FuelM1M2<95>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_05", simplefbp::M3_05, *dynamic_cast<const fs::FuelM3<5>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_10", simplefbp::M3_10, *dynamic_cast<const fs::FuelM3<10>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_15", simplefbp::M3_15, *dynamic_cast<const fs::FuelM3<15>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_20", simplefbp::M3_20, *dynamic_cast<const fs::FuelM3<20>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_25", simplefbp::M3_25, *dynamic_cast<const fs::FuelM3<25>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_30", simplefbp::M3_30, *dynamic_cast<const fs::FuelM3<30>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_35", simplefbp::M3_35, *dynamic_cast<const fs::FuelM3<35>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_40", simplefbp::M3_40, *dynamic_cast<const fs::FuelM3<40>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_45", simplefbp::M3_45, *dynamic_cast<const fs::FuelM3<45>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_50", simplefbp::M3_50, *dynamic_cast<const fs::FuelM3<50>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_55", simplefbp::M3_55, *dynamic_cast<const fs::FuelM3<55>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_60", simplefbp::M3_60, *dynamic_cast<const fs::FuelM3<60>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_65", simplefbp::M3_65, *dynamic_cast<const fs::FuelM3<65>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_70", simplefbp::M3_70, *dynamic_cast<const fs::FuelM3<70>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_75", simplefbp::M3_75, *dynamic_cast<const fs::FuelM3<75>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_80", simplefbp::M3_80, *dynamic_cast<const fs::FuelM3<80>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_85", simplefbp::M3_85, *dynamic_cast<const fs::FuelM3<85>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_90", simplefbp::M3_90, *dynamic_cast<const fs::FuelM3<90>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_95", simplefbp::M3_95, *dynamic_cast<const fs::FuelM3<95>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M3_100", simplefbp::M3_100, *dynamic_cast<const fs::FuelM3<100>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_05", simplefbp::M4_05, *dynamic_cast<const fs::FuelM4<5>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_10", simplefbp::M4_10, *dynamic_cast<const fs::FuelM4<10>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_15", simplefbp::M4_15, *dynamic_cast<const fs::FuelM4<15>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_20", simplefbp::M4_20, *dynamic_cast<const fs::FuelM4<20>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_25", simplefbp::M4_25, *dynamic_cast<const fs::FuelM4<25>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_30", simplefbp::M4_30, *dynamic_cast<const fs::FuelM4<30>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_35", simplefbp::M4_35, *dynamic_cast<const fs::FuelM4<35>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_40", simplefbp::M4_40, *dynamic_cast<const fs::FuelM4<40>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_45", simplefbp::M4_45, *dynamic_cast<const fs::FuelM4<45>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_50", simplefbp::M4_50, *dynamic_cast<const fs::FuelM4<50>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_55", simplefbp::M4_55, *dynamic_cast<const fs::FuelM4<55>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_60", simplefbp::M4_60, *dynamic_cast<const fs::FuelM4<60>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_65", simplefbp::M4_65, *dynamic_cast<const fs::FuelM4<65>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_70", simplefbp::M4_70, *dynamic_cast<const fs::FuelM4<70>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_75", simplefbp::M4_75, *dynamic_cast<const fs::FuelM4<75>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_80", simplefbp::M4_80, *dynamic_cast<const fs::FuelM4<80>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_85", simplefbp::M4_85, *dynamic_cast<const fs::FuelM4<85>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_90", simplefbp::M4_90, *dynamic_cast<const fs::FuelM4<90>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_95", simplefbp::M4_95, *dynamic_cast<const fs::FuelM4<95>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel(
-    "M4_100", simplefbp::M4_100, *dynamic_cast<const fs::FuelM4<100>*>(FuelLookup::Fuels[i++])
+    "M1_M2_90",
+    simplefbp::M1_M2_90,
+    *dynamic_cast<const fs::FuelOldM1M2<90>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M3_M4_00", simplefbp::M3_M4_00, *dynamic_cast<const fs::FuelM3M4<0>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_05", simplefbp::M3_M4_05, *dynamic_cast<const fs::FuelM3M4<5>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_10", simplefbp::M3_M4_10, *dynamic_cast<const fs::FuelM3M4<10>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_15", simplefbp::M3_M4_15, *dynamic_cast<const fs::FuelM3M4<15>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_20", simplefbp::M3_M4_20, *dynamic_cast<const fs::FuelM3M4<20>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_25", simplefbp::M3_M4_25, *dynamic_cast<const fs::FuelM3M4<25>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_30", simplefbp::M3_M4_30, *dynamic_cast<const fs::FuelM3M4<30>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_35", simplefbp::M3_M4_35, *dynamic_cast<const fs::FuelM3M4<35>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_40", simplefbp::M3_M4_40, *dynamic_cast<const fs::FuelM3M4<40>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_45", simplefbp::M3_M4_45, *dynamic_cast<const fs::FuelM3M4<45>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_50", simplefbp::M3_M4_50, *dynamic_cast<const fs::FuelM3M4<50>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_55", simplefbp::M3_M4_55, *dynamic_cast<const fs::FuelM3M4<55>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_60", simplefbp::M3_M4_60, *dynamic_cast<const fs::FuelM3M4<60>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_65", simplefbp::M3_M4_65, *dynamic_cast<const fs::FuelM3M4<65>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_70", simplefbp::M3_M4_70, *dynamic_cast<const fs::FuelM3M4<70>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_75", simplefbp::M3_M4_75, *dynamic_cast<const fs::FuelM3M4<75>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_80", simplefbp::M3_M4_80, *dynamic_cast<const fs::FuelM3M4<80>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_85", simplefbp::M3_M4_85, *dynamic_cast<const fs::FuelM3M4<85>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_90", simplefbp::M3_M4_90, *dynamic_cast<const fs::FuelM3M4<90>*>(FuelLookup::Fuels[i++])
-  );
-  compare_fuel_variable(
-    "M3_M4_95", simplefbp::M3_M4_95, *dynamic_cast<const fs::FuelM3M4<95>*>(FuelLookup::Fuels[i++])
+    "M1_M2_95",
+    simplefbp::M1_M2_95,
+    *dynamic_cast<const fs::FuelOldM1M2<95>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M1_00", simplefbp::M1_00, *dynamic_cast<const fs::FuelM1<0>*>(FuelLookup::Fuels[i++])
+    "M3_05", simplefbp::M3_05, *dynamic_cast<const fs::FuelOldM3<5>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M2_00", simplefbp::M2_00, *dynamic_cast<const fs::FuelM2<0>*>(FuelLookup::Fuels[i++])
+    "M3_10", simplefbp::M3_10, *dynamic_cast<const fs::FuelOldM3<10>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_15", simplefbp::M3_15, *dynamic_cast<const fs::FuelOldM3<15>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_20", simplefbp::M3_20, *dynamic_cast<const fs::FuelOldM3<20>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_25", simplefbp::M3_25, *dynamic_cast<const fs::FuelOldM3<25>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_30", simplefbp::M3_30, *dynamic_cast<const fs::FuelOldM3<30>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_35", simplefbp::M3_35, *dynamic_cast<const fs::FuelOldM3<35>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_40", simplefbp::M3_40, *dynamic_cast<const fs::FuelOldM3<40>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_45", simplefbp::M3_45, *dynamic_cast<const fs::FuelOldM3<45>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_50", simplefbp::M3_50, *dynamic_cast<const fs::FuelOldM3<50>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_55", simplefbp::M3_55, *dynamic_cast<const fs::FuelOldM3<55>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_60", simplefbp::M3_60, *dynamic_cast<const fs::FuelOldM3<60>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_65", simplefbp::M3_65, *dynamic_cast<const fs::FuelOldM3<65>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_70", simplefbp::M3_70, *dynamic_cast<const fs::FuelOldM3<70>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_75", simplefbp::M3_75, *dynamic_cast<const fs::FuelOldM3<75>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_80", simplefbp::M3_80, *dynamic_cast<const fs::FuelOldM3<80>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_85", simplefbp::M3_85, *dynamic_cast<const fs::FuelOldM3<85>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_90", simplefbp::M3_90, *dynamic_cast<const fs::FuelOldM3<90>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_95", simplefbp::M3_95, *dynamic_cast<const fs::FuelOldM3<95>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_100", simplefbp::M3_100, *dynamic_cast<const fs::FuelOldM3<100>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_05", simplefbp::M4_05, *dynamic_cast<const fs::FuelOldM4<5>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_10", simplefbp::M4_10, *dynamic_cast<const fs::FuelOldM4<10>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_15", simplefbp::M4_15, *dynamic_cast<const fs::FuelOldM4<15>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_20", simplefbp::M4_20, *dynamic_cast<const fs::FuelOldM4<20>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_25", simplefbp::M4_25, *dynamic_cast<const fs::FuelOldM4<25>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_30", simplefbp::M4_30, *dynamic_cast<const fs::FuelOldM4<30>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_35", simplefbp::M4_35, *dynamic_cast<const fs::FuelOldM4<35>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_40", simplefbp::M4_40, *dynamic_cast<const fs::FuelOldM4<40>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_45", simplefbp::M4_45, *dynamic_cast<const fs::FuelOldM4<45>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_50", simplefbp::M4_50, *dynamic_cast<const fs::FuelOldM4<50>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_55", simplefbp::M4_55, *dynamic_cast<const fs::FuelOldM4<55>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_60", simplefbp::M4_60, *dynamic_cast<const fs::FuelOldM4<60>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_65", simplefbp::M4_65, *dynamic_cast<const fs::FuelOldM4<65>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_70", simplefbp::M4_70, *dynamic_cast<const fs::FuelOldM4<70>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_75", simplefbp::M4_75, *dynamic_cast<const fs::FuelOldM4<75>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_80", simplefbp::M4_80, *dynamic_cast<const fs::FuelOldM4<80>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_85", simplefbp::M4_85, *dynamic_cast<const fs::FuelOldM4<85>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_90", simplefbp::M4_90, *dynamic_cast<const fs::FuelOldM4<90>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_95", simplefbp::M4_95, *dynamic_cast<const fs::FuelOldM4<95>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_100", simplefbp::M4_100, *dynamic_cast<const fs::FuelOldM4<100>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
-    "M1_M2_00", simplefbp::M1_M2_00, *dynamic_cast<const fs::FuelM1M2<0>*>(FuelLookup::Fuels[i++])
+    "M3_M4_00",
+    simplefbp::M3_M4_00,
+    *dynamic_cast<const fs::FuelOldM3M4<0>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_05",
+    simplefbp::M3_M4_05,
+    *dynamic_cast<const fs::FuelOldM3M4<5>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_10",
+    simplefbp::M3_M4_10,
+    *dynamic_cast<const fs::FuelOldM3M4<10>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_15",
+    simplefbp::M3_M4_15,
+    *dynamic_cast<const fs::FuelOldM3M4<15>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_20",
+    simplefbp::M3_M4_20,
+    *dynamic_cast<const fs::FuelOldM3M4<20>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_25",
+    simplefbp::M3_M4_25,
+    *dynamic_cast<const fs::FuelOldM3M4<25>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_30",
+    simplefbp::M3_M4_30,
+    *dynamic_cast<const fs::FuelOldM3M4<30>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_35",
+    simplefbp::M3_M4_35,
+    *dynamic_cast<const fs::FuelOldM3M4<35>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_40",
+    simplefbp::M3_M4_40,
+    *dynamic_cast<const fs::FuelOldM3M4<40>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_45",
+    simplefbp::M3_M4_45,
+    *dynamic_cast<const fs::FuelOldM3M4<45>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_50",
+    simplefbp::M3_M4_50,
+    *dynamic_cast<const fs::FuelOldM3M4<50>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_55",
+    simplefbp::M3_M4_55,
+    *dynamic_cast<const fs::FuelOldM3M4<55>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_60",
+    simplefbp::M3_M4_60,
+    *dynamic_cast<const fs::FuelOldM3M4<60>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_65",
+    simplefbp::M3_M4_65,
+    *dynamic_cast<const fs::FuelOldM3M4<65>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_70",
+    simplefbp::M3_M4_70,
+    *dynamic_cast<const fs::FuelOldM3M4<70>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_75",
+    simplefbp::M3_M4_75,
+    *dynamic_cast<const fs::FuelOldM3M4<75>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_80",
+    simplefbp::M3_M4_80,
+    *dynamic_cast<const fs::FuelOldM3M4<80>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_85",
+    simplefbp::M3_M4_85,
+    *dynamic_cast<const fs::FuelOldM3M4<85>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_90",
+    simplefbp::M3_M4_90,
+    *dynamic_cast<const fs::FuelOldM3M4<90>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M3_M4_95",
+    simplefbp::M3_M4_95,
+    *dynamic_cast<const fs::FuelOldM3M4<95>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M3_00", simplefbp::M3_00, *dynamic_cast<const fs::FuelM3<0>*>(FuelLookup::Fuels[i++])
+    "M1_00", simplefbp::M1_00, *dynamic_cast<const fs::FuelOldM1<0>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel(
-    "M4_00", simplefbp::M4_00, *dynamic_cast<const fs::FuelM4<0>*>(FuelLookup::Fuels[i++])
+    "M2_00", simplefbp::M2_00, *dynamic_cast<const fs::FuelOldM2<0>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel_variable(
+    "M1_M2_00",
+    simplefbp::M1_M2_00,
+    *dynamic_cast<const fs::FuelOldM1M2<0>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M3_00", simplefbp::M3_00, *dynamic_cast<const fs::FuelOldM3<0>*>(FuelOldLookup::Fuels[i++])
+  );
+  compare_fuel(
+    "M4_00", simplefbp::M4_00, *dynamic_cast<const fs::FuelOldM4<0>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
     "M3_M4_100",
     simplefbp::M3_M4_100,
-    *dynamic_cast<const fs::FuelM3M4<100>*>(FuelLookup::Fuels[i++])
+    *dynamic_cast<const fs::FuelOldM3M4<100>*>(FuelOldLookup::Fuels[i++])
   );
   compare_fuel_variable(
     "O1",
     simplefbp::O1,
-    *dynamic_cast<const fs::FuelO1*>(FuelLookup::Fuels[i++]),
+    *dynamic_cast<const fs::FuelO1*>(FuelOldLookup::Fuels[i++]),
     FUEL_COMPARE_GRASS
   );
   check_equal(NUMBER_OF_FUELS, i, "Number of fuels");
