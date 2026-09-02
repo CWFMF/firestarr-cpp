@@ -466,7 +466,7 @@ bool GridBase::validate(const Point& point) const
   const auto dist_right{(corner_xy_ne.y - corner_xy_se.y).value * cell_km};
   const auto pct_left = (dist_left / dist_center) * 100;
   const auto pct_center = (dist_center / dist_center) * 100;
-  assert(100.0 == pct_mid);
+  assert(100.0 == pct_center);
   const auto pct_right = (dist_right / dist_center) * 100;
   const auto diff_left = pct_left - pct_center;
   const auto diff_right = pct_right - pct_center;
