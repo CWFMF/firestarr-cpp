@@ -3,9 +3,9 @@
 #define FS_SIMPLE_FBP_H
 #include "stdafx.h"
 #include "Duff.h"
-#include "FuelType.h"
 #include "LookupTable.h"
 #include "Settings.h"
+#include "SimpleFuelType.h"
 #include "SimpleStandardFuel.h"
 #ifdef DEBUG_FUEL_VARIABLE
 #include "Log.h"

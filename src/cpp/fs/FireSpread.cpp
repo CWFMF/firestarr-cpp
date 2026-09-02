@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FireSpread.h"
 #include "FuelOldLookup.h"
-#include "FuelType.h"
 #include "LookupTable.h"
 #include "Scenario.h"
 #include "Settings.h"
+#include "SimpleFuelType.h"
 #include "SpreadAlgorithm.h"
 #include "unstable.h"
 namespace fs
