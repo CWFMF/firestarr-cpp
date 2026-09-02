@@ -2,8 +2,11 @@
 #include "FBP45.h"
 namespace fs
 {
-MathSize FuelD1::isfD1(const SpreadInfo& spread, const MathSize ros_multiplier, const MathSize isi)
-  const noexcept
+MathSize FuelOldD1::isfD1(
+  const SpreadInfo& spread,
+  const MathSize ros_multiplier,
+  const MathSize isi
+) const noexcept
 {
   return limitIsf(
     ros_multiplier,
@@ -24,15 +27,15 @@ MathSize FuelD1::isfD1(const SpreadInfo& spread, const MathSize ros_multiplier, 
  * \return Surface Fuel Consumption (SFC) (kg/m^2) [GLC-X-10 eq 9a/9b]
  */
 static LookupTable<&calculate_surface_fuel_consumption_c1> SURFACE_FUEL_CONSUMPTION_C1{};
-MathSize FuelC1::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
+MathSize FuelOldC1::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
   return SURFACE_FUEL_CONSUMPTION_C1(spread.weather->ffmc.value);
 }
-MathSize FuelC2::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
+MathSize FuelOldC2::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
   return SURFACE_FUEL_CONSUMPTION_MIXED_OR_C2(spread.weather->bui.value);
 }
-MathSize FuelC6::finalRos(
+MathSize FuelOldC6::finalRos(
   const SpreadInfo& spread,
   const MathSize isi,
   const MathSize cfb,
@@ -71,7 +74,7 @@ static LookupTable<&calculate_surface_fuel_consumption_c7_ffmc> SURFACE_FUEL_CON
  * \return Woody Fuel Consumption (WFC) (kg/m^2) [ST-X-3 eq 14]
  */
 static LookupTable<&calculate_surface_fuel_consumption_c7_bui> SURFACE_FUEL_CONSUMPTION_C7_BUI{};
-MathSize FuelC7::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
+MathSize FuelOldC7::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
   return SURFACE_FUEL_CONSUMPTION_C7_FFMC(spread.weather->ffmc.value)
        + SURFACE_FUEL_CONSUMPTION_C7_BUI(spread.weather->bui.value);
@@ -81,11 +84,11 @@ MathSize FuelC7::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
   return bui >= 80 ? 1.5 * (1.0 - exp(-0.0183 * bui)) : 0.0;
 }
 static LookupTable<&calculate_surface_fuel_consumption_d2> SURFACE_FUEL_CONSUMPTION_D2{};
-MathSize FuelD2::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
+MathSize FuelOldD2::surfaceFuelConsumption(const SpreadInfo& spread) const noexcept
 {
   return SURFACE_FUEL_CONSUMPTION_D2(spread.weather->bui.value);
 }
-MathSize FuelD2::calculateRos(const int, const FwiWeather& wx, const MathSize isi) const noexcept
+MathSize FuelOldD2::calculateRos(const int, const FwiWeather& wx, const MathSize isi) const noexcept
 {
   return (wx.bui.value >= 80) ? rosBasic(isi) : 0.0;
 }

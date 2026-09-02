@@ -5,7 +5,7 @@
 #include "Duff.h"
 #include "LookupTable.h"
 #include "Settings.h"
-#include "StandardFuel.h"
+#include "StandardFuelOld.h"
 #ifdef DEBUG_FUEL_VARIABLE
 #include "Log.h"
 #endif
@@ -70,20 +70,20 @@ template <
   int BulkDensity,
   int InorganicPercent,
   int DuffDepth>
-class FuelNonMixed
-  : public StandardFuel<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>
+class FuelOldNonMixed
+  : public StandardFuelOld<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>
 {
 public:
-  FuelNonMixed() = delete;
-  ~FuelNonMixed() override = default;
-  FuelNonMixed(const FuelNonMixed& rhs) noexcept = delete;
-  FuelNonMixed(FuelNonMixed&& rhs) noexcept = delete;
-  FuelNonMixed& operator=(const FuelNonMixed& rhs) noexcept = delete;
-  FuelNonMixed& operator=(FuelNonMixed&& rhs) noexcept = delete;
+  FuelOldNonMixed() = delete;
+  ~FuelOldNonMixed() override = default;
+  FuelOldNonMixed(const FuelOldNonMixed& rhs) noexcept = delete;
+  FuelOldNonMixed(FuelOldNonMixed&& rhs) noexcept = delete;
+  FuelOldNonMixed& operator=(const FuelOldNonMixed& rhs) noexcept = delete;
+  FuelOldNonMixed& operator=(FuelOldNonMixed&& rhs) noexcept = delete;
 
 protected:
-  using StandardFuel<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>::
-    StandardFuel;
+  using StandardFuelOld<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>::
+    StandardFuelOld;
 
 public:
   /**
@@ -131,16 +131,16 @@ template <
   int BulkDensity,
   int InorganicPercent,
   int DuffDepth>
-class FuelConifer
-  : public FuelNonMixed<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>
+class FuelOldConifer
+  : public FuelOldNonMixed<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>
 {
 public:
-  FuelConifer() = delete;
-  ~FuelConifer() override = default;
-  FuelConifer(const FuelConifer& rhs) noexcept = delete;
-  FuelConifer(FuelConifer&& rhs) noexcept = delete;
-  FuelConifer& operator=(const FuelConifer& rhs) noexcept = delete;
-  FuelConifer& operator=(FuelConifer&& rhs) noexcept = delete;
+  FuelOldConifer() = delete;
+  ~FuelOldConifer() override = default;
+  FuelOldConifer(const FuelOldConifer& rhs) noexcept = delete;
+  FuelOldConifer(FuelOldConifer&& rhs) noexcept = delete;
+  FuelOldConifer& operator=(const FuelOldConifer& rhs) noexcept = delete;
+  FuelOldConifer& operator=(FuelOldConifer&& rhs) noexcept = delete;
 
 protected:
   /**
@@ -151,14 +151,14 @@ protected:
    * \param duff_ffmc Type of duff near the surface
    * \param duff_dmc Type of duff deeper underground
    */
-  constexpr FuelConifer(
+  constexpr FuelOldConifer(
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
-    : FuelNonMixed<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>(
+    : FuelOldNonMixed<A, B, C, Bui0, Cbh, Cfl, BulkDensity, InorganicPercent, DuffDepth>(
         code,
         name,
         true,
@@ -174,13 +174,13 @@ protected:
    * \param log_q Log value of q [ST-X-3 table 7]
    * \param duff Type of duff near the surface and deeper underground
    */
-  constexpr FuelConifer(
+  constexpr FuelOldConifer(
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
     const Duff* duff
   )
-    : FuelConifer(code, name, log_q, duff, duff)
+    : FuelOldConifer(code, name, log_q, duff, duff)
   { }
 };
 /**
@@ -211,16 +211,16 @@ static LookupTable<&calculate_surface_fuel_consumption_jackpine> SURFACE_FUEL_CO
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
 template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int DuffDepth>
-class FuelJackpine : public FuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>
+class FuelOldJackpine : public FuelOldConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>
 {
 public:
-  FuelJackpine() = delete;
-  ~FuelJackpine() override = default;
-  FuelJackpine(const FuelJackpine& rhs) noexcept = delete;
-  FuelJackpine(FuelJackpine&& rhs) noexcept = delete;
-  FuelJackpine& operator=(const FuelJackpine& rhs) noexcept = delete;
-  FuelJackpine& operator=(FuelJackpine&& rhs) noexcept = delete;
-  using FuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>::FuelConifer;
+  FuelOldJackpine() = delete;
+  ~FuelOldJackpine() override = default;
+  FuelOldJackpine(const FuelOldJackpine& rhs) noexcept = delete;
+  FuelOldJackpine(FuelOldJackpine&& rhs) noexcept = delete;
+  FuelOldJackpine& operator=(const FuelOldJackpine& rhs) noexcept = delete;
+  FuelOldJackpine& operator=(FuelOldJackpine&& rhs) noexcept = delete;
+  using FuelOldConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>::FuelOldConifer;
   /**
    * \brief Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 11]
    * \param spread SpreadInfo to use
@@ -258,16 +258,16 @@ static LookupTable<&calculate_surface_fuel_consumption_pine> SURFACE_FUEL_CONSUM
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
 template <int A, int B, int C, int Bui0, int Cbh, int Cfl, int BulkDensity, int DuffDepth>
-class FuelPine : public FuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>
+class FuelOldPine : public FuelOldConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>
 {
 public:
-  FuelPine() = delete;
-  ~FuelPine() override = default;
-  FuelPine(const FuelPine& rhs) noexcept = delete;
-  FuelPine(FuelPine&& rhs) noexcept = delete;
-  FuelPine& operator=(const FuelPine& rhs) noexcept = delete;
-  FuelPine& operator=(FuelPine&& rhs) noexcept = delete;
-  using FuelConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>::FuelConifer;
+  FuelOldPine() = delete;
+  ~FuelOldPine() override = default;
+  FuelOldPine(const FuelOldPine& rhs) noexcept = delete;
+  FuelOldPine(FuelOldPine&& rhs) noexcept = delete;
+  FuelOldPine& operator=(const FuelOldPine& rhs) noexcept = delete;
+  FuelOldPine& operator=(FuelOldPine&& rhs) noexcept = delete;
+  using FuelOldConifer<A, B, C, Bui0, Cbh, Cfl, BulkDensity, 15, DuffDepth>::FuelOldConifer;
   /**
    * \brief Surface fuel consumption (SFC) (kg/m^2) [ST-X-3 eq 12]
    * \param spread SpreadInfo to use
@@ -281,21 +281,21 @@ public:
 /**
  * \brief FBP fuel type D-1.
  */
-class FuelD1 : public FuelNonMixed<30, 232, 160, 32, 0, 0, 61, 59, 24>
+class FuelOldD1 : public FuelOldNonMixed<30, 232, 160, 32, 0, 0, 61, 59, 24>
 {
 public:
-  FuelD1() = delete;
-  ~FuelD1() override = default;
-  FuelD1(const FuelD1& rhs) noexcept = delete;
-  FuelD1(FuelD1&& rhs) noexcept = delete;
-  FuelD1& operator=(const FuelD1& rhs) noexcept = delete;
-  FuelD1& operator=(FuelD1&& rhs) noexcept = delete;
+  FuelOldD1() = delete;
+  ~FuelOldD1() override = default;
+  FuelOldD1(const FuelOldD1& rhs) noexcept = delete;
+  FuelOldD1(FuelOldD1&& rhs) noexcept = delete;
+  FuelOldD1& operator=(const FuelOldD1& rhs) noexcept = delete;
+  FuelOldD1& operator=(FuelOldD1&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type D-1
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelD1(const FuelCodeSize& code) noexcept
-    : FuelNonMixed(code, "D-1", false, LOG_0_90, &duff::Peat)
+  explicit constexpr FuelOldD1(const FuelCodeSize& code) noexcept
+    : FuelOldNonMixed(code, "D-1", false, LOG_0_90, &duff::Peat)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 25]
@@ -338,24 +338,24 @@ template <
   int BulkDensity,
   int InorganicPercent,
   int DuffDepth>
-class FuelMixed
-  : public StandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>
+class FuelOldMixed
+  : public StandardFuelOld<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>
 {
 public:
-  FuelMixed() = delete;
-  ~FuelMixed() override = default;
-  FuelMixed(const FuelMixed& rhs) noexcept = delete;
-  FuelMixed(FuelMixed&& rhs) noexcept = delete;
-  FuelMixed& operator=(const FuelMixed& rhs) noexcept = delete;
-  FuelMixed& operator=(FuelMixed&& rhs) noexcept = delete;
+  FuelOldMixed() = delete;
+  ~FuelOldMixed() override = default;
+  FuelOldMixed(const FuelOldMixed& rhs) noexcept = delete;
+  FuelOldMixed(FuelOldMixed&& rhs) noexcept = delete;
+  FuelOldMixed& operator=(const FuelOldMixed& rhs) noexcept = delete;
+  FuelOldMixed& operator=(FuelOldMixed&& rhs) noexcept = delete;
   /**
    * \brief A mixed FBP fuel type
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    * \param log_q Log value of q [ST-X-3 table 7]
    */
-  constexpr FuelMixed(const FuelCodeSize& code, const char* name, const LogValue log_q)
-    : StandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>(
+  constexpr FuelOldMixed(const FuelCodeSize& code, const char* name, const LogValue log_q)
+    : StandardFuelOld<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>(
         code,
         name,
         true,
@@ -381,7 +381,7 @@ public:
   [[nodiscard]] MathSize crownConsumption(const MathSize cfb) const noexcept override
   {
     return ratioConifer()
-         * StandardFuel<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>::
+         * StandardFuelOld<A, B, C, Bui0, 6, 80, BulkDensity, InorganicPercent, DuffDepth>::
              crownConsumption(cfb);
   }
   /**
@@ -392,7 +392,7 @@ public:
   [[nodiscard]] MathSize calculateRos(const int, const FwiWeather&, const MathSize isi)
     const noexcept override
   {
-    static const FuelD1 F{14};
+    static const FuelOldD1 F{14};
     return ratioConifer() * this->rosBasic(isi)
          + rosMultiplier() * ratioDeciduous() * F.rosBasic(isi);
   }
@@ -433,7 +433,7 @@ protected:
    */
   [[nodiscard]] static MathSize isfD1(const SpreadInfo& spread, const MathSize isi) noexcept
   {
-    static const FuelD1 F{14};
+    static const FuelOldD1 F{14};
     return F.isfD1(spread, rosMultiplier(), isi);
   }
 };
@@ -447,23 +447,24 @@ protected:
  * \tparam PercentDeadFir Percent dead fir in the stand.
  */
 template <int A, int B, int C, int Bui0, int RosMultiplier, int PercentDeadFir>
-class FuelMixedDead : public FuelMixed<A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75>
+class FuelOldMixedDead
+  : public FuelOldMixed<A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75>
 {
 public:
-  FuelMixedDead() = delete;
-  ~FuelMixedDead() override = default;
-  FuelMixedDead(const FuelMixedDead& rhs) noexcept = delete;
-  FuelMixedDead(FuelMixedDead&& rhs) noexcept = delete;
-  FuelMixedDead& operator=(const FuelMixedDead& rhs) noexcept = delete;
-  FuelMixedDead& operator=(FuelMixedDead&& rhs) noexcept = delete;
+  FuelOldMixedDead() = delete;
+  ~FuelOldMixedDead() override = default;
+  FuelOldMixedDead(const FuelOldMixedDead& rhs) noexcept = delete;
+  FuelOldMixedDead(FuelOldMixedDead&& rhs) noexcept = delete;
+  FuelOldMixedDead& operator=(const FuelOldMixedDead& rhs) noexcept = delete;
+  FuelOldMixedDead& operator=(FuelOldMixedDead&& rhs) noexcept = delete;
   /**
    * \brief A mixed dead FBP fuel type
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    * \param log_q Log value of q [ST-X-3 table 7]
    */
-  constexpr FuelMixedDead(const FuelCodeSize& code, const char* name, const LogValue log_q)
-    : FuelMixed<A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75>(code, name, log_q)
+  constexpr FuelOldMixedDead(const FuelCodeSize& code, const char* name, const LogValue log_q)
+    : FuelOldMixed<A, B, C, Bui0, RosMultiplier, PercentDeadFir, 61, 15, 75>(code, name, log_q)
   { }
 };
 /**
@@ -472,22 +473,23 @@ public:
  * \tparam RatioMixed Percent conifer
  */
 template <int RosMultiplier, int RatioMixed>
-class FuelMixedWood : public FuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>
+class FuelOldMixedWood
+  : public FuelOldMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>
 {
 public:
-  FuelMixedWood() = delete;
-  ~FuelMixedWood() override = default;
-  FuelMixedWood(const FuelMixedWood& rhs) noexcept = delete;
-  FuelMixedWood(FuelMixedWood&& rhs) noexcept = delete;
-  FuelMixedWood& operator=(const FuelMixedWood& rhs) noexcept = delete;
-  FuelMixedWood& operator=(FuelMixedWood&& rhs) noexcept = delete;
+  FuelOldMixedWood() = delete;
+  ~FuelOldMixedWood() override = default;
+  FuelOldMixedWood(const FuelOldMixedWood& rhs) noexcept = delete;
+  FuelOldMixedWood(FuelOldMixedWood&& rhs) noexcept = delete;
+  FuelOldMixedWood& operator=(const FuelOldMixedWood& rhs) noexcept = delete;
+  FuelOldMixedWood& operator=(FuelOldMixedWood&& rhs) noexcept = delete;
   /**
    * \brief A mixedwood FBP fuel type
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    */
-  constexpr FuelMixedWood(const FuelCodeSize& code, const char* name)
-    : FuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>(code, name, LOG_0_80)
+  constexpr FuelOldMixedWood(const FuelCodeSize& code, const char* name)
+    : FuelOldMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>(code, name, LOG_0_80)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 17]
@@ -497,7 +499,7 @@ public:
   [[nodiscard]] MathSize surfaceFuelConsumption(const SpreadInfo& spread) const noexcept override
   {
     return this->ratioConifer()
-           * FuelMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>::
+           * FuelOldMixed<110, 282, 150, 50, RosMultiplier, RatioMixed, 108, 25, 50>::
                surfaceFuelConsumption(spread)
          + this->ratioDeciduous() * SURFACE_FUEL_CONSUMPTION_D1(spread.weather->bui.value);
   }
@@ -534,25 +536,25 @@ static LookupTable<&calculate_base_multiplier_curing> BASE_MULTIPLIER_CURING{};
  * \tparam C Rate of spread parameter c * 100 [ST-X-3 table 6]
  */
 template <int A, int B, int C>
-class FuelGrass
-  : public StandardFuel<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>
+class FuelOldGrass
+  : public StandardFuelOld<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>
 {
 public:
-  FuelGrass() = delete;
-  ~FuelGrass() override = default;
-  FuelGrass(const FuelGrass& rhs) noexcept = delete;
-  FuelGrass(FuelGrass&& rhs) noexcept = delete;
-  FuelGrass& operator=(const FuelGrass& rhs) noexcept = delete;
-  FuelGrass& operator=(FuelGrass&& rhs) noexcept = delete;
+  FuelOldGrass() = delete;
+  ~FuelOldGrass() override = default;
+  FuelOldGrass(const FuelOldGrass& rhs) noexcept = delete;
+  FuelOldGrass(FuelOldGrass&& rhs) noexcept = delete;
+  FuelOldGrass& operator=(const FuelOldGrass& rhs) noexcept = delete;
+  FuelOldGrass& operator=(FuelOldGrass&& rhs) noexcept = delete;
   /**
    * \brief A grass fuel type
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    * \param log_q Log value of q [ST-X-3 table 7]
    */
-  constexpr FuelGrass(const FuelCodeSize& code, const char* name, const LogValue log_q)
+  constexpr FuelOldGrass(const FuelCodeSize& code, const char* name, const LogValue log_q)
     // HACK: grass assumes no duff (total duff depth == ffmc depth => dmc depth is 0)
-    : StandardFuel<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>(
+    : StandardFuelOld<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>(
         code,
         name,
         false,
@@ -647,21 +649,21 @@ public:
 /**
  * \brief FBP fuel type C-1.
  */
-class FuelC1 : public FuelConifer<90, 649, 450, 72, 2, 75, 45, 5, 34>
+class FuelOldC1 : public FuelOldConifer<90, 649, 450, 72, 2, 75, 45, 5, 34>
 {
 public:
-  FuelC1() = delete;
-  ~FuelC1() override = default;
-  FuelC1(const FuelC1& rhs) noexcept = delete;
-  FuelC1(FuelC1&& rhs) noexcept = delete;
-  FuelC1& operator=(const FuelC1& rhs) noexcept = delete;
-  FuelC1& operator=(FuelC1&& rhs) noexcept = delete;
+  FuelOldC1() = delete;
+  ~FuelOldC1() override = default;
+  FuelOldC1(const FuelOldC1& rhs) noexcept = delete;
+  FuelOldC1(FuelOldC1&& rhs) noexcept = delete;
+  FuelOldC1& operator=(const FuelOldC1& rhs) noexcept = delete;
+  FuelOldC1& operator=(FuelOldC1&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type C-1
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelC1(const FuelCodeSize& code) noexcept
-    : FuelConifer(code, "C-1", LOG_0_90, &duff::Reindeer, &duff::Peat)
+  explicit constexpr FuelOldC1(const FuelCodeSize& code) noexcept
+    : FuelOldConifer(code, "C-1", LOG_0_90, &duff::Reindeer, &duff::Peat)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [GLC-X-10 eq 9a/9b]
@@ -673,21 +675,21 @@ public:
 /**
  * \brief FBP fuel type C-2.
  */
-class FuelC2 : public FuelConifer<110, 282, 150, 64, 3, 80, 34, 0, 100>
+class FuelOldC2 : public FuelOldConifer<110, 282, 150, 64, 3, 80, 34, 0, 100>
 {
 public:
-  FuelC2() = delete;
-  ~FuelC2() override = default;
-  FuelC2(const FuelC2& rhs) noexcept = delete;
-  FuelC2(FuelC2&& rhs) noexcept = delete;
-  FuelC2& operator=(const FuelC2& rhs) noexcept = delete;
-  FuelC2& operator=(FuelC2&& rhs) noexcept = delete;
+  FuelOldC2() = delete;
+  ~FuelOldC2() override = default;
+  FuelOldC2(const FuelOldC2& rhs) noexcept = delete;
+  FuelOldC2(FuelOldC2&& rhs) noexcept = delete;
+  FuelOldC2& operator=(const FuelOldC2& rhs) noexcept = delete;
+  FuelOldC2& operator=(FuelOldC2&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type C-2
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelC2(const FuelCodeSize& code) noexcept
-    : FuelConifer(code, "C-2", LOG_0_70, &duff::SphagnumUpper)
+  explicit constexpr FuelOldC2(const FuelCodeSize& code) noexcept
+    : FuelOldConifer(code, "C-2", LOG_0_70, &duff::SphagnumUpper)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 10]
@@ -699,81 +701,81 @@ public:
 /**
  * \brief FBP fuel type C-3.
  */
-class FuelC3 : public FuelJackpine<110, 444, 300, 62, 8, 115, 20, 65>
+class FuelOldC3 : public FuelOldJackpine<110, 444, 300, 62, 8, 115, 20, 65>
 {
 public:
-  FuelC3() = delete;
-  ~FuelC3() override = default;
-  FuelC3(const FuelC3& rhs) noexcept = delete;
-  FuelC3(FuelC3&& rhs) noexcept = delete;
-  FuelC3& operator=(const FuelC3& rhs) noexcept = delete;
-  FuelC3& operator=(FuelC3&& rhs) noexcept = delete;
+  FuelOldC3() = delete;
+  ~FuelOldC3() override = default;
+  FuelOldC3(const FuelOldC3& rhs) noexcept = delete;
+  FuelOldC3(FuelOldC3&& rhs) noexcept = delete;
+  FuelOldC3& operator=(const FuelOldC3& rhs) noexcept = delete;
+  FuelOldC3& operator=(FuelOldC3&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type C-3
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelC3(const FuelCodeSize& code) noexcept
-    : FuelJackpine(code, "C-3", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
+  explicit constexpr FuelOldC3(const FuelCodeSize& code) noexcept
+    : FuelOldJackpine(code, "C-3", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
   { }
 };
 /**
  * \brief FBP fuel type C-4.
  */
-class FuelC4 : public FuelJackpine<110, 293, 150, 66, 4, 120, 31, 62>
+class FuelOldC4 : public FuelOldJackpine<110, 293, 150, 66, 4, 120, 31, 62>
 {
 public:
-  FuelC4() = delete;
-  ~FuelC4() override = default;
-  FuelC4(const FuelC4& rhs) noexcept = delete;
-  FuelC4(FuelC4&& rhs) noexcept = delete;
-  FuelC4& operator=(const FuelC4& rhs) noexcept = delete;
-  FuelC4& operator=(FuelC4&& rhs) noexcept = delete;
+  FuelOldC4() = delete;
+  ~FuelOldC4() override = default;
+  FuelOldC4(const FuelOldC4& rhs) noexcept = delete;
+  FuelOldC4(FuelOldC4&& rhs) noexcept = delete;
+  FuelOldC4& operator=(const FuelOldC4& rhs) noexcept = delete;
+  FuelOldC4& operator=(FuelOldC4&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type C-4
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelC4(const FuelCodeSize& code) noexcept
-    : FuelJackpine(code, "C-4", LOG_0_80, &duff::PineSeney)
+  explicit constexpr FuelOldC4(const FuelCodeSize& code) noexcept
+    : FuelOldJackpine(code, "C-4", LOG_0_80, &duff::PineSeney)
   { }
 };
 /**
  * \brief FBP fuel type C-5.
  */
-class FuelC5 : public FuelPine<30, 697, 400, 56, 18, 120, 93, 46>
+class FuelOldC5 : public FuelOldPine<30, 697, 400, 56, 18, 120, 93, 46>
 {
 public:
-  FuelC5() = delete;
-  ~FuelC5() override = default;
-  FuelC5(const FuelC5& rhs) noexcept = delete;
-  FuelC5(FuelC5&& rhs) noexcept = delete;
-  FuelC5& operator=(const FuelC5& rhs) noexcept = delete;
-  FuelC5& operator=(FuelC5&& rhs) noexcept = delete;
+  FuelOldC5() = delete;
+  ~FuelOldC5() override = default;
+  FuelOldC5(const FuelOldC5& rhs) noexcept = delete;
+  FuelOldC5(FuelOldC5&& rhs) noexcept = delete;
+  FuelOldC5& operator=(const FuelOldC5& rhs) noexcept = delete;
+  FuelOldC5& operator=(FuelOldC5&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type C-5
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelC5(const FuelCodeSize& code) noexcept
-    : FuelPine(code, "C-5", LOG_0_80, &duff::PineSeney)
+  explicit constexpr FuelOldC5(const FuelCodeSize& code) noexcept
+    : FuelOldPine(code, "C-5", LOG_0_80, &duff::PineSeney)
   { }
 };
 /**
  * \brief FBP fuel type C-6.
  */
-class FuelC6 : public FuelPine<30, 800, 300, 62, 7, 180, 50, 50>
+class FuelOldC6 : public FuelOldPine<30, 800, 300, 62, 7, 180, 50, 50>
 {
 public:
-  FuelC6() = delete;
-  ~FuelC6() override = default;
-  FuelC6(const FuelC6& rhs) noexcept = delete;
-  FuelC6(FuelC6&& rhs) noexcept = delete;
-  FuelC6& operator=(const FuelC6& rhs) noexcept = delete;
-  FuelC6& operator=(FuelC6&& rhs) noexcept = delete;
+  FuelOldC6() = delete;
+  ~FuelOldC6() override = default;
+  FuelOldC6(const FuelOldC6& rhs) noexcept = delete;
+  FuelOldC6(FuelOldC6&& rhs) noexcept = delete;
+  FuelOldC6& operator=(const FuelOldC6& rhs) noexcept = delete;
+  FuelOldC6& operator=(FuelOldC6&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type C-6
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelC6(const FuelCodeSize& code) noexcept
-    : FuelPine(code, "C-6", LOG_0_80, &duff::PineSeney)
+  explicit constexpr FuelOldC6(const FuelCodeSize& code) noexcept
+    : FuelOldPine(code, "C-6", LOG_0_80, &duff::PineSeney)
   { }
 
 protected:
@@ -795,21 +797,21 @@ protected:
 /**
  * \brief FBP fuel type C-7.
  */
-class FuelC7 : public FuelConifer<45, 305, 200, 106, 10, 50, 20, 15, 50>
+class FuelOldC7 : public FuelOldConifer<45, 305, 200, 106, 10, 50, 20, 15, 50>
 {
 public:
-  FuelC7() = delete;
-  ~FuelC7() override = default;
-  FuelC7(const FuelC7& rhs) noexcept = delete;
-  FuelC7(FuelC7&& rhs) noexcept = delete;
-  FuelC7& operator=(const FuelC7& rhs) noexcept = delete;
-  FuelC7& operator=(FuelC7&& rhs) noexcept = delete;
+  FuelOldC7() = delete;
+  ~FuelOldC7() override = default;
+  FuelOldC7(const FuelOldC7& rhs) noexcept = delete;
+  FuelOldC7(FuelOldC7&& rhs) noexcept = delete;
+  FuelOldC7& operator=(const FuelOldC7& rhs) noexcept = delete;
+  FuelOldC7& operator=(FuelOldC7&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type C-7
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelC7(const FuelCodeSize& code) noexcept
-    : FuelConifer(code, "C-7", LOG_0_85, &duff::SprucePine)
+  explicit constexpr FuelOldC7(const FuelCodeSize& code) noexcept
+    : FuelOldConifer(code, "C-7", LOG_0_85, &duff::SprucePine)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 15]
@@ -821,22 +823,22 @@ public:
 /**
  * \brief FBP fuel type D-2.
  */
-class FuelD2 : public FuelNonMixed<6, 232, 160, 32, 0, 0, 61, 59, 24>
+class FuelOldD2 : public FuelOldNonMixed<6, 232, 160, 32, 0, 0, 61, 59, 24>
 {
 public:
-  FuelD2() = delete;
-  ~FuelD2() override = default;
-  FuelD2(const FuelD2& rhs) noexcept = delete;
-  FuelD2(FuelD2&& rhs) noexcept = delete;
-  FuelD2& operator=(const FuelD2& rhs) noexcept = delete;
-  FuelD2& operator=(FuelD2&& rhs) noexcept = delete;
+  FuelOldD2() = delete;
+  ~FuelOldD2() override = default;
+  FuelOldD2(const FuelOldD2& rhs) noexcept = delete;
+  FuelOldD2(FuelOldD2&& rhs) noexcept = delete;
+  FuelOldD2& operator=(const FuelOldD2& rhs) noexcept = delete;
+  FuelOldD2& operator=(FuelOldD2&& rhs) noexcept = delete;
   // HACK: assume same bulk_density and inorganicContent as D1
   /**
    * \brief FBP fuel type D-2
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelD2(const FuelCodeSize& code) noexcept
-    : FuelNonMixed(code, "D-2", false, LOG_0_90, &duff::Peat)
+  explicit constexpr FuelOldD2(const FuelCodeSize& code) noexcept
+    : FuelOldNonMixed(code, "D-2", false, LOG_0_90, &duff::Peat)
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2)
@@ -859,22 +861,22 @@ public:
  * \tparam PercentConifer Percent conifer
  */
 template <int PercentConifer>
-class FuelM1 : public FuelMixedWood<10, PercentConifer>
+class FuelOldM1 : public FuelOldMixedWood<10, PercentConifer>
 {
 public:
-  FuelM1() = delete;
-  ~FuelM1() override = default;
-  FuelM1(const FuelM1& rhs) noexcept = delete;
-  FuelM1(FuelM1&& rhs) noexcept = delete;
-  FuelM1& operator=(const FuelM1& rhs) noexcept = delete;
-  FuelM1& operator=(FuelM1&& rhs) noexcept = delete;
+  FuelOldM1() = delete;
+  ~FuelOldM1() override = default;
+  FuelOldM1(const FuelOldM1& rhs) noexcept = delete;
+  FuelOldM1(FuelOldM1&& rhs) noexcept = delete;
+  FuelOldM1& operator=(const FuelOldM1& rhs) noexcept = delete;
+  FuelOldM1& operator=(FuelOldM1&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type M-1
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    */
-  constexpr FuelM1(const FuelCodeSize& code, const char* name)
-    : FuelMixedWood<10, PercentConifer>(code, name)
+  constexpr FuelOldM1(const FuelCodeSize& code, const char* name)
+    : FuelOldMixedWood<10, PercentConifer>(code, name)
   { }
 };
 /**
@@ -882,22 +884,22 @@ public:
  * \tparam PercentConifer Percent conifer
  */
 template <int PercentConifer>
-class FuelM2 : public FuelMixedWood<2, PercentConifer>
+class FuelOldM2 : public FuelOldMixedWood<2, PercentConifer>
 {
 public:
-  FuelM2() = delete;
-  ~FuelM2() override = default;
-  FuelM2(const FuelM2& rhs) noexcept = delete;
-  FuelM2(FuelM2&& rhs) noexcept = delete;
-  FuelM2& operator=(const FuelM2& rhs) noexcept = delete;
-  FuelM2& operator=(FuelM2&& rhs) noexcept = delete;
+  FuelOldM2() = delete;
+  ~FuelOldM2() override = default;
+  FuelOldM2(const FuelOldM2& rhs) noexcept = delete;
+  FuelOldM2(FuelOldM2&& rhs) noexcept = delete;
+  FuelOldM2& operator=(const FuelOldM2& rhs) noexcept = delete;
+  FuelOldM2& operator=(FuelOldM2&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type M-2
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    */
-  constexpr FuelM2(const FuelCodeSize& code, const char* name)
-    : FuelMixedWood<2, PercentConifer>(code, name)
+  constexpr FuelOldM2(const FuelCodeSize& code, const char* name)
+    : FuelOldMixedWood<2, PercentConifer>(code, name)
   { }
 };
 /**
@@ -905,22 +907,22 @@ public:
  * \tparam PercentDeadFir Percent dead fir
  */
 template <int PercentDeadFir>
-class FuelM3 : public FuelMixedDead<120, 572, 140, 50, 10, PercentDeadFir>
+class FuelOldM3 : public FuelOldMixedDead<120, 572, 140, 50, 10, PercentDeadFir>
 {
 public:
-  FuelM3() = delete;
-  ~FuelM3() override = default;
-  FuelM3(const FuelM3& rhs) noexcept = delete;
-  FuelM3(FuelM3&& rhs) noexcept = delete;
-  FuelM3& operator=(const FuelM3& rhs) noexcept = delete;
-  FuelM3& operator=(FuelM3&& rhs) noexcept = delete;
+  FuelOldM3() = delete;
+  ~FuelOldM3() override = default;
+  FuelOldM3(const FuelOldM3& rhs) noexcept = delete;
+  FuelOldM3(FuelOldM3&& rhs) noexcept = delete;
+  FuelOldM3& operator=(const FuelOldM3& rhs) noexcept = delete;
+  FuelOldM3& operator=(FuelOldM3&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type M-3
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    */
-  constexpr FuelM3(const FuelCodeSize& code, const char* name)
-    : FuelMixedDead<120, 572, 140, 50, 10, PercentDeadFir>(code, name, LOG_0_80)
+  constexpr FuelOldM3(const FuelCodeSize& code, const char* name)
+    : FuelOldMixedDead<120, 572, 140, 50, 10, PercentDeadFir>(code, name, LOG_0_80)
   { }
 };
 /**
@@ -928,60 +930,62 @@ public:
  * \tparam PercentDeadFir Percent dead fir
  */
 template <int PercentDeadFir>
-class FuelM4 : public FuelMixedDead<100, 404, 148, 50, 2, PercentDeadFir>
+class FuelOldM4 : public FuelOldMixedDead<100, 404, 148, 50, 2, PercentDeadFir>
 {
 public:
-  FuelM4() = delete;
-  ~FuelM4() override = default;
-  FuelM4(const FuelM4& rhs) noexcept = delete;
-  FuelM4(FuelM4&& rhs) noexcept = delete;
-  FuelM4& operator=(const FuelM4& rhs) noexcept = delete;
-  FuelM4& operator=(FuelM4&& rhs) noexcept = delete;
+  FuelOldM4() = delete;
+  ~FuelOldM4() override = default;
+  FuelOldM4(const FuelOldM4& rhs) noexcept = delete;
+  FuelOldM4(FuelOldM4&& rhs) noexcept = delete;
+  FuelOldM4& operator=(const FuelOldM4& rhs) noexcept = delete;
+  FuelOldM4& operator=(FuelOldM4&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type M-4
    * \param code Code to identify fuel with
    * \param name Name of the fuel
    */
-  constexpr FuelM4(const FuelCodeSize& code, const char* name)
-    : FuelMixedDead<100, 404, 148, 50, 2, PercentDeadFir>(code, name, LOG_0_80)
+  constexpr FuelOldM4(const FuelCodeSize& code, const char* name)
+    : FuelOldMixedDead<100, 404, 148, 50, 2, PercentDeadFir>(code, name, LOG_0_80)
   { }
 };
 /**
  * \brief FBP fuel type O-1a.
  */
-class FuelO1A : public FuelGrass<190, 310, 140>
+class FuelOldO1A : public FuelOldGrass<190, 310, 140>
 {
 public:
-  FuelO1A() = delete;
-  ~FuelO1A() override = default;
-  FuelO1A(const FuelO1A& rhs) noexcept = delete;
-  FuelO1A(FuelO1A&& rhs) noexcept = delete;
-  FuelO1A& operator=(const FuelO1A& rhs) noexcept = delete;
-  FuelO1A& operator=(FuelO1A&& rhs) noexcept = delete;
+  FuelOldO1A() = delete;
+  ~FuelOldO1A() override = default;
+  FuelOldO1A(const FuelOldO1A& rhs) noexcept = delete;
+  FuelOldO1A(FuelOldO1A&& rhs) noexcept = delete;
+  FuelOldO1A& operator=(const FuelOldO1A& rhs) noexcept = delete;
+  FuelOldO1A& operator=(FuelOldO1A&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type O-1a.
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelO1A(const FuelCodeSize& code) noexcept : FuelGrass(code, "O-1a", LOG_1_00)
+  explicit constexpr FuelOldO1A(const FuelCodeSize& code) noexcept
+    : FuelOldGrass(code, "O-1a", LOG_1_00)
   { }
 };
 /**
  * \brief FBP fuel type O-1b.
  */
-class FuelO1B : public FuelGrass<250, 350, 170>
+class FuelOldO1B : public FuelOldGrass<250, 350, 170>
 {
 public:
-  FuelO1B() = delete;
-  ~FuelO1B() override = default;
-  FuelO1B(const FuelO1B& rhs) noexcept = delete;
-  FuelO1B(FuelO1B&& rhs) noexcept = delete;
-  FuelO1B& operator=(const FuelO1B& rhs) noexcept = delete;
-  FuelO1B& operator=(FuelO1B&& rhs) noexcept = delete;
+  FuelOldO1B() = delete;
+  ~FuelOldO1B() override = default;
+  FuelOldO1B(const FuelOldO1B& rhs) noexcept = delete;
+  FuelOldO1B(FuelOldO1B&& rhs) noexcept = delete;
+  FuelOldO1B& operator=(const FuelOldO1B& rhs) noexcept = delete;
+  FuelOldO1B& operator=(FuelOldO1B&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type O-1b.
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelO1B(const FuelCodeSize& code) noexcept : FuelGrass(code, "O-1b", LOG_1_00)
+  explicit constexpr FuelOldO1B(const FuelCodeSize& code) noexcept
+    : FuelOldGrass(code, "O-1b", LOG_1_00)
   { }
 };
 /**
@@ -997,15 +1001,15 @@ public:
  * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
  */
 template <int A, int B, int C, int Bui0, int FfcA, int FfcB, int WfcA, int WfcB, int BulkDensity>
-class FuelSlash : public FuelConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>
+class FuelOldSlash : public FuelOldConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>
 {
 public:
-  FuelSlash() = delete;
-  ~FuelSlash() override = default;
-  FuelSlash(const FuelSlash& rhs) noexcept = delete;
-  FuelSlash(FuelSlash&& rhs) noexcept = delete;
-  FuelSlash& operator=(const FuelSlash& rhs) noexcept = delete;
-  FuelSlash& operator=(FuelSlash&& rhs) noexcept = delete;
+  FuelOldSlash() = delete;
+  ~FuelOldSlash() override = default;
+  FuelOldSlash(const FuelOldSlash& rhs) noexcept = delete;
+  FuelOldSlash(FuelOldSlash&& rhs) noexcept = delete;
+  FuelOldSlash& operator=(const FuelOldSlash& rhs) noexcept = delete;
+  FuelOldSlash& operator=(FuelOldSlash&& rhs) noexcept = delete;
   /**
    * \brief A slash fuel type
    * \param code Code to identify fuel with
@@ -1014,14 +1018,20 @@ public:
    * \param duff_ffmc Type of duff near the surface
    * \param duff_dmc Type of duff deeper underground
    */
-  constexpr FuelSlash(
+  constexpr FuelOldSlash(
     const FuelCodeSize& code,
     const char* name,
     const LogValue log_q,
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   )
-    : FuelConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>(code, name, log_q, duff_ffmc, duff_dmc)
+    : FuelOldConifer<A, B, C, Bui0, 0, 0, BulkDensity, 15, 74>(
+        code,
+        name,
+        log_q,
+        duff_ffmc,
+        duff_dmc
+      )
   { }
   /**
    * \brief Surface Fuel Consumption (SFC) (kg/m^2) [ST-X-3 eq 25]
@@ -1059,69 +1069,69 @@ private:
 /**
  * \brief FBP fuel type S-1.
  */
-class FuelS1 : public FuelSlash<75, 297, 130, 38, 4, -250, 4, -340, 78>
+class FuelOldS1 : public FuelOldSlash<75, 297, 130, 38, 4, -250, 4, -340, 78>
 {
 public:
-  FuelS1() = delete;
-  ~FuelS1() override = default;
-  FuelS1(const FuelS1& rhs) noexcept = delete;
-  FuelS1(FuelS1&& rhs) noexcept = delete;
-  FuelS1& operator=(const FuelS1& rhs) noexcept = delete;
-  FuelS1& operator=(FuelS1&& rhs) noexcept = delete;
+  FuelOldS1() = delete;
+  ~FuelOldS1() override = default;
+  FuelOldS1(const FuelOldS1& rhs) noexcept = delete;
+  FuelOldS1(FuelOldS1&& rhs) noexcept = delete;
+  FuelOldS1& operator=(const FuelOldS1& rhs) noexcept = delete;
+  FuelOldS1& operator=(FuelOldS1&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type S-1
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelS1(const FuelCodeSize& code) noexcept
-    : FuelSlash(code, "S-1", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
+  explicit constexpr FuelOldS1(const FuelCodeSize& code) noexcept
+    : FuelOldSlash(code, "S-1", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
   { }
 };
 /**
  * \brief FBP fuel type S-2.
  */
-class FuelS2 : public FuelSlash<40, 438, 170, 63, 10, -130, 6, -600, 132>
+class FuelOldS2 : public FuelOldSlash<40, 438, 170, 63, 10, -130, 6, -600, 132>
 {
 public:
-  FuelS2() = delete;
-  ~FuelS2() override = default;
-  FuelS2(const FuelS2& rhs) noexcept = delete;
-  FuelS2(FuelS2&& rhs) noexcept = delete;
-  FuelS2& operator=(const FuelS2& rhs) noexcept = delete;
-  FuelS2& operator=(FuelS2&& rhs) noexcept = delete;
+  FuelOldS2() = delete;
+  ~FuelOldS2() override = default;
+  FuelOldS2(const FuelOldS2& rhs) noexcept = delete;
+  FuelOldS2(FuelOldS2&& rhs) noexcept = delete;
+  FuelOldS2& operator=(const FuelOldS2& rhs) noexcept = delete;
+  FuelOldS2& operator=(FuelOldS2&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type S-2
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelS2(const FuelCodeSize& code) noexcept
-    : FuelSlash(code, "S-2", LOG_0_75, &duff::FeatherMoss, &duff::WhiteSpruce)
+  explicit constexpr FuelOldS2(const FuelCodeSize& code) noexcept
+    : FuelOldSlash(code, "S-2", LOG_0_75, &duff::FeatherMoss, &duff::WhiteSpruce)
   { }
 };
 /**
  * \brief FBP fuel type S-3.
  */
-class FuelS3 : public FuelSlash<55, 829, 320, 31, 12, -166, 20, -210, 100>
+class FuelOldS3 : public FuelOldSlash<55, 829, 320, 31, 12, -166, 20, -210, 100>
 {
 public:
-  FuelS3() = delete;
-  ~FuelS3() override = default;
-  FuelS3(const FuelS3& rhs) noexcept = delete;
-  FuelS3(FuelS3&& rhs) noexcept = delete;
-  FuelS3& operator=(const FuelS3& rhs) noexcept = delete;
-  FuelS3& operator=(FuelS3&& rhs) noexcept = delete;
+  FuelOldS3() = delete;
+  ~FuelOldS3() override = default;
+  FuelOldS3(const FuelOldS3& rhs) noexcept = delete;
+  FuelOldS3(FuelOldS3&& rhs) noexcept = delete;
+  FuelOldS3& operator=(const FuelOldS3& rhs) noexcept = delete;
+  FuelOldS3& operator=(FuelOldS3&& rhs) noexcept = delete;
   /**
    * \brief FBP fuel type S-3
    * \param code Code to identify fuel with
    */
-  explicit constexpr FuelS3(const FuelCodeSize& code) noexcept
-    : FuelSlash(code, "S-3", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
+  explicit constexpr FuelOldS3(const FuelCodeSize& code) noexcept
+    : FuelOldSlash(code, "S-3", LOG_0_75, &duff::FeatherMoss, &duff::PineSeney)
   { }
 };
-template <class FuelSpring, class FuelSummer>
-class FuelVariable;
-template <class FuelSpring, class FuelSummer>
+template <class FuelOldSpring, class FuelOldSummer>
+class FuelOldVariable;
+template <class FuelOldSpring, class FuelOldSummer>
 [[nodiscard]] const FuelType& find_fuel_by_season(
   const int nd,
-  const FuelVariable<FuelSpring, FuelSummer>& fuel
+  const FuelOldVariable<FuelOldSpring, FuelOldSummer>& fuel
 ) noexcept
 {
   // HACK: resolve once and fail if not set already
@@ -1132,9 +1142,9 @@ template <class FuelSpring, class FuelSummer>
        : calculate_is_green(nd)    ? fuel.summer()
                                    : fuel.spring();
 }
-template <class FuelSpring, class FuelSummer>
+template <class FuelOldSpring, class FuelOldSummer>
 [[nodiscard]] MathSize compare_by_season(
-  const FuelVariable<FuelSpring, FuelSummer>& fuel,
+  const FuelOldVariable<FuelOldSpring, FuelOldSummer>& fuel,
   const function<MathSize(const FuelType&)>& fct
 )
 {
@@ -1152,12 +1162,12 @@ template <class FuelSpring, class FuelSummer>
  * \tparam FuelSpring Fuel type to use in the spring
  * \tparam FuelSummer Fuel type to use in the summer
  */
-template <class FuelSpring, class FuelSummer>
-class FuelVariable : public FuelType
+template <class FuelOldSpring, class FuelOldSummer>
+class FuelOldVariable : public FuelType
 {
 public:
   // don't delete pointers since they're handled elsewhere
-  ~FuelVariable() override = default;
+  ~FuelOldVariable() override = default;
   /**
    * \brief A slash fuel type
    * \param code Code to identify fuel with
@@ -1166,19 +1176,19 @@ public:
    * \param spring Fuel type to use in the spring
    * \param summer Fuel type to use in the summer
    */
-  constexpr FuelVariable(
+  constexpr FuelOldVariable(
     const FuelCodeSize& code,
     const char* name,
     const bool can_crown,
-    const FuelSpring* const spring,
-    const FuelSummer* const summer
+    const FuelOldSpring* const spring,
+    const FuelOldSummer* const summer
   )
     : FuelType(code, name, can_crown), spring_(spring), summer_(summer)
   { }
-  FuelVariable(FuelVariable&& rhs) noexcept = delete;
-  FuelVariable(const FuelVariable& rhs) = delete;
-  FuelVariable& operator=(FuelVariable&& rhs) noexcept = delete;
-  FuelVariable& operator=(const FuelVariable& rhs) = delete;
+  FuelOldVariable(FuelOldVariable&& rhs) noexcept = delete;
+  FuelOldVariable(const FuelOldVariable& rhs) = delete;
+  FuelOldVariable& operator=(FuelOldVariable&& rhs) noexcept = delete;
+  FuelOldVariable& operator=(const FuelOldVariable& rhs) = delete;
   /**
    * \brief Is fuel a valid fuel type
    */
@@ -1337,32 +1347,32 @@ private:
   /**
    * \brief Fuel to use before green-up
    */
-  const FuelSpring* const spring_{nullptr};
+  const FuelOldSpring* const spring_{nullptr};
   /**
    * \brief Fuel to use after green-up
    */
-  const FuelSummer* const summer_{nullptr};
+  const FuelOldSummer* const summer_{nullptr};
 };
 /**
  * \brief FBP fuel type D-1/D-2.
  */
-class FuelD1D2 : public FuelVariable<FuelD1, FuelD2>
+class FuelOldD1D2 : public FuelOldVariable<FuelOldD1, FuelOldD2>
 {
 public:
-  FuelD1D2() = delete;
-  ~FuelD1D2() override = default;
-  FuelD1D2(const FuelD1D2& rhs) noexcept = delete;
-  FuelD1D2(FuelD1D2&& rhs) noexcept = delete;
-  FuelD1D2& operator=(const FuelD1D2& rhs) noexcept = delete;
-  FuelD1D2& operator=(FuelD1D2&& rhs) noexcept = delete;
+  FuelOldD1D2() = delete;
+  ~FuelOldD1D2() override = default;
+  FuelOldD1D2(const FuelOldD1D2& rhs) noexcept = delete;
+  FuelOldD1D2(FuelOldD1D2&& rhs) noexcept = delete;
+  FuelOldD1D2& operator=(const FuelOldD1D2& rhs) noexcept = delete;
+  FuelOldD1D2& operator=(FuelOldD1D2&& rhs) noexcept = delete;
   /**
    * \brief A fuel that changes between D-1/D-2 depending on green-up
    * \param code Code to identify fuel with
    * \param d1 D-1 fuel to use before green-up
    * \param d2 D-2 fuel to use after green-up
    */
-  constexpr FuelD1D2(const FuelCodeSize& code, const FuelD1* d1, const FuelD2* d2) noexcept
-    : FuelVariable(code, "D-1/D-2", false, d1, d2)
+  constexpr FuelOldD1D2(const FuelCodeSize& code, const FuelOldD1* d1, const FuelOldD2* d2) noexcept
+    : FuelOldVariable(code, "D-1/D-2", false, d1, d2)
   { }
 };
 /**
@@ -1370,15 +1380,15 @@ public:
  * \tparam PercentConifer Percent conifer
  */
 template <int PercentConifer>
-class FuelM1M2 : public FuelVariable<FuelM1<PercentConifer>, FuelM2<PercentConifer>>
+class FuelOldM1M2 : public FuelOldVariable<FuelOldM1<PercentConifer>, FuelOldM2<PercentConifer>>
 {
 public:
-  FuelM1M2() = delete;
-  ~FuelM1M2() override = default;
-  FuelM1M2(const FuelM1M2& rhs) noexcept = delete;
-  FuelM1M2(FuelM1M2&& rhs) noexcept = delete;
-  FuelM1M2& operator=(const FuelM1M2& rhs) noexcept = delete;
-  FuelM1M2& operator=(FuelM1M2&& rhs) noexcept = delete;
+  FuelOldM1M2() = delete;
+  ~FuelOldM1M2() override = default;
+  FuelOldM1M2(const FuelOldM1M2& rhs) noexcept = delete;
+  FuelOldM1M2(FuelOldM1M2&& rhs) noexcept = delete;
+  FuelOldM1M2& operator=(const FuelOldM1M2& rhs) noexcept = delete;
+  FuelOldM1M2& operator=(FuelOldM1M2&& rhs) noexcept = delete;
   // HACK: it's up to you to make sure these match
   /**
    * \brief A fuel that changes between M-1/M-2 depending on green-up
@@ -1387,13 +1397,19 @@ public:
    * \param m1 M-1 fuel to use before green-up
    * \param m2 M-2 fuel to use after green-up
    */
-  constexpr FuelM1M2(
+  constexpr FuelOldM1M2(
     const FuelCodeSize& code,
     const char* name,
-    const FuelM1<PercentConifer>* m1,
-    const FuelM2<PercentConifer>* m2
+    const FuelOldM1<PercentConifer>* m1,
+    const FuelOldM2<PercentConifer>* m2
   )
-    : FuelVariable<FuelM1<PercentConifer>, FuelM2<PercentConifer>>(code, name, true, m1, m2)
+    : FuelOldVariable<FuelOldM1<PercentConifer>, FuelOldM2<PercentConifer>>(
+        code,
+        name,
+        true,
+        m1,
+        m2
+      )
   { }
 };
 /**
@@ -1401,15 +1417,15 @@ public:
  * \tparam PercentDeadFir Percent dead fir
  */
 template <int PercentDeadFir>
-class FuelM3M4 : public FuelVariable<FuelM3<PercentDeadFir>, FuelM4<PercentDeadFir>>
+class FuelOldM3M4 : public FuelOldVariable<FuelOldM3<PercentDeadFir>, FuelOldM4<PercentDeadFir>>
 {
 public:
-  FuelM3M4() = delete;
-  ~FuelM3M4() override = default;
-  FuelM3M4(const FuelM3M4& rhs) noexcept = delete;
-  FuelM3M4(FuelM3M4&& rhs) noexcept = delete;
-  FuelM3M4& operator=(const FuelM3M4& rhs) noexcept = delete;
-  FuelM3M4& operator=(FuelM3M4&& rhs) noexcept = delete;
+  FuelOldM3M4() = delete;
+  ~FuelOldM3M4() override = default;
+  FuelOldM3M4(const FuelOldM3M4& rhs) noexcept = delete;
+  FuelOldM3M4(FuelOldM3M4&& rhs) noexcept = delete;
+  FuelOldM3M4& operator=(const FuelOldM3M4& rhs) noexcept = delete;
+  FuelOldM3M4& operator=(FuelOldM3M4&& rhs) noexcept = delete;
   /**
    * \brief A fuel that changes between M-3/M-4 depending on green-up
    * \param code Code to identify fuel with
@@ -1417,19 +1433,25 @@ public:
    * \param m3 M-3 fuel to use before green-up
    * \param m4 M-4 fuel to use after green-up
    */
-  constexpr FuelM3M4(
+  constexpr FuelOldM3M4(
     const FuelCodeSize& code,
     const char* name,
-    const FuelM3<PercentDeadFir>* m3,
-    const FuelM4<PercentDeadFir>* m4
+    const FuelOldM3<PercentDeadFir>* m3,
+    const FuelOldM4<PercentDeadFir>* m4
   )
-    : FuelVariable<FuelM3<PercentDeadFir>, FuelM4<PercentDeadFir>>(code, name, true, m3, m4)
+    : FuelOldVariable<FuelOldM3<PercentDeadFir>, FuelOldM4<PercentDeadFir>>(
+        code,
+        name,
+        true,
+        m3,
+        m4
+      )
   { }
 };
 /**
  * \brief FBP fuel type O-1.
  */
-class FuelO1 : public FuelVariable<FuelO1A, FuelO1B>
+class FuelO1 : public FuelOldVariable<FuelOldO1A, FuelOldO1B>
 {
 public:
   FuelO1() = delete;
@@ -1448,10 +1470,10 @@ public:
   constexpr FuelO1(
     const FuelCodeSize& code,
     const char* name,
-    const FuelO1A* o1a,
-    const FuelO1B* o1b
+    const FuelOldO1A* o1a,
+    const FuelOldO1B* o1b
   )
-    : FuelVariable<FuelO1A, FuelO1B>(code, name, true, o1a, o1b)
+    : FuelOldVariable<FuelOldO1A, FuelOldO1B>(code, name, true, o1a, o1b)
   { }
 };
 }
