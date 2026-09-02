@@ -6,6 +6,10 @@
 #include <compare>
 #include "BurnedData.h"
 #include "Cell.h"
+#include "FireSpread.h"
+#include "Location.h"
+#include "unstable.h"
+#include "Weather.h"
 namespace fs
 {
 using fs::Direction;
@@ -43,8 +47,10 @@ static constexpr auto MASK_NE = DIRECTION_N & DIRECTION_NE & DIRECTION_E;
 static constexpr auto MASK_SE = DIRECTION_S & DIRECTION_SE & DIRECTION_E;
 static constexpr auto MASK_SW = DIRECTION_S & DIRECTION_SW & DIRECTION_W;
 static constexpr auto MASK_NW = DIRECTION_N & DIRECTION_NW & DIRECTION_W;
+template <class T>
+using CompassArray = std::array<T, NUM_DIRECTIONS>;
 // mask of sides that would need to be burned for direction to not matter
-static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
+static constexpr CompassArray<CellIndex> DIRECTION_MASKS{
   DIRECTION_N,
   MASK_NE,
   MASK_NE,
@@ -62,9 +68,54 @@ static constexpr std::array<CellIndex, NUM_DIRECTIONS> DIRECTION_MASKS{
   MASK_NW,
   MASK_NW
 };
-using array_dists = std::array<DistanceSize, NUM_DIRECTIONS>;
-using array_pts = std::array<XYPos, NUM_DIRECTIONS>;
-using array_dirs = std::array<MathSize, NUM_DIRECTIONS>;
+// use direction distance towards compass point as tie-breaker when ros is the same
+static constexpr auto DIRECTION_ANGLES = []() {
+  CompassArray<Direction> result{};
+  constexpr auto angle = Degrees{Radians::D_360().asDegrees().value / result.size()};
+  for (size_t i = 0; i < result.size(); ++i)
+  {
+    // divide circle into equal wedges
+    result[i] = angle * i;
+  }
+  return result;
+}();
+static inline const SpreadData& find_better(
+  const size_t for_direction,
+  const SpreadData& lhs,
+  const SpreadData& rhs
+) noexcept
+{
+  assert(for_direction < NUM_DIRECTIONS);
+  // either faster or higher direction since we're trying to make this reproducible
+  // regardless of order points are inserted
+  if (lhs.ros < rhs.ros)
+  {
+    return rhs;
+  }
+  else if (lhs.ros > rhs.ros)
+  {
+    return lhs;
+  }
+  // if same speed then look at intensity
+  if (lhs.intensity < rhs.intensity)
+  {
+    return rhs;
+  }
+  else if (lhs.intensity > rhs.intensity)
+  {
+    return lhs;
+  }
+  // if same intensity then look at direction
+  const auto& dir = DIRECTION_ANGLES[for_direction];
+  auto d0 = lhs.direction - dir;
+  auto d1 = rhs.direction - dir;
+  // if closer to compass direction or positive in the case of the same distance
+  if (abs(d0) > abs(d1) || (abs(d0) == abs(d1) && d0 < d1))
+  {
+    return rhs;
+  }
+  return lhs;
+}
 /**
  * Points in a cell furthest in each direction
  */
@@ -79,15 +130,20 @@ private:
     return r;
   }
   static inline constexpr DistanceSize distance(
+    const DistanceSize x2,
+    const DistanceSize y2
+  ) noexcept
+  {
+    return x2 * x2 + y2 * y2;
+  }
+  static inline constexpr DistanceSize distance(
     const DistanceSize x0,
     const DistanceSize y0,
     const DistanceSize x1,
     const DistanceSize y1
   ) noexcept
   {
-    const auto x2 = x0 - x1;
-    const auto y2 = y0 - y1;
-    return x2 * x2 + y2 * y2;
+    return distance(x0 - x1, y0 - y1);
   }
   static inline constexpr DistanceSize distance(
     const XYIdx& cell_x_y,
@@ -96,11 +152,12 @@ private:
     const DistanceSize y1
   ) noexcept
   {
-    const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value)};
-    const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value)};
-    const auto x2 = x0 - x1;
-    const auto y2 = y0 - y1;
-    return x2 * x2 + y2 * y2;
+    return distance(
+      static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value),
+      static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value),
+      x1,
+      y1
+    );
   }
   static inline constexpr DistanceSize distance(
     const XYIdx& cell_x_y,
@@ -108,11 +165,12 @@ private:
     const size_t i
   ) noexcept
   {
-    const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value)};
-    const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value)};
-    const auto x2 = x0 - POINTS_OUTER[i].first;
-    const auto y2 = y0 - POINTS_OUTER[i].second;
-    return x2 * x2 + y2 * y2;
+    return distance(
+      static_cast<DistanceSize>(xy.x.value - cell_x_y.x.value),
+      static_cast<DistanceSize>(xy.y.value - cell_x_y.y.value),
+      POINTS_OUTER[i].first,
+      POINTS_OUTER[i].second
+    );
   }
   static void insert_calc(
     CellPoints& cell_pts,
@@ -132,8 +190,20 @@ private:
       raz.asDegrees()
     );
 #endif
+    // initial burn will have an invalid direction, so needs to burn everywhere
+    const auto is_initial = Direction::Invalid() == spread_current.direction_previous;
+    // only spread in a direction that's in front of the normal to the angle it came from
+    // i.e. the 90 degrees on either side of the raz
+    const auto dir_diff =
+      abs(spread_current.direction.asDegrees() - spread_current.direction_previous.asDegrees());
+    constexpr auto MAX_DEGREES = 90.0;
+    // NOTE: there should be no change in the extent of the fire if we exclude things behind the
+    // normal to the direction it came from
+    //       - but if we exclude too much then it can change how things spread, even if it is a
+    //       more representative angle for the grids
+    const auto is_not_backwards = MAX_DEGREES >= dir_diff;
+    const auto consider_for_spread = is_initial || is_not_backwards;
     auto& spread_arrival = cell_pts.spread_arrival_;
-    auto& spread_internal = cell_pts.spread_internal_;
     // count things as the same time if within a tolerance
     constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
     constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
@@ -150,18 +220,7 @@ private:
     // no point in any of this if not outputting individual or intensity
     else
     {
-      // initial burn will have an invalid direction, so needs to burn everywhere
-      const auto is_initial = Direction::Invalid() == spread_current.direction_previous;
-      // only spread in a direction that's in front of the normal to the angle it came from
-      // i.e. the 90 degrees on either side of the raz
-      const auto dir_diff =
-        abs(spread_current.direction.asDegrees() - spread_current.direction_previous.asDegrees());
-      const auto MAX_DEGREES = 90.0;
-      // NOTE: there should be no change in the extent of the fire if we exclude things behind the
-      // normal to the direction it came from
-      //       - but if we exclude too much then it can change how things spread, even if it is a
-      //       more representative angle for the grids
-      if (is_initial || MAX_DEGREES >= dir_diff)
+      if (consider_for_spread)
       {
         if (abs(spread_current.time - spread_arrival.time) <= TIME_EPSILON)
         // else if (arrival_time == arrival_time_)
@@ -199,9 +258,10 @@ private:
     const DistanceSize x0{static_cast<DistanceSize>(xy.x.value - cell_x_y.x_value())};
     const DistanceSize y0{static_cast<DistanceSize>(xy.y.value - cell_x_y.y_value())};
     // CHECK: FIX: is this initializing everything to false or just one element?
-    std::array<bool, NUM_DIRECTIONS> closer{};
-    std::fill_n(closer.begin(), NUM_DIRECTIONS, false);
-    for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+    CompassArray<bool> closer{};
+    std::fill(closer.begin(), closer.end(), false);
+    // even if !consider_for_spread, update points
+    for (size_t i = 0; i < closer.size(); ++i)
     {
       const auto d = distance(x0, y0, POINTS_OUTER[i].first, POINTS_OUTER[i].second);
       auto& p_d = cell_pts.distances[i];
@@ -209,6 +269,7 @@ private:
       auto& p_a = directions[i];
       closer[i] = (d < p_d);
       p_p = (d < p_d) ? xy : p_p;
+      // always want to update with how we got here
       p_a = (d < p_d) ? spread_current.direction.asDegrees() : p_a;
       p_d = (d < p_d) ? d : p_d;
     }
@@ -223,14 +284,19 @@ private:
       // calculated the relativeIndex for this so add it to main map
       cell_pts.add_source(src_xy.relativeIndex(dst_xy));
     }
-    // if (src.hash() == dst.hash())
-    if (src_xy == dst_xy)
+    // FIX: this should be aware of where it came from
+    // have to check src vs dst is same so we know it didn't come in from outside
+    // CHECK: FIX: should check for things that spread out of cell also?
+    if ((src_xy == dst_xy)
+        // if this spread isn't backwards then figure out if it's faster than previous internal
+        && consider_for_spread)
     {
       // if we spread from this cell to this cell again then ros could be considered for max
       // need to make sure we're not spreading back towards where we came from because that doesn't
-      // matter HACK: for now look at source for this cell and exclude points in those directions
+      // matter
+      // HACK: for now look at source for this cell and exclude points in those directions
       const auto srcs = cell_pts.sources();
-      for (size_t i = 0; i < NUM_DIRECTIONS; ++i)
+      for (size_t i = 0; i < closer.size(); ++i)
       {
         const auto mask = DIRECTION_MASKS[i];
         if (mask != (srcs & mask))
@@ -238,12 +304,8 @@ private:
           // at least one of the cells in this direction is not a source, so consider them
           if (closer[i])
           {
-            // point was closer to edge than what was there
-            if (spread_current.ros >= spread_internal.ros)
-            {
-              // since we spread within cell then set internal spread
-              spread_internal = spread_current;
-            }
+            auto& spread_old = cell_pts.spread_internal_[i];
+            spread_old = find_better(i, spread_old, spread_current);
           }
         }
       }
@@ -294,7 +356,7 @@ private:
   static constexpr auto P_0_5 = static_cast<DistanceSize>(0.5) + DIST_22_5;
   static constexpr auto M_0_5 = static_cast<DistanceSize>(0.5) - DIST_22_5;
   using d = std::pair<DistanceSize, DistanceSize>;
-  static constexpr std::array<d, NUM_DIRECTIONS> POINTS_OUTER{
+  static constexpr CompassArray<d> POINTS_OUTER{
     d{I_0_5, I_1_0},
     // north-northeast is closest to point (0.5 + 0.207, 1.0)
     d{P_0_5, I_1_0},
@@ -375,6 +437,7 @@ public:
         p0[i] = p1[i];
         a0[i] = a1[i];
       }
+      spread_internal_[i] = find_better(i, spread_internal_[i], rhs.spread_internal_[i]);
     }
     add_source(rhs.src_);
     // if valid time and earlier then that would be the arrival time
@@ -382,11 +445,6 @@ public:
         && (INVALID_TIME == spread_arrival_.time || rhs.spread_arrival_.time < spread_arrival_.time))
     {
       spread_arrival_ = rhs.spread_arrival_;
-    }
-    // INVALID_ROS is -1 so just check >
-    if (rhs.spread_internal_.ros > spread_internal_.ros)
-    {
-      spread_internal_ = rhs.spread_internal_;
     }
 #ifdef DEBUG_CELLPOINTS
     logging::note("Merging {:d} with {:d} gives {:d} pts", n0, n1, size());
@@ -421,9 +479,9 @@ public:
     // NOTE: if anything is invalid then everything must be
     return (XPos::Invalid().value == points[0].x.value);
   }
-  std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> point_directions() const noexcept
+  auto point_directions() const noexcept
   {
-    std::array<std::pair<XYPos, MathSize>, NUM_DIRECTIONS> pt_dirs{};
+    CompassArray<std::pair<XYPos, MathSize>> pt_dirs{};
     auto& pts = points;
     auto& dirs = directions;
     for (size_t i = 0; i < pts.size(); ++i)
@@ -435,14 +493,15 @@ public:
   const SpreadData& spread_arrival() const noexcept { return spread_arrival_; }
 
 private:
-  SpreadData spread_arrival_{};
-  SpreadData spread_internal_{};
-  array_dists distances{};
-  array_pts points{};
-  array_dirs directions{};
   // any way to get rid of this since we're using it as the map key?
   XYIdx cell_x_y_{};
+  CompassArray<XYPos> points{};
+  CompassArray<DistanceSize> distances{};
+  CompassArray<MathSize> directions{};
   CellIndex src_{DIRECTION_NONE};
+  SpreadData spread_arrival_{};
+  // need to keep each direction separate so filtering by direction masks when merging works
+  CompassArray<SpreadData> spread_internal_{SpreadData{}};
 };
 using spreading_points = CellPoints::spreading_points;
 // map that merges items when try_emplace doesn't insert
