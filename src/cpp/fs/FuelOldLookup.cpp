@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FuelOldLookup.h"
 #include "FBP45.h"
-#include "FuelType.h"
+#include "FuelTypeOld.h"
 #include "Log.h"
 #include "Settings.h"
 namespace fs::fuel
