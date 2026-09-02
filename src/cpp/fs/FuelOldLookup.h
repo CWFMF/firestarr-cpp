@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "Cell.h"
 #include "FireWeather.h"
-#include "FuelType.h"
+#include "FuelTypeOld.h"
 #include "Util.h"
 namespace fs::fuel
 {
