@@ -513,7 +513,16 @@ static LookupTable<&calculate_base_multiplier_curing> BASE_MULTIPLIER_CURING{};
  */
 template <int A, int B, int C>
 class FuelOldGrass
-  : public StandardFuelOld<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>
+  : public StandardFuelOld<
+      A,
+      B,
+      C,
+      1,
+      0,
+      0,
+      0,
+      0,
+      static_cast<int>(fs::survival::DUFF_FFMC_DEPTH * 10.0)>
 {
 public:
   FuelOldGrass() = delete;
@@ -530,7 +539,16 @@ public:
    */
   constexpr FuelOldGrass(const FuelCodeSize& code, const char* name, const LogValue log_q)
     // HACK: grass assumes no duff (total duff depth == ffmc depth => dmc depth is 0)
-    : StandardFuelOld<A, B, C, 1, 0, 0, 0, 0, static_cast<int>(DUFF_FFMC_DEPTH * 10.0)>(
+    : StandardFuelOld<
+        A,
+        B,
+        C,
+        1,
+        0,
+        0,
+        0,
+        0,
+        static_cast<int>(fs::survival::DUFF_FFMC_DEPTH * 10.0)>(
         code,
         name,
         false,

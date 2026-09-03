@@ -826,7 +826,7 @@ public:
         0,
         0,
         0,
-        static_cast<int>(DUFF_FFMC_DEPTH * 10.0),
+        static_cast<int>(fs::survival::DUFF_FFMC_DEPTH * 10.0),
         &duff::PeatMuck,
         &duff::PeatMuck
       )
