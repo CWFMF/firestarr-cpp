@@ -1,12 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SimpleFuelLookup.h"
-#include "FBP45.h"
-#include "FuelOldLookup.h"
+#include "FuelType.h"
 #include "Log.h"
-#include "RangeIterator.h"
 #include "Settings.h"
 #include "SimpleFBP.h"
-#include "SimpleFuelType.h"
 namespace fs::simplefbp
 {
 string simplify_name(const string_view fuel)
