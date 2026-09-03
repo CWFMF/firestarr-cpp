@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FuelOldLookup.h"
+#include "../fs/Log.h"
+#include "../fs/Settings.h"
 #include "FBP45.h"
 #include "FuelTypeOld.h"
-#include "Log.h"
-#include "Settings.h"
 namespace fs::fuelold
 {
 static const map<const string_view, const string_view> DEFAULT_TYPES{

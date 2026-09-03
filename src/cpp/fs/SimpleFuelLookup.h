@@ -2,7 +2,7 @@
 #ifndef FS_SIMPLEFUELLOOKUP_H
 #define FS_SIMPLEFUELLOOKUP_H
 #include "stdafx.h"
-#include "SimpleFuelType.h"
+#include "FuelType.h"
 namespace fs::simplefbp
 {
 class SimpleFuelLookupImpl;
@@ -147,9 +147,5 @@ public:
 protected:
   mutable unique_ptr<SimpleFuelLookup> fuel_lookup_{nullptr};
 };
-}
-namespace fs::testing
-{
-int test_fbp(const int argc, const char* const argv[]);
 }
 #endif
