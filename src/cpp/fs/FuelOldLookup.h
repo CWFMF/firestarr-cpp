@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "Cell.h"
 #include "FireWeather.h"
-#include "FuelTypeOld.h"
+#include "FuelType.h"
 #include "Util.h"
 namespace fs::fuel
 {
@@ -114,7 +114,7 @@ private:
 {
   return is_null_fuel(fuel_by_code(cell.fuelCode()));
 }
-class LazyFuelLookup : public LazyPath
+class LazyFuelOldLookup : public LazyPath
 {
 public:
   using LazyPath::LazyPath;
@@ -128,20 +128,20 @@ public:
     }
     return *fuel_lookup_;
   }
-  LazyFuelLookup& operator=(const LazyFuelLookup& rhs) noexcept
+  LazyFuelOldLookup& operator=(const LazyFuelOldLookup& rhs) noexcept
   {
     LazyPath::operator=(rhs);
     fuel_lookup_ = nullptr;
     return *this;
   }
-  LazyFuelLookup& operator=(LazyFuelLookup&& rhs) noexcept
+  LazyFuelOldLookup& operator=(LazyFuelOldLookup&& rhs) noexcept
   {
     LazyPath::operator=(rhs);
     fuel_lookup_ = std::move(rhs.fuel_lookup_);
     rhs.fuel_lookup_ = nullptr;
     return *this;
   }
-  LazyFuelLookup& operator=(const string& path) noexcept
+  LazyFuelOldLookup& operator=(const string& path) noexcept
   {
     LazyPath::operator=(path);
     fuel_lookup_ = nullptr;
