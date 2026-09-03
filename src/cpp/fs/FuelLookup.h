@@ -10,6 +10,5 @@ using FuelLookup = fs::fuelold::FuelOldLookup;
 using fs::fuelold::check_fuel;
 using fs::fuelold::fuel_by_code;
 using fs::fuelold::is_null_fuel;
-using fs::fuelold::simplify_fuel_name;
 }
 #endif
