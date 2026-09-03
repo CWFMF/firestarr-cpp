@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FUELOLDLOOKUP_H
 #define FS_FUELOLDLOOKUP_H
-#include "stdafx.h"
-#include "Cell.h"
-#include "FireWeather.h"
-#include "FuelType.h"
-#include "Util.h"
+#include "../fs/Cell.h"
+#include "../fs/FireWeather.h"
+#include "../fs/FuelType.h"
+#include "../fs/stdafx.h"
+#include "../fs/Util.h"
 namespace fs::fuelold
 {
 class FuelOldLookupImpl;

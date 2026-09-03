@@ -1841,10 +1841,6 @@ public:
     assert(m3->percentMixed() == percent_dead_fir);
   }
 };
-}
-namespace fs::testing
-{
-using settings::Settings;
-int test_fbp(const int argc, const char* const argv[]);
+extern const array<const FuelType*, NUMBER_OF_FUELS> SimpleFuels;
 }
 #endif
