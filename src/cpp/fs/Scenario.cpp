@@ -6,6 +6,7 @@
 #include "CellPoints.h"
 #include "FireSpread.h"
 #include "FuelOldLookup.h"
+#include "FuelType.h"
 #include "IntensityMap.h"
 #include "Location.h"
 #include "Log.h"
@@ -15,7 +16,6 @@
 #include "ProbabilityMap.h"
 #include "rng.h"
 #include "Settings.h"
-#include "SimpleFuelType.h"
 #include "unstable.h"
 namespace fs
 {

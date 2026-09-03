@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#include "SimpleFuelType.h"
+#include "FuelType.h"
+#include "Greenup.h"
 #include "Log.h"
 #include "Settings.h"
-#include "SimpleFBP.h"
 namespace fs::fuel
 {
 [[nodiscard]] const FuelType* FuelType::find_fuel_by_season(const int nd) const noexcept

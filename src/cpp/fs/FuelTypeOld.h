@@ -2,7 +2,7 @@
 #ifndef FS_FUELTYPEOLD_H
 #define FS_FUELTYPEOLD_H
 #include "stdafx.h"
-#include "SimpleFuelType.h"
+#include "FuelType.h"
 namespace fs::fuel
 {
 /**
