@@ -6,7 +6,6 @@
 namespace fs::simplefbp
 {
 class SimpleFuelLookupImpl;
-string simplify_name(const string_view fuel);
 /**
  * \brief Provides ability to look up a fuel type based on name or code.
  */

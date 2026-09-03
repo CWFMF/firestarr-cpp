@@ -5,6 +5,40 @@
 #include "Settings.h"
 namespace fs::fuel
 {
+string simplify_fuel_name(const string_view fuel)
+{
+  string simple_fuel_name{fuel};
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '-'), simple_fuel_name.end()
+  );
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), ' '), simple_fuel_name.end()
+  );
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '('), simple_fuel_name.end()
+  );
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), ')'), simple_fuel_name.end()
+  );
+  simple_fuel_name.erase(
+    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '/'), simple_fuel_name.end()
+  );
+  std::transform(
+    simple_fuel_name.begin(), simple_fuel_name.end(), simple_fuel_name.begin(), ::toupper
+  );
+  // remove PDF & PC
+  const auto pc = simple_fuel_name.find("PC");
+  if (string::npos != pc)
+  {
+    simple_fuel_name.erase(pc);
+  }
+  const auto pdf = simple_fuel_name.find("PDF");
+  if (string::npos != pdf)
+  {
+    simple_fuel_name.erase(pdf);
+  }
+  return simple_fuel_name;
+}
 [[nodiscard]] const FuelType* FuelType::find_fuel_by_season(const int nd) const noexcept
 {
   // HACK: resolve once and fail if not set already

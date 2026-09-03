@@ -9,6 +9,7 @@
 namespace fs::fuel
 {
 using duff::Duff;
+string simplify_fuel_name(const string_view fuel);
 // References
 // Forestry Canada
 // Development and Structure of the Canadian Forest Fire Behaviour Prediction System (ST-X-3)
