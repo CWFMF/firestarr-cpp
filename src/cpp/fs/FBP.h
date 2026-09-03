@@ -5,4 +5,8 @@
 #include "FBP45.h"
 #include "FuelType.h"
 #include "Greenup.h"
+namespace fs::fuel
+{
+using namespace fs::fuelold;
+}
 #endif

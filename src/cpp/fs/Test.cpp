@@ -3,7 +3,7 @@
 #include "Test.h"
 #include "FireSpread.h"
 #include "FireWeather.h"
-#include "FuelOldLookup.h"
+#include "FuelLookup.h"
 #include "Location.h"
 #include "Log.h"
 #include "Model.h"
@@ -13,6 +13,7 @@
 #include "Util.h"
 namespace fs
 {
+using fs::fuel::FuelLookup;
 using settings::Settings;
 /**
  * \brief An Environment with no elevation and the same value in every Cell.
@@ -271,7 +272,7 @@ int test(Settings& settings)
   static auto FUEL_NAMES = []() -> vector<string> {
     auto it = std::views::transform(
       std::views::filter(
-        FuelOldLookup::Fuels, [](const FuelType* f) -> bool { return nullptr != f && f->isValid(); }
+        FuelLookup::Fuels, [](const FuelType* f) -> bool { return nullptr != f && f->isValid(); }
       ),
       [](const auto* f) -> string { return simplify_fuel_name(FuelType::safeName(f)); }
     );

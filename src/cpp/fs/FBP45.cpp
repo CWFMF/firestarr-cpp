@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FBP45.h"
-namespace fs
+namespace fs::fuelold
 {
 MathSize FuelOldD1::isfD1(
   const SpreadInfo& spread,

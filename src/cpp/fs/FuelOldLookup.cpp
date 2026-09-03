@@ -4,7 +4,7 @@
 #include "FuelTypeOld.h"
 #include "Log.h"
 #include "Settings.h"
-namespace fs::fuel
+namespace fs::fuelold
 {
 string simplify_fuel_name(const string_view fuel)
 {
@@ -334,7 +334,7 @@ static FuelOldM1M2<0> M1_M2_00{136, "M-1/M-2 (00 PC)", &M1_00, &M2_00};
 static FuelOldM3<0> M3_00{137, "M-3 (00 PDF)"};
 static FuelOldM4<0> M4_00{138, "M-4 (00 PDF)"};
 static FuelOldM3M4<0> M3_M4_00{139, "M-3/M-4 (00 PDF)", &M3_00, &M4_00};
-static FuelO1 O1{140, "O-1", &O1_A, &O1_B};
+static FuelOldO1 O1{140, "O-1", &O1_A, &O1_B};
 /**
  * \brief Implementation class for FuelLookup
  */
