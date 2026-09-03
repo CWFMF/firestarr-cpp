@@ -563,7 +563,7 @@ public:
    */
   [[nodiscard]] MathSize surfaceFuelConsumption(const SpreadInfo&) const noexcept override
   {
-    return DEFAULT_GRASS_FUEL_LOAD;
+    return fs::fuel::DEFAULT_GRASS_FUEL_LOAD;
   }
   /**
    * \brief Grass curing
@@ -578,7 +578,7 @@ public:
       return settings.static_curing.value();
     }
     const auto is_drought = wx.dc.value > 500;
-    return is_drought ? 100 : calculate_grass_curing(nd);
+    return is_drought ? 100 : fs::fuel::calculate_grass_curing(nd);
   }
   /**
    * \brief Calculate base rate of spread multiplier
@@ -1131,10 +1131,10 @@ template <class FuelOldSpring, class FuelOldSummer>
   // HACK: resolve once and fail if not set already
   static const auto& settings = fs::settings::instance();
   // if not green yet, then still in spring conditions
-  return settings.force_greenup    ? fuel.summer()
-       : settings.force_no_greenup ? fuel.spring()
-       : calculate_is_green(nd)    ? fuel.summer()
-                                   : fuel.spring();
+  return settings.force_greenup           ? fuel.summer()
+       : settings.force_no_greenup        ? fuel.spring()
+       : fs::fuel::calculate_is_green(nd) ? fuel.summer()
+                                          : fuel.spring();
 }
 template <class FuelOldSpring, class FuelOldSummer>
 [[nodiscard]] MathSize compare_by_season(

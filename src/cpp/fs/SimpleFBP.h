@@ -14,6 +14,8 @@
 #endif
 namespace fs::simplefbp
 {
+using fs::fuel::calculate_grass_curing;
+using fs::fuel::DEFAULT_GRASS_FUEL_LOAD;
 using settings::Settings;
 [[nodiscard]] static MathSize calculate_surface_fuel_consumption_mixed_or_c2(const MathSize bui
 ) noexcept
@@ -1541,7 +1543,7 @@ public:
 class SimpleFuelVariable;
 [[nodiscard]] MathSize compare_by_season(
   const SimpleFuelVariable& fuel,
-  const function<MathSize(const SimpleFuelType&)>& fct
+  const function<MathSize(const FuelType&)>& fct
 );
 /**
  * \brief A fuel type that changes based on the season.
@@ -1585,9 +1587,7 @@ public:
    */
   [[nodiscard]] MathSize buiEffect(MathSize bui) const override
   {
-    return compare_by_season(*this, [bui](const SimpleFuelType& fuel) {
-      return fuel.buiEffect(bui);
-    });
+    return compare_by_season(*this, [bui](const FuelType& fuel) { return fuel.buiEffect(bui); });
   }
   /**
    * \brief Grass curing
@@ -1595,7 +1595,7 @@ public:
    */
   [[nodiscard]] MathSize grass_curing(const int nd, const FwiWeather& wx) const override
   {
-    return compare_by_season(*this, [&](const SimpleFuelType& fuel) {
+    return compare_by_season(*this, [&](const FuelType& fuel) {
       return fuel.grass_curing(nd, wx);
     });
   }
@@ -1605,7 +1605,7 @@ public:
    */
   [[nodiscard]] MathSize cbh() const override
   {
-    return compare_by_season(*this, [](const SimpleFuelType& fuel) { return fuel.cbh(); });
+    return compare_by_season(*this, [](const FuelType& fuel) { return fuel.cbh(); });
   }
   /**
    * \brief Crown fuel load (kg/m^2) [ST-X-3 table 8]
@@ -1613,7 +1613,7 @@ public:
    */
   [[nodiscard]] MathSize cfl() const override
   {
-    return compare_by_season(*this, [](const SimpleFuelType& fuel) { return fuel.cfl(); });
+    return compare_by_season(*this, [](const FuelType& fuel) { return fuel.cfl(); });
   }
   /**
    * \brief Crown Fuel Consumption (CFC) (kg/m^2) [ST-X-3 eq 66]
@@ -1622,7 +1622,7 @@ public:
    */
   [[nodiscard]] MathSize crownConsumption(const MathSize cfb) const override
   {
-    return compare_by_season(*this, [cfb](const SimpleFuelType& fuel) {
+    return compare_by_season(*this, [cfb](const FuelType& fuel) {
       return fuel.crownConsumption(cfb);
     });
   }
@@ -1663,7 +1663,7 @@ public:
    */
   [[nodiscard]] MathSize lengthToBreadth(const MathSize ws) const override
   {
-    return compare_by_season(*this, [ws](const SimpleFuelType& fuel) {
+    return compare_by_season(*this, [ws](const FuelType& fuel) {
       return fuel.lengthToBreadth(ws);
     });
   }

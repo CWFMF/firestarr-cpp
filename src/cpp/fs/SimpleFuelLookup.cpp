@@ -6,6 +6,7 @@
 #include "SimpleFBP.h"
 namespace fs::simplefbp
 {
+using fs::fuel::simplify_fuel_name;
 static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Spruce-Lichen Woodland", "C-1"},
   {"Boreal Spruce", "C-2"},
@@ -160,8 +161,8 @@ static const map<const string_view, const string_view> DEFAULT_TYPES{
 // FIX: ensure actual code use in compilation doesn't matter and don't need to be speicified
 // manually in sequence
 static_assert(0 == INVALID_FUEL_CODE);
-static fs::InvalidFuel NULL_FUEL{INVALID_FUEL_CODE, "Non-fuel"};
-static fs::InvalidFuel INVALID{1, "Invalid"};
+static fs::fuel::InvalidFuel NULL_FUEL{INVALID_FUEL_CODE, "Non-fuel"};
+static fs::fuel::InvalidFuel INVALID{1, "Invalid"};
 static SimpleFuelC1 C1{2};
 static SimpleFuelC2 C2{3};
 static SimpleFuelC3 C3{4};
@@ -636,18 +637,4 @@ const array<const FuelType*, NUMBER_OF_FUELS> SimpleFuelLookup::Fuels{
   &M3_M4_70,  &M3_M4_75, &M3_M4_80, &M3_M4_85,  &M3_M4_90, &M3_M4_95, &M1_00,    &M2_00,
   &M1_M2_00,  &M3_00,    &M4_00,    &M3_M4_100, &O1,
 };
-MathSize compare_by_season(
-  const SimpleFuelVariable& fuel,
-  const function<MathSize(const SimpleFuelType&)>& fct
-)
-{
-  // HACK: no way to tell which is which, so let's assume they have to be the same??
-  // HACK: use a function so that DEBUG section doesn't get out of sync
-  const auto for_spring = fct(*fuel.spring());
-#ifdef DEBUG_FUEL_VARIABLE
-  const auto for_summer = fct(*fuel.summer());
-  logging::check_fatal(for_spring != for_summer, "Expected spring and summer cfb to be identical");
-#endif
-  return for_spring;
-}
 }
