@@ -2,7 +2,7 @@
 #ifndef FS_SETTINGS_H
 #define FS_SETTINGS_H
 #include "stdafx.h"
-#include "FuelOldLookup.h"
+#include "FuelLookup.h"
 namespace fs::settings
 {
 class Settings;
