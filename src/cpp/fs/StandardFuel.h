@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_SIMPLE_STANDARDFUEL
-#define FS_SIMPLE_STANDARDFUEL
+#ifndef FS_STANDARDFUEL
+#define FS_STANDARDFUEL
 #include "stdafx.h"
+#include "FuelType.h"
 #include "LogValue.h"
 #include "LookupTable.h"
-#include "SimpleFuelType.h"
-namespace fs::simplefbp
+namespace fs::fuel
 {
 /**
  * \brief Limit to slope when calculating ISI
@@ -55,7 +55,7 @@ static const LookupTable<&calculate_standard_foliar_moisture_isi> STANDARD_FOLIA
  */
 static const LookupTable<&calculate_standard_length_to_breadth> STANDARD_LENGTH_TO_BREADTH{};
 /**
- * \brief A SimpleFuelBase made of a standard fuel type.
+ * \brief A FuelBase made of a standard fuel type.
  * \tparam A Rate of spread parameter a [ST-X-3 table 6]
  * \tparam B Rate of spread parameter b * 10000 [ST-X-3 table 6]
  * \tparam C Rate of spread parameter c * 100 [ST-X-3 table 6]
@@ -66,7 +66,7 @@ static const LookupTable<&calculate_standard_length_to_breadth> STANDARD_LENGTH_
  * \tparam InorganicPercent Inorganic percent of Duff layer (%) [Anderson table 1]
  * \tparam DuffDepth Depth of Duff layer (cm * 10) [Anderson table 1]
  */
-class SimpleStandardFuel : public SimpleFuelBase
+class StandardFuel : public FuelBase
 {
 public:
   /**
@@ -78,7 +78,7 @@ public:
    * \param duff_ffmc Type of duff near the surface
    * \param duff_dmc Type of duff deeper underground
    */
-  constexpr SimpleStandardFuel(
+  constexpr StandardFuel(
     const FuelCodeSize& code,
     const char* name,
     const bool can_crown,
@@ -95,7 +95,7 @@ public:
     const Duff* duff_ffmc,
     const Duff* duff_dmc
   ) noexcept
-    : SimpleFuelBase(
+    : FuelBase(
         code,
         name,
         can_crown,
@@ -109,7 +109,7 @@ public:
       log_q_(log_q), a_(a), b_(b), c_(c), bui0_(bui0), cbh_(cbh), cfl_(cfl)
   {
     assert(-negB() < 1);
-    assert(SimpleStandardFuel::c() < 10 && SimpleStandardFuel::c() > 1);
+    assert(StandardFuel::c() < 10 && StandardFuel::c() > 1);
   }
   /**
    * \brief Constructor
@@ -119,7 +119,7 @@ public:
    * \param log_q Log value of q [ST-X-3 table 7]
    * \param duff Type of duff near the surface and deeper underground
    */
-  constexpr SimpleStandardFuel(
+  constexpr StandardFuel(
     const FuelCodeSize& code,
     const char* name,
     const bool can_crown,
@@ -135,7 +135,7 @@ public:
     const MathSize duff_depth,
     const Duff* duff
   ) noexcept
-    : SimpleStandardFuel(
+    : StandardFuel(
         code,
         name,
         can_crown,
@@ -153,10 +153,10 @@ public:
         duff
       )
   { }
-  SimpleStandardFuel(SimpleStandardFuel&& rhs) noexcept = delete;
-  SimpleStandardFuel(const SimpleStandardFuel& rhs) noexcept = delete;
-  SimpleStandardFuel& operator=(SimpleStandardFuel&& rhs) noexcept = delete;
-  SimpleStandardFuel& operator=(const SimpleStandardFuel& rhs) = delete;
+  StandardFuel(StandardFuel&& rhs) noexcept = delete;
+  StandardFuel(const StandardFuel& rhs) noexcept = delete;
+  StandardFuel& operator=(StandardFuel&& rhs) noexcept = delete;
+  StandardFuel& operator=(const StandardFuel& rhs) = delete;
   /**
    * \brief Initial rate of spread (m/min) [ST-X-3 eq 26]
    * \param isi Initial Spread Index
@@ -224,7 +224,7 @@ public:
   }
 
 protected:
-  ~SimpleStandardFuel() override = default;
+  ~StandardFuel() override = default;
 
 public:
   /**
