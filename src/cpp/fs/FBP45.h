@@ -10,7 +10,7 @@
 #ifdef DEBUG_FUEL_VARIABLE
 #include "Log.h"
 #endif
-namespace fs::fuel
+namespace fs::fuelold
 {
 [[nodiscard]] static MathSize calculate_surface_fuel_consumption_mixed_or_c2(const MathSize bui
 ) noexcept
@@ -1427,15 +1427,15 @@ public:
 /**
  * \brief FBP fuel type O-1.
  */
-class FuelO1 : public FuelOldVariable<FuelOldO1A, FuelOldO1B>
+class FuelOldO1 : public FuelOldVariable<FuelOldO1A, FuelOldO1B>
 {
 public:
-  FuelO1() = delete;
-  ~FuelO1() override = default;
-  FuelO1(const FuelO1& rhs) noexcept = delete;
-  FuelO1(FuelO1&& rhs) noexcept = delete;
-  FuelO1& operator=(const FuelO1& rhs) noexcept = delete;
-  FuelO1& operator=(FuelO1&& rhs) noexcept = delete;
+  FuelOldO1() = delete;
+  ~FuelOldO1() override = default;
+  FuelOldO1(const FuelOldO1& rhs) noexcept = delete;
+  FuelOldO1(FuelOldO1&& rhs) noexcept = delete;
+  FuelOldO1& operator=(const FuelOldO1& rhs) noexcept = delete;
+  FuelOldO1& operator=(FuelOldO1&& rhs) noexcept = delete;
   /**
    * \brief A fuel that changes between O-1a/O-1b depending on green-up
    * \param code Code to identify fuel with
@@ -1443,7 +1443,7 @@ public:
    * \param o1a O1-a fuel to use before green-up
    * \param o1b O1-b fuel to use after green-up
    */
-  constexpr FuelO1(
+  constexpr FuelOldO1(
     const FuelCodeSize& code,
     const char* name,
     const FuelOldO1A* o1a,

@@ -5,7 +5,7 @@
 #include "Cell.h"
 #include "CellPoints.h"
 #include "FireSpread.h"
-#include "FuelOldLookup.h"
+#include "FuelLookup.h"
 #include "FuelType.h"
 #include "IntensityMap.h"
 #include "Location.h"

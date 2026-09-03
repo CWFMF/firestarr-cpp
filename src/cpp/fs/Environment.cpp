@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "Environment.h"
 #include "EnvironmentInfo.h"
-#include "FuelOldLookup.h"
+#include "FuelLookup.h"
 #include "Grid.h"
 #include "Location.h"
 #include "Log.h"
@@ -13,7 +13,6 @@
 #include "Util.h"
 namespace fs
 {
-using namespace fuel;
 Environment Environment::load(
   const Point& point,
   const string_view in_fuel,
