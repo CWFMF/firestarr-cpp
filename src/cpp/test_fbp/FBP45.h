@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FBP45_H
 #define FS_FBP45_H
-#include "stdafx.h"
-#include "Duff.h"
-#include "Greenup.h"
-#include "LookupTable.h"
-#include "Settings.h"
+#include "../fs/Duff.h"
+#include "../fs/Greenup.h"
+#include "../fs/Settings.h"
+#include "../fs/stdafx.h"
+#include "FuelOldLookup.h"
 #include "StandardFuelOld.h"
 #ifdef DEBUG_FUEL_VARIABLE
 #include "Log.h"

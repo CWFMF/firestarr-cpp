@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_STANDARDFUEL_H
 #define FS_STANDARDFUEL_H
-#include "stdafx.h"
+#include "../fs/LogValue.h"
+#include "../fs/LookupTable.h"
+#include "../fs/stdafx.h"
 #include "FuelTypeOld.h"
-#include "LogValue.h"
-#include "LookupTable.h"
 namespace fs::fuelold
 {
 /**

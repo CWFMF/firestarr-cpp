@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FUELTYPEOLD_H
 #define FS_FUELTYPEOLD_H
-#include "stdafx.h"
-#include "Duff.h"
-#include "FuelType.h"
-#include "Survival.h"
+#include "../fs/Duff.h"
+#include "../fs/FuelType.h"
+#include "../fs/stdafx.h"
+#include "../fs/Survival.h"
 namespace fs::fuelold
 {
 using fs::duff::Duff;
