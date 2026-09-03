@@ -8,6 +8,7 @@
 #include "LookupTable.h"
 #include "Settings.h"
 #include "SimpleStandardFuel.h"
+#include "Survival.h"
 #ifdef DEBUG_FUEL_VARIABLE
 #include "Log.h"
 #endif

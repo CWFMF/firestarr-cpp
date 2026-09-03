@@ -5,9 +5,12 @@
 #include "FireSpread.h"
 #include "FuelType.h"
 #include "FWI.h"
+#include "Survival.h"
 #include "unstable.h"
 namespace fs::simplefbp
 {
+using fs::fuel::probability_peat;
+using fs::fuel::survival_probability;
 using SimpleFuelType = fs::FuelType;
 /**
  * \brief Base class for all FuelTypes.
@@ -73,16 +76,7 @@ public:
    */
   [[nodiscard]] ThresholdSize probabilityPeat(const MathSize mc_fraction) const noexcept override
   {
-    // Anderson table 1
-    const auto pb = bulkDensity();
-    // Anderson table 1
-    const auto fi = inorganicPercent();
-    const auto pi = fi * pb;
-    // Inorganic ratio
-    const auto ri = fi / (1 - fi);
-    const auto const_part = -19.329 + 1.7170 * ri + 23.059 * pi;
-    // Anderson eq 1
-    return 1 / (1 + exp(17.047 * mc_fraction / (1 - fi) + const_part));
+    return probability_peat(bulkDensity(), inorganicPercent(), mc_fraction);
   }
   /**
    * \brief Survival probability calculated using probability of ony survival based on multiple
@@ -92,44 +86,9 @@ public:
    */
   [[nodiscard]] ThresholdSize survivalProbability(const FwiWeather& wx) const noexcept override
   {
-    // divide by 100 since we need moisture ratio
-    //    IFERROR(((1 / (1 + EXP($G$43 + $I$43 *
-    //            (Q$44 * $O$43 + $N$43)))) -
-    //            (1 / (1 + EXP($G$43 + $I$43 * (2.5 * $O$43 + $N$43)))))
-    //            / (1 / (1 + EXP($G$43 + $I$43 * $N$43))), 0)
-    // HACK: use same constants for all fuels because they seem to work nicer than
-    // using the ratios, but they change anyway because of the other fuel attributes
-    static const auto WFfmc = 0.25;
-    static const auto WDmc = 1.0;
-    static const auto RatioHartford = 0.5;
-    static const auto RatioFrandsen = 1.0 - RatioHartford;
-    static const auto RatioAspen = 0.5;
-    static const auto RatioFuel = 1.0 - RatioAspen;
-    const auto mc_ffmc = wx.mcFfmc() * WFfmc + WDmc;
-    static const auto McFfmcSaturated = 2.5 * WFfmc + WDmc;
-    static const auto McDmc = WDmc;
-    const auto prob_ffmc_peat = probabilityPeat(mc_ffmc);
-    const auto prob_ffmc_peat_saturated = probabilityPeat(McFfmcSaturated);
-    const auto prob_ffmc_peat_zero = probabilityPeat(McDmc);
-    const auto prob_ffmc_peat_weighted =
-      (prob_ffmc_peat - prob_ffmc_peat_saturated) / prob_ffmc_peat_zero;
-    const auto prob_ffmc = duffFfmcType()->probabilityOfSurvival(mc_ffmc * 100);
-    const auto prob_ffmc_saturated = duffFfmcType()->probabilityOfSurvival(McFfmcSaturated * 100);
-    const auto prob_ffmc_zero = duffFfmcType()->probabilityOfSurvival(McDmc);
-    const auto prob_ffmc_weighted = (prob_ffmc - prob_ffmc_saturated) / prob_ffmc_zero;
-    const auto term_otway = exp(-3.11 + 0.12 * wx.dmc.value);
-    const auto prob_otway = term_otway / (1 + term_otway);
-    const auto mc_pct = wx.mcDmcPct() * dmcRatio() + wx.mcFfmcPct() * ffmcRatio();
-    const auto prob_weight_ffmc = duffFfmcType()->probabilityOfSurvival(mc_pct);
-    const auto prob_weight_ffmc_peat = probabilityPeat(mc_pct / 100);
-    const auto prob_weight_dmc = duffDmcType()->probabilityOfSurvival(wx.mcDmcPct());
-    const auto prob_weight_dmc_peat = probabilityPeat(wx.mcDmc());
-    // chance of survival is 1 - chance of it not surviving in every fuel
-    const auto tot_prob =
-      1
-      - (1 - prob_ffmc_peat_weighted) * (1 - prob_ffmc_weighted)
-          * ((1 - prob_otway) * RatioAspen + ((1 - prob_weight_ffmc_peat) * RatioHartford + (1 - prob_weight_ffmc) * RatioFrandsen) * ((1 - prob_weight_dmc_peat) * RatioHartford + (1 - prob_weight_dmc) * RatioFrandsen) * RatioFuel);
-    return tot_prob;
+    return survival_probability(
+      bulkDensity(), inorganicPercent(), *duffFfmcType(), *duffDmcType(), dmcRatio(), wx
+    );
   }
   /**
    * \brief Duff Bulk Density (kg/m^3) [Anderson table 1]

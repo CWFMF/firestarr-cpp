@@ -3,6 +3,7 @@
 #include "SimpleFBP.h"
 #include "FBP45.h"
 #include "FireSpread.h"
+#include "FuelOldLookup.h"
 #include "FWI.h"
 #include "RangeIterator.h"
 #include "unstable.h"
