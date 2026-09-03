@@ -1,0 +1,68 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+#include "SimpleFuelType.h"
+#include "Log.h"
+#include "Settings.h"
+#include "SimpleFBP.h"
+namespace fs::fuel
+{
+[[nodiscard]] const FuelType* FuelType::find_fuel_by_season(const int nd) const noexcept
+{
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  // if not green yet, then still in spring conditions
+  return settings.force_greenup    ? summer()
+       : settings.force_no_greenup ? spring()
+       : calculate_is_green(nd)    ? summer()
+                                   : spring();
+}
+MathSize InvalidFuel::grass_curing(const int, const FwiWeather&) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::cbh() const { throw runtime_error("Invalid fuel type in fuel map"); }
+MathSize InvalidFuel::cfl() const { throw runtime_error("Invalid fuel type in fuel map"); }
+MathSize InvalidFuel::buiEffect(MathSize) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::crownConsumption(MathSize) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::calculateRos(const int, const FwiWeather&, MathSize) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::calculateIsf(const SpreadInfo&, MathSize) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::surfaceFuelConsumption(const SpreadInfo&) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::lengthToBreadth(MathSize) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::finalRos(const SpreadInfo&, MathSize, MathSize, MathSize) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::criticalSurfaceIntensity(const SpreadInfo&) const
+{
+  throw runtime_error("Invalid fuel type in fuel map");
+}
+MathSize InvalidFuel::crownFractionBurned(MathSize, MathSize) const noexcept
+{
+  exit(logging::fatal("Invalid fuel type in fuel map"));
+}
+MathSize InvalidFuel::probabilityPeat(MathSize) const noexcept
+{
+  exit(logging::fatal("Invalid fuel type in fuel map"));
+}
+MathSize InvalidFuel::survivalProbability(const FwiWeather&) const noexcept
+{
+  exit(logging::fatal("Invalid fuel type in fuel map"));
+}
+}
