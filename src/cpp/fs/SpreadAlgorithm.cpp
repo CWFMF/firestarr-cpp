@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SpreadAlgorithm.h"
 #include "FireSpread.h"
-#include "SimpleFuelType.h"
+#include "FuelType.h"
 #include "unstable.h"
 #include "Util.h"
 namespace fs

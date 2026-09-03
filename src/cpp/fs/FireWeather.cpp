@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FireWeather.h"
-#include "SimpleFuelType.h"
+#include "FuelType.h"
 namespace fs
 {
 /*!
