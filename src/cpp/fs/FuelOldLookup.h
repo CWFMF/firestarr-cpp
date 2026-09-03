@@ -111,7 +111,7 @@ private:
  */
 [[nodiscard]] constexpr bool is_null_fuel(const Cell& cell)
 {
-  return is_null_fuel(fuel_by_code(cell.fuelCode()));
+  return fs::fuelold::is_null_fuel(fs::fuelold::fuel_by_code(cell.fuelCode()));
 }
 class LazyFuelOldLookup : public LazyPath
 {

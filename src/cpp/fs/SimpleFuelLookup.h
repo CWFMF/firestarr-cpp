@@ -23,50 +23,50 @@ public:
   SimpleFuelLookup& operator=(const SimpleFuelLookup& rhs) noexcept = default;
   SimpleFuelLookup& operator=(SimpleFuelLookup&& rhs) noexcept = default;
   /**
-   * \brief Look up a SimpleFuelType based on the given code
+   * \brief Look up a FuelType based on the given code
    * \param value Value to use for lookup
    * \param nodata Value that represents no data
-   * \return SimpleFuelType based on the given code
+   * \return FuelType based on the given code
    */
-  [[nodiscard]] const SimpleFuelType* codeToFuel(FuelSize value, FuelSize nodata) const;
+  [[nodiscard]] const FuelType* codeToFuel(FuelSize value, FuelSize nodata) const;
   /**
    * \brief List all fuels and their codes
    */
   void listFuels() const;
   /**
-   * \brief Look up the original code for the given SimpleFuelType
+   * \brief Look up the original code for the given FuelType
    * \param value Value to use for lookup
-   * \return code for the given SimpleFuelType
+   * \return code for the given FuelType
    */
-  [[nodiscard]] FuelSize fuelToCode(const SimpleFuelType* fuel) const;
+  [[nodiscard]] FuelSize fuelToCode(const FuelType* fuel) const;
   /**
-   * \brief Look up a SimpleFuelType ba1ed on the given code
+   * \brief Look up a FuelType ba1ed on the given code
    * \param value Value to use for lookup
    * \param nodata Value that represents no data
-   * \return SimpleFuelType based on the given code
+   * \return FuelType based on the given code
    */
-  [[nodiscard]] const SimpleFuelType* operator()(FuelSize value, FuelSize nodata) const;
+  [[nodiscard]] const FuelType* operator()(FuelSize value, FuelSize nodata) const;
   /**
    * \brief Retrieve set of FuelTypes that are used in the lookup table
    * \return set of FuelTypes that are used in the lookup table
    */
-  [[nodiscard]] set<const SimpleFuelType*> usedFuels() const;
+  [[nodiscard]] set<const FuelType*> usedFuels() const;
   /**
-   * \brief Look up a SimpleFuelType based on the given name
+   * \brief Look up a FuelType based on the given name
    * \param name Name of the fuel to find
-   * \return SimpleFuelType based on the given name
+   * \return FuelType based on the given name
    */
-  [[nodiscard]] const SimpleFuelType* byName(const string_view name) const;
+  [[nodiscard]] const FuelType* byName(const string_view name) const;
   /**
-   * \brief Look up a SimpleFuelType based on the given simplified name
+   * \brief Look up a FuelType based on the given simplified name
    * \param name Simplified name of the fuel to find
-   * \return SimpleFuelType based on the given name
+   * \return FuelType based on the given name
    */
-  [[nodiscard]] const SimpleFuelType* bySimplifiedName(const string_view name) const;
+  [[nodiscard]] const FuelType* bySimplifiedName(const string_view name) const;
   /**
    * \brief Array of all FuelTypes available to be used in simulations
    */
-  static const array<const SimpleFuelType*, NUMBER_OF_FUELS> Fuels;
+  static const array<const FuelType*, NUMBER_OF_FUELS> Fuels;
 
 private:
   /**
@@ -75,20 +75,20 @@ private:
   shared_ptr<SimpleFuelLookupImpl> impl_{nullptr};
 };
 /**
- * \brief Look up a SimpleFuelType based on the given code
+ * \brief Look up a FuelType based on the given code
  * \param code Value to use for lookup
- * \return SimpleFuelType based on the given code
+ * \return FuelType based on the given code
  */
-[[nodiscard]] constexpr const SimpleFuelType* fuel_by_code(const FuelCodeSize& code)
+[[nodiscard]] constexpr const FuelType* fuel_by_code(const FuelCodeSize& code)
 {
   return SimpleFuelLookup::Fuels.at(code);
 }
 /**
- * \brief Get SimpleFuelType based on the given cell
- * \param cell Cell to retrieve SimpleFuelType for
- * \return SimpleFuelType based on the given cell
+ * \brief Get FuelType based on the given cell
+ * \param cell Cell to retrieve FuelType for
+ * \return FuelType based on the given cell
  */
-[[nodiscard]] constexpr const SimpleFuelType* check_fuel(const Cell& cell)
+[[nodiscard]] constexpr const FuelType* check_fuel(const Cell& cell)
 {
   return fuel_by_code(cell.fuelCode());
 }
@@ -97,9 +97,9 @@ private:
  * \param cell Cell to check
  * \return Whether or not there is no fuel in the Cell
  */
-[[nodiscard]] constexpr bool is_null_fuel(const SimpleFuelType* fuel)
+[[nodiscard]] constexpr bool is_null_fuel(const FuelType* fuel)
 {
-  return INVALID_FUEL_CODE == SimpleFuelType::safeCode(fuel);
+  return INVALID_FUEL_CODE == FuelType::safeCode(fuel);
 }
 /**
  * \brief Whether or not there is no fuel in the Cell
@@ -110,6 +110,43 @@ private:
 {
   return fs::simplefbp::is_null_fuel(fuel_by_code(cell.fuelCode()));
 }
+class LazySimpleFuelLookup : public LazyPath
+{
+public:
+  using LazyPath::LazyPath;
+  const SimpleFuelLookup& lookup() const
+  {
+    // HACK: pretend this is const because it only gets assigned once
+    if (nullptr == fuel_lookup_)
+    {
+      fuel_lookup_ = std::make_unique<SimpleFuelLookup>(canonical());
+      logging::check_fatal(nullptr == fuel_lookup_, "Fuel lookup table has not been loaded");
+    }
+    return *fuel_lookup_;
+  }
+  LazySimpleFuelLookup& operator=(const LazySimpleFuelLookup& rhs) noexcept
+  {
+    LazyPath::operator=(rhs);
+    fuel_lookup_ = nullptr;
+    return *this;
+  }
+  LazySimpleFuelLookup& operator=(LazySimpleFuelLookup&& rhs) noexcept
+  {
+    LazyPath::operator=(rhs);
+    fuel_lookup_ = std::move(rhs.fuel_lookup_);
+    rhs.fuel_lookup_ = nullptr;
+    return *this;
+  }
+  LazySimpleFuelLookup& operator=(const string& path) noexcept
+  {
+    LazyPath::operator=(path);
+    fuel_lookup_ = nullptr;
+    return *this;
+  }
+
+protected:
+  mutable unique_ptr<SimpleFuelLookup> fuel_lookup_{nullptr};
+};
 }
 namespace fs::testing
 {
