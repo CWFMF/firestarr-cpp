@@ -2,6 +2,7 @@
 #ifndef FS_SIMPLE_FUELTYPE_H
 #define FS_SIMPLE_FUELTYPE_H
 #include "stdafx.h"
+#include "Duff.h"
 #include "FireSpread.h"
 #include "FuelType.h"
 #include "FWI.h"
@@ -9,6 +10,7 @@
 #include "unstable.h"
 namespace fs::simplefbp
 {
+using fs::duff::Duff;
 using fs::fuel::probability_peat;
 using fs::fuel::survival_probability;
 using SimpleFuelType = fs::FuelType;
@@ -138,7 +140,7 @@ public:
    */
   [[nodiscard]] constexpr MathSize dmcRatio() const
   {
-    return (duffDepth() - DUFF_FFMC_DEPTH) / duffDepth();
+    return (duffDepth() - fs::fuel::DUFF_FFMC_DEPTH) / duffDepth();
   }
   [[nodiscard]] const FuelType* summer() const noexcept override { return this; }
   [[nodiscard]] const FuelType* spring() const noexcept override { return this; }

@@ -6,6 +6,8 @@
 #include "FWI.h"
 namespace fs::fuel
 {
+// amount of duff to apply ffmc moisture to (cm) (1.2 cm is from Kerry's paper)
+static constexpr MathSize DUFF_FFMC_DEPTH = 1.2;
 /**
  * \brief Calculate probability of burning [Anderson eq 1]
  * \param mc_fraction moisture content (% / 100)

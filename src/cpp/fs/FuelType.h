@@ -24,8 +24,6 @@ using duff::Duff;
 //
 // default grass fuel load (kg/m^2)
 static constexpr MathSize DEFAULT_GRASS_FUEL_LOAD = 0.35;
-// amount of duff to apply ffmc moisture to (cm) (1.2 cm is from Kerry's paper)
-static constexpr MathSize DUFF_FFMC_DEPTH = 1.2;
 /**
  * \brief Fire Intensity (kW/m) [ST-X-3 eq 69]
  * \param fc Fuel consumption (kg/m^2)

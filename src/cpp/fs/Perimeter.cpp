@@ -1,13 +1,14 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Perimeter.h"
 #include "Environment.h"
-#include "FuelOldLookup.h"
+#include "FuelLookup.h"
 #include "Location.h"
 namespace fs
 {
 BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const Environment& env)
   : GridMap<unsigned char, unsigned char>(env.makeMap<unsigned char>(static_cast<unsigned char>(0)))
 {
+  using fs::fuel::is_null_fuel;
   // HACK: fix offset if the perimeter raster is different from this one
   logging::check_fatal(
     0 != strcmp(perim_grid.proj4().c_str(), this->proj4().c_str()),
