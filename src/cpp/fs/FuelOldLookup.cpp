@@ -6,40 +6,6 @@
 #include "Settings.h"
 namespace fs::fuelold
 {
-string simplify_fuel_name(const string_view fuel)
-{
-  string simple_fuel_name{fuel};
-  simple_fuel_name.erase(
-    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '-'), simple_fuel_name.end()
-  );
-  simple_fuel_name.erase(
-    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), ' '), simple_fuel_name.end()
-  );
-  simple_fuel_name.erase(
-    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '('), simple_fuel_name.end()
-  );
-  simple_fuel_name.erase(
-    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), ')'), simple_fuel_name.end()
-  );
-  simple_fuel_name.erase(
-    std::remove(simple_fuel_name.begin(), simple_fuel_name.end(), '/'), simple_fuel_name.end()
-  );
-  std::transform(
-    simple_fuel_name.begin(), simple_fuel_name.end(), simple_fuel_name.begin(), ::toupper
-  );
-  // remove PDF & PC
-  const auto pc = simple_fuel_name.find("PC");
-  if (string::npos != pc)
-  {
-    simple_fuel_name.erase(pc);
-  }
-  const auto pdf = simple_fuel_name.find("PDF");
-  if (string::npos != pdf)
-  {
-    simple_fuel_name.erase(pdf);
-  }
-  return simple_fuel_name;
-}
 static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Spruce-Lichen Woodland", "C-1"},
   {"Boreal Spruce", "C-2"},
