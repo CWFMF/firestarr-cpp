@@ -2,13 +2,13 @@
 #ifndef FS_FUELLOOKUP_H
 #define FS_FUELLOOKUP_H
 // change imports in here instead of changing which files get imported to use FBP
-#include "FuelOldLookup.h"
+#include "SimpleFuelLookup.h"
 namespace fs::fuel
 {
-using LazyFuelLookup = fs::fuelold::LazyFuelOldLookup;
-using FuelLookup = fs::fuelold::FuelOldLookup;
-using fs::fuelold::check_fuel;
-using fs::fuelold::fuel_by_code;
-using fs::fuelold::is_null_fuel;
+using LazyFuelLookup = fs::simplefbp::LazySimpleFuelLookup;
+using FuelLookup = fs::simplefbp::SimpleFuelLookup;
+using fs::simplefbp::check_fuel;
+using fs::simplefbp::fuel_by_code;
+using fs::simplefbp::is_null_fuel;
 }
 #endif

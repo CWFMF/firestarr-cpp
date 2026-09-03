@@ -100,7 +100,7 @@ BurnedMap make_burned_map(const XYIdx& location, const size_t size, const Enviro
         if (sqrt(pow_int<2>(x) + pow_int<2>(y)) < max_distance)
         {
           const XYIdx xy{x_loc + x, y_loc + y};
-          if (1 != perim_grid.at(xy) && !is_null_fuel(env.cell(xy)))
+          if (1 != perim_grid.at(xy) && !fs::fuel::is_null_fuel(env.cell(xy)))
           {
             perim_grid.set(xy, 1);
             ++count;
