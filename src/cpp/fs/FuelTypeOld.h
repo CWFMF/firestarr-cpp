@@ -8,8 +8,8 @@
 namespace fs::fuelold
 {
 using fs::duff::Duff;
-using fs::fuel::probability_peat;
-using fs::fuel::survival_probability;
+using fs::survival::probability_peat;
+using fs::survival::survival_probability;
 /**
  * \brief Base class for all FuelTypes.
  * \tparam BulkDensity Duff Bulk Density (kg/m^3) [Anderson table 1] * 1000
@@ -115,7 +115,7 @@ public:
    */
   [[nodiscard]] static constexpr MathSize dmcRatio()
   {
-    return (duffDepth() - fs::fuel::DUFF_FFMC_DEPTH) / duffDepth();
+    return (duffDepth() - fs::survival::DUFF_FFMC_DEPTH) / duffDepth();
   }
   [[nodiscard]] const FuelType* summer() const noexcept override { return this; }
   [[nodiscard]] const FuelType* spring() const noexcept override { return this; }

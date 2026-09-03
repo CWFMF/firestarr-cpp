@@ -11,8 +11,8 @@
 namespace fs::simplefbp
 {
 using fs::duff::Duff;
-using fs::fuel::probability_peat;
-using fs::fuel::survival_probability;
+using fs::survival::probability_peat;
+using fs::survival::survival_probability;
 using SimpleFuelType = fs::FuelType;
 /**
  * \brief Base class for all FuelTypes.
@@ -140,7 +140,7 @@ public:
    */
   [[nodiscard]] constexpr MathSize dmcRatio() const
   {
-    return (duffDepth() - fs::fuel::DUFF_FFMC_DEPTH) / duffDepth();
+    return (duffDepth() - fs::survival::DUFF_FFMC_DEPTH) / duffDepth();
   }
   [[nodiscard]] const FuelType* summer() const noexcept override { return this; }
   [[nodiscard]] const FuelType* spring() const noexcept override { return this; }

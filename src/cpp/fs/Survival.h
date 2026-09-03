@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "Duff.h"
 #include "FWI.h"
-namespace fs::fuel
+namespace fs::survival
 {
 // amount of duff to apply ffmc moisture to (cm) (1.2 cm is from Kerry's paper)
 static constexpr MathSize DUFF_FFMC_DEPTH = 1.2;

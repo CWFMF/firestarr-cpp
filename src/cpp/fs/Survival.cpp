@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Survival.h"
-namespace fs::fuel
+namespace fs::survival
 {
 ThresholdSize probability_peat(
   const MathSize bulk_density,
