@@ -2,8 +2,7 @@
 #include "FuelOldLookup.h"
 #include "../fs/Log.h"
 #include "../fs/Settings.h"
-#include "FBP45.h"
-#include "FuelTypeOld.h"
+#include "FBPOld.h"
 namespace fs::fuelold
 {
 static const map<const string_view, const string_view> DEFAULT_TYPES{
