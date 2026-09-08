@@ -4,7 +4,7 @@
 #include "fs/FuelLookup.h"
 #include "fs/FuelType.h"
 #include "fs/RangeIterator.h"
-#include "test_fbp/FBP45.h"
+#include "test_fbp/FBPOld.h"
 #include "test_fbp/FuelOldLookup.h"
 namespace fs::testing
 {
