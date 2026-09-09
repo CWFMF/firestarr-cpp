@@ -588,251 +588,150 @@ int test_fbp(const int argc, const char* const argv[])
   // }
   size_t i = 0;
   std::vector<std::future<int>> results{};
-  results.push_back(
-    std::async(launch::async, &compare_fuel_valid_by_index, "Non-fuel", i++, "basic test only")
+  auto add_test = [&](auto... args) { results.push_back(std::async(launch::async, args...)); };
+  add_test(&compare_fuel_valid_by_index, "Non-fuel", i++, "basic test only");
+  add_test(&compare_fuel_valid_by_index, "Invalid", i++, "basic test only");
+  add_test(&compare_fuel_by_index<FuelOldC1>, "C1", i++);
+  add_test(&compare_fuel_by_index<FuelOldC2>, "C2", i++);
+  add_test(&compare_fuel_by_index<FuelOldC3>, "C3", i++);
+  add_test(&compare_fuel_by_index<FuelOldC4>, "C4", i++);
+  add_test(&compare_fuel_by_index<FuelOldC5>, "C5", i++);
+  add_test(&compare_fuel_by_index<FuelOldC6>, "C6", i++);
+  add_test(&compare_fuel_by_index<FuelOldC7>, "C7", i++);
+  add_test(&compare_fuel_by_index_options<FuelOldD1>, "D1", i++, FUEL_COMPARE_DECIDUOUS);
+  add_test(&compare_fuel_by_index_options<FuelOldD2>, "D2", i++, FUEL_COMPARE_DECIDUOUS);
+  add_test(&compare_fuel_by_index_options<FuelOldO1A>, "O1_A", i++, FUEL_COMPARE_GRASS);
+  add_test(&compare_fuel_by_index_options<FuelOldO1B>, "O1_B", i++, FUEL_COMPARE_GRASS);
+  add_test(&compare_fuel_by_index<FuelOldS1>, "S1", i++);
+  add_test(&compare_fuel_by_index<FuelOldS2>, "S2", i++);
+  add_test(&compare_fuel_by_index<FuelOldS3>, "S3", i++);
+  add_test(
+    &compare_fuel_variable_by_index_options<FuelOldD1D2>, "D1_D2", i++, FUEL_COMPARE_DECIDUOUS
   );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_valid_by_index, "Invalid", i++, "basic test only")
-  );
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldC1>, "C1", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldC2>, "C2", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldC3>, "C3", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldC4>, "C4", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldC5>, "C5", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldC6>, "C6", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldC7>, "C7", i++));
-  results.push_back(std::async(
-    launch::async, &compare_fuel_by_index_options<FuelOldD1>, "D1", i++, FUEL_COMPARE_DECIDUOUS
-  ));
-  results.push_back(std::async(
-    launch::async, &compare_fuel_by_index_options<FuelOldD2>, "D2", i++, FUEL_COMPARE_DECIDUOUS
-  ));
-  results.push_back(std::async(
-    launch::async, &compare_fuel_by_index_options<FuelOldO1A>, "O1_A", i++, FUEL_COMPARE_GRASS
-  ));
-  results.push_back(std::async(
-    launch::async, &compare_fuel_by_index_options<FuelOldO1B>, "O1_B", i++, FUEL_COMPARE_GRASS
-  ));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldS1>, "S1", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldS2>, "S2", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldS3>, "S3", i++));
-  results.push_back(std::async(
-    launch::async,
-    &compare_fuel_variable_by_index_options<FuelOldD1D2>,
-    "D1_D2",
-    i++,
-    FUEL_COMPARE_DECIDUOUS
-  ));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<5>>, "M1_05", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<10>>, "M1_10", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<15>>, "M1_15", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<20>>, "M1_20", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<25>>, "M1_25", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<30>>, "M1_30", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<35>>, "M1_35", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<40>>, "M1_40", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<45>>, "M1_45", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<50>>, "M1_50", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<55>>, "M1_55", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<60>>, "M1_60", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<65>>, "M1_65", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<70>>, "M1_70", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<75>>, "M1_75", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<80>>, "M1_80", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<85>>, "M1_85", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<90>>, "M1_90", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<95>>, "M1_95", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<5>>, "M2_05", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<10>>, "M2_10", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<15>>, "M2_15", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<20>>, "M2_20", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<25>>, "M2_25", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<30>>, "M2_30", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<35>>, "M2_35", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<40>>, "M2_40", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<45>>, "M2_45", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<50>>, "M2_50", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<55>>, "M2_55", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<60>>, "M2_60", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<65>>, "M2_65", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<70>>, "M2_70", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<75>>, "M2_75", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<80>>, "M2_80", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<85>>, "M2_85", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<90>>, "M2_90", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<95>>, "M2_95", i++));
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<5>>, "M1_M2_05", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<10>>, "M1_M2_10", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<15>>, "M1_M2_15", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<20>>, "M1_M2_20", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<25>>, "M1_M2_25", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<30>>, "M1_M2_30", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<35>>, "M1_M2_35", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<40>>, "M1_M2_40", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<45>>, "M1_M2_45", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<50>>, "M1_M2_50", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<55>>, "M1_M2_55", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<60>>, "M1_M2_60", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<65>>, "M1_M2_65", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<70>>, "M1_M2_70", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<75>>, "M1_M2_75", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<80>>, "M1_M2_80", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<85>>, "M1_M2_85", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<90>>, "M1_M2_90", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<95>>, "M1_M2_95", i++)
-  );
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<5>>, "M3_05", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<10>>, "M3_10", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<15>>, "M3_15", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<20>>, "M3_20", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<25>>, "M3_25", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<30>>, "M3_30", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<35>>, "M3_35", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<40>>, "M3_40", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<45>>, "M3_45", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<50>>, "M3_50", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<55>>, "M3_55", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<60>>, "M3_60", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<65>>, "M3_65", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<70>>, "M3_70", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<75>>, "M3_75", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<80>>, "M3_80", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<85>>, "M3_85", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<90>>, "M3_90", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<95>>, "M3_95", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<100>>, "M3_100", i++)
-  );
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<5>>, "M4_05", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<10>>, "M4_10", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<15>>, "M4_15", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<20>>, "M4_20", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<25>>, "M4_25", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<30>>, "M4_30", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<35>>, "M4_35", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<40>>, "M4_40", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<45>>, "M4_45", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<50>>, "M4_50", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<55>>, "M4_55", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<60>>, "M4_60", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<65>>, "M4_65", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<70>>, "M4_70", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<75>>, "M4_75", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<80>>, "M4_80", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<85>>, "M4_85", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<90>>, "M4_90", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<95>>, "M4_95", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<100>>, "M4_100", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<0>>, "M3_M4_00", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<5>>, "M3_M4_05", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<10>>, "M3_M4_10", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<15>>, "M3_M4_15", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<20>>, "M3_M4_20", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<25>>, "M3_M4_25", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<30>>, "M3_M4_30", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<35>>, "M3_M4_35", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<40>>, "M3_M4_40", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<45>>, "M3_M4_45", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<50>>, "M3_M4_50", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<55>>, "M3_M4_55", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<60>>, "M3_M4_60", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<65>>, "M3_M4_65", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<70>>, "M3_M4_70", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<75>>, "M3_M4_75", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<80>>, "M3_M4_80", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<85>>, "M3_M4_85", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<90>>, "M3_M4_90", i++)
-  );
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<95>>, "M3_M4_95", i++)
-  );
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM1<0>>, "M1_00", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM2<0>>, "M2_00", i++));
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM1M2<0>>, "M1_M2_00", i++)
-  );
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM3<0>>, "M3_00", i++));
-  results.push_back(std::async(launch::async, &compare_fuel_by_index<FuelOldM4<0>>, "M4_00", i++));
-  results.push_back(
-    std::async(launch::async, &compare_fuel_variable_by_index<FuelOldM3M4<100>>, "M3_M4_100", i++)
-  );
-  results.push_back(std::async(
-    launch::async, &compare_fuel_variable_by_index_options<FuelOldO1>, "O1", i++, FUEL_COMPARE_GRASS
-  ));
+  add_test(&compare_fuel_by_index<FuelOldM1<5>>, "M1_05", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<10>>, "M1_10", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<15>>, "M1_15", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<20>>, "M1_20", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<25>>, "M1_25", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<30>>, "M1_30", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<35>>, "M1_35", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<40>>, "M1_40", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<45>>, "M1_45", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<50>>, "M1_50", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<55>>, "M1_55", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<60>>, "M1_60", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<65>>, "M1_65", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<70>>, "M1_70", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<75>>, "M1_75", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<80>>, "M1_80", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<85>>, "M1_85", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<90>>, "M1_90", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<95>>, "M1_95", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<5>>, "M2_05", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<10>>, "M2_10", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<15>>, "M2_15", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<20>>, "M2_20", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<25>>, "M2_25", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<30>>, "M2_30", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<35>>, "M2_35", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<40>>, "M2_40", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<45>>, "M2_45", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<50>>, "M2_50", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<55>>, "M2_55", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<60>>, "M2_60", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<65>>, "M2_65", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<70>>, "M2_70", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<75>>, "M2_75", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<80>>, "M2_80", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<85>>, "M2_85", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<90>>, "M2_90", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<95>>, "M2_95", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<5>>, "M1_M2_05", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<10>>, "M1_M2_10", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<15>>, "M1_M2_15", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<20>>, "M1_M2_20", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<25>>, "M1_M2_25", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<30>>, "M1_M2_30", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<35>>, "M1_M2_35", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<40>>, "M1_M2_40", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<45>>, "M1_M2_45", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<50>>, "M1_M2_50", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<55>>, "M1_M2_55", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<60>>, "M1_M2_60", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<65>>, "M1_M2_65", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<70>>, "M1_M2_70", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<75>>, "M1_M2_75", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<80>>, "M1_M2_80", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<85>>, "M1_M2_85", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<90>>, "M1_M2_90", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<95>>, "M1_M2_95", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<5>>, "M3_05", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<10>>, "M3_10", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<15>>, "M3_15", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<20>>, "M3_20", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<25>>, "M3_25", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<30>>, "M3_30", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<35>>, "M3_35", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<40>>, "M3_40", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<45>>, "M3_45", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<50>>, "M3_50", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<55>>, "M3_55", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<60>>, "M3_60", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<65>>, "M3_65", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<70>>, "M3_70", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<75>>, "M3_75", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<80>>, "M3_80", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<85>>, "M3_85", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<90>>, "M3_90", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<95>>, "M3_95", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<100>>, "M3_100", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<5>>, "M4_05", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<10>>, "M4_10", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<15>>, "M4_15", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<20>>, "M4_20", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<25>>, "M4_25", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<30>>, "M4_30", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<35>>, "M4_35", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<40>>, "M4_40", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<45>>, "M4_45", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<50>>, "M4_50", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<55>>, "M4_55", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<60>>, "M4_60", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<65>>, "M4_65", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<70>>, "M4_70", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<75>>, "M4_75", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<80>>, "M4_80", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<85>>, "M4_85", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<90>>, "M4_90", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<95>>, "M4_95", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<100>>, "M4_100", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<0>>, "M3_M4_00", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<5>>, "M3_M4_05", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<10>>, "M3_M4_10", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<15>>, "M3_M4_15", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<20>>, "M3_M4_20", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<25>>, "M3_M4_25", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<30>>, "M3_M4_30", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<35>>, "M3_M4_35", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<40>>, "M3_M4_40", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<45>>, "M3_M4_45", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<50>>, "M3_M4_50", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<55>>, "M3_M4_55", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<60>>, "M3_M4_60", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<65>>, "M3_M4_65", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<70>>, "M3_M4_70", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<75>>, "M3_M4_75", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<80>>, "M3_M4_80", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<85>>, "M3_M4_85", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<90>>, "M3_M4_90", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<95>>, "M3_M4_95", i++);
+  add_test(&compare_fuel_by_index<FuelOldM1<0>>, "M1_00", i++);
+  add_test(&compare_fuel_by_index<FuelOldM2<0>>, "M2_00", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM1M2<0>>, "M1_M2_00", i++);
+  add_test(&compare_fuel_by_index<FuelOldM3<0>>, "M3_00", i++);
+  add_test(&compare_fuel_by_index<FuelOldM4<0>>, "M4_00", i++);
+  add_test(&compare_fuel_variable_by_index<FuelOldM3M4<100>>, "M3_M4_100", i++);
+  add_test(&compare_fuel_variable_by_index_options<FuelOldO1>, "O1", i++, FUEL_COMPARE_GRASS);
   check_equal(NUMBER_OF_FUELS, i, "Number of fuels");
   for (auto& result : results)
   {
