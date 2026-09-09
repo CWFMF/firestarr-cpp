@@ -532,6 +532,30 @@ vector<int> find_nd_values()
   );
   return {nd_values.begin(), nd_values.end()};
 }
+int compare_fuel_valid(const string name, const size_t i, const char* msg = "")
+{
+  return compare_fuel_valid(name, FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], msg);
+}
+template <class TypeA, class TypeB>
+int compare_fuel(
+  const string name,
+  const size_t i,
+  const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
+)
+{
+  return compare_fuel<TypeA, TypeB>(name, FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], options);
+}
+template <class TypeA, class TypeB>
+int compare_fuel_variable(
+  const string name,
+  const size_t i,
+  const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
+)
+{
+  return compare_fuel_variable<TypeA, TypeB>(
+    name, FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], options
+  );
+}
 int test_fbp(const int argc, const char* const argv[])
 {
   std::ignore = argc;
@@ -549,387 +573,148 @@ int test_fbp(const int argc, const char* const argv[])
   //   compare(a.name(), a, b);
   //   // compare("", *fuel::Fuels[i], *FuelOldLookup::Fuels[i]);
   // }
-  auto i = 0;
-  compare_fuel_valid("Non-fuel", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], "basic test only");
-  ++i;
-  compare_fuel_valid("Invalid", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], "basic test only");
-  ++i;
-  compare_fuel<StandardFuel, FuelOldC1>("C1", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldC2>("C2", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldC3>("C3", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldC4>("C4", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldC5>("C5", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldC6>("C6", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldC7>("C7", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldD1>(
-    "D1", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], FUEL_COMPARE_DECIDUOUS
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldD2>(
-    "D2", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], FUEL_COMPARE_DECIDUOUS
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldO1A>(
-    "O1_A", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], FUEL_COMPARE_GRASS
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldO1B>(
-    "O1_B", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], FUEL_COMPARE_GRASS
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldS1>("S1", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldS2>("S2", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldS3>("S3", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldD1D2>(
-    "D1_D2", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], FUEL_COMPARE_DECIDUOUS
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<5>>("M1_05", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<10>>("M1_10", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<15>>("M1_15", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<20>>("M1_20", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<25>>("M1_25", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<30>>("M1_30", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<35>>("M1_35", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<40>>("M1_40", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<45>>("M1_45", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<50>>("M1_50", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<55>>("M1_55", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<60>>("M1_60", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<65>>("M1_65", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<70>>("M1_70", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<75>>("M1_75", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<80>>("M1_80", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<85>>("M1_85", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<90>>("M1_90", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<95>>("M1_95", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<5>>("M2_05", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<10>>("M2_10", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<15>>("M2_15", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<20>>("M2_20", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<25>>("M2_25", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<30>>("M2_30", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<35>>("M2_35", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<40>>("M2_40", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<45>>("M2_45", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<50>>("M2_50", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<55>>("M2_55", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<60>>("M2_60", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<65>>("M2_65", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<70>>("M2_70", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<75>>("M2_75", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<80>>("M2_80", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<85>>("M2_85", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<90>>("M2_90", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<95>>("M2_95", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<5>>(
-    "M1_M2_05", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<10>>(
-    "M1_M2_10", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<15>>(
-    "M1_M2_15", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<20>>(
-    "M1_M2_20", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<25>>(
-    "M1_M2_25", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<30>>(
-    "M1_M2_30", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<35>>(
-    "M1_M2_35", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<40>>(
-    "M1_M2_40", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<45>>(
-    "M1_M2_45", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<50>>(
-    "M1_M2_50", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<55>>(
-    "M1_M2_55", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<60>>(
-    "M1_M2_60", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<65>>(
-    "M1_M2_65", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<70>>(
-    "M1_M2_70", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<75>>(
-    "M1_M2_75", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<80>>(
-    "M1_M2_80", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<85>>(
-    "M1_M2_85", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<90>>(
-    "M1_M2_90", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<95>>(
-    "M1_M2_95", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<5>>("M3_05", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<10>>("M3_10", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<15>>("M3_15", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<20>>("M3_20", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<25>>("M3_25", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<30>>("M3_30", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<35>>("M3_35", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<40>>("M3_40", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<45>>("M3_45", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<50>>("M3_50", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<55>>("M3_55", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<60>>("M3_60", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<65>>("M3_65", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<70>>("M3_70", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<75>>("M3_75", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<80>>("M3_80", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<85>>("M3_85", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<90>>("M3_90", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<95>>("M3_95", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<100>>(
-    "M3_100", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<5>>("M4_05", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<10>>("M4_10", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<15>>("M4_15", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<20>>("M4_20", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<25>>("M4_25", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<30>>("M4_30", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<35>>("M4_35", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<40>>("M4_40", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<45>>("M4_45", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<50>>("M4_50", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<55>>("M4_55", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<60>>("M4_60", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<65>>("M4_65", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<70>>("M4_70", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<75>>("M4_75", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<80>>("M4_80", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<85>>("M4_85", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<90>>("M4_90", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<95>>("M4_95", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<100>>(
-    "M4_100", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<0>>(
-    "M3_M4_00", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<5>>(
-    "M3_M4_05", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<10>>(
-    "M3_M4_10", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<15>>(
-    "M3_M4_15", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<20>>(
-    "M3_M4_20", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<25>>(
-    "M3_M4_25", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<30>>(
-    "M3_M4_30", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<35>>(
-    "M3_M4_35", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<40>>(
-    "M3_M4_40", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<45>>(
-    "M3_M4_45", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<50>>(
-    "M3_M4_50", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<55>>(
-    "M3_M4_55", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<60>>(
-    "M3_M4_60", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<65>>(
-    "M3_M4_65", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<70>>(
-    "M3_M4_70", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<75>>(
-    "M3_M4_75", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<80>>(
-    "M3_M4_80", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<85>>(
-    "M3_M4_85", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<90>>(
-    "M3_M4_90", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<95>>(
-    "M3_M4_95", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM1<0>>("M1_00", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM2<0>>("M2_00", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM1M2<0>>(
-    "M1_M2_00", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM3<0>>("M3_00", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel<StandardFuel, FuelOldM4<0>>("M4_00", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldM3M4<100>>(
-    "M3_M4_100", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]
-  );
-  ++i;
-  compare_fuel_variable<FuelVariable, FuelOldO1>(
-    "O1", FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], FUEL_COMPARE_GRASS
-  );
-  ++i;
+  size_t i = 0;
+  compare_fuel_valid("Non-fuel", i++, "basic test only");
+  compare_fuel_valid("Invalid", i++, "basic test only");
+  compare_fuel<StandardFuel, FuelOldC1>("C1", i++);
+  compare_fuel<StandardFuel, FuelOldC2>("C2", i++);
+  compare_fuel<StandardFuel, FuelOldC3>("C3", i++);
+  compare_fuel<StandardFuel, FuelOldC4>("C4", i++);
+  compare_fuel<StandardFuel, FuelOldC5>("C5", i++);
+  compare_fuel<StandardFuel, FuelOldC6>("C6", i++);
+  compare_fuel<StandardFuel, FuelOldC7>("C7", i++);
+  compare_fuel<StandardFuel, FuelOldD1>("D1", i++, FUEL_COMPARE_DECIDUOUS);
+  compare_fuel<StandardFuel, FuelOldD2>("D2", i++, FUEL_COMPARE_DECIDUOUS);
+  compare_fuel<StandardFuel, FuelOldO1A>("O1_A", i++, FUEL_COMPARE_GRASS);
+  compare_fuel<StandardFuel, FuelOldO1B>("O1_B", i++, FUEL_COMPARE_GRASS);
+  compare_fuel<StandardFuel, FuelOldS1>("S1", i++);
+  compare_fuel<StandardFuel, FuelOldS2>("S2", i++);
+  compare_fuel<StandardFuel, FuelOldS3>("S3", i++);
+  compare_fuel_variable<FuelVariable, FuelOldD1D2>("D1_D2", i++, FUEL_COMPARE_DECIDUOUS);
+  compare_fuel<StandardFuel, FuelOldM1<5>>("M1_05", i++);
+  compare_fuel<StandardFuel, FuelOldM1<10>>("M1_10", i++);
+  compare_fuel<StandardFuel, FuelOldM1<15>>("M1_15", i++);
+  compare_fuel<StandardFuel, FuelOldM1<20>>("M1_20", i++);
+  compare_fuel<StandardFuel, FuelOldM1<25>>("M1_25", i++);
+  compare_fuel<StandardFuel, FuelOldM1<30>>("M1_30", i++);
+  compare_fuel<StandardFuel, FuelOldM1<35>>("M1_35", i++);
+  compare_fuel<StandardFuel, FuelOldM1<40>>("M1_40", i++);
+  compare_fuel<StandardFuel, FuelOldM1<45>>("M1_45", i++);
+  compare_fuel<StandardFuel, FuelOldM1<50>>("M1_50", i++);
+  compare_fuel<StandardFuel, FuelOldM1<55>>("M1_55", i++);
+  compare_fuel<StandardFuel, FuelOldM1<60>>("M1_60", i++);
+  compare_fuel<StandardFuel, FuelOldM1<65>>("M1_65", i++);
+  compare_fuel<StandardFuel, FuelOldM1<70>>("M1_70", i++);
+  compare_fuel<StandardFuel, FuelOldM1<75>>("M1_75", i++);
+  compare_fuel<StandardFuel, FuelOldM1<80>>("M1_80", i++);
+  compare_fuel<StandardFuel, FuelOldM1<85>>("M1_85", i++);
+  compare_fuel<StandardFuel, FuelOldM1<90>>("M1_90", i++);
+  compare_fuel<StandardFuel, FuelOldM1<95>>("M1_95", i++);
+  compare_fuel<StandardFuel, FuelOldM2<5>>("M2_05", i++);
+  compare_fuel<StandardFuel, FuelOldM2<10>>("M2_10", i++);
+  compare_fuel<StandardFuel, FuelOldM2<15>>("M2_15", i++);
+  compare_fuel<StandardFuel, FuelOldM2<20>>("M2_20", i++);
+  compare_fuel<StandardFuel, FuelOldM2<25>>("M2_25", i++);
+  compare_fuel<StandardFuel, FuelOldM2<30>>("M2_30", i++);
+  compare_fuel<StandardFuel, FuelOldM2<35>>("M2_35", i++);
+  compare_fuel<StandardFuel, FuelOldM2<40>>("M2_40", i++);
+  compare_fuel<StandardFuel, FuelOldM2<45>>("M2_45", i++);
+  compare_fuel<StandardFuel, FuelOldM2<50>>("M2_50", i++);
+  compare_fuel<StandardFuel, FuelOldM2<55>>("M2_55", i++);
+  compare_fuel<StandardFuel, FuelOldM2<60>>("M2_60", i++);
+  compare_fuel<StandardFuel, FuelOldM2<65>>("M2_65", i++);
+  compare_fuel<StandardFuel, FuelOldM2<70>>("M2_70", i++);
+  compare_fuel<StandardFuel, FuelOldM2<75>>("M2_75", i++);
+  compare_fuel<StandardFuel, FuelOldM2<80>>("M2_80", i++);
+  compare_fuel<StandardFuel, FuelOldM2<85>>("M2_85", i++);
+  compare_fuel<StandardFuel, FuelOldM2<90>>("M2_90", i++);
+  compare_fuel<StandardFuel, FuelOldM2<95>>("M2_95", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<5>>("M1_M2_05", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<10>>("M1_M2_10", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<15>>("M1_M2_15", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<20>>("M1_M2_20", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<25>>("M1_M2_25", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<30>>("M1_M2_30", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<35>>("M1_M2_35", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<40>>("M1_M2_40", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<45>>("M1_M2_45", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<50>>("M1_M2_50", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<55>>("M1_M2_55", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<60>>("M1_M2_60", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<65>>("M1_M2_65", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<70>>("M1_M2_70", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<75>>("M1_M2_75", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<80>>("M1_M2_80", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<85>>("M1_M2_85", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<90>>("M1_M2_90", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<95>>("M1_M2_95", i++);
+  compare_fuel<StandardFuel, FuelOldM3<5>>("M3_05", i++);
+  compare_fuel<StandardFuel, FuelOldM3<10>>("M3_10", i++);
+  compare_fuel<StandardFuel, FuelOldM3<15>>("M3_15", i++);
+  compare_fuel<StandardFuel, FuelOldM3<20>>("M3_20", i++);
+  compare_fuel<StandardFuel, FuelOldM3<25>>("M3_25", i++);
+  compare_fuel<StandardFuel, FuelOldM3<30>>("M3_30", i++);
+  compare_fuel<StandardFuel, FuelOldM3<35>>("M3_35", i++);
+  compare_fuel<StandardFuel, FuelOldM3<40>>("M3_40", i++);
+  compare_fuel<StandardFuel, FuelOldM3<45>>("M3_45", i++);
+  compare_fuel<StandardFuel, FuelOldM3<50>>("M3_50", i++);
+  compare_fuel<StandardFuel, FuelOldM3<55>>("M3_55", i++);
+  compare_fuel<StandardFuel, FuelOldM3<60>>("M3_60", i++);
+  compare_fuel<StandardFuel, FuelOldM3<65>>("M3_65", i++);
+  compare_fuel<StandardFuel, FuelOldM3<70>>("M3_70", i++);
+  compare_fuel<StandardFuel, FuelOldM3<75>>("M3_75", i++);
+  compare_fuel<StandardFuel, FuelOldM3<80>>("M3_80", i++);
+  compare_fuel<StandardFuel, FuelOldM3<85>>("M3_85", i++);
+  compare_fuel<StandardFuel, FuelOldM3<90>>("M3_90", i++);
+  compare_fuel<StandardFuel, FuelOldM3<95>>("M3_95", i++);
+  compare_fuel<StandardFuel, FuelOldM3<100>>("M3_100", i++);
+  compare_fuel<StandardFuel, FuelOldM4<5>>("M4_05", i++);
+  compare_fuel<StandardFuel, FuelOldM4<10>>("M4_10", i++);
+  compare_fuel<StandardFuel, FuelOldM4<15>>("M4_15", i++);
+  compare_fuel<StandardFuel, FuelOldM4<20>>("M4_20", i++);
+  compare_fuel<StandardFuel, FuelOldM4<25>>("M4_25", i++);
+  compare_fuel<StandardFuel, FuelOldM4<30>>("M4_30", i++);
+  compare_fuel<StandardFuel, FuelOldM4<35>>("M4_35", i++);
+  compare_fuel<StandardFuel, FuelOldM4<40>>("M4_40", i++);
+  compare_fuel<StandardFuel, FuelOldM4<45>>("M4_45", i++);
+  compare_fuel<StandardFuel, FuelOldM4<50>>("M4_50", i++);
+  compare_fuel<StandardFuel, FuelOldM4<55>>("M4_55", i++);
+  compare_fuel<StandardFuel, FuelOldM4<60>>("M4_60", i++);
+  compare_fuel<StandardFuel, FuelOldM4<65>>("M4_65", i++);
+  compare_fuel<StandardFuel, FuelOldM4<70>>("M4_70", i++);
+  compare_fuel<StandardFuel, FuelOldM4<75>>("M4_75", i++);
+  compare_fuel<StandardFuel, FuelOldM4<80>>("M4_80", i++);
+  compare_fuel<StandardFuel, FuelOldM4<85>>("M4_85", i++);
+  compare_fuel<StandardFuel, FuelOldM4<90>>("M4_90", i++);
+  compare_fuel<StandardFuel, FuelOldM4<95>>("M4_95", i++);
+  compare_fuel<StandardFuel, FuelOldM4<100>>("M4_100", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<0>>("M3_M4_00", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<5>>("M3_M4_05", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<10>>("M3_M4_10", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<15>>("M3_M4_15", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<20>>("M3_M4_20", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<25>>("M3_M4_25", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<30>>("M3_M4_30", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<35>>("M3_M4_35", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<40>>("M3_M4_40", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<45>>("M3_M4_45", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<50>>("M3_M4_50", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<55>>("M3_M4_55", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<60>>("M3_M4_60", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<65>>("M3_M4_65", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<70>>("M3_M4_70", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<75>>("M3_M4_75", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<80>>("M3_M4_80", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<85>>("M3_M4_85", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<90>>("M3_M4_90", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<95>>("M3_M4_95", i++);
+  compare_fuel<StandardFuel, FuelOldM1<0>>("M1_00", i++);
+  compare_fuel<StandardFuel, FuelOldM2<0>>("M2_00", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM1M2<0>>("M1_M2_00", i++);
+  compare_fuel<StandardFuel, FuelOldM3<0>>("M3_00", i++);
+  compare_fuel<StandardFuel, FuelOldM4<0>>("M4_00", i++);
+  compare_fuel_variable<FuelVariable, FuelOldM3M4<100>>("M3_M4_100", i++);
+  compare_fuel_variable<FuelVariable, FuelOldO1>("O1", i++, FUEL_COMPARE_GRASS);
   check_equal(NUMBER_OF_FUELS, i, "Number of fuels");
   return 0;
 }
