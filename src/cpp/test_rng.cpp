@@ -1,11 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#include "stdafx.h"
-#include <experimental/iterator>
-#include <sstream>
 #include "fs/ArgumentParser.h"
+#include "fs/Log.h"
 #include "fs/rng.h"
 #include "fs/StartPoint.h"
-#include "Log.h"
+#include "fs/stdafx.h"
 namespace fs::testing
 {
 int test_rng(const int argc, const char* const argv[])
@@ -32,13 +30,15 @@ int test_rng(const int argc, const char* const argv[])
   // generated from:
   std::ostringstream buffer{};
   buffer << "vector<ThresholdSize> expected{";
-  std::copy(
-    std::begin(thresholds),
-    std::end(thresholds),
-    std::experimental::make_ostream_joiner(buffer, ", ")
-  );
-  buffer << "};\n";
-  logging::debug("Code for generated RNG values would be:\n{}", buffer.str().c_str());
+  for (auto v : thresholds)
+  {
+    buffer << v << ", ";
+  }
+  // HACK: remove trailing comma and space
+  auto contents = buffer.str();
+  contents.resize(contents.size() - 2);
+  contents.append("};\n");
+  logging::debug("Code for generated RNG values would be:\n{}", contents.c_str());
   vector<ThresholdSize> expected{
     506482, 398084, 517855, 340105, 621545, 622084, 560899, 552511, 338998, 470216, 325964, 635500,
     436118, 535747, 425084, 554142, 472864, 517666, 520041, 508828, 518166, 386235, 515854, 590559,
