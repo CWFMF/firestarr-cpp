@@ -46,14 +46,14 @@ int compare_fuel_valid(
   return 0;
 }
 // use vectors so FuelCompareOptions can assign any of these directly
-static const auto BUI_RANGE_DEFAULTS = range(0.0, 300.0, 7.0);
-static const auto DC_RANGE_DEFAULTS = range(0.0, 1000.0, 7.0);
+static const auto BUI_RANGE_DEFAULTS = range(0.0, 300.0, 11.0);
+static const auto DC_RANGE_DEFAULTS = range(0.0, 1000.0, 11.0);
 static const vector<MathSize> DC_VALUES_GRASS{0, 10, 50, 100, 400, 499, 500, 501, 1000};
-static const auto RANGE_MC_FRACTION = range(-1, 3, 0.0001);
-static const auto RANGE_WIND_SPEED = range(0, 200, 0.01);
-static const auto RANGE_BUI_EFFECT = range(-1, 300, 0.01);
-static const auto RANGE_CFB = range(0, 100, 0.01);
-static const auto RANGE_ISI = range(0, 250, 0.1);
+static const auto RANGE_MC_FRACTION = range(-1, 3, 0.007);
+static const auto RANGE_WIND_SPEED = range(0, 200, 0.03);
+static const auto RANGE_BUI_EFFECT = range(-1, 300, 0.3);
+static const auto RANGE_CFB = range(0, 100, 0.03);
+static const auto RANGE_ISI = range(0, 250, 0.3);
 struct FuelCompareOptions
 {
   // HACK: can't figure out how to refer to a range so just use vectors
@@ -92,7 +92,7 @@ int compare_spread(
   };
   static const auto FFMC_RANGE = range(0.0, 101.0, 1.0);
   static const auto DMC_SMALL_RANGE = range(0.0, 200.0, 47.0);
-  static const auto DMC_RANGE = range(0.0, 200.0, 3.0);
+  static const auto DMC_RANGE = range(0.0, 200.0, 7.0);
   size_t count_comparisons{0};
   logging::debug(
     "compare_spread({:s}, {:s}, {:s})", name.c_str(), FuelType::safeName(a), FuelType::safeName(b)
