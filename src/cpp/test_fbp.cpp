@@ -352,7 +352,9 @@ int compare_fuel_basic(
     it_nds.begin(),
     it_nds.end(),
     [&](const auto& v) {
-      auto& [nd, bui, dc] = v;
+      auto& [nd_binding, bui, dc] = v;
+      // HACK: avoid 'reference to local binding 'nd' declared in enclosing lambda expression'
+      auto nd = nd_binding;
       // logging::verbose("dc {:f}", dc);
       const FwiWeather wx{
         Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
