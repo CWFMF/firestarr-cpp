@@ -134,7 +134,7 @@ int compare_spread(
   return std::transform_reduce(
 #if !defined(__APPLE__) || !defined(__clang__)
     // apple clang doesn't support this?
-    std::execution::par,
+    std::execution::par_unseq,
 #endif
     it.begin(),
     it.end(),
