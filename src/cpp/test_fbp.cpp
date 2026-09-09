@@ -63,9 +63,6 @@ int compare_spread(
   const FuelCompareOptions options = FUEL_COMPARE_DEFAULT
 )
 {
-  static const DurationSize TIME{INVALID_TIME};
-  // HACK: 0.0 is causing offsets to be generated in grass
-  static const MathSize MIN_ROS{1E-6};
   static const MathSize CELL_SIZE{100.0};
   static const vector<SlopeSize> slopes{0, 15, 30};
   static const vector<AspectSize> aspects{0, 15, 25, 35, 45, 55};
@@ -94,121 +91,29 @@ int compare_spread(
   );
   // HACK: use less options for things with nd values (just grass?)
   const auto dmc_values = options.nd_values.size() > 1 ? DMC_SMALL_RANGE : DMC_RANGE;
-  for (auto nd : options.nd_values)
-  {
-    logging::extensive("nd {:d}", nd);
-    for (auto ffmc : FFMC_RANGE)
+  static auto it = [&]() {
+    vector<std::tuple<int, MathSize, MathSize, MathSize, short, short>> results{};
+    for (auto nd : options.nd_values)
     {
-      logging::extensive("ffmc {:f}", ffmc);
-      for (auto dmc : dmc_values)
+      logging::extensive("nd {:d}", nd);
+      for (auto ffmc : FFMC_RANGE)
       {
-        logging::extensive("dmc {:f}", dmc);
-        // for (auto bui : options.bui_values)
+        logging::extensive("ffmc {:f}", ffmc);
+        for (auto dmc : dmc_values)
         {
-          for (auto dc : options.dc_values)
-          // for (auto dc : range(0.0, std::ranges::max(options.dc_values), 17.0))
+          logging::extensive("dmc {:f}", dmc);
+          // for (auto bui : options.bui_values)
           {
-            logging::extensive("dc {:f}", dc);
-            const FwiWeather weather{Weather::Invalid(), Ffmc{ffmc}, Dmc{dmc}, Dc{dc}};
-            for (auto slope : slopes)
+            for (auto dc : options.dc_values)
+            // for (auto dc : range(0.0, std::ranges::max(options.dc_values), 17.0))
             {
-              logging::extensive("slope {:d}", slope);
-              for (auto aspect : aspects)
+              logging::extensive("dc {:f}", dc);
+              for (auto slope : slopes)
               {
-                ++count_comparisons;
-                logging::extensive("aspect {:d}", aspect);
-                // HACK: this constructor ignores fuel part of this
-                const auto key = Cell::key(Cell::hashCell(slope, aspect, 0));
-                const SpreadInfo spread_a{a, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
-                const SpreadInfo spread_b{b, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
-                const auto offsets_a = spread_a.offsets();
-                const auto offsets_b = spread_b.offsets();
-                const auto head_ros = spread_a.headRos();
-                static constexpr MathSize ROS_MINIMAL{1.0};
-                logging::verbose(
-                  "compare_spread() [{:d}] {:s}spreading for ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
-                  count_comparisons,
-                  spread_a.isNotSpreading() ? "not "
-                  : head_ros < ROS_MINIMAL  ? "minimal "
-                                            : "",
-                  ffmc,
-                  dmc,
-                  dc,
-                  nd,
-                  slope,
-                  aspect
-                );
-                const auto show_offsets =
-                  logging::should_log(logging::level::verbose) && head_ros >= ROS_MINIMAL;
-                if (offsets_a.size() != offsets_b.size())
+                logging::extensive("slope {:d}", slope);
+                for (auto aspect : aspects)
                 {
-                  logging::error(
-                    "compare_spread() size failed for name: {:s}; ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
-                    name.c_str(),
-                    ffmc,
-                    dmc,
-                    dc,
-                    nd,
-                    slope,
-                    aspect
-                  );
-                  if (offsets_a.size() < offsets_b.size())
-                  {
-                    logging::error("compare_spread() size == -1");
-                    return -1;
-                  }
-                  if (offsets_a.size() > offsets_b.size())
-                  {
-                    logging::error("compare_spread() size == 1");
-                    return 1;
-                  }
-                }
-                if (show_offsets)
-                {
-                  cout << "Offsets are: [";
-                }
-                for (size_t i = 0; i < offsets_a.size(); ++i)
-                {
-                  const auto pt_a{offsets_a.at(i)};
-                  const auto pt_b{offsets_b.at(i)};
-                  if (show_offsets)
-                  {
-                    show_offset(pt_a);
-                  }
-                  if (auto cmp_pt = pt_a <=> pt_b; 0 != cmp_pt)
-                  {
-                    if (!show_offsets)
-                    {
-                      show_offset(pt_a);
-                    }
-                    cout << " != ";
-                    show_offset(pt_b);
-                    cout << "\n";
-                    logging::error(
-                      "compare_spread() pt failed for name: {:s}; ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
-                      name.c_str(),
-                      ffmc,
-                      dmc,
-                      dc,
-                      nd,
-                      slope,
-                      aspect
-                    );
-                    if (std::weak_ordering::less == cmp_pt)
-                    {
-                      logging::error("compare_spread() pt == -1");
-                      return -1;
-                    }
-                    if (std::weak_ordering::greater == cmp_pt)
-                    {
-                      logging::error("compare_spread() pt == 1");
-                      return 1;
-                    }
-                  }
-                }
-                if (show_offsets)
-                {
-                  cout << "]\n";
+                  results.emplace_back(nd, ffmc, dmc, dc, slope, aspect);
                 }
               }
             }
@@ -216,8 +121,116 @@ int compare_spread(
         }
       }
     }
-  }
-  logging::debug("compare_spread() == 0 with {:d} comparisons", count_comparisons);
+    return results;
+  }();
+  std::for_each(
+#ifndef __APPLE__
+    // apple clang doesn't support this?
+    std::execution::par_unseq,
+#endif
+    it.begin(),
+    it.end(),
+    [&](const auto& v) {
+      static const DurationSize TIME{INVALID_TIME};
+      // HACK: 0.0 is causing offsets to be generated in grass
+      static const MathSize MIN_ROS{1E-6};
+      auto& [nd, ffmc, dmc, dc, slope, aspect] = v;
+      const FwiWeather weather{Weather::Invalid(), Ffmc{ffmc}, Dmc{dmc}, Dc{dc}};
+      ++count_comparisons;
+      logging::extensive("aspect {:d}", aspect);
+      // HACK: this constructor ignores fuel part of this
+      const auto key = Cell::key(Cell::hashCell(slope, aspect, 0));
+      const SpreadInfo spread_a{a, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
+      const SpreadInfo spread_b{b, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
+      const auto offsets_a = spread_a.offsets();
+      const auto offsets_b = spread_b.offsets();
+      const auto head_ros = spread_a.headRos();
+      static constexpr MathSize ROS_MINIMAL{1.0};
+      logging::verbose(
+        "compare_spread() [{:d}] {:s}spreading for ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
+        count_comparisons,
+        spread_a.isNotSpreading() ? "not "
+        : head_ros < ROS_MINIMAL  ? "minimal "
+                                  : "",
+        ffmc,
+        dmc,
+        dc,
+        nd,
+        slope,
+        aspect
+      );
+      const auto show_offsets =
+        logging::should_log(logging::level::verbose) && head_ros >= ROS_MINIMAL;
+      if (offsets_a.size() != offsets_b.size())
+      {
+        logging::error(
+          "compare_spread() size failed for name: {:s}; ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
+          name.c_str(),
+          ffmc,
+          dmc,
+          dc,
+          nd,
+          slope,
+          aspect
+        );
+        if (offsets_a.size() < offsets_b.size())
+        {
+          logging::fatal("compare_spread() size == -1");
+        }
+        if (offsets_a.size() > offsets_b.size())
+        {
+          logging::fatal("compare_spread() size == 1");
+        }
+      }
+      if (show_offsets)
+      {
+        cout << "Offsets are: [";
+      }
+      for (size_t i = 0; i < offsets_a.size(); ++i)
+      {
+        const auto pt_a{offsets_a.at(i)};
+        const auto pt_b{offsets_b.at(i)};
+        if (show_offsets)
+        {
+          show_offset(pt_a);
+        }
+        if (auto cmp_pt = pt_a <=> pt_b; 0 != cmp_pt)
+        {
+          if (!show_offsets)
+          {
+            show_offset(pt_a);
+          }
+          cout << " != ";
+          show_offset(pt_b);
+          cout << "\n";
+          logging::error(
+            "compare_spread() pt failed for name: {:s}; ffmc:{:f}; dmc:{:f}; dc:{:f}; nd:{:d}; slope:{:d}; aspect: {:d}",
+            name.c_str(),
+            ffmc,
+            dmc,
+            dc,
+            nd,
+            slope,
+            aspect
+          );
+          if (std::weak_ordering::less == cmp_pt)
+          {
+            logging::fatal("compare_spread() pt == -1");
+          }
+          if (std::weak_ordering::greater == cmp_pt)
+          {
+            logging::fatal("compare_spread() pt == 1");
+          }
+        }
+      }
+      if (show_offsets)
+      {
+        cout << "]\n";
+      }
+      logging::debug("compare_spread() == 0 with {:d} comparisons", count_comparisons);
+    }
+  );
+  // HACK: would have exited with fatal error if not okay
   return 0;
 }
 template <class TypeA, class TypeB>
@@ -297,32 +310,48 @@ int compare_fuel_basic(
   // - BUI 80 (D2)
   // - DC 500 (O1)
   // FIX: use some weird increments to do less but not always have __0.0
-  for (auto nd : options.nd_values)
-  {
-    for (auto bui : options.bui_values)
+  static auto it_nds = [&]() {
+    vector<std::tuple<int, MathSize, MathSize>> results{};
+    for (auto nd : options.nd_values)
     {
-      // logging::verbose("bui {:f}", bui);
-      // for (auto dc : range(0.0, 2000.0, 7.0))
-      for (auto dc : options.dc_values)
+      for (auto bui : options.bui_values)
       {
-        // logging::verbose("dc {:f}", dc);
-        const FwiWeather wx{
-          Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
-        };
-        const string msg = logging::should_log(logging::level::verbose)
-                           ? std::format("calculateRos(nd={}, bui={}, dc={})", nd, bui, dc)
-                           : "calculateRos()";
-        check_range(
-          msg.c_str(),
-          "isi",
-          [&](const auto& v) { return a.calculateRos(nd, wx, v); },
-          [&](const auto& v) { return b.calculateRos(nd, wx, v); },
-          EPSILON,
-          RANGE_ISI
-        );
+        // logging::verbose("bui {:f}", bui);
+        // for (auto dc : range(0.0, 2000.0, 7.0))
+        for (auto dc : options.dc_values)
+        {
+          results.emplace_back(nd, bui, dc);
+        }
       }
     }
-  }
+    return results;
+  }();
+  std::for_each(
+#ifndef __APPLE__
+    // apple clang doesn't support this?
+    std::execution::par_unseq,
+#endif
+    it_nds.begin(),
+    it_nds.end(),
+    [&](const auto& v) {
+      auto& [nd, bui, dc] = v;
+      // logging::verbose("dc {:f}", dc);
+      const FwiWeather wx{
+        Weather::Zero(), Ffmc::Zero(), Dmc::Zero(), Dc{dc}, Isi::Zero(), Bui{bui}, Fwi::Zero()
+      };
+      const string msg = logging::should_log(logging::level::verbose)
+                         ? std::format("calculateRos(nd={}, bui={}, dc={})", nd, bui, dc)
+                         : "calculateRos()";
+      check_range(
+        msg.c_str(),
+        "isi",
+        [&](const auto& v) { return a.calculateRos(nd, wx, v); },
+        [&](const auto& v) { return b.calculateRos(nd, wx, v); },
+        EPSILON,
+        RANGE_ISI
+      );
+    }
+  );
   // MathSize calculateIsf(const SpreadInfo& spread, MathSize isi)
   // MathSize surfaceFuelConsumption(const SpreadInfo& spread) const
   check_range(
