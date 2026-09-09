@@ -345,8 +345,8 @@ int compare_fuel_basic(
       check_range(
         msg.c_str(),
         "isi",
-        [&](const auto& v) { return a.calculateRos(nd, wx, v); },
-        [&](const auto& v) { return b.calculateRos(nd, wx, v); },
+        [=, &a](const auto& v) { return a.calculateRos(nd, wx, v); },
+        [=, &b](const auto& v) { return b.calculateRos(nd, wx, v); },
         EPSILON,
         RANGE_ISI
       );
@@ -357,8 +357,8 @@ int compare_fuel_basic(
   check_range(
     "lengthToBreadth()",
     "ws",
-    [&](const auto& v) { return a.lengthToBreadth(v); },
-    [&](const auto& v) { return b.lengthToBreadth(v); },
+    [=, &a](const auto& v) { return a.lengthToBreadth(v); },
+    [=, &b](const auto& v) { return b.lengthToBreadth(v); },
     EPSILON,
     RANGE_WIND_SPEED
   );
@@ -401,8 +401,8 @@ int compare_fuel(
   check_range(
     "rosBasic()",
     "isi",
-    [&](const auto& v) { return a.rosBasic(v); },
-    [&](const auto& v) { return b.rosBasic(v); },
+    [=, &a](const auto& v) { return a.rosBasic(v); },
+    [=, &b](const auto& v) { return b.rosBasic(v); },
     EPSILON,
     RANGE_ISI
   );
