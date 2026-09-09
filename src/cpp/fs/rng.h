@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
+#include "StartPoint.h"
 namespace fs::rng
 {
 /*!
@@ -29,6 +30,23 @@ void make_threshold(
   mt19937_64* mt,
   const Day start_day,
   const Day last_date,
+  const ThresholdSize threshold_scenario_weight,
+  const ThresholdSize threshold_daily_weight,
+  const ThresholdSize threshold_hourly_weight,
   ThresholdSize (*convert)(double value) = same
+);
+void make_threshold(
+  vector<ThresholdSize>* thresholds,
+  mt19937_64* mt,
+  const Day start_day,
+  const Day last_date,
+  ThresholdSize (*convert)(double value) = same
+);
+std::seed_seq make_seed(
+  const char* name,
+  const StartPoint& start_point,
+  const Day start_day,
+  const size_t salt,
+  const size_t base_salt
 );
 };
