@@ -737,15 +737,17 @@ int test_fbp(const int argc, const char* const argv[])
   add_test(&compare_fuel_variable_by_index<FuelOldM3M4<100>>, "M3_M4_100");
   add_test(&compare_fuel_variable_by_index_options<FuelOldO1>, "O1", FUEL_COMPARE_GRASS);
   check_equal(NUMBER_OF_FUELS, i, "Number of fuels");
+  int ret = 0;
   for (auto& result : results)
   {
     result.wait();
-    if (auto cmp = result.get(); 0 != cmp)
+    if (auto cmp = result.get(); 0 == ret && 0 != cmp)
     {
-      return cmp;
+      // HACK: keep first value to return but need to wait for every future
+      ret = cmp;
     }
   }
-  return 0;
+  return ret;
 }
 }
 int main(const int argc, const char* const argv[])
