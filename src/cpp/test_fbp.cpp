@@ -3,10 +3,9 @@
 #include "fs/FBP.h"
 #include "fs/FuelLookup.h"
 #include "fs/FuelType.h"
+#include "fs/Log.h"
 #include "fs/RangeIterator.h"
 #include "fs/stdafx.h"
-#include "Log.h"
-#include "StandardFuel.h"
 #include "test_fbp/FBPOld.h"
 #include "test_fbp/FuelOldLookup.h"
 namespace fs::testing
@@ -132,13 +131,18 @@ int compare_spread(
     }
     return results;
   }();
-  std::for_each(
+  return std::transform_reduce(
 #if !defined(__APPLE__) || !defined(__clang__)
     // apple clang doesn't support this?
-    std::execution::par_unseq,
+    std::execution::par,
 #endif
     it.begin(),
     it.end(),
+    0,
+    [](const int a, const int b) {
+      // keep first non-zero value
+      return 0 == a ? b : a;
+    },
     [&](const auto& v) {
       static const DurationSize TIME{INVALID_TIME};
       // HACK: 0.0 is causing offsets to be generated in grass
@@ -184,11 +188,13 @@ int compare_spread(
         );
         if (offsets_a.size() < offsets_b.size())
         {
-          logging::fatal("compare_spread() size == -1");
+          logging::error("compare_spread() size == -1");
+          return -1;
         }
         if (offsets_a.size() > offsets_b.size())
         {
-          logging::fatal("compare_spread() size == 1");
+          logging::error("compare_spread() size == 1");
+          return 1;
         }
       }
       if (show_offsets)
@@ -224,11 +230,13 @@ int compare_spread(
           );
           if (std::weak_ordering::less == cmp_pt)
           {
-            logging::fatal("compare_spread() pt == -1");
+            logging::error("compare_spread() pt == -1");
+            return -1;
           }
           if (std::weak_ordering::greater == cmp_pt)
           {
-            logging::fatal("compare_spread() pt == 1");
+            logging::error("compare_spread() pt == 1");
+            return 1;
           }
         }
       }
@@ -237,10 +245,9 @@ int compare_spread(
         cout << "]\n";
       }
       logging::debug("compare_spread() == 0 with {:d} comparisons", count_comparisons);
+      return 0;
     }
   );
-  // HACK: would have exited with fatal error if not okay
-  return 0;
 }
 int compare_fuel_basic(
   const string name,
@@ -251,11 +258,13 @@ int compare_fuel_basic(
 {
   if (nullptr == f_a)
   {
-    logging::fatal("Invalid FuelTypeA");
+    logging::error("Invalid FuelTypeA");
+    return -1;
   }
   if (nullptr == f_b)
   {
-    logging::fatal("Invalid FuelTypeB");
+    logging::error("Invalid FuelTypeB");
+    return 1;
   }
   const FuelType& a = *f_a;
   const FuelType& b = *f_b;
