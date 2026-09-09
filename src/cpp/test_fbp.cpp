@@ -124,7 +124,7 @@ int compare_spread(
     return results;
   }();
   std::for_each(
-#ifndef __APPLE__
+#if !defined(__APPLE__) || !defined(__clang__)
     // apple clang doesn't support this?
     std::execution::par_unseq,
 #endif
@@ -327,7 +327,7 @@ int compare_fuel_basic(
     return results;
   }();
   std::for_each(
-#ifndef __APPLE__
+#if !defined(__APPLE__) || !defined(__clang__)
     // apple clang doesn't support this?
     std::execution::par_unseq,
 #endif

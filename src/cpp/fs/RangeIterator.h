@@ -229,7 +229,7 @@ auto check_range(
 {
   logging::debug("Checking {:s}", name_fct);
   std::for_each(
-#ifndef __APPLE__
+#if !defined(__APPLE__) || !defined(__clang__)
     // apple clang doesn't support this?
     std::execution::par_unseq,
 #endif
