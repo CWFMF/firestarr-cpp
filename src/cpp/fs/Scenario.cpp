@@ -14,6 +14,7 @@
 #include "Perimeter.h"
 #include "PointSpread.h"
 #include "ProbabilityMap.h"
+#include "rng.h"
 #include "Settings.h"
 #include "unstable.h"
 namespace fs
@@ -83,80 +84,6 @@ size_t Scenario::completed() noexcept { return COMPLETED; }
 size_t Scenario::count() noexcept { return COUNT; }
 size_t Scenario::total_steps() noexcept { return TOTAL_STEPS; }
 Scenario::~Scenario() { clear(); }
-/*!
- * \page probability Probability of events
- *
- * Probability throughout the simulations is handled using pre-rolled random numbers
- * based on a fixed seed, so that simulation results are reproducible.
- *
- * Probability is stored as 'thresholds' for a certain event on a day-by-day and hour-by-hour
- * basis. If the calculated probability of that type of event matches or exceeds the threshold
- * then the event will occur.
- *
- * Each iteration of a scenario will have its own thresholds, and thus different behaviour
- * can occur with the same input indices.
- *
- * Thresholds are used to determine:
- * - extinction
- * - spread events
- */
-static void make_threshold(
-  vector<ThresholdSize>* thresholds,
-  mt19937_64* mt,
-  const Day start_day,
-  const Day last_date,
-  ThresholdSize (*convert)(double value)
-)
-{
-  // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
-  const auto total_weight = settings.threshold_scenario_weight + settings.threshold_daily_weight
-                          + settings.threshold_hourly_weight;
-  uniform_real_distribution<ThresholdSize> rand(0.0, 1.0);
-  const auto general = rand(*mt);
-  for (size_t i = start_day; i < MAX_DAYS; ++i)
-  {
-    const auto daily = rand(*mt);
-    for (auto h = 0; h < DAY_HOURS; ++h)
-    {
-      // generate no matter what so if we extend the time period the results
-      // for the first days don't change
-      const auto hourly = rand(*mt);
-      // only save if we're going to use it
-      // HACK: +1 so if it's exactly at the end time there's something there
-      if (i <= static_cast<size_t>(last_date + 1))
-      {
-        // subtract from 1.0 because we want weight to make things more likely not less
-        // ensure we stay between 0 and 1
-        thresholds->at((i - start_day) * DAY_HOURS + h) = convert(max(
-          0.0,
-          min(
-            1.0,
-            1.0
-              - (+settings.threshold_scenario_weight * general
-                 + +settings.threshold_daily_weight * daily
-                 + +settings.threshold_hourly_weight * hourly)
-                  / total_weight
-          )
-        ));
-      }
-    }
-  }
-}
-template <class V>
-constexpr V same(const V value) noexcept
-{
-  return value;
-}
-static void make_threshold(
-  vector<ThresholdSize>* thresholds,
-  mt19937_64* mt,
-  const Day start_day,
-  const Day last_date
-)
-{
-  make_threshold(thresholds, mt, start_day, last_date, &same);
-}
 // HACK: just set next start point here for surface right now
 Scenario* Scenario::reset_with_new_start(const XYIdx& start_xy, ptr<SafeVector> final_sizes)
 {
@@ -210,11 +137,11 @@ Scenario* Scenario::reset(
   // if these are null then all probability thresholds remain 0
   if (nullptr != mt_extinction)
   {
-    make_threshold(&extinction_thresholds_, mt_extinction, start_day_, last_date_);
+    rng::make_threshold(&extinction_thresholds_, mt_extinction, start_day_, last_date_);
   }
   if (nullptr != mt_spread)
   {
-    make_threshold(
+    rng::make_threshold(
       &spread_thresholds_by_ros_,
       mt_spread,
       start_day_,
