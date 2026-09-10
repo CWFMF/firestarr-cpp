@@ -25,7 +25,7 @@ auto check_equal(const auto& lhs, const auto& rhs, const char* name)
 {
   logging::check_equal_verbose(logging::level::debug, lhs, rhs, name);
 }
-int compare_fuel_valid(
+auto compare_fuel_valid(
   const string name,
   const FuelType* f_a,
   const FuelType* f_b,
@@ -64,7 +64,7 @@ struct FuelCompareOptions
 };
 static const FuelCompareOptions FUEL_COMPARE_DEFAULT{};
 static const FuelCompareOptions FUEL_COMPARE_DECIDUOUS{.bui_values = BUI_RANGE_DEFAULTS};
-int compare_spread(
+auto compare_spread(
   const string name,
   const FuelType* a,
   const FuelType* b,
@@ -249,7 +249,7 @@ int compare_spread(
     }
   );
 }
-int compare_fuel_basic(
+auto compare_fuel_basic(
   const string name,
   const FuelType* f_a,
   const FuelType* f_b,
@@ -401,7 +401,7 @@ int compare_fuel_basic(
   );
 }
 template <class TypeB>
-int compare_fuel(
+auto compare_fuel(
   const string name,
   const FuelType* f_a,
   const FuelType* f_b,
@@ -450,7 +450,7 @@ int compare_fuel(
   return 0;
 }
 template <class TypeB>
-int compare_fuel_variable(
+auto compare_fuel_variable(
   const string name,
   const FuelType* f_a,
   const FuelType* f_b,
@@ -546,22 +546,22 @@ vector<int> find_nd_values()
   );
   return {nd_values.begin(), nd_values.end()};
 }
-int compare_fuel_valid_by_index(const size_t i, const string name, const char* msg = "")
+auto compare_fuel_valid_by_index(const size_t i, const string name, const char* msg = "")
 {
   return compare_fuel_valid(name, FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], msg);
 }
 template <class TypeB>
-int compare_fuel_by_index(const size_t i, const string name)
+auto compare_fuel_by_index(const size_t i, const string name)
 {
   return compare_fuel<TypeB>(name, FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
 }
 template <class TypeB>
-int compare_fuel_variable_by_index(const size_t i, const string name)
+auto compare_fuel_variable_by_index(const size_t i, const string name)
 {
   return compare_fuel_variable<TypeB>(name, FuelLookup::Fuels[i], FuelOldLookup::Fuels[i]);
 }
 template <class TypeB>
-int compare_fuel_by_index_options(
+auto compare_fuel_by_index_options(
   const size_t i,
   const string name,
   const FuelCompareOptions options
@@ -571,7 +571,7 @@ int compare_fuel_by_index_options(
   return compare_fuel<TypeB>(name, FuelLookup::Fuels[i], FuelOldLookup::Fuels[i], options);
 }
 template <class TypeB>
-int compare_fuel_variable_by_index_options(
+auto compare_fuel_variable_by_index_options(
   const size_t i,
   const string name,
   const FuelCompareOptions options
