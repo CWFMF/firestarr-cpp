@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+#include <future>
+#include <mutex>
 #include "fs/ArgumentParser.h"
 #include "fs/FBP.h"
 #include "fs/FuelLookup.h"
@@ -32,11 +34,17 @@ public:
     add(std::move(rhs));
     return *this;
   }
+  void add(std::future<int>&& f) noexcept
+  {
+    std::scoped_lock lock(mutex_);
+    logging::check_fatal(finalized_, "TestResults were already finalized but trying to add more");
+    results_.push_back(std::move(f));
+  };
   void add(const auto& fct, auto... args) noexcept
   {
-    lock_guard<mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     logging::check_fatal(finalized_, "TestResults were already finalized but trying to add more");
-    results_.push_back(std::async(launch::async, fct, args...));
+    add(std::async(launch::async, fct, args...));
   };
   void add(TestResults&& rhs) noexcept
   {
@@ -60,9 +68,15 @@ public:
       rhs.results_.clear();
     }
   };
-  int value() noexcept
+  std::future<int> value() noexcept
   {
-    lock_guard<mutex> lock(mutex_);
+    return std::async(launch::async, &TestResults::calculate_value, this);
+  }
+
+private:
+  int calculate_value() noexcept
+  {
+    std::scoped_lock lock(mutex_);
     if (!finalized_)
     {
       for (auto& result : results_)
@@ -79,9 +93,7 @@ public:
     }
     return return_value_;
   }
-
-private:
-  mutable mutex mutex_{};
+  mutable std::recursive_mutex mutex_{};
   std::vector<TestResult> results_{};
   bool finalized_{false};
   int return_value_{0};
@@ -825,7 +837,7 @@ int test_fbp(const int argc, const char* const argv[])
   add_test(&compare_fuel_variable_by_index<FuelOldM3M4<100>>, "M3_M4_100");
   add_test(&compare_fuel_variable_by_index_options<FuelOldO1>, "O1", FUEL_COMPARE_GRASS);
   check_equal(NUMBER_OF_FUELS, i, "Number of fuels");
-  return results.value();
+  return results.value().get();
 }
 }
 int main(const int argc, const char* const argv[])
