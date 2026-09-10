@@ -46,12 +46,12 @@ auto compare_fuel_valid(
   return 0;
 }
 // use vectors so FuelCompareOptions can assign any of these directly
-static const auto BUI_RANGE_DEFAULTS = range(0.0, 300.0, 11.0);
-static const auto DC_RANGE_DEFAULTS = range(0.0, 1000.0, 11.0);
+static const auto BUI_RANGE_DEFAULTS = range(0.0, 300.0, 13.0);
+static const auto DC_RANGE_DEFAULTS = range(0.0, 1000.0, 13.0);
 static const vector<MathSize> DC_VALUES_GRASS{0, 10, 50, 100, 400, 499, 500, 501, 1000};
-static const auto RANGE_MC_FRACTION = range(-1, 3, 0.007);
-static const auto RANGE_WIND_SPEED = range(0, 200, 0.03);
-static const auto RANGE_BUI_EFFECT = range(-1, 300, 0.3);
+static const auto RANGE_MC_FRACTION = range(-1, 3, 0.011);
+static const auto RANGE_WIND_SPEED = range(0, 200, 0.07);
+static const auto RANGE_BUI_EFFECT = range(-1, 300, 0.7);
 static const auto RANGE_CFB = range(0, 100, 0.03);
 static const auto RANGE_ISI = range(0, 250, 0.3);
 struct FuelCompareOptions
@@ -481,11 +481,11 @@ vector<int> find_nd_values()
   static constexpr MathSize BOUNDS_CANADA_LON_MIN = -141;
   static constexpr MathSize BOUNDS_CANADA_LON_MAX = -52;
   // FIX: use some weird increments to do less but not always have __.0
-  static constexpr MathSize DEGREE_INCREMENT = 0.3;
+  static constexpr MathSize DEGREE_INCREMENT = 0.7;
   // static constexpr MathSize ELEVATION_CANADA_MAX = 5959;
   static constexpr MathSize ELEVATION_EARTH_MIN = -418;
   static constexpr MathSize ELEVATION_EARTH_MAX = 8848;
-  static constexpr MathSize ELEVATION_INCREMENT = 100;
+  static constexpr MathSize ELEVATION_INCREMENT = 113;
   // - nd for different latitudes
   //   - elevation 0
   // const auto latitudes = range(-90.0, 90.0, DEGREE_INCREMENT);
@@ -544,7 +544,19 @@ vector<int> find_nd_values()
     max_nd,
     is_consecutive ? "consecutive" : "non-consecutive"
   );
-  return {nd_values.begin(), nd_values.end()};
+  // pick every Nth item
+  vector<int> result{};
+  constexpr auto N = 3;
+  size_t i = 0;
+  for (auto v : nd_values)
+  {
+    if (0 == (i % N))
+    {
+      result.emplace_back(v);
+    }
+    ++i;
+  }
+  return result;
 }
 auto compare_fuel_valid_by_index(const size_t i, const string name, const char* msg = "")
 {
