@@ -19,6 +19,73 @@ using fs::fuel::FuelLookup;
 using fs::fuel::FuelType;
 using fs::fuel::FuelVariable;
 using fs::fuel::StandardFuel;
+using TestResult = std::future<int>;
+class TestResults
+{
+public:
+  constexpr TestResults() noexcept = default;
+  TestResults(const TestResults& rhs) noexcept = delete;
+  TestResults(TestResults&& rhs) noexcept { add(std::move(rhs)); }
+  TestResults& operator=(const TestResults& rhs) noexcept = delete;
+  TestResults& operator=(TestResults&& rhs) noexcept
+  {
+    add(std::move(rhs));
+    return *this;
+  }
+  void add(const auto& fct, auto... args) noexcept
+  {
+    lock_guard<mutex> lock(mutex_);
+    logging::check_fatal(finalized_, "TestResults were already finalized but trying to add more");
+    results_.push_back(std::async(launch::async, fct, args...));
+  };
+  void add(TestResults&& rhs) noexcept
+  {
+    std::scoped_lock lock(mutex_, rhs.mutex_);
+    logging::check_fatal(finalized_, "TestResults were already finalized but trying to add more");
+    if (rhs.finalized_)
+    {
+      logging::check_fatal(
+        rhs.results_.empty(), "TestResults were finalized but still have results to check"
+      );
+      // keep first non-zero value
+      if (0 == return_value_)
+      {
+        return_value_ = rhs.return_value_;
+      }
+    }
+    else
+    {
+      std::move(rhs.results_.begin(), rhs.results_.end(), results_.end());
+      rhs.finalized_ = true;
+      rhs.results_.clear();
+    }
+  };
+  int value() noexcept
+  {
+    lock_guard<mutex> lock(mutex_);
+    if (!finalized_)
+    {
+      for (auto& result : results_)
+      {
+        result.wait();
+        if (auto cmp = result.get(); 0 == return_value_ && 0 != cmp)
+        {
+          // HACK: keep first value to return but need to wait for every future
+          return_value_ = cmp;
+        }
+      }
+      finalized_ = true;
+      results_.clear();
+    }
+    return return_value_;
+  }
+
+private:
+  mutable mutex mutex_{};
+  std::vector<TestResult> results_{};
+  bool finalized_{false};
+  int return_value_{0};
+};
 // check %, so 1 decimal is fine
 static constexpr auto EPSILON = static_cast<MathSize>(1e-1);
 auto check_equal(const auto& lhs, const auto& rhs, const char* name)
@@ -609,12 +676,12 @@ int test_fbp(const int argc, const char* const argv[])
   //   compare(a.name(), a, b);
   //   // compare("", *fuel::Fuels[i], *FuelOldLookup::Fuels[i]);
   // }
-  std::vector<std::future<int>> results{};
+  TestResults results{};
   // HACK: keep i in here so we don't need to add it incrementing to all calls
   size_t i = 0;
   auto add_test = [&](const auto& fct, auto... args) {
     // HACK: increment i in here so we don't need to add it incrementing to all calls
-    results.push_back(std::async(launch::async, fct, i++, args...));
+    results.add(fct, i++, args...);
   };
   add_test(&compare_fuel_valid_by_index, "Non-fuel", "basic test only");
   add_test(&compare_fuel_valid_by_index, "Invalid", "basic test only");
@@ -758,17 +825,7 @@ int test_fbp(const int argc, const char* const argv[])
   add_test(&compare_fuel_variable_by_index<FuelOldM3M4<100>>, "M3_M4_100");
   add_test(&compare_fuel_variable_by_index_options<FuelOldO1>, "O1", FUEL_COMPARE_GRASS);
   check_equal(NUMBER_OF_FUELS, i, "Number of fuels");
-  int ret = 0;
-  for (auto& result : results)
-  {
-    result.wait();
-    if (auto cmp = result.get(); 0 == ret && 0 != cmp)
-    {
-      // HACK: keep first value to return but need to wait for every future
-      ret = cmp;
-    }
-  }
-  return ret;
+  return results.value();
 }
 }
 int main(const int argc, const char* const argv[])
