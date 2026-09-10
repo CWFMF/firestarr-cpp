@@ -147,7 +147,7 @@ void Settings::setRoot(const string dir_binary, const string dir_root) noexcept
 {
   std::lock_guard<mutex> lock{MUTEX};
   logging::check_fatal(nullptr != INSTANCE, "Settings already initialized from file");
-  INSTANCE = make_unique<Settings>(dir_binary, dir_root);
+  INSTANCE = make_unique<Settings>(dir_binary, dir_root.empty() ? "." : dir_root);
 }
 Settings::Settings(const string dir_binary, const string dir_root) noexcept
   : dir_binary_{dir_binary}, dir_root_{dir_root}
