@@ -318,7 +318,7 @@ ArgumentParser::ArgumentParser(
   }
   // FIX: doing this here means we always see the settings if we haven't adjusted log level
   // if there is a settings.ini in the output directory then use that
-  logging::note("Checking for {:s}", output_directory + "settings.ini");
+  logging::debug("Checking for {:s}", output_directory + "settings.ini");
   Settings::setRoot(binary_directory_, output_directory);
   logging::check_fatal(nullptr != PARSER, "Parser initialized multiple times");
   PARSER = this;
