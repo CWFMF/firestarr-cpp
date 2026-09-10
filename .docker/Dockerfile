@@ -47,10 +47,10 @@ RUN vcpkg/vcpkg install
 # build and test
 FROM vcpkg-installed AS firestarr-build
 WORKDIR /appl/firestarr
-# HACK: copy .env here since cmake needs to write to it in github workflow
-COPY .env ./.env
+# NOTE: .env needs to be rw here since cmake needs to write to it in github workflow
 # mount instead of copy to minimize layers
-RUN --mount=type=bind,source=./cmake,target=./cmake \
+RUN --mount=type=bind,source=./.env,target=./.env \
+    --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./CMakeLists.txt,target=./CMakeLists.txt \
     --mount=type=bind,source=./CMakePresets.json,target=./CMakePresets.json \
     --mount=type=bind,source=./.clang-format,target=./.clang-format \
@@ -82,10 +82,10 @@ COPY --from=distroless-amd64 / /
 FROM scratch AS firestarr-minimal
 COPY --from=firestarr-base-minimal / /
 WORKDIR /appl/firestarr
-COPY ./fuel.lut /appl/firestarr/
-COPY ./settings.ini /appl/firestarr/
 COPY --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
 COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
+COPY ./fuel.lut /appl/firestarr/
+COPY ./settings.ini /appl/firestarr/
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
 
 # make a layer with scratch to clear out old layers
