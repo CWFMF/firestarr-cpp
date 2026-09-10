@@ -10,9 +10,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   execute_process(COMMAND git describe --tags --abbrev=0 --match "v*" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE VERSION_TAG)
   set(VERSION ${VERSION_TAG})
   list(TRANSFORM VERSION REPLACE "v(.*)" "\\1")
-  message("VERSION_TAG=${VERSION}")
+  set(VERSION_OUT "VERSION=${VERSION}")
+  message("${VERSION_OUT}")
   # always generate from git tag initially
-  file(WRITE ${FILE_ENV} "VERSION=${VERSION}\n")
+  file(READ ${FILE_ENV} ENV_VALUE)
+  if ("${ENV_VALUE}" STREQUAL "${VERSION_OUT}\n")
+    message("VERSION is already set properly")
+  else()
+    file(WRITE ${FILE_ENV} "${VERSION_OUT}\n")
+  endif()
 endif()
 
 # read from config
