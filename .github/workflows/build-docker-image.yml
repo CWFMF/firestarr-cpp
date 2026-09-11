@@ -81,8 +81,12 @@ jobs:
           tags: ${{ inputs.registry-image }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           # ${{ github.repository }} isn't lowercase so manually specify
-          cache-from: ${{ inputs.cache-from }}${{ case ( '' != inputs.cache-from, env.PLATFORM_PAIR, '' ) }}
-          cache-to: ${{ inputs.cache-to }}${{ case ( '' != inputs.cache-to, env.PLATFORM_PAIR, '' ) }}
+          cache-from: |
+            ${{ inputs.cache-from }}${{ case ( '' != inputs.cache-from, env.PLATFORM_PAIR, '' ) }}
+            type=gha
+          cache-to: |
+            ${{ inputs.cache-to }}${{ case ( '' != inputs.cache-to, env.PLATFORM_PAIR, '' ) }}
+            type=gha,mode=max,ignore-error=true
 
       - name: Export digest
         run: |
