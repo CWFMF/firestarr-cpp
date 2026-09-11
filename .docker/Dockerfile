@@ -101,10 +101,10 @@ RUN apt-get clean \
 
 # use --from=firestarr-minimal to create a dependency so cache hopefully includes both
 FROM base-cleaned AS firestarr-base-cleaned
+COPY --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
+COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
 COPY ./fuel.lut /appl/firestarr/
 COPY ./settings.ini /appl/firestarr/
-COPY --from=firestarr-minimal /appl/firestarr/firestarr /appl/firestarr/
-COPY --from=firestarr-minimal /appl/firestarr/proj.db /appl/firestarr/proj.db
 
 # derive final image from base so updates to binary are small layers
 FROM scratch AS firestarr
