@@ -10,17 +10,12 @@ on:
       image:
         required: true
         type: string
-      cache-from:
-        required: false
-        type: string
-      cache-to:
-        required: false
-        type: string
       suffix:
         required: false
         type: string
 
 env:
+  CONTAINER_REGISTRY: ghcr.io
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
 
 jobs:
@@ -37,7 +32,7 @@ jobs:
         # no point in more than base image supports
         # ignore 32-bit - 386, arm/v5, arm/v7
         # arm64 == arm64/v8
-        platform: [amd64, arm64, ppc64le, riscv64, s390x]
+        platform: [amd64]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -49,6 +44,9 @@ jobs:
         run: |
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_LOWER=${GITHUB_REPOSITORY@L}" >> $GITHUB_ENV
+
+      - run: echo "CONTAINER_TARGET=${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_LOWER}/cache:${PLATFORM_PAIR}" >> $GITHUB_ENV
 
       - name: Docker meta
         id: meta
@@ -56,10 +54,10 @@ jobs:
         with:
           images: ${{ inputs.registry-image }}
 
-      - name: Login to GHCR
+      - name: Login to container registry
         uses: docker/login-action@v4
         with:
-          registry: ghcr.io
+          registry: ${{ env.CONTAINER_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -81,6 +79,11 @@ jobs:
           tags: ${{ inputs.registry-image }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           # ${{ github.repository }} isn't lowercase so manually specify
+          cache-from: |
+            type=registry,ref=${{ env.CONTAINER_TARGET }}
+          cache-to: |
+            type=registry,mode=max,ref=${{ env.CONTAINER_TARGET }}
+
           cache-from: ${{ inputs.cache-from }}${{ case ( '' != inputs.cache-from, env.PLATFORM_PAIR, '' ) }}
           cache-to: ${{ inputs.cache-to }}${{ case ( '' != inputs.cache-to, env.PLATFORM_PAIR, '' ) }}
 
@@ -118,10 +121,10 @@ jobs:
           pattern: digests-${{ inputs.image }}-*
           merge-multiple: true
 
-      - name: Login to GHCR
+      - name: Login to container registry
         uses: docker/login-action@v4
         with:
-          registry: ghcr.io
+          registry: ${{ env.CONTAINER_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
