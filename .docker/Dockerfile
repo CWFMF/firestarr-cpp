@@ -74,7 +74,7 @@ WORKDIR /appl/firestarr
 # NOTE: .env needs to be rw here since cmake needs to write to it in github workflow
 # mount instead of copy to minimize layers
 RUN --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
-    --mount=type=bind,source=./.env,target=./.env \
+    --mount=type=bind,rw=true,source=./.env,target=./.env \
     --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./CMakeLists.txt,target=./CMakeLists.txt \
     --mount=type=bind,source=./CMakePresets.json,target=./CMakePresets.json \
