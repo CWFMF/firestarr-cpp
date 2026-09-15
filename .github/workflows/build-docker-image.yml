@@ -99,6 +99,12 @@ jobs:
           cache-to: |
             type=registry,mode=max,ref=${{ env.TARGET_CACHE }}
 
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
