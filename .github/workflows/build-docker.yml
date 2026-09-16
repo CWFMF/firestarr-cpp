@@ -46,18 +46,6 @@ jobs:
           echo "TARGET=${registry}/${image}" >> $GITHUB_ENV
           echo "IMAGE=firestarr" >> $GITHUB_ENV
 
-      - name: Docker meta
-        id: meta-normal
-        uses: docker/metadata-action@v6
-        with:
-          images: ${TARGET}
-
-      - name: Docker meta
-        id: meta-minimal
-        uses: docker/metadata-action@v6
-        with:
-          images: ${TARGET}
-
       - name: Login to container registry
         uses: docker/login-action@v4
         with:
@@ -71,7 +59,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build and push by digest
+      - name: ${{ env.IMAGE }} - Docker meta
+        id: meta-normal
+        uses: docker/metadata-action@v6
+        with:
+          images: ${TARGET}
+
+      - name: ${{ env.IMAGE }} - Build and push by digest
         id: build-normal
         uses: docker/build-push-action@v7
         with:
@@ -88,13 +82,13 @@ jobs:
           cache-to: |
             type=registry,mode=max,ref=${{ env.TARGET_CACHE }}
 
-      - name: Export digest
+      - name: ${{ env.IMAGE }} - Export digest
         run: |
           mkdir -p ${{ runner.temp }}/digests-${{ env.IMAGE }}
           digest="${{ steps.build-normal.outputs.digest }}"
           touch "${{ runner.temp }}/digests-${{ env.IMAGE }}/${digest#sha256:}"
 
-      - name: Upload digest
+      - name: ${{ env.IMAGE }} - Upload digest
         uses: actions/upload-artifact@v7
         with:
           name: digests-firestarr-${{ env.PLATFORM_PAIR }}
@@ -106,7 +100,13 @@ jobs:
         run: |
           echo "IMAGE=firestarr-minimal" >> $GITHUB_ENV
 
-      - name: Build and push by digest
+      - name: ${{ env.IMAGE }} - Docker meta
+        id: meta-minimal
+        uses: docker/metadata-action@v6
+        with:
+          images: ${TARGET}
+
+      - name: ${{ env.IMAGE }} - Build and push by digest
         id: build-minimal
         uses: docker/build-push-action@v7
         with:
@@ -123,13 +123,13 @@ jobs:
           cache-to: |
             type=registry,mode=max,ref=${{ env.TARGET_CACHE }}
 
-      - name: Export digest
+      - name: ${{ env.IMAGE }} - Export digest
         run: |
           mkdir -p ${{ runner.temp }}/digests-${{ env.IMAGE }}
           digest="${{ steps.build-minimal.outputs.digest }}"
           touch "${{ runner.temp }}/digests-${{ env.IMAGE }}/${digest#sha256:}"
 
-      - name: Upload digest
+      - name: ${{ env.IMAGE }} - Upload digest
         uses: actions/upload-artifact@v7
         with:
           name: digests-${{ env.IMAGE }}-${{ env.PLATFORM_PAIR }}
@@ -158,20 +158,7 @@ jobs:
           image=${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
           echo "TARGET_CACHE=${registry}/cache" >> $GITHUB_ENV
           echo "TARGET=${registry}/${image}" >> $GITHUB_ENV
-
-      - name: Download digests
-        uses: actions/download-artifact@v8
-        with:
-          path: ${{ runner.temp }}/digests-${{ env.IMAGE }}
-          pattern: digests-firestarr-*
-          merge-multiple: true
-
-      - name: Download digests
-        uses: actions/download-artifact@v8
-        with:
-          path: ${{ runner.temp }}/digests-minimal
-          pattern: digests-firestarr-minimal-*
-          merge-multiple: true
+          echo "IMAGE=firestarr" >> $GITHUB_ENV
 
       - name: Login to GHCR
         uses: docker/login-action@v4
@@ -183,12 +170,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Docker meta
-        id: metameta-normal
+      - name: ${{ env.IMAGE }} - Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests-${{ env.IMAGE }}
+          pattern: digests-firestarr-*
+          merge-multiple: true
+
+      - name: ${{ env.IMAGE }} - Docker meta
+        id: meta-normal
         uses: docker/metadata-action@v6
         with:
           images: |
-            firestarr
+            ${{ env.IMAGE }}
           flavor: |
             latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
             prefix=
@@ -200,22 +194,26 @@ jobs:
             type=semver,pattern={{version}},prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=semver,pattern={{major}}.{{minor}},prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
-      - name: Create manifest list and push
-        working-directory: ${{ runner.temp }}/digests-normal
+      - name: ${{ env.IMAGE }} - Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests-${{ env.IMAGE }}
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.TARGET }}@sha256:%s ' *)
 
-      - name: Inspect image
+      - name: ${{ env.IMAGE }} - Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.TARGET }}:${{ steps.meta-normal.outputs.version }}
 
-      - name: Docker meta
+      - name: Change target image
+        run: |
+          echo "IMAGE=firestarr-minimal" >> $GITHUB_ENV
+
+      - name: ${{ env.IMAGE }} - Docker meta
         id: meta-minimal
         uses: docker/metadata-action@v6
         with:
           images: |
-            firestarr-minimal
+            ${{ env.IMAGE }}
           flavor: |
             latest=false
             prefix=
@@ -229,12 +227,19 @@ jobs:
             type=raw,value=minimal,prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=raw,value=minimal-latest,prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
-      - name: Create manifest list and push
-        working-directory: ${{ runner.temp }}/digests-minimal
+      - name: ${{ env.IMAGE }} - Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests-${{ env.IMAGE }}
+          pattern: digests-${{ env.IMAGE }}-*
+          merge-multiple: true
+
+      - name: ${{ env.IMAGE }} - Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests-${{ env.IMAGE }}
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.TARGET }}@sha256:%s ' *)
 
-      - name: Inspect image
+      - name: ${{ env.IMAGE }} - Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.TARGET }}:${{ steps.meta-minimal.outputs.version }}
