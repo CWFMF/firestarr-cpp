@@ -44,6 +44,7 @@ jobs:
           image=${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
           echo "TARGET_CACHE=${registry}/cache" >> $GITHUB_ENV
           echo "TARGET=${registry}/${image}" >> $GITHUB_ENV
+          echo "IMAGE=firestarr" >> $GITHUB_ENV
 
       - name: Docker meta
         id: meta-normal
@@ -76,7 +77,7 @@ jobs:
         with:
           context: .
           file: .docker/Dockerfile
-          target: firestarr
+          target: ${{ env.IMAGE }}
           platforms: linux/${{ matrix.platform }}
           labels: ${{ steps.meta-normal.outputs.labels }}
           tags: ${{ env.TARGET }}
@@ -89,17 +90,21 @@ jobs:
 
       - name: Export digest
         run: |
-          mkdir -p ${{ runner.temp }}/digests-normal
+          mkdir -p ${{ runner.temp }}/digests-${{ env.IMAGE }}
           digest="${{ steps.build-normal.outputs.digest }}"
-          touch "${{ runner.temp }}/digests-normal/${digest#sha256:}"
+          touch "${{ runner.temp }}/digests-${{ env.IMAGE }}/${digest#sha256:}"
 
       - name: Upload digest
         uses: actions/upload-artifact@v7
         with:
           name: digests-firestarr-${{ env.PLATFORM_PAIR }}
-          path: ${{ runner.temp }}/digests-normal/*
+          path: ${{ runner.temp }}/digests-${{ env.IMAGE }}/*
           if-no-files-found: error
           retention-days: 1
+
+      - name: Change target image
+        run: |
+          echo "IMAGE=firestarr-minimal" >> $GITHUB_ENV
 
       - name: Build and push by digest
         id: build-minimal
@@ -107,7 +112,7 @@ jobs:
         with:
           context: .
           file: .docker/Dockerfile
-          target: firestarr-minimal
+          target: ${{ env.IMAGE }}
           platforms: linux/${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.TARGET }}
@@ -120,15 +125,15 @@ jobs:
 
       - name: Export digest
         run: |
-          mkdir -p ${{ runner.temp }}/digests-minimal
+          mkdir -p ${{ runner.temp }}/digests-${{ env.IMAGE }}
           digest="${{ steps.build-minimal.outputs.digest }}"
-          touch "${{ runner.temp }}/digests-minimal/${digest#sha256:}"
+          touch "${{ runner.temp }}/digests-${{ env.IMAGE }}/${digest#sha256:}"
 
       - name: Upload digest
         uses: actions/upload-artifact@v7
         with:
-          name: digests-firestarr-${{ env.PLATFORM_PAIR }}
-          path: ${{ runner.temp }}/digests-minimal/*
+          name: digests-${{ env.IMAGE }}-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests-${{ env.IMAGE }}/*
           if-no-files-found: error
           retention-days: 1
 
@@ -157,7 +162,7 @@ jobs:
       - name: Download digests
         uses: actions/download-artifact@v8
         with:
-          path: ${{ runner.temp }}/digests-normal
+          path: ${{ runner.temp }}/digests-${{ env.IMAGE }}
           pattern: digests-firestarr-*
           merge-multiple: true
 
