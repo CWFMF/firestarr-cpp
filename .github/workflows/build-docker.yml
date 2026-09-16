@@ -182,7 +182,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ${{ env.IMAGE }}
+            ${{ env.TARGET }}
           flavor: |
             latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
             prefix=
@@ -213,7 +213,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ${{ env.IMAGE }}
+            ${{ env.TARGET }}
           flavor: |
             latest=false
             prefix=
