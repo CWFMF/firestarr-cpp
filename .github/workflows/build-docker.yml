@@ -79,7 +79,7 @@ jobs:
           target: firestarr
           platforms: linux/${{ matrix.platform }}
           labels: ${{ steps.meta-normal.outputs.labels }}
-          tags: ${{ steps.meta-normal.outputs.tags }}
+          tags: ${{ env.TARGET }}
           push: ${{ github.event_name != 'pull_request' }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           cache-from: |
@@ -110,7 +110,7 @@ jobs:
           target: firestarr-minimal
           platforms: linux/${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-minimal.outputs.tags }}
+          tags: ${{ env.TARGET }}
           labels: ${{ steps.meta-minimal.outputs.labels }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           cache-from: |
