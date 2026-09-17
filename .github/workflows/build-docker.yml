@@ -63,7 +63,7 @@ jobs:
         id: meta-normal
         uses: docker/metadata-action@v6
         with:
-          images: ${TARGET}
+          images: ${{ env.TARGET }}
 
       - name: ${{ env.IMAGE }} - Build and push by digest
         id: build-normal
@@ -104,7 +104,7 @@ jobs:
         id: meta-minimal
         uses: docker/metadata-action@v6
         with:
-          images: ${TARGET}
+          images: ${{ env.TARGET }}
 
       - name: ${{ env.IMAGE }} - Build and push by digest
         id: build-minimal
