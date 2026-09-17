@@ -78,7 +78,7 @@ jobs:
         id: output
         run: |
           echo "registry=${{ env.registry }}" >> $GITHUB_OUTPUT
-          echo "package=${{ steps.build-firestarr.package }}" >> $GITHUB_OUTPUT
+          echo "package=${{ steps.build-firestarr.outputs.package }}" >> $GITHUB_OUTPUT
 
     outputs:
       registry: ${{ steps.output.outputs.registry }}
