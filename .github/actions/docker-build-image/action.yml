@@ -6,7 +6,7 @@ inputs:
   target:
     required: true
     type: string
-  package:
+  package-name:
     required: true
     type: string
   platform:
@@ -26,7 +26,7 @@ runs:
       shell: bash
       run: |
         registry=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}
-        echo "PACKAGE=${registry}/${{ inputs.package }}" >> $GITHUB_ENV
+        echo "PACKAGE=${registry}/${{ inputs.package-name }}" >> $GITHUB_ENV
         echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
         echo "PLATFORM=${{ inputs.platform }}" >> $GITHUB_ENV
 
@@ -83,5 +83,5 @@ runs:
       run: |
         echo "target=${{ inputs.target }}" >> $GITHUB_OUTPUT
         echo "registry=${{ inputs.registry }}" >> $GITHUB_OUTPUT
-        echo "package=${{ inputs.package }}" >> $GITHUB_OUTPUT
+        echo "package-name=${{ inputs.package-name }}" >> $GITHUB_OUTPUT
         echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
