@@ -28,7 +28,7 @@ runs:
     - name: Find variables
       shell: bash
       run: |
-        PLATFORM_PAIR=${PLATFORM//\//}]
+        PLATFORM_PAIR=${PLATFORM//\//}
         CONTAINER_REGISTRY=${PACKAGE%%\/*}
         FOUND_REGISTRY=${PACKAGE%\/*}
         FOUND_PACKAGE=${PACKAGE##*\/}
