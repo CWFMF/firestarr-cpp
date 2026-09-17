@@ -144,6 +144,8 @@ message("${SPECIFIC_REVISION}")
 set(VERSION_CODE "extern \"C\" const char* const SPECIFIC_REVISION{\"${SPECIFIC_REVISION}\"}\;")
 list(APPEND VERSION_CODE "extern \"C\" const char* const FULL_HASH{\"${FULL_HASH}\"}\;")
 list(APPEND VERSION_CODE "extern \"C\" const char* const COMPILED_ON{\"${COMPILED_ON}\"}\;")
+# HACK: add empty line to get trailing newline
+list(APPEND VERSION_CODE "")
 list(JOIN VERSION_CODE "\n" VERSION_CODE)
 if(EXISTS FILE_VERSION_CPP)
   file(STRINGS ${FILE_VERSION_CPP} VERSION_CODE_OLD)
