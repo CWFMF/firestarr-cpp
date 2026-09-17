@@ -80,6 +80,7 @@ runs:
         retention-days: 1
 
     - name: Set outputs
+      shell: bash
       run: |
         echo "target=${{ inputs.target }}" >> $GITHUB_OUTPUT
         echo "registry=${{ inputs.registry }}" >> $GITHUB_OUTPUT
