@@ -34,13 +34,8 @@ jobs:
 
       - name: Prepare environment
         run: |
-          echo "PACKAGE=${{ inputs.package }}" >> $GITHUB_ENV
-          echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
-
-      - name: Find variables
-        run: |
-          echo "CONTAINER_REGISTRY=${PACKAGE%%\/*}" >> $GITHUB_ENV
-          echo "FOUND_PACKAGE=${PACKAGE##*\/}" >> $GITHUB_ENV
+          package=${{ inputs.package }}
+          echo "CONTAINER_REGISTRY=${package%%\/*}" >> $GITHUB_ENV
 
       - name: Login to GHCR
         uses: docker/login-action@v4
@@ -52,30 +47,30 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: ${{ env.TARGET }} - Download digests
+      - name: ${{ inputs.target }} - Download digests
         uses: actions/download-artifact@v8
         with:
-          path: ${{ runner.temp }}/digests-${{ env.TARGET }}
-          pattern: digests-${{ env.TARGET }}-*
+          path: ${{ runner.temp }}/digests-${{ inputs.target }}
+          pattern: digests-${{ inputs.target }}-*
           merge-multiple: true
 
-      - name: ${{ env.TARGET }} - Docker meta
+      - name: ${{ inputs.target }} - Docker meta
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.PACKAGE }}
+          images: ${{ inputs.package }}
           flavor: ${{ inputs.flavor }}
           tags: ${{ inputs.tags }}
 
-      - name: ${{ env.TARGET }} - Create manifest list and push
-        working-directory: ${{ runner.temp }}/digests-${{ env.TARGET }}
+      - name: ${{ inputs.target }} - Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests-${{ inputs.target }}
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.PACKAGE }}@sha256:%s ' *)
+            $(printf '${{ inputs.package }}@sha256:%s ' *)
 
-      - name: ${{ env.TARGET }} - Inspect image
+      - name: ${{ inputs.target }} - Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.PACKAGE }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ${{ inputs.package }}:${{ steps.meta.outputs.version }}
 
       - name: Set outputs
         run: |
