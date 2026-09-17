@@ -53,6 +53,7 @@ jobs:
         id: build-firestarr
         with:
           target: firestarr
+          registry: ${{ steps.login.inputs.registry }}
           package: ${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
           platform: ${{ matrix.platform }}
 
@@ -60,21 +61,22 @@ jobs:
         id: build-firestarr-minimal
         with:
           target: firestarr-minimal
+          registry: ${{ steps.build-firestarr.inputs.registry }}
           package: ${{ steps.build-firestarr.inputs.package }}
-          platform: ${{ matrix.platform }}
+          platform: ${{ steps.build-firestarr.inputs.platform }}
 
       - name: Set outputs
         run: |
-          echo "registry=${{ steps.id.inputs.registry }}" >> $GITHUB_OUTPUT
+          echo "registry=${{ steps.login.inputs.registry }}" >> $GITHUB_OUTPUT
           echo "package=${{ steps.build-firestarr.inputs.package }}" >> $GITHUB_OUTPUT
 
   merge-firestarr:
     needs: [build-docker-image]
     uses: ./.github/workflows/docker-merge-image.yml
     with:
+      target: firestarr
       registry: ${{ needs.build-docker-image.outputs.registry }}
       package: ${{ needs.build-docker-image.outputs.package }}
-      target: firestarr
       flavor: |
         latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
         prefix=
@@ -90,9 +92,9 @@ jobs:
     needs: [build-docker-image]
     uses: ./.github/workflows/docker-merge-image.yml
     with:
+      target: firestarr-minimal
       registry: ${{ needs.build-docker-image.outputs.registry }}
       package: ${{ needs.build-docker-image.outputs.package }}
-      target: firestarr-minimal
       flavor: |
         latest=false
         prefix=

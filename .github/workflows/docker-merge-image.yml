@@ -16,9 +16,8 @@ on:
         required: true
         type: string
       registry:
-        required: false
+        required: true
         type: string
-        default: 'ghcr.io'
 
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
