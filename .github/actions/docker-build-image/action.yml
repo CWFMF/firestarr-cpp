@@ -30,12 +30,15 @@ runs:
     - name: Prepare environment
       shell: bash
       run: |
-        platform=${{ inputs.platform }}
-        platform_pair=${platform//\//}
-        package=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}/${{ inputs.package-name }}
-        echo "REGISTRY_CACHE=${package%\/*}/cache:${platform_pair}" >> $GITHUB_ENV
-        echo "PLATFORM_PAIR=${platform_pair}" >> $GITHUB_ENV
-        echo "PACKAGE=${package}" >> $GITHUB_ENV
+        echo "PLATFORM=${{ inputs.platform }}" >> $GITHUB_ENV
+        echo "REPO=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}" >> $GITHUB_ENV
+
+    - name: Set variables
+      shell: bash
+      run: |
+        echo "PLATFORM_PAIR=${PLATFORM//\//}" >> $GITHUB_ENV
+        echo "PACKAGE=${REPO}/${{ inputs.package-name }}" >> $GITHUB_ENV
+        echo "REGISTRY_CACHE=${REPO}/cache" >> $GITHUB_ENV
 
     - name: ${{ inputs.target }} - Docker meta
       id: meta
@@ -56,9 +59,13 @@ runs:
         push: ${{ github.event_name != 'pull_request' }}
         outputs: type=image,push-by-digest=true,name-canonical=true,push=true
         cache-from: |
+          type=registry,ref=${{ env.PACKAGE }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.ref_name }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}
         cache-to: |
-          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.ref_name }}
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
 
     - name: ${{ inputs.target }} - Export digest
       shell: bash
