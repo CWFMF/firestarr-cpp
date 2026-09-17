@@ -80,6 +80,7 @@ runs:
         retention-days: 1
 
     - name: Set outputs
+      id: output
       shell: bash
       run: |
         echo "target=${{ inputs.target }}" >> $GITHUB_OUTPUT
@@ -87,3 +88,10 @@ runs:
         echo "package-name=${{ inputs.package-name }}" >> $GITHUB_OUTPUT
         echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
         echo "package=${{ env.PACKAGE }}" >> $GITHUB_OUTPUT
+
+  outputs:
+    target: ${{ steps.output.outputs.target }}
+    registry: ${{ steps.output.outputs.registry }}
+    package-name: ${{ steps.output.outputs.package-name }}
+    platform: ${{ steps.output.outputs.platform }}
+    package: ${{ steps.output.outputs.package }}
