@@ -86,3 +86,4 @@ runs:
         echo "registry=${{ inputs.registry }}" >> $GITHUB_OUTPUT
         echo "package-name=${{ inputs.package-name }}" >> $GITHUB_OUTPUT
         echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
+        echo "package=${{ env.PACKAGE }}" >> $GITHUB_OUTPUT

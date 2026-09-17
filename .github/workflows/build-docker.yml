@@ -83,8 +83,7 @@ jobs:
     uses: ./.github/workflows/docker-merge-image.yml
     with:
       target: firestarr
-      registry: ${{ needs.build-docker-image.outputs.registry }}
-      package-name: ${{ needs.build-docker-image.outputs.package-name }}
+      package: ${{ needs.build-docker-image.outputs.package }}
       flavor: |
         latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
         prefix=
@@ -101,8 +100,7 @@ jobs:
     uses: ./.github/workflows/docker-merge-image.yml
     with:
       target: firestarr-minimal
-      registry: ${{ needs.build-docker-image.outputs.registry }}
-      package-name: ${{ needs.build-docker-image.outputs.package-name }}
+      package: ${{ needs.build-docker-image.outputs.package }}
       flavor: |
         latest=false
         prefix=
