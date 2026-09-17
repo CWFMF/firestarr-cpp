@@ -74,10 +74,15 @@ jobs:
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
 
+      - name: Set outputs
+        id: output
+        run: |
+          echo "registry=${{ env.registry }}" >> $GITHUB_OUTPUT
+          echo "package=${{ steps.build-firestarr.package }}" >> $GITHUB_OUTPUT
+
     outputs:
-      registry: ${{ steps.build-firestarr.outputs.registry }}
-      package-name: ${{ steps.build-firestarr.outputs.package-name }}
-      package: ${{ steps.build-firestarr.outputs.package }}
+      registry: ${{ steps.output.outputs.registry }}
+      package: ${{ steps.output.outputs.package }}
 
   merge-firestarr:
     needs: [build-docker-image]
