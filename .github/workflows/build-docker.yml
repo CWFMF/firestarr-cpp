@@ -49,6 +49,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      - name: Show values
+        run: |
+          echo "${{ steps.login.inputs.registry }}"
+          echo "${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}"
+          echo "${{ matrix.platform }}"
+
       - uses: ./.github/actions/docker-build-image
         id: build-firestarr
         with:
@@ -56,6 +62,12 @@ jobs:
           registry: ${{ steps.login.inputs.registry }}
           package: ${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
           platform: ${{ matrix.platform }}
+
+      - name: Show values
+        run: |
+          echo "${{ steps.build-firestarr.inputs.registry }}"
+          echo "${{ steps.build-firestarr.inputs.package }}"
+          echo "${{ steps.build-firestarr.inputs.platform }}"
 
       - uses: ./.github/actions/docker-build-image
         id: build-firestarr-minimal

@@ -36,11 +36,9 @@ runs:
         PLATFORM_PAIR=${PLATFORM//\//}
         CONTAINER_REGISTRY=${PACKAGE%%\/*}
         FOUND_REGISTRY=${PACKAGE%\/*}
-        FOUND_PACKAGE=${PACKAGE##*\/}
         echo "PLATFORM_PAIR=${PLATFORM_PAIR}" >> $GITHUB_ENV
         echo "CONTAINER_REGISTRY=${CONTAINER_REGISTRY}" >> $GITHUB_ENV
         echo "FOUND_REGISTRY=${FOUND_REGISTRY}" >> $GITHUB_ENV
-        echo "FOUND_PACKAGE=${FOUND_PACKAGE}" >> $GITHUB_ENV
         echo "REGISTRY_CACHE=${FOUND_REGISTRY}/cache:${PLATFORM_PAIR}" >> $GITHUB_ENV
 
     - name: ${{ env.TARGET }} - Docker meta
