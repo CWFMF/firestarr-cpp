@@ -89,9 +89,9 @@ runs:
         echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
         echo "package=${{ env.PACKAGE }}" >> $GITHUB_OUTPUT
 
-  outputs:
-    target: ${{ steps.output.outputs.target }}
-    registry: ${{ steps.output.outputs.registry }}
-    package-name: ${{ steps.output.outputs.package-name }}
-    platform: ${{ steps.output.outputs.platform }}
-    package: ${{ steps.output.outputs.package }}
+outputs:
+  target: ${{ steps.output.outputs.target }}
+  registry: ${{ steps.output.outputs.registry }}
+  package-name: ${{ steps.output.outputs.package-name }}
+  platform: ${{ steps.output.outputs.platform }}
+  package: ${{ steps.output.outputs.package }}
