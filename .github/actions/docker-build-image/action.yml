@@ -30,13 +30,11 @@ runs:
     - name: Prepare environment
       shell: bash
       run: |
-        echo "PLATFORM=${{ inputs.platform }}" >> $GITHUB_ENV
-        echo "REPO=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}" >> $GITHUB_ENV
-
-    - name: Set variables
-      shell: bash
-      run: |
+        PLATFORM=${{ inputs.platform }}
+        REPO=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}
+        REF_NAME=${{ github.ref_name }}
         echo "PLATFORM_PAIR=${PLATFORM//\//}" >> $GITHUB_ENV
+        echo "CACHE_REF=${REF_NAME//\//}" >> $GITHUB_ENV
         echo "PACKAGE=${REPO}/${{ inputs.package-name }}" >> $GITHUB_ENV
         echo "REGISTRY_CACHE=${REPO}/cache" >> $GITHUB_ENV
 
@@ -60,11 +58,11 @@ runs:
         outputs: type=image,push-by-digest=true,name-canonical=true,push=true
         cache-from: |
           type=registry,ref=${{ env.PACKAGE }}
-          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.ref_name }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}
         cache-to: |
-          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.ref_name }}
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
           type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
 
     - name: ${{ inputs.target }} - Export digest
