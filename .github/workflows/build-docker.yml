@@ -46,6 +46,7 @@ jobs:
           echo "TARGET=firestarr" >> $GITHUB_ENV
 
       - name: Find variables
+        run: |
           echo "CONTAINER_REGISTRY=${PACKAGE%%\/*}" >> $GITHUB_ENV
           echo "FOUND_REGISTRY=${PACKAGE%\/*}" >> $GITHUB_ENV
           echo "FOUND_PACKAGE=${PACKAGE##*\/}" >> $GITHUB_ENV
@@ -163,6 +164,7 @@ jobs:
           echo "FOUND_REGISTRY=${registry%\/*}" >> $GITHUB_ENV
 
       - name: Find variables
+        run: |
           echo "CONTAINER_REGISTRY=${PACKAGE%%\/*}" >> $GITHUB_ENV
           echo "FOUND_REGISTRY=${PACKAGE%\/*}" >> $GITHUB_ENV
           echo "FOUND_PACKAGE=${PACKAGE##*\/}" >> $GITHUB_ENV
@@ -233,6 +235,7 @@ jobs:
           echo "FOUND_REGISTRY=${registry%\/*}" >> $GITHUB_ENV
 
       - name: Find variables
+        run: |
           echo "CONTAINER_REGISTRY=${PACKAGE%%\/*}" >> $GITHUB_ENV
           echo "FOUND_REGISTRY=${PACKAGE%\/*}" >> $GITHUB_ENV
           echo "FOUND_PACKAGE=${PACKAGE##*\/}" >> $GITHUB_ENV
