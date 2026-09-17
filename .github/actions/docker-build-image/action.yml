@@ -19,6 +19,14 @@ inputs:
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
 
+outputs:
+  registry:
+    description: "Container registry"
+    value: ${{ steps.output.outputs.registry }}
+  package:
+    description: "Container package"
+    value: ${{ steps.output.outputs.package }}
+
 runs:
   using: "composite"
   steps:
@@ -88,10 +96,3 @@ runs:
         echo "package-name=${{ inputs.package-name }}" >> $GITHUB_OUTPUT
         echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
         echo "package=${{ env.PACKAGE }}" >> $GITHUB_OUTPUT
-
-outputs:
-  target: ${{ steps.output.outputs.target }}
-  registry: ${{ steps.output.outputs.registry }}
-  package-name: ${{ steps.output.outputs.package-name }}
-  platform: ${{ steps.output.outputs.platform }}
-  package: ${{ steps.output.outputs.package }}
