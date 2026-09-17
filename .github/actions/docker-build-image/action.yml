@@ -30,36 +30,27 @@ runs:
     - name: Prepare environment
       shell: bash
       run: |
-        registry=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}
-        echo "PACKAGE=${registry}/${{ inputs.package-name }}" >> $GITHUB_ENV
-        echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
-        echo "PLATFORM=${{ inputs.platform }}" >> $GITHUB_ENV
+        platform=${{ inputs.platform }}
+        platform_pair=${platform//\//}
+        package=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}/${{ inputs.package-name }}
+        echo "REGISTRY_CACHE=${package%\/*}/cache:${platform_pair}" >> $GITHUB_ENV
+        echo "PLATFORM_PAIR=${platform_pair}" >> $GITHUB_ENV
+        echo "PACKAGE=${package}" >> $GITHUB_ENV
 
-    - name: Find variables
-      shell: bash
-      run: |
-        PLATFORM_PAIR=${PLATFORM//\//}
-        CONTAINER_REGISTRY=${PACKAGE%%\/*}
-        FOUND_REGISTRY=${PACKAGE%\/*}
-        echo "PLATFORM_PAIR=${PLATFORM_PAIR}" >> $GITHUB_ENV
-        echo "CONTAINER_REGISTRY=${CONTAINER_REGISTRY}" >> $GITHUB_ENV
-        echo "FOUND_REGISTRY=${FOUND_REGISTRY}" >> $GITHUB_ENV
-        echo "REGISTRY_CACHE=${FOUND_REGISTRY}/cache:${PLATFORM_PAIR}" >> $GITHUB_ENV
-
-    - name: ${{ env.TARGET }} - Docker meta
+    - name: ${{ inputs.target }} - Docker meta
       id: meta
       uses: docker/metadata-action@v6
       with:
         images: ${{ env.PACKAGE }}
 
-    - name: ${{ env.TARGET }} - Build and push by digest
+    - name: ${{ inputs.target }} - Build and push by digest
       id: build
       uses: docker/build-push-action@v7
       with:
         context: .
         file: .docker/Dockerfile
-        target: ${{ env.TARGET }}
-        platforms: linux/${{ env.PLATFORM }}
+        target: ${{ inputs.target }}
+        platforms: linux/${{ inputs.platform }}
         labels: ${{ steps.meta.outputs.labels }}
         tags: ${{ env.PACKAGE }}
         push: ${{ github.event_name != 'pull_request' }}
@@ -69,18 +60,18 @@ runs:
         cache-to: |
           type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}
 
-    - name: ${{ env.TARGET }} - Export digest
+    - name: ${{ inputs.target }} - Export digest
       shell: bash
       run: |
-        mkdir -p ${{ runner.temp }}/digests-${{ env.TARGET }}
+        mkdir -p ${{ runner.temp }}/digests-${{ inputs.target }}
         digest="${{ steps.build.outputs.digest }}"
-        touch "${{ runner.temp }}/digests-${{ env.TARGET }}/${digest#sha256:}"
+        touch "${{ runner.temp }}/digests-${{ inputs.target }}/${digest#sha256:}"
 
-    - name: ${{ env.TARGET }} - Upload digest
+    - name: ${{ inputs.target }} - Upload digest
       uses: actions/upload-artifact@v7
       with:
-        name: digests-${{ env.TARGET }}-${{ env.PLATFORM_PAIR }}
-        path: ${{ runner.temp }}/digests-${{ env.TARGET }}/*
+        name: digests-${{ inputs.target }}-${{ env.PLATFORM_PAIR }}
+        path: ${{ runner.temp }}/digests-${{ inputs.target }}/*
         if-no-files-found: error
         retention-days: 1
 
