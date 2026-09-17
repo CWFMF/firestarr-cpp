@@ -28,6 +28,9 @@ jobs:
         # arm64 == arm64/v8
         platform: [amd64, arm64, ppc64le, riscv64, s390x]
         # platform: [amd64]
+    env:
+      registry: 'ghcr.io'
+      package: ${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -39,7 +42,7 @@ jobs:
         id: login
         uses: docker/login-action@v4
         with:
-          registry: ghcr.io
+          registry: ${{ env.registry }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -51,36 +54,31 @@ jobs:
 
       - name: Show values
         run: |
-          echo "${{ steps.login.inputs.registry }}"
-          echo "${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}"
+          echo "${{ env.registry }}"
+          echo "${{ env.package }}"
           echo "${{ matrix.platform }}"
 
       - uses: ./.github/actions/docker-build-image
         id: build-firestarr
         with:
           target: firestarr
-          registry: ${{ steps.login.inputs.registry }}
-          package: ${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
+          registry: ${{ env.registry }}
+          package: ${{ env.package }}
           platform: ${{ matrix.platform }}
-
-      - name: Show values
-        run: |
-          echo "${{ steps.build-firestarr.inputs.registry }}"
-          echo "${{ steps.build-firestarr.inputs.package }}"
-          echo "${{ steps.build-firestarr.inputs.platform }}"
 
       - uses: ./.github/actions/docker-build-image
         id: build-firestarr-minimal
         with:
           target: firestarr-minimal
-          registry: ${{ steps.build-firestarr.inputs.registry }}
-          package: ${{ steps.build-firestarr.inputs.package }}
-          platform: ${{ steps.build-firestarr.inputs.platform }}
+          registry: ${{ env.registry }}
+          package: ${{ env.package }}
+          platform: ${{ matrix.platform }}
 
       - name: Set outputs
         run: |
-          echo "registry=${{ steps.login.inputs.registry }}" >> $GITHUB_OUTPUT
-          echo "package=${{ steps.build-firestarr.inputs.package }}" >> $GITHUB_OUTPUT
+          echo "registry=${{ env.registry }}" >> $GITHUB_OUTPUT
+          echo "package=${{ env.package }}" >> $GITHUB_OUTPUT
+          echo "platform=${{ matrix.platform }}" >> $GITHUB_OUTPUT
 
   merge-firestarr:
     needs: [build-docker-image]
