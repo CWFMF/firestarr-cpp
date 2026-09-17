@@ -1,0 +1,78 @@
+name: docker-merge-image
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        required: true
+        type: string
+      flavor:
+        required: true
+        type: string
+      tags:
+        required: true
+        type: string
+
+env:
+  BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+
+jobs:
+  merge:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          submodules: true
+
+      - name: Prepare environment
+        run: |
+          registry=ghcr.io/${GITHUB_REPOSITORY@L}
+          package=${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
+          echo "PACKAGE=${registry}/${package}" >> $GITHUB_ENV
+          echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
+
+      - name: Find variables
+        run: |
+          echo "CONTAINER_REGISTRY=${PACKAGE%%\/*}" >> $GITHUB_ENV
+          echo "FOUND_REGISTRY=${PACKAGE%\/*}" >> $GITHUB_ENV
+          echo "FOUND_PACKAGE=${PACKAGE##*\/}" >> $GITHUB_ENV
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: ${{ env.TARGET }} - Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests-${{ env.TARGET }}
+          pattern: digests-${{ env.TARGET }}-*
+          merge-multiple: true
+
+      - name: ${{ env.TARGET }} - Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.PACKAGE }}
+          flavor: ${{ inputs.flavor }}
+          tags: ${{ inputs.tags }}
+
+      - name: ${{ env.TARGET }} - Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests-${{ env.TARGET }}
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.PACKAGE }}@sha256:%s ' *)
+
+      - name: ${{ env.TARGET }} - Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.PACKAGE }}:${{ steps.meta.outputs.version }}
