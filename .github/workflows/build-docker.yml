@@ -110,7 +110,7 @@ jobs:
         prefix=
         suffix=-minimal
       tags: |
-        type=ref,event=pr
+        type=ref,event=pr,prefix=,suffix=-minimal
         type=ref,prefix=,suffix=-minimal,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
         type=ref,prefix=,suffix=-minimal-latest,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
         type=semver,pattern={{version}},prefix=,suffix=-minimal,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
