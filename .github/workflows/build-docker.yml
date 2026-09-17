@@ -52,12 +52,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Show values
-        run: |
-          echo "${{ env.registry }}"
-          echo "${{ env.package-name }}"
-          echo "${{ matrix.platform }}"
-
       - uses: ./.github/actions/docker-build-image
         id: build-firestarr
         with:
@@ -74,13 +68,8 @@ jobs:
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
 
-      - name: Set outputs
-        id: output
-        run: |
-          echo "package=${{ steps.build-firestarr.outputs.package }}" >> $GITHUB_OUTPUT
-
     outputs:
-      package: ${{ steps.output.outputs.package }}
+      package: ${{ steps.build-firestarr.outputs.package }}
 
   merge-firestarr:
     needs: [build-docker-image]
