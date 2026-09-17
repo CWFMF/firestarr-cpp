@@ -5,8 +5,6 @@ services:
       context: .
       target: firestarr
       dockerfile: .docker/Dockerfile
-      args:
-        VERSION: ${VERSION}
       tags:
         - firestarr:${VERSION}
     volumes:
@@ -25,8 +23,6 @@ services:
       context: .
       target: firestarr-minimal
       dockerfile: .docker/Dockerfile
-      args:
-        VERSION: ${VERSION}
       tags:
         - firestarr-minimal:${VERSION}
     volumes:
@@ -45,8 +41,6 @@ services:
       context: .
       target: firestarr-dev
       dockerfile: .docker/Dockerfile.dev
-      args:
-        VERSION: ${VERSION}
       tags:
         - firestarr-dev:${VERSION}
     entrypoint: tail -f /dev/null
