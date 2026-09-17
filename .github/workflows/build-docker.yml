@@ -43,7 +43,7 @@ jobs:
           registry=${{ env.CONTAINER_REGISTRY }}/${GITHUB_REPOSITORY@L}
           image=${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
           echo "REGISTRY_CACHE=${registry}/cache:${platform//\//}" >> $GITHUB_ENV
-          echo "TARGET=${registry}/${image}" >> $GITHUB_ENV
+          echo "PACKAGE=${registry}/${image}" >> $GITHUB_ENV
           echo "IMAGE=firestarr" >> $GITHUB_ENV
 
       - name: Login to container registry
@@ -63,7 +63,7 @@ jobs:
         id: meta-normal
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.TARGET }}
+          images: ${{ env.PACKAGE }}
 
       - name: ${{ env.IMAGE }} - Build and push by digest
         id: build-normal
@@ -74,7 +74,7 @@ jobs:
           target: ${{ env.IMAGE }}
           platforms: linux/${{ matrix.platform }}
           labels: ${{ steps.meta-normal.outputs.labels }}
-          tags: ${{ env.TARGET }}
+          tags: ${{ env.PACKAGE }}
           push: ${{ github.event_name != 'pull_request' }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           cache-from: |
@@ -104,7 +104,7 @@ jobs:
         id: meta-minimal
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.TARGET }}
+          images: ${{ env.PACKAGE }}
 
       - name: ${{ env.IMAGE }} - Build and push by digest
         id: build-minimal
@@ -115,7 +115,7 @@ jobs:
           target: ${{ env.IMAGE }}
           platforms: linux/${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.TARGET }}
+          tags: ${{ env.PACKAGE }}
           labels: ${{ steps.meta-minimal.outputs.labels }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           cache-from: |
@@ -157,7 +157,7 @@ jobs:
           registry=${{ env.CONTAINER_REGISTRY }}/${GITHUB_REPOSITORY@L}
           image=${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
           echo "REGISTRY_CACHE=${registry}/cache" >> $GITHUB_ENV
-          echo "TARGET=${registry}/${image}" >> $GITHUB_ENV
+          echo "PACKAGE=${registry}/${image}" >> $GITHUB_ENV
           echo "IMAGE=firestarr" >> $GITHUB_ENV
 
       - name: Login to GHCR
@@ -182,7 +182,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ${{ env.TARGET }}
+            ${{ env.PACKAGE }}
           flavor: |
             latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
             prefix=
@@ -198,11 +198,11 @@ jobs:
         working-directory: ${{ runner.temp }}/digests-${{ env.IMAGE }}
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.TARGET }}@sha256:%s ' *)
+            $(printf '${{ env.PACKAGE }}@sha256:%s ' *)
 
       - name: ${{ env.IMAGE }} - Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.TARGET }}:${{ steps.meta-normal.outputs.version }}
+          docker buildx imagetools inspect ${{ env.PACKAGE }}:${{ steps.meta-normal.outputs.version }}
 
   merge-minimal:
     runs-on: ubuntu-24.04
@@ -224,7 +224,7 @@ jobs:
           registry=${{ env.CONTAINER_REGISTRY }}/${GITHUB_REPOSITORY@L}
           image=${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
           echo "REGISTRY_CACHE=${registry}/cache" >> $GITHUB_ENV
-          echo "TARGET=${registry}/${image}" >> $GITHUB_ENV
+          echo "PACKAGE=${registry}/${image}" >> $GITHUB_ENV
           echo "IMAGE=firestarr-minimal" >> $GITHUB_ENV
 
       - name: Login to GHCR
@@ -249,7 +249,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ${{ env.TARGET }}
+            ${{ env.PACKAGE }}
           flavor: |
             latest=false
             prefix=
@@ -267,8 +267,8 @@ jobs:
         working-directory: ${{ runner.temp }}/digests-${{ env.IMAGE }}
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.TARGET }}@sha256:%s ' *)
+            $(printf '${{ env.PACKAGE }}@sha256:%s ' *)
 
       - name: ${{ env.IMAGE }} - Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.TARGET }}:${{ steps.meta-minimal.outputs.version }}
+          docker buildx imagetools inspect ${{ env.PACKAGE }}:${{ steps.meta-minimal.outputs.version }}
