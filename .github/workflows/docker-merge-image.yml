@@ -81,3 +81,9 @@ jobs:
       - name: ${{ env.TARGET }} - Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.PACKAGE }}:${{ steps.meta.outputs.version }}
+
+      - name: Set outputs
+        run: |
+          echo "target=${{ inputs.target }}" >> $GITHUB_OUTPUT
+          echo "registry=${{ inputs.registry }}" >> $GITHUB_OUTPUT
+          echo "package=${{ inputs.package }}" >> $GITHUB_OUTPUT

@@ -78,3 +78,10 @@ runs:
         path: ${{ runner.temp }}/digests-${{ env.TARGET }}/*
         if-no-files-found: error
         retention-days: 1
+
+    - name: Set outputs
+      run: |
+        echo "target=${{ inputs.target }}" >> $GITHUB_OUTPUT
+        echo "registry=${{ inputs.registry }}" >> $GITHUB_OUTPUT
+        echo "package=${{ inputs.package }}" >> $GITHUB_OUTPUT
+        echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
