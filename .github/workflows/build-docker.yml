@@ -9,7 +9,6 @@ on:
   workflow_dispatch:
 
 env:
-  CONTAINER_REGISTRY: ghcr.io
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
 
 jobs:
@@ -37,11 +36,15 @@ jobs:
           submodules: true
 
       - name: Login to container registry
+        id: login
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.CONTAINER_REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          echo "registry=${{ steps.id.inputs.registry }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -63,7 +66,7 @@ jobs:
     needs: [build-docker-image]
     uses: ./.github/workflows/docker-merge-image.yml
     with:
-      registry: ${{ env.CONTAINER_REGISTRY }}
+      registry: ${{ needs.build-docker-image.outputs.registry }}
       target: firestarr
       flavor: |
         latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
@@ -80,7 +83,7 @@ jobs:
     needs: [build-docker-image]
     uses: ./.github/workflows/docker-merge-image.yml
     with:
-      registry: ${{ env.CONTAINER_REGISTRY }}
+      registry: ${{ needs.build-docker-image.outputs.registry }}
       target: firestarr-minimal
       flavor: |
         latest=false
