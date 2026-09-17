@@ -43,9 +43,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: |
-          echo "registry=${{ steps.id.inputs.registry }}" >> $GITHUB_OUTPUT
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
@@ -53,20 +50,30 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - uses: ./.github/actions/docker-build-image
+        id: build-firestarr
         with:
           target: firestarr
+          package: ${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
           platform: ${{ matrix.platform }}
 
       - uses: ./.github/actions/docker-build-image
+        id: build-firestarr-minimal
         with:
           target: firestarr-minimal
+          package: ${{ steps.build-firestarr.inputs.package }}
           platform: ${{ matrix.platform }}
+
+      - name: Set outputs
+        run: |
+          echo "registry=${{ steps.id.inputs.registry }}" >> $GITHUB_OUTPUT
+          echo "package=${{ steps.build-firestarr.inputs.package }}" >> $GITHUB_OUTPUT
 
   merge-firestarr:
     needs: [build-docker-image]
     uses: ./.github/workflows/docker-merge-image.yml
     with:
       registry: ${{ needs.build-docker-image.outputs.registry }}
+      package: ${{ needs.build-docker-image.outputs.package }}
       target: firestarr
       flavor: |
         latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
@@ -84,6 +91,7 @@ jobs:
     uses: ./.github/workflows/docker-merge-image.yml
     with:
       registry: ${{ needs.build-docker-image.outputs.registry }}
+      package: ${{ needs.build-docker-image.outputs.package }}
       target: firestarr-minimal
       flavor: |
         latest=false
