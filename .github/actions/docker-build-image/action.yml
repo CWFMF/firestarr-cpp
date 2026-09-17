@@ -20,9 +20,6 @@ env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
 
 outputs:
-  registry:
-    description: "Container registry"
-    value: ${{ steps.output.outputs.registry }}
   package:
     description: "Container package"
     value: ${{ steps.output.outputs.package }}
@@ -91,8 +88,4 @@ runs:
       id: output
       shell: bash
       run: |
-        echo "target=${{ inputs.target }}" >> $GITHUB_OUTPUT
-        echo "registry=${{ inputs.registry }}" >> $GITHUB_OUTPUT
-        echo "package-name=${{ inputs.package-name }}" >> $GITHUB_OUTPUT
-        echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
         echo "package=${{ env.PACKAGE }}" >> $GITHUB_OUTPUT
