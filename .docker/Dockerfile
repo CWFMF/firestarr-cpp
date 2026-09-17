@@ -91,7 +91,7 @@ RUN --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
     --mount=type=bind,source=./LICENSE,target=./LICENSE \
     cmake --preset Release \
     && cmake --build --parallel --preset Release \
-    && ctest --preset Release
+    && ctest --parallel --preset Release
 
 # make a layer with scratch to clear out old layers
 FROM scratch AS firestarr-minimal
