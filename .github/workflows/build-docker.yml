@@ -55,12 +55,12 @@ jobs:
       - uses: ./.github/actions/docker-build-image
         with:
           target: firestarr
-          platform: ${{ env.PLATFORM }}
+          platform: ${{ matrix.platform }}
 
       - uses: ./.github/actions/docker-build-image
         with:
           target: firestarr-minimal
-          platform: ${{ env.PLATFORM }}
+          platform: ${{ matrix.platform }}
 
   merge-firestarr:
     needs: [build-docker-image]
