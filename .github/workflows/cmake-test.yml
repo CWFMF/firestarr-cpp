@@ -2,6 +2,8 @@ name: cmake-test
 
 on:
   push:
+    paths-ignore:
+      - '.github/**docker**'
   pull_request:
   workflow_dispatch:
   release:
