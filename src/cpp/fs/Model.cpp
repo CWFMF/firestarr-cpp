@@ -74,7 +74,7 @@ void Model::setWeather(const FwiWeather& weather, const Day start_day)
 }
 void Model::readWeather(
   const FwiWeather& yesterday,
-  const MathSize latitude,
+  const StartPoint& start_point,
   const string& filename
 )
 {
@@ -207,7 +207,15 @@ void Model::readWeather(
           const auto month = t.tm_mon + 1;
           s_daily.emplace(
             day,
-            FwiWeather{*prev, month, latitude, w.temperature, w.rh, w.wind, Precipitation(apcp_24h)}
+            FwiWeather{
+              *prev,
+              month,
+              start_point.latitude(),
+              w.temperature,
+              w.rh,
+              w.wind,
+              Precipitation(apcp_24h)
+            }
           );
           // new 24 hour period
           logging::extensive("Resetting daily precip to {:f} from {:f}", 0.0, apcp_24h);
@@ -1245,7 +1253,7 @@ int Model::runScenarios(
   }
   else
   {
-    model.readWeather(yesterday, start_point.latitude(), weather_input.canonical());
+    model.readWeather(yesterday, start_point, weather_input.canonical());
     if (model.wx_.empty())
     {
       exit(logging::fatal("No weather provided"));

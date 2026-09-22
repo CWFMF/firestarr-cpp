@@ -278,7 +278,11 @@ public:
    * \param latitude Latitude to calculate for
    * \param filename Weather file to read
    */
-  void readWeather(const FwiWeather& yesterday, const MathSize latitude, const string& filename);
+  void readWeather(
+    const FwiWeather& yesterday,
+    const StartPoint& start_point,
+    const string& filename
+  );
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
