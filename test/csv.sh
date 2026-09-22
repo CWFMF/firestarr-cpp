@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 FILE_WX=test/output/csv/header_casing.csv
+DIR_OUT=test/output/csv
 scripts/build.sh
 for h in \
   "ScEnArio,date,PreC,TeMP,RH,ws,Wd,FFmC,DMC,DC,ISI,BUI,FWI" \
@@ -10,12 +11,12 @@ for h in \
   ;
 do
   echo -e "Using header:\n${h}"
-  rm -rf test/output/csv
-  mkdir test/output/csv
+  rm -rf "${DIR_OUT}"
+  mkdir -p "${DIR_OUT}"
   echo ${h} > ${FILE_WX}
   grep -E "^0," test/input/10N_50651/firestarr_10N_50651_wx.csv >> ${FILE_WX}
   ./firestarr \
-    test/output/csv \
+    "${DIR_OUT}" \
     2024-06-03 59 -123 01:00 \
     --ffmc 89.9 \
     --dmc 59.5 \
