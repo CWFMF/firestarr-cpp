@@ -23,6 +23,7 @@ public:
   Point(Point&& rhs) noexcept = default;
   Point& operator=(const Point& rhs) noexcept = default;
   Point& operator=(Point&& rhs) noexcept = default;
+  auto operator<=>(const Point& rhs) const noexcept = default;
   /**
    * \brief Latitude (decimal degrees)
    * \return Latitude (degrees)
