@@ -106,8 +106,10 @@ void Model::readWeather(
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     constexpr auto expected_header = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
+    const auto expected_header_lower = tolower(expected_header);
+    const auto input_header_lower = tolower(str);
     logging::check_fatal(
-      expected_header != str,
+      expected_header_lower != input_header_lower,
       "Input CSV must have columns in this order:\n'{:s}'\n but got:\n'{:s}'",
       expected_header,
       str
