@@ -590,10 +590,10 @@ CellPointsMap spread_map(
       auto& offsets = spread_info.offsets(key);
       const spreading_points::mapped_type& cell_pts = kv0.second;
       auto r = [](
-                 const DurationSize& arrival_time,
+                 const DurationSize& new_time,
                  const DurationSize& duration,
                  const OffsetSet& offsets,
-                 const spreading_points::mapped_type& cell_pts_map
+                 const spreading_points::mapped_type& cell_pts
                ) {
         CellPointsMap result{};
         OffsetSet offsets_after_duration{};
@@ -608,13 +608,13 @@ CellPointsMap spread_map(
             };
           }
         );
-        for (auto& [location, cell_pts] : cell_pts_map)
+        for (auto& [location, cell_pts] : cell_pts)
         {
           if (cell_pts.empty())
           {
             continue;
           }
-          spread_points(result, cell_pts, offsets_after_duration, arrival_time);
+          spread_points(result, cell_pts, offsets_after_duration, new_time);
           // result.merge(unburnable, r1);
         }
         return result;
