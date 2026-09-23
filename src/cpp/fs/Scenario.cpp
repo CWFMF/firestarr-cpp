@@ -575,37 +575,6 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   return this;
 }
-CellPointsMap apply_offsets_spreadkey(
-  const DurationSize& arrival_time,
-  const DurationSize& duration,
-  const OffsetSet& offsets,
-  const spreading_points::mapped_type& cell_pts_map
-)
-{
-  CellPointsMap result{};
-  OffsetSet offsets_after_duration{};
-  offsets_after_duration.resize(offsets.size());
-  std::transform(
-    offsets.cbegin(),
-    offsets.cend(),
-    offsets_after_duration.begin(),
-    [&](const ROSOffset& r) {
-      return ROSOffset{
-        r.intensity, r.ros, r.raz, Offset{r.offset.x * duration, r.offset.y * duration}
-      };
-    }
-  );
-  for (auto& [location, cell_pts] : cell_pts_map)
-  {
-    if (cell_pts.empty())
-    {
-      continue;
-    }
-    spread_points(result, cell_pts, offsets_after_duration, arrival_time);
-    // result.merge(unburnable, r1);
-  }
-  return result;
-}
 CellPointsMap spread_map(
   const BurnedData& unburnable,
   const SpreadCache& spread_info,
@@ -620,7 +589,36 @@ CellPointsMap spread_map(
       auto& key = kv0.first;
       auto& offsets = spread_info.offsets(key);
       const spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey(new_time, duration, offsets, cell_pts);
+      auto r = [](
+                 const DurationSize& arrival_time,
+                 const DurationSize& duration,
+                 const OffsetSet& offsets,
+                 const spreading_points::mapped_type& cell_pts_map
+               ) {
+        CellPointsMap result{};
+        OffsetSet offsets_after_duration{};
+        offsets_after_duration.resize(offsets.size());
+        std::transform(
+          offsets.cbegin(),
+          offsets.cend(),
+          offsets_after_duration.begin(),
+          [&](const ROSOffset& r) {
+            return ROSOffset{
+              r.intensity, r.ros, r.raz, Offset{r.offset.x * duration, r.offset.y * duration}
+            };
+          }
+        );
+        for (auto& [location, cell_pts] : cell_pts_map)
+        {
+          if (cell_pts.empty())
+          {
+            continue;
+          }
+          spread_points(result, cell_pts, offsets_after_duration, arrival_time);
+          // result.merge(unburnable, r1);
+        }
+        return result;
+      }(new_time, duration, offsets, cell_pts);
       return r;
     });
   auto it = spread.begin();
