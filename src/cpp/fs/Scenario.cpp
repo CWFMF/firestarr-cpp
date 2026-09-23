@@ -655,7 +655,6 @@ DurationSize do_spread(
   SpreadCache& spread_info,
   const Scenario& scenario,
   const BurnedData& unburnable,
-  const FwiWeather* wx,
   const DurationSize time,
   const DurationSize max_duration
 ) noexcept
@@ -751,7 +750,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     max_ros_ = 0.0;
   }
   auto new_time =
-    do_spread(max_ros_, points_, spread_info_, *this, unburnable_, wx, time, max_duration);
+    do_spread(max_ros_, points_, spread_info_, *this, unburnable_, time, max_duration);
   if (-1 == new_time)
   {
     // if no spread then we left everything back in points still
