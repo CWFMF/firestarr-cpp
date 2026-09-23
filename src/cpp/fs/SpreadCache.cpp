@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SpreadCache.h"
+#include "FireSpread.h"
 #include "Log.h"
 #include "Scenario.h"
 namespace fs
@@ -11,30 +12,24 @@ static MathSize find_min_ros(const Scenario& scenario, const DurationSize time)
   const MathSize min_ros = settings.minimum_ros;
   return settings.deterministic ? min_ros : std::max(scenario.spreadThresholdByRos(time), min_ros);
 }
-std::pair<map<SpreadKey, SpreadInfo>::iterator, bool> SpreadCache::add_spread(
+ptr<const SpreadInfo> SpreadCache::add_spread(
   const SpreadKey& key,
   ptr<const Scenario> scenario,
   DurationSize time
 ) noexcept
 {
-  return spread_info_.try_emplace(
-    key,
-    time,
-    find_min_ros(*scenario, time),
-    scenario->cellSize(),
-    key,
-    scenario->nd(time),
-    scenario->weather(time),
-    scenario->weather_daily(time)
-  );
-}
-SpreadCache::SpreadCacheMap::const_iterator SpreadCache::find(const SpreadKey& key) const noexcept
-{
-  return spread_info_.find(key);
-}
-SpreadCache::SpreadCacheMap::const_iterator SpreadCache::end() const noexcept
-{
-  return spread_info_.end();
+  return &(spread_info_
+             .try_emplace(
+               key,
+               time,
+               find_min_ros(*scenario, time),
+               scenario->cellSize(),
+               key,
+               scenario->nd(time),
+               scenario->weather(time),
+               scenario->weather_daily(time)
+             )
+             .first->second);
 }
 MathSize SpreadCache::maxIntensity(const SpreadKey& key) const noexcept
 {

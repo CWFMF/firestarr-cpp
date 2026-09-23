@@ -620,7 +620,7 @@ CellPointsMap spread_map(
       auto& key = kv0.first;
       auto& offsets = spread_info.offsets(key);
       const spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey( new_time, duration, offsets, cell_pts);
+      auto r = apply_offsets_spreadkey(new_time, duration, offsets, cell_pts);
       return r;
     });
   auto it = spread.begin();
@@ -673,9 +673,8 @@ DurationSize do_spread(
       const Cell for_cell = scenario.cell(loc);
       const auto key = for_cell.key();
       {
-        auto origin_inserted = spread_info.add_spread(key, &scenario, time);
         // any cell that has the same fuel, slope, and aspect has the same spread
-        const auto& origin = origin_inserted.first->second;
+        auto& origin = *spread_info.add_spread(key, &scenario, time);
         // filter out things not spreading fast enough here so they get copied if they aren't
         // isNotSpreading() had better be true if ros is lower than minimum
         const auto ros = origin.headRos();
