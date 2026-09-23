@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "SpreadCache.h"
+#include "Log.h"
 #include "Scenario.h"
 namespace fs
 {
@@ -17,6 +18,9 @@ std::pair<map<SpreadKey, SpreadInfo>::iterator, bool> SpreadCache::add_spread(
   const ptr<const FwiWeather> weather
 ) noexcept
 {
+  logging::check_fatal(
+    weather != scenario->weather(time), "scenario->weather({}) doesn't match passed weather", time
+  );
   return spread_info_.try_emplace(
     key,
     time,
