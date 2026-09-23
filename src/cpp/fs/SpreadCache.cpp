@@ -10,7 +10,9 @@ std::pair<map<SpreadKey, SpreadInfo>::iterator, bool> SpreadCache::add_spread(
   const ptr<const FwiWeather> weather
 ) noexcept
 {
-  return spread_info_.try_emplace(key, *scenario, time, key, scenario->nd(time), weather);
+  return spread_info_.try_emplace(
+    key, *scenario, time, key, scenario->nd(time), weather, scenario->weather_daily(time)
+  );
 }
 SpreadCache::SpreadCacheMap::const_iterator SpreadCache::find(const SpreadKey& key) const noexcept
 {

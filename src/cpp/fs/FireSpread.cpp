@@ -57,15 +57,6 @@ static MathSize calculate_standard_wsv(const MathSize v) noexcept
   return v < 40.0 ? exp(0.05039 * v) : 12.0 * (1.0 - exp(-0.0818 * (v - 28)));
 }
 static const LookupTable<&calculate_standard_wsv> STANDARD_WSV{};
-SpreadInfo::SpreadInfo(
-  const Scenario& scenario,
-  const DurationSize time,
-  const SpreadKey& key,
-  const int nd,
-  const ptr<const FwiWeather> weather
-)
-  : SpreadInfo(scenario, time, key, nd, weather, scenario.weather_daily(time))
-{ }
 MathSize SpreadInfo::initial(
   SpreadInfo& spread,
   const FwiWeather& weather,

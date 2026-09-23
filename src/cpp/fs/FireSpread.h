@@ -51,13 +51,6 @@ public:
   static const SlopeTableArray SlopeTable;
   SpreadInfo() = default;
   ~SpreadInfo() = default;
-  SpreadInfo(
-    const Scenario& scenario,
-    DurationSize time,
-    const SpreadKey& key,
-    int nd,
-    const ptr<const FwiWeather> weather
-  );
   constexpr SpreadInfo(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo(const SpreadInfo& rhs) noexcept = default;
   constexpr SpreadInfo& operator=(SpreadInfo&& rhs) noexcept = default;
@@ -215,11 +208,6 @@ public:
   MathSize crownFuelConsumption() const { return cfc_; }
   char fireDescription() const { return cfb_ >= 0.9 ? 'C' : (cfb_ < 0.1 ? 'S' : 'I'); }
   MathSize surfaceFuelConsumption() const { return sfc_; }
-  MathSize totalFuelConsumption() const { return tfc_; }
-
-private:
-  // HACK: have private constructor so is_spreading() can short-circuit the calculation,
-  // but nothing else can get a partially constructed SpreadInfo object
   /**
    * \brief Calculate fire spread for time and place
    * \param scenario Scenario this is spreading in
@@ -237,6 +225,11 @@ private:
     const ptr<const FwiWeather> weather,
     const ptr<const FwiWeather> weather_daily
   );
+  MathSize totalFuelConsumption() const { return tfc_; }
+
+private:
+  // HACK: have private constructor so is_spreading() can short-circuit the calculation,
+  // but nothing else can get a partially constructed SpreadInfo object
   /**
    * Actual fire spread calculation without needing to worry about settings or scenarios
    */
