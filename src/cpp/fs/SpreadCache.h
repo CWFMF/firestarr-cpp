@@ -19,8 +19,7 @@ public:
   std::pair<SpreadCacheMap::iterator, bool> add_spread(
     const SpreadKey& key,
     ptr<const Scenario> scenario,
-    DurationSize time,
-    const ptr<const FwiWeather> weather
+    DurationSize time
   ) noexcept;
   SpreadCacheMap::const_iterator find(const SpreadKey& key) const noexcept;
   SpreadCacheMap::const_iterator end() const noexcept;

@@ -14,13 +14,9 @@ static MathSize find_min_ros(const Scenario& scenario, const DurationSize time)
 std::pair<map<SpreadKey, SpreadInfo>::iterator, bool> SpreadCache::add_spread(
   const SpreadKey& key,
   ptr<const Scenario> scenario,
-  DurationSize time,
-  const ptr<const FwiWeather> weather
+  DurationSize time
 ) noexcept
 {
-  logging::check_fatal(
-    weather != scenario->weather(time), "scenario->weather({}) doesn't match passed weather", time
-  );
   return spread_info_.try_emplace(
     key,
     time,
@@ -28,7 +24,7 @@ std::pair<map<SpreadKey, SpreadInfo>::iterator, bool> SpreadCache::add_spread(
     scenario->cellSize(),
     key,
     scenario->nd(time),
-    weather,
+    scenario->weather(time),
     scenario->weather_daily(time)
   );
 }

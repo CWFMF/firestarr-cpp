@@ -675,7 +675,7 @@ DurationSize do_spread(
       const Cell for_cell = scenario.cell(loc);
       const auto key = for_cell.key();
       {
-        auto origin_inserted = spread_info.add_spread(key, &scenario, time, wx);
+        auto origin_inserted = spread_info.add_spread(key, &scenario, time);
         // any cell that has the same fuel, slope, and aspect has the same spread
         const auto& origin = origin_inserted.first->second;
         // filter out things not spreading fast enough here so they get copied if they aren't
