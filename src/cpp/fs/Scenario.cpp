@@ -586,15 +586,10 @@ CellPointsMap spread_map(
   CellPointsMap cell_pts{};
   auto spread =
     std::views::transform(to_spread, [&](const spreading_points::value_type& kv0) -> CellPointsMap {
-      auto& key = kv0.first;
-      auto& offsets = spread_info.offsets(key);
-      const spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = [](
-                 const DurationSize& new_time,
-                 const DurationSize& duration,
-                 const OffsetSet& offsets,
-                 const spreading_points::mapped_type& cell_pts
-               ) {
+      const auto& key = kv0.first;
+      const auto& offsets = spread_info.offsets(key);
+      const auto& cell_pts = kv0.second;
+      auto r = [&]() {
         CellPointsMap result{};
         OffsetSet offsets_after_duration{};
         offsets_after_duration.resize(offsets.size());
@@ -618,7 +613,7 @@ CellPointsMap spread_map(
           // result.merge(unburnable, r1);
         }
         return result;
-      }(new_time, duration, offsets, cell_pts);
+      }();
       return r;
     });
   auto it = spread.begin();
