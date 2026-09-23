@@ -576,7 +576,6 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   return this;
 }
 CellPointsMap apply_offsets_spreadkey(
-  const BurnedData& unburnable,
   const DurationSize& arrival_time,
   const DurationSize& duration,
   const OffsetSet& offsets,
@@ -621,7 +620,7 @@ CellPointsMap spread_map(
       auto& key = kv0.first;
       auto& offsets = spread_info.offsets(key);
       const spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey(unburnable, new_time, duration, offsets, cell_pts);
+      auto r = apply_offsets_spreadkey( new_time, duration, offsets, cell_pts);
       return r;
     });
   auto it = spread.begin();
