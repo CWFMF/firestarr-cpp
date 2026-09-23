@@ -3,6 +3,13 @@
 #include "Scenario.h"
 namespace fs
 {
+static MathSize find_min_ros(const Scenario& scenario, const DurationSize time)
+{
+  // HACK: resolve once and fail if not set already
+  static const auto& settings = fs::settings::instance();
+  const MathSize min_ros = settings.minimum_ros;
+  return settings.deterministic ? min_ros : std::max(scenario.spreadThresholdByRos(time), min_ros);
+}
 std::pair<map<SpreadKey, SpreadInfo>::iterator, bool> SpreadCache::add_spread(
   const SpreadKey& key,
   ptr<const Scenario> scenario,
@@ -11,7 +18,14 @@ std::pair<map<SpreadKey, SpreadInfo>::iterator, bool> SpreadCache::add_spread(
 ) noexcept
 {
   return spread_info_.try_emplace(
-    key, *scenario, time, key, scenario->nd(time), weather, scenario->weather_daily(time)
+    key,
+    time,
+    find_min_ros(*scenario, time),
+    scenario->cellSize(),
+    key,
+    scenario->nd(time),
+    weather,
+    scenario->weather_daily(time)
   );
 }
 SpreadCache::SpreadCacheMap::const_iterator SpreadCache::find(const SpreadKey& key) const noexcept

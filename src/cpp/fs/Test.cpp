@@ -198,7 +198,9 @@ string run_test(
   FireWeather weather(fuel, start_date, dc, dmc, ffmc, wind);
   TestScenario scenario(&model, start_xy, ForPoint, start_date, end_date, &weather, final_sizes);
   const auto w = weather.at(start_date);
-  auto info = SpreadInfo(scenario, start_date, start_cell.key(), model.nd(start_date), w, w);
+  SpreadCache spread_cache{};
+  auto e = spread_cache.add_spread(start_cell.key(), &scenario, start_date, w);
+  auto& info = e.first->second;
   showSpread(info, w, fuel);
   map<DurationSize, shared_ptr<ProbabilityMap>> probabilities{};
   logging::debug("Starting simulation");

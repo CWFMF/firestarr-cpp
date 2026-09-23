@@ -3,12 +3,12 @@
 #include "FuelLookup.h"
 #include "FuelType.h"
 #include "LookupTable.h"
-#include "Scenario.h"
 #include "Settings.h"
 #include "SpreadAlgorithm.h"
 #include "unstable.h"
 namespace fs
 {
+using namespace fs::fuel;
 /**
  * \brief Maximum slope that affects ISI - everything after this is the same factor
  */
@@ -126,31 +126,6 @@ MathSize SpreadInfo::initial(
   }
   return spread.head_ros_;
 }
-static MathSize find_min_ros(const Scenario& scenario, const DurationSize time)
-{
-  // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
-  const MathSize min_ros = settings.minimum_ros;
-  return settings.deterministic ? min_ros : std::max(scenario.spreadThresholdByRos(time), min_ros);
-}
-SpreadInfo::SpreadInfo(
-  const Scenario& scenario,
-  const DurationSize time,
-  const SpreadKey& key,
-  const int nd,
-  const ptr<const FwiWeather> weather,
-  const ptr<const FwiWeather> weather_daily
-)
-  : SpreadInfo(
-      time,
-      find_min_ros(scenario, time),
-      scenario.cellSize(),
-      key,
-      nd,
-      weather,
-      weather_daily
-    )
-{ }
 static SpreadKey make_key(const SlopeSize slope, const AspectSize aspect, const char* fuel_name)
 {
   // HACK: resolve once and fail if not set already

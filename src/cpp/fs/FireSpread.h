@@ -27,7 +27,6 @@ using fs::fuel::OffsetSet;
 static constexpr MathSize MAX_SPREAD_ANGLE = 5.0;
 static constexpr MathSize INVALID_ROS = -1.0;
 static constexpr MathSize INVALID_INTENSITY = -1.0;
-class Scenario;
 /**
  * \brief Possible results of an attempt to spread.
  */
@@ -40,7 +39,7 @@ enum SpreadResult
 int calculate_nd_ref_for_point(const int elevation, const Point& point) noexcept;
 int calculate_nd_for_point(const Day day, const int elevation, const Point& point);
 /**
- * \brief Information regarding spread within a Cell for a specific Scenario and time.
+ * \brief Information regarding spread
  */
 class SpreadInfo
 {
@@ -208,31 +207,11 @@ public:
   MathSize crownFuelConsumption() const { return cfc_; }
   char fireDescription() const { return cfb_ >= 0.9 ? 'C' : (cfb_ < 0.1 ? 'S' : 'I'); }
   MathSize surfaceFuelConsumption() const { return sfc_; }
-  /**
-   * \brief Calculate fire spread for time and place
-   * \param scenario Scenario this is spreading in
-   * \param time Time spread is occurring
-   * \param key Attributes for Cell spread is occurring in
-   * \param nd Difference between date and the date of minimum foliar moisture content
-   *DurationSize timether FwiWeather to use for calculations
-   * \param weather_daily FwiWeather to use for spread event probability
-   */
-  SpreadInfo(
-    const Scenario& scenario,
-    DurationSize time,
-    const SpreadKey& key,
-    int nd,
-    const ptr<const FwiWeather> weather,
-    const ptr<const FwiWeather> weather_daily
-  );
   MathSize totalFuelConsumption() const { return tfc_; }
 
 private:
   // HACK: have private constructor so is_spreading() can short-circuit the calculation,
   // but nothing else can get a partially constructed SpreadInfo object
-  /**
-   * Actual fire spread calculation without needing to worry about settings or scenarios
-   */
   SpreadInfo(
     DurationSize time,
     MathSize min_ros,
@@ -251,6 +230,8 @@ private:
     int nd,
     const ptr<const FwiWeather> weather
   );
+
+public:
   SpreadInfo(
     DurationSize time,
     MathSize min_ros,
