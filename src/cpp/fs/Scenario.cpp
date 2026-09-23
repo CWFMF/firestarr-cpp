@@ -609,7 +609,7 @@ CellPointsMap apply_offsets_spreadkey(
 }
 CellPointsMap spread_map(
   const BurnedData& unburnable,
-  const map<SpreadKey, SpreadInfo>& spread_info,
+  const SpreadCache& spread_info,
   const spreading_points& to_spread,
   const DurationSize new_time,
   const DurationSize duration
@@ -619,7 +619,7 @@ CellPointsMap spread_map(
   auto spread =
     std::views::transform(to_spread, [&](const spreading_points::value_type& kv0) -> CellPointsMap {
       auto& key = kv0.first;
-      const auto& offsets = spread_info.at(key).offsets();
+      auto& offsets = spread_info.offsets(key);
       const spreading_points::mapped_type& cell_pts = kv0.second;
       auto r = apply_offsets_spreadkey(unburnable, new_time, duration, offsets, cell_pts);
       return r;
@@ -652,7 +652,7 @@ CellPointsMap spread_map(
 DurationSize do_spread(
   MathSize& max_ros,
   CellPointsMap& points,
-  map<SpreadKey, SpreadInfo>& spread_info,
+  SpreadCache& spread_info,
   const Scenario& scenario,
   const BurnedData& unburnable,
   const FwiWeather* wx,
@@ -675,8 +675,7 @@ DurationSize do_spread(
       const Cell for_cell = scenario.cell(loc);
       const auto key = for_cell.key();
       {
-        const auto& origin_inserted =
-          spread_info.try_emplace(key, scenario, time, key, scenario.nd(time), wx);
+        auto origin_inserted = spread_info.add_spread(key, &scenario, time, wx);
         // any cell that has the same fuel, slope, and aspect has the same spread
         const auto& origin = origin_inserted.first->second;
         // filter out things not spreading fast enough here so they get copied if they aren't
@@ -766,9 +765,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto for_cell = cell(loc);
     // ******************* CHECK THIS BECAUSE IF SOMETHING IS IN HERE SHOULD IT ALWAYS HAVE
     // SPREAD????? *****************8
-    const auto& seek_spread = spread_info_.find(for_cell.key());
-    const auto max_intensity =
-      (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
+    const auto max_intensity = spread_info_.maxIntensity(for_cell.key());
     // HACK: just use side-effect to log and check bounds
     points_log_.log(step_, STAGE_SPREAD, new_time, pts);
     if (canBurn(loc) && max_intensity > 0)

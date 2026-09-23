@@ -10,6 +10,7 @@
 #include "LogPoints.h"
 #include "Model.h"
 #include "Settings.h"
+#include "SpreadCache.h"
 #include "StartPoint.h"
 namespace fs
 {
@@ -433,7 +434,7 @@ protected:
   /**
    * \brief Calculated SpreadInfo for SpreadKey for current time
    */
-  map<SpreadKey, SpreadInfo> spread_info_{};
+  SpreadCache spread_info_{};
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
