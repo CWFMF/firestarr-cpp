@@ -57,11 +57,13 @@ runs:
         push: ${{ github.event_name != 'pull_request' }}
         outputs: type=image,push-by-digest=true,name-canonical=true,push=true
         cache-from: |
+          type=local,src=${{ runner.temp }}/docker-cache,tag=${{ env.PLATFORM_PAIR }}-${{ github.sha }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}
         cache-to: |
+          type=local,dest=${{ runner.temp }}/docker-cache,tag=${{ env.PLATFORM_PAIR }}-${{ github.sha }},mode=max
           type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
           type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
           type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
