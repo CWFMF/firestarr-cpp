@@ -58,6 +58,15 @@ jobs:
           path: |
             ${{ runner.temp }}/docker-cache
 
+      # HACK: hoping building this image specifically will cache it so recompile doesn't happen
+      - uses: ./.github/actions/docker-build-image
+        id: build-firestarr-build
+        with:
+          target: firestarr-build
+          registry: ${{ env.registry }}
+          package-name: 'cache'
+          platform: ${{ matrix.platform }}
+
       - uses: ./.github/actions/docker-build-image
         id: build-firestarr
         with:
