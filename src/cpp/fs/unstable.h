@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_UNSTABLE_H
 #define FS_UNSTABLE_H
+#define _USE_MATH_DEFINES
+#include <cmath>
+// HACK: M_PI not showing up on Windows
+#include <math.h>
 namespace fs
 {
 /**
