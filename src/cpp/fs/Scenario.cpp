@@ -270,7 +270,7 @@ void Scenario::evaluate(const Event& event)
     insert(
       points_,
       p0,
-      SpreadData{event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
+      SpreadData{event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid(), 1},
       p0
     );
     if (is_null_fuel(for_cell))
@@ -548,7 +548,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
       insert(
         points_,
         p0,
-        SpreadData{start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
+        SpreadData{start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid(), 1},
         p0
       );
     }
@@ -755,7 +755,7 @@ CellPointsMap apply_offsets_spreadkey(
           std::ignore = insert(
             r1,
             pt,
-            SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+            SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}, 1},
             pt_new
           );
 #ifdef DEBUG_CELLPOINTS
