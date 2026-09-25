@@ -95,11 +95,17 @@ jobs:
       - name: ${{ inputs.target }} - Add tags to existing image
         if: ${{ !inputs.image-missing }}
         run: |
-          docker pull ${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}
+          CACHED="${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}"
+          docker pull ${CACHED}
+          echo "Pulled ${CACHED}"
           echo "TAGS are: ${{ steps.meta.outputs.tags }}"
-          for t in ${{ steps.meta.outputs.tags }}
+          TAGS="${{ steps.meta.outputs.tags }}"
+          echo "TAGS after assign in bash are: ${TAGS}"
+          for t in ${TAGS}
           do
             echo "Tag is: $t"
+            git tag "${CACHED}" "${t}"
+            git push "${t}"
           done
 
       - name: Set outputs
