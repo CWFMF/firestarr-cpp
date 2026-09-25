@@ -96,10 +96,12 @@ jobs:
               ) > /dev/null 2>&1 \
               && echo "false" \
             ) || echo "true")
+          echo "MISSING: ${MISSING}"
+          echo "MISSING=${MISSING}" >> $GITHUB_ENV
           echo "image-missing=${MISSING}" >> $GITHUB_OUTPUT
 
       - uses: ./.github/actions/docker-build-image
-        if: ${{ steps.check-missing.outputs.image-missing }}
+        if: ${{ 'true' == steps.check-missing.outputs.image-missing }}
         id: build-firestarr
         with:
           target: firestarr
@@ -108,7 +110,7 @@ jobs:
           platform: ${{ matrix.platform }}
 
       - uses: ./.github/actions/docker-build-image
-        if: ${{ steps.check-missing.outputs.image-missing }}
+        if: ${{ 'true' == steps.check-missing.outputs.image-missing }}
         id: build-firestarr-minimal
         with:
           target: firestarr-minimal
