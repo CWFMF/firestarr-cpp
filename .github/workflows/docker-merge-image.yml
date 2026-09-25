@@ -63,6 +63,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      - name: ${{ inputs.target }} - Download digests
+        if: ${{ inputs.image-missing }}
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests-${{ inputs.target }}
+          pattern: digests-${{ inputs.target }}-*
+          merge-multiple: true
+
       - name: ${{ inputs.target }} - Docker meta
         id: meta
         uses: docker/metadata-action@v6
@@ -81,14 +89,6 @@ jobs:
           do
             echo "Tag is: $t"
           done
-
-      - name: ${{ inputs.target }} - Download digests
-        if: ${{ inputs.image-missing }}
-        uses: actions/download-artifact@v8
-        with:
-          path: ${{ runner.temp }}/digests-${{ inputs.target }}
-          pattern: digests-${{ inputs.target }}-*
-          merge-multiple: true
 
       - name: ${{ inputs.target }} - Create manifest list and push
         if: ${{ inputs.image-missing }}
