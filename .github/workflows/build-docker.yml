@@ -101,22 +101,22 @@ jobs:
           echo "image-missing=${MISSING}" >> $GITHUB_OUTPUT
 
       - uses: ./.github/actions/docker-build-image
-        if: ${{ 'true' == steps.check-missing.outputs.image-missing }}
         id: build-firestarr
         with:
           target: firestarr
           registry: ${{ env.registry }}
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
+          image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
 
       - uses: ./.github/actions/docker-build-image
-        if: ${{ 'true' == steps.check-missing.outputs.image-missing }}
         id: build-firestarr-minimal
         with:
           target: firestarr-minimal
           registry: ${{ env.registry }}
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
+          image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
 
     outputs:
       package: ${{ steps.build-firestarr.outputs.package }}
