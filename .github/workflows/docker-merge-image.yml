@@ -140,22 +140,6 @@ jobs:
           docker push "${{ env.CACHED }}"
 
       # already exists, so want to add tags to existing image
-      - name: ${{ inputs.target }} - Add tags to existing image - pull
-        if: ${{ 'true' != inputs.image-missing }}
-        run: |
-          docker pull "${{ env.CACHED }}"
-          echo "Pulled ${{ env.CACHED }}"
-          echo "TAGS are: ${{ steps.meta.outputs.tags }}"
-          TAGS="${{ steps.meta.outputs.tags }}"
-          echo "TAGS after assign in bash are: ${TAGS}"
-          for t in ${TAGS}
-          do
-            echo "Tag is: $t"
-            git tag "${{ env.CACHED }}" "${t}"
-            git push "${t}"
-          done
-
-      # already exists, so want to add tags to existing image
       - name: ${{ inputs.target }} - Add tags to existing image
         if: ${{ 'true' != inputs.image-missing }}
         run: |
@@ -167,8 +151,8 @@ jobs:
           for t in ${TAGS}
           do
             echo "Tag is: $t"
-            git tag "${{ env.CACHED }}" "${t}"
-            git push "${t}"
+            docker tag "${{ env.CACHED }}" "${t}"
+            docker push "${t}"
           done
 
       - name: Set outputs
