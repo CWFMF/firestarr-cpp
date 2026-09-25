@@ -79,17 +79,6 @@ jobs:
           flavor: ${{ inputs.flavor }}
           tags: ${{ inputs.tags }}
 
-      # already exists, so want to add tags to existing image
-      - name: ${{ inputs.target }} - Add tags to existing image
-        if: ${{ !inputs.image-missing }}
-        run: |
-          docker pull ${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}
-          echo "TAGS are: ${{ steps.meta.outputs.tags }}"
-          for t in ${{ steps.meta.outputs.tags }}
-          do
-            echo "Tag is: $t"
-          done
-
       - name: ${{ inputs.target }} - Create manifest list and push
         if: ${{ inputs.image-missing }}
         working-directory: ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -108,6 +97,17 @@ jobs:
           docker pull ${{ inputs.package }}:${{ steps.meta.outputs.version }}
           docker tag ${{ inputs.package }}:${{ steps.meta.outputs.version }} ${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}
           docker push ${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}
+
+      # already exists, so want to add tags to existing image
+      - name: ${{ inputs.target }} - Add tags to existing image
+        if: ${{ !inputs.image-missing }}
+        run: |
+          docker pull ${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}
+          echo "TAGS are: ${{ steps.meta.outputs.tags }}"
+          for t in ${{ steps.meta.outputs.tags }}
+          do
+            echo "Tag is: $t"
+          done
 
       - name: Set outputs
         run: |
