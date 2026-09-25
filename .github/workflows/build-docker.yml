@@ -120,6 +120,7 @@ jobs:
           registry: ${{ env.registry }}
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
+          suffix:
           image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
 
       - uses: ./.github/actions/docker-build-image
@@ -129,6 +130,7 @@ jobs:
           registry: ${{ env.registry }}
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
+          suffix: -minimal
           image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
 
     outputs:
