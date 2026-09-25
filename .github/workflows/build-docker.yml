@@ -137,7 +137,7 @@ jobs:
     with:
       target: firestarr
       package: ${{ needs.build-docker-image.outputs.package }}
-      image-missing: ${{ needs.build-docker-image.outputs.image-missing }}
+      image-missing: ${{ 'true' == needs.build-docker-image.outputs.image-missing }}
       suffix:
       flavor: |
         latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
@@ -156,7 +156,7 @@ jobs:
     with:
       target: firestarr-minimal
       package: ${{ needs.build-docker-image.outputs.package }}
-      image-missing: ${{ needs.build-docker-image.outputs.image-missing }}
+      image-missing: ${{ 'true' == needs.build-docker-image.outputs.image-missing }}
       suffix: -minimal
       flavor: |
         latest=false
