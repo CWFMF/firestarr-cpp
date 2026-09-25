@@ -85,7 +85,7 @@ jobs:
           registry=${package%%\/*}
           repo=${registry}/${GITHUB_REPOSITORY@L}
           registry_cache=${repo}/cache
-          cached=${registry_cache}:${{ github.sha }}${{ inputs.suffix }}
+          cached=${registry}:${{ github.sha }}${{ inputs.suffix }}
           echo "PACKAGE=${package}" >> $GITHUB_ENV
           echo "REGISTRY=${registry}" >> $GITHUB_ENV
           echo "REGISTRY_CACHE=${registry_cache}" >> $GITHUB_ENV
@@ -128,15 +128,6 @@ jobs:
         if: ${{ 'true' == inputs.image-missing }}
         run: |
           docker buildx imagetools inspect ${{ inputs.package }}:${{ steps.meta.outputs.version }}
-
-      - name: ${{ inputs.target }} - Push to cache with commit sha
-        if: ${{ 'true' == inputs.image-missing }}
-        run: |
-          TAG=${{ inputs.package }}:${{ steps.meta.outputs.version }}
-          echo "TAG is ${TAG}"
-          docker pull "${TAG}"
-          docker tag "${TAG}" "${{ env.CACHED }}"
-          docker push "${{ env.CACHED }}"
 
       # already exists, so want to add tags to existing image
       - name: ${{ inputs.target }} - Add tags to existing image

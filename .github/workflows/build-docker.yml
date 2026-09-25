@@ -80,7 +80,7 @@ jobs:
         id: check
         run: |
           . ./.env
-          cached=${REGISTRY_CACHE}:${{ github.sha }}
+          cached=${REGISTRY}:${{ github.sha }}
           cached_minimal=${cached}-minimal
           ENV_TAG=v${VERSION}
           VERSION_HASH=$(git log -n1 --pretty=%H -- .env)
@@ -156,6 +156,7 @@ jobs:
         type=ref,prefix=,suffix=-latest,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
         type=semver,pattern={{version}},prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
         type=semver,pattern={{major}}.{{minor}},prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
+        type=raw,value=${{ github.sha }},prefix=,suffix=
 
   merge-firestarr-minimal:
     needs: [build-docker-image]
@@ -177,3 +178,4 @@ jobs:
         type=semver,pattern={{major}}.{{minor}},prefix=,suffix=-minimal,enable=${{ needs.build-docker-image.outputs.is-tagged }}
         type=raw,value=minimal,prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
         type=raw,value=minimal-latest,prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
+        type=raw,value=${{ github.sha }}-minimal,prefix=,suffix=
