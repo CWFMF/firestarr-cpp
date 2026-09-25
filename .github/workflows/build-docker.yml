@@ -83,9 +83,9 @@ jobs:
             IS_TAGGED=true
             echo "tagged-hash=${FULL_HASH}" >> $GITHUB_OUTPUT
             echo "tag=${VERSION}" >> $GITHUB_OUTPUT
-            echo "cached-tag=${CACHED}:${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "cached-tag-minimal=${CACHED}:${{ github.sha }}-minimal" >> $GITHUB_OUTPUT
           fi
+          echo "cached=${CACHED}:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "cached-minimal=${CACHED}:${{ github.sha }}-minimal" >> $GITHUB_OUTPUT
           echo "is-tagged=${IS_TAGGED}" >> $GITHUB_OUTPUT
 
       # unsure how minimal could exist without other
@@ -93,7 +93,9 @@ jobs:
         if: ${{ steps.check.outputs.is-tagged }}
         id: check-missing
         run: |
-          MISSING=$((docker manifest inspect ${{ steps.check.outputs.cached-tag }} && docker manifest inspect ${{ steps.check.outputs.cached-tag-minimal }} && echo "false") || echo "true")
+          echo "steps.check.outputs.cached: ${{ steps.check.outputs.cached }}"
+          echo "steps.check.outputs.cached-minimal: ${{ steps.check.outputs.cached-minimal }}"
+          MISSING=$((docker manifest inspect ${{ steps.check.outputs.cached }} && docker manifest inspect ${{ steps.check.outputs.cached-minimal }} && echo "false") || echo "true")
           echo "image-missing=${MISSING}" >> $GITHUB_OUTPUT
 
       # HACK: hoping building this image specifically will cache it so recompile doesn't happen
