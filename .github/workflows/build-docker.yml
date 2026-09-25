@@ -88,7 +88,14 @@ jobs:
         run: |
           echo "steps.check.outputs.cached: ${{ steps.check.outputs.cached }}"
           echo "steps.check.outputs.cached-minimal: ${{ steps.check.outputs.cached-minimal }}"
-          MISSING=$((docker manifest inspect ${{ steps.check.outputs.cached }} && docker manifest inspect ${{ steps.check.outputs.cached-minimal }} && echo "false") || echo "true")
+          MISSING=$( \
+            ( \
+              ( \
+                docker manifest inspect ${{ steps.check.outputs.cached }} \
+                && docker manifest inspect ${{ steps.check.outputs.cached-minimal }} \
+              ) > /dev/null 2>&1 \
+              && echo "false" \
+            ) || echo "true")
           echo "image-missing=${MISSING}" >> $GITHUB_OUTPUT
 
       - uses: ./.github/actions/docker-build-image
