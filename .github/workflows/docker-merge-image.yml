@@ -60,7 +60,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: ${{ inputs.target }} - Download digests
-        if: ${{ 'true' == inputs.image-missing }}
+        if: ${{ inputs.image-missing }}
         uses: actions/download-artifact@v8
         with:
           path: ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -76,19 +76,19 @@ jobs:
           tags: ${{ inputs.tags }}
 
       - name: ${{ inputs.target }} - Create manifest list and push
-        if: ${{ 'true' == inputs.image-missing }}
+        if: ${{ inputs.image-missing }}
         working-directory: ${{ runner.temp }}/digests-${{ inputs.target }}
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ inputs.package }}@sha256:%s ' *)
 
       - name: ${{ inputs.target }} - Inspect image
-        if: ${{ 'true' == inputs.image-missing }}
+        if: ${{ inputs.image-missing }}
         run: |
           docker buildx imagetools inspect ${{ inputs.package }}:${{ steps.meta.outputs.version }}
 
       - name: ${{ inputs.target }} - Push to cache with commit sha
-        if: ${{ 'true' == inputs.image-missing }}
+        if: ${{ inputs.image-missing }}
         run: |
           echo "TAGS are: ${{ steps.meta.outputs.tags }}"
           TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)

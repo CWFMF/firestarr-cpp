@@ -47,14 +47,14 @@ runs:
         echo "CACHE_REF=${ref_name//\//}" >> $GITHUB_ENV
 
     - name: ${{ inputs.target }} - Docker meta
-      if: ${{ 'true' == inputs.image-missing }}
+      if: ${{ inputs.image-missing }}
       id: meta
       uses: docker/metadata-action@v6
       with:
         images: ${{ env.PACKAGE }}
 
     - name: ${{ inputs.target }} - Build and push by digest
-      if: ${{ 'true' == inputs.image-missing }}
+      if: ${{ inputs.image-missing }}
       id: build
       uses: docker/build-push-action@v7
       with:
@@ -77,7 +77,7 @@ runs:
           type=registry,mode=max,ref=${{ env.REGISTRY }}:${{ env.PLATFORM_PAIR }}
 
     - name: ${{ inputs.target }} - Export digest
-      if: ${{ 'true' == inputs.image-missing }}
+      if: ${{ inputs.image-missing }}
       shell: bash
       run: |
         mkdir -p ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -85,7 +85,7 @@ runs:
         touch "${{ runner.temp }}/digests-${{ inputs.target }}/${digest#sha256:}"
 
     - name: ${{ inputs.target }} - Upload digest
-      if: ${{ 'true' == inputs.image-missing }}
+      if: ${{ inputs.image-missing }}
       uses: actions/upload-artifact@v7
       with:
         name: digests-${{ inputs.target }}-${{ env.PLATFORM_PAIR }}
