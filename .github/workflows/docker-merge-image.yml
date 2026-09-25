@@ -84,10 +84,11 @@ jobs:
           package=${{ inputs.package }}
           registry=${package%%\/*}
           repo=${registry}/${GITHUB_REPOSITORY@L}
-          registry=${repo}/cache
-          cached=${registry}:${{ github.sha }}${{ inputs.suffix }}
+          registry_cache=${repo}/cache
+          cached=${registry_cache}:${{ github.sha }}${{ inputs.suffix }}
           echo "PACKAGE=${package}" >> $GITHUB_ENV
           echo "REGISTRY=${registry}" >> $GITHUB_ENV
+          echo "REGISTRY_CACHE=${registry_cache}" >> $GITHUB_ENV
           echo "CACHED=${cached}" >> $GITHUB_ENV
 
       - name: Login to GHCR
@@ -137,6 +138,22 @@ jobs:
           docker pull "${TAG}"
           docker tag "${TAG}" "${{ env.CACHED }}"
           docker push "${{ env.CACHED }}"
+
+      # already exists, so want to add tags to existing image
+      - name: ${{ inputs.target }} - Add tags to existing image - pull
+        if: ${{ 'true' != inputs.image-missing }}
+        run: |
+          docker pull "${{ env.CACHED }}"
+          echo "Pulled ${{ env.CACHED }}"
+          echo "TAGS are: ${{ steps.meta.outputs.tags }}"
+          TAGS="${{ steps.meta.outputs.tags }}"
+          echo "TAGS after assign in bash are: ${TAGS}"
+          for t in ${TAGS}
+          do
+            echo "Tag is: $t"
+            git tag "${{ env.CACHED }}" "${t}"
+            git push "${t}"
+          done
 
       # already exists, so want to add tags to existing image
       - name: ${{ inputs.target }} - Add tags to existing image

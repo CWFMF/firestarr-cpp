@@ -76,10 +76,11 @@ runs:
         registry=${{ inputs.registry }}
         repo=${registry}/${GITHUB_REPOSITORY@L}
         package=${repo}/${{ inputs.package-name }}
-        registry=${repo}/cache
-        cached=${registry}:${{ github.sha }}${{ inputs.suffix }}
+        registry_cache=${repo}/cache
+        cached=${registry_cache}:${{ github.sha }}${{ inputs.suffix }}
         echo "PACKAGE=${package}" >> $GITHUB_ENV
         echo "REGISTRY=${registry}" >> $GITHUB_ENV
+        echo "REGISTRY_CACHE=${registry_cache}" >> $GITHUB_ENV
         echo "CACHED=${cached}" >> $GITHUB_ENV
         platform=${{ inputs.platform }}
         ref_name=${{ github.ref_name }}
@@ -107,14 +108,14 @@ runs:
         push: ${{ github.event_name != 'pull_request' }}
         outputs: type=image,push-by-digest=true,name-canonical=true,push=true
         cache-from: |
-          type=registry,ref=${{ env.REGISTRY }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
-          type=registry,ref=${{ env.REGISTRY }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
-          type=registry,ref=${{ env.REGISTRY }}:${{ env.PLATFORM_PAIR }}
-          type=registry,ref=${{ env.REGISTRY }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}
         cache-to: |
-          type=registry,mode=max,ref=${{ env.REGISTRY }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
-          type=registry,mode=max,ref=${{ env.REGISTRY }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
-          type=registry,mode=max,ref=${{ env.REGISTRY }}:${{ env.PLATFORM_PAIR }}
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
 
     - name: ${{ inputs.target }} - Export digest
       if: ${{ 'true' == inputs.image-missing }}
