@@ -8,6 +8,7 @@ name: build-docker
 #   another push is the same hash.
 #   Tried pushing image to another cache package, but then the digest changes.
 #   Tried just caching the image reference but actions/cache doesn't work between branches.
+#   Tried pulling, tagging, and pushing in same registry, but doesn't work for multiplatform.
 on:
   push:
     paths-ignore:
