@@ -40,16 +40,19 @@ jobs:
 
       - name: Prepare environment
         run: |
-          package=${{ inputs.package }}
           registry=${package%%\/*}
-          echo "CONTAINER_REGISTRY=${registry}" >> $GITHUB_ENV
-          REPO=${registry}/${GITHUB_REPOSITORY@L}
-          echo "REGISTRY_CACHE=${REPO}/cache" >> $GITHUB_ENV
+          repo=${registry}/${GITHUB_REPOSITORY@L}
+          package=${{ inputs.package }}
+          registry=${repo}/cache
+          cached=${registry}:${{ github.sha }}${{ inputs.suffix }}
+          echo "PACKAGE=${package}" >> $GITHUB_ENV
+          echo "REGISTRY=${registry}" >> $GITHUB_ENV
+          echo "CACHED=${cached}" >> $GITHUB_ENV
 
       - name: Login to GHCR
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.CONTAINER_REGISTRY }}
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -87,28 +90,26 @@ jobs:
       - name: ${{ inputs.target }} - Push to cache with commit sha
         if: ${{ 'true' == inputs.image-missing }}
         run: |
-          CACHED="${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}"
           echo "TAGS are: ${{ steps.meta.outputs.tags }}"
           TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
           echo "TAG is ${TAG}"
           docker pull "${TAG}"
-          docker tag "${TAG}" "${CACHED}"
-          docker push "${CACHED}"
+          docker tag "${TAG}" "${{ env.CACHED }}"
+          docker push "${{ env.CACHED }}"
 
       # already exists, so want to add tags to existing image
       - name: ${{ inputs.target }} - Add tags to existing image
         if: ${{ !inputs.image-missing }}
         run: |
-          CACHED="${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}"
-          docker pull ${CACHED}
-          echo "Pulled ${CACHED}"
+          docker pull "${{ env.CACHED }}"
+          echo "Pulled ${{ env.CACHED }}"
           echo "TAGS are: ${{ steps.meta.outputs.tags }}"
           TAGS="${{ steps.meta.outputs.tags }}"
           echo "TAGS after assign in bash are: ${TAGS}"
           for t in ${TAGS}
           do
             echo "Tag is: $t"
-            git tag "${CACHED}" "${t}"
+            git tag "${{ env.CACHED }}" "${t}"
             git push "${t}"
           done
 

@@ -75,31 +75,32 @@ jobs:
         id: check
         run: |
           . ./.env
-          CACHED=${REGISTRY_CACHE}:${{ github.sha }}
+          cached=${REGISTRY_CACHE}:${{ github.sha }}
+          cached_minimal=${cached}-minimal
           ENV_TAG=v${VERSION}
           VERSION_HASH=$(git log -n1 --pretty=%H -- .env)
           FULL_HASH=$(git rev-parse --verify HEAD)
-          IS_TAGGED=false
+          is_tagged=false
           if [[ "${VERSION_HASH}" == "${FULL_HASH}" ]]; then
-            IS_TAGGED=true
+            is_tagged=true
             echo "tagged-hash=${FULL_HASH}" >> $GITHUB_OUTPUT
             echo "tag=${VERSION}" >> $GITHUB_OUTPUT
           fi
-          echo "cached=${CACHED}" >> $GITHUB_OUTPUT
-          echo "cached-minimal=${CACHED}-minimal" >> $GITHUB_OUTPUT
-          echo "is-tagged=${IS_TAGGED}" >> $GITHUB_OUTPUT
+          echo "CACHED=${cached}" >> $GITHUB_ENV
+          echo "CACHED_MINIMAL=${cached_minimal}" >> $GITHUB_ENV
+          echo "IS_TAGGED=${is_tagged}" >> $GITHUB_ENV
 
       # unsure how minimal could exist without other
       - name: Check existing
         id: check-missing
         run: |
-          echo "steps.check.outputs.cached: ${{ steps.check.outputs.cached }}"
-          echo "steps.check.outputs.cached-minimal: ${{ steps.check.outputs.cached-minimal }}"
+          echo "env.CACHED: ${{ env.CACHED }}"
+          echo "env.CACHED_MINIMAL: ${{ env.CACHED_MINIMAL }}"
           MISSING=$( \
             ( \
               ( \
-                docker manifest inspect ${{ steps.check.outputs.cached }} \
-                && docker manifest inspect ${{ steps.check.outputs.cached-minimal }} \
+                docker manifest inspect ${{ env.CACHED }} \
+                && docker manifest inspect ${{ env.CACHED_MINIMAL }} \
               ) > /dev/null 2>&1 \
               && echo "false" \
             ) || echo "true")
@@ -128,7 +129,7 @@ jobs:
     outputs:
       package: ${{ steps.build-firestarr.outputs.package }}
       image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
-      is-tagged: ${{ steps.check.outputs.is-tagged }}
+      is-tagged: ${{ env.IS_TAGGED }}
 
   merge-firestarr:
     needs: [build-docker-image]
