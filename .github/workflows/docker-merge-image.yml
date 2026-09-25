@@ -132,8 +132,7 @@ jobs:
       - name: ${{ inputs.target }} - Push to cache with commit sha
         if: ${{ 'true' == inputs.image-missing }}
         run: |
-          echo "TAGS are: ${{ steps.meta.outputs.tags }}"
-          TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          TAG=${{ inputs.package }}:${{ steps.meta.outputs.version }}
           echo "TAG is ${TAG}"
           docker pull "${TAG}"
           docker tag "${TAG}" "${{ env.CACHED }}"
