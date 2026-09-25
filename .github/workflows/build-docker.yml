@@ -6,7 +6,8 @@ name: build-docker
 #   things, and it makes a new image.
 #   This caches the built image with the commit hash, and then adds tags to it if
 #   another push is the same hash.
-
+#   Tried pushing image to another cache package, but then the digest changes.
+#   Tried just caching the image reference but actions/cache doesn't work between branches.
 on:
   push:
     paths-ignore:
