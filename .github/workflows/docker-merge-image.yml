@@ -42,15 +42,7 @@ jobs:
         run: |
           package=${{ inputs.package }}
           echo "CONTAINER_REGISTRY=${package%%\/*}" >> $GITHUB_ENV
-
-      - name: Prepare environment
-        shell: bash
-        run: |
           REPO=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}
-          REF_NAME=${{ github.ref_name }}
-          echo "PLATFORM_PAIR=${PLATFORM//\//}" >> $GITHUB_ENV
-          echo "CACHE_REF=${REF_NAME//\//}" >> $GITHUB_ENV
-          echo "PACKAGE=${REPO}/${{ inputs.package-name }}" >> $GITHUB_ENV
           echo "REGISTRY_CACHE=${REPO}/cache" >> $GITHUB_ENV
 
       - name: Login to GHCR
