@@ -1,5 +1,12 @@
 name: build-docker
 
+# NOTE:
+#   This is a mess because the cmake process relies on having .git mounted,
+#   and also captures the build time, so docker sees any push as modifying
+#   things, and it makes a new image.
+#   This caches the built image with the commit hash, and then adds tags to it if
+#   another push is the same hash.
+
 on:
   push:
     paths-ignore:
