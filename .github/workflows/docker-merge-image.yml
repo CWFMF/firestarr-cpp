@@ -40,9 +40,9 @@ jobs:
 
       - name: Prepare environment
         run: |
+          package=${{ inputs.package }}
           registry=${package%%\/*}
           repo=${registry}/${GITHUB_REPOSITORY@L}
-          package=${{ inputs.package }}
           registry=${repo}/cache
           cached=${registry}:${{ github.sha }}${{ inputs.suffix }}
           echo "PACKAGE=${package}" >> $GITHUB_ENV
