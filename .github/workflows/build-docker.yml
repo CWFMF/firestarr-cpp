@@ -84,7 +84,6 @@ jobs:
 
       # unsure how minimal could exist without other
       - name: Check existing
-        if: ${{ steps.check.outputs.is-tagged }}
         id: check-missing
         run: |
           echo "steps.check.outputs.cached: ${{ steps.check.outputs.cached }}"
