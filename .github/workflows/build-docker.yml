@@ -127,7 +127,7 @@ jobs:
 
     outputs:
       package: ${{ steps.build-firestarr.outputs.package }}
-      image-missing: ${{ steps.check-missing.outputs.image-missing }}
+      image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
       is-tagged: ${{ steps.check.outputs.is-tagged }}
 
   merge-firestarr:
