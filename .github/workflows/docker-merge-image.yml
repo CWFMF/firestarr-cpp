@@ -32,6 +32,46 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Show inputs
+        shell: bash
+        run: |
+          echo "inputs.target=${{ inputs.target }}"
+          echo "inputs.package=${{ inputs.package }}"
+          echo "inputs.image-missing=${{ inputs.image-missing }}"
+          echo "inputs.suffix=${{ inputs.suffix }}"
+          echo "inputs.flavor=${{ inputs.flavor }}"
+          echo "inputs.tags=${{ inputs.tags }}"
+
+      - if: ${{ inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
+      - if: ${{ 'true' == inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "'true' == inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
+      - if: ${{ 'false' == inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "'false' == inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
+      - if: ${{ 'true' != inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "'true' != inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
+      - if: ${{ 'false' != inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "'false' != inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0

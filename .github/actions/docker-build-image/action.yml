@@ -30,6 +30,45 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Show inputs
+      shell: bash
+      run: |
+        echo "inputs.target=${{ inputs.target }}"
+        echo "inputs.package-name=${{ inputs.package-name }}"
+        echo "inputs.platform=${{ inputs.platform }}"
+        echo "inputs.registry=${{ inputs.registry }}"
+        echo "inputs.image-missing=${{ inputs.image-missing }}"
+
+    - if: ${{ inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
+    - if: ${{ 'true' == inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "'true' == inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
+    - if: ${{ 'false' == inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "'false' == inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
+    - if: ${{ 'true' != inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "'true' != inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
+    - if: ${{ 'false' != inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "'false' != inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
     - name: Prepare environment
       shell: bash
       run: |
