@@ -133,16 +133,14 @@ jobs:
       - name: ${{ inputs.target }} - Add tags to existing image
         if: ${{ 'true' != inputs.image-missing }}
         run: |
-          docker pull "${{ env.CACHED }}"
-          echo "Pulled ${{ env.CACHED }}"
+          echo "Copying from ${{ env.CACHED }}"
           echo "TAGS are: ${{ steps.meta.outputs.tags }}"
           TAGS="${{ steps.meta.outputs.tags }}"
           echo "TAGS after assign in bash are: ${TAGS}"
           for t in ${TAGS}
           do
             echo "Tag is: $t"
-            docker tag "${{ env.CACHED }}" "${t}"
-            docker push "${t}"
+            docker buildx imagetools create -t "${t}" "${{ env.CACHED }}"
           done
 
       - name: Set outputs
