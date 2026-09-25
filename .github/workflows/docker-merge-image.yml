@@ -87,9 +87,13 @@ jobs:
       - name: ${{ inputs.target }} - Push to cache with commit sha
         if: ${{ 'true' == inputs.image-missing }}
         run: |
-          docker pull ${{ inputs.package }}:${{ steps.meta.outputs.version }}
-          docker tag ${{ inputs.package }}:${{ steps.meta.outputs.version }} ${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}
-          docker push ${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}
+          CACHED="${{ env.REGISTRY_CACHE }}:${{ github.sha }}${{ inputs.suffix }}"
+          echo "TAGS are: ${{ steps.meta.outputs.tags }}"
+          TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          echo "TAG is ${TAG}"
+          docker pull "${TAG}"
+          docker tag "${TAG}" "${CACHED}"
+          docker push "${CACHED}"
 
       # already exists, so want to add tags to existing image
       - name: ${{ inputs.target }} - Add tags to existing image
