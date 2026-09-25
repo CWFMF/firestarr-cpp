@@ -9,9 +9,10 @@ on:
       package:
         required: true
         type: string
+      # HACK: passing boolean to action doesn't work so use string and (== 'true') for both
       image-missing:
         required: true
-        type: boolean
+        type: string
       suffix:
         required: false
         type: string
@@ -100,7 +101,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: ${{ inputs.target }} - Download digests
-        if: ${{ inputs.image-missing }}
+        if: ${{ 'true' == inputs.image-missing }}
         uses: actions/download-artifact@v8
         with:
           path: ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -116,19 +117,19 @@ jobs:
           tags: ${{ inputs.tags }}
 
       - name: ${{ inputs.target }} - Create manifest list and push
-        if: ${{ inputs.image-missing }}
+        if: ${{ 'true' == inputs.image-missing }}
         working-directory: ${{ runner.temp }}/digests-${{ inputs.target }}
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ inputs.package }}@sha256:%s ' *)
 
       - name: ${{ inputs.target }} - Inspect image
-        if: ${{ inputs.image-missing }}
+        if: ${{ 'true' == inputs.image-missing }}
         run: |
           docker buildx imagetools inspect ${{ inputs.package }}:${{ steps.meta.outputs.version }}
 
       - name: ${{ inputs.target }} - Push to cache with commit sha
-        if: ${{ inputs.image-missing }}
+        if: ${{ 'true' == inputs.image-missing }}
         run: |
           echo "TAGS are: ${{ steps.meta.outputs.tags }}"
           TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
@@ -139,7 +140,7 @@ jobs:
 
       # already exists, so want to add tags to existing image
       - name: ${{ inputs.target }} - Add tags to existing image
-        if: ${{ !inputs.image-missing }}
+        if: ${{ 'true' != inputs.image-missing }}
         run: |
           docker pull "${{ env.CACHED }}"
           echo "Pulled ${{ env.CACHED }}"

@@ -15,9 +15,10 @@ inputs:
   registry:
     required: true
     type: string
+  # HACK: passing boolean to action doesn't work so use string for both
   image-missing:
     required: true
-    type: boolean
+    type: string
 
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
@@ -86,14 +87,14 @@ runs:
         echo "CACHE_REF=${ref_name//\//}" >> $GITHUB_ENV
 
     - name: ${{ inputs.target }} - Docker meta
-      if: ${{ inputs.image-missing }}
+      if: ${{ 'true' == inputs.image-missing }}
       id: meta
       uses: docker/metadata-action@v6
       with:
         images: ${{ env.PACKAGE }}
 
     - name: ${{ inputs.target }} - Build and push by digest
-      if: ${{ inputs.image-missing }}
+      if: ${{ 'true' == inputs.image-missing }}
       id: build
       uses: docker/build-push-action@v7
       with:
@@ -116,7 +117,7 @@ runs:
           type=registry,mode=max,ref=${{ env.REGISTRY }}:${{ env.PLATFORM_PAIR }}
 
     - name: ${{ inputs.target }} - Export digest
-      if: ${{ inputs.image-missing }}
+      if: ${{ 'true' == inputs.image-missing }}
       shell: bash
       run: |
         mkdir -p ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -124,7 +125,7 @@ runs:
         touch "${{ runner.temp }}/digests-${{ inputs.target }}/${digest#sha256:}"
 
     - name: ${{ inputs.target }} - Upload digest
-      if: ${{ inputs.image-missing }}
+      if: ${{ 'true' == inputs.image-missing }}
       uses: actions/upload-artifact@v7
       with:
         name: digests-${{ inputs.target }}-${{ env.PLATFORM_PAIR }}
