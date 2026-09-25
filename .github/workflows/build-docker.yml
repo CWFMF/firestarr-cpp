@@ -81,7 +81,7 @@ jobs:
         id: check
         run: |
           . ./.env
-          cached=${REGISTRY}:${{ github.sha }}
+          cached=${PACKAGE}:${{ github.sha }}
           cached_minimal=${cached}-minimal
           ENV_TAG=v${VERSION}
           VERSION_HASH=$(git log -n1 --pretty=%H -- .env)

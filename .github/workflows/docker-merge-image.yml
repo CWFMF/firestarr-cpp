@@ -85,7 +85,7 @@ jobs:
           registry=${package%%\/*}
           repo=${registry}/${GITHUB_REPOSITORY@L}
           registry_cache=${repo}/cache
-          cached=${registry}:${{ github.sha }}${{ inputs.suffix }}
+          cached=${package}:${{ github.sha }}${{ inputs.suffix }}
           echo "PACKAGE=${package}" >> $GITHUB_ENV
           echo "REGISTRY=${registry}" >> $GITHUB_ENV
           echo "REGISTRY_CACHE=${registry_cache}" >> $GITHUB_ENV
