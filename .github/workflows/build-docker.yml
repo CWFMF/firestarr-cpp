@@ -15,6 +15,11 @@ on:
 
   workflow_dispatch:
 
+# queue runs so that images get built & cache gets used instead of building in parallel
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  queue: max
+
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
 
