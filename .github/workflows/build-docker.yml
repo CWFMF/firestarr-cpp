@@ -40,8 +40,7 @@ jobs:
         # no point in more than base image supports
         # ignore 32-bit - 386, arm/v5, arm/v7
         # arm64 == arm64/v8
-        # platform: [amd64, arm64, ppc64le, riscv64, s390x]
-        platform: [amd64]
+        platform: [amd64, arm64, ppc64le, riscv64, s390x]
     env:
       REGISTRY: 'ghcr.io'
       package-name: ${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
