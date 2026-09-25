@@ -84,8 +84,8 @@ jobs:
             echo "tagged-hash=${FULL_HASH}" >> $GITHUB_OUTPUT
             echo "tag=${VERSION}" >> $GITHUB_OUTPUT
           fi
-          echo "cached=${CACHED}:${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo "cached-minimal=${CACHED}:${{ github.sha }}-minimal" >> $GITHUB_OUTPUT
+          echo "cached=${CACHED}" >> $GITHUB_OUTPUT
+          echo "cached-minimal=${CACHED}-minimal" >> $GITHUB_OUTPUT
           echo "is-tagged=${IS_TAGGED}" >> $GITHUB_OUTPUT
 
       # unsure how minimal could exist without other
