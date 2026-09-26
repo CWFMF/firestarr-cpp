@@ -1,5 +1,14 @@
 name: build-docker
 
+# NOTE:
+#   This is a mess because the cmake process relies on having .git mounted,
+#   and also captures the build time, so docker sees any push as modifying
+#   things, and it makes a new image.
+#   This caches the built image with the commit hash, and then adds tags to it if
+#   another push is the same hash.
+#   Tried pushing image to another cache package, but then the digest changes.
+#   Tried just caching the image reference but actions/cache doesn't work between branches.
+#   Tried pulling, tagging, and pushing in same registry, but doesn't work for multiplatform.
 on:
   push:
     paths-ignore:
@@ -7,6 +16,11 @@ on:
       - '.github/workflows/docker-cleanup.yml'
 
   workflow_dispatch:
+
+# queue runs so that images get built & cache gets used instead of building in parallel
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  queue: max
 
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
@@ -28,7 +42,7 @@ jobs:
         # arm64 == arm64/v8
         platform: [amd64, arm64, ppc64le, riscv64, s390x]
     env:
-      registry: 'ghcr.io'
+      REGISTRY: 'ghcr.io'
       package-name: ${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
     steps:
       - uses: actions/checkout@v6
@@ -41,7 +55,7 @@ jobs:
         id: login
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.registry }}
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -51,24 +65,79 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      - name: Prepare environment
+        shell: bash
+        run: |
+          PLATFORM=${{ matrix.platform }}
+          REPO=${{ env.REGISTRY }}/${GITHUB_REPOSITORY@L}
+          REF_NAME=${{ github.ref_name }}
+          echo "PLATFORM_PAIR=${PLATFORM//\//}" >> $GITHUB_ENV
+          echo "CACHE_REF=${REF_NAME//\//}" >> $GITHUB_ENV
+          echo "PACKAGE=${REPO}/firestarr" >> $GITHUB_ENV
+          echo "REGISTRY_CACHE=${REPO}/cache" >> $GITHUB_ENV
+
+      # treat changing .env as if it were tagged even if that hasn't happened yet
+      - name: Check tags
+        id: check
+        run: |
+          . ./.env
+          cached=${PACKAGE}:${{ github.sha }}
+          cached_minimal=${cached}-minimal
+          ENV_TAG=v${VERSION}
+          VERSION_HASH=$(git log -n1 --pretty=%H -- .env)
+          FULL_HASH=$(git rev-parse --verify HEAD)
+          is_tagged=false
+          if [[ "${VERSION_HASH}" == "${FULL_HASH}" ]]; then
+            is_tagged=true
+            echo "tagged-hash=${FULL_HASH}" >> $GITHUB_OUTPUT
+            echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+          fi
+          echo "CACHED=${cached}" >> $GITHUB_ENV
+          echo "CACHED_MINIMAL=${cached_minimal}" >> $GITHUB_ENV
+          echo "IS_TAGGED=${is_tagged}" >> $GITHUB_ENV
+
+      # unsure how minimal could exist without other
+      - name: Check existing
+        id: check-missing
+        run: |
+          echo "env.CACHED: ${{ env.CACHED }}"
+          echo "env.CACHED_MINIMAL: ${{ env.CACHED_MINIMAL }}"
+          MISSING=$( \
+            ( \
+              ( \
+                docker manifest inspect ${{ env.CACHED }} \
+                && docker manifest inspect ${{ env.CACHED_MINIMAL }} \
+              ) > /dev/null 2>&1 \
+              && echo "false" \
+            ) || echo "true")
+          echo "MISSING: ${MISSING}"
+          echo "MISSING=${MISSING}" >> $GITHUB_ENV
+          echo "image-missing=${MISSING}" >> $GITHUB_OUTPUT
+
       - uses: ./.github/actions/docker-build-image
         id: build-firestarr
         with:
           target: firestarr
-          registry: ${{ env.registry }}
+          registry: ${{ env.REGISTRY }}
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
+          suffix:
+          image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
 
       - uses: ./.github/actions/docker-build-image
         id: build-firestarr-minimal
         with:
           target: firestarr-minimal
-          registry: ${{ env.registry }}
+          registry: ${{ env.REGISTRY }}
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
+          suffix: -minimal
+          image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
 
     outputs:
       package: ${{ steps.build-firestarr.outputs.package }}
+      image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
+      is-tagged: ${{ env.IS_TAGGED }}
 
   merge-firestarr:
     needs: [build-docker-image]
@@ -76,6 +145,8 @@ jobs:
     with:
       target: firestarr
       package: ${{ needs.build-docker-image.outputs.package }}
+      image-missing: ${{ 'true' == needs.build-docker-image.outputs.image-missing }}
+      suffix:
       flavor: |
         latest=${{ case ( startsWith(github.ref, 'refs/tags/v'), 'auto', 'false' ) }}
         prefix=
@@ -84,8 +155,9 @@ jobs:
         type=ref,event=pr
         type=ref,prefix=,suffix=,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
         type=ref,prefix=,suffix=-latest,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
-        type=semver,pattern={{version}},prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-        type=semver,pattern={{major}}.{{minor}},prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+        type=semver,pattern={{version}},prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
+        type=semver,pattern={{major}}.{{minor}},prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
+        type=raw,value=${{ github.sha }},prefix=,suffix=
 
   merge-firestarr-minimal:
     needs: [build-docker-image]
@@ -93,6 +165,8 @@ jobs:
     with:
       target: firestarr-minimal
       package: ${{ needs.build-docker-image.outputs.package }}
+      image-missing: ${{ 'true' == needs.build-docker-image.outputs.image-missing }}
+      suffix: -minimal
       flavor: |
         latest=false
         prefix=
@@ -101,7 +175,8 @@ jobs:
         type=ref,event=pr,prefix=,suffix=-minimal
         type=ref,prefix=,suffix=-minimal,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
         type=ref,prefix=,suffix=-minimal-latest,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
-        type=semver,pattern={{version}},prefix=,suffix=-minimal,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-        type=semver,pattern={{major}}.{{minor}},prefix=,suffix=-minimal,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-        type=raw,value=minimal,prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-        type=raw,value=minimal-latest,prefix=,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+        type=semver,pattern={{version}},prefix=,suffix=-minimal,enable=${{ needs.build-docker-image.outputs.is-tagged }}
+        type=semver,pattern={{major}}.{{minor}},prefix=,suffix=-minimal,enable=${{ needs.build-docker-image.outputs.is-tagged }}
+        type=raw,value=minimal,prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
+        type=raw,value=minimal-latest,prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
+        type=raw,value=${{ github.sha }}-minimal,prefix=,suffix=

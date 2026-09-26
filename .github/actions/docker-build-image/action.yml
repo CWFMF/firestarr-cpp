@@ -15,6 +15,13 @@ inputs:
   registry:
     required: true
     type: string
+  suffix:
+    required: false
+    type: string
+  # HACK: passing boolean to action doesn't work so use string for both
+  image-missing:
+    required: true
+    type: string
 
 env:
   BUILDX_NO_DEFAULT_ATTESTATIONS: 1
@@ -27,24 +34,71 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Show inputs
+      shell: bash
+      run: |
+        echo "inputs.target=${{ inputs.target }}"
+        echo "inputs.package-name=${{ inputs.package-name }}"
+        echo "inputs.platform=${{ inputs.platform }}"
+        echo "inputs.registry=${{ inputs.registry }}"
+        echo "inputs.image-missing=${{ inputs.image-missing }}"
+
+    - if: ${{ inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
+    - if: ${{ 'true' == inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "'true' == inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
+    - if: ${{ 'false' == inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "'false' == inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
+    - if: ${{ 'true' != inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "'true' != inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
+    - if: ${{ 'false' != inputs.image-missing }}
+      shell: bash
+      run: |
+        echo "'false' != inputs.image-missing"
+        echo "${{ inputs.image-missing }}"
+
     - name: Prepare environment
       shell: bash
       run: |
-        PLATFORM=${{ inputs.platform }}
-        REPO=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}
-        REF_NAME=${{ github.ref_name }}
-        echo "PLATFORM_PAIR=${PLATFORM//\//}" >> $GITHUB_ENV
-        echo "CACHE_REF=${REF_NAME//\//}" >> $GITHUB_ENV
-        echo "PACKAGE=${REPO}/${{ inputs.package-name }}" >> $GITHUB_ENV
-        echo "REGISTRY_CACHE=${REPO}/cache" >> $GITHUB_ENV
+        registry=${{ inputs.registry }}
+        repo=${registry}/${GITHUB_REPOSITORY@L}
+        package=${repo}/${{ inputs.package-name }}
+        registry_cache=${repo}/cache
+        cached=${registry_cache}:${{ github.sha }}${{ inputs.suffix }}
+        echo "PACKAGE=${package}" >> $GITHUB_ENV
+        echo "REGISTRY=${registry}" >> $GITHUB_ENV
+        echo "REGISTRY_CACHE=${registry_cache}" >> $GITHUB_ENV
+        echo "CACHED=${cached}" >> $GITHUB_ENV
+        platform=${{ inputs.platform }}
+        ref_name=${{ github.ref_name }}
+        echo "PLATFORM_PAIR=${platform//\//}" >> $GITHUB_ENV
+        echo "CACHE_REF=${ref_name//\//}" >> $GITHUB_ENV
 
     - name: ${{ inputs.target }} - Docker meta
+      if: ${{ 'true' == inputs.image-missing }}
       id: meta
       uses: docker/metadata-action@v6
       with:
         images: ${{ env.PACKAGE }}
 
     - name: ${{ inputs.target }} - Build and push by digest
+      if: ${{ 'true' == inputs.image-missing }}
       id: build
       uses: docker/build-push-action@v7
       with:
@@ -57,15 +111,17 @@ runs:
         push: ${{ github.event_name != 'pull_request' }}
         outputs: type=image,push-by-digest=true,name-canonical=true,push=true
         cache-from: |
-          type=registry,ref=${{ env.PACKAGE }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}
         cache-to: |
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
           type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
           type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
 
     - name: ${{ inputs.target }} - Export digest
+      if: ${{ 'true' == inputs.image-missing }}
       shell: bash
       run: |
         mkdir -p ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -73,6 +129,7 @@ runs:
         touch "${{ runner.temp }}/digests-${{ inputs.target }}/${digest#sha256:}"
 
     - name: ${{ inputs.target }} - Upload digest
+      if: ${{ 'true' == inputs.image-missing }}
       uses: actions/upload-artifact@v7
       with:
         name: digests-${{ inputs.target }}-${{ env.PLATFORM_PAIR }}

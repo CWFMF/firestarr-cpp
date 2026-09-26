@@ -9,6 +9,13 @@ on:
       package:
         required: true
         type: string
+      # HACK: passing boolean to action doesn't work so use string and (== 'true') for both
+      image-missing:
+        required: true
+        type: string
+      suffix:
+        required: false
+        type: string
       flavor:
         required: true
         type: string
@@ -26,6 +33,46 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Show inputs
+        shell: bash
+        run: |
+          echo "inputs.target=${{ inputs.target }}"
+          echo "inputs.package=${{ inputs.package }}"
+          echo "inputs.image-missing=${{ inputs.image-missing }}"
+          echo "inputs.suffix=${{ inputs.suffix }}"
+          echo "inputs.flavor=${{ inputs.flavor }}"
+          echo "inputs.tags=${{ inputs.tags }}"
+
+      - if: ${{ inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
+      - if: ${{ 'true' == inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "'true' == inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
+      - if: ${{ 'false' == inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "'false' == inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
+      - if: ${{ 'true' != inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "'true' != inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
+      - if: ${{ 'false' != inputs.image-missing }}
+        shell: bash
+        run: |
+          echo "'false' != inputs.image-missing"
+          echo "${{ inputs.image-missing }}"
+
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
@@ -35,12 +82,19 @@ jobs:
       - name: Prepare environment
         run: |
           package=${{ inputs.package }}
-          echo "CONTAINER_REGISTRY=${package%%\/*}" >> $GITHUB_ENV
+          registry=${package%%\/*}
+          repo=${registry}/${GITHUB_REPOSITORY@L}
+          registry_cache=${repo}/cache
+          cached=${package}:${{ github.sha }}${{ inputs.suffix }}
+          echo "PACKAGE=${package}" >> $GITHUB_ENV
+          echo "REGISTRY=${registry}" >> $GITHUB_ENV
+          echo "REGISTRY_CACHE=${registry_cache}" >> $GITHUB_ENV
+          echo "CACHED=${cached}" >> $GITHUB_ENV
 
       - name: Login to GHCR
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.CONTAINER_REGISTRY }}
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -48,6 +102,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: ${{ inputs.target }} - Download digests
+        if: ${{ 'true' == inputs.image-missing }}
         uses: actions/download-artifact@v8
         with:
           path: ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -63,14 +118,30 @@ jobs:
           tags: ${{ inputs.tags }}
 
       - name: ${{ inputs.target }} - Create manifest list and push
+        if: ${{ 'true' == inputs.image-missing }}
         working-directory: ${{ runner.temp }}/digests-${{ inputs.target }}
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ inputs.package }}@sha256:%s ' *)
 
       - name: ${{ inputs.target }} - Inspect image
+        if: ${{ 'true' == inputs.image-missing }}
         run: |
           docker buildx imagetools inspect ${{ inputs.package }}:${{ steps.meta.outputs.version }}
+
+      # already exists, so want to add tags to existing image
+      - name: ${{ inputs.target }} - Add tags to existing image
+        if: ${{ 'true' != inputs.image-missing }}
+        run: |
+          echo "Copying from ${{ env.CACHED }}"
+          echo "TAGS are: ${{ steps.meta.outputs.tags }}"
+          TAGS="${{ steps.meta.outputs.tags }}"
+          echo "TAGS after assign in bash are: ${TAGS}"
+          for t in ${TAGS}
+          do
+            echo "Tag is: $t"
+            docker buildx imagetools create -t "${t}" "${{ env.CACHED }}"
+          done
 
       - name: Set outputs
         run: |
