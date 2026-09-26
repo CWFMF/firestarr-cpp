@@ -18,6 +18,7 @@ struct SpreadData
   ROSSize ros{INVALID_ROS};
   Direction direction{Direction::Invalid()};
   Direction direction_previous{Direction::Invalid()};
+  int point_count{1};
 };
 // not sure what's going on with this and wondering if it doesn't keep number exactly
 // shouldn't be any way to be further than twice the entire width of the area
@@ -134,9 +135,6 @@ private:
 #endif
     auto& spread_arrival = cell_pts.spread_arrival_;
     auto& spread_internal = cell_pts.spread_internal_;
-    // count things as the same time if within a tolerance
-    constexpr auto TIME_EPSILON_SECONDS = 1.0 * MINUTE_SECONDS;
-    constexpr auto TIME_EPSILON = TIME_EPSILON_SECONDS / DAY_SECONDS;
     if (0 < spread_current.time && 0 > spread_arrival.time)
     {
 #ifdef DEBUG_CELLPOINTS
@@ -153,19 +151,16 @@ private:
       // initial burn will have an invalid direction, so needs to burn everywhere
       const auto is_initial = Direction::Invalid() == spread_current.direction_previous;
       // only spread in a direction that's in front of the normal to the angle it came from
-      // i.e. the 90 degrees on either side of the raz
+      // i.e. the 25 degrees to either side of the raz
       const auto dir_diff =
         abs(spread_current.direction.asDegrees() - spread_current.direction_previous.asDegrees());
-      const auto MAX_DEGREES = 90.0;
+      const auto MAX_DEGREES = 25.0;
       // NOTE: there should be no change in the extent of the fire if we exclude things behind the
       // normal to the direction it came from
       //       - but if we exclude too much then it can change how things spread, even if it is a
       //       more representative angle for the grids
       if (is_initial || MAX_DEGREES >= dir_diff)
       {
-        if (abs(spread_current.time - spread_arrival.time) <= TIME_EPSILON)
-        // else if (arrival_time == arrival_time_)
-        {
 #ifdef DEBUG_CELLPOINTS
           logging::verbose(
             "Same time so setting ros to max({:f}, {:f}) at time {:f}",
@@ -174,22 +169,19 @@ private:
             spread_current.time
           );
 #endif
-          // the same time so pick higher ros
-          if (
-          (spread_arrival.ros < spread_current.ros)
-          || (spread_arrival.ros == spread_current.ros
-              && spread_current.intensity > spread_arrival.intensity))
-          {
-            // NOTE: keep track of original time so this doesn't just always happen
-            spread_arrival = {
-              spread_arrival.time,
-              spread_current.intensity,
-              spread_current.ros,
-              spread_current.direction,
-              spread_current.direction_previous
-            };
-          }
-        }
+        // NOTE: keep track of original time so this doesn't just always happen
+        // Keep a running average of intensity and ros for all points that spread within some 
+        // angle (25deg on either side) of the original spread direction for this cell.
+        // - Unlike the previous approach, any spread in this cell within this direction criteria
+        //   is included, not just points arriving within some time epsilon of arrival
+        spread_arrival = {
+          spread_arrival.time,
+          spread_current.intensity / (spread_arrival.point_count + 1) + spread_arrival.intensity * spread_arrival.point_count / (spread_arrival.point_count + 1),
+          spread_current.ros / (spread_arrival.point_count + 1) + spread_arrival.ros * spread_arrival.point_count / (spread_arrival.point_count + 1),
+          spread_arrival.direction,
+          spread_arrival.direction_previous,
+          spread_arrival.point_count + 1
+        };
       }
     }
     // NOTE: use location inside cell so smaller types can be more precise

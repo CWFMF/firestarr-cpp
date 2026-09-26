@@ -4,6 +4,30 @@ ARG BASE_DISTROLESS=gcr.io/distroless/static-debian13
 # armv/v5, 386, riscv64, i686
 ARG BASE_SLIM=debian:trixie-slim
 
+FROM --platform=linux/amd64 ${BASE_DISTROLESS} AS distroless-amd64
+
+# seems like we can just delete everything and then copy distroless into any platform?
+FROM ${BASE_SLIM} AS base-minimal
+WORKDIR /appl/firestarr
+RUN mkdir -p /appl/firestarr/grid
+# HACK: mkdir doesn't exist when copied into scratch but COPY should work
+WORKDIR /
+RUN rm -rf $(ls -1 / | grep -vE "appl|dev|etc|proc|sys")
+COPY --from=distroless-amd64 / /
+
+# make a layer with scratch to clear out old layers
+FROM ${BASE_SLIM} AS base-cleaned
+WORKDIR /appl/firestarr
+RUN mkdir -p /appl/firestarr/grid
+RUN apt-get clean \
+  && rm -rf \
+    /tmp/* \
+    /usr/share/doc/* \
+    /var/cache/* \
+    /var/lib/apt/lists/* \
+    /var/lib/dpkg/* \
+    /var/tmp/*
+
 # basic image to start from
 FROM debian:trixie-slim AS gcc-cmake
 ARG TARGETARCH
@@ -41,16 +65,17 @@ RUN git clone -v https://github.com/microsoft/vcpkg.git \
 # install packages so they stay if nothing changes with vcpkg*.json
 FROM vcpkg-bootstrap AS vcpkg-installed
 WORKDIR /appl/firestarr
-COPY ./vcpkg.json .
-RUN vcpkg/vcpkg install
+RUN --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
+  vcpkg/vcpkg install
 
 # build and test
 FROM vcpkg-installed AS firestarr-build
 WORKDIR /appl/firestarr
-# HACK: copy .env here since cmake needs to write to it in github workflow
-COPY .env ./.env
+# NOTE: .env needs to be rw here since cmake needs to write to it in github workflow
 # mount instead of copy to minimize layers
-RUN --mount=type=bind,source=./cmake,target=./cmake \
+RUN --mount=type=bind,source=./vcpkg.json,target=./vcpkg.json \
+    --mount=type=bind,rw=true,source=./.env,target=./.env \
+    --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./CMakeLists.txt,target=./CMakeLists.txt \
     --mount=type=bind,source=./CMakePresets.json,target=./CMakePresets.json \
     --mount=type=bind,source=./.clang-format,target=./.clang-format \
@@ -66,49 +91,24 @@ RUN --mount=type=bind,source=./cmake,target=./cmake \
     --mount=type=bind,source=./LICENSE,target=./LICENSE \
     cmake --preset Release \
     && cmake --build --parallel --preset Release \
-    && ctest --preset Release
-
-FROM --platform=linux/amd64 ${BASE_DISTROLESS} AS distroless-amd64
-
-# seems like we can just delete everything and then copy distroless into any platform?
-FROM ${BASE_SLIM} AS firestarr-base-minimal
-# HACK: mkdir doesn't exist when copied into scratch but COPY should work
-RUN mkdir -p /appl/firestarr/grid
-WORKDIR /
-RUN rm -rf $(ls -1 / | grep -vE "appl|dev|etc|proc|sys")
-COPY --from=distroless-amd64 / /
+    && ctest --parallel --preset Release
 
 # make a layer with scratch to clear out old layers
 FROM scratch AS firestarr-minimal
-COPY --from=firestarr-base-minimal / /
+COPY --from=base-minimal / /
 WORKDIR /appl/firestarr
-COPY ./fuel.lut /appl/firestarr/
-COPY ./settings.ini /appl/firestarr/
-COPY --from=firestarr-build /appl/firestarr/firestarr /appl/firestarr/
-COPY --from=firestarr-build /appl/firestarr/proj.db /appl/firestarr/proj.db
+COPY --from=firestarr-build /appl/firestarr/firestarr .
+COPY --from=firestarr-build /appl/firestarr/proj.db ./proj.db
+COPY ./fuel.lut .
+COPY ./settings.ini .
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]
-
-# make a layer with scratch to clear out old layers
-FROM ${BASE_SLIM} AS base-cleaned
-RUN apt-get clean \
-  && rm -rf \
-    /tmp/* \
-    /usr/share/doc/* \
-    /var/cache/* \
-    /var/lib/apt/lists/* \
-    /var/lib/dpkg/* \
-    /var/tmp/*
-
-# use --from=firestarr-minimal to create a dependency so cache hopefully includes both
-FROM base-cleaned AS firestarr-base-cleaned
-COPY ./fuel.lut /appl/firestarr/
-COPY ./settings.ini /appl/firestarr/
-COPY --from=firestarr-minimal /appl/firestarr/firestarr /appl/firestarr/
-COPY --from=firestarr-minimal /appl/firestarr/proj.db /appl/firestarr/proj.db
 
 # derive final image from base so updates to binary are small layers
 FROM scratch AS firestarr
-COPY --from=firestarr-base-cleaned / /
-RUN mkdir -p /appl/firestarr/grid
+COPY --from=base-cleaned / /
 WORKDIR /appl/firestarr
+COPY --from=firestarr-minimal /appl/firestarr/firestarr .
+COPY --from=firestarr-minimal /appl/firestarr/proj.db ./proj.db
+COPY ./fuel.lut .
+COPY ./settings.ini .
 ENTRYPOINT [ "/appl/firestarr/firestarr" ]

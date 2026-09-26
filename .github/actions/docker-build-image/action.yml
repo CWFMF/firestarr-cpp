@@ -1,0 +1,87 @@
+# requires docker setup elsewhere
+name: docker-build-image
+description: 'Build docker image for specific platform'
+
+inputs:
+  target:
+    required: true
+    type: string
+  package-name:
+    required: true
+    type: string
+  platform:
+    required: true
+    type: string
+  registry:
+    required: true
+    type: string
+
+env:
+  BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+
+outputs:
+  package:
+    description: "Container package"
+    value: ${{ steps.output.outputs.package }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare environment
+      shell: bash
+      run: |
+        PLATFORM=${{ inputs.platform }}
+        REPO=${{ inputs.registry }}/${GITHUB_REPOSITORY@L}
+        REF_NAME=${{ github.ref_name }}
+        echo "PLATFORM_PAIR=${PLATFORM//\//}" >> $GITHUB_ENV
+        echo "CACHE_REF=${REF_NAME//\//}" >> $GITHUB_ENV
+        echo "PACKAGE=${REPO}/${{ inputs.package-name }}" >> $GITHUB_ENV
+        echo "REGISTRY_CACHE=${REPO}/cache" >> $GITHUB_ENV
+
+    - name: ${{ inputs.target }} - Docker meta
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: ${{ env.PACKAGE }}
+
+    - name: ${{ inputs.target }} - Build and push by digest
+      id: build
+      uses: docker/build-push-action@v7
+      with:
+        context: .
+        file: .docker/Dockerfile
+        target: ${{ inputs.target }}
+        platforms: linux/${{ inputs.platform }}
+        labels: ${{ steps.meta.outputs.labels }}
+        tags: ${{ env.PACKAGE }}
+        push: ${{ github.event_name != 'pull_request' }}
+        outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+        cache-from: |
+          type=registry,ref=${{ env.PACKAGE }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
+          type=registry,ref=${{ env.REGISTRY_CACHE }}
+        cache-to: |
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
+          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
+
+    - name: ${{ inputs.target }} - Export digest
+      shell: bash
+      run: |
+        mkdir -p ${{ runner.temp }}/digests-${{ inputs.target }}
+        digest="${{ steps.build.outputs.digest }}"
+        touch "${{ runner.temp }}/digests-${{ inputs.target }}/${digest#sha256:}"
+
+    - name: ${{ inputs.target }} - Upload digest
+      uses: actions/upload-artifact@v7
+      with:
+        name: digests-${{ inputs.target }}-${{ env.PLATFORM_PAIR }}
+        path: ${{ runner.temp }}/digests-${{ inputs.target }}/*
+        if-no-files-found: error
+        retention-days: 1
+
+    - name: Set outputs
+      id: output
+      shell: bash
+      run: |
+        echo "package=${{ env.PACKAGE }}" >> $GITHUB_OUTPUT
