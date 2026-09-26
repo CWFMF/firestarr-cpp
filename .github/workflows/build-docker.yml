@@ -18,8 +18,9 @@ on:
   workflow_dispatch:
 
 # queue runs so that images get built & cache gets used instead of building in parallel
+# don't use '-${{ github.sha }}' so builds always happen in the order they were pushed
 concurrency:
-  group: ${{ github.workflow }}-${{ github.sha }}
+  group: ${{ github.workflow }}
   queue: max
 
 env:
