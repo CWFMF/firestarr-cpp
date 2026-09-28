@@ -36,15 +36,16 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
   }
   [[nodiscard]] static constexpr Radians fix(const Radians& radians)
   {
-    if (radians > PiX2())
+    auto v = radians.value;
+    while (v > PiX2().value)
     {
-      return radians - PiX2();
+      v -= PiX2().value;
     }
-    if (radians < Radians::Zero())
+    while (v < Radians::Zero().value)
     {
-      return radians + PiX2();
+      v += PiX2().value;
     }
-    return radians;
+    return Radians{v};
   }
   /**
    * \brief Ensure that value lies between 0 and 2 * PI

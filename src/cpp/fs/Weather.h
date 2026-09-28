@@ -30,6 +30,19 @@ struct Direction : public StrictType<Direction, units::CompassDegrees>
     return Radians::from_degrees(asDegrees()).value;
   }
   [[nodiscard]] constexpr MathSize asDegrees() const { return value; }
+  [[nodiscard]] constexpr Direction fix() const
+  {
+    auto r = asDegrees();
+    while (r < 0)
+    {
+      r += 360;
+    }
+    while (r >= 360)
+    {
+      r -= 360;
+    }
+    return Direction{r};
+  }
   [[nodiscard]] constexpr DegreesSize asDegreesSize() const
   {
     return static_cast<DegreesSize>(asDegrees());

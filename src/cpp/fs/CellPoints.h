@@ -155,7 +155,7 @@ private:
       // only spread in a direction that's in front of the normal to the angle it came from
       // i.e. the 90 degrees on either side of the raz
       const auto dir_diff =
-        abs(spread_current.direction.asDegrees() - spread_current.direction_previous.asDegrees());
+        abs((spread_current.direction - spread_current.direction_previous).fix().asDegrees());
       const auto MAX_DEGREES = 90.0;
       // NOTE: there should be no change in the extent of the fire if we exclude things behind the
       // normal to the direction it came from
