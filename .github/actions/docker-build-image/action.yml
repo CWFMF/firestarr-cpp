@@ -18,6 +18,9 @@ inputs:
   suffix:
     required: false
     type: string
+  push:
+    required: true
+    type: boolean
   # HACK: passing boolean to action doesn't work so use string for both
   image-missing:
     required: true
@@ -108,8 +111,8 @@ runs:
         platforms: linux/${{ inputs.platform }}
         labels: ${{ steps.meta.outputs.labels }}
         tags: ${{ env.PACKAGE }}
-        push: ${{ github.event_name != 'pull_request' }}
-        outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+        push: ${{ inputs.push }}
+        outputs: ${{ case( inputs.push, 'type=image,push-by-digest=true,name-canonical=true,push=true', '' ) }}
         cache-from: |
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
@@ -121,7 +124,7 @@ runs:
           type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
 
     - name: ${{ inputs.target }} - Export digest
-      if: ${{ 'true' == inputs.image-missing }}
+      if: ${{ inputs.push && 'true' == inputs.image-missing }}
       shell: bash
       run: |
         mkdir -p ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -129,7 +132,7 @@ runs:
         touch "${{ runner.temp }}/digests-${{ inputs.target }}/${digest#sha256:}"
 
     - name: ${{ inputs.target }} - Upload digest
-      if: ${{ 'true' == inputs.image-missing }}
+      if: ${{ inputs.push && 'true' == inputs.image-missing }}
       uses: actions/upload-artifact@v7
       with:
         name: digests-${{ inputs.target }}-${{ env.PLATFORM_PAIR }}
