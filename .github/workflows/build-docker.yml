@@ -14,7 +14,7 @@ on:
     paths-ignore:
       - '.github/workflows/cmake-test.yml'
       - '.github/workflows/docker-cleanup.yml'
-
+  pull_request:
   workflow_dispatch:
 
 # queue runs so that images get built & cache gets used instead of building in parallel
@@ -44,6 +44,7 @@ jobs:
         platform: [amd64, arm64, ppc64le, riscv64, s390x]
     env:
       REGISTRY: 'ghcr.io'
+      # since package-name is 'cache' if this isn't tagged or one of main/dev/unstable, we can run the whole process to test still
       package-name: ${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'firestarr', 'cache' ) }}
     steps:
       - uses: actions/checkout@v6
