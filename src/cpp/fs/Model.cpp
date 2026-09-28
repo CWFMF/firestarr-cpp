@@ -9,6 +9,7 @@
 #include "Observer.h"
 #include "Perimeter.h"
 #include "ProbabilityMap.h"
+#include "rng.h"
 #include "Scenario.h"
 #include "Settings.h"
 namespace fs
@@ -852,6 +853,7 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   const Day start_day
 )
 {
+  using rng::make_seed;
   if (starts_.empty())
   {
     logging::warning("No start locations so not running");
@@ -864,38 +866,8 @@ map<DurationSize, shared_ptr<ProbabilityMap>> Model::runIterations(
   {
     last_date = max(static_cast<Day>(start_day + i), last_date);
   }
-  // use independent seeds so that if we remove one threshold it doesn't affect the other
-  // HACK: seed_seq takes a list of integers now, so multiply and convert to get more digits
-  // NOTE: use abs() because negative numbers act differently on arm64 vs x64 vs windows
-  // // NOTE: was matching to 15 digits (digits10 - 6) but use half precision so less likely
-  // //       mismatches happen on different hardware/os combinations
-  // constexpr auto precision = std::numeric_limits<size_t>::digits10 / 2;
-  // NOTE: std::numeric_limits<size_t>::digits10 varies on different hardware
-  //       (but is 8 on 32-bit so don't go beyond that in case we can ever get that working)
-  constexpr auto precision = 8;
-  static_assert(std::numeric_limits<size_t>::digits10 >= precision);
-  const auto lat = static_cast<size_t>(abs(start_point.latitude()) * pow(10, precision));
-  const auto lon = static_cast<size_t>(abs(start_point.longitude()) * pow(10, precision));
-  logging::debug("lat/long {} converted to ({:d}, {:d})", start_point, lat, lon);
-  const size_t base_salt = settings.salt;
-  auto make_seed = [&](const char* name, const size_t salt) {
-    const auto d = static_cast<size_t>(start_day);
-    logging::info(
-      "Seed inputs using precision of {:d} with base_salt {:d} for {:s}: {:d}, {:d}, {:d}, {:d}",
-      precision,
-      base_salt,
-      name,
-      salt,
-      d,
-      lat,
-      lon
-    );
-    // size_t will wrap around so don't need to worry about overflow
-    const size_t use_salt = base_salt + salt;
-    return std::seed_seq{use_salt, d, lat, lon};
-  };
-  auto seed_spread = make_seed("spread", 0);
-  auto seed_extinction = make_seed("extinction", 1);
+  auto seed_spread = make_seed("spread", start_point, start_day, 0, settings.salt);
+  auto seed_extinction = make_seed("extinction", start_point, start_day, 1, settings.salt);
   mt19937_64 mt_spread(seed_spread);
   mt19937_64 mt_extinction(seed_extinction);
   vector<MathSize> all_sizes{};
