@@ -119,9 +119,9 @@ runs:
           type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
           type=registry,ref=${{ env.REGISTRY_CACHE }}
         cache-to: |
-          ${{ case( 'true' == inputs.push, 'type=registry,mode=max,ref='${{ env.REGISTRY_CACHE }}':'${{ env.PLATFORM_PAIR }}'-'${{ github.sha }}, '' ) }}
-          ${{ case( 'true' == inputs.push, 'type=registry,mode=max,ref='${{ env.REGISTRY_CACHE }}':'${{ env.PLATFORM_PAIR }}'-'${{ env.CACHE_REF }}, '' ) }}
-          ${{ case( 'true' == inputs.push, 'type=registry,mode=max,ref='${{ env.REGISTRY_CACHE }}':'${{ env.PLATFORM_PAIR }}, '' ) }}
+          ${{ case( 'true' == inputs.push, format( 'type=registry,mode=max,ref={0}:{1}-{2}', env.REGISTRY_CACHE, env.PLATFORM_PAIR, github.sha ), '' ) }}
+          ${{ case( 'true' == inputs.push, format( 'type=registry,mode=max,ref={0}:{1}-{2}', env.REGISTRY_CACHE, env.PLATFORM_PAIR, env.CACHE_REF ), '' ) }}
+          ${{ case( 'true' == inputs.push, format( 'type=registry,mode=max,ref={0}:{1}', env.REGISTRY_CACHE, env.PLATFORM_PAIR), '' ) }}
 
     - name: ${{ inputs.target }} - Export digest
       if: ${{ 'true' == inputs.push && 'true' == inputs.image-missing }}
