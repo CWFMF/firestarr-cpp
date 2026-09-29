@@ -30,6 +30,9 @@ outputs:
   package:
     description: "Container package"
     value: ${{ steps.output.outputs.package }}
+  cached:
+    description: "Cached image"
+    value: ${{ steps.output.outputs.cached }}
 
 runs:
   using: "composite"
@@ -142,3 +145,4 @@ runs:
       shell: bash
       run: |
         echo "package=${{ env.PACKAGE }}" >> $GITHUB_OUTPUT
+        echo "cached=${{ env.CACHED }}" >> $GITHUB_OUTPUT

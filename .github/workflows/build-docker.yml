@@ -83,7 +83,7 @@ jobs:
         id: check
         run: |
           . ./.env
-          cached=${PACKAGE}:${{ github.sha }}
+          cached=${REGISTRY_CACHE}:${{ github.sha }}
           cached_minimal=${cached}-minimal
           ENV_TAG=v${VERSION}
           VERSION_HASH=$(git log -n1 --pretty=%H -- .env)
@@ -138,6 +138,8 @@ jobs:
 
     outputs:
       package: ${{ steps.build-firestarr.outputs.package }}
+      cached: ${{ steps.build-firestarr.outputs.cached }}
+      cached-minimal: ${{ steps.build-firestarr-minimal.outputs.cached }}
       image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
       is-tagged: ${{ env.IS_TAGGED }}
 
@@ -147,6 +149,7 @@ jobs:
     with:
       target: firestarr
       package: ${{ needs.build-docker-image.outputs.package }}
+      cached: ${{ needs.build-docker-image.outputs.cached }}
       image-missing: ${{ 'true' == needs.build-docker-image.outputs.image-missing }}
       suffix:
       flavor: |
@@ -159,7 +162,6 @@ jobs:
         type=ref,prefix=,suffix=-latest,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
         type=semver,pattern={{version}},prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
         type=semver,pattern={{major}}.{{minor}},prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
-        type=raw,value=${{ github.sha }},prefix=,suffix=
 
   merge-firestarr-minimal:
     needs: [build-docker-image]
@@ -167,6 +169,7 @@ jobs:
     with:
       target: firestarr-minimal
       package: ${{ needs.build-docker-image.outputs.package }}
+      cached: ${{ needs.build-docker-image.outputs.cached-minimal }}
       image-missing: ${{ 'true' == needs.build-docker-image.outputs.image-missing }}
       suffix: -minimal
       flavor: |
@@ -181,4 +184,3 @@ jobs:
         type=semver,pattern={{major}}.{{minor}},prefix=,suffix=-minimal,enable=${{ needs.build-docker-image.outputs.is-tagged }}
         type=raw,value=minimal,prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
         type=raw,value=minimal-latest,prefix=,suffix=,enable=${{ needs.build-docker-image.outputs.is-tagged }}
-        type=raw,value=${{ github.sha }}-minimal,prefix=,suffix=
