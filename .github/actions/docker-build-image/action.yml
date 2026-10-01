@@ -18,6 +18,9 @@ inputs:
   suffix:
     required: false
     type: string
+  push:
+    required: true
+    type: string
   # HACK: passing boolean to action doesn't work so use string for both
   image-missing:
     required: true
@@ -30,6 +33,9 @@ outputs:
   package:
     description: "Container package"
     value: ${{ steps.output.outputs.package }}
+  cached:
+    description: "Cached image"
+    value: ${{ steps.output.outputs.cached }}
 
 runs:
   using: "composite"
@@ -108,20 +114,20 @@ runs:
         platforms: linux/${{ inputs.platform }}
         labels: ${{ steps.meta.outputs.labels }}
         tags: ${{ env.PACKAGE }}
-        push: ${{ github.event_name != 'pull_request' }}
-        outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+        push: ${{ 'true' == inputs.push }}
+        outputs: ${{ case( 'true' == inputs.push, 'type=image,push-by-digest=true,name-canonical=true,push=true', '' ) }}
         cache-from: |
-          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
-          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
-          type=registry,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
-          type=registry,ref=${{ env.REGISTRY_CACHE }}
+          ${{ format( 'type=registry,ref={0}:{1}-{2}', env.REGISTRY_CACHE, env.PLATFORM_PAIR, github.sha ) }}
+          ${{ format( 'type=registry,ref={0}:{1}-{2}', env.REGISTRY_CACHE, env.PLATFORM_PAIR, env.CACHE_REF ) }}
+          ${{ format( 'type=registry,ref={0}:{1}', env.REGISTRY_CACHE, env.PLATFORM_PAIR ) }}
+          ${{ format( 'type=registry,ref={0}', env.REGISTRY_CACHE ) }}
         cache-to: |
-          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }}
-          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}-${{ env.CACHE_REF }}
-          type=registry,mode=max,ref=${{ env.REGISTRY_CACHE }}:${{ env.PLATFORM_PAIR }}
+          ${{ case( 'true' == inputs.push, format( 'type=registry,mode=max,ref={0}:{1}-{2}', env.REGISTRY_CACHE, env.PLATFORM_PAIR, github.sha ), '' ) }}
+          ${{ case( 'true' == inputs.push, format( 'type=registry,mode=max,ref={0}:{1}-{2}', env.REGISTRY_CACHE, env.PLATFORM_PAIR, env.CACHE_REF ), '' ) }}
+          ${{ case( 'true' == inputs.push, format( 'type=registry,mode=max,ref={0}:{1}', env.REGISTRY_CACHE, env.PLATFORM_PAIR), '' ) }}
 
     - name: ${{ inputs.target }} - Export digest
-      if: ${{ 'true' == inputs.image-missing }}
+      if: ${{ 'true' == inputs.push && 'true' == inputs.image-missing }}
       shell: bash
       run: |
         mkdir -p ${{ runner.temp }}/digests-${{ inputs.target }}
@@ -129,7 +135,7 @@ runs:
         touch "${{ runner.temp }}/digests-${{ inputs.target }}/${digest#sha256:}"
 
     - name: ${{ inputs.target }} - Upload digest
-      if: ${{ 'true' == inputs.image-missing }}
+      if: ${{ 'true' == inputs.push && 'true' == inputs.image-missing }}
       uses: actions/upload-artifact@v7
       with:
         name: digests-${{ inputs.target }}-${{ env.PLATFORM_PAIR }}
@@ -142,3 +148,4 @@ runs:
       shell: bash
       run: |
         echo "package=${{ env.PACKAGE }}" >> $GITHUB_OUTPUT
+        echo "cached=${{ env.CACHED }}" >> $GITHUB_OUTPUT

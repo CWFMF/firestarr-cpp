@@ -9,6 +9,9 @@ on:
       package:
         required: true
         type: string
+      cached:
+        required: true
+        type: string
       # HACK: passing boolean to action doesn't work so use string and (== 'true') for both
       image-missing:
         required: true
@@ -85,7 +88,7 @@ jobs:
           registry=${package%%\/*}
           repo=${registry}/${GITHUB_REPOSITORY@L}
           registry_cache=${repo}/cache
-          cached=${package}:${{ github.sha }}${{ inputs.suffix }}
+          cached=${registry_cache}:${{ github.sha }}${{ inputs.suffix }}
           echo "PACKAGE=${package}" >> $GITHUB_ENV
           echo "REGISTRY=${registry}" >> $GITHUB_ENV
           echo "REGISTRY_CACHE=${registry_cache}" >> $GITHUB_ENV
@@ -128,6 +131,11 @@ jobs:
         if: ${{ 'true' == inputs.image-missing }}
         run: |
           docker buildx imagetools inspect ${{ inputs.package }}:${{ steps.meta.outputs.version }}
+
+      - name: ${{ inputs.target }} - Cache image
+        if: ${{ 'true' == inputs.image-missing }}
+        run: |
+          docker buildx imagetools create -t "${{ env.CACHED }}" "${{ inputs.package }}:${{ steps.meta.outputs.version }}"
 
       # already exists, so want to add tags to existing image
       - name: ${{ inputs.target }} - Add tags to existing image
