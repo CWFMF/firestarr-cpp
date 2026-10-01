@@ -1,27 +1,30 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_FUELLOOKUP_H
-#define FS_FUELLOOKUP_H
-#include "stdafx.h"
-#include "FuelType.h"
-namespace fs::fuel
+#ifndef FS_FUELOLDLOOKUP_H
+#define FS_FUELOLDLOOKUP_H
+#include "../fs/Cell.h"
+#include "../fs/FireWeather.h"
+#include "../fs/FuelType.h"
+#include "../fs/stdafx.h"
+#include "../fs/Util.h"
+namespace fs::fuelold
 {
-class FuelLookupImpl;
+class FuelOldLookupImpl;
 /**
  * \brief Provides ability to look up a fuel type based on name or code.
  */
-class FuelLookup
+class FuelOldLookup
 {
 public:
-  ~FuelLookup() = default;
+  ~FuelOldLookup() = default;
   /**
    * \brief Construct by reading from a file
    * \param filename File to read from. Uses .lut format from Prometheus
    */
-  explicit FuelLookup(const char* filename);
-  FuelLookup(const FuelLookup& rhs) noexcept = default;
-  FuelLookup(FuelLookup&& rhs) noexcept = default;
-  FuelLookup& operator=(const FuelLookup& rhs) noexcept = default;
-  FuelLookup& operator=(FuelLookup&& rhs) noexcept = default;
+  explicit FuelOldLookup(const char* filename);
+  FuelOldLookup(const FuelOldLookup& rhs) noexcept = default;
+  FuelOldLookup(FuelOldLookup&& rhs) noexcept = default;
+  FuelOldLookup& operator=(const FuelOldLookup& rhs) noexcept = default;
+  FuelOldLookup& operator=(FuelOldLookup&& rhs) noexcept = default;
   /**
    * \brief Look up a FuelType based on the given code
    * \param value Value to use for lookup
@@ -72,7 +75,7 @@ private:
   /**
    * \brief Implementation class for FuelLookup
    */
-  shared_ptr<FuelLookupImpl> impl_{nullptr};
+  shared_ptr<FuelOldLookupImpl> impl_{nullptr};
 };
 /**
  * \brief Look up a FuelType based on the given code
@@ -81,7 +84,7 @@ private:
  */
 [[nodiscard]] constexpr const FuelType* fuel_by_code(const FuelCodeSize& code)
 {
-  return FuelLookup::Fuels.at(code);
+  return FuelOldLookup::Fuels.at(code);
 }
 /**
  * \brief Get FuelType based on the given cell
@@ -108,36 +111,36 @@ private:
  */
 [[nodiscard]] constexpr bool is_null_fuel(const Cell& cell)
 {
-  return fs::fuel::is_null_fuel(fuel_by_code(cell.fuelCode()));
+  return fs::fuelold::is_null_fuel(fs::fuelold::fuel_by_code(cell.fuelCode()));
 }
-class LazyFuelLookup : public LazyPath
+class LazyFuelOldLookup : public LazyPath
 {
 public:
   using LazyPath::LazyPath;
-  const FuelLookup& lookup() const
+  const FuelOldLookup& lookup() const
   {
     // HACK: pretend this is const because it only gets assigned once
     if (nullptr == fuel_lookup_)
     {
-      fuel_lookup_ = std::make_unique<FuelLookup>(canonical());
+      fuel_lookup_ = std::make_unique<FuelOldLookup>(canonical());
       logging::check_fatal(nullptr == fuel_lookup_, "Fuel lookup table has not been loaded");
     }
     return *fuel_lookup_;
   }
-  LazyFuelLookup& operator=(const LazyFuelLookup& rhs) noexcept
+  LazyFuelOldLookup& operator=(const LazyFuelOldLookup& rhs) noexcept
   {
     LazyPath::operator=(rhs);
     fuel_lookup_ = nullptr;
     return *this;
   }
-  LazyFuelLookup& operator=(LazyFuelLookup&& rhs) noexcept
+  LazyFuelOldLookup& operator=(LazyFuelOldLookup&& rhs) noexcept
   {
     LazyPath::operator=(rhs);
     fuel_lookup_ = std::move(rhs.fuel_lookup_);
     rhs.fuel_lookup_ = nullptr;
     return *this;
   }
-  LazyFuelLookup& operator=(const string& path) noexcept
+  LazyFuelOldLookup& operator=(const string& path) noexcept
   {
     LazyPath::operator=(path);
     fuel_lookup_ = nullptr;
@@ -145,7 +148,7 @@ public:
   }
 
 protected:
-  mutable unique_ptr<FuelLookup> fuel_lookup_{nullptr};
+  mutable unique_ptr<FuelOldLookup> fuel_lookup_{nullptr};
 };
 }
 #endif
