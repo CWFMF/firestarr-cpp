@@ -124,6 +124,7 @@ jobs:
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
           suffix:
+          push: ${{ github.event_name != 'pull_request' }}
           image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
 
       - uses: ./.github/actions/docker-build-image
@@ -134,6 +135,7 @@ jobs:
           package-name: ${{ env.package-name }}
           platform: ${{ matrix.platform }}
           suffix: -minimal
+          push: ${{ github.event_name != 'pull_request' }}
           image-missing: ${{ 'true' == steps.check-missing.outputs.image-missing }}
 
     outputs:
@@ -145,6 +147,7 @@ jobs:
 
   merge-firestarr:
     needs: [build-docker-image]
+    if: ${{ github.event_name != 'pull_request' }}
     uses: ./.github/workflows/docker-merge-image.yml
     with:
       target: firestarr
@@ -165,6 +168,7 @@ jobs:
 
   merge-firestarr-minimal:
     needs: [build-docker-image]
+    if: ${{ github.event_name != 'pull_request' }}
     uses: ./.github/workflows/docker-merge-image.yml
     with:
       target: firestarr-minimal
