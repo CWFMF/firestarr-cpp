@@ -19,42 +19,37 @@ DurationSize do_spread(
   static const auto& settings = fs::settings::instance();
   static const MathSize ros_min = settings.minimum_ros;
   spreading_points to_spread{};
-  // make block to prevent it being visible beyond use
+  // if we use an iterator this way we don't need to copy keys to erase things
+  auto& lhs = points.cells_;
+  auto it_cells = lhs.begin();
+  while (it_cells != lhs.end())
   {
-    // if we use an iterator this way we don't need to copy keys to erase things
-    auto& lhs = points.cells_;
-    auto it_cells = lhs.begin();
-    while (it_cells != lhs.end())
+    auto& [loc, pts] = *it_cells;
+    const Cell for_cell = scenario->cell(loc);
+    const auto key = for_cell.key();
+    // any cell that has the same fuel, slope, and aspect has the same spread
+    auto& origin = *spread_info.add_spread(key, scenario, time);
+    // filter out things not spreading fast enough here so they get copied if they aren't
+    // isNotSpreading() had better be true if ros is lower than minimum
+    const auto ros = origin.headRos();
+    if (ros >= ros_min)
     {
-      auto& [loc, pts] = *it_cells;
-      const Cell for_cell = scenario->cell(loc);
-      const auto key = for_cell.key();
-      {
-        // any cell that has the same fuel, slope, and aspect has the same spread
-        auto& origin = *spread_info.add_spread(key, scenario, time);
-        // filter out things not spreading fast enough here so they get copied if they aren't
-        // isNotSpreading() had better be true if ros is lower than minimum
-        const auto ros = origin.headRos();
-        if (ros >= ros_min)
-        {
-          max_ros = max(max_ros, ros);
-          // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(std::move(*it_cells));
-          it_cells = lhs.erase(it_cells);
+      max_ros = max(max_ros, ros);
+      // NOTE: shouldn't be Cell if we're looking up by just Location later
+      to_spread[key].emplace_back(std::move(*it_cells));
+      it_cells = lhs.erase(it_cells);
 #ifdef DEBUG_CELLPOINTS
-          auto& v = to_spread[key];
-          const auto n = v.size();
-          const auto& p = v[n - 1].second;
-          logging::note(
-            "added {:d} items to to_spread[{:d}][({:d}, {:d})]", p.size(), key, loc.x(), loc.y()
-          );
+      auto& v = to_spread[key];
+      const auto n = v.size();
+      const auto& p = v[n - 1].second;
+      logging::note(
+        "added {:d} items to to_spread[{:d}][({:d}, {:d})]", p.size(), key, loc.x(), loc.y()
+      );
 #endif
-        }
-        else
-        {
-          ++it_cells;
-        }
-      }
+    }
+    else
+    {
+      ++it_cells;
     }
   }
   // if nothing in to_spread then nothing is spreading
