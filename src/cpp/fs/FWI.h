@@ -5,6 +5,65 @@
 #include "Weather.h"
 namespace fs
 {
+// months as array indexes
+class Month
+{
+public:
+  enum class Value
+  {
+    January,
+    February,
+    March,
+    April,
+    May,
+    June,
+    July,
+    August,
+    September,
+    October,
+    November,
+    December
+  };
+  static Month from_index(const int value) { return {static_cast<Value>(value)}; }
+  static Month from_ordinal(const int value) { return {static_cast<Value>(value - 1)}; }
+  Month(const Value value) : value{value} { }
+  int ordinal() const { return static_cast<int>(value) + 1; }
+  size_t index() const { return static_cast<size_t>(value); }
+  const char* name() const
+  {
+    static constexpr const char* NAMES[]{
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    };
+    return NAMES[index()];
+  }
+
+private:
+  Value value;
+};
+struct Latitude
+{
+  MathSize value{};
+  auto operator<=>(const Latitude& rhs) const = default;
+  Latitude operator-(const Latitude& rhs) const { return {value - rhs.value}; }
+  Latitude operator-() const { return {-value}; }
+};
+static inline Latitude abs(const Latitude& rhs) { return {std::abs(rhs.value)}; }
+struct Moisture
+{
+  MathSize value{};
+};
+constexpr Latitude DEFAULT_LATITUDE{46.0};
 /**
  * \brief Fine Fuel Moisture Code value.
  */
@@ -47,8 +106,16 @@ struct Dmc : public StrictType<Dmc>
     const RelativeHumidity rh,
     const Precipitation prec,
     const Dmc dmc_previous,
+    const Month month,
+    const Latitude latitude = DEFAULT_LATITUDE
+  ) noexcept;
+  Dmc(
+    const Temperature temperature,
+    const RelativeHumidity rh,
+    const Precipitation prec,
+    const Dmc dmc_previous,
     const int month,
-    const MathSize latitude
+    const MathSize latitude = DEFAULT_LATITUDE.value
   ) noexcept;
 };
 /**
@@ -69,8 +136,15 @@ struct Dc : public StrictType<Dc>
     const Temperature temperature,
     const Precipitation prec,
     const Dc dc_previous,
+    const Month month,
+    const Latitude latitude = DEFAULT_LATITUDE
+  ) noexcept;
+  Dc(
+    const Temperature temperature,
+    const Precipitation prec,
+    const Dc dc_previous,
     const int month,
-    const MathSize latitude
+    const MathSize latitude = DEFAULT_LATITUDE.value
   ) noexcept;
 };
 /**
@@ -136,19 +210,5 @@ struct Dsr : public StrictType<Dsr>
   explicit Dsr(const Fwi fwi) noexcept;
 };
 MathSize ffmc_effect(const Ffmc ffmc) noexcept;
-constexpr auto FFMC_MOISTURE_CONSTANT = 250.0 * 59.5 / 101.0;
-constexpr MathSize ffmc_to_moisture(const MathSize ffmc) noexcept
-{
-  return FFMC_MOISTURE_CONSTANT * (101.0 - ffmc) / (59.5 + ffmc);
-}
-constexpr MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept
-{
-  return ffmc_to_moisture(ffmc.value);
-}
-constexpr Ffmc moisture_to_ffmc(const MathSize m) noexcept
-{
-  return Ffmc{(59.5 * (250.0 - m) / (FFMC_MOISTURE_CONSTANT + m))};
-}
-constexpr Ffmc ffmc_from_moisture(const MathSize m) noexcept { return Ffmc(moisture_to_ffmc(m)); }
 }
 #endif

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FwiReference.h"
 #include "FWI.h"
+#include "FwiWeather.h"
 namespace fs::fwireference
 {
 using namespace std;

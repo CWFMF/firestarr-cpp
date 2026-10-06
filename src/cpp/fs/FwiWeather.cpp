@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FwiWeather.h"
+#include "FwiOld.h"
 namespace fs
 {
 [[nodiscard]] MathSize FwiWeatherImpl::ffmcEffect() const { return ffmc_effect(ffmc); }
@@ -11,4 +12,8 @@ namespace fs
   return exp((dmc.value - 244.72) / -43.43) + 20;
 }
 mutex FwiWeather::mutex_ = {};
+MathSize ffmc_to_moisture(const MathSize ffmc) noexcept { return fwiold::ffmc_to_moisture(ffmc); }
+MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept { return fwiold::ffmc_to_moisture(ffmc); }
+Ffmc moisture_to_ffmc(const MathSize m) noexcept { return fwiold::moisture_to_ffmc(m); }
+Ffmc ffmc_from_moisture(const MathSize m) noexcept { return fwiold::ffmc_from_moisture(m); }
 }

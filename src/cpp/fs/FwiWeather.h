@@ -244,5 +244,10 @@ public:
 private:
   ptr<const FwiWeatherImpl> impl_{nullptr};
 };
+MathSize ffmc_effect(const Ffmc ffmc) noexcept;
+MathSize ffmc_to_moisture(const MathSize ffmc) noexcept;
+MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept;
+Ffmc moisture_to_ffmc(const MathSize m) noexcept;
+Ffmc ffmc_from_moisture(const MathSize m) noexcept;
 }
 #endif
