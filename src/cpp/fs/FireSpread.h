@@ -50,9 +50,9 @@ public:
   static const SlopeTableArray SlopeTable;
   SpreadInfo() = default;
   ~SpreadInfo() = default;
-  constexpr SpreadInfo(SpreadInfo&& rhs) noexcept = default;
+  SpreadInfo(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo(const SpreadInfo& rhs) noexcept = default;
-  constexpr SpreadInfo& operator=(SpreadInfo&& rhs) noexcept = default;
+  SpreadInfo& operator=(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo& operator=(const SpreadInfo& rhs) noexcept = default;
   /**
    * \brief Determine rate of spread from probability of spread threshold
@@ -192,7 +192,7 @@ public:
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
-    const ptr<const FwiWeather> weather
+    const FwiWeather weather
   );
   SpreadInfo(
     const tm& start_date,
@@ -201,7 +201,7 @@ public:
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
-    const ptr<const FwiWeather> weather
+    const FwiWeather weather
   );
   MathSize crownFractionBurned() const { return cfb_; }
   MathSize crownFuelConsumption() const { return cfc_; }
@@ -220,7 +220,7 @@ private:
     const AspectSize aspect,
     const char* fuel_name,
     int nd,
-    const ptr<const FwiWeather> weather
+    const FwiWeather weather
   );
   SpreadInfo(
     DurationSize time,
@@ -228,7 +228,7 @@ private:
     MathSize cell_size,
     const SpreadKey& key,
     int nd,
-    const ptr<const FwiWeather> weather
+    const FwiWeather weather
   );
 
 public:
@@ -238,8 +238,8 @@ public:
     MathSize cell_size,
     const SpreadKey& key,
     int nd,
-    const ptr<const FwiWeather> weather,
-    const ptr<const FwiWeather> weather_daily
+    const FwiWeather weather,
+    const FwiWeather weather_daily
   );
 
 public:
@@ -251,8 +251,8 @@ public:
     MathSize cell_size,
     const SpreadKey& key,
     int nd,
-    const ptr<const FwiWeather> weather,
-    const ptr<const FwiWeather> weather_daily
+    const FwiWeather weather,
+    const FwiWeather weather_daily
   );
 
 private:
@@ -291,7 +291,7 @@ public:
   /**
    * \brief FwiWeather determining spread
    */
-  ptr<const FwiWeather> weather{nullptr};
+  FwiWeather weather{};
 
 private:
   /**

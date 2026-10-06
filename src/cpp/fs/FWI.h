@@ -138,10 +138,10 @@ struct Dsr : public StrictType<Dsr>
 /**
  * \brief A Weather value with calculated FWI indices.
  */
-struct FwiWeather : public Weather
+struct FwiWeatherImpl : public Weather
 {
-  static consteval FwiWeather Zero() { return {}; }
-  static consteval FwiWeather Invalid()
+  static consteval FwiWeatherImpl Zero() { return {}; }
+  static consteval FwiWeatherImpl Invalid()
   {
     return {
       Weather::Invalid(),
@@ -177,8 +177,8 @@ struct FwiWeather : public Weather
    * \brief Fire Weather Index
    */
   Fwi fwi{};
-  constexpr FwiWeather() noexcept = default;
-  constexpr FwiWeather(
+  constexpr FwiWeatherImpl() noexcept = default;
+  constexpr FwiWeatherImpl(
     const Weather wx,
     const Ffmc ffmc,
     const Dmc dmc,
@@ -192,7 +192,7 @@ struct FwiWeather : public Weather
       bui{Bui::Invalid() == bui ? Bui{dmc, dc} : bui},
       fwi{Fwi::Invalid() == fwi ? Fwi{this->isi, this->bui} : fwi}
   { }
-  constexpr FwiWeather(
+  constexpr FwiWeatherImpl(
     const Temperature temp,
     const RelativeHumidity rh,
     const Wind wind,
@@ -204,10 +204,10 @@ struct FwiWeather : public Weather
     const Bui bui,
     const Fwi fwi
   ) noexcept
-    : FwiWeather{Weather{temp, rh, wind, prec}, ffmc, dmc, dc, isi, bui, fwi}
+    : FwiWeatherImpl{Weather{temp, rh, wind, prec}, ffmc, dmc, dc, isi, bui, fwi}
   { }
-  constexpr FwiWeather(
-    const FwiWeather& yesterday,
+  constexpr FwiWeatherImpl(
+    const FwiWeatherImpl& yesterday,
     const int month,
     const MathSize latitude,
     const Temperature& temp,
@@ -221,7 +221,7 @@ struct FwiWeather : public Weather
     Bui bui = Bui::Invalid(),
     Fwi fwi = Fwi::Invalid()
   ) noexcept
-    : FwiWeather(
+    : FwiWeatherImpl(
         {.temperature = temp, .rh = rh, .wind = wind, .prec = prec},
         (Ffmc::Invalid() == ffmc) ? Ffmc{temp, rh, wind.speed, prec, yesterday.ffmc} : ffmc,
         (Dmc::Invalid() == dmc) ? Dmc{temp, rh, prec, yesterday.dmc, month, latitude} : dmc,
@@ -231,7 +231,7 @@ struct FwiWeather : public Weather
         fwi
       )
   { }
-  auto operator<=>(const FwiWeather& rhs) const = default;
+  auto operator<=>(const FwiWeatherImpl& rhs) const = default;
   /**
    * \brief Moisture content (%) based on Ffmc
    * \return Moisture content (%) based on Ffmc
@@ -257,6 +257,122 @@ struct FwiWeather : public Weather
    * \return Ffmc effect used for spread
    */
   [[nodiscard]] MathSize ffmcEffect() const;
+};
+class FwiWeather
+{
+private:
+  static mutex mutex_;
+  ptr<const FwiWeatherImpl> lookup(const FwiWeatherImpl& wx) noexcept
+  {
+    // keep unique FwiWeatherImpl and then just do pointer comparison for equality
+    lock_guard<mutex> lock(mutex_);
+    static set<FwiWeatherImpl> fwi_values{};
+    static const FwiWeatherImpl empty{};
+    if (empty == wx)
+    {
+      return nullptr;
+    }
+    auto e = fwi_values.emplace(wx);
+    return &(*e.first);
+  }
+
+public:
+  // static FwiWeather Zero() { return FwiWeather(FwiWeatherImpl::Zero()); }
+  // static FwiWeather Invalid() { return FwiWeather(FwiWeatherImpl::Invalid()); }
+  const Ffmc& ffmc() const noexcept { return impl_->ffmc; }
+  const Dmc& dmc() const noexcept { return impl_->dmc; }
+  const Dc& dc() const noexcept { return impl_->dc; }
+  const Isi& isi() const noexcept { return impl_->isi; }
+  const Bui& bui() const noexcept { return impl_->bui; }
+  const Fwi& fwi() const noexcept { return impl_->fwi; }
+  const Temperature& temperature() const noexcept { return impl_->temperature; };
+  const RelativeHumidity& rh() const noexcept { return impl_->rh; };
+  const Wind& wind() const noexcept { return impl_->wind; };
+  const Precipitation& prec() const noexcept { return impl_->prec; };
+  constexpr FwiWeather() noexcept = default;
+  FwiWeather(const FwiWeatherImpl& wx) noexcept : impl_{FwiWeather::lookup(wx)} { }
+  FwiWeather(const FwiWeather& rhs) noexcept : impl_{rhs.impl_} { }
+  FwiWeather(FwiWeather&& rhs) noexcept : impl_{rhs.impl_} { }
+  FwiWeather& operator=(const FwiWeather& rhs) noexcept
+  {
+    impl_ = rhs.impl_;
+    return *this;
+  }
+  FwiWeather& operator=(FwiWeather&& rhs) noexcept
+  {
+    impl_ = rhs.impl_;
+    return *this;
+  }
+  FwiWeather(
+    const Weather wx,
+    const Ffmc ffmc,
+    const Dmc dmc,
+    const Dc dc,
+    const Isi isi = Isi::Invalid(),
+    const Bui bui = Bui::Invalid(),
+    const Fwi fwi = Fwi::Invalid()
+  ) noexcept
+    : FwiWeather{FwiWeatherImpl{Weather(wx), ffmc, dmc, dc, isi, bui, fwi}}
+  { }
+  FwiWeather(
+    const Temperature temp,
+    const RelativeHumidity rh,
+    const Wind wind,
+    const Precipitation prec,
+    const Ffmc ffmc,
+    const Dmc dmc,
+    const Dc dc,
+    // Isi isi = Isi::Invalid(),
+    // Bui bui = Bui::Invalid(),
+    // Fwi fwi = Fwi::Invalid()
+    const Isi isi,
+    const Bui bui,
+    const Fwi fwi
+  ) noexcept
+    : FwiWeather{Weather{temp, rh, wind, prec}, ffmc, dmc, dc, isi, bui, fwi}
+  { }
+  FwiWeather(
+    const FwiWeather& yesterday,
+    const int month,
+    const MathSize latitude,
+    const Temperature& temp,
+    const RelativeHumidity& rh,
+    const Wind& wind,
+    const Precipitation& prec,
+    Ffmc ffmc = Ffmc::Invalid(),
+    Dmc dmc = Dmc::Invalid(),
+    Dc dc = Dc::Invalid(),
+    Isi isi = Isi::Invalid(),
+    Bui bui = Bui::Invalid(),
+    Fwi fwi = Fwi::Invalid()
+  ) noexcept
+    : FwiWeather{FwiWeatherImpl{
+        *yesterday.impl_,
+        month,
+        latitude,
+        temp,
+        rh,
+        wind,
+        prec,
+        ffmc,
+        dmc,
+        dc,
+        isi,
+        bui,
+        fwi
+      }}
+  { }
+  auto operator<=>(const FwiWeather& rhs) const { return *impl_ <=> *rhs.impl_; }
+  auto operator==(const FwiWeather& rhs) const { return impl_ == rhs.impl_; }
+  [[nodiscard]] MathSize mcFfmcPct() const { return impl_->mcFfmcPct(); }
+  [[nodiscard]] MathSize mcDmcPct() const { return impl_->mcDmcPct(); }
+  [[nodiscard]] MathSize mcFfmc() const { return impl_->mcFfmc(); }
+  [[nodiscard]] MathSize mcDmc() const { return impl_->mcDmc(); }
+  [[nodiscard]] MathSize ffmcEffect() const { return impl_->ffmcEffect(); }
+  [[nodiscard]] bool isNull() const { return nullptr == impl_; }
+
+private:
+  ptr<const FwiWeatherImpl> impl_{nullptr};
 };
 constexpr auto FFMC_MOISTURE_CONSTANT = 250.0 * 59.5 / 101.0;
 constexpr MathSize ffmc_to_moisture(const MathSize ffmc) noexcept

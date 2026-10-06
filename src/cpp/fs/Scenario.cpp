@@ -6,7 +6,6 @@
 #include "CellPoints.h"
 #include "FireSpread.h"
 #include "FuelLookup.h"
-#include "FuelType.h"
 #include "IntensityMap.h"
 #include "Location.h"
 #include "Log.h"
@@ -224,8 +223,8 @@ void Scenario::evaluate(const Event& event)
           "{:s} Didn't survive ignition in {:s} with weather {:f}, {:f}",
           log_prefix_,
           FuelType::safeName(check_fuel(for_cell)),
-          wx->ffmc.value,
-          wx->dmc.value
+          wx.ffmc().value,
+          wx.dmc().value
         );
       }
       // HACK: we still want the fire to have existed, so set the intensity of the origin
@@ -287,7 +286,7 @@ Scenario::Scenario(
 {
   const auto wx = weather_->at(start_time_);
   logging::check_fatal(
-    nullptr == wx, "No weather for start time {:s}", make_timestamp(model->year(), start_time_)
+    wx.isNull(), "No weather for start time {:s}", make_timestamp(model->year(), start_time_)
   );
   const auto saves = settings::instance().output_date_offsets.offsets();
   const auto last_save = start_day_ + saves[saves.size() - 1];
@@ -583,13 +582,13 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto wx_daily = settings.is_surface() ? model_->yesterday() : weather_daily(time);
   current_time_ = time;
   log_prefix_ = get_log_prefix(*this);
-  logging::check_fatal(nullptr == wx, "No weather available for time {:f}", time);
+  logging::check_fatal(wx.isNull(), "No weather available for time {:f}", time);
   const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
   const auto max_duration = (next_time - time) * DAY_MINUTES;
   const auto max_time = time + max_duration / DAY_MINUTES;
   // HACK: use the old ffmc for this check to be consistent with previous version
-  if (wx_daily->ffmc.value < minimumFfmcForSpread(time))
+  if (wx_daily.ffmc().value < minimumFfmcForSpread(time))
   {
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     logging::extensive("{:s} Waiting until {:f} because of FFMC", log_prefix_, max_time);

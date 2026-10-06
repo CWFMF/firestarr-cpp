@@ -312,7 +312,7 @@ public:
   /**
    * Conditions for yesterday (or constant weather)
    */
-  ptr<const FwiWeather> yesterday() const noexcept { return &yesterday_; }
+  FwiWeather yesterday() const noexcept { return yesterday_; }
   /**
    * \brief Initial fire size at start of scenario
    */

@@ -501,12 +501,13 @@ Dsr::Dsr(const Fwi fwi) noexcept
       return (0.0272 * pow(fwi.value, 1.77));
     }()}
 { }
-[[nodiscard]] MathSize FwiWeather::ffmcEffect() const { return ffmc_effect(ffmc); }
-[[nodiscard]] MathSize FwiWeather::mcDmc() const { return mcDmcPct() / 100.0; }
-[[nodiscard]] MathSize FwiWeather::mcFfmc() const { return mcFfmcPct() / 100.0; }
-[[nodiscard]] MathSize FwiWeather::mcFfmcPct() const { return ffmc_to_moisture(ffmc); }
-[[nodiscard]] MathSize FwiWeather::mcDmcPct() const
+[[nodiscard]] MathSize FwiWeatherImpl::ffmcEffect() const { return ffmc_effect(ffmc); }
+[[nodiscard]] MathSize FwiWeatherImpl::mcDmc() const { return mcDmcPct() / 100.0; }
+[[nodiscard]] MathSize FwiWeatherImpl::mcFfmc() const { return mcFfmcPct() / 100.0; }
+[[nodiscard]] MathSize FwiWeatherImpl::mcFfmcPct() const { return ffmc_to_moisture(ffmc); }
+[[nodiscard]] MathSize FwiWeatherImpl::mcDmcPct() const
 {
   return exp((dmc.value - 244.72) / -43.43) + 20;
 }
+mutex FwiWeather::mutex_ = {};
 }

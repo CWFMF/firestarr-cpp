@@ -66,7 +66,7 @@ public:
    * \param time Time to get weather for
    * \return FwiWeather for given time
    */
-  [[nodiscard]] ptr<const FwiWeather> at(const DurationSize time) const;
+  [[nodiscard]] FwiWeather at(const DurationSize time) const;
   /**
    * \brief Probability of survival in given fuel at given time
    * \param time Time to get survival probability for
@@ -91,31 +91,13 @@ public:
    * \brief Weather by hour by day
    * \return Weather by hour by day
    */
-  [[nodiscard]] const vector<ptr<const FwiWeather>>& getWeather()
-  {
-    return weather_by_hour_by_day_;
-  }
-
-protected:
-  /**
-   * \brief Constructor
-   * \param used_fuels set of FuelTypes that are used in the simulation
-   * \param min_date Minimum date present in stream
-   * \param max_date Maximum date present in stream
-   * \param weather_by_hour_by_day FwiWeather by hour by Day
-   */
-  FireWeather(
-    const set<const FuelType*>& used_fuels,
-    Day min_date,
-    Day max_date,
-    vector<ptr<const FwiWeather>>&& weather_by_hour_by_day
-  );
+  [[nodiscard]] const vector<FwiWeather>& getWeather() { return weather_by_hour_by_day_; }
 
 private:
   /**
    * \brief FwiWeather by hour by Day
    */
-  vector<ptr<const FwiWeather>> weather_by_hour_by_day_{};
+  vector<FwiWeather> weather_by_hour_by_day_{};
   /**
    * \brief Probability of survival for fuels fuel at each time
    */

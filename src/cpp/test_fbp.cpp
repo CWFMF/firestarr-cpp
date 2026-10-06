@@ -232,8 +232,8 @@ auto compare_spread(
       logging::extensive("aspect {:d}", aspect);
       // HACK: this constructor ignores fuel part of this
       const auto key = Cell::key(Cell::hashCell(slope, aspect, 0));
-      const SpreadInfo spread_a{a, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
-      const SpreadInfo spread_b{b, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
+      const SpreadInfo spread_a{a, TIME, MIN_ROS, CELL_SIZE, key, nd, weather, weather};
+      const SpreadInfo spread_b{b, TIME, MIN_ROS, CELL_SIZE, key, nd, weather, weather};
       const auto offsets_a = spread_a.offsets();
       const auto offsets_b = spread_b.offsets();
       const auto head_ros = spread_a.headRos();

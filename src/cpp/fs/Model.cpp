@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Model.h"
-#include "FBP.h"
 #include "FireWeather.h"
 #include "FWI.h"
+#include "Greenup.h"
 #include "Input.h"
 #include "Location.h"
 #include "Log.h"
@@ -62,13 +62,23 @@ void Model::setWeather(const FwiWeather& weather, const Day start_day)
   wx_.emplace(
     0,
     FireWeather{
-      f, static_cast<Day>(start_day - 1), weather.dc, weather.dmc, weather.ffmc, weather.wind
+      f,
+      static_cast<Day>(start_day - 1),
+      weather.dc(),
+      weather.dmc(),
+      weather.ffmc(),
+      weather.wind()
     }
   );
   wx_daily_.emplace(
     0,
     FireWeather{
-      f, static_cast<Day>(start_day - 1), weather.dc, weather.dmc, weather.ffmc, weather.wind
+      f,
+      static_cast<Day>(start_day - 1),
+      weather.dc(),
+      weather.dmc(),
+      weather.ffmc(),
+      weather.wind()
     }
   );
 }
@@ -116,7 +126,7 @@ void Model::readWeather(
     );
     auto prev = &yesterday;
     // HACK: adding to original object if we don't do this?
-    auto apcp_24h = yesterday.prec.value;
+    auto apcp_24h = yesterday.prec().value;
     while (getline(in, str))
     {
       istringstream iss(str);
@@ -150,9 +160,9 @@ void Model::readWeather(
           wx_daily.emplace(cur, map<Day, FwiWeather>());
           prev = &yesterday;
           logging::extensive(
-            "Resetting new scenario precip to {:f} from {:f}", yesterday.prec.value, apcp_24h
+            "Resetting new scenario precip to {:f} from {:f}", yesterday.prec().value, apcp_24h
           );
-          apcp_24h = yesterday.prec.value;
+          apcp_24h = yesterday.prec().value;
         }
         auto& s = wx.at(cur);
         struct tm t{};
@@ -194,11 +204,11 @@ void Model::readWeather(
         FwiWeather w{read_fwi_weather(&iss, &str)};
         s.at(for_time) = w;
         logging::check_fatal(
-          0 > w.prec.value, "Hourly weather precip {:f} is negative", w.prec.value
+          0 > w.prec().value, "Hourly weather precip {:f} is negative", w.prec().value
         );
-        apcp_24h += w.prec.value;
+        apcp_24h += w.prec().value;
         logging::extensive(
-          "Adding {:f} to precip results in accumulation of {:f}", w.prec.value, apcp_24h
+          "Adding {:f} to precip results in accumulation of {:f}", w.prec().value, apcp_24h
         );
         if (12 == t.tm_hour)
         {
@@ -213,9 +223,9 @@ void Model::readWeather(
               *prev,
               month,
               start_point.latitude(),
-              w.temperature,
-              w.rh,
-              w.wind,
+              w.temperature(),
+              w.rh(),
+              w.wind(),
               Precipitation(apcp_24h)
             }
           );
@@ -235,7 +245,7 @@ void Model::readWeather(
           t.tm_hour,
           t.tm_min,
           t.tm_sec,
-          w.prec.value,
+          w.prec().value,
           w.temperature.value,
           w.rh.value,
           w.wind.speed.value,
@@ -1349,7 +1359,7 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
           static_cast<uint8_t>(hour - day * DAY_HOURS),
           0,
           0,
-          w->prec.value,
+          w->prec().value,
           w->temperature.value,
           w->rh.value,
           w->wind.speed.value,
@@ -1400,17 +1410,17 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
                 static_cast<uint8_t>(hour - day * DAY_HOURS),
                 0,
                 0,
-                w->prec.value,
-                w->temperature.value,
-                w->rh.value,
-                w->wind.speed.value,
-                w->wind.direction.value,
-                w->ffmc.value,
-                w->dmc.value,
-                w->dc.value,
-                w->isi.value,
-                w->bui.value,
-                w->fwi.value,
+                w->prec().value,
+                w->temperature().value,
+                w->rh().value,
+                w->wind().speed.value,
+                w->wind().direction.value,
+                w->ffmc().value,
+                w->dmc().value,
+                w->dc().value,
+                w->isi().value,
+                w->bui().value,
+                w->fwi().value,
                 spread.crownFractionBurned(),
                 spread.crownFuelConsumption(),
                 spread.fireDescription(),

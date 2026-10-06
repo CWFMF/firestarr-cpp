@@ -3,7 +3,6 @@
 #define FS_SCENARIO_H
 #include "stdafx.h"
 #include "CellPoints.h"
-#include "FireSpread.h"
 #include "FireWeather.h"
 #include "IntensityMap.h"
 #include "Location.h"
@@ -143,11 +142,8 @@ public:
    * \param time Time to get weather for (decimal days)
    * \return FwiWeather for given time
    */
-  [[nodiscard]] ptr<const FwiWeather> weather(const DurationSize time) const
-  {
-    return weather_->at(time);
-  }
-  [[nodiscard]] ptr<const FwiWeather> weather_daily(const DurationSize time) const
+  [[nodiscard]] FwiWeather weather(const DurationSize time) const { return weather_->at(time); }
+  [[nodiscard]] FwiWeather weather_daily(const DurationSize time) const
   {
     return weather_daily_->at(time);
   }
@@ -319,7 +315,7 @@ public:
       //                3     40.184467357005346
       //                2     35.025698388961054
       //                1     15.049926856936347
-      const auto mc = wx->mcDmcPct();
+      const auto mc = wx.mcDmcPct();
       if (100 > mc || (109 >= mc && 5 > time_at_location) || (119 >= mc && 4 > time_at_location)
           || (131 >= mc && 3 > time_at_location) || (145 >= mc && 2 > time_at_location)
           || (218 >= mc && 1 > time_at_location))
