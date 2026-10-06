@@ -88,11 +88,8 @@ DurationSize do_spread(
       // done with list so don't need mutex
       auto pt_dirs = cell_pts.point_directions();
       std::sort(pt_dirs.begin(), pt_dirs.end());
-      const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
-      auto it_pt_dirs = pt_dirs.cbegin();
-      while (it_pt_dirs != it_pt_dirs_last)
+      for (const auto& [pt, dir] : pt_dirs)
       {
-        const auto& [pt, dir] = *it_pt_dirs;
         for (const ROSOffset& r : offsets_after_duration)
         {
           const auto& x_o = r.offset.x;
@@ -105,7 +102,6 @@ DurationSize do_spread(
             pt_new
           );
         }
-        ++it_pt_dirs;
       }
       // result.merge(unburnable, r1);
     }
