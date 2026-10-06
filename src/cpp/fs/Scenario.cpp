@@ -575,73 +575,6 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   return this;
 }
-// time spread went to or -1 if no spread
-DurationSize do_spread(
-  MathSize& max_ros,
-  CellPointsMap& points,
-  SpreadCache& spread_info,
-  const Scenario& scenario,
-  const BurnedData& unburnable,
-  const DurationSize time,
-  const DurationSize max_duration
-) noexcept
-{
-  // get once and keep
-  static const auto& settings = fs::settings::instance();
-  static const MathSize ros_min = settings.minimum_ros;
-  spreading_points to_spread{};
-  // make block to prevent it being visible beyond use
-  {
-    // if we use an iterator this way we don't need to copy keys to erase things
-    auto& lhs = points.cells_;
-    auto it = lhs.begin();
-    while (it != lhs.end())
-    {
-      auto& [loc, pts] = *it;
-      const Cell for_cell = scenario.cell(loc);
-      const auto key = for_cell.key();
-      {
-        // any cell that has the same fuel, slope, and aspect has the same spread
-        auto& origin = *spread_info.add_spread(key, &scenario, time);
-        // filter out things not spreading fast enough here so they get copied if they aren't
-        // isNotSpreading() had better be true if ros is lower than minimum
-        const auto ros = origin.headRos();
-        if (ros >= ros_min)
-        {
-          max_ros = max(max_ros, ros);
-          // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(std::move(*it));
-          it = lhs.erase(it);
-#ifdef DEBUG_CELLPOINTS
-          auto& v = to_spread[key];
-          const auto n = v.size();
-          const auto& p = v[n - 1].second;
-          logging::note(
-            "added {:d} items to to_spread[{:d}][({:d}, {:d})]", p.size(), key, loc.x(), loc.y()
-          );
-#endif
-        }
-        else
-        {
-          ++it;
-        }
-      }
-    }
-  }
-  // if nothing in to_spread then nothing is spreading
-  if (to_spread.empty())
-  {
-    return -1;
-  }
-  const auto duration =
-    ((max_ros > 0)
-       ? min(max_duration, settings.maximum_spread_distance * scenario.cellSize() / max_ros)
-       : max_duration);
-  const auto new_time = time + duration / DAY_MINUTES;
-  // need to merge new points back into cells that didn'
-  points.merge(unburnable, spread_map(unburnable, spread_info, to_spread, new_time, duration));
-  return new_time;
-}
 void Scenario::scheduleFireSpread(const Event& event)
 {
   // HACK: resolve once and fail if not set already
@@ -675,8 +608,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     }
     max_ros_ = 0.0;
   }
-  auto new_time =
-    do_spread(max_ros_, points_, spread_info_, *this, unburnable_, time, max_duration);
+  auto new_time = do_spread(max_ros_, points_, spread_info_, this, unburnable_, time, max_duration);
   if (-1 == new_time)
   {
     // if no spread then we left everything back in points still
