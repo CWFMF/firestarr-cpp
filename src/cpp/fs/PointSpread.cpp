@@ -63,65 +63,53 @@ DurationSize do_spread(
        : max_duration);
   const auto new_time = time + duration / DAY_MINUTES;
   CellPointsMap cell_pts_out{};
-  auto spread =
-    std::views::transform(to_spread, [&](const spreading_points::value_type& kv0) -> CellPointsMap {
-      const auto& key = kv0.first;
-      const auto& offsets = spread_info.offsets(key);
-      const auto& cell_pts_in = kv0.second;
-      OffsetSet offsets_after_duration{};
-      offsets_after_duration.resize(offsets.size());
-      std::transform(
-        offsets.cbegin(),
-        offsets.cend(),
-        offsets_after_duration.begin(),
-        [&](const ROSOffset& r) {
-          return ROSOffset{
-            r.intensity, r.ros, r.raz, Offset{r.offset.x * duration, r.offset.y * duration}
-          };
-        }
-      );
-      CellPointsMap cell_pts_cur{};
-      for (auto& [location, cell_pts] : cell_pts_in)
-      {
-        if (cell_pts.empty())
-        {
-          continue;
-        }
-        // done with list so don't need mutex
-        auto pt_dirs = cell_pts.point_directions();
-        std::sort(pt_dirs.begin(), pt_dirs.end());
-        const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
-        auto it_pt_dirs = pt_dirs.cbegin();
-        while (it_pt_dirs != it_pt_dirs_last)
-        {
-          const auto& [pt, dir] = *it_pt_dirs;
-          for (const ROSOffset& r : offsets_after_duration)
-          {
-            const auto& x_o = r.offset.x;
-            const auto& y_o = r.offset.y;
-            const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
-            std::ignore = insert(
-              cell_pts_cur,
-              pt,
-              SpreadData{new_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
-              pt_new
-            );
-          }
-          ++it_pt_dirs;
-        }
-        // result.merge(unburnable, r1);
-      }
-      return cell_pts_cur;
-    });
-  auto it_spread = spread.begin();
-  while (spread.end() != it_spread)
+  for (const auto& [key, cell_pts_in] : to_spread)
   {
-    const CellPointsMap& cell_pts_cur = *it_spread;
-    // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not
-    // adding const auto h = cell_pts.location().hash(); if (!unburnable[h])
-    // {
+    const auto& offsets = spread_info.offsets(key);
+    OffsetSet offsets_after_duration{};
+    offsets_after_duration.resize(offsets.size());
+    std::transform(
+      offsets.cbegin(),
+      offsets.cend(),
+      offsets_after_duration.begin(),
+      [&](const ROSOffset& r) {
+        return ROSOffset{
+          r.intensity, r.ros, r.raz, Offset{r.offset.x * duration, r.offset.y * duration}
+        };
+      }
+    );
+    CellPointsMap cell_pts_cur{};
+    for (auto& [location, cell_pts] : cell_pts_in)
+    {
+      if (cell_pts.empty())
+      {
+        continue;
+      }
+      // done with list so don't need mutex
+      auto pt_dirs = cell_pts.point_directions();
+      std::sort(pt_dirs.begin(), pt_dirs.end());
+      const auto it_pt_dirs_last = std::unique(pt_dirs.begin(), pt_dirs.end());
+      auto it_pt_dirs = pt_dirs.cbegin();
+      while (it_pt_dirs != it_pt_dirs_last)
+      {
+        const auto& [pt, dir] = *it_pt_dirs;
+        for (const ROSOffset& r : offsets_after_duration)
+        {
+          const auto& x_o = r.offset.x;
+          const auto& y_o = r.offset.y;
+          const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
+          std::ignore = insert(
+            cell_pts_cur,
+            pt,
+            SpreadData{new_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+            pt_new
+          );
+        }
+        ++it_pt_dirs;
+      }
+      // result.merge(unburnable, r1);
+    }
     cell_pts_out.merge(unburnable, cell_pts_cur);
-    ++it_spread;
   }
 #ifdef DEBUG_CELLPOINTS
   const auto n_c = cell_pts.size();
