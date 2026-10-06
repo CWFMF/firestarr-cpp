@@ -62,12 +62,12 @@ DurationSize do_spread(
        ? min(max_duration, settings.maximum_spread_distance * scenario->cellSize() / max_ros)
        : max_duration);
   const auto new_time = time + duration / DAY_MINUTES;
-  CellPointsMap cell_pts{};
+  CellPointsMap cell_pts_out{};
   auto spread =
     std::views::transform(to_spread, [&](const spreading_points::value_type& kv0) -> CellPointsMap {
       const auto& key = kv0.first;
       const auto& offsets = spread_info.offsets(key);
-      const auto& cell_pts = kv0.second;
+      const auto& cell_pts_in = kv0.second;
       OffsetSet offsets_after_duration{};
       offsets_after_duration.resize(offsets.size());
       std::transform(
@@ -81,7 +81,7 @@ DurationSize do_spread(
         }
       );
       CellPointsMap cell_pts_cur{};
-      for (auto& [location, cell_pts] : cell_pts)
+      for (auto& [location, cell_pts] : cell_pts_in)
       {
         if (cell_pts.empty())
         {
@@ -120,13 +120,13 @@ DurationSize do_spread(
     // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not
     // adding const auto h = cell_pts.location().hash(); if (!unburnable[h])
     // {
-    cell_pts.merge(unburnable, cell_pts_cur);
+    cell_pts_out.merge(unburnable, cell_pts_cur);
     ++it_spread;
   }
 #ifdef DEBUG_CELLPOINTS
   const auto n_c = cell_pts.size();
 #endif
-  cell_pts.remove_if([&](const CellPointsMap::map_value& kv) {
+  cell_pts_out.remove_if([&](const CellPointsMap::map_value& kv) {
     auto& [location, pts] = kv;
     // clear out if unburnable
     const auto do_clear = unburnable.at(location);
@@ -135,7 +135,7 @@ DurationSize do_spread(
 #ifdef DEBUG_CELLPOINTS
   logging::note("{:d} cell_pts before remove_if() and {:d} after", n_c, cell_pts.size());
 #endif
-  points.merge(unburnable, cell_pts);
+  points.merge(unburnable, cell_pts_out);
   return new_time;
 }
 }
