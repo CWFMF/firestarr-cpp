@@ -23,10 +23,10 @@ DurationSize do_spread(
   {
     // if we use an iterator this way we don't need to copy keys to erase things
     auto& lhs = points.cells_;
-    auto it = lhs.begin();
-    while (it != lhs.end())
+    auto it_cells = lhs.begin();
+    while (it_cells != lhs.end())
     {
-      auto& [loc, pts] = *it;
+      auto& [loc, pts] = *it_cells;
       const Cell for_cell = scenario->cell(loc);
       const auto key = for_cell.key();
       {
@@ -39,8 +39,8 @@ DurationSize do_spread(
         {
           max_ros = max(max_ros, ros);
           // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(std::move(*it));
-          it = lhs.erase(it);
+          to_spread[key].emplace_back(std::move(*it_cells));
+          it_cells = lhs.erase(it_cells);
 #ifdef DEBUG_CELLPOINTS
           auto& v = to_spread[key];
           const auto n = v.size();
@@ -52,7 +52,7 @@ DurationSize do_spread(
         }
         else
         {
-          ++it;
+          ++it_cells;
         }
       }
     }
@@ -121,15 +121,15 @@ DurationSize do_spread(
       }();
       return r;
     });
-  auto it = spread.begin();
-  while (spread.end() != it)
+  auto it_spread = spread.begin();
+  while (spread.end() != it_spread)
   {
-    const CellPointsMap& cell_pts_cur = *it;
+    const CellPointsMap& cell_pts_cur = *it_spread;
     // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not
     // adding const auto h = cell_pts.location().hash(); if (!unburnable[h])
     // {
     cell_pts.merge(unburnable, cell_pts_cur);
-    ++it;
+    ++it_spread;
   }
 #ifdef DEBUG_CELLPOINTS
   const auto n_c = cell_pts.size();
