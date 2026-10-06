@@ -3,6 +3,7 @@
 #define FS_FIREWEATHER_H
 #include "stdafx.h"
 #include "FWI.h"
+#include "FwiWeather.h"
 namespace fs
 {
 namespace fuel

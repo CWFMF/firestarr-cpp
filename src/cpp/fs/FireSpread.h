@@ -3,7 +3,7 @@
 #define FS_FIRESPREAD_H
 #include "stdafx.h"
 #include "Cell.h"
-#include "FWI.h"
+#include "FwiWeather.h"
 #include "Location.h"
 #include "Point.h"
 #include "Weather.h"

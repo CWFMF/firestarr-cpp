@@ -2,7 +2,7 @@
 #ifndef FS_INPUT_H
 #define FS_INPUT_H
 #include "stdafx.h"
-#include "FWI.h"
+#include "FwiWeather.h"
 namespace fs
 {
 /**

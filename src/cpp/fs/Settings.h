@@ -3,6 +3,7 @@
 #define FS_SETTINGS_H
 #include "stdafx.h"
 #include "FuelLookup.h"
+#include "FwiWeather.h"
 namespace fs::settings
 {
 class Settings;
