@@ -80,7 +80,7 @@ DurationSize do_spread(
           };
         }
       );
-      auto r = [&]() {
+      auto result = [&]() {
         CellPointsMap result{};
         for (auto& [location, cell_pts] : cell_pts)
         {
@@ -114,7 +114,7 @@ DurationSize do_spread(
         }
         return result;
       }();
-      return r;
+      return result;
     });
   auto it_spread = spread.begin();
   while (spread.end() != it_spread)
