@@ -43,7 +43,7 @@ CellPointsMap spread_map(
                                  CellPointsMap& result,
                                  const CellPoints& cell_pts,
                                  const OffsetSet& offsets_after_duration,
-                                 const DurationSize arrival_time
+                                 const DurationSize new_time
                                ) noexcept {
             // done with list so don't need mutex
             auto pt_dirs = cell_pts.point_directions();
@@ -61,7 +61,7 @@ CellPointsMap spread_map(
                 std::ignore = insert(
                   result,
                   pt,
-                  SpreadData{arrival_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+                  SpreadData{new_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
                   pt_new
                 );
               }
