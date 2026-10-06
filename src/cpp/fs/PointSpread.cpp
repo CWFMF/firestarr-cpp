@@ -81,24 +81,23 @@ DurationSize do_spread(
     CellPointsMap cell_pts_cur{};
     for (auto& [location, cell_pts] : cell_pts_in)
     {
-      if (cell_pts.empty())
+      if (!cell_pts.empty())
       {
-        continue;
-      }
-      // done with list so don't need mutex
-      auto pt_dirs = cell_pts.point_directions();
-      std::sort(pt_dirs.begin(), pt_dirs.end());
-      for (const auto& [pt, dir] : pt_dirs)
-      {
-        for (const ROSOffset& r : offsets_after_duration)
+        // done with list so don't need mutex
+        auto pt_dirs = cell_pts.point_directions();
+        std::sort(pt_dirs.begin(), pt_dirs.end());
+        for (const auto& [pt, dir] : pt_dirs)
         {
-          const XYPos pt_new{XPos{r.offset.x + pt.x.value}, YPos{r.offset.y + pt.y.value}};
-          std::ignore = insert(
-            cell_pts_cur,
-            pt,
-            SpreadData{new_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
-            pt_new
-          );
+          for (const ROSOffset& r : offsets_after_duration)
+          {
+            const XYPos pt_new{XPos{r.offset.x + pt.x.value}, YPos{r.offset.y + pt.y.value}};
+            std::ignore = insert(
+              cell_pts_cur,
+              pt,
+              SpreadData{new_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
+              pt_new
+            );
+          }
         }
       }
       // result.merge(unburnable, r1);
