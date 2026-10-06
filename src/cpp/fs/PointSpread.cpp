@@ -80,7 +80,7 @@ DurationSize do_spread(
           };
         }
       );
-      CellPointsMap result{};
+      CellPointsMap cell_pts_cur{};
       for (auto& [location, cell_pts] : cell_pts)
       {
         if (cell_pts.empty())
@@ -101,7 +101,7 @@ DurationSize do_spread(
             const auto& y_o = r.offset.y;
             const XYPos pt_new{XPos{x_o + pt.x.value}, YPos{y_o + pt.y.value}};
             std::ignore = insert(
-              result,
+              cell_pts_cur,
               pt,
               SpreadData{new_time, r.intensity, r.ros, r.raz, Direction{Degrees{dir}}},
               pt_new
@@ -111,7 +111,7 @@ DurationSize do_spread(
         }
         // result.merge(unburnable, r1);
       }
-      return result;
+      return cell_pts_cur;
     });
   auto it_spread = spread.begin();
   while (spread.end() != it_spread)
