@@ -32,10 +32,5 @@ Isi ISIcalc(const Speed wind_speed, const Ffmc ffmc) noexcept;
 Bui BUIcalc(const Dmc dmc, const Dc dc) noexcept;
 Fwi FWIcalc(const Isi isi, const Bui bui) noexcept;
 Dsr DSRcalc(const Fwi fwi) noexcept;
-MathSize ffmc_effect(const Ffmc ffmc) noexcept;
-MathSize ffmc_to_moisture(const MathSize ffmc) noexcept;
-MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept;
-Ffmc moisture_to_ffmc(const MathSize m) noexcept;
-Ffmc ffmc_from_moisture(const MathSize m) noexcept;
 }
 #endif

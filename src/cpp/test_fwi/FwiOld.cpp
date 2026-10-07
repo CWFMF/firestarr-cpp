@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FwiOld.h"
 #include "Log.h"
+#include "Moisture.h"
 #include "Util.h"
 #include "Weather.h"
 // adapted from http://www.columbia.edu/~rf2426/index_files/FWI.vba
@@ -372,15 +373,4 @@ Dsr DSRcalc(const Fwi fwi) noexcept
   //'''/* 41 '*/
   return Dsr{0.0272 * pow(fwi.value, 1.77)};
 }
-constexpr auto FFMC_MOISTURE_CONSTANT = 250.0 * 59.5 / 101.0;
-MathSize ffmc_to_moisture(const MathSize ffmc) noexcept
-{
-  return FFMC_MOISTURE_CONSTANT * (101.0 - ffmc) / (59.5 + ffmc);
-}
-MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept { return ffmc_to_moisture(ffmc.value); }
-Ffmc moisture_to_ffmc(const MathSize m) noexcept
-{
-  return Ffmc{(59.5 * (250.0 - m) / (FFMC_MOISTURE_CONSTANT + m))};
-}
-Ffmc ffmc_from_moisture(const MathSize m) noexcept { return Ffmc(moisture_to_ffmc(m)); }
 }

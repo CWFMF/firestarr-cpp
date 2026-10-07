@@ -57,7 +57,6 @@ Dc::Dc(
 ) noexcept
   : Dc{temperature, prec, dc_previous, Month::from_ordinal(month), Latitude{latitude}}
 { }
-MathSize ffmc_effect(const Ffmc ffmc) noexcept { return fwireference::ffmc_effect(ffmc); }
 Isi::Isi(const Speed wind, const Ffmc ffmc) noexcept : Isi{fwireference::ISIcalc(wind, ffmc)} { }
 Bui::Bui(const Dmc dmc, const Dc dc) noexcept : Bui{fwireference::BUIcalc(dmc, dc)} { }
 Fwi::Fwi(const Isi isi, const Bui bui) noexcept : Fwi{fwireference::FWIcalc(isi, bui)} { }
