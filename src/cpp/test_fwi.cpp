@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "fs/ArgumentParser.h"
-#include "fs/FwiOld.h"
 #include "fs/FwiReference.h"
 #include "fs/Log.h"
 #include "fs/unstable.h"
 #include "fs/Util.h"
 #include "fs/Weather.h"
+#include "test_fwi/FwiOld.h"
 namespace fs::testing
 {
 // https://publications.gc.ca/collections/collection_2016/rncan-nrcan/Fo133-1-424-eng.pdf
