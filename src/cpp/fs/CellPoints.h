@@ -9,7 +9,7 @@
 #include "FireSpread.h"
 #include "Location.h"
 #include "unstable.h"
-#include "wx/Weather.h"
+#include "wx/WeatherIndices.h"
 namespace fs
 {
 using fs::Direction;

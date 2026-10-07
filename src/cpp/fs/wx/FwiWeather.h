@@ -2,7 +2,7 @@
 #ifndef FS_FWI_WEATHER_H
 #define FS_FWI_WEATHER_H
 #include "../unstable.h"
-#include "FWI.h"
+#include "FireWeatherIndices.h"
 namespace fs
 {
 /**

@@ -14,8 +14,8 @@
 #include "fs/Test.h"
 #include "fs/TimeUtil.h"
 #include "fs/Util.h"
-#include "fs/wx/FWI.h"
-#include "fs/wx/Weather.h"
+#include "fs/wx/FireWeatherIndices.h"
+#include "fs/wx/WeatherIndices.h"
 #include "version.h"
 namespace fs
 {

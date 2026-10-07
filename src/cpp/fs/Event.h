@@ -5,7 +5,7 @@
 #include <compare>
 #include "Cell.h"
 #include "Location.h"
-#include "wx/Weather.h"
+#include "wx/WeatherIndices.h"
 namespace fs
 {
 using fs::Direction;

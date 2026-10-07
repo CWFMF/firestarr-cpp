@@ -2,7 +2,7 @@
 #include "Input.h"
 #include "Log.h"
 #include "Util.h"
-#include "wx/FWI.h"
+#include "wx/FireWeatherIndices.h"
 namespace fs
 {
 inline MathSize stod(const string* const str) { return stod(*str); }

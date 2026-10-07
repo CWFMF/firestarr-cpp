@@ -3,7 +3,7 @@
 #include "FBP.h"
 #include "FireSpread.h"
 #include "unstable.h"
-#include "wx/FWI.h"
+#include "wx/FireWeatherIndices.h"
 namespace fs::fuel
 {
 using settings::Settings;

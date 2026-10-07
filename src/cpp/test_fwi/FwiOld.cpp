@@ -3,7 +3,7 @@
 #include "Log.h"
 #include "Moisture.h"
 #include "Util.h"
-#include "Weather.h"
+#include "WeatherIndices.h"
 // adapted from http://www.columbia.edu/~rf2426/index_files/FWI.vba
 //******************************************************************************************
 //

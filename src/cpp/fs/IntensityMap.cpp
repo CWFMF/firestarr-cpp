@@ -6,7 +6,7 @@
 #include "Perimeter.h"
 #include "unstable.h"
 #include "Util.h"
-#include "wx/Weather.h"
+#include "wx/WeatherIndices.h"
 namespace fs
 {
 template <class T>

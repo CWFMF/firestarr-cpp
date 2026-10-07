@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FwiReference.h"
-#include "FWI.h"
+#include "FireWeatherIndices.h"
 #include "Moisture.h"
 namespace fs::fwireference
 {

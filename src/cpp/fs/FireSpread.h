@@ -6,7 +6,7 @@
 #include "Location.h"
 #include "Point.h"
 #include "wx/FwiWeather.h"
-#include "wx/Weather.h"
+#include "wx/WeatherIndices.h"
 namespace fs
 {
 namespace fuel

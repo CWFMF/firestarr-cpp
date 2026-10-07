@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#include "FWI.h"
+#include "FireWeatherIndices.h"
 namespace fs
 {
 MathSize ffmc_effect(const Ffmc ffmc) noexcept;

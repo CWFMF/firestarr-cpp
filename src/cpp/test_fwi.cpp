@@ -4,7 +4,7 @@
 #include "fs/unstable.h"
 #include "fs/Util.h"
 #include "fs/wx/FwiReference.h"
-#include "fs/wx/Weather.h"
+#include "fs/wx/WeatherIndices.h"
 #include "test_fwi/FwiOld.h"
 namespace fs::testing
 {

@@ -2,7 +2,7 @@
 #ifndef FS_FWI_H
 #define FS_FWI_H
 #include "../unstable.h"
-#include "Weather.h"
+#include "WeatherIndices.h"
 namespace fs
 {
 // months as array indexes
