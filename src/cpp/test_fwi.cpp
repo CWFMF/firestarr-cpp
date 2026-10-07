@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "fs/ArgumentParser.h"
-#include "fs/FWI.h"
+#include "fs/FwiOld.h"
 #include "fs/FwiReference.h"
 #include "fs/Log.h"
 #include "fs/unstable.h"
@@ -88,22 +88,22 @@ int test_fwi_file(
     Speed wind_{wind};
     Precipitation prcp_{prcp};
     auto ffmc{FFMCcalc(temp_, rhum_, wind_, prcp_, ffmc0)};
-    Ffmc ffmc_{temp_, rhum_, wind_, prcp_, ffmc0_};
+    auto ffmc_{fwiold::FFMCcalc(temp_, rhum_, wind_, prcp_, ffmc0_)};
     logging::check_tolerance(EPSILON, ffmc.value, ffmc_.value, "ffmc");
     auto dmc{DMCcalc(temp_, rhum_, prcp_, dmc0_, month_, latitude_)};
-    Dmc dmc_{temp_, rhum_, prcp_, dmc0_, month, latitude};
+    auto dmc_{fwiold::DMCcalc(temp_, rhum_, prcp_, dmc0_, month, latitude)};
     logging::check_tolerance(EPSILON, dmc.value, dmc_.value, "dmc");
     auto dc{DCcalc(temp_, prcp_, dc0_, month_, latitude_)};
-    Dc dc_{temp_, prcp_, dc0_, month, latitude};
+    auto dc_{fwiold::DCcalc(temp_, prcp_, dc0_, month, latitude)};
     logging::check_tolerance(EPSILON, dc.value, dc_.value, "dc");
     auto isi{ISIcalc(ffmc, wind_)};
-    Isi isi_{wind_, ffmc_};
+    auto isi_{fwiold::ISIcalc(wind_, ffmc_)};
     logging::check_tolerance(EPSILON, isi.value, isi_.value, "isi");
     auto bui{BUIcalc(dmc, dc)};
-    Bui bui_{dmc_, dc_};
+    auto bui_{fwiold::BUIcalc(dmc_, dc_)};
     logging::check_tolerance(EPSILON, bui.value, bui_.value, "bui");
     auto fwi{FWIcalc(isi, bui)};
-    Fwi fwi_{isi_, bui_};
+    auto fwi_{fwiold::FWIcalc(isi_, bui_)};
     logging::check_tolerance(EPSILON, fwi.value, fwi_.value, "fwi");
     ffmc0 = ffmc;
     dmc0 = dmc;
