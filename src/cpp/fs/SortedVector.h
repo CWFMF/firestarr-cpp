@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_SORTEDVECTOR_H
-#define FS_SORTEDVECTOR_H
+#ifndef FS_SORTED_VECTOR_H
+#define FS_SORTED_VECTOR_H
 #include "stdafx.h"
 namespace fs
 {

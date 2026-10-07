@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_CONSTANTGRID_H
-#define FS_CONSTANTGRID_H
+#ifndef FS_CONSTANT_GRID_H
+#define FS_CONSTANT_GRID_H
 #include "stdafx.h"
 #include "Grid.h"
 #include "Location.h"

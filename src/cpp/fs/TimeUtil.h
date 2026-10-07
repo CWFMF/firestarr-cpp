@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_TIMEUTIL_H
-#define FS_TIMEUTIL_H
+#ifndef FS_TIME_UTIL_H
+#define FS_TIME_UTIL_H
 #include <ctime>
 namespace fs
 {

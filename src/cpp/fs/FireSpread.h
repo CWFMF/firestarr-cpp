@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_FIRESPREAD_H
-#define FS_FIRESPREAD_H
+#ifndef FS_FIRE_SPREAD_H
+#define FS_FIRE_SPREAD_H
 #include "stdafx.h"
 #include "Cell.h"
 #include "Location.h"

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_STANDARDFUEL
-#define FS_STANDARDFUEL
+#ifndef FS_STANDARD_FUEL_H
+#define FS_STANDARD_FUEL_H
 #include "stdafx.h"
 #include "FuelType.h"
 #include "LogValue.h"

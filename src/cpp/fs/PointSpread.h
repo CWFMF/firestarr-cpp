@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+#ifndef FS_POINT_SPREAD_H
+#define FS_POINT_SPREAD_H
 #include "stdafx.h"
 #include "CellPoints.h"
 #include "Scenario.h"
@@ -17,3 +19,4 @@ DurationSize do_spread(
   const DurationSize max_duration
 ) noexcept;
 }
+#endif

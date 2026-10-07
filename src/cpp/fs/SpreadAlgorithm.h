@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_SPREADALGORITHM_H
-#define FS_SPREADALGORITHM_H
+#ifndef FS_SPREAD_ALGORITHM_H
+#define FS_SPREAD_ALGORITHM_H
 #include "stdafx.h"
 #include "FireSpread.h"
 namespace fs

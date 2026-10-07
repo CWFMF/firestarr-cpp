@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_PROBABILITYMAP_H
-#define FS_PROBABILITYMAP_H
+#ifndef FS_PROBABILITY_MAP_H
+#define FS_PROBABILITY_MAP_H
 #include "stdafx.h"
 #include "GridMap.h"
 #include "Perimeter.h"

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_RANGEITERATOR_H
-#define FS_RANGEITERATOR_H
+#ifndef FS_RANGE_ITERATOR_H
+#define FS_RANGE_ITERATOR_H
 #include "stdafx.h"
 #include "Log.h"
 // HACK: don't use until logging causing issues with constexpr is fixed

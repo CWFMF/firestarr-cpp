@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_TYPES_H
-#define FS_TYPES_H
+#ifndef FS_RADIANS_H
+#define FS_RADIANS_H
 #include "stdafx.h"
 #include "StrictType.h"
 namespace fs

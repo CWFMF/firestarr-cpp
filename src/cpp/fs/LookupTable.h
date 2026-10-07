@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_LOOKUPTABLE_H
-#define FS_LOOKUPTABLE_H
+#ifndef FS_LOOKUP_TABLE_H
+#define FS_LOOKUP_TABLE_H
 #include "stdafx.h"
 #include "Util.h"
 #define LOOKUP_TABLES_OFF 1

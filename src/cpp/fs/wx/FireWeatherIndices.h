@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_FWI_H
-#define FS_FWI_H
+#ifndef FS_FIRE_WEATHER_INDICES_H
+#define FS_FIRE_WEATHER_INDICES_H
 #include "../unstable.h"
 #include "WeatherIndices.h"
 namespace fs

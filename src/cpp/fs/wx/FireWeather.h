@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_FIREWEATHER_H
-#define FS_FIREWEATHER_H
+#ifndef FS_FIRE_WEATHER_H
+#define FS_FIRE_WEATHER_H
 #include "../stdafx.h"
 #include "FireWeatherIndices.h"
 #include "FwiWeather.h"

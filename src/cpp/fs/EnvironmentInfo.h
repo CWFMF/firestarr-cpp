@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_ENVIRONMENTINFO_H
-#define FS_ENVIRONMENTINFO_H
+#ifndef FS_ENVIRONMENT_INFO_H
+#define FS_ENVIRONMENT_INFO_H
 #include "stdafx.h"
 #include "Environment.h"
 #include "Grid.h"

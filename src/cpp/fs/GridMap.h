@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_GRIDMAP_H
-#define FS_GRIDMAP_H
+#ifndef FS_GRID_MAP_H
+#define FS_GRID_MAP_H
 #include "stdafx.h"
 #include "Grid.h"
 #include "Location.h"

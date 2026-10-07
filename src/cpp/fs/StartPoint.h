@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_STARTPOINT_H
-#define FS_STARTPOINT_H
+#ifndef FS_START_POINT_H
+#define FS_START_POINT_H
 #include "stdafx.h"
 #include "Point.h"
 #include "Settings.h"

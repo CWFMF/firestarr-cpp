@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_FUELLOOKUP_H
-#define FS_FUELLOOKUP_H
+#ifndef FS_FUEL_LOOKUP_H
+#define FS_FUEL_LOOKUP_H
 #include "stdafx.h"
 #include "FuelType.h"
 namespace fs::fuel

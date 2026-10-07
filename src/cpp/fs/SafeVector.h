@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_SAFEVECTOR_H
-#define FS_SAFEVECTOR_H
+#ifndef FS_SAFE_VECTOR_H
+#define FS_SAFE_VECTOR_H
 #include "stdafx.h"
 namespace fs
 {
