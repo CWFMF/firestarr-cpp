@@ -22,6 +22,8 @@ struct IObserver_deleter
 {
   void operator()(IObserver*) const;
 };
+// use an array instead of a map since number of values is so small and access should be faster
+using SurvivalMap = array<vector<float>, NUMBER_OF_FUELS>;
 /**
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
  */
@@ -283,6 +285,10 @@ public:
    * \return Whether or not this Scenario has run already
    */
   [[nodiscard]] bool ran() const noexcept;
+  ThresholdSize survivalProbability(const DurationSize time, const FuelCodeSize& in_fuel) const
+  {
+    return survival_probability_.at(in_fuel).at(time_index(time, weather_->minDate()));
+  }
   /**
    * \brief Whether or not the fire survives the conditions
    * \param time Time to use weather from
@@ -323,7 +329,7 @@ public:
         return true;
       }
       // we can look by fuel type because the entire landscape shares the weather
-      return extinctionThreshold(time) < fire_wx->survivalProbability(time, cell.fuelCode());
+      return extinctionThreshold(time) < survivalProbability(time, cell.fuelCode());
     }
     catch (const std::out_of_range&)
     {
@@ -515,6 +521,10 @@ protected:
    * \brief How many times this scenario tried to spread out of bounds
    */
   size_t oob_spread_{};
+  /**
+   * \brief Probability of survival for fuels fuel at each time
+   */
+  SurvivalMap survival_probability_{};
 };
 }
 #endif

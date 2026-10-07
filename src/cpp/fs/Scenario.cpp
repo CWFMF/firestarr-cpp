@@ -15,6 +15,7 @@
 #include "ProbabilityMap.h"
 #include "rng.h"
 #include "Settings.h"
+#include "Survival.h"
 #include "unstable.h"
 namespace fs
 {
@@ -262,6 +263,39 @@ void Scenario::evaluate(const Event& event)
     }
   }
 }
+using namespace fuel;
+SurvivalMap make_survival(const FireWeather& fire_wx)
+{
+  static const auto& settings = fs::settings::instance();
+  static const auto& lookup = settings.fuel_lookup.lookup();
+  const auto& used_fuels = lookup.usedFuels();
+  const auto& weather_by_hour_by_day = fire_wx.getWeather();
+  const auto min_date = fire_wx.minDate();
+  const auto max_date = fire_wx.maxDate();
+  SurvivalMap result{};
+  for (const auto& in_fuel : used_fuels)
+  {
+    const auto code = FuelType::safeCode(in_fuel);
+    if (nullptr != in_fuel && INVALID_FUEL_CODE != code)
+    {
+      auto by_fuel = vector<float>{};
+      by_fuel.resize((static_cast<size_t>(max_date) - min_date + 2) * DAY_HOURS);
+      // calculate the entire stream for this fuel
+      for (auto day = min_date; day <= max_date; ++day)
+      {
+        for (auto h = 0; h < DAY_HOURS; ++h)
+        {
+          const auto wx = weather_by_hour_by_day.at(time_index(day, h, min_date));
+          const auto i = time_index(day, h, min_date);
+          by_fuel.at(i) =
+            static_cast<float>(wx.isNull() ? 0.0 : (in_fuel->survivalProbability(wx)));
+        }
+      }
+      result.at(code) = std::move(by_fuel);
+    }
+  }
+  return result;
+}
 Scenario::Scenario(
   Model* model,
   const size_t id,
@@ -282,7 +316,8 @@ Scenario::Scenario(
     ran_(false), step_(0),
     points_log_(
       LogPoints{model_->outputDirectory(), settings::instance().save_points, id_, start_time_}
-    )
+    ),
+    survival_probability_{make_survival(*weather_)}
 {
   const auto wx = weather_->at(start_time_);
   logging::check_fatal(
@@ -350,7 +385,8 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     weather_daily_(rhs.weather_daily_), model_(rhs.model_), probabilities_(rhs.probabilities_),
     final_sizes_(rhs.final_sizes_), start_point_(std::move(rhs.start_point_)), id_(rhs.id_),
     start_time_(rhs.start_time_), last_save_(rhs.last_save_), simulation_(rhs.simulation_),
-    start_day_(rhs.start_day_), last_date_(rhs.last_date_), ran_(rhs.ran_)
+    start_day_(rhs.start_day_), last_date_(rhs.last_date_), ran_(rhs.ran_),
+    survival_probability_(rhs.survival_probability_)
 { }
 Scenario& Scenario::operator=(Scenario&& rhs) noexcept
 {
@@ -379,6 +415,7 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
     start_day_ = rhs.start_day_;
     last_date_ = rhs.last_date_;
     ran_ = rhs.ran_;
+    survival_probability_ = rhs.survival_probability_;
   }
   return *this;
 }

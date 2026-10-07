@@ -11,8 +11,6 @@ namespace fuel
 class FuelType;
 }
 using namespace fuel;
-// use an array instead of a map since number of values is so small and access should be faster
-using SurvivalMap = array<vector<float>, NUMBER_OF_FUELS>;
 /**
  * \brief A stream of weather that gets used by a Scenario every Iteration.
  */
@@ -92,17 +90,16 @@ public:
    * \brief Weather by hour by day
    * \return Weather by hour by day
    */
-  [[nodiscard]] const vector<FwiWeather>& getWeather() { return weather_by_hour_by_day_; }
+  [[nodiscard]] const vector<FwiWeather>& getWeather() const noexcept
+  {
+    return weather_by_hour_by_day_;
+  }
 
 private:
   /**
    * \brief FwiWeather by hour by Day
    */
   vector<FwiWeather> weather_by_hour_by_day_{};
-  /**
-   * \brief Probability of survival for fuels fuel at each time
-   */
-  SurvivalMap survival_probability_{};
   /**
    * \brief Minimum date present in stream
    */

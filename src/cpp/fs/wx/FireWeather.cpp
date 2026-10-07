@@ -549,37 +549,6 @@ vector<FwiWeather> make_vector(map<Day, FwiWeather> data)
 FireWeather::FireWeather(const set<const FuelType*>& used_fuels, const map<Day, FwiWeather>& data)
   : FireWeather(used_fuels, data.begin()->first, data.rbegin()->first, make_vector(data))
 { }
-static SurvivalMap make_survival(
-  const set<const FuelType*>& used_fuels,
-  const Day min_date,
-  const Day max_date,
-  const vector<FwiWeather>& weather_by_hour_by_day
-)
-{
-  SurvivalMap result{};
-  for (const auto& in_fuel : used_fuels)
-  {
-    const auto code = FuelType::safeCode(in_fuel);
-    if (nullptr != in_fuel && INVALID_FUEL_CODE != code)
-    {
-      auto by_fuel = vector<float>{};
-      by_fuel.resize((static_cast<size_t>(max_date) - min_date + 2) * DAY_HOURS);
-      // calculate the entire stream for this fuel
-      for (auto day = min_date; day <= max_date; ++day)
-      {
-        for (auto h = 0; h < DAY_HOURS; ++h)
-        {
-          const auto wx = weather_by_hour_by_day.at(time_index(day, h, min_date));
-          const auto i = time_index(day, h, min_date);
-          by_fuel.at(i) =
-            static_cast<float>(wx.isNull() ? 0.0 : (in_fuel->survivalProbability(wx)));
-        }
-      }
-      result.at(code) = std::move(by_fuel);
-    }
-  }
-  return result;
-}
 FireWeather::FireWeather(
   const set<const FuelType*>& used_fuels,
   Day min_date,
@@ -589,7 +558,6 @@ FireWeather::FireWeather(
   : weather_by_hour_by_day_{[&]() {
       return vector<FwiWeather>{weather_by_hour_by_day.begin(), weather_by_hour_by_day.end()};
     }()},
-    survival_probability_{make_survival(used_fuels, min_date, max_date, weather_by_hour_by_day_)},
     min_date_{min_date}, max_date_{max_date}
 { }
 static vector<FwiWeather> make_constant_weather(
@@ -647,10 +615,5 @@ FwiWeather FireWeather::at(const DurationSize time) const
   logging::check_fatal(time < 0 || time >= MAX_DAYS, "Invalid weather time {:f}", time);
 #endif
   return weather_by_hour_by_day_.at(time_index(time, min_date_));
-}
-ThresholdSize FireWeather::survivalProbability(const DurationSize time, const FuelCodeSize& in_fuel)
-  const
-{
-  return survival_probability_.at(in_fuel).at(time_index(time, min_date_));
 }
 }
