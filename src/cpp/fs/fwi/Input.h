@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_INPUT_H
 #define FS_INPUT_H
-#include "stdafx.h"
+#include "../stdafx.h"
 #include "FwiWeather.h"
 namespace fs
 {

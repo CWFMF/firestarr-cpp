@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "fs/ArgumentParser.h"
-#include "fs/FwiReference.h"
+#include "fs/fwi/FwiReference.h"
 #include "fs/Log.h"
 #include "fs/unstable.h"
 #include "fs/Util.h"

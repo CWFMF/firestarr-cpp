@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(DIR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp)
 set(DIR_SRC_COMMON ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/fs)
+set(DIR_SRC_FWI ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/fs/fwi)
 
 if(NOT DEFINED CPU_TUNE_ONLY)
   set(CPU_TUNE_ONLY TRUE)
@@ -107,9 +108,15 @@ set_source_files_properties(${FILE_UNSTABLE_CPP} PROPERTIES COMPILE_FLAGS "${CMA
 if(NOT ASAN_ARGS)
   file(GLOB FILES_CPP ${DIR_SRC}/*.cpp)
   file(GLOB FILES_H ${DIR_SRC}/*.h)
+  file(GLOB FILES_CPP_FWI ${DIR_SRC_FWI}/*.cpp)
+  file(GLOB FILES_H_FWI ${DIR_SRC_FWI}/*.h)
   file(GLOB FILES_CPP_COMMON ${DIR_SRC_COMMON}/*.cpp)
   file(GLOB FILES_H_COMMON ${DIR_SRC_COMMON}/*.h)
-  set(FILES_FORMAT ${FILES_CPP} ${FILES_H} ${FILES_CPP_COMMON} ${FILES_H_COMMON})
+  set(FILES_FORMAT
+    ${FILES_CPP} ${FILES_H}
+    ${FILES_CPP_COMMON} ${FILES_H_COMMON}
+    ${FILES_CPP_FWI} ${FILES_CPP_FWI}
+  )
   include(cmake/TidyFormat.cmake)
 endif()
 
@@ -130,6 +137,7 @@ endif()
 
 enable_testing()
 
+add_subdirectory(${DIR_SRC_FWI})
 add_subdirectory(${DIR_SRC_COMMON})
 
 foreach(bin ${PROJECT_NAME} test_duff test_fwi test_fbp test_rng)
@@ -141,11 +149,20 @@ foreach(bin ${PROJECT_NAME} test_duff test_fwi test_fbp test_rng)
 
 # FIX: wrap anything new that might be breaking windows workflow
 if(LINUX)
-  target_include_directories(${bin} PRIVATE ${DIR_SRC_COMMON} ${DIR_SRC} ${DIR_SRC_TEST})
+  target_include_directories(${bin} PRIVATE
+    ${DIR_SRC} ${DIR_SRC_TEST}
+    ${DIR_SRC_FWI}
+    ${DIR_SRC_COMMON}
+  )
 else()
-  target_include_directories(${bin} PUBLIC ${DIR_SRC_COMMON} ${DIR_SRC} ${DIR_SRC_TEST})
+  target_include_directories(${bin} PUBLIC
+    ${DIR_SRC} ${DIR_SRC_TEST}
+    ${DIR_SRC_FWI}
+    ${DIR_SRC_COMMON}
+  )
 endif()
   target_link_libraries(${bin} PUBLIC fs)
+  target_link_libraries(${bin} PUBLIC fwi)
 # FIX: wrap anything new that might be breaking windows workflow
 if(LINUX)
   if(ASAN_ARGS)

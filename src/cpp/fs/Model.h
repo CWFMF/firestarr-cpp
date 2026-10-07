@@ -3,7 +3,7 @@
 #define FS_MODEL_H
 #include "stdafx.h"
 #include "Environment.h"
-#include "FireWeather.h"
+#include "fwi/FireWeather.h"
 #include "Iteration.h"
 #include "Perimeter.h"
 #include "Settings.h"

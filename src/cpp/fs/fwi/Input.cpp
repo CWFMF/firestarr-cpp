@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Input.h"
+#include "../Log.h"
+#include "../Util.h"
 #include "FWI.h"
-#include "Log.h"
-#include "Util.h"
 namespace fs
 {
 inline MathSize stod(const string* const str) { return stod(*str); }

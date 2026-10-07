@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "Duff.h"
 #include "FireSpread.h"
-#include "FwiWeather.h"
+#include "fwi/FwiWeather.h"
 #include "Survival.h"
 #include "unstable.h"
 namespace fs::fuel

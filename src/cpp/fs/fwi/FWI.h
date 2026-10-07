@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FWI_H
 #define FS_FWI_H
-#include "unstable.h"
-#include "Weather.h"
+#include "../unstable.h"
+#include "../Weather.h"
 namespace fs
 {
 // months as array indexes

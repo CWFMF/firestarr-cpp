@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "FBP.h"
 #include "FireSpread.h"
-#include "FWI.h"
+#include "fwi/FWI.h"
 #include "unstable.h"
 namespace fs::fuel
 {

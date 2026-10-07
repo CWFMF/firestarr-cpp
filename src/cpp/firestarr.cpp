@@ -6,7 +6,7 @@
  * FireSTARR is a probabilistic fire growth model.
  */
 #include "fs/ArgumentParser.h"
-#include "fs/FWI.h"
+#include "fs/fwi/FWI.h"
 #include "fs/Log.h"
 #include "fs/Model.h"
 #include "fs/Settings.h"

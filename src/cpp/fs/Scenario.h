@@ -3,7 +3,7 @@
 #define FS_SCENARIO_H
 #include "stdafx.h"
 #include "CellPoints.h"
-#include "FireWeather.h"
+#include "fwi/FireWeather.h"
 #include "IntensityMap.h"
 #include "Location.h"
 #include "LogPoints.h"

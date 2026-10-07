@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Model.h"
-#include "FireWeather.h"
-#include "FWI.h"
+#include "fwi/FireWeather.h"
+#include "fwi/FWI.h"
+#include "fwi/Input.h"
 #include "Greenup.h"
-#include "Input.h"
 #include "Location.h"
 #include "Log.h"
 #include "Observer.h"
