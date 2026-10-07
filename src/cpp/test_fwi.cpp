@@ -96,7 +96,7 @@ int test_fwi_file(
     auto dc{DCcalc(temp_, prcp_, dc0_, month_, latitude_)};
     auto dc_{fwiold::DCcalc(temp_, prcp_, dc0_, month, latitude)};
     logging::check_tolerance(EPSILON, dc.value, dc_.value, "dc");
-    auto isi{ISIcalc(ffmc, wind_)};
+    auto isi{ISIcalc(wind_, ffmc)};
     auto isi_{fwiold::ISIcalc(wind_, ffmc_)};
     logging::check_tolerance(EPSILON, isi.value, isi_.value, "isi");
     auto bui{BUIcalc(dmc, dc)};

@@ -27,8 +27,14 @@ Dc DCcalc(
   const Month month,
   const Latitude latitude = DEFAULT_LATITUDE
 );
-Isi ISIcalc(Ffmc ffmc, Speed wind_speed);
+Isi ISIcalc(Speed wind_speed, Ffmc ffmc);
 Bui BUIcalc(Dmc dmc, Dc dc);
 Fwi FWIcalc(Isi isi, Bui bui);
+Dsr DSRcalc(const Fwi fwi) noexcept;
+MathSize ffmc_effect(const Ffmc ffmc) noexcept;
+MathSize ffmc_to_moisture(const MathSize ffmc) noexcept;
+MathSize ffmc_to_moisture(const Ffmc& ffmc) noexcept;
+Ffmc moisture_to_ffmc(const MathSize m) noexcept;
+Ffmc ffmc_from_moisture(const MathSize m) noexcept;
 }
 #endif

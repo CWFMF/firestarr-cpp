@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FWI.h"
-#include "FwiOld.h"
+#include "FwiReference.h"
 #include "Weather.h"
 // #define CHECK_CALCULATION 1
 #ifndef DEBUG_FWI_WEATHER
@@ -17,7 +17,7 @@ Ffmc::Ffmc(
   const Precipitation rain,
   const Ffmc ffmc_previous
 ) noexcept
-  : Ffmc{fwiold::FFMCcalc(temperature, rh, wind, rain, ffmc_previous)}
+  : Ffmc{fwireference::FFMCcalc(temperature, rh, wind, rain, ffmc_previous)}
 { }
 Dmc::Dmc(
   const Temperature temperature,
@@ -27,7 +27,7 @@ Dmc::Dmc(
   const Month month,
   const Latitude latitude
 ) noexcept
-  : Dmc{fwiold::DMCcalc(temperature, rh, rain, dmc_previous, month.ordinal(), latitude.value)}
+  : Dmc{fwireference::DMCcalc(temperature, rh, rain, dmc_previous, month, latitude)}
 { }
 Dmc::Dmc(
   const Temperature temperature,
@@ -46,7 +46,7 @@ Dc::Dc(
   const Month month,
   const Latitude latitude
 ) noexcept
-  : Dc{fwiold::DCcalc(temperature, rain, dc_previous, month.ordinal(), latitude.value)}
+  : Dc{fwireference::DCcalc(temperature, rain, dc_previous, month, latitude)}
 { }
 Dc::Dc(
   const Temperature temperature,
@@ -57,11 +57,11 @@ Dc::Dc(
 ) noexcept
   : Dc{temperature, prec, dc_previous, Month::from_ordinal(month), Latitude{latitude}}
 { }
-MathSize ffmc_effect(const Ffmc ffmc) noexcept { return fwiold::ffmc_effect(ffmc); }
-Isi::Isi(const Speed wind, const Ffmc ffmc) noexcept : Isi{fwiold::ISIcalc(wind, ffmc)} { }
-Bui::Bui(const Dmc dmc, const Dc dc) noexcept : Bui{fwiold::BUIcalc(dmc, dc)} { }
-Fwi::Fwi(const Isi isi, const Bui bui) noexcept : Fwi{fwiold::FWIcalc(isi, bui)} { }
-Dsr::Dsr(const Fwi fwi) noexcept : Dsr{fwiold::DSRcalc(fwi)} { }
+MathSize ffmc_effect(const Ffmc ffmc) noexcept { return fwireference::ffmc_effect(ffmc); }
+Isi::Isi(const Speed wind, const Ffmc ffmc) noexcept : Isi{fwireference::ISIcalc(wind, ffmc)} { }
+Bui::Bui(const Dmc dmc, const Dc dc) noexcept : Bui{fwireference::BUIcalc(dmc, dc)} { }
+Fwi::Fwi(const Isi isi, const Bui bui) noexcept : Fwi{fwireference::FWIcalc(isi, bui)} { }
+Dsr::Dsr(const Fwi fwi) noexcept : Dsr{fwireference::DSRcalc(fwi)} { }
 Isi check_isi(
   const MathSize
 #if defined(CHECK_CALCULATION) | defined(USE_GIVEN)
