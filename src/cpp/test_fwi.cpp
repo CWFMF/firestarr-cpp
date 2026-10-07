@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "fs/ArgumentParser.h"
-#include "fs/fwi/FwiReference.h"
 #include "fs/Log.h"
 #include "fs/unstable.h"
 #include "fs/Util.h"
-#include "fs/Weather.h"
+#include "fs/wx/FwiReference.h"
+#include "fs/wx/Weather.h"
 #include "test_fwi/FwiOld.h"
 namespace fs::testing
 {

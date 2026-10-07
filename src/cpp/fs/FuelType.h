@@ -4,9 +4,9 @@
 #include "stdafx.h"
 #include "Duff.h"
 #include "FireSpread.h"
-#include "fwi/FwiWeather.h"
 #include "Survival.h"
 #include "unstable.h"
+#include "wx/FwiWeather.h"
 namespace fs::fuel
 {
 using duff::Duff;

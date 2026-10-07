@@ -3,9 +3,9 @@
 #define FS_FUELOLDLOOKUP_H
 #include "../fs/Cell.h"
 #include "../fs/FuelType.h"
-#include "../fs/fwi/FireWeather.h"
 #include "../fs/stdafx.h"
 #include "../fs/Util.h"
+#include "../fs/wx/FireWeather.h"
 namespace fs::fuelold
 {
 class FuelOldLookupImpl;

@@ -3,10 +3,10 @@
 #define FS_FIRESPREAD_H
 #include "stdafx.h"
 #include "Cell.h"
-#include "fwi/FwiWeather.h"
 #include "Location.h"
 #include "Point.h"
-#include "Weather.h"
+#include "wx/FwiWeather.h"
+#include "wx/Weather.h"
 namespace fs
 {
 namespace fuel

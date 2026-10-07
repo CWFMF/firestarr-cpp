@@ -3,7 +3,6 @@
 #define FS_SCENARIO_H
 #include "stdafx.h"
 #include "CellPoints.h"
-#include "fwi/FireWeather.h"
 #include "IntensityMap.h"
 #include "Location.h"
 #include "LogPoints.h"
@@ -11,6 +10,7 @@
 #include "Settings.h"
 #include "SpreadCache.h"
 #include "StartPoint.h"
+#include "wx/FireWeather.h"
 namespace fs
 {
 class IObserver;

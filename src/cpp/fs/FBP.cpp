@@ -2,8 +2,8 @@
 #include "stdafx.h"
 #include "FBP.h"
 #include "FireSpread.h"
-#include "fwi/FWI.h"
 #include "unstable.h"
+#include "wx/FWI.h"
 namespace fs::fuel
 {
 using settings::Settings;

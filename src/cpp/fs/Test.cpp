@@ -3,7 +3,6 @@
 #include "Test.h"
 #include "FireSpread.h"
 #include "FuelLookup.h"
-#include "fwi/FireWeather.h"
 #include "Location.h"
 #include "Log.h"
 #include "Model.h"
@@ -11,6 +10,7 @@
 #include "SafeVector.h"
 #include "Settings.h"
 #include "Util.h"
+#include "wx/FireWeather.h"
 namespace fs
 {
 using fs::fuel::FuelLookup;

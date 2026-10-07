@@ -1,9 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Model.h"
-#include "fwi/FireWeather.h"
-#include "fwi/FWI.h"
-#include "fwi/Input.h"
 #include "Greenup.h"
+#include "Input.h"
 #include "Location.h"
 #include "Log.h"
 #include "Observer.h"
@@ -12,6 +10,7 @@
 #include "rng.h"
 #include "Scenario.h"
 #include "Settings.h"
+#include "wx/FireWeather.h"
 namespace fs
 {
 // // HACK: assume using half the CPUs probably means that faster cores are being used?

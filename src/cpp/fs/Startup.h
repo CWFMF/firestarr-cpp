@@ -2,9 +2,9 @@
 #ifndef FS_STARTUP_H
 #define FS_STARTUP_H
 #include "stdafx.h"
-#include "fwi/FWI.h"
 #include "Point.h"
-#include "Weather.h"
+#include "wx/FWI.h"
+#include "wx/Weather.h"
 namespace fs
 {
 /**
