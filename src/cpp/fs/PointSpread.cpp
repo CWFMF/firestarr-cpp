@@ -5,6 +5,7 @@
 #include "Scenario.h"
 namespace fs
 {
+using namespace fuel;
 DurationSize do_spread(
   MathSize& max_ros,
   CellPointsMap& points,

@@ -13,6 +13,7 @@
 #include "wx/FireWeather.h"
 namespace fs
 {
+using namespace fuel;
 // // HACK: assume using half the CPUs probably means that faster cores are being used?
 // constexpr MathSize PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
@@ -53,31 +54,17 @@ Model::Model(
 }
 void Model::setWeather(const FwiWeather& weather, const Day start_day)
 {
-  // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
-  static const auto& lookup = settings.fuel_lookup.lookup();
   yesterday_ = weather;
-  const auto& f = lookup.usedFuels();
   wx_.emplace(
     0,
     FireWeather{
-      f,
-      static_cast<Day>(start_day - 1),
-      weather.dc(),
-      weather.dmc(),
-      weather.ffmc(),
-      weather.wind()
+      static_cast<Day>(start_day - 1), weather.dc(), weather.dmc(), weather.ffmc(), weather.wind()
     }
   );
   wx_daily_.emplace(
     0,
     FireWeather{
-      f,
-      static_cast<Day>(start_day - 1),
-      weather.dc(),
-      weather.dmc(),
-      weather.ffmc(),
-      weather.wind()
+      static_cast<Day>(start_day - 1), weather.dc(), weather.dmc(), weather.ffmc(), weather.wind()
     }
   );
 }
@@ -87,9 +74,6 @@ void Model::readWeather(
   const string& filename
 )
 {
-  // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
-  static const auto& lookup = settings.fuel_lookup.lookup();
   map<size_t, vector<FwiWeather>> wx{};
   map<size_t, map<Day, FwiWeather>> wx_daily{};
   map<Day, struct tm> dates{};
@@ -267,7 +251,6 @@ void Model::readWeather(
 #endif
     in.close();
   }
-  const auto& f = lookup.usedFuels();
   // loop through and try to find duplicates
   for (const auto& kv : wx)
   {
@@ -276,12 +259,12 @@ void Model::readWeather(
     // FIX: this is just looking for duplicate scenario ids, not weather?
     if (wx_.find(k) == wx_.end())
     {
-      wx_.emplace(k, FireWeather{f, min_date, max_date, s});
+      wx_.emplace(k, FireWeather{min_date, max_date, s});
       // calculate daily indices
       auto& s_daily = wx_daily.at(k);
       // HACK: set yesterday to match today
       s_daily.emplace(min_date - 1, s_daily.at(min_date));
-      wx_daily_.emplace(k, FireWeather{f, s_daily});
+      wx_daily_.emplace(k, FireWeather{s_daily});
     }
   }
 }

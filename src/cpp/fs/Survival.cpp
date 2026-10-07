@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Survival.h"
-#include "FuelType.h"
-#include "wx/FireWeather.h"
 namespace fs::survival
 {
 ThresholdSize probability_peat(

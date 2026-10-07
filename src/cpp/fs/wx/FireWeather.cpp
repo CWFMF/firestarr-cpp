@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FireWeather.h"
-#include "../FuelType.h"
+#include "../Util.h"
 #include "Moisture.h"
+#ifdef DEBUG_FWI_WEATHER
+#include "../Log.h"
+#endif
 namespace fs
 {
 /*!
@@ -546,15 +549,10 @@ vector<FwiWeather> make_vector(map<Day, FwiWeather> data)
   }
   return r;
 }
-FireWeather::FireWeather(const set<const FuelType*>& used_fuels, const map<Day, FwiWeather>& data)
-  : FireWeather(used_fuels, data.begin()->first, data.rbegin()->first, make_vector(data))
+FireWeather::FireWeather(const map<Day, FwiWeather>& data)
+  : FireWeather(data.begin()->first, data.rbegin()->first, make_vector(data))
 { }
-FireWeather::FireWeather(
-  const set<const FuelType*>& used_fuels,
-  Day min_date,
-  Day max_date,
-  vector<FwiWeather> weather_by_hour_by_day
-)
+FireWeather::FireWeather(Day min_date, Day max_date, vector<FwiWeather> weather_by_hour_by_day)
   : weather_by_hour_by_day_{[&]() {
       return vector<FwiWeather>{weather_by_hour_by_day.begin(), weather_by_hour_by_day.end()};
     }()},
@@ -590,24 +588,13 @@ static vector<FwiWeather> make_constant_weather(
   return wx;
 }
 FireWeather::FireWeather(
-  const FuelType* fuel,
   const Day start_date,
   const Dc& dc,
   const Dmc& dmc,
   const Ffmc& ffmc,
   const Wind& wind
 )
-  : FireWeather(set<const FuelType*>{fuel}, start_date, dc, dmc, ffmc, wind)
-{ }
-FireWeather::FireWeather(
-  const set<const FuelType*>& used_fuels,
-  const Day start_date,
-  const Dc& dc,
-  const Dmc& dmc,
-  const Ffmc& ffmc,
-  const Wind& wind
-)
-  : FireWeather(used_fuels, start_date, MAX_DAYS - 1, make_constant_weather(dc, dmc, ffmc, wind))
+  : FireWeather(start_date, MAX_DAYS - 1, make_constant_weather(dc, dmc, ffmc, wind))
 { }
 FwiWeather FireWeather::at(const DurationSize time) const
 {

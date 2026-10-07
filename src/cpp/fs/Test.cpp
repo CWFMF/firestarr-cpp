@@ -13,6 +13,7 @@
 #include "wx/FireWeather.h"
 namespace fs
 {
+using namespace fuel;
 using fs::fuel::FuelLookup;
 using settings::Settings;
 /**
@@ -195,7 +196,7 @@ string run_test(
   const XYIdx start_xy{static_cast<Idx>(MAX_WIDTH / 2), static_cast<Idx>(MAX_HEIGHT / 2)};
   Model model(settings.start_date.value(), output_directory, ForPoint, &env);
   const auto start_cell = model.cell(start_xy);
-  FireWeather weather(fuel, start_date, dc, dmc, ffmc, wind);
+  FireWeather weather{static_cast<Day>(start_date), dc, dmc, ffmc, wind};
   TestScenario scenario(&model, start_xy, ForPoint, start_date, end_date, &weather, final_sizes);
   const auto w = weather.at(start_date);
   SpreadCache spread_cache{};

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include <future>
 #include <mutex>
+#include "FireSpread.h"
 #include "fs/ArgumentParser.h"
 #include "fs/FBP.h"
 #include "fs/FuelLookup.h"
@@ -20,6 +21,7 @@ using namespace fs::fuelold;
 using fs::fuel::FuelLookup;
 using fs::fuel::FuelType;
 using fs::fuel::FuelVariable;
+using fs::fuel::ROSOffset;
 using fs::fuel::StandardFuel;
 using TestResult = std::future<int>;
 class TestResults

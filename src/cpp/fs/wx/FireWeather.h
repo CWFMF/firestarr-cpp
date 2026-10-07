@@ -6,11 +6,6 @@
 #include "FwiWeather.h"
 namespace fs
 {
-namespace fuel
-{
-class FuelType;
-}
-using namespace fuel;
 /**
  * \brief A stream of weather that gets used by a Scenario every Iteration.
  */
@@ -23,13 +18,8 @@ public:
    * \param used_fuels set of FuelTypes that are used in the simulation
    * \param data map of Day to FwiWeather to use for weather stream with diurnal formula
    */
-  FireWeather(const set<const FuelType*>& used_fuels, const map<Day, FwiWeather>& data);
-  FireWeather(
-    const set<const FuelType*>& used_fuels,
-    Day min_date,
-    Day max_date,
-    vector<FwiWeather> weather_by_hour_by_day
-  );
+  FireWeather(const map<Day, FwiWeather>& data);
+  FireWeather(Day min_date, Day max_date, vector<FwiWeather> weather_by_hour_by_day);
   /**
    * \brief A Constant weather stream with only one possible fuel
    * \param fuel Fuel to use
@@ -41,15 +31,6 @@ public:
    * \param wind Wind
    */
   FireWeather(
-    const FuelType* fuel,
-    const Day start_date,
-    const Dc& dc,
-    const Dmc& dmc,
-    const Ffmc& ffmc,
-    const Wind& wind
-  );
-  FireWeather(
-    const set<const FuelType*>& used_fuels,
     const Day start_date,
     const Dc& dc,
     const Dmc& dmc,

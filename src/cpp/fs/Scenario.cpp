@@ -15,10 +15,10 @@
 #include "ProbabilityMap.h"
 #include "rng.h"
 #include "Settings.h"
-#include "Survival.h"
 #include "unstable.h"
 namespace fs
 {
+using namespace fuel;
 using std::cout;
 // constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;

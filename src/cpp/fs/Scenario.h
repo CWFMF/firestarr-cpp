@@ -524,7 +524,7 @@ protected:
   /**
    * \brief Probability of survival for fuels fuel at each time
    */
-  SurvivalMap survival_probability_{};
+  SurvivalMap survival_probability_;
 };
 }
 #endif
