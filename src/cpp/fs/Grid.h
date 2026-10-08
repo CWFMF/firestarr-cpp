@@ -2,7 +2,7 @@
 #ifndef FS_GRID_H
 #define FS_GRID_H
 #include "stdafx.h"
-#include "Location.h"
+#include "types/Location.h"
 #include "Log.h"
 #include "Point.h"
 #include "Settings.h"

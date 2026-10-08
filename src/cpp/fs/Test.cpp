@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Test.h"
+#include "types/Location.h"
 #include "wx/FireWeather.h"
 #include "FireSpread.h"
 #include "FuelLookup.h"
-#include "Location.h"
 #include "Log.h"
 #include "Model.h"
 #include "Observer.h"

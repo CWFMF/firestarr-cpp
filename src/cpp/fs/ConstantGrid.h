@@ -2,8 +2,8 @@
 #ifndef FS_CONSTANT_GRID_H
 #define FS_CONSTANT_GRID_H
 #include "stdafx.h"
+#include "types/Location.h"
 #include "Grid.h"
-#include "Location.h"
 #include "Util.h"
 namespace fs
 {

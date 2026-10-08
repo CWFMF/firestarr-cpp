@@ -2,10 +2,10 @@
 #ifndef FS_FIRE_SPREAD_H
 #define FS_FIRE_SPREAD_H
 #include "stdafx.h"
+#include "types/Location.h"
 #include "wx/FwiWeather.h"
 #include "wx/WeatherIndices.h"
 #include "Cell.h"
-#include "Location.h"
 #include "Point.h"
 namespace fs
 {

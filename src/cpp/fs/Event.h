@@ -3,9 +3,9 @@
 #define FS_EVENT_H
 #include "stdafx.h"
 #include <compare>
+#include "types/Location.h"
 #include "wx/WeatherIndices.h"
 #include "Cell.h"
-#include "Location.h"
 namespace fs
 {
 using fs::Direction;

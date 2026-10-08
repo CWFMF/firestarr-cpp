@@ -2,8 +2,8 @@
 #ifndef FS_BURNED_DATA_H
 #define FS_BURNED_DATA_H
 #include "stdafx.h"
+#include "types/Location.h"
 #include "ConstantGrid.h"
-#include "Location.h"
 namespace fs
 {
 class BurnedData

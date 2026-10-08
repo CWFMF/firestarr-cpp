@@ -2,8 +2,8 @@
 #ifndef FS_GRID_MAP_H
 #define FS_GRID_MAP_H
 #include "stdafx.h"
+#include "types/Location.h"
 #include "Grid.h"
-#include "Location.h"
 namespace fs
 {
 /**

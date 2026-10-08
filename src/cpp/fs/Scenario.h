@@ -2,10 +2,10 @@
 #ifndef FS_SCENARIO_H
 #define FS_SCENARIO_H
 #include "stdafx.h"
+#include "types/Location.h"
 #include "wx/FireWeather.h"
 #include "CellPoints.h"
 #include "IntensityMap.h"
-#include "Location.h"
 #include "LogPoints.h"
 #include "Model.h"
 #include "Settings.h"
