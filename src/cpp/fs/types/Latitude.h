@@ -1,13 +1,14 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_LATITUDE_H
 #define FS_LATITUDE_H
+#include <compare>
 #include "../unstable.h"
 namespace fs
 {
 struct Latitude
 {
   MathSize value{};
-  auto operator<=>(const Latitude& rhs) const = default;
+  std::partial_ordering operator<=>(const Latitude& rhs) const = default;
   Latitude operator-(const Latitude& rhs) const { return {value - rhs.value}; }
   Latitude operator-() const { return {-value}; }
 };
