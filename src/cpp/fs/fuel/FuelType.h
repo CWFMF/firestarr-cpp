@@ -1,12 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FUEL_TYPE_H
 #define FS_FUEL_TYPE_H
-#include "stdafx.h"
-#include "wx/FwiWeather.h"
+#include "../stdafx.h"
+#include "../FireSpread.h"
+#include "../Survival.h"
+#include "../wx/FwiWeather.h"
 #include "Duff.h"
-#include "FireSpread.h"
-#include "Survival.h"
-#include "unstable.h"
 namespace fs::fuel
 {
 using duff::Duff;

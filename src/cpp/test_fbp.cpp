@@ -1,14 +1,14 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+#include "fs/stdafx.h"
 #include <future>
 #include <mutex>
 #include "fs/ArgumentParser.h"
-#include "fs/FBP.h"
 #include "fs/FireSpread.h"
-#include "fs/FuelLookup.h"
-#include "fs/FuelType.h"
+#include "fs/fuel/FireBehaviourPrediction.h"
+#include "fs/fuel/FuelLookup.h"
+#include "fs/fuel/FuelType.h"
 #include "fs/Log.h"
 #include "fs/RangeIterator.h"
-#include "fs/stdafx.h"
 #include "test_fbp/FBPOld.h"
 #include "test_fbp/FuelOldLookup.h"
 namespace fs::testing

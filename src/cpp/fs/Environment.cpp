@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Environment.h"
+#include "fuel/FuelLookup.h"
 #include "types/Location.h"
 #include "types/Radians.h"
 #include "EnvironmentInfo.h"
-#include "FuelLookup.h"
 #include "Grid.h"
 #include "Log.h"
 #include "Point.h"

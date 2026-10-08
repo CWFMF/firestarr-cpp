@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FireSpread.h"
-#include "FuelLookup.h"
-#include "FuelType.h"
+#include "fuel/FuelLookup.h"
+#include "fuel/FuelType.h"
 #include "LookupTable.h"
 #include "Settings.h"
 #include "SpreadAlgorithm.h"

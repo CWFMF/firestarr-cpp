@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Duff.h"
-#include "Log.h"
+#include "../Log.h"
 namespace fs::testing
 {
 // FIX: this was used to compare to the old template version, but doesn't work now

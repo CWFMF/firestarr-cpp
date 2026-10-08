@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Model.h"
+#include "fuel/Greenup.h"
 #include "types/Location.h"
 #include "wx/FireWeather.h"
-#include "Greenup.h"
 #include "Input.h"
 #include "Log.h"
 #include "Observer.h"

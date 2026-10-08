@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FBPOLD_H
 #define FS_FBPOLD_H
-#include "../fs/Duff.h"
-#include "../fs/Greenup.h"
-#include "../fs/Settings.h"
 #include "../fs/stdafx.h"
+#include "../fs/fuel/Duff.h"
+#include "../fs/fuel/Greenup.h"
+#include "../fs/Settings.h"
 #include "StandardFuelOld.h"
 #ifdef DEBUG_FUEL_VARIABLE
 #include "../fs/Log.h"

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_SIMPLE_FUEL_TYPE_H
 #define FS_SIMPLE_FUEL_TYPE_H
-#include "stdafx.h"
+#include "../stdafx.h"
 #include "Duff.h"
 #include "FuelType.h"
 namespace fs::simplefbp

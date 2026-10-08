@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Perimeter.h"
+#include "fuel/FuelLookup.h"
 #include "types/Location.h"
 #include "Environment.h"
-#include "FuelLookup.h"
 namespace fs
 {
 BurnedMap::BurnedMap(const Grid<unsigned char, unsigned char>& perim_grid, const Environment& env)

@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FuelType.h"
+#include "../Log.h"
+#include "../Settings.h"
 #include "Greenup.h"
-#include "Log.h"
-#include "Settings.h"
 namespace fs::fuel
 {
 string simplify_fuel_name(const string_view fuel)

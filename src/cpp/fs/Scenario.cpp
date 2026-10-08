@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Scenario.h"
+#include "fuel/FuelLookup.h"
 #include "types/Location.h"
 #include "BurnedData.h"
 #include "Cell.h"
 #include "CellPoints.h"
 #include "FireSpread.h"
-#include "FuelLookup.h"
 #include "IntensityMap.h"
 #include "Log.h"
 #include "Observer.h"
@@ -15,7 +15,6 @@
 #include "ProbabilityMap.h"
 #include "rng.h"
 #include "Settings.h"
-#include "unstable.h"
 namespace fs
 {
 using namespace fuel;

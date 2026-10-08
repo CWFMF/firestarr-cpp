@@ -1,16 +1,16 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FBP_H
 #define FS_FBP_H
-#include "stdafx.h"
+#include "../stdafx.h"
+#include "../LookupTable.h"
+#include "../Settings.h"
+#include "../Survival.h"
 #include "Duff.h"
 #include "FuelType.h"
 #include "Greenup.h"
-#include "LookupTable.h"
-#include "Settings.h"
 #include "StandardFuel.h"
-#include "Survival.h"
 #ifdef DEBUG_FUEL_VARIABLE
-#include "Log.h"
+#include "../Log.h"
 #endif
 namespace fs::fuel
 {
