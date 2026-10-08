@@ -7,7 +7,7 @@
 #include "../fs/stdafx.h"
 #include "StandardFuelOld.h"
 #ifdef DEBUG_FUEL_VARIABLE
-#include "Log.h"
+#include "../fs/Log.h"
 #endif
 namespace fs::fuelold
 {

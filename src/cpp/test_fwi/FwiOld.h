@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FWI_OLD_H
 #define FS_FWI_OLD_H
-#include "FireWeatherIndices.h"
-#include "unstable.h"
-#include "WeatherIndices.h"
+#include "../fs/unstable.h"
+#include "../fs/wx/FireWeatherIndices.h"
+#include "../fs/wx/WeatherIndices.h"
 namespace fs::fwiold
 {
 Ffmc FFMCcalc(

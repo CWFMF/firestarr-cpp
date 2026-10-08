@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include <future>
 #include <mutex>
-#include "FireSpread.h"
 #include "fs/ArgumentParser.h"
 #include "fs/FBP.h"
+#include "fs/FireSpread.h"
 #include "fs/FuelLookup.h"
 #include "fs/FuelType.h"
 #include "fs/Log.h"
