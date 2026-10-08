@@ -1,64 +1,12 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FIRE_WEATHER_INDICES_H
 #define FS_FIRE_WEATHER_INDICES_H
+#include "../types/Latitude.h"
+#include "../types/Month.h"
 #include "../unstable.h"
 #include "WeatherIndices.h"
 namespace fs
 {
-// months as array indexes
-class Month
-{
-public:
-  enum class Value
-  {
-    January,
-    February,
-    March,
-    April,
-    May,
-    June,
-    July,
-    August,
-    September,
-    October,
-    November,
-    December
-  };
-  static Month from_index(const int value) { return {static_cast<Value>(value)}; }
-  static Month from_ordinal(const int value) { return {static_cast<Value>(value - 1)}; }
-  Month(const Value value) : value{value} { }
-  int ordinal() const { return static_cast<int>(value) + 1; }
-  size_t index() const { return static_cast<size_t>(value); }
-  const char* name() const
-  {
-    static constexpr const char* NAMES[]{
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December"
-    };
-    return NAMES[index()];
-  }
-
-private:
-  Value value;
-};
-struct Latitude
-{
-  MathSize value{};
-  auto operator<=>(const Latitude& rhs) const = default;
-  Latitude operator-(const Latitude& rhs) const { return {value - rhs.value}; }
-  Latitude operator-() const { return {-value}; }
-};
-static inline Latitude abs(const Latitude& rhs) { return {std::abs(rhs.value)}; }
 struct Moisture
 {
   MathSize value{};
