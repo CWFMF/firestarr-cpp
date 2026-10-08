@@ -2,8 +2,8 @@
 #ifndef FS_SURVIVAL_H
 #define FS_SURVIVAL_H
 #include "stdafx.h"
-#include "Duff.h"
 #include "wx/FwiWeather.h"
+#include "Duff.h"
 namespace fs::survival
 {
 // amount of duff to apply ffmc moisture to (cm) (1.2 cm is from Kerry's paper)

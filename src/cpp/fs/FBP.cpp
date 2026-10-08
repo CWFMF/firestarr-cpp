@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "FBP.h"
+#include "wx/FireWeatherIndices.h"
 #include "FireSpread.h"
 #include "unstable.h"
-#include "wx/FireWeatherIndices.h"
 namespace fs::fuel
 {
 using settings::Settings;

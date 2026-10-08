@@ -2,12 +2,12 @@
 #ifndef FS_MODEL_H
 #define FS_MODEL_H
 #include "stdafx.h"
+#include "wx/FireWeather.h"
 #include "Environment.h"
 #include "Iteration.h"
 #include "Perimeter.h"
 #include "Settings.h"
 #include "unstable.h"
-#include "wx/FireWeather.h"
 namespace fs
 {
 using settings::Settings;

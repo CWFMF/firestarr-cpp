@@ -4,12 +4,12 @@
 #include "stdafx.h"
 #include <algorithm>
 #include <compare>
+#include "wx/WeatherIndices.h"
 #include "BurnedData.h"
 #include "Cell.h"
 #include "FireSpread.h"
 #include "Location.h"
 #include "unstable.h"
-#include "wx/WeatherIndices.h"
 namespace fs
 {
 using fs::Direction;

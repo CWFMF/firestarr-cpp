@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Model.h"
+#include "wx/FireWeather.h"
 #include "Greenup.h"
 #include "Input.h"
 #include "Location.h"
@@ -10,7 +11,6 @@
 #include "rng.h"
 #include "Scenario.h"
 #include "Settings.h"
-#include "wx/FireWeather.h"
 namespace fs
 {
 using namespace fuel;

@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FireWeather.h"
 #include "../Util.h"
-#include "Moisture.h"
 #ifdef DEBUG_FWI_WEATHER
 #include "../Log.h"
 #endif
+#include "Moisture.h"
 namespace fs
 {
 /*!

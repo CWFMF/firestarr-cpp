@@ -77,8 +77,10 @@ IncludeCategories:
     Priority: 1
   - Regex: '^<.*>' # System includes
     Priority: 2
+  - Regex: '".*\/.*"' # Project-specific includes in other folders
+    Priority: 4
   - Regex: '".*"' # Project-specific includes
-    Priority: 3
+    Priority: 5
 SortUsingDeclarations: true
 SpaceAfterTemplateKeyword: true
 SpaceInEmptyBlock: true
