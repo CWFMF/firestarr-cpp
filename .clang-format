@@ -71,7 +71,7 @@ ReflowComments: true
 # SeparateDefinitionBlocks: Always
 SortIncludes: CaseInsensitive
 IncludeCategories:
-  - Regex: '^("|<)stdafx\.h(pp)?("|>)'
+  - Regex: '^("|<).*stdafx\.h(pp)?("|>)'
     Priority: -1
   - Regex: '^<[^\.]*>' # Core includes
     Priority: 1
