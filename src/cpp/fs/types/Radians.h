@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_RADIANS_H
 #define FS_RADIANS_H
-#include "stdafx.h"
+#include "../stdafx.h"
+#include "Degrees.h"
 #include "StrictType.h"
 namespace fs
 {
@@ -9,14 +10,6 @@ namespace fs
  * \brief Ratio of degrees to radians
  */
 static constexpr auto M_RADIANS_TO_DEGREES = 180.0 / M_PI;
-struct Radians;
-struct Degrees : public StrictType<Degrees, units::CompassDegrees>
-{
-  using StrictType::StrictType;
-  explicit constexpr Degrees(const DirectionSize degrees) noexcept
-    : Degrees{static_cast<MathSize>(degrees)}
-  { }
-};
 struct Radians : public StrictType<Radians, units::CompassRadians>
 {
   using StrictType::StrictType;
@@ -68,7 +61,6 @@ struct Radians : public StrictType<Radians, units::CompassRadians>
     return Radians{static_cast<AspectSize>(aspect)};
   }
 };
-static constexpr Degrees INVALID_DIRECTION{std::numeric_limits<DirectionSize>::max()};
 static constexpr Radians abs(const Radians& radians) { return Radians{radians.value}; };
 static inline MathSize tan(const Radians& radians) { return std::tan(radians.value); };
 static inline MathSize sin(const Radians& radians) { return fs::sin(radians.value); };

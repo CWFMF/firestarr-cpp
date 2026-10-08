@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Environment.h"
+#include "types/Radians.h"
 #include "EnvironmentInfo.h"
 #include "FuelLookup.h"
 #include "Grid.h"
@@ -8,7 +9,6 @@
 #include "Log.h"
 #include "Point.h"
 #include "ProbabilityMap.h"
-#include "Radians.h"
 #include "Settings.h"
 #include "Util.h"
 namespace fs

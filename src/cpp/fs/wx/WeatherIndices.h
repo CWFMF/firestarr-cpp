@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_WEATHER_INDICES_H
 #define FS_WEATHER_INDICES_H
-#include "../Radians.h"
-#include "../StrictType.h"
+#include "../types/Radians.h"
+#include "../types/StrictType.h"
 #include "../unstable.h"
 namespace fs
 {

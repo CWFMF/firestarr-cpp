@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_STRICT_TYPE_H
 #define FS_STRICT_TYPE_H
-#include "stdafx.h"
+#include "../stdafx.h"
 namespace fs
 {
 namespace units

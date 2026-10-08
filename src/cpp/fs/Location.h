@@ -2,7 +2,7 @@
 #ifndef FS_LOCATION_H
 #define FS_LOCATION_H
 #include "stdafx.h"
-#include "StrictType.h"
+#include "types/StrictType.h"
 #include "Util.h"
 namespace fs
 {
