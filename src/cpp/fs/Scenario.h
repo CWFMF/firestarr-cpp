@@ -2,14 +2,14 @@
 #ifndef FS_SCENARIO_H
 #define FS_SCENARIO_H
 #include "stdafx.h"
+#include "types/Location.h"
+#include "wx/FireWeather.h"
 #include "CellPoints.h"
-#include "FireSpread.h"
-#include "FireWeather.h"
 #include "IntensityMap.h"
-#include "Location.h"
 #include "LogPoints.h"
 #include "Model.h"
 #include "Settings.h"
+#include "SpreadCache.h"
 #include "StartPoint.h"
 namespace fs
 {
@@ -22,6 +22,8 @@ struct IObserver_deleter
 {
   void operator()(IObserver*) const;
 };
+// use an array instead of a map since number of values is so small and access should be faster
+using SurvivalMap = array<vector<float>, NUMBER_OF_FUELS>;
 /**
  * \brief A single Scenario in an Iteration using a specific FireWeather stream.
  */
@@ -142,11 +144,8 @@ public:
    * \param time Time to get weather for (decimal days)
    * \return FwiWeather for given time
    */
-  [[nodiscard]] ptr<const FwiWeather> weather(const DurationSize time) const
-  {
-    return weather_->at(time);
-  }
-  [[nodiscard]] ptr<const FwiWeather> weather_daily(const DurationSize time) const
+  [[nodiscard]] FwiWeather weather(const DurationSize time) const { return weather_->at(time); }
+  [[nodiscard]] FwiWeather weather_daily(const DurationSize time) const
   {
     return weather_daily_->at(time);
   }
@@ -286,6 +285,10 @@ public:
    * \return Whether or not this Scenario has run already
    */
   [[nodiscard]] bool ran() const noexcept;
+  ThresholdSize survivalProbability(const DurationSize time, const FuelCodeSize& in_fuel) const
+  {
+    return survival_probability_.at(in_fuel).at(time_index(time, weather_->minDate()));
+  }
   /**
    * \brief Whether or not the fire survives the conditions
    * \param time Time to use weather from
@@ -318,7 +321,7 @@ public:
       //                3     40.184467357005346
       //                2     35.025698388961054
       //                1     15.049926856936347
-      const auto mc = wx->mcDmcPct();
+      const auto mc = wx.mcDmcPct();
       if (100 > mc || (109 >= mc && 5 > time_at_location) || (119 >= mc && 4 > time_at_location)
           || (131 >= mc && 3 > time_at_location) || (145 >= mc && 2 > time_at_location)
           || (218 >= mc && 1 > time_at_location))
@@ -326,7 +329,7 @@ public:
         return true;
       }
       // we can look by fuel type because the entire landscape shares the weather
-      return extinctionThreshold(time) < fire_wx->survivalProbability(time, cell.fuelCode());
+      return extinctionThreshold(time) < survivalProbability(time, cell.fuelCode());
     }
     catch (const std::out_of_range&)
     {
@@ -433,7 +436,7 @@ protected:
   /**
    * \brief Calculated SpreadInfo for SpreadKey for current time
    */
-  map<SpreadKey, SpreadInfo> spread_info_{};
+  SpreadCache spread_info_{};
   /**
    * \brief Map of when Cell had first Point arrive in it
    */
@@ -518,6 +521,10 @@ protected:
    * \brief How many times this scenario tried to spread out of bounds
    */
   size_t oob_spread_{};
+  /**
+   * \brief Probability of survival for fuels fuel at each time
+   */
+  SurvivalMap survival_probability_;
 };
 }
 #endif

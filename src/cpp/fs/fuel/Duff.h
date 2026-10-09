@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_DUFF_H
 #define FS_DUFF_H
-#include "stdafx.h"
-#include "Log.h"
-#include "unstable.h"
+#include "../stdafx.h"
+#include "../Log.h"
 namespace fs::duff
 {
 /*! \page survival Probability of fire survival

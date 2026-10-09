@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Test.h"
+#include "fuel/FuelLookup.h"
+#include "types/Location.h"
+#include "wx/FireWeather.h"
 #include "FireSpread.h"
-#include "FireWeather.h"
-#include "FuelLookup.h"
-#include "Location.h"
 #include "Log.h"
 #include "Model.h"
 #include "Observer.h"
@@ -13,6 +13,7 @@
 #include "Util.h"
 namespace fs
 {
+using namespace fuel;
 using fs::fuel::FuelLookup;
 using settings::Settings;
 /**
@@ -80,7 +81,7 @@ public:
     std::ignore = reset(nullptr, nullptr, final_sizes);
   }
 };
-void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelType* fuel)
+void showSpread(const SpreadInfo& spread, const FwiWeather w, const FuelType* fuel)
 {
   // HACK: make two rows and then print so columns are aligned
   std::stringstream line_header{};
@@ -89,22 +90,22 @@ void showSpread(const SpreadInfo& spread, ptr<const FwiWeather> w, const FuelTyp
     line_data << " " << value;
     line_header << std::format(" {:>{}s}", col, value.size());
   };
-  add_value("PREC", std::format("{:5.2f}", w->prec.value));
-  add_value("TEMP", std::format("{:5.1f}", w->temperature.value));
-  add_value("RH", std::format("{:3g}", w->rh.value));
-  add_value("WS", std::format("{:5.1f}", w->wind.speed.value));
-  add_value("WD", std::format("{:3g}", w->wind.direction.value));
-  add_value("FFMC", std::format("{:5.1f}", w->ffmc.value));
-  add_value("DMC", std::format("{:5.1f}", w->dmc.value));
-  add_value("DC", std::format("{:5g}", w->dc.value));
-  add_value("ISI", std::format("{:5.1f}", w->isi.value));
-  add_value("BUI", std::format("{:5.1f}", w->bui.value));
-  add_value("FWI", std::format("{:5.1f}", w->fwi.value));
+  add_value("PREC", std::format("{:5.2f}", w.prec().value));
+  add_value("TEMP", std::format("{:5.1f}", w.temperature().value));
+  add_value("RH", std::format("{:3g}", w.rh().value));
+  add_value("WS", std::format("{:5.1f}", w.wind().speed.value));
+  add_value("WD", std::format("{:3g}", w.wind().direction.value));
+  add_value("FFMC", std::format("{:5.1f}", w.ffmc().value));
+  add_value("DMC", std::format("{:5.1f}", w.dmc().value));
+  add_value("DC", std::format("{:5g}", w.dc().value));
+  add_value("ISI", std::format("{:5.1f}", w.isi().value));
+  add_value("BUI", std::format("{:5.1f}", w.bui().value));
+  add_value("FWI", std::format("{:5.1f}", w.fwi().value));
   add_value("GS", std::format("{:3d}", spread.percentSlope()));
   add_value("SAZ", std::format("{:3d}", spread.slopeAzimuth()));
   const auto simple_fuel = simplify_fuel_name(fuel->name());
   add_value("FUEL", std::format("{:>7s}", simple_fuel));
-  add_value("GC", std::format("{:3.0g}", fuel->grass_curing(spread.nd(), *w)));
+  add_value("GC", std::format("{:3.0g}", fuel->grass_curing(spread.nd(), w)));
   add_value("L:B", std::format("{:5.2f}", spread.lengthToBreadth()));
   add_value("CBH", std::format("{:4.1f}", fuel->cbh()));
   add_value("CFB", std::format("{:6.3f}", spread.crownFractionBurned()));
@@ -195,10 +196,11 @@ string run_test(
   const XYIdx start_xy{static_cast<Idx>(MAX_WIDTH / 2), static_cast<Idx>(MAX_HEIGHT / 2)};
   Model model(settings.start_date.value(), output_directory, ForPoint, &env);
   const auto start_cell = model.cell(start_xy);
-  FireWeather weather(fuel, start_date, dc, dmc, ffmc, wind);
+  FireWeather weather{static_cast<Day>(start_date), dc, dmc, ffmc, wind};
   TestScenario scenario(&model, start_xy, ForPoint, start_date, end_date, &weather, final_sizes);
   const auto w = weather.at(start_date);
-  auto info = SpreadInfo(scenario, start_date, start_cell.key(), model.nd(start_date), w);
+  SpreadCache spread_cache{};
+  auto& info = *spread_cache.add_spread(start_cell.key(), &scenario, start_date);
   showSpread(info, w, fuel);
   map<DurationSize, shared_ptr<ProbabilityMap>> probabilities{};
   logging::debug("Starting simulation");

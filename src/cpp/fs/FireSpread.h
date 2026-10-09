@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_FIRESPREAD_H
-#define FS_FIRESPREAD_H
+#ifndef FS_FIRE_SPREAD_H
+#define FS_FIRE_SPREAD_H
 #include "stdafx.h"
+#include "types/Location.h"
+#include "wx/FwiWeather.h"
+#include "wx/WeatherIndices.h"
 #include "Cell.h"
-#include "FWI.h"
-#include "Location.h"
 #include "Point.h"
-#include "Weather.h"
 namespace fs
 {
 namespace fuel
@@ -27,7 +27,6 @@ using fs::fuel::OffsetSet;
 static constexpr MathSize MAX_SPREAD_ANGLE = 5.0;
 static constexpr MathSize INVALID_ROS = -1.0;
 static constexpr MathSize INVALID_INTENSITY = -1.0;
-class Scenario;
 /**
  * \brief Possible results of an attempt to spread.
  */
@@ -40,7 +39,7 @@ enum SpreadResult
 int calculate_nd_ref_for_point(const int elevation, const Point& point) noexcept;
 int calculate_nd_for_point(const Day day, const int elevation, const Point& point);
 /**
- * \brief Information regarding spread within a Cell for a specific Scenario and time.
+ * \brief Information regarding spread
  */
 class SpreadInfo
 {
@@ -51,16 +50,9 @@ public:
   static const SlopeTableArray SlopeTable;
   SpreadInfo() = default;
   ~SpreadInfo() = default;
-  SpreadInfo(
-    const Scenario& scenario,
-    DurationSize time,
-    const SpreadKey& key,
-    int nd,
-    const ptr<const FwiWeather> weather
-  );
-  constexpr SpreadInfo(SpreadInfo&& rhs) noexcept = default;
+  SpreadInfo(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo(const SpreadInfo& rhs) noexcept = default;
-  constexpr SpreadInfo& operator=(SpreadInfo&& rhs) noexcept = default;
+  SpreadInfo& operator=(SpreadInfo&& rhs) noexcept = default;
   SpreadInfo& operator=(const SpreadInfo& rhs) noexcept = default;
   /**
    * \brief Determine rate of spread from probability of spread threshold
@@ -200,7 +192,7 @@ public:
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
-    const ptr<const FwiWeather> weather
+    const FwiWeather weather
   );
   SpreadInfo(
     const tm& start_date,
@@ -209,7 +201,7 @@ public:
     const SlopeSize slope,
     const AspectSize aspect,
     const char* fuel_name,
-    const ptr<const FwiWeather> weather
+    const FwiWeather weather
   );
   MathSize crownFractionBurned() const { return cfb_; }
   MathSize crownFuelConsumption() const { return cfc_; }
@@ -220,26 +212,6 @@ public:
 private:
   // HACK: have private constructor so is_spreading() can short-circuit the calculation,
   // but nothing else can get a partially constructed SpreadInfo object
-  /**
-   * \brief Calculate fire spread for time and place
-   * \param scenario Scenario this is spreading in
-   * \param time Time spread is occurring
-   * \param key Attributes for Cell spread is occurring in
-   * \param nd Difference between date and the date of minimum foliar moisture content
-   *DurationSize timether FwiWeather to use for calculations
-   * \param weather_daily FwiWeather to use for spread event probability
-   */
-  SpreadInfo(
-    const Scenario& scenario,
-    DurationSize time,
-    const SpreadKey& key,
-    int nd,
-    const ptr<const FwiWeather> weather,
-    const ptr<const FwiWeather> weather_daily
-  );
-  /**
-   * Actual fire spread calculation without needing to worry about settings or scenarios
-   */
   SpreadInfo(
     DurationSize time,
     MathSize min_ros,
@@ -248,7 +220,7 @@ private:
     const AspectSize aspect,
     const char* fuel_name,
     int nd,
-    const ptr<const FwiWeather> weather
+    const FwiWeather weather
   );
   SpreadInfo(
     DurationSize time,
@@ -256,16 +228,18 @@ private:
     MathSize cell_size,
     const SpreadKey& key,
     int nd,
-    const ptr<const FwiWeather> weather
+    const FwiWeather weather
   );
+
+public:
   SpreadInfo(
     DurationSize time,
     MathSize min_ros,
     MathSize cell_size,
     const SpreadKey& key,
     int nd,
-    const ptr<const FwiWeather> weather,
-    const ptr<const FwiWeather> weather_daily
+    const FwiWeather weather,
+    const FwiWeather weather_daily
   );
 
 public:
@@ -277,8 +251,8 @@ public:
     MathSize cell_size,
     const SpreadKey& key,
     int nd,
-    const ptr<const FwiWeather> weather,
-    const ptr<const FwiWeather> weather_daily
+    const FwiWeather weather,
+    const FwiWeather weather_daily
   );
 
 private:
@@ -317,7 +291,7 @@ public:
   /**
    * \brief FwiWeather determining spread
    */
-  ptr<const FwiWeather> weather{nullptr};
+  FwiWeather weather{};
 
 private:
   /**

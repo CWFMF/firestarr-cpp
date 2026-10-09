@@ -2,7 +2,7 @@
 #ifndef FS_PROJECTION_H
 #define FS_PROJECTION_H
 #include "stdafx.h"
-#include "Location.h"
+#include "types/Location.h"
 #include "Point.h"
 namespace fs
 {

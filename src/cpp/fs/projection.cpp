@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "projection.h"
 #include <proj.h>
+#include "types/Radians.h"
 #include "Log.h"
 #include "Point.h"
-#include "Radians.h"
 #include "Settings.h"
 #include "unstable.h"
 #include "Util.h"

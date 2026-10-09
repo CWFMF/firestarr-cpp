@@ -1,10 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "Model.h"
-#include "FBP.h"
-#include "FireWeather.h"
-#include "FWI.h"
+#include "fuel/Greenup.h"
+#include "types/Location.h"
+#include "wx/FireWeather.h"
 #include "Input.h"
-#include "Location.h"
 #include "Log.h"
 #include "Observer.h"
 #include "Perimeter.h"
@@ -14,6 +13,7 @@
 #include "Settings.h"
 namespace fs
 {
+using namespace fuel;
 // // HACK: assume using half the CPUs probably means that faster cores are being used?
 // constexpr MathSize PCT_CPU = 0.5;
 Semaphore Model::task_limiter{static_cast<int>(std::thread::hardware_concurrency())};
@@ -54,33 +54,26 @@ Model::Model(
 }
 void Model::setWeather(const FwiWeather& weather, const Day start_day)
 {
-  // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
-  static const auto& lookup = settings.fuel_lookup.lookup();
   yesterday_ = weather;
-  const auto& f = lookup.usedFuels();
   wx_.emplace(
     0,
     FireWeather{
-      f, static_cast<Day>(start_day - 1), weather.dc, weather.dmc, weather.ffmc, weather.wind
+      static_cast<Day>(start_day - 1), weather.dc(), weather.dmc(), weather.ffmc(), weather.wind()
     }
   );
   wx_daily_.emplace(
     0,
     FireWeather{
-      f, static_cast<Day>(start_day - 1), weather.dc, weather.dmc, weather.ffmc, weather.wind
+      static_cast<Day>(start_day - 1), weather.dc(), weather.dmc(), weather.ffmc(), weather.wind()
     }
   );
 }
 void Model::readWeather(
   const FwiWeather& yesterday,
-  const MathSize latitude,
+  const StartPoint& start_point,
   const string& filename
 )
 {
-  // HACK: resolve once and fail if not set already
-  static const auto& settings = fs::settings::instance();
-  static const auto& lookup = settings.fuel_lookup.lookup();
   map<size_t, vector<FwiWeather>> wx{};
   map<size_t, map<Day, FwiWeather>> wx_daily{};
   map<Day, struct tm> dates{};
@@ -106,15 +99,17 @@ void Model::readWeather(
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     constexpr auto expected_header = "Scenario,Date,PREC,TEMP,RH,WS,WD,FFMC,DMC,DC,ISI,BUI,FWI";
+    const auto expected_header_lower = tolower(expected_header);
+    const auto input_header_lower = tolower(str);
     logging::check_fatal(
-      expected_header != str,
+      expected_header_lower != input_header_lower,
       "Input CSV must have columns in this order:\n'{:s}'\n but got:\n'{:s}'",
       expected_header,
       str
     );
     auto prev = &yesterday;
     // HACK: adding to original object if we don't do this?
-    auto apcp_24h = yesterday.prec.value;
+    auto apcp_24h = yesterday.prec().value;
     while (getline(in, str))
     {
       istringstream iss(str);
@@ -148,9 +143,9 @@ void Model::readWeather(
           wx_daily.emplace(cur, map<Day, FwiWeather>());
           prev = &yesterday;
           logging::extensive(
-            "Resetting new scenario precip to {:f} from {:f}", yesterday.prec.value, apcp_24h
+            "Resetting new scenario precip to {:f} from {:f}", yesterday.prec().value, apcp_24h
           );
-          apcp_24h = yesterday.prec.value;
+          apcp_24h = yesterday.prec().value;
         }
         auto& s = wx.at(cur);
         struct tm t{};
@@ -192,11 +187,11 @@ void Model::readWeather(
         FwiWeather w{read_fwi_weather(&iss, &str)};
         s.at(for_time) = w;
         logging::check_fatal(
-          0 > w.prec.value, "Hourly weather precip {:f} is negative", w.prec.value
+          0 > w.prec().value, "Hourly weather precip {:f} is negative", w.prec().value
         );
-        apcp_24h += w.prec.value;
+        apcp_24h += w.prec().value;
         logging::extensive(
-          "Adding {:f} to precip results in accumulation of {:f}", w.prec.value, apcp_24h
+          "Adding {:f} to precip results in accumulation of {:f}", w.prec().value, apcp_24h
         );
         if (12 == t.tm_hour)
         {
@@ -207,7 +202,15 @@ void Model::readWeather(
           const auto month = t.tm_mon + 1;
           s_daily.emplace(
             day,
-            FwiWeather{*prev, month, latitude, w.temperature, w.rh, w.wind, Precipitation(apcp_24h)}
+            FwiWeather{
+              *prev,
+              month,
+              start_point.latitude(),
+              w.temperature(),
+              w.rh(),
+              w.wind(),
+              Precipitation(apcp_24h)
+            }
           );
           // new 24 hour period
           logging::extensive("Resetting daily precip to {:f} from {:f}", 0.0, apcp_24h);
@@ -225,7 +228,7 @@ void Model::readWeather(
           t.tm_hour,
           t.tm_min,
           t.tm_sec,
-          w.prec.value,
+          w.prec().value,
           w.temperature.value,
           w.rh.value,
           w.wind.speed.value,
@@ -248,7 +251,6 @@ void Model::readWeather(
 #endif
     in.close();
   }
-  const auto& f = lookup.usedFuels();
   // loop through and try to find duplicates
   for (const auto& kv : wx)
   {
@@ -257,12 +259,12 @@ void Model::readWeather(
     // FIX: this is just looking for duplicate scenario ids, not weather?
     if (wx_.find(k) == wx_.end())
     {
-      wx_.emplace(k, FireWeather{f, min_date, max_date, s});
+      wx_.emplace(k, FireWeather{min_date, max_date, s});
       // calculate daily indices
       auto& s_daily = wx_daily.at(k);
       // HACK: set yesterday to match today
       s_daily.emplace(min_date - 1, s_daily.at(min_date));
-      wx_daily_.emplace(k, FireWeather{f, s_daily});
+      wx_daily_.emplace(k, FireWeather{s_daily});
     }
   }
 }
@@ -1245,7 +1247,7 @@ int Model::runScenarios(
   }
   else
   {
-    model.readWeather(yesterday, start_point.latitude(), weather_input.canonical());
+    model.readWeather(yesterday, start_point, weather_input.canonical());
     if (model.wx_.empty())
     {
       exit(logging::fatal("No weather provided"));
@@ -1339,7 +1341,7 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
           static_cast<uint8_t>(hour - day * DAY_HOURS),
           0,
           0,
-          w->prec.value,
+          w->prec().value,
           w->temperature.value,
           w->rh.value,
           w->wind.speed.value,
@@ -1390,17 +1392,17 @@ void Model::outputWeather(map<size_t, FireWeather>& weather, const char* file_na
                 static_cast<uint8_t>(hour - day * DAY_HOURS),
                 0,
                 0,
-                w->prec.value,
-                w->temperature.value,
-                w->rh.value,
-                w->wind.speed.value,
-                w->wind.direction.value,
-                w->ffmc.value,
-                w->dmc.value,
-                w->dc.value,
-                w->isi.value,
-                w->bui.value,
-                w->fwi.value,
+                w->prec().value,
+                w->temperature().value,
+                w->rh().value,
+                w->wind().speed.value,
+                w->wind().direction.value,
+                w->ffmc().value,
+                w->dmc().value,
+                w->dc().value,
+                w->isi().value,
+                w->bui().value,
+                w->fwi().value,
                 spread.crownFractionBurned(),
                 spread.crownFuelConsumption(),
                 spread.fireDescription(),

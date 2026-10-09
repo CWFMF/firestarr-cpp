@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_MERGEITERATOR_H
-#define FS_MERGEITERATOR_H
+#ifndef FS_MERGE_ITERATOR_H
+#define FS_MERGE_ITERATOR_H
 #include "stdafx.h"
 namespace fs
 {

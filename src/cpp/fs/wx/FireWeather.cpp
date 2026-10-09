@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FireWeather.h"
-#include "FuelType.h"
+#include "../Util.h"
+#ifdef DEBUG_FWI_WEATHER
+#include "../Log.h"
+#endif
+#include "Moisture.h"
 namespace fs
 {
 /*!
@@ -383,56 +387,43 @@ inline Ffmc ffmc_1100_low(const MathSize ln_x, const MathSize ln_x_sq) noexcept
   constexpr auto e = 0.356051255;
   return ffmc_from_moisture((a + c * ln_x + e * ln_x_sq) / (1 + b * ln_x + d * ln_x_sq));
 }
-static ptr<const FwiWeather> make_wx(FwiWeather wx)
-{
-  static sp_set<FwiWeather> all_weather{};
-  static const FwiWeather empty{};
-  if (empty == wx)
-  {
-    return nullptr;
-  }
-  // HACK: assign rain to noon only
-  auto wx_inserted = all_weather.sp_emplace(wx);
-  // doesn't matter if was already there or just inserted
-  return wx_inserted.first->get();
-}
-static ptr<const FwiWeather> make_wx(
+static FwiWeather make_wx(
   const Speed& speed,
   const FwiWeather& wx,
   const Ffmc& ffmc,
   const int hour
 )
 {
-  return make_wx(FwiWeather{
+  return FwiWeather{
     Weather{
-      wx.temperature,
-      wx.rh,
-      Wind{speed, wx.wind.direction},
-      12 == hour ? wx.prec : Precipitation::Zero()
+      wx.temperature(),
+      wx.rh(),
+      Wind{speed, wx.wind().direction},
+      12 == hour ? wx.prec() : Precipitation::Zero()
     },
     ffmc,
-    wx.dmc,
-    wx.dc
-  });
+    wx.dmc(),
+    wx.dc()
+  };
 }
-static ptr<const FwiWeather> make_wx(
+static FwiWeather make_wx(
   const FwiWeather& wx_wind,
   const FwiWeather& wx,
   const Ffmc& ffmc,
   const int hour
 )
 {
-  return make_wx(Speed(wx_wind.wind.speed.value * wind_speed_adjustment(hour)), wx, ffmc, hour);
+  return make_wx(Speed(wx_wind.wind().speed.value * wind_speed_adjustment(hour)), wx, ffmc, hour);
 }
-static ptr<const FwiWeather> make_wx(const FwiWeather& wx, const Ffmc& ffmc, const int hour)
+static FwiWeather make_wx(const FwiWeather& wx, const Ffmc& ffmc, const int hour)
 {
   return make_wx(wx, wx, ffmc, hour);
 }
-vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
+vector<FwiWeather> make_vector(map<Day, FwiWeather> data)
 {
   const Day min_date = data.begin()->first;
   const Day max_date = data.rbegin()->first;
-  vector<ptr<const FwiWeather>> r{(static_cast<size_t>(max_date) - min_date + 2) * DAY_HOURS};
+  vector<FwiWeather> r{(static_cast<size_t>(max_date) - min_date + 2) * DAY_HOURS};
   // HACK: just approximate last day
   for (const auto& kv : data)
   {
@@ -453,7 +444,7 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
     add_wx(13, ffmc_1300(x, x_sq, x_cu, rt_x, ln_x));
     add_wx(14, ffmc_1400(x, x_sq, rt_x, ln_x, exp_x));
     add_wx(15, ffmc_1500(x, x_sq, x_cu, rt_x, ln_x));
-    add_wx(16, wx.ffmc);
+    add_wx(16, wx.ffmc());
     add_wx(17, ffmc_1700(x, x_sq, rt_x, ln_x, exp_neg_x));
     add_wx(18, ffmc_1800(x, x_sq, x_cu, rt_x, ln_x));
     add_wx(19, ffmc_1900(x, x_sq, rt_x, exp_x, exp_neg_x));
@@ -481,7 +472,7 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
     const auto x = wx.mcFfmcPct();
     const auto ln_x = log(x);
     const auto ln_x_sq = ln_x * ln_x;
-    const auto& at_1200 = r.at(time_index(day + 1, 12, min_date))->ffmc;
+    const auto& at_1200 = r.at(time_index(day + 1, 12, min_date)).ffmc();
     // figure out which is the closest match and use that curve
     const auto at_1100_high = ffmc_1100_high(ln_x, ln_x_sq);
     const auto at_1100_med = ffmc_1100_med(x);
@@ -529,12 +520,12 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
   {
     // use first day's weather for min date instead of all 0's
     const auto& wx = (day == min_date ? data.at(day + 1) : data.at(day));
-    const auto ffmc_at_0600 = r.at(time_index(day + 1, 6, min_date))->ffmc.value;
-    const auto ffmc_at_2000 = r.at(time_index(day, 20, min_date))->ffmc.value;
+    const auto ffmc_at_0600 = r.at(time_index(day + 1, 6, min_date)).ffmc().value;
+    const auto ffmc_at_2000 = r.at(time_index(day, 20, min_date)).ffmc().value;
     // need linear interpolation between 2000 and 0600
     const auto ffmc_slope = (ffmc_at_0600 - ffmc_at_2000) / 10.0;
-    const auto wind_at_0600 = r.at(time_index(day + 1, 6, min_date))->wind.speed.value;
-    const auto wind_at_2000 = r.at(time_index(day, 20, min_date))->wind.speed.value;
+    const auto wind_at_0600 = r.at(time_index(day + 1, 6, min_date)).wind().speed.value;
+    const auto wind_at_2000 = r.at(time_index(day, 20, min_date)).wind().speed.value;
     // need linear interpolation between 2000 and 0600
     const auto wind_slope = (wind_at_0600 - wind_at_2000) / 10.0;
     const auto add_wx = [&](const Day day_offset, const int hour, const int offset) {
@@ -558,62 +549,16 @@ vector<ptr<const FwiWeather>> make_vector(map<Day, FwiWeather> data)
   }
   return r;
 }
-FireWeather::FireWeather(const set<const FuelType*>& used_fuels, const map<Day, FwiWeather>& data)
-  : FireWeather(used_fuels, data.begin()->first, data.rbegin()->first, make_vector(data))
+FireWeather::FireWeather(const map<Day, FwiWeather>& data)
+  : FireWeather(data.begin()->first, data.rbegin()->first, make_vector(data))
 { }
-static SurvivalMap make_survival(
-  const set<const FuelType*>& used_fuels,
-  const Day min_date,
-  const Day max_date,
-  const vector<ptr<const FwiWeather>>& weather_by_hour_by_day
-)
-{
-  SurvivalMap result{};
-  for (const auto& in_fuel : used_fuels)
-  {
-    const auto code = FuelType::safeCode(in_fuel);
-    if (nullptr != in_fuel && INVALID_FUEL_CODE != code)
-    {
-      auto by_fuel = vector<float>{};
-      by_fuel.resize((static_cast<size_t>(max_date) - min_date + 2) * DAY_HOURS);
-      // calculate the entire stream for this fuel
-      for (auto day = min_date; day <= max_date; ++day)
-      {
-        for (auto h = 0; h < DAY_HOURS; ++h)
-        {
-          const auto wx = weather_by_hour_by_day.at(time_index(day, h, min_date));
-          const auto i = time_index(day, h, min_date);
-          by_fuel.at(i) =
-            static_cast<float>(nullptr != wx ? (in_fuel->survivalProbability(*wx)) : 0.0);
-        }
-      }
-      result.at(code) = std::move(by_fuel);
-    }
-  }
-  return result;
-}
-FireWeather::FireWeather(
-  const set<const FuelType*>& used_fuels,
-  const Day min_date,
-  const Day max_date,
-  vector<ptr<const FwiWeather>>&& weather_by_hour_by_day
-)
-  : weather_by_hour_by_day_(weather_by_hour_by_day),
-    survival_probability_(make_survival(used_fuels, min_date, max_date, weather_by_hour_by_day_)),
-    min_date_(min_date), max_date_(max_date)
+FireWeather::FireWeather(Day min_date, Day max_date, vector<FwiWeather> weather_by_hour_by_day)
+  : weather_by_hour_by_day_{[&]() {
+      return vector<FwiWeather>{weather_by_hour_by_day.begin(), weather_by_hour_by_day.end()};
+    }()},
+    min_date_{min_date}, max_date_{max_date}
 { }
-FireWeather::FireWeather(
-  const set<const FuelType*>& used_fuels,
-  Day min_date,
-  Day max_date,
-  vector<FwiWeather> weather_by_hour_by_day
-)
-  : FireWeather(used_fuels, min_date, max_date, [&]() {
-      auto it = std::views::transform(weather_by_hour_by_day, [](auto& v) { return make_wx(v); });
-      return vector<ptr<const FwiWeather>>{it.begin(), it.end()};
-    }())
-{ }
-static vector<ptr<const FwiWeather>> make_constant_weather(
+static vector<FwiWeather> make_constant_weather(
   const Dc& dc,
   const Dmc& dmc,
   const Ffmc& ffmc,
@@ -624,10 +569,10 @@ static vector<ptr<const FwiWeather>> make_constant_weather(
   static constexpr RelativeHumidity RH(30.0);
   static constexpr Precipitation PREC(0.0);
   const Bui bui{dmc, dc};
-  vector<ptr<const FwiWeather>> wx{static_cast<size_t>(YEAR_HOURS)};
+  vector<FwiWeather> wx{static_cast<size_t>(YEAR_HOURS)};
   std::generate(wx.begin(), wx.end(), [&]() {
     const Isi isi{wind.speed, ffmc};
-    return make_wx(FwiWeather{
+    return FwiWeather{
       TEMP,
       RH,
       wind,
@@ -638,40 +583,24 @@ static vector<ptr<const FwiWeather>> make_constant_weather(
       isi,
       bui,
       Fwi{isi, bui},
-    });
+    };
   });
   return wx;
 }
 FireWeather::FireWeather(
-  const FuelType* fuel,
   const Day start_date,
   const Dc& dc,
   const Dmc& dmc,
   const Ffmc& ffmc,
   const Wind& wind
 )
-  : FireWeather(set<const FuelType*>{fuel}, start_date, dc, dmc, ffmc, wind)
+  : FireWeather(start_date, MAX_DAYS - 1, make_constant_weather(dc, dmc, ffmc, wind))
 { }
-FireWeather::FireWeather(
-  const set<const FuelType*>& used_fuels,
-  const Day start_date,
-  const Dc& dc,
-  const Dmc& dmc,
-  const Ffmc& ffmc,
-  const Wind& wind
-)
-  : FireWeather(used_fuels, start_date, MAX_DAYS - 1, make_constant_weather(dc, dmc, ffmc, wind))
-{ }
-ptr<const FwiWeather> FireWeather::at(const DurationSize time) const
+FwiWeather FireWeather::at(const DurationSize time) const
 {
 #ifdef DEBUG_FWI_WEATHER
   logging::check_fatal(time < 0 || time >= MAX_DAYS, "Invalid weather time {:f}", time);
 #endif
   return weather_by_hour_by_day_.at(time_index(time, min_date_));
-}
-ThresholdSize FireWeather::survivalProbability(const DurationSize time, const FuelCodeSize& in_fuel)
-  const
-{
-  return survival_probability_.at(in_fuel).at(time_index(time, min_date_));
 }
 }

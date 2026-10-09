@@ -1,13 +1,14 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+#include "fs/stdafx.h"
 #include <future>
 #include <mutex>
 #include "fs/ArgumentParser.h"
-#include "fs/FBP.h"
-#include "fs/FuelLookup.h"
-#include "fs/FuelType.h"
+#include "fs/FireSpread.h"
+#include "fs/fuel/FireBehaviourPrediction.h"
+#include "fs/fuel/FuelLookup.h"
+#include "fs/fuel/FuelType.h"
 #include "fs/Log.h"
 #include "fs/RangeIterator.h"
-#include "fs/stdafx.h"
 #include "test_fbp/FBPOld.h"
 #include "test_fbp/FuelOldLookup.h"
 namespace fs::testing
@@ -20,6 +21,7 @@ using namespace fs::fuelold;
 using fs::fuel::FuelLookup;
 using fs::fuel::FuelType;
 using fs::fuel::FuelVariable;
+using fs::fuel::ROSOffset;
 using fs::fuel::StandardFuel;
 using TestResult = std::future<int>;
 class TestResults
@@ -232,8 +234,8 @@ auto compare_spread(
       logging::extensive("aspect {:d}", aspect);
       // HACK: this constructor ignores fuel part of this
       const auto key = Cell::key(Cell::hashCell(slope, aspect, 0));
-      const SpreadInfo spread_a{a, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
-      const SpreadInfo spread_b{b, TIME, MIN_ROS, CELL_SIZE, key, nd, &weather, &weather};
+      const SpreadInfo spread_a{a, TIME, MIN_ROS, CELL_SIZE, key, nd, weather, weather};
+      const SpreadInfo spread_b{b, TIME, MIN_ROS, CELL_SIZE, key, nd, weather, weather};
       const auto offsets_a = spread_a.offsets();
       const auto offsets_b = spread_b.offsets();
       const auto head_ros = spread_a.headRos();

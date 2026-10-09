@@ -1,14 +1,13 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "stdafx.h"
 #include "Scenario.h"
+#include "fuel/FuelLookup.h"
+#include "types/Location.h"
 #include "BurnedData.h"
 #include "Cell.h"
 #include "CellPoints.h"
 #include "FireSpread.h"
-#include "FuelLookup.h"
-#include "FuelType.h"
 #include "IntensityMap.h"
-#include "Location.h"
 #include "Log.h"
 #include "Observer.h"
 #include "Perimeter.h"
@@ -16,9 +15,9 @@
 #include "ProbabilityMap.h"
 #include "rng.h"
 #include "Settings.h"
-#include "unstable.h"
 namespace fs
 {
+using namespace fuel;
 using std::cout;
 // constexpr auto PRECISION = static_cast<MathSize>(0.001);
 static atomic<size_t> COUNT = 0;
@@ -197,8 +196,7 @@ void Scenario::evaluate(const Event& event)
     points_log_.log(step_, STAGE_NEW, event.time, x.value, y.value);
     // HACK: don't do this in constructor because scenario creates this in its constructor
     // HACK: insert point as originating from itself
-    insert(
-      points_,
+    points_.insert(
       p0,
       SpreadData{event.time, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
       p0
@@ -225,8 +223,8 @@ void Scenario::evaluate(const Event& event)
           "{:s} Didn't survive ignition in {:s} with weather {:f}, {:f}",
           log_prefix_,
           FuelType::safeName(check_fuel(for_cell)),
-          wx->ffmc.value,
-          wx->dmc.value
+          wx.ffmc().value,
+          wx.dmc().value
         );
       }
       // HACK: we still want the fire to have existed, so set the intensity of the origin
@@ -264,6 +262,39 @@ void Scenario::evaluate(const Event& event)
     }
   }
 }
+using namespace fuel;
+SurvivalMap make_survival(const FireWeather& fire_wx)
+{
+  static const auto& settings = fs::settings::instance();
+  static const auto& lookup = settings.fuel_lookup.lookup();
+  const auto& used_fuels = lookup.usedFuels();
+  const auto& weather_by_hour_by_day = fire_wx.getWeather();
+  const auto min_date = fire_wx.minDate();
+  const auto max_date = fire_wx.maxDate();
+  SurvivalMap result{};
+  for (const auto& in_fuel : used_fuels)
+  {
+    const auto code = FuelType::safeCode(in_fuel);
+    if (nullptr != in_fuel && INVALID_FUEL_CODE != code)
+    {
+      auto by_fuel = vector<float>{};
+      by_fuel.resize((static_cast<size_t>(max_date) - min_date + 2) * DAY_HOURS);
+      // calculate the entire stream for this fuel
+      for (auto day = min_date; day <= max_date; ++day)
+      {
+        for (auto h = 0; h < DAY_HOURS; ++h)
+        {
+          const auto wx = weather_by_hour_by_day.at(time_index(day, h, min_date));
+          const auto i = time_index(day, h, min_date);
+          by_fuel.at(i) =
+            static_cast<float>(wx.isNull() ? 0.0 : (in_fuel->survivalProbability(wx)));
+        }
+      }
+      result.at(code) = std::move(by_fuel);
+    }
+  }
+  return result;
+}
 Scenario::Scenario(
   Model* model,
   const size_t id,
@@ -284,11 +315,12 @@ Scenario::Scenario(
     ran_(false), step_(0),
     points_log_(
       LogPoints{model_->outputDirectory(), settings::instance().save_points, id_, start_time_}
-    )
+    ),
+    survival_probability_{make_survival(*weather_)}
 {
   const auto wx = weather_->at(start_time_);
   logging::check_fatal(
-    nullptr == wx, "No weather for start time {:s}", make_timestamp(model->year(), start_time_)
+    wx.isNull(), "No weather for start time {:s}", make_timestamp(model->year(), start_time_)
   );
   const auto saves = settings::instance().output_date_offsets.offsets();
   const auto last_save = start_day_ + saves[saves.size() - 1];
@@ -352,7 +384,8 @@ Scenario::Scenario(Scenario&& rhs) noexcept
     weather_daily_(rhs.weather_daily_), model_(rhs.model_), probabilities_(rhs.probabilities_),
     final_sizes_(rhs.final_sizes_), start_point_(std::move(rhs.start_point_)), id_(rhs.id_),
     start_time_(rhs.start_time_), last_save_(rhs.last_save_), simulation_(rhs.simulation_),
-    start_day_(rhs.start_day_), last_date_(rhs.last_date_), ran_(rhs.ran_)
+    start_day_(rhs.start_day_), last_date_(rhs.last_date_), ran_(rhs.ran_),
+    survival_probability_(rhs.survival_probability_)
 { }
 Scenario& Scenario::operator=(Scenario&& rhs) noexcept
 {
@@ -381,6 +414,7 @@ Scenario& Scenario::operator=(Scenario&& rhs) noexcept
     start_day_ = rhs.start_day_;
     last_date_ = rhs.last_date_;
     ran_ = rhs.ran_;
+    survival_probability_ = rhs.survival_probability_;
   }
   return *this;
 }
@@ -475,8 +509,7 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
       const auto& y = p0.y;
       // log_verbose(*this, "Adding point ({:d}, {:d})",
       logging::extensive("{:s} Adding point ({:f}, {:f})", log_prefix_, x.value, y.value);
-      insert(
-        points_,
+      points_.insert(
         p0,
         SpreadData{start_time_, NO_INTENSITY, NO_ROS, Direction::Invalid(), Direction::Invalid()},
         p0
@@ -575,149 +608,6 @@ Scenario* Scenario::run(map<DurationSize, shared_ptr<ProbabilityMap>>* probabili
   }
   return this;
 }
-CellPointsMap apply_offsets_spreadkey(
-  const BurnedData& unburnable,
-  const DurationSize& arrival_time,
-  const DurationSize& duration,
-  const OffsetSet& offsets,
-  const spreading_points::mapped_type& cell_pts_map
-)
-{
-  CellPointsMap result{};
-  OffsetSet offsets_after_duration{};
-  offsets_after_duration.resize(offsets.size());
-  std::transform(
-    offsets.cbegin(),
-    offsets.cend(),
-    offsets_after_duration.begin(),
-    [&](const ROSOffset& r) {
-      return ROSOffset{
-        r.intensity, r.ros, r.raz, Offset{r.offset.x * duration, r.offset.y * duration}
-      };
-    }
-  );
-  for (auto& [location, cell_pts] : cell_pts_map)
-  {
-    if (cell_pts.empty())
-    {
-      continue;
-    }
-    spread_points(result, cell_pts, offsets_after_duration, arrival_time);
-    // result.merge(unburnable, r1);
-  }
-  return result;
-}
-CellPointsMap spread_map(
-  const BurnedData& unburnable,
-  const map<SpreadKey, SpreadInfo>& spread_info,
-  const spreading_points& to_spread,
-  const DurationSize new_time,
-  const DurationSize duration
-) noexcept
-{
-  CellPointsMap cell_pts{};
-  auto spread =
-    std::views::transform(to_spread, [&](const spreading_points::value_type& kv0) -> CellPointsMap {
-      auto& key = kv0.first;
-      const auto& offsets = spread_info.at(key).offsets();
-      const spreading_points::mapped_type& cell_pts = kv0.second;
-      auto r = apply_offsets_spreadkey(unburnable, new_time, duration, offsets, cell_pts);
-      return r;
-    });
-  auto it = spread.begin();
-  while (spread.end() != it)
-  {
-    const CellPointsMap& cell_pts_cur = *it;
-    // // HACK: keep old behaviour until we can figure out whey removing isn't the same as not
-    // adding const auto h = cell_pts.location().hash(); if (!unburnable[h])
-    // {
-    cell_pts.merge(unburnable, cell_pts_cur);
-    ++it;
-  }
-#ifdef DEBUG_CELLPOINTS
-  const auto n_c = cell_pts.size();
-#endif
-  cell_pts.remove_if([&](const CellPointsMap::map_value& kv) {
-    auto& [location, pts] = kv;
-    // clear out if unburnable
-    const auto do_clear = unburnable.at(location);
-    return do_clear;
-  });
-#ifdef DEBUG_CELLPOINTS
-  logging::note("{:d} cell_pts before remove_if() and {:d} after", n_c, cell_pts.size());
-#endif
-  return cell_pts;
-}
-// time spread went to or -1 if no spread
-DurationSize do_spread(
-  MathSize& max_ros,
-  CellPointsMap& points,
-  map<SpreadKey, SpreadInfo>& spread_info,
-  const Scenario& scenario,
-  const BurnedData& unburnable,
-  const FwiWeather* wx,
-  const DurationSize time,
-  const DurationSize max_duration
-) noexcept
-{
-  // get once and keep
-  static const auto& settings = fs::settings::instance();
-  static const MathSize ros_min = settings.minimum_ros;
-  spreading_points to_spread{};
-  // make block to prevent it being visible beyond use
-  {
-    // if we use an iterator this way we don't need to copy keys to erase things
-    auto& lhs = points.cells_;
-    auto it = lhs.begin();
-    while (it != lhs.end())
-    {
-      auto& [loc, pts] = *it;
-      const Cell for_cell = scenario.cell(loc);
-      const auto key = for_cell.key();
-      {
-        const auto& origin_inserted =
-          spread_info.try_emplace(key, scenario, time, key, scenario.nd(time), wx);
-        // any cell that has the same fuel, slope, and aspect has the same spread
-        const auto& origin = origin_inserted.first->second;
-        // filter out things not spreading fast enough here so they get copied if they aren't
-        // isNotSpreading() had better be true if ros is lower than minimum
-        const auto ros = origin.headRos();
-        if (ros >= ros_min)
-        {
-          max_ros = max(max_ros, ros);
-          // NOTE: shouldn't be Cell if we're looking up by just Location later
-          to_spread[key].emplace_back(std::move(*it));
-          it = lhs.erase(it);
-#ifdef DEBUG_CELLPOINTS
-          auto& v = to_spread[key];
-          const auto n = v.size();
-          const auto& p = v[n - 1].second;
-          logging::note(
-            "added {:d} items to to_spread[{:d}][({:d}, {:d})]", p.size(), key, loc.x(), loc.y()
-          );
-#endif
-        }
-        else
-        {
-          ++it;
-        }
-      }
-    }
-  }
-  // if nothing in to_spread then nothing is spreading
-  if (to_spread.empty())
-  {
-    return -1;
-  }
-  const auto duration =
-    ((max_ros > 0)
-       ? min(max_duration, settings.maximum_spread_distance * scenario.cellSize() / max_ros)
-       : max_duration);
-  const auto new_time = time + duration / DAY_MINUTES;
-  // need to merge new points back into cells that didn'
-  points.merge(unburnable, spread_map(unburnable, spread_info, to_spread, new_time, duration));
-  return new_time;
-}
 void Scenario::scheduleFireSpread(const Event& event)
 {
   // HACK: resolve once and fail if not set already
@@ -728,13 +618,13 @@ void Scenario::scheduleFireSpread(const Event& event)
   const auto wx_daily = settings.is_surface() ? model_->yesterday() : weather_daily(time);
   current_time_ = time;
   log_prefix_ = get_log_prefix(*this);
-  logging::check_fatal(nullptr == wx, "No weather available for time {:f}", time);
+  logging::check_fatal(wx.isNull(), "No weather available for time {:f}", time);
   const auto next_time = static_cast<DurationSize>(this_time + 1) / DAY_HOURS;
   // should be in minutes?
   const auto max_duration = (next_time - time) * DAY_MINUTES;
   const auto max_time = time + max_duration / DAY_MINUTES;
   // HACK: use the old ffmc for this check to be consistent with previous version
-  if (wx_daily->ffmc.value < minimumFfmcForSpread(time))
+  if (wx_daily.ffmc().value < minimumFfmcForSpread(time))
   {
     addEvent(Event{.time = max_time, .type = Event::Type::FireSpread});
     logging::extensive("{:s} Waiting until {:f} because of FFMC", log_prefix_, max_time);
@@ -751,8 +641,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     }
     max_ros_ = 0.0;
   }
-  auto new_time =
-    do_spread(max_ros_, points_, spread_info_, *this, unburnable_, wx, time, max_duration);
+  auto new_time = do_spread(max_ros_, points_, spread_info_, this, unburnable_, time, max_duration);
   if (-1 == new_time)
   {
     // if no spread then we left everything back in points still
@@ -766,9 +655,7 @@ void Scenario::scheduleFireSpread(const Event& event)
     const auto for_cell = cell(loc);
     // ******************* CHECK THIS BECAUSE IF SOMETHING IS IN HERE SHOULD IT ALWAYS HAVE
     // SPREAD????? *****************8
-    const auto& seek_spread = spread_info_.find(for_cell.key());
-    const auto max_intensity =
-      (spread_info_.end() == seek_spread) ? 0 : seek_spread->second.maxIntensity();
+    const auto max_intensity = spread_info_.maxIntensity(for_cell.key());
     // HACK: just use side-effect to log and check bounds
     points_log_.log(step_, STAGE_SPREAD, new_time, pts);
     if (canBurn(loc) && max_intensity > 0)

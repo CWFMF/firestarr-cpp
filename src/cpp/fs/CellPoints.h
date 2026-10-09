@@ -1,15 +1,15 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_CELLPOINTS_H
-#define FS_CELLPOINTS_H
+#ifndef FS_CELL_POINTS_H
+#define FS_CELL_POINTS_H
 #include "stdafx.h"
 #include <algorithm>
 #include <compare>
+#include "types/Location.h"
+#include "wx/WeatherIndices.h"
 #include "BurnedData.h"
 #include "Cell.h"
 #include "FireSpread.h"
-#include "Location.h"
 #include "unstable.h"
-#include "Weather.h"
 namespace fs
 {
 using fs::Direction;
@@ -558,39 +558,34 @@ public:
   // private:
   // CellPoints contains XYIdx so no need for pair
   map_type cells_{};
-};
-static inline CellPoints& insert(
-  CellPointsMap& cell_pts_map,
-  const XYPos& src,
-  const SpreadData& spread_current,
-  const XYPos& xy
-) noexcept
-{
-#ifdef DEBUG_CELLPOINTS
-  const auto n0 = size();
-#endif
-  const XYIdx location{xy};
-  auto& lhs = cell_pts_map.cells_;
-  auto e = lhs.try_emplace(location, src, spread_current, xy);
-  CellPoints& cell_pts = e.first->second;
-  if (!e.second)
+  CellPoints& insert(const XYPos& src, const SpreadData& spread_current, const XYPos& xy) noexcept
   {
-    // FIX: should use max of whatever ROS has entered during this time and not just first ros
-    // tried to add new CellPoints but already there
-    cell_pts.insert(src, spread_current, xy);
 #ifdef DEBUG_CELLPOINTS
-    logging::note(
-      "insert with size {:d} of ({:f}, {:f}) at time {:f} with ROS {:f} gives size {:d}",
-      n0,
-      x,
-      y,
-      arrival_time,
-      ros,
-      size()
-    );
+    const auto n0 = size();
 #endif
+    const XYIdx location{xy};
+    auto& lhs = cells_;
+    auto e = lhs.try_emplace(location, src, spread_current, xy);
+    CellPoints& cell_pts = e.first->second;
+    if (!e.second)
+    {
+      // FIX: should use max of whatever ROS has entered during this time and not just first ros
+      // tried to add new CellPoints but already there
+      cell_pts.insert(src, spread_current, xy);
+#ifdef DEBUG_CELLPOINTS
+      logging::note(
+        "insert with size {:d} of ({:f}, {:f}) at time {:f} with ROS {:f} gives size {:d}",
+        n0,
+        x,
+        y,
+        arrival_time,
+        ros,
+        size()
+      );
+#endif
+    }
+    return cell_pts;
   }
-  return cell_pts;
-}
+};
 }
 #endif

@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FuelLookup.h"
-#include "FBP.h"
+#include "../Log.h"
+#include "../Settings.h"
+#include "FireBehaviourPrediction.h"
 #include "FuelType.h"
-#include "Log.h"
-#include "Settings.h"
 namespace fs::fuel
 {
 using fs::fuel::simplify_fuel_name;

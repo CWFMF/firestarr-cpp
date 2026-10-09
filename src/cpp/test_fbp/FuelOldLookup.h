@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #ifndef FS_FUELOLDLOOKUP_H
 #define FS_FUELOLDLOOKUP_H
-#include "../fs/Cell.h"
-#include "../fs/FireWeather.h"
-#include "../fs/FuelType.h"
 #include "../fs/stdafx.h"
+#include "../fs/Cell.h"
+#include "../fs/fuel/FuelType.h"
 #include "../fs/Util.h"
 namespace fs::fuelold
 {
+using fuel::FuelType;
 class FuelOldLookupImpl;
 /**
  * \brief Provides ability to look up a fuel type based on name or code.

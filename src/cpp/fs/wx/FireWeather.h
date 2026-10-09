@@ -1,17 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_FIREWEATHER_H
-#define FS_FIREWEATHER_H
-#include "stdafx.h"
-#include "FWI.h"
+#ifndef FS_FIRE_WEATHER_H
+#define FS_FIRE_WEATHER_H
+#include "../stdafx.h"
+#include "FireWeatherIndices.h"
+#include "FwiWeather.h"
 namespace fs
 {
-namespace fuel
-{
-class FuelType;
-}
-using namespace fuel;
-// use an array instead of a map since number of values is so small and access should be faster
-using SurvivalMap = array<vector<float>, NUMBER_OF_FUELS>;
 /**
  * \brief A stream of weather that gets used by a Scenario every Iteration.
  */
@@ -24,13 +18,8 @@ public:
    * \param used_fuels set of FuelTypes that are used in the simulation
    * \param data map of Day to FwiWeather to use for weather stream with diurnal formula
    */
-  FireWeather(const set<const FuelType*>& used_fuels, const map<Day, FwiWeather>& data);
-  FireWeather(
-    const set<const FuelType*>& used_fuels,
-    Day min_date,
-    Day max_date,
-    vector<FwiWeather> weather_by_hour_by_day
-  );
+  FireWeather(const map<Day, FwiWeather>& data);
+  FireWeather(Day min_date, Day max_date, vector<FwiWeather> weather_by_hour_by_day);
   /**
    * \brief A Constant weather stream with only one possible fuel
    * \param fuel Fuel to use
@@ -42,15 +31,6 @@ public:
    * \param wind Wind
    */
   FireWeather(
-    const FuelType* fuel,
-    const Day start_date,
-    const Dc& dc,
-    const Dmc& dmc,
-    const Ffmc& ffmc,
-    const Wind& wind
-  );
-  FireWeather(
-    const set<const FuelType*>& used_fuels,
     const Day start_date,
     const Dc& dc,
     const Dmc& dmc,
@@ -66,7 +46,7 @@ public:
    * \param time Time to get weather for
    * \return FwiWeather for given time
    */
-  [[nodiscard]] ptr<const FwiWeather> at(const DurationSize time) const;
+  [[nodiscard]] FwiWeather at(const DurationSize time) const;
   /**
    * \brief Probability of survival in given fuel at given time
    * \param time Time to get survival probability for
@@ -91,35 +71,16 @@ public:
    * \brief Weather by hour by day
    * \return Weather by hour by day
    */
-  [[nodiscard]] const vector<ptr<const FwiWeather>>& getWeather()
+  [[nodiscard]] const vector<FwiWeather>& getWeather() const noexcept
   {
     return weather_by_hour_by_day_;
   }
-
-protected:
-  /**
-   * \brief Constructor
-   * \param used_fuels set of FuelTypes that are used in the simulation
-   * \param min_date Minimum date present in stream
-   * \param max_date Maximum date present in stream
-   * \param weather_by_hour_by_day FwiWeather by hour by Day
-   */
-  FireWeather(
-    const set<const FuelType*>& used_fuels,
-    Day min_date,
-    Day max_date,
-    vector<ptr<const FwiWeather>>&& weather_by_hour_by_day
-  );
 
 private:
   /**
    * \brief FwiWeather by hour by Day
    */
-  vector<ptr<const FwiWeather>> weather_by_hour_by_day_{};
-  /**
-   * \brief Probability of survival for fuels fuel at each time
-   */
-  SurvivalMap survival_probability_{};
+  vector<FwiWeather> weather_by_hour_by_day_{};
   /**
    * \brief Minimum date present in stream
    */

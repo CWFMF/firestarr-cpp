@@ -5,6 +5,7 @@
 #include "FBPOld.h"
 namespace fs::fuelold
 {
+using namespace fuel;
 static const map<const string_view, const string_view> DEFAULT_TYPES{
   {"Spruce-Lichen Woodland", "C-1"},
   {"Boreal Spruce", "C-2"},

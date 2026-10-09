@@ -2,8 +2,8 @@
 #ifndef FS_MODEL_H
 #define FS_MODEL_H
 #include "stdafx.h"
+#include "wx/FireWeather.h"
 #include "Environment.h"
-#include "FireWeather.h"
 #include "Iteration.h"
 #include "Perimeter.h"
 #include "Settings.h"
@@ -278,7 +278,11 @@ public:
    * \param latitude Latitude to calculate for
    * \param filename Weather file to read
    */
-  void readWeather(const FwiWeather& yesterday, const MathSize latitude, const string& filename);
+  void readWeather(
+    const FwiWeather& yesterday,
+    const StartPoint& start_point,
+    const string& filename
+  );
   /**
    * \brief Make starts based on desired point and where nearest combustible cells are
    * \param coordinates Coordinates in the Environment to try starting at
@@ -308,7 +312,7 @@ public:
   /**
    * Conditions for yesterday (or constant weather)
    */
-  ptr<const FwiWeather> yesterday() const noexcept { return &yesterday_; }
+  FwiWeather yesterday() const noexcept { return yesterday_; }
   /**
    * \brief Initial fire size at start of scenario
    */

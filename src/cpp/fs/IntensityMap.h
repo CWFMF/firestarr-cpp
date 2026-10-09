@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-#ifndef FS_INTENSITYMAP_H
-#define FS_INTENSITYMAP_H
+#ifndef FS_INTENSITY_MAP_H
+#define FS_INTENSITY_MAP_H
 #include "stdafx.h"
+#include "types/Location.h"
 #include "BurnedData.h"
 #include "GridMap.h"
-#include "Location.h"
 namespace fs
 {
 class Perimeter;

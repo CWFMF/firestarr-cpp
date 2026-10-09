@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "FwiReference.h"
-#include "FWI.h"
+#include "FireWeatherIndices.h"
+#include "Moisture.h"
 namespace fs::fwireference
 {
 using namespace std;
@@ -213,7 +214,7 @@ Dc DCcalc(
     V = .0;
   return Dc{Do + 0.5 * V};
 }
-Isi ISIcalc(Ffmc ffmc, Speed wind_speed)
+Isi ISIcalc(Speed wind_speed, Ffmc ffmc)
 {
   // use same variable names as equations from
   // Forestry Technical Report 35 [Van Wagner 1987]
@@ -268,5 +269,10 @@ Fwi FWIcalc(Isi isi, Bui bui)
   else                                          /*Eq. 30b*/
     fwi = B;
   return Fwi{fwi};
+}
+Dsr DSRcalc(const Fwi fwi) noexcept
+{
+  /*Eq. 41*/
+  return Dsr{0.0272 * pow(fwi.value, 1.77)};
 }
 }
