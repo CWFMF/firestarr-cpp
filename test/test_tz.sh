@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 # system timezone should not change anything about simulations since they always expect LST
 RESULT=0
 # test all timezones listed in Canada
