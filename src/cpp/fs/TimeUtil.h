@@ -9,13 +9,13 @@ constexpr YearSize TM_YEAR_OFFSET = 1900;
 constexpr int TM_MONTH_OFFSET = 1;
 // FIX: don't use same name as ctime since we're changing behaviour
 #ifdef _WIN32
-struct tm* localtime_r(const time_t* timer, struct tm* result);
+struct tm* gmtime_r(const time_t* timer, struct tm* result);
 #endif
 /**
  * \brief Calculate tm fields from values already there
  * @param t tm object to update
  */
-void fix_tm(tm* t);
+time_t fix_utc(tm* t);
 // sim specific time functions
 /**
  * \brief Convert day and hour to DurationSize representing time
@@ -90,11 +90,11 @@ template <typename T>
  * \param minute minute
  * \return tm representing date and time
  */
-tm to_tm(const YearSize year, const int month, const int day, const int hour, const int minute);
+tm to_utc(const YearSize year, const int month, const int day, const int hour, const int minute);
 string format_datetime(const tm& date);
 string format_date(const tm& date);
 string format_time(const tm& date);
-tm parse_date(const string value);
+tm parse_utc(const string value);
 void add_time(tm& date, const string value);
 /**
  * \brief Convert tm struct into internal represenation

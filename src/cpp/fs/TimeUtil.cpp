@@ -5,24 +5,26 @@
 namespace fs
 {
 #ifdef _WIN32
-struct tm* localtime_r(const time_t* timer, struct tm* result)
+struct tm* gmtime_r(const time_t* timer, struct tm* result)
 {
-  if (localtime_s(result, timer))
+  if (gmtime_s(result, timer))
   {
     return nullptr;
   }
   return result;
 }
 #endif
-void fix_tm(tm* t)
+time_t fix_utc(tm* t)
 {
-  const time_t t_t = mktime(t);
-  if (!localtime_r(&t_t, t))
+  // HACK: just use UTC since tz is not used
+  const time_t t_t = timegm(t);
+  if (!gmtime_r(&t_t, t))
   {
     logging::fatal("Unable to convert time from {}", t_t);
   }
+  return t_t;
 }
-tm to_tm(const YearSize year, const int month, const int day, const int hour, const int minute)
+tm to_utc(const YearSize year, const int month, const int day, const int hour, const int minute)
 {
   // do this to calculate yday
   tm t{};
@@ -31,9 +33,7 @@ tm to_tm(const YearSize year, const int month, const int day, const int hour, co
   t.tm_mday = day;
   t.tm_hour = hour;
   t.tm_min = minute;
-  // always use LST
-  t.tm_isdst = 0;
-  ::mktime(&t);
+  fs::fix_utc(&t);
   return t;
 }
 string format_date(const tm& date)
@@ -54,12 +54,13 @@ string format_datetime(const tm& date)
   // make sure parts match whole
   return std::format("{} {}", format_date(date), format_time(date));
 }
-tm parse_date(const string value)
+tm parse_utc(const string value)
 {
   tm date{};
   date.tm_year = stoi(value.substr(0, 4)) - TM_YEAR_OFFSET;
   date.tm_mon = stoi(value.substr(5, 2)) - TM_MONTH_OFFSET;
   date.tm_mday = stoi(value.substr(8, 2));
+  fs::fix_utc(&date);
   return date;
 }
 void add_time(tm& date, const string value)
@@ -77,9 +78,9 @@ void add_time(tm& date, const string value)
     "Simulation start time has an invalid minute ({:d})",
     date.tm_min
   );
-  fs::logging::verbose("Simulation start time before fix_tm() is {:s}", format_datetime(date));
-  fs::fix_tm(&date);
-  fs::logging::verbose("Simulation start time after fix_tm() is {:s}", format_datetime(date));
+  fs::logging::debug("Simulation start time before fix_tm() is {:s}", format_datetime(date));
+  fs::fix_utc(&date);
+  fs::logging::debug("Simulation start time after fix_tm() is {:s}", format_datetime(date));
 }
 DurationSize to_time(const tm& t)
 {
@@ -94,7 +95,7 @@ DurationSize to_time(
   const int minute
 )
 {
-  return to_time(to_tm(year, month, day, hour, minute));
+  return to_time(to_utc(year, month, day, hour, minute));
 }
 void read_date(istringstream* iss, string* str, tm* t)
 {
@@ -112,8 +113,7 @@ void read_date(istringstream* iss, string* str, tm* t)
   getline(dss, ds, ':');
   t->tm_hour = stoi(ds);
   logging::verbose("Date is {:s}", format_datetime(*t));
-  // always use LST
-  t->tm_isdst = 0;
+  fs::fix_utc(t);
 }
 constexpr int DAYS_IN_MONTH[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 constexpr int DAYS_IN_MONTH_LEAP[] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};

@@ -157,7 +157,7 @@ void Model::readWeather(
         struct tm t{};
         read_date(&iss, &str, &t);
         year_ = t.tm_year + TM_YEAR_OFFSET;
-        const auto ticks = mktime(&t);
+        const auto ticks = fix_utc(&t);
         if (1 == cur)
         {
           logging::debug("Date '{:s}' is {:d} and calculated jd is {:d}", str, ticks, t.tm_yday);
@@ -170,7 +170,7 @@ void Model::readWeather(
         }
         min_date = min(min_date, static_cast<Day>(t.tm_yday));
         max_date = max(max_date, static_cast<Day>(t.tm_yday));
-        time_t cur_time = mktime(&t);
+        time_t cur_time = fix_utc(&t);
         if (prev_time != std::numeric_limits<time_t>::min())
         {
           auto seconds_diff = (cur_time - prev_time);

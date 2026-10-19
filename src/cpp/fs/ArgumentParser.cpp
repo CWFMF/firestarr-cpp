@@ -470,7 +470,7 @@ MainArgumentParser::MainArgumentParser(const int argc, const char* const argv[])
     const auto day = 15;
     const auto hour = 12;
     const auto minute = 0;
-    settings.start_date = to_tm(year, month, day, hour, minute);
+    settings.start_date = to_utc(year, month, day, hour, minute);
     settings.latitude = 49.3911;
     settings.longitude = -84.7395;
     logging::note("Running in test mode");
@@ -641,7 +641,7 @@ Settings& MainArgumentParser::parse_args()
     if (has_positional())
     {
       // NOTE: these will overwrite any values in the settings file that exist
-      settings.start_date = parse_date(get_positional());
+      settings.start_date = parse_utc(get_positional());
       auto& start_date = settings.start_date.value();
       settings.latitude = stod(get_positional());
       settings.longitude = stod(get_positional());

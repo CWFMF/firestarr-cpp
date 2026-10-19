@@ -361,7 +361,7 @@ Settings::Settings(const string dir_binary, const string dir_root) noexcept
     }
     if (const auto value = get_value_if_not_mode("START_DATE", Mode::Test); "INVALID" != value)
     {
-      start_date = parse_date(value);
+      start_date = parse_utc(value);
     }
     if (const auto value = get_value_if_not_mode("START_TIME", Mode::Test); "INVALID" != value)
     {
