@@ -105,6 +105,8 @@ int main(const int argc, const char* const argv[])
       auto year_end = start;
       year_end.tm_mon = 12 - TM_MONTH_OFFSET;
       year_end.tm_mday = 31;
+      // always use LST
+      year_end.tm_isdst = 0;
       const auto seconds = difftime(mktime(&year_end), start_t);
       // start day counts too, so +1
       // HACK: but we don't want to go to Jan 1 so don't add 1

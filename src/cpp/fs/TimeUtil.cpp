@@ -31,6 +31,8 @@ tm to_tm(const YearSize year, const int month, const int day, const int hour, co
   t.tm_mday = day;
   t.tm_hour = hour;
   t.tm_min = minute;
+  // always use LST
+  t.tm_isdst = 0;
   ::mktime(&t);
   return t;
 }
@@ -110,6 +112,8 @@ void read_date(istringstream* iss, string* str, tm* t)
   getline(dss, ds, ':');
   t->tm_hour = stoi(ds);
   logging::verbose("Date is {:s}", format_datetime(*t));
+  // always use LST
+  t->tm_isdst = 0;
 }
 constexpr int DAYS_IN_MONTH[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 constexpr int DAYS_IN_MONTH_LEAP[] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
