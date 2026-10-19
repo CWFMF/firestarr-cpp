@@ -13,6 +13,14 @@ struct tm* gmtime_r(const time_t* timer, struct tm* result)
   }
   return result;
 }
+struct tm* localtime_r(const time_t* timer, struct tm* result)
+{
+  if (localtime_s(result, timer))
+  {
+    return nullptr;
+  }
+  return result;
+}
 #endif
 time_t fix_utc(tm* t)
 {

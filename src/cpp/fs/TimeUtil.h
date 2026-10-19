@@ -9,7 +9,9 @@ constexpr YearSize TM_YEAR_OFFSET = 1900;
 constexpr int TM_MONTH_OFFSET = 1;
 // FIX: don't use same name as ctime since we're changing behaviour
 #ifdef _WIN32
+#define timegm _mkgmtime
 struct tm* gmtime_r(const time_t* timer, struct tm* result);
+struct tm* localtime_r(const time_t* timer, struct tm* result);
 #endif
 /**
  * \brief Calculate tm fields from values already there
