@@ -1,6 +1,5 @@
 #!/bin/bash
-pushd $(dirname $(dirname $0))
-pwd
+cd $(dirname $(dirname $0))
 # system timezone should not change anything about simulations since they always expect LST
 RESULT=0
 # test all timezones listed in Canada
@@ -57,9 +56,11 @@ do
   diff "./test/output/UTC/settings.log" "${DIR_OUT}/settings.log" > /dev/null && echo "Same for $tz"
   R=$?
   if [ "$R" -ne 0 ]; then
+    if [ "$RESULT" -eq 0 ]; then
+      RESULT=$R
+    fi
     echo -e "Different for $tz:"
-    (diff "./test/output/UTC/settings.log" "${DIR_OUT}/settings.log" || ([ "$RESULT" -eq 0 ] && RESULT=$R)) | sed "s/^/    /g"
+    diff "./test/output/UTC/settings.log" "${DIR_OUT}/settings.log" | sed "s/^/    /g"
   fi
 done
-popd
 exit $RESULT
