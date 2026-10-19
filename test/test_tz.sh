@@ -29,15 +29,34 @@ for tz in \
   "America/St_Johns" \
   ;
 do
-  rm -rf "test/output/$tz"
-  mkdir -p test/output/$tz
-  (sleep 2 && killall -s SIGINT firestarr)&
-  (TZ=$tz ./firestarr test/output/$tz 2024-06-03 58.81228184403946 -122.9117103995713 01:00 --ffmc 89.9 --dmc 59.5 --dc 450.9 --apcp_prev 0 -v --wx /appl/firestarr/test/input/10N_50651/firestarr_10N_50651_wx.csv --output_date_offsets [1,2,3] --tz -5 --raster-root /appl/firestarr/test/input/10N_50651/ --perim /appl/firestarr/test/input/10N_50651/10N_50651.tif -i -v > /dev/null || grep "TIME" test/output/$tz/settings.ini > test/output/$tz/settings.log)
-  diff test/output/UTC/settings.log test/output/$tz/settings.log > /dev/null && echo "Same for $tz"
+  DIR_OUT="test/output/$tz"
+  rm -rf "${DIR_OUT}"
+  mkdir -p "${DIR_OUT}"
+  (TZ=$tz \
+    ./firestarr \
+    "${DIR_OUT}" \
+    2024-06-03 \
+    58.81228184403946 -122.9117103995713 \
+    01:00 \
+    --ffmc 89.9 \
+    --dmc 59.5 \
+    --dc 450.9 \
+    --apcp_prev 0 \
+    -v \
+    --wx /appl/firestarr/test/input/10N_50651/firestarr_10N_50651_wx.csv \
+    --output_date_offsets [1] \
+    --tz -5 \
+    --raster-root /appl/firestarr/test/input/10N_50651/ \
+    --perim /appl/firestarr/test/input/10N_50651/10N_50651.tif \
+    --no-intensity \
+    -v \
+    > /dev/null)
+  grep "TIME" "${DIR_OUT}/settings.ini" > "${DIR_OUT}/settings.log"
+  diff "test/output/UTC/settings.log" "${DIR_OUT}/settings.log" > /dev/null && echo "Same for $tz"
   R=$?
   if [ "$R" -ne 0 ]; then
     echo -e "Different for $tz:"
-    (diff test/output/UTC/settings.log test/output/$tz/settings.log || ([ "$RESULT" -eq 0 ] && RESULT=$R)) | sed "s/^/    /g"
+    (diff test/output/UTC/settings.log "${DIR_OUT}/settings.log" || ([ "$RESULT" -eq 0 ] && RESULT=$R)) | sed "s/^/    /g"
   fi
 done
 exit $RESULT
