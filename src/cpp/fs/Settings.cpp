@@ -2,6 +2,7 @@
 #include "Settings.h"
 #include "FuelLookup.h"
 #include "Log.h"
+#include "TimeUtil.h"
 #include "Trim.h"
 #include "Util.h"
 namespace fs::settings

@@ -12,6 +12,7 @@
 #include "rng.h"
 #include "Scenario.h"
 #include "Settings.h"
+#include "TimeUtil.h"
 namespace fs
 {
 // // HACK: assume using half the CPUs probably means that faster cores are being used?

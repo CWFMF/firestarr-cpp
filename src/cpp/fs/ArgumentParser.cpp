@@ -2,6 +2,7 @@
 #include "ArgumentParser.h"
 #include "Log.h"
 #include "Settings.h"
+#include "TimeUtil.h"
 #include "Util.h"
 namespace fs::settings
 {
