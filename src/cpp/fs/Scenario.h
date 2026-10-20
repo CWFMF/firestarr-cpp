@@ -11,6 +11,7 @@
 #include "Model.h"
 #include "Settings.h"
 #include "StartPoint.h"
+#include "TimeUtil.h"
 namespace fs
 {
 class IObserver;

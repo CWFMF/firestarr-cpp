@@ -95,17 +95,18 @@ int main(const int argc, const char* const argv[])
       // but don't want to add another argument right now
       const FwiWeather yesterday{settings.get_weather()};
       auto& start_date = settings.start_date.value();
-      fs::fix_tm(&start_date);
+      // we were given a time, so number of days is until end of year
+      tm start = start_date;
+      // HACK: use UTC internally since tz offset is only for daylight hour calculation
+      const auto start_t = fs::fix_utc(&start_date);
       logging::debug(
         "Simulation start time after fix_tm() again is {:s}", format_datetime(start_date)
       );
-      // we were given a time, so number of days is until end of year
-      tm start = start_date;
-      const auto start_t = mktime(&start);
       auto year_end = start;
       year_end.tm_mon = 12 - TM_MONTH_OFFSET;
       year_end.tm_mday = 31;
-      const auto seconds = difftime(mktime(&year_end), start_t);
+      const auto year_t = fs::fix_utc(&year_end);
+      const auto seconds = difftime(year_t, start_t);
       // start day counts too, so +1
       // HACK: but we don't want to go to Jan 1 so don't add 1
       auto num_days = static_cast<size_t>(seconds / fs::DAY_SECONDS);

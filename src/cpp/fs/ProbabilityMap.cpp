@@ -205,10 +205,10 @@ void ProbabilityMap::deleteInterim()
   FileList files{};
   const auto is_interim = processed != processing_status;
   auto t = start_time;
-  auto ticks = mktime(&t);
+  auto ticks = fix_utc(&t);
   const auto day = static_cast<int>(round(time));
   ticks += (static_cast<size_t>(day) - t.tm_yday - 1) * DAY_SECONDS;
-  if (!localtime_r(&ticks, &t))
+  if (!gmtime_r(&ticks, &t))
   {
     logging::fatal("Unable to convert time from {}", ticks);
   }

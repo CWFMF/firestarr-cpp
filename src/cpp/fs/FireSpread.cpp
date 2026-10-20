@@ -191,7 +191,7 @@ SpreadInfo::SpreadInfo(
   const ptr<const FwiWeather> weather
 )
   : SpreadInfo(
-      to_tm(year, month, day, hour, minute),
+      to_utc(year, month, day, hour, minute),
       start_point,
       elevation,
       slope,

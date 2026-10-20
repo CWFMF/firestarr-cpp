@@ -115,6 +115,7 @@ inline string format_log_message(const char* prefix, const string msg)
 #ifdef NDEBUG
   tm out{};
   const time_t now = time(nullptr);
+  // NOTE: this is specifically local time for the log output
   if (!localtime_r(&now, &out))
   {
     logging::fatal("Error formatting time {}", now);
