@@ -52,14 +52,24 @@ FROM gcc-cmake AS vcpkg-bootstrap
 # vcpkg says: Environment variable VCPKG_FORCE_SYSTEM_BINARIES must be set on arm, s390x, ppc64le and riscv platforms.
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 ENV VCPKG_ROOT=/appl/firestarr/vcpkg
+ARG TARGETARCH
 WORKDIR /appl/firestarr
 # copy so we know correct version is bootstrapped when files change
 COPY ./vcpkg-configuration.json .
 # --branch doesn't work with sha?
+# HACK: uname doesn't work on 386 so override with ARCH=x86
 RUN git clone -v https://github.com/microsoft/vcpkg.git \
   && cd vcpkg \
   && git checkout $(sed -n '/baseline/{s/.*\"\([^"]*\)",$/\1/g;p}' ../vcpkg-configuration.json) \
   && cd .. \
+  && ( \
+    ( \
+      [ "386" = "$TARGETARCH" ] \
+        && echo "Using ARCH=x86 instead of detecting" \
+        && sed -i 's/ARCH=.*/ARCH=x86/' vcpkg/scripts/bootstrap.sh \
+    ) \
+    || echo "Detecting ARCH" \
+  ) \
   && vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install packages so they stay if nothing changes with vcpkg*.json
