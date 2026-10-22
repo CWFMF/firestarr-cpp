@@ -18,9 +18,10 @@ on:
   workflow_dispatch:
 
 # queue runs so that images get built & cache gets used instead of building in parallel
-# don't use '-${{ github.sha }}' so builds always happen in the order they were pushed
+# Use case() so that building published version is the same concurrency, but things only
+# going to cache don't block each other
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ case( startsWith(github.ref, 'refs/tags/v') || contains('["main", "dev", "unstable"]', github.ref_name), 'published', github.sha ) }}
   queue: max
 
 env:
