@@ -18,7 +18,7 @@ Project Documentation
 ```{=html}
 </title>
 ```
-`<date>`{=html}2026-06-26`</date>`{=html} `</info>`{=html}
+`<date>`{=html}2026-10-23`</date>`{=html} `</info>`{=html}
 ```{=html}
 <section xml:id="_overview">
 ```
